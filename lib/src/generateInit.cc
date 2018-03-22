@@ -580,6 +580,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
 
         // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
         os << "__shared__ unsigned int shRowLength[" << initSparseBlkSz << "];" << std::endl;
+        os << "__shared__ unsigned int shRowStart[" << initSparseBlkSz << "];" << std::endl;
 
         // common variables for all cases
         os << "const unsigned int id = " << initSparseBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
