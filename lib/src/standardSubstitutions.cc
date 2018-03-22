@@ -301,6 +301,7 @@ std::string StandardSubstitutions::initSparseConnectivity(
     const InitSparseConnectivitySnippet::Init &connectInit,
     const std::string &addSynapseFunctionTemplate,
     unsigned int numTrgNeurons,
+    const std::string &preIdx,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
     const std::string &rng)
@@ -308,7 +309,9 @@ std::string StandardSubstitutions::initSparseConnectivity(
     // Get user code string
     std::string code = connectInit.getSnippet()->getRowBuildCode();
 
+    // Substitute pre and postsynaptic indices
     substitute(code, "$(prevJ)", "prevJ");
+    substitute(code, "$(i)", preIdx);
 
     // Replace endRow() with break to stop loop
     functionSubstitute(code, "endRow", 0, "break");
