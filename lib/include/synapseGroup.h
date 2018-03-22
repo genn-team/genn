@@ -234,9 +234,6 @@ private:
     //!< Variable mode used for variables used to combine input from this synapse group
     VarMode m_InSynVarMode;
 
-    //!< Variable mode used for sparse connectivity
-    VarMode m_SparseConnectivityVarMode;
-
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
 
@@ -269,4 +266,7 @@ private:
 
     //!< Initialiser used for creating sparse connectivity
     InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
+
+    //!< Variable mode used for sparse connectivity
+    VarMode m_SparseConnectivityVarMode;
 };

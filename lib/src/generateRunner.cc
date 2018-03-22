@@ -671,7 +671,10 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         }
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
             // **TODO** different types
-            if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST) {
+#ifndef CPU_ONLY
+            if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST)
+#endif
+            {
                 os << varExportPrefix << " RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
             }
         }
@@ -1075,6 +1078,7 @@ void genRunner(const NNmodel &model,    //!< Model description
     os << "#include \"definitions.h\"" << std::endl;
     os << "#include <cstdlib>" << std::endl;
     os << "#include <cstdio>" << std::endl;
+    os << "#include <cstring>" << std::endl;
     os << "#include <cmath>" << std::endl;
     os << "#include <ctime>" << std::endl;
     os << "#include <cassert>" << std::endl;
@@ -1268,7 +1272,10 @@ void genRunner(const NNmodel &model,    //!< Model description
         }
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
             // **TODO** other index types
-            if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST) {
+#ifndef CPU_ONLY
+            if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST)
+#endif
+            {
                 os << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << "," << s.second.getMaxSourceConnections() << ");" << std::endl;
             }
 #ifndef CPU_ONLY

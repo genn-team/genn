@@ -49,6 +49,7 @@ namespace GENN_PREFERENCES {
     extern bool buildSharedLibrary; //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
     extern bool autoInitSparseVars; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
     extern VarMode defaultVarMode;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
+    extern VarMode defaultSparseConnectivityMode; //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     extern unsigned int neuronBlockSize;

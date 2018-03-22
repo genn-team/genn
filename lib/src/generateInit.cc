@@ -1067,9 +1067,8 @@ void genInit(const NNmodel &model,      //!< Model description
                     assert(!model.isSynapseGroupDynamicsRequired(s.first));
 
                     // If sparse connectivity was initialised on host, upload to device
-                    // **TODO** check that there is actually any connectivity init code
                     // **TODO** this may well be the wrong check i.e. zero copy
-                    if(s.second.getSparseConnectivityVarMode() & VarInit::HOST) {
+                    if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())) {
                         os << "initializeRaggedArray(C" << s.first << ", ";
                         os << "d_ind" << s.first << ", ";
                         os << "d_rowLength" << s.first << ", ";
@@ -1128,8 +1127,8 @@ void genInit(const NNmodel &model,      //!< Model description
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 anySparse = true;
 
-                // If connectivity was generated on host
-                if(s.second.getSparseConnectivityVarMode() & VarInit::HOST) {
+                // If we should initialise sparse connectivity on the host
+                if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())) {
                     if (model.isSynapseGroupDynamicsRequired(s.first)) {
                         os << "createPreIndices(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
                     }
