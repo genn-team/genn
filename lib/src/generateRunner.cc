@@ -1279,7 +1279,6 @@ void genRunner(const NNmodel &model,    //!< Model description
                 os << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
 
                 if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                    assert(s.second.getSparseConnectivityVarMode() & VarInit::HOST);
                     os << "unsigned int *d_colLength" << s.first << ";" << std::endl;
                     os << "__device__ unsigned int *dd_colLength" << s.first << ";" << std::endl;
                     os << "unsigned int *d_remap" << s.first << ";" << std::endl;
@@ -1541,19 +1540,18 @@ void genRunner(const NNmodel &model,    //!< Model description
 
                 if(model.isSynapseGroupPostLearningRequired(s.first)) {
                      // **TODO** implement reverse array generation on device
-                    assert(s.second.getSparseConnectivityVarMode() & VarInit::HOST);
                     const size_t postSize = s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getMaxSourceConnections();
                     
                     // Allocate column lengths
-                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".colLength", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".colLength", s.second.getSparseConnectivityVarMode(),
                                            s.second.getTrgNeuronGroup()->getNumNeurons());
-                    allocate_device_variable(os,  "unsigned int", "colLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                    allocate_device_variable(os,  "unsigned int", "colLength" + s.first, s.second.getSparseConnectivityVarMode(),
                                              s.second.getTrgNeuronGroup()->getNumNeurons());
                     
                     // Allocate remap
-                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".remap", s.second.getSparseConnectivityVarMode(),
                                            postSize);
-                    allocate_device_variable(os,  "unsigned int", "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                    allocate_device_variable(os,  "unsigned int", "remap" + s.first, s.second.getSparseConnectivityVarMode(),
                                              postSize);
                 }
                 
@@ -1755,12 +1753,11 @@ void genRunner(const NNmodel &model,    //!< Model description
                 assert(!model.isSynapseGroupDynamicsRequired(s.first));
                 
                 if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                    assert(s.second.getSparseConnectivityVarMode() & VarInit::HOST);
-                    free_host_variable(os, "C" + s.first + ".colLength", VarMode::LOC_HOST_DEVICE_INIT_HOST);
-                    free_device_variable(os, "colLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                    free_host_variable(os, "C" + s.first + ".colLength", s.second.getSparseConnectivityVarMode());
+                    free_device_variable(os, "colLength" + s.first, s.second.getSparseConnectivityVarMode());
 
-                    free_host_variable(os, "C" + s.first + ".remap", VarMode::LOC_HOST_DEVICE_INIT_HOST);
-                    free_device_variable(os, "remap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                    free_host_variable(os, "C" + s.first + ".remap", s.second.getSparseConnectivityVarMode());
+                    free_device_variable(os, "remap" + s.first, s.second.getSparseConnectivityVarMode());
                 }
             }
             else if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
