@@ -7,6 +7,7 @@
 #include <vector>
 
 // GeNN includes
+#include "initSparseConnectivitySnippet.h"
 #include "neuronGroup.h"
 #include "newPostsynapticModels.h"
 #include "newWeightUpdateModels.h"
@@ -21,7 +22,8 @@ public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
-                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup);
+                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
+                 const InitSparseConnectivitySnippet::Init &connectivityInitialiser);
     SynapseGroup(const SynapseGroup&) = delete;
     SynapseGroup() = delete;
 
@@ -70,6 +72,10 @@ public:
     /*! This is ignored for CPU simulations */
     void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
 
+    //! Set variable mode used for sparse connectivity
+    /*! This is ignored for CPU simulations */
+    void setSparseConnectivityVarMode(VarMode mode){ m_SparseConnectivityVarMode = mode; }
+
     //! Sets the maximum number of target neurons any source neurons can connect to
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
@@ -101,6 +107,9 @@ public:
     //! Get variable mode used for variables used to combine input from this synapse group
     VarMode getInSynVarMode() const { return m_InSynVarMode; }
 
+    //! Get variable mode used for sparse connectivity
+    VarMode getSparseConnectivityVarMode() const{ return m_SparseConnectivityVarMode; }
+
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
 
@@ -130,6 +139,8 @@ public:
     const std::vector<NewModels::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
+    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
+    
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
@@ -157,10 +168,6 @@ public:
 
     //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
-
-    //! Is this synapse group too large to use shared memory for combining postsynaptic output
-    // **THINK** this is very cuda-specific
-    bool isPSAtomicAddRequired(unsigned int blockSize) const;
 
     void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
@@ -247,6 +254,9 @@ private:
     //!< Variable mode used for variables used to combine input from this synapse group
     VarMode m_InSynVarMode;
 
+    //!< Variable mode used for sparse connectivity
+    VarMode m_SparseConnectivityVarMode;
+
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
 
@@ -288,4 +298,7 @@ private:
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
     std::vector<VarMode> m_PSVarMode;
+
+    //!< Initialiser used for creating sparse connectivity
+    InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
 };

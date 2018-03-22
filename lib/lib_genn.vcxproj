@@ -75,6 +75,7 @@
     <ClCompile Include="src\newNeuronModels.cc" />
     <ClCompile Include="src\newWeightUpdateModels.cc" />
     <ClCompile Include="src\newPostsynapticModels.cc" />
+    <ClCompile Include="src\initSparseConnectivitySnippet.cc" />
     <ClCompile Include="src\initVarSnippet.cc" />
     <ClCompile Include="src\neuronGroup.cc" />
     <ClCompile Include="src\synapseGroup.cc" />

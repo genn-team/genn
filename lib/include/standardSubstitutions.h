@@ -5,6 +5,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "initSparseConnectivitySnippet.h"
 #include "newNeuronModels.h"
 
 // Forward declarations
@@ -179,4 +180,11 @@ std::string initVariable(
     const std::string &ftype,
     const std::string &rng);
 
+std::string initSparseConnectivity(
+    const InitSparseConnectivitySnippet::Init &connectInit,
+    const std::string &addSynapseFunctionTemplate,
+    unsigned int numTrgNeurons,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 }   // StandardSubstitions

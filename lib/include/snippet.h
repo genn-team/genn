@@ -122,4 +122,48 @@ public:
     //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const{ return {}; }
 };
+
+//----------------------------------------------------------------------------
+// Snippet::Init
+//----------------------------------------------------------------------------
+//! Class used to bind together everything required to utilize a snippet
+//! 1. A pointer to a variable initialisation snippet
+//! 2. The parameters required to control the variable initialisation snippet
+template<typename SnippetBase>
+class Init
+{
+public:
+    Init(const SnippetBase *snippet, const std::vector<double> &params)
+        : m_Snippet(snippet), m_Params(params)
+    {
+    }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    const SnippetBase *getSnippet() const{ return m_Snippet; }
+    const std::vector<double> &getParams() const{ return m_Params; }
+    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+
+    void initDerivedParams(double dt)
+    {
+        auto derivedParams = m_Snippet->getDerivedParams();
+
+        // Reserve vector to hold derived parameters
+        m_DerivedParams.reserve(derivedParams.size());
+
+        // Loop through derived parameters
+        for(const auto &d : derivedParams) {
+            m_DerivedParams.push_back(d.second(m_Params, dt));
+        }
+    }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SnippetBase *m_Snippet;
+    std::vector<double> m_Params;
+    std::vector<double> m_DerivedParams;
+};
 }   // namespace Snippet

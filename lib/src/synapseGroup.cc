@@ -44,15 +44,17 @@ std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varI
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                            const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
-                           NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
-    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), 
+                           NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
+                           const InitSparseConnectivitySnippet::Init &connectivityInitialiser)
+    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps),
         m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_WUPreVarMode(wuPreVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
-        m_WUPostVarMode(wuPostVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
+        m_WUPostVarMode(wuPostVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
+        m_ConnectivityInitialiser(connectivityInitialiser)
 {
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
@@ -142,6 +144,9 @@ void SynapseGroup::initDerivedParams(double dt)
     for(auto &v : m_PSVarInitialisers) {
         v.initDerivedParams(dt);
     }
+
+    // Initialise any derived connectivity initialiser parameters
+    m_ConnectivityInitialiser.initDerivedParams(dt);
 }
 
 void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart)
@@ -238,19 +243,6 @@ VarMode SynapseGroup::getPSVarMode(const std::string &var) const
     return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
-bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
-{
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Loop through list of extra global weight update parameters
@@ -334,7 +326,12 @@ bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
 bool SynapseGroup::isWUInitRNGRequired(VarInit varInitMode) const
 {
     // If initialising the weight update variables require an RNG, return true
-    return isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode);
+    if(isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode)) {
+        return true;
+    }
+
+    // Return true if the var init mode we're querying is the one used for sparse connectivity and the connectivity initialiser requires an RNG
+    return ((getSparseConnectivityVarMode() & varInitMode) && ::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 
 bool SynapseGroup::isPSDeviceVarInitRequired() const

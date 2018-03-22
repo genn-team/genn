@@ -375,3 +375,39 @@ std::string StandardSubstitutions::initVariable(
 
     return code;
 }
+
+std::string StandardSubstitutions::initSparseConnectivity(
+    const InitSparseConnectivitySnippet::Init &connectInit,
+    const std::string &addSynapseFunctionTemplate,
+    unsigned int numTrgNeurons,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Get user code string
+    std::string code = connectInit.getSnippet()->getRowBuildCode();
+
+    substitute(code, "$(prevJ)", "prevJ");
+
+    // Replace endRow() with break to stop loop
+    functionSubstitute(code, "endRow", 0, "break");
+
+    // Replace addSynapse(j) with template to increment count var
+    functionSubstitute(code, "addSynapse", 1, addSynapseFunctionTemplate);
+
+    // Replace isPostNeuronValid(j) for test against size of target neuron group
+    functionSubstitute(code, "isPostNeuronValid", 1, "($(0) < " + std::to_string(numTrgNeurons) + ")");
+
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+
+    // Perform standard substitutions
+    functionSubstitutions(code, ftype, functions);
+    substitute(code, "$(rng)", rng);
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, "initSparseConnectivity");
+
+    return code;
+}

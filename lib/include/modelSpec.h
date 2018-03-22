@@ -92,6 +92,17 @@ inline NewModels::VarInit uninitialisedVar()
     return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
 }
 
+template<typename Snippet>
+inline InitSparseConnectivitySnippet::Init initConnectivity(const typename Snippet::ParamValues &params)
+{
+    return InitSparseConnectivitySnippet::Init(Snippet::getInstance(), params.getValues());
+}
+
+inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
+{
+    return InitSparseConnectivitySnippet::Init(InitSparseConnectivitySnippet::Uninitialised::getInstance(), {});
+}
+
 /*===============================================================
 //! \brief class NNmodel for specifying a neuronal network model.
 //
@@ -361,7 +372,8 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
-                                       const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+                                       const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -396,7 +408,8 @@ public:
             std::forward_as_tuple(name, mtype, delaySteps,
                                   wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
-                                  srcNeuronGrp, trgNeuronGrp));
+                                  srcNeuronGrp, trgNeuronGrp,
+                                  connectivityInitialiser));
 
         if(!result.second)
         {
@@ -425,7 +438,8 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         // Create empty pre and postsynaptic weight update variable initialisers
         typename WeightUpdateModel::PreVarValues weightPreVarInitialisers;
@@ -455,10 +469,12 @@ public:
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
                                        const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+                                       const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
-                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers);
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
+                                    connectivityInitialiser);
 
     }
 
