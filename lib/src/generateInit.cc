@@ -342,18 +342,19 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
 
-                            // If matrix has individual state variables
-                            // **THINK** should this REALLY also apply to postsynaptic models
-                            auto psmVars = s->getPSModel()->getVars();
-                            for(size_t j = 0; j < psmVars.size(); j++) {
-                                const auto &varInit = s->getPSVarInitialisers()[j];
-                                const VarMode varMode = s->getPSVarMode(j);
+                            // If postsynaptic model variables should be individual
+                            if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                                auto psmVars = s->getPSModel()->getVars();
+                                for(size_t j = 0; j < psmVars.size(); j++) {
+                                    const auto &varInit = s->getPSVarInitialisers()[j];
+                                    const VarMode varMode = s->getPSVarMode(j);
 
-                                // Initialise directly into device variable
-                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
-                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                    // Initialise directly into device variable
+                                    if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                        CodeStream::Scope b(os);
+                                        os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
+                                                                                  cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                    }
                                 }
                             }
                         }
