@@ -529,10 +529,12 @@ int main(int argc, char *argv[])
         filesystem::create_directory(runPath);
         runPath = runPath.make_absolute();
 
+        // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
+        const int localHostID = 0;
 #ifndef CPU_ONLY
-        chooseDevice(model, runPath.str());
+        chooseDevice(model, runPath.str(), localHostID);
 #endif // CPU_ONLY
-        generate_model_runner(model, runPath.str());
+        generate_model_runner(model, runPath.str(), localHostID);
 
         // Build path to generated model code
         auto modelPath = runPath / (networkName + "_CODE");
