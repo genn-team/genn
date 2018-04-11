@@ -33,9 +33,9 @@ using namespace std;
  */
 //--------------------------------------------------------------------------
 
-void generate_model_runner(const NNmodel &model,  //!< Model description
-                           const string &path      //!< Path where the generated code will be deposited
-                           );
+void generate_model_runner(const NNmodel &model,    //!< Model description
+                           const string &path,      //!< Path where the generated code will be deposited
+                           int localHostID);        //!< ID of local host
 
 
 //--------------------------------------------------------------------------
@@ -47,7 +47,7 @@ void generate_model_runner(const NNmodel &model,  //!< Model description
 //--------------------------------------------------------------------------
 
 #ifndef CPU_ONLY
-void chooseDevice(NNmodel &model, //!< the nn model we are generating code for
-                  const string &path     //!< path the generated code will be deposited
-                  );
+void chooseDevice(NNmodel &model,       //!< the nn model we are generating code for
+                  const string &path,   //!< path the generated code will be deposited
+                  int localHostID);     //!< ID of local host
 #endif
