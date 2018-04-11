@@ -469,9 +469,6 @@ int main(int argc, char *argv[])
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
                                                                    neuronModel, trgNeuronModel);
 
-                    // Global weight value can be used if there are no state variables
-                    const bool globalG = weightUpdateModel.getVars().empty();
-
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");
                     if(!postSynapse) {
@@ -496,6 +493,10 @@ int main(int argc, char *argv[])
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
                                                                    trgNeuronModel, &weightUpdateModel);
+
+                    // Global weight value can be used if there are no state variables
+                    // **TODO** seperate individualness for PSM and WUM should be used here
+                    const bool globalG = weightUpdateModel.getVars().empty() && postsynapticModel.getVars().empty();
 
                     // Determine the GeNN matrix type and number of delay steps
                     SynapseMatrixType mtype;
