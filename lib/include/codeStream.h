@@ -81,6 +81,36 @@ public:
         const unsigned int Level;
     };
 
+    //------------------------------------------------------------------------
+    // Scope
+    //------------------------------------------------------------------------
+    class Scope
+    {
+    public:
+        Scope(CodeStream &codeStream)
+        :   m_CodeStream(codeStream), m_Level(s_NextLevel++)
+        {
+            m_CodeStream << CodeStream::OB(m_Level);
+        }
+
+        ~Scope()
+        {
+            m_CodeStream << CodeStream::CB(m_Level);
+        }
+
+    private:
+        //------------------------------------------------------------------------
+        // Static members
+        //------------------------------------------------------------------------
+        static unsigned int s_NextLevel;
+
+        //------------------------------------------------------------------------
+        // Members
+        //------------------------------------------------------------------------
+        CodeStream &m_CodeStream;
+        const unsigned int m_Level;
+    };
+
     CodeStream(): std::ostream(&m_Buffer) {
         m_Braces.push_back(0);
     }
