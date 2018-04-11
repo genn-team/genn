@@ -300,7 +300,7 @@ bool SynapseGroup::isPSDeviceVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables,
     // return true if any of the postsynapse variables are initialised on the device
-    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         return std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
                         [](const VarMode mode){ return (mode & VarInit::DEVICE); });
     }

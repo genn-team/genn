@@ -254,7 +254,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     for(const auto *sg : n.second.getInSyn()) {
                         const auto *psm = sg->getPSModel();
 
-                        if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                        if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                             for(const auto &v : psm->getVars()) {
                                 os << v.second << " lps" << v.first << sg->getName();
                                 os << " = " <<  v.first << sg->getName() << "[n];" << std::endl;
