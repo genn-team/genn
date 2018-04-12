@@ -59,9 +59,16 @@ bool shouldAccumulateInLinSyn(const SynapseGroup &sg)
 
 bool shouldAccumulateInSharedMemory(const SynapseGroup &sg)
 {
-    // We should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
+    // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
+    // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
+    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC && deviceProp[theDevice].major < 6) {
+        return false;
+    }
+    // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
-    return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getTrgNeuronGroup()->getNumNeurons() <= synapseBlkSz);
+    else {
+        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getTrgNeuronGroup()->getNumNeurons() <= synapseBlkSz);
+    }
 }
 
 // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
@@ -145,7 +152,7 @@ void generatePreParallelisedSparseCode(
             // If postsynaptic input should be accumulated in shared memory
             // **THINK** should this actually be using shared memory atomics here?
             if(shouldAccumulateInSharedMemory(sg)) {
-                substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
                 substitute(wCode, "$(inSyn)", "shLg[ipost]");
             }
             // Otherwise, if it should be accumulated directly in global memory
@@ -262,6 +269,7 @@ void generatePostParallelisedCode(
                 string wCode = (evnt ? wu->getEventCode() : wu->getSimCode());
                 substitute(wCode, "$(t)", "t");
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                    // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                     if (shouldAccumulateInSharedMemory(sg)) {
                         substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                         substitute(wCode, "$(inSyn)", "shLg[ipost]");
@@ -873,7 +881,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
             [](const NNmodel::SynapseGroupValueType &s){ return shouldAccumulateInSharedMemory(s.second); }))
         {
-            os << "volatile __shared__ " << model.getPrecision() << " shLg[BLOCKSZ_SYN];" << std::endl;
+            os << "__shared__ " << model.getPrecision() << " shLg[BLOCKSZ_SYN];" << std::endl;
         }
 
         // We need linsyn if any synapse groups accumulate directly into a register
