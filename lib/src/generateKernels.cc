@@ -149,18 +149,17 @@ void generatePreParallelisedSparseCode(
             string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
             substitute(wCode, "$(t)", "t");
 
-            // If postsynaptic input should be accumulated in shared memory
-            // **THINK** should this actually be using shared memory atomics here?
+            // Use atomic operation to update $(inSyn)
+            substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
+
+            // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
             if(shouldAccumulateInSharedMemory(sg)) {
-                substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
                 substitute(wCode, "$(inSyn)", "shLg[ipost]");
             }
-            // Otherwise, if it should be accumulated directly in global memory
+            // Otherwise, substitute global memory array for $(inSyn)
             else {
-                substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
                 substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
             }
-
 
             if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 name_substitutions(wCode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[prePos]");
