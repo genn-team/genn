@@ -61,7 +61,7 @@ bool shouldAccumulateInSharedMemory(const SynapseGroup &sg)
 {
     // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
-    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC && deviceProp[theDevice].major < 6) {
+    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC && deviceProp[theDevice].major < 5) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
