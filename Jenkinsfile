@@ -160,30 +160,17 @@ for(b = 0; b < builderNodes.size; b++) {
                 }
                 
                 buildStep("Gathering test results (" + env.NODE_NAME + ")") {
-                    dir("genn/tests") {
-                        // Process JUnit test output
-                        junit "**/test_results*.xml";
-                        
-                        // Rename output so name is unique 
-                        def uniqueMsg = "msg_" + env.NODE_NAME;
-                        sh "mv msg \"" + uniqueMsg + "\"";
-                        
-                        // Archive output
-                        archive uniqueMsg;
-                    }
-                }
-                
-                buildStep("Calculating code coverage (" + env.NODE_NAME + ")") {
-                    // Calculate coverage
-                    dir("genn/tests") {
-                        if (isUnix()) {
-                            // Run correct coverage calculation script
-                            if("cpu_only" in nodeLabel) {
-                                sh "./calc_coverage.sh -c";
-                            }
-                            else {
-                                sh "./calc_coverage.sh";
-                            }
+                    if (isUnix()) {
+                        dir("genn/tests") {
+                            // Process JUnit test output
+                            junit "**/test_results*.xml";
+                            
+                            // Rename output so name is unique 
+                            def uniqueMsg = "msg_" + env.NODE_NAME;
+                            sh "mv msg \"" + uniqueMsg + "\"";
+                            
+                            // Archive output
+                            archive uniqueMsg;
                             
                             // Stash coverage txt files so master can combine them all together again
                             stash name: nodeName + "_coverage", includes: "coverage.txt"

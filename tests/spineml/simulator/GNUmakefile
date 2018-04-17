@@ -19,6 +19,9 @@
 # its own goals, we need to manually specify the DEFAULT_GOAL
 .DEFAULT_GOAL := all
 
+# Turn on coverage calculation
+COVERAGE := 1
+
 # Include makefile which builds libgenn
 include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 
