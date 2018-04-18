@@ -92,11 +92,8 @@ pushd unit
 # Reset coverage  before running test
 reset_coverage
 
-# Clean
-make clean 1>> ../msg 2>> ../msg
-
-# Build
-make $MAKE_FLAGS 1>>../msg 2>>../msg 
+# Clean and build
+make clean all COVERAGE=1 $MAKE_FLAGS 1>>../msg 2>>../msg 
 
 # Run tests
 ./test --gtest_output="xml:test_results_unit.xml"
@@ -111,20 +108,12 @@ popd
 pushd spineml
 pushd simulator
 
-# Reset coverage  before running test
-reset_coverage
-
-# Clean
-make clean 1>> ../../msg 2>> ../../msg
-
-# Build
-make $MAKE_FLAGS 1>>../../msg 2>>../../msg 
+# Clean and build
+make clean all $MAKE_FLAGS 1>>../../msg 2>>../../msg 
 
 # Run SpineML simulator tests
 ./test --gtest_output="xml:test_results_spineml.xml"
 
-# Update coverage after test
-update_coverage coverage_spineml
 
 popd    # simulator
 popd    # spineml
