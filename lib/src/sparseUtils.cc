@@ -18,7 +18,7 @@
 void createPosttoPreArray(unsigned int preN, unsigned int postN, SparseProjection * C)
 {
     // Zero reverse lookup indices
-    std::fill_n(C->revIndInG, postN, 0);
+    std::fill_n(C->revIndInG, postN + 1, 0);
 
     // First calculate column lengths in revIndInG
     for (unsigned int i = 0; i < preN; i++){ //i : index of presynaptic neuron
