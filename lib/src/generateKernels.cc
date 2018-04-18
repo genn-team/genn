@@ -50,6 +50,27 @@ string getFloatAtomicAdd(const string &ftype)
         return "atomicAdd";
     }
 }
+
+bool shouldAccumulateInLinSyn(const SynapseGroup &sg)
+{
+    // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield (where each thread represents an individual neuron)
+    return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
+}
+
+bool shouldAccumulateInSharedMemory(const SynapseGroup &sg)
+{
+    // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
+    // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
+    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC && deviceProp[theDevice].major < 5) {
+        return false;
+    }
+    // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
+    // and the output population is small enough that input to it can be stored in a shared memory array
+    else {
+        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getTrgNeuronGroup()->getNumNeurons() <= synapseBlkSz);
+    }
+}
+
 // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
 void generatePreParallelisedSparseCode(
     CodeStream &os, //!< output stream for code
@@ -65,13 +86,6 @@ void generatePreParallelisedSparseCode(
     DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
-
-    //int maxConnections;
-    if (sg.isPSAtomicAddRequired(synapseBlkSz)) {
-        if (sg.getMaxConnections() < 1) {
-            fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.\n");
-        }
-    }
 
     os << "if (" << localID << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -135,13 +149,16 @@ void generatePreParallelisedSparseCode(
             string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
             substitute(wCode, "$(t)", "t");
 
-            if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
-                substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
-                substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
-            }
-            else { // using shared memory
-                substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+            // Use atomic operation to update $(inSyn)
+            substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
+
+            // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
+            if(shouldAccumulateInSharedMemory(sg)) {
                 substitute(wCode, "$(inSyn)", "shLg[ipost]");
+            }
+            // Otherwise, substitute global memory array for $(inSyn)
+            else {
+                substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
             }
 
             if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -195,32 +212,14 @@ void generatePostParallelisedCode(
             CodeStream::Scope b(os);
             os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
         }
-
-        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
-            // set shLg to 0 for all postsynaptic neurons; is ok as model.neuronN[model.synapseTarget[i]] <= synapseBlkSz
-            os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ") shLg[threadIdx.x] = 0;" << std::endl;
-        }
         os << "__syncthreads();" << std::endl;
 
-        int maxConnections;
-        if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.isPSAtomicAddRequired(synapseBlkSz)) {
-            if (sg.getMaxConnections() < 1) {
-                fprintf(stderr, "Model Generation warning: for every SPARSE synapse group used you must also supply (in your model) a max possible number of connections via the model.setMaxConn() function.\n");
-                maxConnections = sg.getTrgNeuronGroup()->getNumNeurons();
-            }
-            else {
-                maxConnections = sg.getMaxConnections();
-            }
-        }
-        else {
-            maxConnections = sg.getTrgNeuronGroup()->getNumNeurons();
-        }
         os << "// loop through all incoming spikes" << std::endl;
         os << "for (j = 0; j < lmax; j++)";
         {
             CodeStream::Scope b(os);
             os << "// only work on existing neurons" << std::endl;
-            os << "if (" << localID << " < " << maxConnections << ")";
+            os << "if (" << localID << " < " << sg.getMaxConnections() << ")";
             {
                 CodeStream::Scope b(os);
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -269,13 +268,14 @@ void generatePostParallelisedCode(
                 string wCode = (evnt ? wu->getEventCode() : wu->getSimCode());
                 substitute(wCode, "$(t)", "t");
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-                    if (sg.isPSAtomicAddRequired(synapseBlkSz)) { // SPARSE using atomicAdd
-                        substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
-                        substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
-                    }
-                    else { // SPARSE using shared memory
+                    // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
+                    if (shouldAccumulateInSharedMemory(sg)) {
                         substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                         substitute(wCode, "$(inSyn)", "shLg[ipost]");
+                    }
+                    else {
+                        substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
+                        substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
                     }
 
                     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -307,16 +307,6 @@ void generatePostParallelisedCode(
                 else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     os << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
                 }
-            }
-
-            if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !sg.isPSAtomicAddRequired(synapseBlkSz)) {
-                os << "__syncthreads();" << std::endl;
-                os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")" << CodeStream::OB(136); // need to write back results
-                os << "linSyn += shLg[" << localID << "];" << std::endl;
-                os << "shLg[" << localID << "] = 0;" << std::endl;
-                os << CodeStream::CB(136) << std::endl;
-
-                os << "__syncthreads();" << std::endl;
             }
         }
     }
@@ -885,11 +875,17 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         os << "unsigned int id = BLOCKSZ_SYN * blockIdx.x + threadIdx.x;" << std::endl;
         os << "unsigned int lmax, j, r;" << std::endl;
         os << model.getPrecision() << " addtoinSyn;" << std::endl;
-        os << "volatile __shared__ " << model.getPrecision() << " shLg[BLOCKSZ_SYN];" << std::endl;
 
-        // case-dependent variables
+        // We need shLg if any synapse groups accumulate into shared memory
+        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [](const NNmodel::SynapseGroupValueType &s){ return shouldAccumulateInSharedMemory(s.second); }))
+        {
+            os << "__shared__ " << model.getPrecision() << " shLg[BLOCKSZ_SYN];" << std::endl;
+        }
+
+        // We need linsyn if any synapse groups accumulate directly into a register
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if (!(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s.second.isPSAtomicAddRequired(synapseBlkSz)){
+            if (shouldAccumulateInLinSyn(s.second)) {
                 os << model.getPrecision() << " linSyn;" << std::endl;
                 break;
             }
@@ -943,13 +939,24 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << ") % " << s->second.getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
                 }
 
-                if (!(s->second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s->second.isPSAtomicAddRequired(synapseBlkSz)){
+                // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
+                if (shouldAccumulateInLinSyn(s->second)) {
                     os << "// only do this for existing neurons" << std::endl;
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
                         os << "linSyn = dd_inSyn" << s->first << "[" << localID << "];" << std::endl;
                     }
+                }
+                // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
+                // **NOTE** is ok as number of target neurons <= synapseBlkSz
+                else if(shouldAccumulateInSharedMemory(s->second)) {
+                    os << "if (threadIdx.x < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "shLg[threadIdx.x] = dd_inSyn" << s->first << "[threadIdx.x];"<< std::endl;
+                    }
+                    os << "__syncthreads();" << std::endl;
                 }
 
                 if (s->second.isSpikeEventRequired()) {
@@ -985,7 +992,8 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 }
                 os << std::endl;
 
-                if (!(s->second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || !s->second.isPSAtomicAddRequired(synapseBlkSz)) {
+                // If we have been accumulating into a register, write value back to global memory
+                if (shouldAccumulateInLinSyn(s->second)) {
                     os << "// only do this for existing neurons" << std::endl;
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
@@ -993,6 +1001,17 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         os << "dd_inSyn" << s->first << "[" << localID << "] = linSyn;" << std::endl;
                     }
                 }
+                // Otherwise, if we have been accumulating into shared memory, write value back to global memory
+                // **NOTE** is ok as number of target neurons <= synapseBlkSz
+                else if(shouldAccumulateInSharedMemory(s->second)) {
+                    os << "__syncthreads();" << std::endl;
+                    os << "if (threadIdx.x < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "dd_inSyn" << s->first << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
+                    }
+                }
+
                 // need to do reset operations in this kernel (no learning kernel)
                 if (model.getResetKernel() == GENN_FLAGS::calcSynapses) {
                     os << "__syncthreads();" << std::endl;

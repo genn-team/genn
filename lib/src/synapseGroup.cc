@@ -210,19 +210,6 @@ VarMode SynapseGroup::getPSVarMode(const std::string &var) const
     return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
-bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
-{
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Loop through list of extra global weight update parameters
