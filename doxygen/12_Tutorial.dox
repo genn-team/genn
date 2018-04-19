@@ -94,8 +94,8 @@ void modelDefinition(NNmodel &model)
     );
 
     PostsynapticModels::ExpCond::ParamValues ps_p(
-    1.0,    // 0 - tau_S: decay time constant for S [ms]
-    -80.0   // 1 - Erev: Reversal potential
+        1.0,    // 0 - tau_S: decay time constant for S [ms]
+        -80.0   // 1 - Erev: Reversal potential
     );
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
