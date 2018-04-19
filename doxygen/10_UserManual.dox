@@ -350,16 +350,21 @@ See tools/gen_syns_sparse_IzhModel used in Izh_sparse project to see a working e
  
 Furthermore the SynapseMatrixWeight defines how 
 - SynapseMatrixWeight::INDIVIDUAL allows each individual synapse to have unique weight update model variables. 
-Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXToDevice function, where XXXX is the name of the synapse population.
+Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
+- SynapseMatrixWeight::INDIVIDUAL_PSM allows each postsynapic neuron to have unique post synaptic model variables.
+Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::GLOBAL saves memory by only maintaining one copy of the weight update model variables.
 This is automatically initialized to the initial value passed to NNmodel::addSynapsePopulation.
 
 Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to NNmodel::addSynapsePopulation:
 - SynapseMatrixType::SPARSE_GLOBALG
+- SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM
 - SynapseMatrixType::SPARSE_INDIVIDUALG
 - SynapseMatrixType::DENSE_GLOBALG
+- SynapseMatrixType::DENSE_GLOBALG_INDIVIDUAL_PSM
 - SynapseMatrixType::DENSE_INDIVIDUALG
 - SynapseMatrixType::BITMASK_GLOBALG
+- SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM
 
 \page sect_postsyn Postsynaptic integration methods
 
