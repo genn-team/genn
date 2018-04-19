@@ -1,6 +1,6 @@
 var classNeuronGroup =
 [
-    [ "NeuronGroup", "d7/d3b/classNeuronGroup.html#a98e2ef53655f29e8886b857221521e31", null ],
+    [ "NeuronGroup", "d7/d3b/classNeuronGroup.html#afcefd1a762b4ff856416e28828eeb1ea", null ],
     [ "NeuronGroup", "d7/d3b/classNeuronGroup.html#aa2b21c7c696a54bb3824c6843a0d5bb1", null ],
     [ "NeuronGroup", "d7/d3b/classNeuronGroup.html#acf9b709abcfb87f8bdc2375796aa8b78", null ],
     [ "addExtraGlobalParams", "d7/d3b/classNeuronGroup.html#a9f12603e7de577a4b75bfd91f0e8146e", null ],
@@ -10,6 +10,8 @@ var classNeuronGroup =
     [ "calcSizes", "d7/d3b/classNeuronGroup.html#a088945c23743787a072a170279b53af5", null ],
     [ "canRunOnCPU", "d7/d3b/classNeuronGroup.html#ae1cd4d83db92836d196f484851b768fb", null ],
     [ "checkNumDelaySlots", "d7/d3b/classNeuronGroup.html#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce", null ],
+    [ "getClusterDeviceID", "d7/d3b/classNeuronGroup.html#ad0c76cf34b4b3141e2be0e34f95a5d19", null ],
+    [ "getClusterHostID", "d7/d3b/classNeuronGroup.html#a404eda44aa75eea5658de671fe7e3d9c", null ],
     [ "getDerivedParams", "d7/d3b/classNeuronGroup.html#ab24bb1fe23a16dff329f63c541561851", null ],
     [ "getIDRange", "d7/d3b/classNeuronGroup.html#ab826930dd5c8684ed5f71a334ceb4fab", null ],
     [ "getInSyn", "d7/d3b/classNeuronGroup.html#ae06a3a7f94e79234ae964a61ecae32e8", null ],
@@ -28,6 +30,7 @@ var classNeuronGroup =
     [ "getVarInitialisers", "d7/d3b/classNeuronGroup.html#a84d4f4b6035ba8b2482dcbb0a1543927", null ],
     [ "getVarMode", "d7/d3b/classNeuronGroup.html#a6eb06067afe9840e93003e06cca5f177", null ],
     [ "getVarMode", "d7/d3b/classNeuronGroup.html#a45edc159473ff4292a1a82ac67158135", null ],
+    [ "hasOutputToHost", "d7/d3b/classNeuronGroup.html#a052e3e16e639d9116f9916b45346a459", null ],
     [ "initDerivedParams", "d7/d3b/classNeuronGroup.html#affd4e9d0657fe474a7dfe54a8189d634", null ],
     [ "isDelayRequired", "d7/d3b/classNeuronGroup.html#a1c49f6bcf677638de5d6e2ea2efa8ee4", null ],
     [ "isDeviceVarInitRequired", "d7/d3b/classNeuronGroup.html#ad0207280cfdb47d71bc9764bb0e6a68a", null ],
@@ -47,7 +50,6 @@ var classNeuronGroup =
     [ "isVarQueueRequired", "d7/d3b/classNeuronGroup.html#a3e526b6156869c32b1294b731bb8613c", null ],
     [ "isVarZeroCopyEnabled", "d7/d3b/classNeuronGroup.html#a6fae674c1ccbc5c1bbc4e9eb2ec41453", null ],
     [ "isZeroCopyEnabled", "d7/d3b/classNeuronGroup.html#ae896defdc5b9713528f4229a8e87c48c", null ],
-    [ "setClusterIndex", "d7/d3b/classNeuronGroup.html#a00eed83a7c03531bb0110280ca92e5b3", null ],
     [ "setSpikeEventRequired", "d7/d3b/classNeuronGroup.html#afe704a4b5894996ce3839dda258b0e07", null ],
     [ "setSpikeEventVarMode", "d7/d3b/classNeuronGroup.html#a50fd1cf4939e60154b1fbea2bd22058b", null ],
     [ "setSpikeEventZeroCopyEnabled", "d7/d3b/classNeuronGroup.html#a55e1dead26dc0322d8057058056fd326", null ],

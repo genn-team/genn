@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.0</span>
+   &#160;<span id="projectnumber">3.1.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -169,8 +169,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5db0d96c5244b6e3eb10181a94ff04b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a5db0d96c5244b6e3eb10181a94ff04b3">setPSVarMode</a> (const std::string &amp;varName, <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> mode)</td></tr>
 <tr class="memdesc:a5db0d96c5244b6e3eb10181a94ff04b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable mode of postsynaptic model state variable.  <a href="#a5db0d96c5244b6e3eb10181a94ff04b3">More...</a><br /></td></tr>
 <tr class="separator:a5db0d96c5244b6e3eb10181a94ff04b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28b3a34ee4d0bba93ae3c0fb49ffa4c4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a28b3a34ee4d0bba93ae3c0fb49ffa4c4">setClusterIndex</a> (int hostID, int deviceID)</td></tr>
-<tr class="separator:a28b3a34ee4d0bba93ae3c0fb49ffa4c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a56bed62cefac16ddc39bb70090599742"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a56bed62cefac16ddc39bb70090599742">setInSynVarMode</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a> mode)</td></tr>
 <tr class="memdesc:a56bed62cefac16ddc39bb70090599742"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable mode used for variables used to combine input from this synapse group.  <a href="#a56bed62cefac16ddc39bb70090599742">More...</a><br /></td></tr>
 <tr class="separator:a56bed62cefac16ddc39bb70090599742"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -207,6 +205,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a1b863cb3fca9cabe40b5d4e89e4f98c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4debf170302b28741a9a7f980e9888b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ad4debf170302b28741a9a7f980e9888b">getTrgNeuronGroup</a> () const </td></tr>
 <tr class="separator:ad4debf170302b28741a9a7f980e9888b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16b848aedef6d0b42bf7a2606e70b680"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a16b848aedef6d0b42bf7a2606e70b680">getClusterHostID</a> () const </td></tr>
+<tr class="separator:a16b848aedef6d0b42bf7a2606e70b680"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc5233c2e93f705edcbd748e55d90761"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#adc5233c2e93f705edcbd748e55d90761">getClusterDeviceID</a> () const </td></tr>
+<tr class="separator:adc5233c2e93f705edcbd748e55d90761"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9fc1869b2019d1583563b2c0451ede7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ad9fc1869b2019d1583563b2c0451ede7">isTrueSpikeRequired</a> () const </td></tr>
 <tr class="separator:ad9fc1869b2019d1583563b2c0451ede7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afddee436ed3459540759061aab08de61"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#afddee436ed3459540759061aab08de61">isSpikeEventRequired</a> () const </td></tr>
@@ -251,9 +253,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab01b904bfa3af2008b53fc438471a0d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ab01b904bfa3af2008b53fc438471a0d4">getPSVarMode</a> (size_t index) const </td></tr>
 <tr class="memdesc:ab01b904bfa3af2008b53fc438471a0d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable mode used by postsynaptic model state variable.  <a href="#ab01b904bfa3af2008b53fc438471a0d4">More...</a><br /></td></tr>
 <tr class="separator:ab01b904bfa3af2008b53fc438471a0d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7fe3c9fbcb27b40024221d867460279e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a7fe3c9fbcb27b40024221d867460279e">isPSAtomicAddRequired</a> (unsigned int blockSize) const </td></tr>
-<tr class="memdesc:a7fe3c9fbcb27b40024221d867460279e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is this synapse group too large to use shared memory for combining postsynaptic output.  <a href="#a7fe3c9fbcb27b40024221d867460279e">More...</a><br /></td></tr>
-<tr class="separator:a7fe3c9fbcb27b40024221d867460279e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad57bb85759076e1410979b4c6f426081"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ad57bb85759076e1410979b4c6f426081">addExtraGlobalNeuronParams</a> (std::map&lt; string, string &gt; &amp;kernelParameters) const </td></tr>
 <tr class="separator:ad57bb85759076e1410979b4c6f426081"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd939b244af1b5052f6c5a0bb3acd5ca"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#abd939b244af1b5052f6c5a0bb3acd5ca">addExtraGlobalSynapseParams</a> (std::map&lt; string, string &gt; &amp;kernelParameters) const </td></tr>
@@ -543,6 +542,52 @@ Public Member Functions</h2></td></tr>
 
 <p>Can this synapse group run on the CPU? </p>
 <p>If we are running in CPU_ONLY mode this is always true, but some GPU functionality will prevent models being run on both CPU and GPU. </p>
+
+</div>
+</div>
+<a class="anchor" id="adc5233c2e93f705edcbd748e55d90761"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int SynapseGroup::getClusterDeviceID </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a16b848aedef6d0b42bf7a2606e70b680"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int SynapseGroup::getClusterHostID </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1205,24 +1250,6 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a7fe3c9fbcb27b40024221d867460279e"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::isPSAtomicAddRequired </td>
-          <td>(</td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>blockSize</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Is this synapse group too large to use shared memory for combining postsynaptic output. </p>
-
-</div>
-</div>
 <a class="anchor" id="a249ff6f548f3c4dd19f7d5a1b140cc2d"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1398,40 +1425,6 @@ Public Member Functions</h2></td></tr>
           <td> const</td>
         </tr>
       </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a28b3a34ee4d0bba93ae3c0fb49ffa4c4"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void SynapseGroup::setClusterIndex </td>
-          <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>hostID</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>deviceID</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -1715,7 +1708,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a></li>
-    <li class="footer">Generated on Wed Feb 14 2018 12:09:04 for GeNN by
+    <li class="footer">Generated on Thu Apr 19 2018 16:29:03 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

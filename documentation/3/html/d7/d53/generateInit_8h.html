@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.0</span>
+   &#160;<span id="projectnumber">3.1.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -134,14 +134,14 @@ $(document).ready(function(){initNavTree('d7/d53/generateInit_8h.html','../../')
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ac7f22615c8b82751fddecd468c9d3518"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/generateInit_8h.html#ac7f22615c8b82751fddecd468c9d3518">genInit</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const std::string &amp;path)</td></tr>
-<tr class="memdesc:ac7f22615c8b82751fddecd468c9d3518"><td class="mdescLeft">&#160;</td><td class="mdescRight">Path for code generationn.  <a href="#ac7f22615c8b82751fddecd468c9d3518">More...</a><br /></td></tr>
-<tr class="separator:ac7f22615c8b82751fddecd468c9d3518"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa992d1050d445057a79eebd83526b384"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d53/generateInit_8h.html#aa992d1050d445057a79eebd83526b384">genInit</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const std::string &amp;path, int localHostID)</td></tr>
+<tr class="memdesc:aa992d1050d445057a79eebd83526b384"><td class="mdescLeft">&#160;</td><td class="mdescRight">ID of local host.  <a href="#aa992d1050d445057a79eebd83526b384">More...</a><br /></td></tr>
+<tr class="separator:aa992d1050d445057a79eebd83526b384"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Contains functions to generate code for initialising kernel state variables. Part of the code generation section. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="ac7f22615c8b82751fddecd468c9d3518"></a>
+<a class="anchor" id="aa992d1050d445057a79eebd83526b384"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -155,7 +155,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>path</em>&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>localHostID</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -165,11 +171,12 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Path for code generationn. </p>
+<p>ID of local host. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">model</td><td>Model description </td></tr>
     <tr><td class="paramname">path</td><td>Path for code generationn </td></tr>
+    <tr><td class="paramname">localHostID</td><td>ID of local host </td></tr>
   </table>
   </dd>
 </dl>
@@ -182,7 +189,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d7/d53/generateInit_8h.html">generateInit.h</a></li>
-    <li class="footer">Generated on Wed Feb 14 2018 12:09:03 for GeNN by
+    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

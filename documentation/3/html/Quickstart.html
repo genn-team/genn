@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.0</span>
+   &#160;<span id="projectnumber">3.1.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -149,7 +149,7 @@ Defining a New Model in GeNN</h1>
 <p>If heterogeneous parameter values are required for a particular population of neurons (or synapses), they need to be defined as "variables" rather than parameters. See the <a class="el" href="UserManual.html">User Manual </a> for how to define new neuron (or synapse) types and the <a class="el" href="sectVariableInitialisation.html#sect_new_var_init">Defining a new variable initialisation snippet</a> section for more information on initialising these variables to hetererogenous values.</p>
 <p class="startli">c) The actual network needs to be defined in the form of a function <code>modelDefinition</code>, i.e. </p><div class="fragment"><div class="line"><span class="keywordtype">void</span> modelDefinition(<a class="code" href="dc/de5/classNNmodel.html">NNmodel</a> &amp;model); </div></div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>The name <code>modelDefinition</code> and its parameter of type <code><a class="el" href="dc/de5/classNNmodel.html">NNmodel</a>&amp;</code> are fixed and cannot be changed if GeNN is to recognize it as a model definition.</dd></dl>
 <p>d) Inside modelDefinition(), The time step <code>DT</code> needs to be defined, e.g. </p><div class="fragment"><div class="line">model.setDT(0.1);</div></div><!-- fragment --> <dl class="section note"><dt>Note</dt><dd>All provided examples and pre-defined model elements in GeNN work with units of mV, ms, nF and muS. However, the choice of units is entirely left to the user if custom model elements are used.</dd></dl>
-<p><code>MBody1.cc</code> shows a typical example of a model definition function. In its core it contains calls to <a class="el" href="dc/de5/classNNmodel.html#a8d7d593837882775dfb89a9780c06fab" title="Method for adding a neuron population to a neuronal network model, using C++ string for the name of t...">NNmodel::addNeuronPopulation</a> and <a class="el" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c" title="This function has been depreciated as of GeNN 2.2. ">NNmodel::addSynapsePopulation</a> to build up the network. For a full range of options for defining a network, refer to the <a class="el" href="UserManual.html">User Manual</a>.</p>
+<p><code>MBody1.cc</code> shows a typical example of a model definition function. In its core it contains calls to <a class="el" href="dc/de5/classNNmodel.html#ace4f728c03858ad86dd4d05c7f9a0b9b" title="Method for adding a neuron population to a neuronal network model, using C++ string for the name of t...">NNmodel::addNeuronPopulation</a> and <a class="el" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c" title="This function has been depreciated as of GeNN 2.2. ">NNmodel::addSynapsePopulation</a> to build up the network. For a full range of options for defining a network, refer to the <a class="el" href="UserManual.html">User Manual</a>.</p>
 </li>
 <li><p class="startli">The programmer defines their own "user-side" modeling code similar to the code in <code>userproject/MBody1_project/model/map_classol.*</code> and <code>userproject/MBody1_project/model/classol_sim.*</code>. In this code,</p>
 <p class="startli">a) They define the connectivity matrices between neuron groups. (In the MBody1 example those are read from files). Refer to the <a class="el" href="subsect34.html">Synaptic matrix types</a> section for the required format of connectivity matrices for dense or sparse connectivities.</p>
@@ -167,7 +167,7 @@ Defining a New Model in GeNN</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Feb 14 2018 12:09:03 for GeNN by
+    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

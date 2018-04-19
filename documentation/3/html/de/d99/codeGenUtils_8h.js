@@ -8,6 +8,7 @@ var codeGenUtils_8h =
     [ "functionSubstitute", "de/d99/codeGenUtils_8h.html#aab4265c6d7306a311b190d11769221a0", null ],
     [ "functionSubstitutions", "de/d99/codeGenUtils_8h.html#ab7bd7b9284cea44fb8f8c49ba6026c80", null ],
     [ "GetPairKeyConstIter", "de/d99/codeGenUtils_8h.html#ace7ac47c329a00705e2ec2e2bf3d5db5", null ],
+    [ "hashString", "de/d99/codeGenUtils_8h.html#a71534a5653f888ddf9e849ee5f044e0d", null ],
     [ "isInitRNGRequired", "de/d99/codeGenUtils_8h.html#a5c9df97ea98c37aba3679e15cbac34f2", null ],
     [ "isRNGRequired", "de/d99/codeGenUtils_8h.html#ad67ee4ca2abda90738d77cbe98df0bcd", null ],
     [ "name_substitutions", "de/d99/codeGenUtils_8h.html#a4859009add81ed0f979f2a522fd093bf", null ],

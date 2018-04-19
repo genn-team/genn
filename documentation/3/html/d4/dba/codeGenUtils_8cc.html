@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.0</span>
+   &#160;<span id="projectnumber">3.1.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -129,6 +129,7 @@ $(document).ready(function(){initNavTree('d4/dba/codeGenUtils_8cc.html','../../'
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="../../de/d99/codeGenUtils_8h_source.html">codeGenUtils.h</a>&quot;</code><br />
 <code>#include &lt;regex&gt;</code><br />
+<code>#include &lt;cstring&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/db9/standardSubstitutions_8h_source.html">standardSubstitutions.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
@@ -166,6 +167,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a7558f23b931fcfe8d249a58a8777a205"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a7558f23b931fcfe8d249a58a8777a205">checkUnreplacedVariables</a> (const string &amp;code, const string &amp;codeName)</td></tr>
 <tr class="memdesc:a7558f23b931fcfe8d249a58a8777a205"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function checks for unknown variable definitions and returns a gennError if any are found.  <a href="#a7558f23b931fcfe8d249a58a8777a205">More...</a><br /></td></tr>
 <tr class="separator:a7558f23b931fcfe8d249a58a8777a205"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71534a5653f888ddf9e849ee5f044e0d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a71534a5653f888ddf9e849ee5f044e0d">hashString</a> (const std::string &amp;string)</td></tr>
+<tr class="memdesc:a71534a5653f888ddf9e849ee5f044e0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash.  <a href="#a71534a5653f888ddf9e849ee5f044e0d">More...</a><br /></td></tr>
+<tr class="separator:a71534a5653f888ddf9e849ee5f044e0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1ac7da7500e771969cd05517aa18288"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#ae1ac7da7500e771969cd05517aa18288">neuron_substitutions_in_synaptic_code</a> (string &amp;wCode, const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const string &amp;preIdx, const string &amp;postIdx, const string &amp;devPrefix)</td></tr>
 <tr class="memdesc:ae1ac7da7500e771969cd05517aa18288"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="#ae1ac7da7500e771969cd05517aa18288">More...</a><br /></td></tr>
 <tr class="separator:ae1ac7da7500e771969cd05517aa18288"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -330,6 +334,28 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a71534a5653f888ddf9e849ee5f044e0d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t hashString </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>string</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash. </p>
+<p><a href="https://stackoverflow.com/questions/19411742/what-is-the-default-hash-function-used-in-c-stdunordered-map">https://stackoverflow.com/questions/19411742/what-is-the-default-hash-function-used-in-c-stdunordered-map</a> suggests that libstdc++ uses MurmurHash2 so this seems as good a bet as any MurmurHash2, by Austin Appleby It has a few limitations -</p><ol type="1">
+<li>It will not work incrementally.</li>
+<li>It will not produce the same results on little-endian and big-endian machines. </li>
+</ol>
+
+</div>
+</div>
 <a class="anchor" id="a5c9df97ea98c37aba3679e15cbac34f2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -478,7 +504,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html">codeGenUtils.cc</a></li>
-    <li class="footer">Generated on Wed Feb 14 2018 12:09:03 for GeNN by
+    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

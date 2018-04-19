@@ -18,6 +18,8 @@ var files =
     [ "generateInit.h", "d7/d53/generateInit_8h.html", "d7/d53/generateInit_8h" ],
     [ "generateKernels.cc", "da/d14/generateKernels_8cc.html", "da/d14/generateKernels_8cc" ],
     [ "generateKernels.h", "d9/d4c/generateKernels_8h.html", "d9/d4c/generateKernels_8h" ],
+    [ "generateMPI.cc", "da/d2c/generateMPI_8cc.html", "da/d2c/generateMPI_8cc" ],
+    [ "generateMPI.h", "da/d16/generateMPI_8h.html", "da/d16/generateMPI_8h" ],
     [ "generateRunner.cc", "d3/dad/generateRunner_8cc.html", "d3/dad/generateRunner_8cc" ],
     [ "generateRunner.h", "d2/d75/generateRunner_8h.html", "d2/d75/generateRunner_8h" ],
     [ "global.cc", "d7/dd8/global_8cc.html", "d7/dd8/global_8cc" ],

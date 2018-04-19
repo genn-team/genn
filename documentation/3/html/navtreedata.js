@@ -91,10 +91,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "Credits.html",
-"d4/d0f/newWeightUpdateModels_8h.html#a8d014c818d8ee68f3a16838dcd4f030f",
-"d7/dad/classNeuronModels_1_1Base.html#ada27dc79296ef8368ac2c7ab20ca8c8e",
-"dc/de5/classNNmodel.html#a47a23c344993756fbb5d8cd524123e5b",
-"functions_func_n.html"
+"d4/d0f/newWeightUpdateModels_8h.html#a4f3e008922887cba8cfafc0fb0e53965",
+"d7/dad/classNeuronModels_1_1Base.html",
+"dc/de5/classNNmodel.html#a0da6274f7860bca52c00086809e3b204",
+"df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#af7b0f08fe1dca0aa7420b719625eeeee"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

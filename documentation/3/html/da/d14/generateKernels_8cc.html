@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.0</span>
+   &#160;<span id="projectnumber">3.1.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -142,9 +142,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a545c380da9d365cdeac933f8b117a6c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#a545c380da9d365cdeac933f8b117a6c9">genNeuronKernel</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
 <tr class="memdesc:a545c380da9d365cdeac933f8b117a6c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for generating the CUDA kernel that simulates all neurons in the model.  <a href="#a545c380da9d365cdeac933f8b117a6c9">More...</a><br /></td></tr>
 <tr class="separator:a545c380da9d365cdeac933f8b117a6c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a398f6c10f72f4b4d9bfa970de4e201a5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#a398f6c10f72f4b4d9bfa970de4e201a5">genSynapseKernel</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
-<tr class="memdesc:a398f6c10f72f4b4d9bfa970de4e201a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for generating a CUDA kernel for simulating all synapses.  <a href="#a398f6c10f72f4b4d9bfa970de4e201a5">More...</a><br /></td></tr>
-<tr class="separator:a398f6c10f72f4b4d9bfa970de4e201a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa83d5aaba02448178149bc4b5026e759"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d14/generateKernels_8cc.html#aa83d5aaba02448178149bc4b5026e759">genSynapseKernel</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path, int localHostID)</td></tr>
+<tr class="memdesc:aa83d5aaba02448178149bc4b5026e759"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for generating a CUDA kernel for simulating all synapses.  <a href="#aa83d5aaba02448178149bc4b5026e759">More...</a><br /></td></tr>
+<tr class="separator:aa83d5aaba02448178149bc4b5026e759"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Contains functions that generate code for CUDA kernels. Part of the code generation section. </p>
@@ -185,7 +185,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a398f6c10f72f4b4d9bfa970de4e201a5"></a>
+<a class="anchor" id="aa83d5aaba02448178149bc4b5026e759"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -199,7 +199,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const string &amp;&#160;</td>
-          <td class="paramname"><em>path</em>&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>localHostID</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -216,6 +222,7 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">model</td><td>Model description </td></tr>
     <tr><td class="paramname">path</td><td>Path for code generation </td></tr>
+    <tr><td class="paramname">localHostID</td><td>ID of local host </td></tr>
   </table>
   </dd>
 </dl>
@@ -228,7 +235,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../da/d14/generateKernels_8cc.html">generateKernels.cc</a></li>
-    <li class="footer">Generated on Wed Feb 14 2018 12:09:03 for GeNN by
+    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

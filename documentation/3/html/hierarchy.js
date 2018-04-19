@@ -64,6 +64,7 @@ var hierarchy =
       [ "CodeStream", "da/da8/classCodeStream.html", null ]
     ] ],
     [ "postSynModel", "d2/d1a/classpostSynModel.html", null ],
+    [ "CodeStream::Scope", "d2/d16/classCodeStream_1_1Scope.html", null ],
     [ "SparseProjection", "d9/d91/structSparseProjection.html", null ],
     [ "stopWatch", "d1/df5/structstopWatch.html", null ],
     [ "SynapseGroup", "dc/dfa/classSynapseGroup.html", null ],

@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.0</span>
+   &#160;<span id="projectnumber">3.1.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -128,15 +128,19 @@ $(document).ready(function(){initNavTree('subsect34.html','');});
 <li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699">SynapseMatrixConnectivity::BITMASK</a> is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see <a class="el" href="Examples.html#ex_mbody">Insect olfaction model</a>).</li>
 </ul>
 <p>Furthermore the SynapseMatrixWeight defines how</p><ul>
-<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323">SynapseMatrixWeight::INDIVIDUAL</a> allows each individual synapse to have unique weight update model variables. Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the <code>pushXXXXXToDevice</code> function, where XXXX is the name of the synapse population.</li>
+<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323">SynapseMatrixWeight::INDIVIDUAL</a> allows each individual synapse to have unique weight update model variables. Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the <code>pushXXXXXStateToDevice</code> function, where XXXX is the name of the synapse population.</li>
+<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa">SynapseMatrixWeight::INDIVIDUAL_PSM</a> allows each postsynapic neuron to have unique post synaptic model variables. Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the <code>pushXXXXXStateToDevice</code> function, where XXXX is the name of the synapse population.</li>
 <li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334">SynapseMatrixWeight::GLOBAL</a> saves memory by only maintaining one copy of the weight update model variables. This is automatically initialized to the initial value passed to <a class="el" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c" title="This function has been depreciated as of GeNN 2.2. ">NNmodel::addSynapsePopulation</a>.</li>
 </ul>
 <p>Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to <a class="el" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c" title="This function has been depreciated as of GeNN 2.2. ">NNmodel::addSynapsePopulation</a>:</p><ul>
 <li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d">SynapseMatrixType::SPARSE_GLOBALG</a></li>
+<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca4caebb15c1a09f263b6f223241bde1ac">SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM</a></li>
 <li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cae7658b74f700d52b421afc540c892d2e">SynapseMatrixType::SPARSE_INDIVIDUALG</a></li>
 <li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca0103dab4be5e9b66601b43a52ffa00f0">SynapseMatrixType::DENSE_GLOBALG</a></li>
+<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca05bf2ba82e234d9d8ba1b92b6287945e">SynapseMatrixType::DENSE_GLOBALG_INDIVIDUAL_PSM</a></li>
 <li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cac125fea63eb10ca9b8951ddbe787d7ce">SynapseMatrixType::DENSE_INDIVIDUALG</a></li>
-<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca1655cb54ae8edd2462977f30072f8bf8">SynapseMatrixType::BITMASK_GLOBALG</a> </li>
+<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca1655cb54ae8edd2462977f30072f8bf8">SynapseMatrixType::BITMASK_GLOBALG</a></li>
+<li><a class="el" href="dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca1afc3ca441931cf66047766d6a135ff4">SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM</a> </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
@@ -144,7 +148,7 @@ $(document).ready(function(){initNavTree('subsect34.html','');});
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Wed Feb 14 2018 12:09:03 for GeNN by
+    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

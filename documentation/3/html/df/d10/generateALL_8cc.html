@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.0</span>
+   &#160;<span id="projectnumber">3.1.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -133,6 +133,7 @@ $(document).ready(function(){initNavTree('df/d10/generateALL_8cc.html','../../')
 <code>#include &quot;<a class="el" href="../../d2/dfd/generateCPU_8h_source.html">generateCPU.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d7/d53/generateInit_8h_source.html">generateInit.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d9/d4c/generateKernels_8h_source.html">generateKernels.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../da/d16/generateMPI_8h_source.html">generateMPI.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d2/d75/generateRunner_8h_source.html">generateRunner.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
@@ -146,12 +147,12 @@ $(document).ready(function(){initNavTree('df/d10/generateALL_8cc.html','../../')
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ad294c0e5ba13bcdbac26d733fb45b316"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#ad294c0e5ba13bcdbac26d733fb45b316">generate_model_runner</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
-<tr class="memdesc:ad294c0e5ba13bcdbac26d733fb45b316"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function will call the necessary sub-functions to generate the code for simulating a model.  <a href="#ad294c0e5ba13bcdbac26d733fb45b316">More...</a><br /></td></tr>
-<tr class="separator:ad294c0e5ba13bcdbac26d733fb45b316"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc04ad19d8b1826475e8187b71c542f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#afc04ad19d8b1826475e8187b71c542f4">chooseDevice</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path)</td></tr>
-<tr class="memdesc:afc04ad19d8b1826475e8187b71c542f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.  <a href="#afc04ad19d8b1826475e8187b71c542f4">More...</a><br /></td></tr>
-<tr class="separator:afc04ad19d8b1826475e8187b71c542f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0b7f2171612535c6d1e8d4400dafcdd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#ab0b7f2171612535c6d1e8d4400dafcdd">generate_model_runner</a> (const <a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path, int localHostID)</td></tr>
+<tr class="memdesc:ab0b7f2171612535c6d1e8d4400dafcdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function will call the necessary sub-functions to generate the code for simulating a model.  <a href="#ab0b7f2171612535c6d1e8d4400dafcdd">More...</a><br /></td></tr>
+<tr class="separator:ab0b7f2171612535c6d1e8d4400dafcdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a80eb5b0e9c4889b059c8414a2616ed"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a8a80eb5b0e9c4889b059c8414a2616ed">chooseDevice</a> (<a class="el" href="../../dc/de5/classNNmodel.html">NNmodel</a> &amp;model, const string &amp;path, int localHostID)</td></tr>
+<tr class="memdesc:a8a80eb5b0e9c4889b059c8414a2616ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function that prepares data structures and detects the hardware properties to enable the code generation code that follows.  <a href="#a8a80eb5b0e9c4889b059c8414a2616ed">More...</a><br /></td></tr>
+<tr class="separator:a8a80eb5b0e9c4889b059c8414a2616ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d10/generateALL_8cc.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="memdesc:a0ddf1224851353fc92bfbff6f499fa97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main entry point for the generateALL executable that generates the code for GPU and CPU.  <a href="#a0ddf1224851353fc92bfbff6f499fa97">More...</a><br /></td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -160,7 +161,7 @@ Functions</h2></td></tr>
 <div class="textblock"><p>Main file combining the code for code generation. Part of the code generation section. </p>
 <p>The file includes separate files for generating kernels (<a class="el" href="../../da/d14/generateKernels_8cc.html" title="Contains functions that generate code for CUDA kernels. Part of the code generation section...">generateKernels.cc</a>), generating the CPU side code for running simulations on either the CPU or GPU (<a class="el" href="../../d3/dad/generateRunner_8cc.html" title="Contains functions to generate code for running the simulation on the GPU, and for I/O convenience fu...">generateRunner.cc</a>) and for CPU-only simulation code (<a class="el" href="../../da/d80/generateCPU_8cc.html" title="Functions for generating code that will run the neuron and synapse simulations on the CPU...">generateCPU.cc</a>). </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="afc04ad19d8b1826475e8187b71c542f4"></a>
+<a class="anchor" id="a8a80eb5b0e9c4889b059c8414a2616ed"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -174,7 +175,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const string &amp;&#160;</td>
-          <td class="paramname"><em>path</em>&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>localHostID</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -190,13 +197,14 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">model</td><td>the nn model we are generating code for </td></tr>
     <tr><td class="paramname">path</td><td>path the generated code will be deposited </td></tr>
+    <tr><td class="paramname">localHostID</td><td>ID of local host </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a class="anchor" id="ad294c0e5ba13bcdbac26d733fb45b316"></a>
+<a class="anchor" id="ab0b7f2171612535c6d1e8d4400dafcdd"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -210,7 +218,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const string &amp;&#160;</td>
-          <td class="paramname"><em>path</em>&#160;</td>
+          <td class="paramname"><em>path</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>localHostID</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -221,10 +235,12 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>This function will call the necessary sub-functions to generate the code for simulating a model. </p>
+<p>ID of local host </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">model</td><td>Model description </td></tr>
     <tr><td class="paramname">path</td><td>Path where the generated code will be deposited </td></tr>
+    <tr><td class="paramname">localHostID</td><td>ID of local host </td></tr>
   </table>
   </dd>
 </dl>
@@ -273,7 +289,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../df/d10/generateALL_8cc.html">generateALL.cc</a></li>
-    <li class="footer">Generated on Wed Feb 14 2018 12:09:03 for GeNN by
+    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['uninitialisedvar',['uninitialisedVar',['../dc/de1/modelSpec_8h.html#a4916e3559295d02263b13092e3d4e2e1',1,'modelSpec.h']]],
-  ['updatevarqueues',['updateVarQueues',['../d7/d3b/classNeuronGroup.html#a59966c1058ce93cc197418311ad20c72',1,'NeuronGroup']]]
+  ['thesize',['theSize',['../d5/d60/utils_8h.html#a7579c2e0bac1447fd480bf3619ac29f2',1,'theSize(const string &amp;type):&#160;utils.cc'],['../d7/da9/utils_8cc.html#a7579c2e0bac1447fd480bf3619ac29f2',1,'theSize(const string &amp;type):&#160;utils.cc']]],
+  ['tostring',['toString',['../dd/dc3/stringUtils_8h.html#acd4836da644df996627ecc9823546f8a',1,'stringUtils.h']]]
 ];
