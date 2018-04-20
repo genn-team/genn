@@ -55,6 +55,7 @@ endif
 ifndef CPU_ONLY
     CXXFLAGS            +=-std=c++11
 else
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_CPU_ONLY
     CXXFLAGS            +=-std=c++11 -DCPU_ONLY
 endif
 ifdef DEBUG
@@ -62,24 +63,35 @@ ifdef DEBUG
 else
     CXXFLAGS            +=$(OPTIMIZATIONFLAGS)
 endif
+ifdef MPI_ENABLE
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_MPI
+    CXXFLAGS            +=-DMPI_ENABLE
+    INCLUDE_FLAGS       +=-I"$(MPI_PATH)/include"
+    LINK_FLAGS          +=$(shell mpiCC -showme:link)
+endif
+
+ifdef COVERAGE
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_COVERAGE
+    CXXFLAGS            +=-O0 --coverage
+endif
 
 # Global include and link flags
 ifndef CPU_ONLY
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include" -I"$(CUDA_PATH)/include"
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-rpath $(CUDA_PATH)/lib -L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart -lstdc++ -lc++
+        LINK_FLAGS      +=-rpath $(CUDA_PATH)/lib -L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn$(LIBGENN_PREFIX) -lcuda -lcudart -lstdc++ -lc++
     else
         ifeq ($(OS_SIZE),32)
-            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn -lcuda -lcudart
+            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib" -lgenn$(LIBGENN_PREFIX) -lcuda -lcudart
         else
-            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn -lcuda -lcudart
+            LINK_FLAGS  +=-L"$(GENN_PATH)/lib/lib" -L"$(CUDA_PATH)/lib64" -lgenn$(LIBGENN_PREFIX) -lcuda -lcudart
         endif
     endif
 else
     INCLUDE_FLAGS       +=-I"$(GENN_PATH)/lib/include" -I"$(GENN_PATH)/userproject/include"
-    LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY
+    LINK_FLAGS          +=-L"$(GENN_PATH)/lib/lib" -lgenn$(LIBGENN_PREFIX)
     ifeq ($(DARWIN),DARWIN)
-        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn_CPU_ONLY -lstdc++ -lc++
+        LINK_FLAGS      +=-L"$(GENN_PATH)/lib/lib" -lgenn$(LIBGENN_PREFIX) -lstdc++ -lc++
     endif
 endif
 
@@ -92,8 +104,9 @@ ifndef SIM_CODE
     $(warning Using wildcard SIM_CODE=*_CODE.)
     SIM_CODE            :=*_CODE
 endif
+
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
-OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(obj).o) $(SIM_CODE)/runner.o
+OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(OBJECT_PATH)$(obj).o) $(SIM_CODE)/runner.o
 
 # Target rules
 .PHONY: all clean purge show
@@ -116,22 +129,22 @@ endif
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
 
-%.o: %.c
+$(OBJECT_PATH)%.o: %.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-%.o: %.cc
+$(OBJECT_PATH)%.o: %.cc
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-%.o: %.cpp
+$(OBJECT_PATH)%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 ifndef CPU_ONLY
-%.o: %.cu
+$(OBJECT_PATH)%.o: %.cu
 	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 endif
 
 clean:
-	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper *.o *.dSYM/ generateALL
+	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper $(OBJECT_PATH)*.o *.dSYM/ generateALL*
 	cd $(SIM_CODE) && make clean
 
 purge: clean

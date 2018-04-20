@@ -160,30 +160,17 @@ for(b = 0; b < builderNodes.size; b++) {
                 }
                 
                 buildStep("Gathering test results (" + env.NODE_NAME + ")") {
-                    dir("genn/tests") {
-                        // Process JUnit test output
-                        junit "**/test_results*.xml";
-                        
-                        // Rename output so name is unique 
-                        def uniqueMsg = "msg_" + env.NODE_NAME;
-                        sh "mv msg \"" + uniqueMsg + "\"";
-                        
-                        // Archive output
-                        archive uniqueMsg;
-                    }
-                }
-                
-                buildStep("Calculating code coverage (" + env.NODE_NAME + ")") {
-                    // Calculate coverage
-                    dir("genn/tests") {
-                        if (isUnix()) {
-                            // Run correct coverage calculation script
-                            if("cpu_only" in nodeLabel) {
-                                sh "./calc_coverage.sh -c";
-                            }
-                            else {
-                                sh "./calc_coverage.sh";
-                            }
+                    if (isUnix()) {
+                        dir("genn/tests") {
+                            // Process JUnit test output
+                            junit "**/test_results*.xml";
+                            
+                            // Rename output so name is unique 
+                            def uniqueMsg = "msg_" + env.NODE_NAME;
+                            sh "mv msg \"" + uniqueMsg + "\"";
+                            
+                            // Archive output
+                            archive uniqueMsg;
                             
                             // Stash coverage txt files so master can combine them all together again
                             stash name: nodeName + "_coverage", includes: "coverage.txt"
@@ -239,11 +226,11 @@ node {
 
                 // Remove standard library stuff from coverage report
                 // **NOTE** this doesn't seem to work reliably on Mac so doing globally on master
-                sh "lcov --remove combined_coverage.txt \"/usr*\" --output-file combined_coverage.txt"
+                sh "lcov --remove combined_coverage.txt \"/usr/*\" --output-file combined_coverage.txt"
 
                 // Remove coverage of tests themselves as this seems dumb
                 // **NOTE** this doesn't seem to work reliably on Mac so doing globally on master
-                sh "lcov --remove combined_coverage.txt \"tests*\" --output-file combined_coverage.txt"
+                sh "lcov --remove combined_coverage.txt \"*/tests/*\" --output-file combined_coverage.txt"
 
                 // Archive raw coverage report
                 archive "combined_coverage.txt"
