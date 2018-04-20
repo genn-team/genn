@@ -71,13 +71,10 @@ for f in features/*;
 
                     # Run code generator once, generating coverage
                     if genn-buildmodel.sh $BUILD_FLAGS -v model$s.cc 1>>../../msg 2>> ../../msg ; then
-                        # Run code generator again, not generating coverage
-                        if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
-                            # Clean and build test
-                            if make clean all $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
-                                # Run tests
-                                ./test --gtest_output="xml:test_results$s.xml"
-                            fi
+                        # Clean and build test
+                        if make clean all $MAKE_FLAGS COVERAGE=1 SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
+                            # Run tests
+                            ./test --gtest_output="xml:test_results$s.xml"
                         fi
                     fi
                     
