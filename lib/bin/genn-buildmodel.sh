@@ -70,9 +70,6 @@ popd > /dev/null
 if [[ -n "$DEBUG" ]]; then
     MACROS="$MACROS DEBUG=1";
 fi
-if [[ -n "$COVERAGE" ]]; then
-    MACROS="$MACROS COVERAGE=1";
-fi
 
 if [[ -n "$CPU_ONLY" ]]; then
     MACROS="$MACROS CPU_ONLY=1";
@@ -82,6 +79,11 @@ fi
 if [[ -n "$MPI_ENABLE" ]]; then
     MACROS="$MACROS MPI_ENABLE=1";
     GENERATEALL="$GENERATEALL"_MPI
+fi
+
+if [[ -n "$COVERAGE" ]]; then
+    MACROS="$MACROS COVERAGE=1";
+    GENERATEALL="$GENERATEALL"_COVERAGE
 fi
 
 # generate model code

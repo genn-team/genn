@@ -26,6 +26,10 @@ ifdef MPI_ENABLE
     LIBGENN_PREFIX       :=$(LIBGENN_PREFIX)_MPI
 endif
 
+ifdef COVERAGE
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_COVERAGE
+endif
+
 # Source, Include, Object and Library directories
 SRC_PATH                 :=$(GENN_PATH)/lib/src
 INC_PATH                 :=$(GENN_PATH)/lib/include
