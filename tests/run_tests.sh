@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 reset_coverage () {
     # On OSX remove existing raw coverage files before running each test
     # **NOTE** GCC can successfully combine gcno and gcda files itself but not LLVM
@@ -41,11 +40,16 @@ done
 # Clean GeNN library
 pushd $GENN_PATH/lib
 make clean
+make clean COVERAGE=1
 popd
 
 # Delete existing output and libgenn coverage data
 rm -f msg
-rm -rf $GENN_PATH/lib/**/*.gcno $GENN_PATH/lib/**/*.gcda
+rm -f $GENN_PATH/lib/**/*.gcno $GENN_PATH/lib/**/*.gcda
+
+# Delete existing test coverage data
+find . -type f -name "*.gcda" -delete
+find . -type f -name "*.gcno" -delete
 
 # Loop through feature tests
 for f in features/*;
@@ -65,15 +69,15 @@ for f in features/*;
                     # Determine where the sim code is located for this test
                     c=$(basename $f)$s"_CODE"
 
-                    # Clean
-                    make $MAKE_FLAGS SIM_CODE=$c clean 1>> ../../msg 2>> ../../msg
-
-                    # Build and generate model (generating coverage)
+                    # Run code generator once, generating coverage
                     if genn-buildmodel.sh $BUILD_FLAGS -v model$s.cc 1>>../../msg 2>> ../../msg ; then
-                        # Make
-                        if make $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
-                            # Run tests
-                            ./test --gtest_output="xml:test_results$s.xml"
+                        # Run code generator again, not generating coverage
+                        if genn-buildmodel.sh $BUILD_FLAGS model$s.cc 1>>../../msg 2>> ../../msg ; then
+                            # Clean and build test
+                            if make clean all $MAKE_FLAGS SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
+                                # Run tests
+                                ./test --gtest_output="xml:test_results$s.xml"
+                            fi
                         fi
                     fi
                     
