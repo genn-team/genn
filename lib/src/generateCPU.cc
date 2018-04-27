@@ -449,6 +449,8 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
         os << "void calcSynapseDynamicsCPU(" << model.getPrecision() << " t)";
         {
             CodeStream::Scope b(os);
+            os << model.getPrecision() << " addtoinSyn;" << std::endl;
+            os << std::endl;
             os << "// execute internal synapse dynamics if any" << std::endl;
 
             for(const auto &s : model.getSynapseDynamicsGroups())
