@@ -2548,7 +2548,7 @@ void genMSBuild(const NNmodel &model,   //!< Model description
     os << "  <!-- Compile runner using CUDA compiler -->" << endl;
     os << "  <ItemGroup>" << endl;
     os << "    <CudaCompile Include=\"" << model.getName() + "_CODE\\runner.cc\">" << endl;
-    os << "        <AdditionalOptions>-x cu %(AdditionalOptions)</AdditionalOptions>" << endl;
+    os << "        <AdditionalOptions Condition=\" !$(AdditionalOptions.Contains('-x cu')) \">-x cu %(AdditionalOptions)</AdditionalOptions>" << endl;
     os << "    </CudaCompile>" << endl;
     os << "  </ItemGroup>" << endl;
 #endif  // !CPU_ONLY
