@@ -469,9 +469,6 @@ int main(int argc, char *argv[])
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
                                                                    neuronModel, trgNeuronModel);
 
-                    // Global weight value can be used if there are no state variables
-                    const bool globalG = weightUpdateModel.getVars().empty();
-
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");
                     if(!postSynapse) {
@@ -496,6 +493,10 @@ int main(int argc, char *argv[])
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
                                                                    trgNeuronModel, &weightUpdateModel);
+
+                    // Global weight value can be used if there are no state variables
+                    // **TODO** seperate individualness for PSM and WUM should be used here
+                    const bool globalG = weightUpdateModel.getVars().empty() && postsynapticModel.getVars().empty();
 
                     // Determine the GeNN matrix type and number of delay steps
                     SynapseMatrixType mtype;
@@ -529,10 +530,12 @@ int main(int argc, char *argv[])
         filesystem::create_directory(runPath);
         runPath = runPath.make_absolute();
 
+        // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
+        const int localHostID = 0;
 #ifndef CPU_ONLY
-        chooseDevice(model, runPath.str());
+        chooseDevice(model, runPath.str(), localHostID);
 #endif // CPU_ONLY
-        generate_model_runner(model, runPath.str());
+        generate_model_runner(model, runPath.str(), localHostID);
 
         // Build path to generated model code
         auto modelPath = runPath / (networkName + "_CODE");
