@@ -2491,7 +2491,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
             if (!model.getSynapseDynamicsGroups().empty()) {
                 os << "cudaEventElapsedTime(&tmp, synDynStart, synDynStop);" << std::endl;
-                os << "lsynDyn_tme+= tmp/1000.0;" << std::endl;
+                os << "synDyn_tme+= tmp/1000.0;" << std::endl;
             }
             os << "cudaEventElapsedTime(&tmp, neuronStart, neuronStop);" << std::endl;
             os << "neuron_tme+= tmp/1000.0;" << std::endl;
