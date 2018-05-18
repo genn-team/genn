@@ -434,7 +434,7 @@ public:
     void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
     void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
     void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
-    void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
+    //void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
 private:
     //--------------------------------------------------------------------------
