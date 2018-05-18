@@ -1,0 +1,61 @@
+##--------------------------------------------------------------------------
+##   Author: Thomas Nowotny
+##           James Knight
+##           Anton Komissarov
+##
+##   Institute: Center for Computational Neuroscience and Robotics
+##              University of Sussex
+##              Falmer, Brighton BN1 9QJ, UK
+##
+##   email to:  T.Nowotny@sussex.ac.uk
+##
+##   initial version: 2018-05-14
+##
+##--------------------------------------------------------------------------
+
+SWIG                               :=swig -c++ -python
+SWIG_MODULE_NAME                   :=libgenn
+SWIG_PATH                          :=$(GENN_PATH)/lib/swig
+PYWRAP_PATH                        :=$(GENN_PATH)/lib/pywrap
+PYWRAP_PYTHON_FILE_PATH            :=$(GENN_PATH)/lib/pywrap/$(SWIG_MODULE_NAME).py
+PYWRAP_CPP_PATH                    :=$(GENN_PATH)/lib/pywrap
+PYWRAP_SWIG_FILE_PATH              :=$(GENN_PATH)/lib/$(SWIG_MODULE_NAME).i
+
+PYWRAP_PIC_OBJ                     :=global modelSpec neuronGroup synapseGroup neuronModels synapseModels postSynapseModels initVarSnippet utils codeStream codeGenUtils sparseUtils hr_time newNeuronModels newPostsynapticModels newWeightUpdateModels standardSubstitutions standardGeneratedSections generateALL generateCPU generateInit generateKernels generateMPI generateRunner
+PYWRAP_PIC_OBJ                     :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(PYWRAP_PIC_OBJ))
+PYWRAP_PIC_OBJ                     :=$(addsuffix _PIC.o,$(PYWRAP_PIC_OBJ))
+
+SWIG_SO                            :=snippet newModels newNeuronModels newPostsynapticModels newWeightUpdateModels initVarSnippet
+SWIG_SO                            :=$(addprefix $(PYWRAP_PATH)/_,$(SWIG_SO))
+SWIG_SO                            :=$(addsuffix .so,$(SWIG_SO))
+
+SWIG_SUBMODULES                    :=Snippet NewModels NeuronModels PostsynapticModels WeightUpdateModels InitVarSnippet
+SWIG_SUBMODULES                    :=$(addprefix $(PYWRAP_PATH)/_,$(SWIG_SUBMODULES))
+SWIG_SUBMODULES                    :=$(addsuffix .so,$(SWIG_SUBMODULES))
+
+py_wrap: $(PYWRAP_PATH) $(LIBGENN_OBJ_PATH) $(SWIG_SUBMODULES) $(PYWRAP_PIC_OBJ)
+	$(SWIG) -outdir $(PYWRAP_PATH) -o $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.cc $(PYWRAP_SWIG_FILE_PATH)
+	$(CXX) $(CXXFLAGS) -c -fPIC $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.cc -o $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.o -I /usr/include/python3.6m -I/opt/cuda/include -I $(INC_PATH)
+	$(CXX) $(CXXFLAGS) -shared $(PYWRAP_PIC_OBJ) $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.o -o $(PYWRAP_PATH)/_$(SWIG_MODULE_NAME).so -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+	$(foreach var,$(join $(addsuffix ;,$(SWIG_SO)),$(SWIG_SUBMODULES)),mv $(subst ;, ,$(var)) &&) :
+
+$(LIBGENN_OBJ_PATH)/%_PIC.o: $(SRC_PATH)/%.cc
+	$(CXX) $(CXXFLAGS) -DGENERATOR_MAIN_HANDLED -c -fPIC -o $@ $< -I/opt/cuda/include -I $(INC_PATH)
+
+$(SWIG_SUBMODULES): $(SWIG_SO)
+
+$(PYWRAP_PATH)/_%.so: $(PYWRAP_PATH)/%_wrap.o $(PYWRAP_PIC_OBJ)
+	$(CXX) $(CXXFLAGS) -shared -o $@ $^ -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+
+$(PYWRAP_PATH)/%_wrap.o: $(PYWRAP_PATH)/%_wrap.cc
+	$(CXX) $(CXXFLAGS) -c -fPIC -o $@ $< -I /usr/include/python3.6m -I/opt/cuda/include -I $(INC_PATH)
+
+$(PYWRAP_PATH)/%_wrap.cc: $(SWIG_PATH)/%.i
+	$(SWIG) -outdir $(PYWRAP_PATH) -o $@ $<
+
+$(PYWRAP_PATH):
+	mkdir -p $@
+
+clean_pywrap: clean_libgenn
+	rm -rf $(PYWRAP_PATH)
+

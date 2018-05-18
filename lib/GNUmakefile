@@ -22,6 +22,9 @@
 # Include makefile which builds libgenn
 include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 
+# Include makefile which builds python wrapper
+include $(GENN_PATH)/lib/GNUMakefilePyWrap
+
 
 # Source, Include, Object and Library directories
 GENERATEALL_PATH         :=$(CURDIR)
@@ -35,7 +38,7 @@ INCLUDE_FLAGS            +=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 GENERATEALL          :=$(GENERATEALL_PATH)/generateALL$(LIBGENN_PREFIX)
 
 # Target rules
-.PHONY: all clean clean_libgenn clean_generateall always_compile
+.PHONY: all clean clean_libgenn clean_generateall always_compile py_wrap clean_pywrap
 
 all: $(GENERATEALL)
 
