@@ -47,7 +47,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser)
     :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps),
-    	m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+    	m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers),
@@ -55,6 +55,28 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityVarMode(GENN_PREFERENCES::defaultSparseConnectivityMode)
 {
+    // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
+    if(calcMaxRowLengthFunc) {
+        m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                m_ConnectivityInitialiser.getParams());
+    }
+    // Otherwise, default to the size of the target population
+    else {
+        m_MaxConnections = trgNeuronGroup->getNumNeurons();
+    }
+    
+    // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
+    if(calcMaxColLengthFunc) {
+        m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                      m_ConnectivityInitialiser.getParams());
+    }
+    // Otherwise, default to the size of the source population
+    else {
+        m_MaxSourceConnections = srcNeuronGroup->getNumNeurons();
+    }
+    
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
 
@@ -88,6 +110,10 @@ void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
+            assert(false);
+        }
+        
         m_MaxConnections = maxConnections;
     }
     else {
