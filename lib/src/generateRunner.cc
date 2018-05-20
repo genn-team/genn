@@ -2548,7 +2548,9 @@ void genMSBuild(const NNmodel &model,   //!< Model description
     os << "  <!-- Compile runner using CUDA compiler -->" << endl;
     os << "  <ItemGroup>" << endl;
     os << "    <CudaCompile Include=\"" << model.getName() + "_CODE\\runner.cc\">" << endl;
-    os << "        <AdditionalOptions Condition=\" !$(AdditionalOptions.Contains('-x cu')) \">-x cu %(AdditionalOptions)</AdditionalOptions>" << endl;
+    // **YUCK** for some reasons you can't call .Contains on %(BaseCommandLineTemplate) directly
+    // Solution suggested by https://stackoverflow.com/questions/9512577/using-item-functions-on-metadata-values
+    os << "      <AdditionalOptions Condition=\" !$([System.String]::new('%(BaseCommandLineTemplate)').Contains('-x cu')) \">-x cu %(AdditionalOptions)</AdditionalOptions>" << endl;
     os << "    </CudaCompile>" << endl;
     os << "  </ItemGroup>" << endl;
 #endif  // !CPU_ONLY
