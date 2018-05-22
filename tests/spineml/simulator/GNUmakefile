@@ -19,9 +19,6 @@
 # its own goals, we need to manually specify the DEFAULT_GOAL
 .DEFAULT_GOAL := all
 
-# These unit tests
-CPU_ONLY = 1
-
 # Include makefile which builds libgenn
 include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 

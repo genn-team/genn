@@ -388,6 +388,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
 
+                        // If postsynaptic model variables should be individual
                         if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                             genDeviceInitVarCode(os, s->getPSModel()->getVars(), "lid", s->getName(), model.getPrecision(),
                                                  [&s](size_t i){ return s->getPSVarInitialisers()[i]; },

@@ -26,6 +26,10 @@ ifdef MPI_ENABLE
     LIBGENN_PREFIX       :=$(LIBGENN_PREFIX)_MPI
 endif
 
+ifdef COVERAGE
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_COVERAGE
+endif
+
 # Source, Include, Object and Library directories
 SRC_PATH                 :=$(GENN_PATH)/lib/src
 INC_PATH                 :=$(GENN_PATH)/lib/include
@@ -34,7 +38,7 @@ LIBGENN_OBJ_PATH         :=$(GENN_PATH)/lib/obj$(LIBGENN_PREFIX)
 LIBGENN                  :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).a
 
 # objects to build into libgenn
-LIBGENN_OBJ              :=global.o modelSpec.o neuronGroup.o synapseGroup.o neuronModels.o synapseModels.o postSynapseModels.o initSparseConnectivitySnippet.o initVarSnippet.o utils.o codeStream.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o standardSubstitutions.o standardGeneratedSections.o
+LIBGENN_OBJ              :=binomial.o global.o modelSpec.o neuronGroup.o synapseGroup.o neuronModels.o synapseModels.o postSynapseModels.o initSparseConnectivitySnippet.o initVarSnippet.o utils.o codeStream.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o standardSubstitutions.o standardGeneratedSections.o
 
 # repath these into correct object directory
 LIBGENN_OBJ              :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(LIBGENN_OBJ))

@@ -62,6 +62,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClCompile Include="src\binomial.cc" />
     <ClCompile Include="src\global.cc" />
     <ClCompile Include="src\modelSpec.cc" />
     <ClCompile Include="src\neuronModels.cc" />
