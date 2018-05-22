@@ -350,7 +350,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
 
-                        // If matrix has individual state variables
+                        // If postsynaptic model variables should be individual
                         if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                             auto psmVars = s->getPSModel()->getVars();
                             for(size_t j = 0; j < psmVars.size(); j++) {
