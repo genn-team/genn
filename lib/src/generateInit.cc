@@ -900,6 +900,9 @@ void genInit(const NNmodel &model,      //!< Model description
                     os << "d_rowLength" << s.first << ", ";
                     os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
 
+                    // **TODO**
+                    assert(!model.isSynapseGroupDynamicsRequired(s.first));
+                    
                     if (model.isSynapseGroupPostLearningRequired(s.first)) {
                         os << "initializeRaggedArrayRev(C" << s.first << ", ";
                         os << "d_colLength" << s.first << ",";
