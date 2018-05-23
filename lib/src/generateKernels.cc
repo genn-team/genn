@@ -767,8 +767,6 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
 
     if (!model.getSynapseDynamicsGroups().empty()) {
-        os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;
-
         // SynapseDynamics kernel header
         os << "extern \"C\" __global__ void calcSynapseDynamics(";
         for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
@@ -780,8 +778,11 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         {
             CodeStream::Scope b(os);
 
+            // **TODO** if any ragged
+            os << "__shared__ unsigned int shRowLength[" << synDynBlkSz << "];" << std::endl;
+
             // common variables for all cases
-            os << "unsigned int id = BLOCKSZ_SYNDYN * blockIdx.x + threadIdx.x;" << std::endl;
+            os << "unsigned int id = " << synDynBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
             os << model.getPrecision() << " addtoinSyn;" << std::endl;
             os << std::endl;
 
@@ -813,6 +814,9 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                             os << "unsigned int lid = id - " << s->second.first << ";" << std::endl;
                         }
 
+                        const unsigned int numSrcNeurons = sg->getSrcNeuronGroup()->getNumNeurons();
+                        const unsigned int numTrgNeurons = sg->getTrgNeuronGroup()->getNumNeurons();
+
                         if (sg->getSrcNeuronGroup()->isDelayRequired()) {
                             os << "unsigned int delaySlot = (dd_spkQuePtr" << sg->getSrcNeuronGroup()->getName();
                             os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
@@ -823,7 +827,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         substitute(SDcode, "$(t)", "t");
 
                         if (sg->getMatrixType() & SynapseMatrixConnectivity::YALE) { // YALE
-                            os << "if (" << localID << " < dd_indInG" << s->first << "[" << sg->getSrcNeuronGroup()->getNumNeurons() << "])";
+                            os << "if (" << localID << " < dd_indInG" << s->first << "[" << numSrcNeurons << "])";
                             {
                                 CodeStream::Scope b(os);
                                 os << "// all threads participate that can work on an existing synapse" << std::endl;
@@ -846,10 +850,67 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                             }
                         }
                         else if(sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {  // RAGGED
-                            assert(false);
+                            //assert(false);
+                            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
+                            const unsigned int numBlocks = (numSrcNeurons + synDynBlkSz - 1) / synDynBlkSz;
+
+                            // Loop through blocks
+                            os << "unsigned int idx = " << localID << ";" << std::endl;
+                            os << "for(unsigned int r = 0; r < " << numBlocks << "; r++)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                // Calculate number of rows to process in this block
+                                os << "const unsigned numRowsInBlock = (r == " << numBlocks - 1 << ")";
+                                os << " ? " << ((numSrcNeurons - 1) % synDynBlkSz) + 1;
+                                os << " : " << synDynBlkSz << ";" << std::endl;
+
+                                // Use threads to copy block of sparse structure into shared memory
+                                os << "__syncthreads();" << std::endl;
+                                os << "if (threadIdx.x < numRowsInBlock)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "shRowLength[threadIdx.x] = dd_rowLength" << sg->getName() << "[(r * " << synDynBlkSz << ") + threadIdx.x];" << std::endl;
+                                }
+                                os << "__syncthreads();" << std::endl;
+
+                                // Loop through rows
+                                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+
+                                    // If there is a synapse for this thread to update the dynamics of
+                                    os << "if(" << localID << " < shRowLength[i])";
+                                    {
+                                        CodeStream::Scope b(os);
+
+                                        if (!wu->getSynapseDynamicsSuppportCode().empty()) {
+                                            os << " using namespace " << sg->getName() << "_weightupdate_synapseDynamics;" << std::endl;
+                                        }
+                                        if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                                            // name substitute synapse var names in synapseDynamics code
+                                            name_substitutions(SDcode, "dd_", wuVars.nameBegin, wuVars.nameEnd, sg->getName() + "[idx]");
+                                        }
+
+                                        // Build strings containing pre and postsynaptic indices
+                                        const std::string preIdx = "(r * " + std::to_string(synDynBlkSz) + ") + i";
+                                        const std::string postIdx = "dd_ind" + sg->getName() + "[idx]";
+
+                                        substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
+                                        substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getName() + "[" + postIdx + "]");
+
+                                        StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                                    preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision());
+                                        os << SDcode << std::endl;
+                                    }
+
+                                    // If matrix is ragged, advance index to next row by adding stride
+                                    os << "idx += " << sg->getMaxConnections() << ";" << std::endl;
+                                }
+                            }
                         }
                         else { // DENSE
-                            os << "if (" << localID << " < " << sg->getSrcNeuronGroup()->getNumNeurons() * sg->getTrgNeuronGroup()->getNumNeurons() << ")";
+                            os << "if (" << localID << " < " << numSrcNeurons * numTrgNeurons << ")";
                             {
                                 CodeStream::Scope b(os);
                                 os << "// all threads participate that can work on an existing synapse" << std::endl;
@@ -861,12 +922,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     name_substitutions(SDcode, "dd_", wuVars.nameBegin, wuVars.nameEnd, s->first + "[" + localID + "]");
                                 }
 
-                                const std::string postIdx = localID +"%" + to_string(sg->getTrgNeuronGroup()->getNumNeurons());
+                                const std::string postIdx = localID +"%" + to_string(numTrgNeurons);
                                 substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
                                 substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                            localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
+                                                                            localID +"/" + to_string(numTrgNeurons),
                                                                             postIdx, "dd_", cudaFunctions, model.getPrecision());
                                 os << SDcode << std::endl;
                             }
