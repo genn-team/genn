@@ -1279,6 +1279,7 @@ void genRunner(const NNmodel &model,    //!< Model description
                 os << "unsigned int *d_remap" << s.first << ";" << std::endl;
                 os << "__device__ unsigned int *dd_remap" << s.first << ";" << std::endl;
             }
+            assert(!model.isSynapseGroupDynamicsRequired(s.first));
 #endif  // CPU_ONLY
         }
 
@@ -1742,6 +1743,8 @@ void genRunner(const NNmodel &model,    //!< Model description
                 free_host_variable(os, "C" + s.first + ".ind", VarMode::LOC_HOST_DEVICE_INIT_HOST);
                 free_device_variable(os, "ind" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
+                assert(!model.isSynapseGroupDynamicsRequired(s.first));
+                
                 if (model.isSynapseGroupPostLearningRequired(s.first)) {
                     free_host_variable(os, "C" + s.first + ".colLength", VarMode::LOC_HOST_DEVICE_INIT_HOST);
                     free_device_variable(os, "colLength" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);

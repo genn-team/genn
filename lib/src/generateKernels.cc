@@ -822,7 +822,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         string SDcode = wu->getSynapseDynamicsCode();
                         substitute(SDcode, "$(t)", "t");
 
-                        if (sg->getMatrixType() & SynapseMatrixConnectivity::YALE) { // YALE
+                        if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                             os << "if (" << localID << " < dd_indInG" << s->first << "[" << sg->getSrcNeuronGroup()->getNumNeurons() << "])";
                             {
                                 CodeStream::Scope b(os);
@@ -844,9 +844,6 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                                                             postIdx, "dd_", cudaFunctions, model.getPrecision());
                                 os << SDcode << std::endl;
                             }
-                        }
-                        else if(sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {  // RAGGED
-                            assert(false);
                         }
                         else { // DENSE
                             os << "if (" << localID << " < " << sg->getSrcNeuronGroup()->getNumNeurons() * sg->getTrgNeuronGroup()->getNumNeurons() << ")";
