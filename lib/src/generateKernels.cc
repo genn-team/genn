@@ -823,25 +823,46 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         substitute(SDcode, "$(t)", "t");
 
                         if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-                            os << "if (" << localID << " < dd_indInG" << s->first << "[" << sg->getSrcNeuronGroup()->getNumNeurons() << "])";
+                            if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                os << "if (" << localID << " < dd_indInG" << s->first << "[" << sg->getSrcNeuronGroup()->getNumNeurons() << "])";
+                            }
+                            else {
+                                os << "if (" << localID << " < dd_synRemap" << s->first << "[0])";
+                            }
                             {
                                 CodeStream::Scope b(os);
+
+                                // Determine synapse and presynaptic indices for this thread
+                                std::string synIdx;
+                                std::string preIdx;
+                                if(sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                    os << "const unsigned int s = dd_synRemap" << s->first << "[1 + " << localID << "];" << std::endl;
+                                    synIdx = "s";
+                                    preIdx = "s / " + to_string(sg->getMaxConnections());
+
+                                }
+                                else {
+                                    synIdx = localID;
+                                    preIdx = "dd_preInd" + s->first +"[" + localID + "]";
+                                }
+
+                                // Determine postsynaptic index from ind array
+                                const std::string postIdx = "dd_ind" + s->first + "[" + synIdx + "]";
+
                                 os << "// all threads participate that can work on an existing synapse" << std::endl;
                                 if (!wu->getSynapseDynamicsSuppportCode().empty()) {
                                     os << " using namespace " << s->first << "_weightupdate_synapseDynamics;" << std::endl;
                                 }
                                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                                     // name substitute synapse var names in synapseDynamics code
-                                    name_substitutions(SDcode, "dd_", wuVars.nameBegin, wuVars.nameEnd, s->first + "[" + localID +"]");
+                                    name_substitutions(SDcode, "dd_", wuVars.nameBegin, wuVars.nameEnd, s->first + "[" + synIdx +"]");
                                 }
 
-                                const std::string postIdx = "dd_ind" + s->first + "[" + localID + "]";
                                 substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
                                 substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                            "dd_preInd" + s->first +"[" + localID + "]",
-                                                                            postIdx, "dd_", cudaFunctions, model.getPrecision());
+                                                                            preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision());
                                 os << SDcode << std::endl;
                             }
                         }

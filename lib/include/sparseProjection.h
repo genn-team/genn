@@ -27,7 +27,7 @@ struct SparseProjection{
 template<typename PostIndexType>
 struct RaggedProjection {
     RaggedProjection(unsigned int maxRow, unsigned int maxCol) 
-    : maxRowLength(maxRow), maxColLength(maxCol)
+    : maxRowLength(maxRow), maxColLength(maxCol), synRemapSize(0)
     {}
 
     //! Maximum dimensions of matrices (used for sizing of ind and remap)
@@ -45,4 +45,10 @@ struct RaggedProjection {
     
     //! Ragged column-major matrix, padded to maxColLength containing indices back into ind
     unsigned int *remap;
+
+    //! Size of synRemap array (i.e. actual number of synapses)
+    unsigned int synRemapSize;
+
+    //! Indices back into ind for each synapse
+    unsigned int *synRemap;
 };
