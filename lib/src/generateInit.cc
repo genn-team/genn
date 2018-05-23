@@ -954,7 +954,7 @@ void genInit(const NNmodel &model,      //!< Model description
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 anySparse = true;
-                if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                if ((s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) && model.isSynapseGroupDynamicsRequired(s.first)) {
                     os << "createPreIndices(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
                 }
                 if (model.isSynapseGroupPostLearningRequired(s.first)) {
