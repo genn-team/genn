@@ -563,7 +563,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                     if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                                         CodeStream::Scope b(os);
                                         os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                                cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                                                                  cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
                                     }
                                 }
                             }
