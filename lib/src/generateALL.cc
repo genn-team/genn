@@ -187,11 +187,8 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
             }
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
-                }
-                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                    groupSize[KernelCalcSynapseDynamics].push_back(maxConnections);
                 }
                 else {
                     groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * numTrgNeurons);

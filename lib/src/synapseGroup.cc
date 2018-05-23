@@ -167,13 +167,9 @@ void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedK
 
 unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::YALE) {
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
         return ceil((double) getSrcNeuronGroup()->getNumNeurons() * getMaxConnections() / (double) blockSize) * (double) blockSize;
-    }
-    else if (getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-        // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * maxConn[i]
-        return ceil((double)getMaxConnections() / (double) blockSize) * (double) blockSize;
     }
     else {
         // paddedSize is the lowest multiple of synDynBlkSz >= neuronN[synapseSource[i]] * neuronN[synapseTarget[i]]
