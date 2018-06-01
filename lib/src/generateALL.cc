@@ -645,6 +645,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 #else // SWIG
 int init_cuda_mpi()
 {
+    GENN_PREFERENCES::buildSharedLibrary = true;
 #endif // SWIG
 #ifdef DEBUG
     GENN_PREFERENCES::optimizeCode = false;

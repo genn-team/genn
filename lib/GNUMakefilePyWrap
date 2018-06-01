@@ -33,31 +33,40 @@ SWIG_SUBMODULES                    :=Snippet NewModels NeuronModels Postsynaptic
 SWIG_SUBMODULES                    :=$(addprefix $(PYWRAP_PATH)/_,$(SWIG_SUBMODULES))
 SWIG_SUBMODULES                    :=$(addsuffix .so,$(SWIG_SUBMODULES))
 
-py_wrap: prepare_swig_config $(PYWRAP_PATH) $(LIBGENN_OBJ_PATH) $(LIBGENN) $(SWIG_SUBMODULES) $(PYWRAP_PIC_OBJ)
+py_wrap:$(PYWRAP_PATH) prepare_swig_config prepare_shared_lib $(LIBGENN_OBJ_PATH) $(SWIG_SO) #$(PYWRAP_PIC_OBJ)
 	$(SWIG) -outdir $(PYWRAP_PATH) -o $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.cc $(PYWRAP_SWIG_FILE_PATH)
-	$(CXX) $(CXXFLAGS) -c -fPIC -DSWIG $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.cc -o $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.o -I /usr/include/python3.6m -I/opt/cuda/include -I $(INC_PATH)
-	$(CXX) $(CXXFLAGS) -shared $(PYWRAP_PIC_OBJ) $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.o -o $(PYWRAP_PATH)/_$(SWIG_MODULE_NAME).so -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+	$(CXX) $(CXXFLAGS) -shared -fPIC -DSWIG $(PYWRAP_PIC_OBJ) $(PYWRAP_PATH)/$(SWIG_MODULE_NAME)_wrap.cc -o $(PYWRAP_PATH)/_$(SWIG_MODULE_NAME).so -I /usr/include/python3.6m -I/opt/cuda/include -I $(INC_PATH) -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
 	$(foreach var,$(join $(addsuffix ;,$(SWIG_SO)),$(SWIG_SUBMODULES)),mv $(subst ;, ,$(var)) &&) :
 
 $(LIBGENN_OBJ_PATH)/%_PIC.o: $(SRC_PATH)/%.cc
 	$(CXX) $(CXXFLAGS) -DSWIG -c -fPIC -o $@ $< -I/opt/cuda/include -I $(INC_PATH)
 
-$(SWIG_SUBMODULES): $(SWIG_SO)
-
-$(PYWRAP_PATH)/_%.so: $(PYWRAP_PATH)/%_wrap.o $(PYWRAP_PIC_OBJ)
-	$(CXX) $(CXXFLAGS) -shared -o $@ $^ -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+$(PYWRAP_PATH)/_%.so: $(PYWRAP_PATH)/%_wrap.cc $(PYWRAP_PIC_OBJ) 
+	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ -I /usr/include/python3.6m -I $(INC_PATH) -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
 
 $(PYWRAP_PATH)/%_wrap.o: $(PYWRAP_PATH)/%_wrap.cc
 	$(CXX) $(CXXFLAGS) -c -fPIC -o $@ $< -I /usr/include/python3.6m -I/opt/cuda/include -I $(INC_PATH)
 
 $(PYWRAP_PATH)/%_wrap.cc: $(SWIG_PATH)/%.i
-	$(SWIG) -outdir $(PYWRAP_PATH) -o $@ $<
+	$(SWIG) -outdir $(PYWRAP_PATH) -o $@ $< 
 
 $(PYWRAP_PATH):
 	mkdir -p $@
 
-prepare_swig_config:
-	python $(GENN_PATH)/lib/generate_swig_config.py $(GENN_PATH)/lib
+prepare_swig_config: 
+	python $(GENN_PATH)/lib/swig/generate_swig_config.py $(GENN_PATH)/lib
+
+prepare_shared_lib: _SharedLibraryModel.so
+	cp $(SWIG_PATH)/GeNNModel.py $(PYWRAP_PATH)/GeNNModel.py
+
+SharedLibraryModel_wrap.cc:
+	$(SWIG) -outdir $(PYWRAP_PATH) -o $(PYWRAP_PATH)/SharedLibraryModel_wrap.cc $(SWIG_PATH)/SharedLibraryModel.i
+
+SharedLibraryModel_wrap.o: SharedLibraryModel_wrap.cc
+	$(CXX) $(CXXFLAGS) -c -fPIC -DSWIG $(PYWRAP_PATH)/SharedLibraryModel_wrap.cc -o $(PYWRAP_PATH)/SharedLibraryModel_wrap.o -I /usr/include/python3.6m -I $(SWIG_PATH)
+
+_SharedLibraryModel.so: SharedLibraryModel_wrap.o
+	$(CXX) $(CXXFLAGS) -shared $(PYWRAP_PATH)/SharedLibraryModel_wrap.o -o $(PYWRAP_PATH)/_SharedLibraryModel.so -ldl
 
 clean_pywrap: clean_libgenn
 	rm -rf $(PYWRAP_PATH)

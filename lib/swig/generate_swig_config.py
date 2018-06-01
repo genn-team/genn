@@ -55,6 +55,8 @@ def generate_configs( genn_lib_path ):
                 neuronModels_i.write( '%inline %{\n' )
                 postsynModels_i.write( '%inline %{\n' )
                 wUpdateModels_i.write( '%inline %{\n' )
+
+                supported_neurons = []
             
                 for line in neuronModels_h.readlines():
                     line = line.lstrip()
@@ -63,15 +65,19 @@ def generate_configs( genn_lib_path ):
 
                         num_params = int( num_params)
                         num_vars = int( num_vars )
-                        model_name = nspace_model_name.split('::')[1]
+                        model_name = nspace_model_name.split( '::' )[1]
+
+                        supported_neurons.append( model_name )
 
                         nnModel_template = '%template(addNeuronPopulation_{0}) NNmodel::addNeuronPopulation<{1}>;\n'.format( model_name, nspace_model_name )
 
                         libgenn_i.write( nnModel_template )
                         neuronModels_i.write( generate_makers( 'NeuronModels', model_name, num_params, num_vars ) )
+                
+                neuronModels_i.write( 'std::vector< std::string > getSupportedNeurons() {\nreturn std::vector<std::string>{"' + '", "'.join(supported_neurons) + '"};\n}\n' )
 
                 neuronModels_i.write( '%}\n' )
-            
+
                 postsyn_models = []
             
                 for line in postsynModels_h.readlines():
@@ -86,8 +92,8 @@ def generate_configs( genn_lib_path ):
 
                         postsynModels_i.write( generate_makers( 'PostsynapticModels', model_name, num_params, num_vars ) )
 
+                postsynModels_i.write( 'std::vector< std::string > getSupportedPostsyn() {\nreturn std::vector<std::string>{"' + '", "'.join(postsyn_models) + '"};\n}\n' )
                 postsynModels_i.write( '%}\n' )
-
 
                 wupdate_models = []
             
@@ -103,7 +109,9 @@ def generate_configs( genn_lib_path ):
 
                         wUpdateModels_i.write( generate_makers( 'WeightUpdateModels', model_name, num_params, num_vars ) )
 
+                wUpdateModels_i.write( 'std::vector< std::string > getSupportedWUpdate() {\nreturn std::vector<std::string>{"' + '", "'.join(wupdate_models) + '"};\n}\n' )
                 wUpdateModels_i.write( '%}\n' )
+
 
                 for ps_model in postsyn_models:
                     for wu_model in wupdate_models:

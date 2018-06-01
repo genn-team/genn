@@ -11,62 +11,26 @@
   
 --------------------------------------------------------------------------*/
 
-//%module(directors="1") NeuronModels
+/* %module(directors="1") NeuronModels // for inheritance in python */
 %module NeuronModels
 %{
 #include "newNeuronModels.h"
 %}
+%ignore LegacyWrapper;
 
 
 %include <std_string.i>
-%import "newModels.i"
-//%feature("director"); // for inheritance in python
-%include "include/newNeuronModels.h"
+%include <std_pair.i>
 %include <std_vector.i>
+%import "newModels.i"
+/* %feature("director") NeuronModels::Base; // for inheritance in python */
+%include "include/newNeuronModels.h"
 
-/*%inline %{
-template<class T>
-T* make_T_0() { 
-   return new T();
-}
-template<class T>
-T* make_T_1(double v1) { 
-   return new T(v1);
-}
-template<class T>
-T* make_T_2(double v1, double v2) {
-   return new T(v1, v2);
-}
-template<class T>
-T* make_T_3(double v1, double v2, double v3) {
-   return new T(v1, v2, v3);
-}
-template<class T>
-T* make_T_4(double v1, double v2, double v3, double v4) {
-   return new T(v1, v2, v3, v4);
-}
-template<class T>
-T* make_T_5(double v1, double v2, double v3, double v4, double v5) {
-   return new T(v1, v2, v3, v4, v5);
-}
-template<class T>
-T* make_T_6(double v1, double v2, double v3, double v4, double v5, double v6) {
-   return new T(v1, v2, v3, v4, v5, v6);
-}
-template<class T>
-T* make_T_7(double v1, double v2, double v3, double v4, double v5, double v6, double v7) {
-   return new T(v1, v2, v3, v4, v5, v6, v7);
-}
-template<class T>
-T* make_T_8(double v1, double v2, double v3, double v4, double v5, double v6, double v7, double v8) {
-   return new T(v1, v2, v3, v4, v5, v6, v7, v8);
-}
-template<class T>
-T* make_T_9(double v1, double v2, double v3, double v4, double v5, double v6, double v7, double v8, double v9) {
-   return new T(v1, v2, v3, v4, v5, v6, v7, v8, v9);
-}
-%}
-%template(make_TraubMiles_ParamValues) make_T_7<NeuronModels::TraubMiles::ParamValues>;
-%template(make_TraubMiles_VarValues) make_T_4<NeuronModels::TraubMiles::VarValues>;
-%template(make_Izhikevich_ParamValues) make_T_4<NeuronModels::Izhikevich::ParamValues>;
-%template(make_Izhikevich_VarValues) make_T_2<NeuronModels::Izhikevich::VarValues>;*/ 
+
+%template(StringVector) std::vector<std::string>;
+%template() std::pair<std::string, std::string>;
+%template(StringPairVector) std::vector<std::pair<std::string, std::string>>;
+%template() std::pair<std::string, double>;
+%template() std::pair<std::string, std::pair<std::string, double>>;
+%template() std::vector<std::pair<std::string, std::pair<std::string, double>>>;
+

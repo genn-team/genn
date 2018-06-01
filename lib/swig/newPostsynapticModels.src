@@ -15,6 +15,10 @@
 %{
 #include "newPostsynapticModels.h"
 %}
+%ignore LegacyWrapper;
 %include <std_string.i>
+%include <std_vector.i>
 %import "newModels.i"
 %include "include/newPostsynapticModels.h"
+%template(StringVector) std::vector<std::string>;
+

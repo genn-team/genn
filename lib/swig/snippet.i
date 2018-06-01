@@ -11,9 +11,15 @@
   
 --------------------------------------------------------------------------*/
 
+/* %module(directors="1") Snippet // for inheritance in python */
 %module Snippet
 %{
 #include "snippet.h"
 %}
 %include <std_string.i>
+/* %include "std_function.i" */
+%include <std_pair.i>
+%include <std_vector.i>
+/* %feature("director") Snippet::Base; // for inheritance in python */
 %include "include/snippet.h"
+

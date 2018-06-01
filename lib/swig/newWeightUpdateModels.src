@@ -15,6 +15,10 @@
 %{
 #include "newWeightUpdateModels.h"
 %}
+%ignore LegacyWrapper;
 %include <std_string.i>
+%include <std_vector.i>
 %import "newModels.i"
 %include "include/newWeightUpdateModels.h"
+%template(StringVector) std::vector<std::string>;
+
