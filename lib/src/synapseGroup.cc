@@ -56,8 +56,9 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityVarMode(GENN_PREFERENCES::defaultSparseConnectivityMode)
 {
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
-    if(calcMaxRowLengthFunc) {
+    if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
         m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
                                                 m_ConnectivityInitialiser.getParams());
     }
@@ -67,8 +68,9 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     }
     
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
-    if(calcMaxColLengthFunc) {
+    if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
         m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
                                                       m_ConnectivityInitialiser.getParams());
     }

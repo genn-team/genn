@@ -457,8 +457,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
             if((s.second.getSparseConnectivityVarMode() & VarInit::DEVICE)
                 && !connectInit.getSnippet()->getRowBuildCode().empty())
             {
-                const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-                const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+                const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+                const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
                 os << "// synapse group " << s.first << std::endl;
                 PaddedSizeScope p(os, numSrcNeurons, initBlkSz, startThread);
@@ -506,8 +506,15 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                     if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // Calculate indices of bits at start and end of row
                         os << "// Calculate indices" << std::endl;
-                        os << "const unsigned int rowStartGID = lid * " << numTrgNeurons << ";" << std::endl;
-                        os << "const unsigned int rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
+                        const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
+                        if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                            os << "const uint64_t rowStartGID = lid * " << numTrgNeurons << "ull;" << std::endl;
+                            os << "const uint64_t rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
+                        }
+                        else {
+                            os << "const unsigned int rowStartGID = lid * " << numTrgNeurons << ";" << std::endl;
+                            os << "const unsigned int rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
+                        }
 
                         // Loop through the words in this row without overlaps and zero
                         // **NOTE** (x + y - 1) / y is essentially ceil(x / y)
@@ -911,8 +918,8 @@ void genInit(const NNmodel &model,      //!< Model description
             const auto *wu = s.second.getWUModel();
             const auto *psm = s.second.getPSModel();
 
-            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
             // Generate code to initialise pre and postsynaptic weight update variables on host if necessary
             genHostInitVarCode(os, wu->getPreVars(), numSrcNeurons, s.first, model.getPrecision(),
@@ -969,7 +976,7 @@ void genInit(const NNmodel &model,      //!< Model description
                     {
                         // Calculate index of bit at start of this row
                         CodeStream::Scope b(os);
-                        os << "const int rowStartGID = i * " << numTrgNeurons << ";" << std::endl;
+                        os << "const int64_t rowStartGID = i * " << numTrgNeurons << "ll;" << std::endl;
 
                         // Build function template to set correct bit in bitmask
                         const std::string addSynapseTemplate = "setB(gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
