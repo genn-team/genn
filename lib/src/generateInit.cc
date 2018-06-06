@@ -925,17 +925,17 @@ void genInit(const NNmodel &model,      //!< Model description
                     os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << " * sizeof(uint32_t));" << std::endl;
 
                     // Loop through source neurons
-                    os << "for (int64_t i = 0; i < " << numSrcNeurons << "; i++)";
+                    os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
                     {
                         // Calculate index of bit at start of this row
                         CodeStream::Scope b(os);
-                        os << "const int64_t rowStartGID = i * " << numTrgNeurons << ";" << std::endl;
+                        os << "const int64_t rowStartGID = i * " << numTrgNeurons << "ll;" << std::endl;
 
                         // Build function template to set correct bit in bitmask
                         const std::string addSynapseTemplate = "setB(gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
 
                         // Loop through synapses in row
-                        os << "for(int64_t prevJ = -1;;)";
+                        os << "for(int prevJ = -1;;)";
                         {
                             CodeStream::Scope b(os);
 

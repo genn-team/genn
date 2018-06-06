@@ -233,7 +233,7 @@ void generatePostParallelisedCode(
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     const size_t maxSynapses = (size_t)sg.getTrgNeuronGroup()->getNumNeurons() * (size_t)sg.getSrcNeuronGroup()->getNumNeurons();
                     if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                        os << "uint64_t gid = ((uint64_t)shSpk" << postfix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + (uint64_t)" << localID << ");" << std::endl;
+                        os << "uint64_t gid = (shSpk" << postfix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << localID << ");" << std::endl;
                     }
                     else {
                         os << "unsigned int gid = (shSpk" << postfix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << localID << ");" << std::endl;
