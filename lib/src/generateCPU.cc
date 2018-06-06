@@ -89,7 +89,7 @@ void generate_process_presynaptic_events_code_CPU(
                     os << "const unsigned int ipost = C" << sgName << ".ind[(ipre * " << sg.getMaxConnections() << ") + j];" << std::endl;
                 }
                 else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "const uint64_t gid = ((uint64_t)ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + (uint64_t)ipost);" << std::endl;
+                    os << "const uint64_t gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + ipost);" << std::endl;
                 }
 
                 if (!wu->getSimSupportCode().empty()) {

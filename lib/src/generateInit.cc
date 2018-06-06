@@ -418,8 +418,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
             if((s.second.getSparseConnectivityVarMode() & VarInit::DEVICE)
                 && !connectInit.getSnippet()->getRowBuildCode().empty())
             {
-                const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-                const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+                const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+                const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
                 os << "// synapse group " << s.first << std::endl;
                 PaddedSizeScope p(os, numSrcNeurons, initBlkSz, startThread);
@@ -467,8 +467,15 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                     if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // Calculate indices of bits at start and end of row
                         os << "// Calculate indices" << std::endl;
-                        os << "const unsigned int rowStartGID = lid * " << numTrgNeurons << ";" << std::endl;
-                        os << "const unsigned int rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
+                        const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
+                        if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                            os << "const uint64_t rowStartGID = lid * " << numTrgNeurons << "ull;" << std::endl;
+                            os << "const uint64_t rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
+                        }
+                        else {
+                            os << "const unsigned int rowStartGID = lid * " << numTrgNeurons << ";" << std::endl;
+                            os << "const unsigned int rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
+                        }
 
                         // Loop through the words in this row without overlaps and zero
                         // **NOTE** (x + y - 1) / y is essentially ceil(x / y)
