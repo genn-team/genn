@@ -881,8 +881,8 @@ void genInit(const NNmodel &model,      //!< Model description
             const auto *wu = s.second.getWUModel();
             const auto *psm = s.second.getPSModel();
 
-            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
             // If we should initialise this synapse group's connectivity on the
             // host and it has a connectivity initialisation snippet
@@ -925,17 +925,17 @@ void genInit(const NNmodel &model,      //!< Model description
                     os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << " * sizeof(uint32_t));" << std::endl;
 
                     // Loop through source neurons
-                    os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                    os << "for (int64_t i = 0; i < " << numSrcNeurons << "; i++)";
                     {
                         // Calculate index of bit at start of this row
                         CodeStream::Scope b(os);
-                        os << "const int rowStartGID = i * " << numTrgNeurons << ";" << std::endl;
+                        os << "const int64_t rowStartGID = i * " << numTrgNeurons << ";" << std::endl;
 
                         // Build function template to set correct bit in bitmask
                         const std::string addSynapseTemplate = "setB(gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
 
                         // Loop through synapses in row
-                        os << "for(int prevJ = -1;;)";
+                        os << "for(int64_t prevJ = -1;;)";
                         {
                             CodeStream::Scope b(os);
 

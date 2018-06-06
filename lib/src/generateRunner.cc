@@ -1526,7 +1526,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
             // If connectivity is defined using a bitmask, allocate memory for bitmask
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = (s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
                 mem += allocate_variable(os, "uint32_t", "gp" + s.first, s.second.getSparseConnectivityVarMode(), gpSize);
             }
             else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
@@ -1547,7 +1547,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
                 if(model.isSynapseGroupPostLearningRequired(s.first)) {
                      // **TODO** implement reverse array generation on device
-                    const size_t postSize = s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getMaxSourceConnections();
+                    const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
                     
                     // Allocate column lengths
                     allocate_host_variable(os,  "unsigned int", "C" + s.first + ".colLength", s.second.getSparseConnectivityVarMode(),
@@ -2166,7 +2166,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if((s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
                 && canPushPullVar(s.second.getSparseConnectivityVarMode()))
             {
-                const size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
+                const size_t size = ((size_t)numSrcNeurons * (size_t)numTrgNeurons) / 32 + 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << s.first;
                 os << ", gp" << s.first;
                 os << ", " << size << " * sizeof(uint32_t), cudaMemcpyHostToDevice));" << std::endl;
@@ -2279,8 +2279,8 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-        const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+        const size_t numSrcNeurons = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons();
+        const size_t numTrgNeurons = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons();
 
         os << "void pull" << s.first << "StateFromDevice()";
         {
