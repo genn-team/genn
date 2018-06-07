@@ -25,14 +25,9 @@ HTTPS clone URL displayed on the GeNN Github page (\a https://github.com/genn-te
 
 This will clone the entire repository, including all open branches.
 By default git will check out the master branch which contains the
-source version upon which the latest release is based. If you want the
-most recent (but unstable) development version (which may or may not be fully functional at any
-given time), checkout the development branch
-\code
-git checkout development
-\endcode
-There are other branches in the repository that are used for specific
-development purposes and are opened and closed without warning.
+source version upon which the next release will be based. There are other 
+branches in the repository that are used for specific development 
+purposes and are opened and closed without warning.
 
 As an alternative to using git you can also download the full content of
 GeNN sources clicking on the "Download ZIP" button on the bottom right
@@ -75,9 +70,10 @@ repository.
 
 (iv) Install the C++ compiler on the machine, if not already present.
      For Windows, download Microsoft Visual Studio Community Edition from
-     \a https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx
-     When installing Visual Studio, one should select "custom install",
-     and ensure that all C++ optional extras are also installed.
+     \a https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx.
+     When installing Visual Studio, one should select the 'Desktop 
+    development with C++' configuration' and the 'Windows 8.1 SDK' and 'Windows 
+    Universal CRT' individual components.
      Mac users should download and set up Xcode from
      \a https://developer.apple.com/xcode/index.html
      Linux users should install the GNU compiler collection gcc and g++
@@ -87,8 +83,8 @@ repository.
      with each other. The latest C++ compiler is not necessarily
      compatible with the latest CUDA toolkit.
 
-(v) If you haven't installed CUDA on your machine, obtain a fresh
-    installation of the NVIDIA CUDA toolkit from
+(v) If your machine has a GPU and you haven't installed CUDA already, 
+    obtain a fresh installation of the NVIDIA CUDA toolkit from
     \a https://developer.nvidia.com/cuda-downloads
     Again, be sure to pick CUDA and C++ compiler versions which are compatible
     with each other. The latest C++ compiler is not necessarily
@@ -116,11 +112,9 @@ are initialised.
 If you are using GeNN in Windows, the Visual Studio development
 environment must be set up within every instance of the CMD.EXE command
 window used. One can open an instance of CMD.EXE with the development
-environment already set up by navigating to Start - All Programs - visual
-studio - tools - visual studio native command prompt. You may wish to
-create a shortcut for this tool on the desktop, for convenience. Note that
-all C++ tools should have been installed during the Visual Studio install
-process for this to work. 
+environment already set up by navigating to Start - All Programs - 
+Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may wish to
+create a shortcut for this tool on the desktop, for convenience.
 
 \section testInstall Testing Your Installation
 
