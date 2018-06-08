@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------
 /*! \page Tutorial2 Tutorial 2
 
-In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synatic models. As an example we will connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
+In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synaptic models. As an example we will connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
 
 First, copy the files from Tutorial 1 into a new directory and rename the ``tenHHModel.cc`` to ``tenHHRingModel.cc`` and ``tenHHSimulation.cc`` to ``tenHHRingSimulation.cc``, e.g. on Linux or Mac:
 \code
