@@ -31,6 +31,14 @@ public:
     typedef void (*VoidFunction)(void);
 
 
+    typedef std::unordered_map< std::string, scalar** > VarMap;
+    typedef std::unordered_map< std::string, std::tuple< int, VoidFunction, VarMap > > PopMap;
+    
+    typedef std::array< VoidFunction, 5 > VoidIOFuncs;
+    typedef std::tuple< int, VoidIOFuncs, VoidIOFuncs > PopulationIO;
+    typedef std::unordered_map< std::string, PopulationIO > PopIOMap;
+
+
     SharedLibraryModel() : m_Library(nullptr), m_AllocateMem(nullptr),
         m_Initialize(nullptr), m_InitializeSparse(nullptr),
         m_StepTimeGPU(nullptr), m_StepTimeCPU(nullptr)
@@ -93,106 +101,95 @@ public:
         }
 
     }
-    
-    
-    // bool runGPUInPlace( scalar* out, int n1, int n2, int n3, int nSteps )
-    // {
-    //   if ( n1 < nSteps || n2 < total_state_vars || n3 < max_pop_size ) return false;
-    //   scalar* cur = out;
-    //   for ( int i = 0; i < nSteps; ++i )
-    //   {
-    //     stepTimeGPU();
-    //
-    //     for ( auto pop : populations )
-    //     {
-    //       auto popData = pop.second;
-    //       auto popSize = std::get<0>(popData);
-    //       auto popVarPullers = std::get<1>(popData);
-    //       auto popStateVars = std::get<2>(popData);
-    //       for ( auto funcIter = popVarPullers.begin(); funcIter != popVarPullers.end(); ++funcIter )
-    //         (*funcIter)();
-    //
-    //       for ( auto varIter = popStateVars.begin(); varIter != popStateVars.end();  ++varIter )
-    //       {
-    //         for ( int j = 0; j < popSize; ++j, ++cur )
-    //           *cur = (**varIter)[j];
-    //         cur += max_pop_size - popSize;
-    //       }
-    //     }
-    //   }
-    //   return true;
-    // }
-
-    
-    bool runGPUInPlace( scalar* out, int n1, int n2, int nSteps )
+   
+    void initNeuronPopIO( const std::string &popName, int popSize )
     {
-      if ( n1 < nSteps || n2 < totalPopVars ) return false;
-      scalar* cur = out;
-      for ( int i = 0; i < nSteps; ++i )
+      std::array< std::string, 5 > data = {
+        "State",
+        "Spikes",
+        "SpikeEvents",
+        "CurrentSpikes",
+        "CurrentSpikeEvents" 
+      };
+      VoidIOFuncs pushers;
+      VoidIOFuncs pullers;
+      for ( int i = 0; i < data.size(); ++i )
       {
-        stepTimeGPU();
-        
-        for ( auto pop : populations )
-        {
-          auto popData = pop.second;
-          auto popSize = std::get<0>(popData);
-          auto popVarPullers = std::get<1>(popData);
-          auto popStateVars = std::get<2>(popData);
-          for ( auto funcIter = popVarPullers.begin(); funcIter != popVarPullers.end(); ++funcIter )
-            (*funcIter)();
-        
-          for ( auto varIter = popStateVars.begin(); varIter != popStateVars.end();  ++varIter )
-          {
-            for ( int j = 0; j < popSize; ++j, ++cur )
-              *cur = (**varIter)[j];
-            cur += max_pop_size - popSize;
-          }
-        }
+        pullers[i] = (VoidFunction)getSymbol( "pull" + popName + data[i] + "FromDevice" );
+        pushers[i] = (VoidFunction)getSymbol( "push" + popName + data[i] + "ToDevice" );
       }
-      return true;
+
+      populationsIO.emplace( std::piecewise_construct,
+                             std::forward_as_tuple( popName ),
+                             std::forward_as_tuple( popSize, pullers, pushers ) );
     }
     
-
-    void addVars( const std::vector< std::pair< std::string, std::string > > nameTypes, const std::string &popName, int popSize )
+    void initSynapsePopIO( const std::string &popName, int popSize )
     {
-        std::vector< VoidFunction > varPullers;
-        std::vector< scalar** > stateVars;
-        varPullers.emplace_back( (VoidFunction)getSymbol( "pull" + popName + "StateFromDevice" ) );
-        
-        for ( auto nameType : nameTypes )
-        {
-          stateVars.emplace_back( (scalar**)getSymbol( nameType.first + popName ) );
-        }
-        populations.emplace( std::piecewise_construct, std::forward_as_tuple( popName ), std::forward_as_tuple( popSize, varPullers, stateVars ) );
-        total_state_vars += stateVars.size();
-        max_pop_size = max_pop_size < popSize ? popSize : max_pop_size;
-        totalPopVars = stateVars.size() * popSize;
+      std::array< std::string, 1 > data = {
+        "State",
+      };
+      VoidIOFuncs pushers;
+      VoidIOFuncs pullers;
+      for ( int i = 0; i < data.size(); ++i )
+      {
+        pullers[i] = (VoidFunction)getSymbol( "pull" + popName + data[i] + "FromDevice" );
+        pushers[i] = (VoidFunction)getSymbol( "push" + popName + data[i] + "ToDevice" );
+      }
+
+      populationsIO.emplace( std::piecewise_construct,
+                             std::forward_as_tuple( popName ),
+                             std::forward_as_tuple( popSize, pullers, pushers ) );
+    }
+    
+    void pullPopulationStateFromDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<0>( std::get<1>( tmpPop ) )();
+    }
+    
+    void pullPopulationSpikesFromDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<1>( std::get<1>( tmpPop ) )();
+    }
+    
+    void pushPopulationStateToDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<0>( std::get<2>( tmpPop ) )();
+    }
+    
+    void pushPopulationSpikesToDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<1>( std::get<2>( tmpPop ) )();
     }
 
-
-    void pushVarToDevice( const std::string &popName, const std::string &varName, scalar* initData, int n1 )
+    void assignExternalPointerToVar( const std::string &popName, const int popSize, const std::string &varName, scalar** varPtr, int* n1 )
     {
-        scalar** tmpVar = (scalar**) getSymbol( varName + popName );
-        VoidFunction tmpPusher = (VoidFunction) getSymbol( "push" + popName + "StateToDevice" );
-        scalar* curVar = *tmpVar;
-        for ( int i = 0; i < n1; ++i, ++initData, ++curVar )
-            *curVar = *initData;
-        tmpPusher();
+      *varPtr = *( (scalar**)getSymbol( varName + popName ));
+      *n1 = popSize;
+    }
+    
+    void assignExternalPointerToSpikes( const std::string &popName, int popSize, bool spkCnt, unsigned int** spkPtr, int* n1 )
+    {
+      *spkPtr = *( (unsigned int**) getSymbol( ( spkCnt ? "glbSpkCnt" : "glbSpk" ) + popName ) );
+      *n1 = popSize;
     }
 
-
-    void pushSpikesToDevice( const std::string &popName, int spikeCount, unsigned int* initData, int n1 )
+    void assignExternalPointerToT( scalar** tPtr, int* n1 )
     {
-        unsigned int** tmpSpikeCount = (unsigned int**) getSymbol( "glbSpkCnt" + popName );
-        unsigned int** tmpSpike = (unsigned int**) getSymbol( "glbSpk" + popName );
-        VoidFunction tmpPusher = (VoidFunction) getSymbol( "push" + popName + "SpikesToDevice" );
-        **tmpSpikeCount = spikeCount;
-        unsigned int* curSpike = *tmpSpike;
-        for ( int i = 0; i < n1; ++i, ++initData, ++curSpike )
-            *curSpike = *initData;
-        tmpPusher();
+      *tPtr = (scalar*)getSymbol( "t" );
+      *n1 = 1;
     }
-
+    
+    void assignExternalPointerToTimestep( unsigned long long** timestepPtr, int* n1 )
+    {
+      *timestepPtr = (unsigned long long*)getSymbol( "iT" );
+      *n1 = 1;
+    }
+    
 
     void *getSymbol(const std::string &symbolName, bool allowMissing = false)
     {
@@ -260,8 +257,8 @@ private:
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTimeGPU;
     VoidFunction m_StepTimeCPU;
-
-    std::unordered_map< std::string, std::tuple<int, std::vector< VoidFunction >, std::vector< scalar** > > > populations;
+    
+    PopIOMap populationsIO;
 
     int max_pop_size = 0;
     int total_state_vars = 0;

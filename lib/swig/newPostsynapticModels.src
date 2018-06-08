@@ -11,14 +11,19 @@
   
 --------------------------------------------------------------------------*/
 
-%module PostsynapticModels
+%module(directors="1") PostsynapticModels // for inheritance in python
 %{
 #include "newPostsynapticModels.h"
+#include "../swig/customValues.h"
+#include "../swig/customPostsynaptic.h"
 %}
 %ignore LegacyWrapper;
-%include <std_string.i>
-%include <std_vector.i>
+
 %import "newModels.i"
+
+%feature("director") PostsynapticModels::Base; // for inheritance in python
 %include "include/newPostsynapticModels.h"
-%template(StringVector) std::vector<std::string>;
+
+%feature("director") PostsynapticModels::Custom; // for inheritance in python
+%include "customPostsynaptic.h"
 

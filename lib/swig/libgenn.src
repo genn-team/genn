@@ -47,6 +47,10 @@
 #include "generateKernels.h"
 #include "generateMPI.h"
 #include "generateALL.h"
+#include "../swig/customValues.h"
+#include "../swig/customNeuron.h"
+#include "../swig/customPostsynaptic.h"
+#include "../swig/customWeightUpdate.h"
 %}
 
 %ignore GenericFunction;
@@ -93,13 +97,20 @@
 //%include "include/stringUtils.h"
 //%include "include/hr_time.h"
 
-%template(DoubleVector) std::vector<double>;
+
 %template(StringPair) std::pair<std::string, std::string>;
+%template(StringDoublePair) std::pair<std::string, double>;
+%template(StringStringDoublePairPair) std::pair<std::string, std::pair<std::string, double>>;
+%template(DoubleVector) std::vector<double>;
+%template(StringVector) std::vector<std::string>;
 %template(StringPairVector) std::vector<std::pair<std::string, std::string>>;
+%template(StringStringDoublePairPairVector) std::vector<std::pair<std::string, std::pair<std::string, double>>>;
 
 %inline %{
 void setDefaultVarMode( const VarMode &varMode ) {
   GENN_PREFERENCES::defaultVarMode = varMode;
 }
 %}
+
+%template(addNeuronPopulation_Custom) NNmodel::addNeuronPopulation<NeuronModels::Custom>;
 

@@ -11,26 +11,21 @@
   
 --------------------------------------------------------------------------*/
 
-/* %module(directors="1") NeuronModels // for inheritance in python */
-%module NeuronModels
+%module(directors="1") NeuronModels // for inheritance in python
 %{
 #include "newNeuronModels.h"
+#include "../swig/customValues.h"
+#include "../swig/customNeuron.h"
 %}
 %ignore LegacyWrapper;
 
-
-%include <std_string.i>
-%include <std_pair.i>
-%include <std_vector.i>
 %import "newModels.i"
-/* %feature("director") NeuronModels::Base; // for inheritance in python */
+
+%feature("director") NeuronModels::Base; // for inheritance in python
 %include "include/newNeuronModels.h"
 
+%feature("director") NeuronModels::Custom; // for inheritance in python
+%include "customNeuron.h"
 
-%template(StringVector) std::vector<std::string>;
-%template() std::pair<std::string, std::string>;
-%template(StringPairVector) std::vector<std::pair<std::string, std::string>>;
-%template() std::pair<std::string, double>;
-%template() std::pair<std::string, std::pair<std::string, double>>;
-%template() std::vector<std::pair<std::string, std::pair<std::string, double>>>;
+
 

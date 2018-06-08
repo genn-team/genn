@@ -11,14 +11,19 @@
   
 --------------------------------------------------------------------------*/
 
-%module WeightUpdateModels
+%module(directors="1") WeightUpdateModels // for inheritance in python
 %{
 #include "newWeightUpdateModels.h"
+#include "../swig/customValues.h"
+#include "../swig/customWeightUpdate.h"
 %}
 %ignore LegacyWrapper;
-%include <std_string.i>
-%include <std_vector.i>
+
 %import "newModels.i"
+
+%feature("director") WeightUpdateModels::Base; // for inheritance in python
 %include "include/newWeightUpdateModels.h"
-%template(StringVector) std::vector<std::string>;
+
+%feature("director") WeightUpdateModels::Custom; // for inheritance in python
+%include "customWeightUpdate.h"
 
