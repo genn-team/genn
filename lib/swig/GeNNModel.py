@@ -277,7 +277,11 @@ class GeNNModel( object ):
 
     def build( self, pathToModel = "./" ):
 
-        """Finalize and build a GeNN model; import the model as shared library and initialize it"""
+        """Finalize and build a GeNN model
+        
+        Keyword args:
+        pathToModel -- path where to place the generated model code. Defaults to the local directory.
+        """
 
         if self._built:
             raise Exception("GeNN model already built")
@@ -287,7 +291,41 @@ class GeNNModel( object ):
         lg.finalize_model_runner_generation(self._model, self._pathToModel, self._localhost)
 
         check_call( ['make', '-C', path.join( pathToModel, self._modelName + '_CODE' ) ] )
-        print( self._pathToModel, self._modelName )
+        
+        self._built = True
+
+    def loadExistingModel( self, pathToModel, neuronPop, synapsePop ):
+        """import the existing model as shared library and initialize it
+        Args:
+        pathToModel -- path to the model
+        neuronPop   -- dictionary with neuron populations. Each population must have:
+                        'nN' - number of neurons
+                        'vars' - dictionary with variable names
+                        'spk' - view into internal spikes variable. Can be None. This value will be
+                                overwritten with actual variable view while the model is loaded.
+                        'spkCnt' - view into internal spike count variable. Can be None. This value will be
+                                   overwritten with actual variable view while the model is loaded.
+
+                        Example: {'Pop1' : {'nN' : 10,
+                                            'vars' : { 'varName1': None },
+                                            'spk' : None,
+                                            'spkCnt' : None }
+                                 }
+                        
+        synapsePop  -- dictionary with synapse populations. Each population must have: 'nN', 'vars'. sa neuronPop.
+        """
+
+        self.neuronPopulations = neuronPop
+        self.synapsePopulations = synapsePop
+        self._pathToModel = pathToModel
+        self._built = True
+        self.load()
+       
+    def load( self ):
+        """import the model as shared library and initialize it"""
+        if not self._built:
+            raise Exception( "GeNN model has to be built before running" )
+        
         self._slm.open( self._pathToModel, self._modelName )
 
         self._slm.allocateMem()
@@ -311,7 +349,6 @@ class GeNNModel( object ):
             for varName, varData in popData['vars'].items():
                 popData['vars'][varName] = self._slm.assignExternalPointerToVar( popName, popData['nN'], varName )
 
-        self._built = True
 
     def stepTimeGPU( self ):
         """Make one simulation step"""
