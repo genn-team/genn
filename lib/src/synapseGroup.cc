@@ -46,9 +46,10 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
     :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), 
-        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MaxDendriticDelay(0), m_MatrixType(matrixType),
+        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MaxDendriticDelaySlots(0), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
+        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+        m_InSynVarMode(GENN_PREFERENCES::defaultVarMode), m_DenDelayVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
 {
@@ -102,10 +103,10 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
     }
 }
 
-void SynapseGroup::setMaxDendriticDelay(unsigned int maxDendriticDelay)
+void SynapseGroup::setMaxDendriticDelaySlots(unsigned int maxDendriticDelaySlots)
 {
     // **TODO** constraints on this
-    m_MaxDendriticDelay = maxDendriticDelay;
+    m_MaxDendriticDelaySlots = maxDendriticDelaySlots;
 }
 
 void SynapseGroup::setSpanType(SpanType spanType)
@@ -349,6 +350,11 @@ bool SynapseGroup::canRunOnCPU() const
 #ifndef CPU_ONLY
     // Return false if insyn variable isn't present on the host
     if(!(getInSynVarMode() & VarLocation::HOST)) {
+        return false;
+    }
+
+    // Return false if den delay variable isn't present on the host
+    if(!(getDenDelayVarMode() & VarLocation::HOST)) {
         return false;
     }
 

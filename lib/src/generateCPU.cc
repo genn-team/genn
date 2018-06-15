@@ -133,6 +133,9 @@ void generate_process_presynaptic_events_code_CPU(
                 // Code substitutions ----------------------------------------------------------------------------------
                 string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
                 substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+
+                functionSubstitute(wCode, "addToDenDelay", 2, "denDelay" + sgName + "[ipost + (" + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + " * ((iT + $(1)) % " + to_string(sg.getMaxDendriticDelaySlots()) + "))] += $(0)");
+
                 substitute(wCode, "$(t)", "t");
                 if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
@@ -264,6 +267,18 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
                     for(const auto *sg : n.second.getInSyn()) {
                         const auto *psm = sg->getPSModel();
+
+                        // If dendritic delay is required
+                        if(sg->isDendriticDelayRequired()) {
+                            // Get reference to dendritic delay buffer input for this timestep
+                            os << model.getPrecision() << " &denDelay = denDelay" + sg->getName() + "[n + ((iT % " + to_string(sg->getMaxDendriticDelaySlots()) + ") * " + to_string(n.second.getNumNeurons()) + ")];" << std::endl;
+
+                            // Add delayed input from buffer into inSyn
+                            os << "inSyn" + sg->getName() + "[n] += denDelay;" << std::endl;
+
+                            // Zero delay buffer slot
+                            os << "denDelay = 0;" << std::endl;
+                        }
 
                         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                             for(const auto &v : psm->getVars()) {

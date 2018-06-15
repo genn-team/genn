@@ -661,7 +661,11 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << std::endl;
 
     for(const auto &s : model.getLocalSynapseGroups()) {
-        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, s.second.getInSynVarMode());
+        extern_variable_def(os, model.getPrecision() + " *", "inSyn" + s.first, s.second.getInSynVarMode());
+
+        if (s.second.isDendriticDelayRequired()) {
+            extern_variable_def(os, model.getPrecision() + " *", "denDelay" + s.first, s.second.getDenDelayVarMode());
+        }
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             extern_variable_def(os, "uint32_t *", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
@@ -1239,6 +1243,10 @@ void genRunner(const NNmodel &model,    //!< Model description
 
         variable_def(os, model.getPrecision() + " *", "inSyn" + s.first, s.second.getInSynVarMode());
 
+        if(s.second.isDendriticDelayRequired()) {
+            variable_def(os, model.getPrecision() + " *", "denDelay" + s.first, s.second.getDenDelayVarMode());
+        }
+
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
@@ -1513,8 +1521,13 @@ void genRunner(const NNmodel &model,    //!< Model description
 
             // Allocate buffer to hold input coming from this synapse population
             mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, s.second.getInSynVarMode(),
-                                    s.second.getTrgNeuronGroup()->getNumNeurons());
+                                     s.second.getTrgNeuronGroup()->getNumNeurons());
 
+            // Allocate buffer to delay input coming from this synapse population
+            if(s.second.isDendriticDelayRequired()) {
+                mem += allocate_variable(os, model.getPrecision(), "denDelay" + s.first, s.second.getDenDelayVarMode(),
+                                         s.second.getMaxDendriticDelaySlots() * s.second.getTrgNeuronGroup()->getNumNeurons());
+            }
             // If connectivity is defined using a bitmask, allocate memory for bitmask
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = (s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
@@ -1722,6 +1735,10 @@ void genRunner(const NNmodel &model,    //!< Model description
         // FREE SYNAPSE VARIABLES
         for(const auto &s : model.getLocalSynapseGroups()) {
             free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
+
+            if(s.second.isDendriticDelayRequired()) {
+                free_variable(os, "denDelay" + s.first, s.second.getDenDelayVarMode());
+            }
 
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                 os << "C" << s.first << ".connN= 0;" << std::endl;
@@ -2185,6 +2202,21 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                     os << CodeStream::CB(1103);
                 }
             }
+
+            // If dendritic delay variables can be pushed and pulled add copy code
+            if(s.isDendriticDelayRequired() && canPushPullVar(s.second.getDenDelayVarMode())) {
+                // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                if(s.second.getDenDelayVarMode() & VarInit::DEVICE) {
+                    os << "if(!hostInitialisedOnly)" << CodeStream::OB(1104);
+                }
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_denDelay" << s.first;
+                os << ", denDelay" << s.first;
+                os << ", " << s.second.getMaxDendriticDelaySlots() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
+
+                if(s.second.getDenDelayVarMode() & VarInit::DEVICE) {
+                    os << CodeStream::CB(1104);
+                }
+            }
         }
         os << std::endl;
     }
@@ -2238,7 +2270,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             CodeStream::Scope b(os);
 
             if(canPushPullVar(n.second.getSpikeVarMode())) {
-                size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
+                const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
                 os << ", d_glbSpkCnt" << n.first;
                 os << ", " << glbSpkCntSize << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
@@ -2317,7 +2349,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
             
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
+                const size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << s.first;
                 os << ", d_gp" << s.first;
                 os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << std::endl;
@@ -2327,6 +2359,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
                 os << ", d_inSyn" << s.first;
                 os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+            }
+
+            if(s.isDendriticDelayRequired() &&canPushPullVar(s.second.getDenDelayVarMode())) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(denDelay" << s.first;
+                os << ", d_denDelay" << s.first;
+                os << ", " << s.second.getMaxDendriticDelaySlots() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
         }
         os << std::endl;

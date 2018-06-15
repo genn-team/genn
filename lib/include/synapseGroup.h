@@ -70,6 +70,10 @@ public:
     /*! This is ignored for CPU simulations */
     void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
 
+    //! Set variable mode used for this synapse group's dendritic delay buffers
+    /*! This is ignored for CPU simulations */
+    void setDenDelayVarMode(VarMode mode) { m_DenDelayVarMode = mode; }
+
     //! Sets the maximum number of target neurons any source neurons can connect to
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
@@ -79,7 +83,7 @@ public:
     void setMaxSourceConnections(unsigned int maxPostConnections);
     
     //! Sets the maximum number of dendritic delay slots for connection
-    void setMaxDendriticDelay(unsigned int maxDendriticDelay);
+    void setMaxDendriticDelaySlots(unsigned int maxDendriticDelaySlots);
     
     //! Set how CUDA implementation is parallelised
     /*! with a thread per target neuron (default) or a thread per source spike */
@@ -99,11 +103,16 @@ public:
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
-    unsigned int getMaxDendriticDelay() const{ return m_MaxDendriticDelay; }
+    unsigned int getMaxDendriticDelaySlots() const{ return m_MaxDendriticDelaySlots; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
+
+    bool isDendriticDelayRequired() const{ return (getMaxDendriticDelaySlots() > 0); }
 
     //! Get variable mode used for variables used to combine input from this synapse group
     VarMode getInSynVarMode() const { return m_InSynVarMode; }
+
+    //! Get variable mode used for this synapse group's dendritic delay buffers
+    VarMode getDenDelayVarMode() const{ return m_DenDelayVarMode; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
@@ -207,7 +216,7 @@ private:
     unsigned int m_MaxSourceConnections;
 
     //!< Maximum number of delay slots required for dendritic delay
-    unsigned int m_MaxDendriticDelay;
+    unsigned int m_MaxDendriticDelaySlots;
     
     //!< Connectivity type of synapses
     SynapseMatrixType m_MatrixType;
@@ -229,6 +238,9 @@ private:
 
     //!< Variable mode used for variables used to combine input from this synapse group
     VarMode m_InSynVarMode;
+
+    //!< Variable mode used for this synapse group's dendritic delay buffers
+    VarMode m_DenDelayVarMode;
 
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
