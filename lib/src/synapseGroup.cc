@@ -302,18 +302,16 @@ std::string SynapseGroup::getOffsetPre() const
         : "";
 }
 
-std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix) const
+std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset) const
 {
     assert(isDendriticDelayRequired());
 
-    return "(" + devPrefix + "denDelayPtr" + getName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
-}
-
-std::string SynapseGroup::getDendriticDelayOffset(const std::string &offset, const std::string &devPrefix) const
-{
-    assert(isDendriticDelayRequired());
-
-    return "(((" + devPrefix + "denDelayPtr" + getName() + " + " + offset + ") % " + to_string(getMaxDendriticDelaySlots()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+    if(offset.empty()) {
+        return "(" + devPrefix + "denDelayPtr" + getName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+    }
+    else {
+        return "(((" + devPrefix + "denDelayPtr" + getName() + " + " + offset + ") % " + to_string(getMaxDendriticDelaySlots()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+    }
 }
 
 bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
