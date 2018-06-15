@@ -1147,8 +1147,8 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         os << "if (r == numSpikeSubsets - 1) lmax = ((lscnt-1) % " << learnBlkSz << ")+1;" << std::endl;
                         os << "else lmax = " << learnBlkSz << ";" << std::endl;
 
-                        string offsetTrueSpkPost = sg->getTrgNeuronGroup()->isTrueSpikeRequired()
-                            ? sg->getOffsetPost("dd_")
+                        const string offsetTrueSpkPost = sg->getTrgNeuronGroup()->isTrueSpikeRequired()
+                            ? sg->getTrgNeuronGroup()->getQueueOffset("dd_")
                             : "";
                         os << "if (threadIdx.x < lmax)";
                         {

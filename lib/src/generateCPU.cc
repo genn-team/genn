@@ -665,7 +665,9 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                     {
                         CodeStream::Scope b(os);
 
-                        string offsetTrueSpkPost = sg->getTrgNeuronGroup()->isTrueSpikeRequired() ? sg->getOffsetPost("") : "";
+                        const string offsetTrueSpkPost = sg->getTrgNeuronGroup()->isTrueSpikeRequired()
+                            ? sg->getTrgNeuronGroup()->getQueueOffset("")
+                            : "";
                         os << "lSpk = glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "ipost];" << std::endl;
 
                         if (sparse) {

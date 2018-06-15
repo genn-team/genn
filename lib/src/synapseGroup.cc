@@ -302,11 +302,6 @@ std::string SynapseGroup::getOffsetPre() const
         : "";
 }
 
-std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
-{
-    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
-}
-
 bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
 {
     // If initialising the postsynaptic variables require an RNG, return true
