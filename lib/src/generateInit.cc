@@ -342,6 +342,16 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
 
+                            // If dendritic delays are required and these should be initialised on device
+                            if(s->isDendriticDelayRequired() && (s->getDenDelayVarMode() & VarInit::DEVICE)) {
+                                os << "for (int i = 0; i < " << s->getMaxDendriticDelaySlots() << "; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
+                                    os << "dd_denDelay" << s->getName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                }
+                            }
+
                             // If postsynaptic model variables should be individual
                             if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                                 auto psmVars = s->getPSModel()->getVars();
@@ -787,6 +797,16 @@ void genInit(const NNmodel &model,      //!< Model description
                 {
                     CodeStream::Scope b(os);
                     os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                }
+            }
+
+            // If dendritic delay buffer should be initialised on the host
+            if(shouldInitOnHost(s.second.getDenDelayVarMode())) {
+                CodeStream::Scope b(os);
+                os << "for (int i = 0; i < " << numTrgNeurons * s.second.getMaxDendriticDelaySlots() << "; i++)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "denDelay" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
                 }
             }
 
