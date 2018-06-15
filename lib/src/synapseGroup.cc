@@ -46,7 +46,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
     :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), 
-        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MaxDendriticDelay(0), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
@@ -100,6 +100,12 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
     else {
         gennError("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
+}
+
+void SynapseGroup::setMaxDendriticDelay(unsigned int maxDendriticDelay)
+{
+    // **TODO** constraints on this
+    m_MaxDendriticDelay = maxDendriticDelay;
 }
 
 void SynapseGroup::setSpanType(SpanType spanType)
