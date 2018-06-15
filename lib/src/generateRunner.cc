@@ -2658,7 +2658,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
 
         // Generate code to advance host side dendritic delay buffers
-        genHostDenDelayAdvance(os, model, localHostID);
+        genHostDenDelayAdvance(os, model);
 
         os << "iT++;" << std::endl;
         os << "t= iT*DT;" << std::endl;
