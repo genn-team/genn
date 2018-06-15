@@ -800,13 +800,22 @@ void genInit(const NNmodel &model,      //!< Model description
                 }
             }
 
-            // If dendritic delay buffer should be initialised on the host
-            if(shouldInitOnHost(s.second.getDendriticDelayVarMode())) {
-                CodeStream::Scope b(os);
-                os << "for (int i = 0; i < " << numTrgNeurons * s.second.getMaxDendriticDelaySlots() << "; i++)";
-                {
+            if(s.second.isDendriticDelayRequired()) {
+                os << "denDelayPtr" << s.first << " = 0;" << std::endl;
+#ifndef CPU_ONLY
+                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_denDelayPtr" << s.first;
+                os << ", &denDelayPtr" << s.first;
+                os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
+#endif
+
+                // If dendritic delay buffer should be initialised on the host
+                if(shouldInitOnHost(s.second.getDendriticDelayVarMode())) {
                     CodeStream::Scope b(os);
-                    os << "denDelay" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    os << "for (int i = 0; i < " << numTrgNeurons * s.second.getMaxDendriticDelaySlots() << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "denDelay" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    }
                 }
             }
 

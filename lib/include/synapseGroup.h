@@ -164,6 +164,8 @@ public:
 
     // **THINK** do these really belong here - they are very code-generation specific
     std::string getOffsetPre() const;
+    std::string getDendriticDelayOffset(const std::string &devPrefix) const;
+    std::string getDendriticDelayOffset(const std::string &offset, const std::string &devPrefix) const;
 
     //! Does this synapse group require an RNG for it's postsynaptic init code
     bool isPSInitRNGRequired(VarInit varInitMode) const;
