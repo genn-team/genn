@@ -277,7 +277,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                             os << "inSyn" + sg->getName() + "[n] += denDelay;" << std::endl;
 
                             // Zero delay buffer slot
-                            os << "denDelay = 0;" << std::endl;
+                            os << "denDelay = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
 
                         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
