@@ -2204,7 +2204,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
 
             // If dendritic delay variables can be pushed and pulled add copy code
-            if(s.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
+            if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
                 // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
                 if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
                     os << "if(!hostInitialisedOnly)" << CodeStream::OB(1104);
@@ -2361,7 +2361,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
 
-            if(s.isDendriticDelayRequired() &&canPushPullVar(s.second.getDendriticDelayVarMode())) {
+            if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(denDelay" << s.first;
                 os << ", d_denDelay" << s.first;
                 os << ", " << s.second.getMaxDendriticDelaySlots() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
