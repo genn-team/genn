@@ -49,7 +49,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MaxDendriticDelaySlots(0), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-        m_InSynVarMode(GENN_PREFERENCES::defaultVarMode), m_DenDelayVarMode(GENN_PREFERENCES::defaultVarMode),
+        m_InSynVarMode(GENN_PREFERENCES::defaultVarMode), m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
 {
@@ -354,7 +354,7 @@ bool SynapseGroup::canRunOnCPU() const
     }
 
     // Return false if den delay variable isn't present on the host
-    if(!(getDenDelayVarMode() & VarLocation::HOST)) {
+    if(!(getDendriticDelayVarMode() & VarLocation::HOST)) {
         return false;
     }
 

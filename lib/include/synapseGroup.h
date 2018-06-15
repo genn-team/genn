@@ -72,7 +72,7 @@ public:
 
     //! Set variable mode used for this synapse group's dendritic delay buffers
     /*! This is ignored for CPU simulations */
-    void setDenDelayVarMode(VarMode mode) { m_DenDelayVarMode = mode; }
+    void setDendriticDelayVarMode(VarMode mode) { m_DendriticDelayVarMode = mode; }
 
     //! Sets the maximum number of target neurons any source neurons can connect to
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
@@ -112,7 +112,7 @@ public:
     VarMode getInSynVarMode() const { return m_InSynVarMode; }
 
     //! Get variable mode used for this synapse group's dendritic delay buffers
-    VarMode getDenDelayVarMode() const{ return m_DenDelayVarMode; }
+    VarMode getDendriticDelayVarMode() const{ return m_DendriticDelayVarMode; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
@@ -240,7 +240,7 @@ private:
     VarMode m_InSynVarMode;
 
     //!< Variable mode used for this synapse group's dendritic delay buffers
-    VarMode m_DenDelayVarMode;
+    VarMode m_DendriticDelayVarMode;
 
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
