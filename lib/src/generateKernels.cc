@@ -729,6 +729,28 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << "__syncthreads();" << std::endl;
                 }
 
+                // If any synapse groups require dendritic delay
+                if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                    [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); }))
+                {
+                    os << "if (threadIdx.x == 0)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "const unsigned int j = atomicAdd((unsigned int *) &d_done, 1);" << std::endl;
+                        os << "if (j == " << neuronGridSz - 1 << ")";
+                        {
+                            CodeStream::Scope b(os);
+
+                            for(const auto &s : model.getLocalSynapseGroups()) {
+                                if(s.second.isDendriticDelayRequired()) {
+                                    os << "dd_denDelayPtr" << s.first << " = (dd_denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelaySlots() << ";" << std::endl;
+                                }
+                            }
+                            os << "d_done = 0;" << std::endl;
+                        }   // end "if (j == " << numOfBlocks - 1 << ")"
+                    }   // end "if (threadIdx.x == 0)"
+                }
+
                 string queueOffset = n->second.getQueueOffset("dd_");
                 if (n->second.isSpikeEventRequired()) {
                     os << "if (threadIdx.x < spkEvntCount)";
