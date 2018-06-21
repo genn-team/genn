@@ -3,6 +3,7 @@ import SharedLibraryModel as slm
 from os import path
 from subprocess import check_call
 import numpy as np
+import json
 
 class GeNNModel( object ):
 
@@ -27,38 +28,48 @@ class GeNNModel( object ):
         else:
             raise ValueError( 'unknown scalar type "{0}"'.format( scalar ) )
         
+        self._built = False
         self._localhost = lg.init_cuda_mpi()
         
         lg.setDefaultVarMode( lg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
         lg.initGeNN()
         self._model = lg.NNmodel()
-        self._modelName = modelName
+        self._modelName = None
         if modelName is not None:
-            self._model.setName( modelName )
+            self.modelName = modelName
         self.neuronPopulations = {}
         self.synapsePopulations = {}
         self._supportedNeurons = list(lg.NeuronModels.getSupportedNeurons())
         self._supportedPostsyn = list(lg.PostsynapticModels.getSupportedPostsyn())
         self._supportedWUpdate = list(lg.WeightUpdateModels.getSupportedWUpdate())
-        self._built = False
+        self._dT = 1.0
 
+    @property
+    def modelName( self ):
+        """Name of the model"""
+        return self._modelName
 
-    def setModelName( self, modelName ):
-        """Set model name"""
+    @modelName.setter
+    def modelName( self, modelName ):
         if self._built:
             raise Exception("GeNN model already built")
         self._modelName = modelName
         self._model.setName( modelName )
 
+    @property
+    def dT( self ):
+        """Step sise"""
+        return self._dT
 
-    def setModelDT( self, dt ):
-        """Set time step size for the simulation"""
+    @dT.setter 
+    def dT( self, dt ):
         if self._built:
             raise Exception("GeNN model already built")
+        self._dT = dt
         self._model.setDT( dt )
 
     
-    def addNeuronPopulation(self, popName, numNeurons, neuron, neuronParamValues, neuronInitVarValues, customNeuron=False):
+    def addNeuronPopulation(self, popName, numNeurons, neuron, paramSpace, varSpace, customNeuron=False):
         """Add a neuron population to the GeNN model
 
         Args:
@@ -67,8 +78,8 @@ class GeNNModel( object ):
         neuron      -- type of the NeuronModels class as string or instance of neuron class
                         derived from NeuronModels::Custom class if customNeuron is True;
                         sa createCustomNeuronClass
-        neuronParamValues -- list with param values for the NeuronModels class
-        neuronInitVarValues -- list with initial variable values for the NeuronModels class
+        paramSpace  -- dict with param values for the NeuronModels class
+        varSpace    -- dict with initial variable values for the NeuronModels class
 
         Keyword args:
         customNeuron -- boolean which indicates whether a custom neuron model is used. False by default
@@ -77,38 +88,36 @@ class GeNNModel( object ):
             raise Exception("GeNN model already built")
         if popName in self.neuronPopulations:
             raise ValueError( 'neuron population "{0}" already exists'.format( popName ) )
-
-        if not customNeuron and neuron not in self._supportedNeurons:
-            raise ValueError( 'neuron model "{0}" is not supported'.format( neuronType ) )
-
-        # convert params to corresponding classes
-        if customNeuron:
-            params = makeCustomParamValues( neuronParamValues )
-            ini = makeCustomVarValues( neuronInitVarValues )
-        else:
-            params = eval( 'lg.NeuronModels.make_' + \
-                neuron + \
-                '_ParamValues( ' + \
-                ','.join( [str(p) for p in neuronParamValues] ) + ')' )
-
-            ini = eval( 'lg.NeuronModels.make_' + \
-                neuron + \
-                '_VarValues( ' + \
-                ','.join( [str(v) for v in neuronInitVarValues] ) + ')' )
         
-        # add neuron population to the GeNN model
-        if customNeuron:
-            self._model.addNeuronPopulation_Custom( popName, numNeurons, neuron, params, ini )
+        
+        # check whether the neuron is valid
+        if not isinstance( neuron, str ):
+            if not isinstance( neuron, lg.NeuronModels.Custom ):
+                neuronType = type( neuron ).__name__
+                if neuronType not in self._supportedNeurons:
+                    raise ValueError( 'neuron model "{0}" is not supported'.format( neuronType ) )
+            else:
+                neuronType = 'Custom'
         else:
-            eval( 'self._model.addNeuronPopulation_' + \
-                neuron + \
-                '( popName, numNeurons, params, ini )' ) 
+            neuronType = neuron
+            if neuronType not in self._supportedNeurons:
+                raise ValueError( 'neuron model "{0}" is not supported'.format( neuronType ) )
+            else:
+                neuron = eval( 'lg.NeuronModels.' + neuron + '()' )
+
+        params = parameterSpaceToParamValues( neuron, paramSpace )
+        varIni = varSpaceToVarValues( neuron, varSpace )
+
+        # add neuron population to the GeNN model
+        eval( 'self._model.addNeuronPopulation_' + \
+                neuronType + \
+                '( popName, numNeurons, neuron, params, varIni )' ) 
 
         # save neuron population info
         tmpPopDescr = {
-                'NI' : neuron if customNeuron else eval( 'lg.NeuronModels.' + neuron + '()' ),
+                'NI' : neuron,
                 'nN' : numNeurons,
-                'nParams' : len( neuronParamValues ),
+                'nParams' : len( paramSpace ),
                 'vars' : {},
                 'spk' : None,
                 'spkCnt' : None
@@ -122,8 +131,8 @@ class GeNNModel( object ):
 
     
     def addSynapsePopulation(self, popName, matrixType, delaySteps, source, target,
-                wUpdateModel, wuParamValues, wuInitVarValues,
-                postsynModel, postsynParamValues, postsynInitVarValues,
+                wUpdateModel, wuParamSpace, wuVarSpace,
+                postsynModel, postsynParamSpace, postsynVarSpace,
                 customWeightUpdate=False, customPostsynaptic=False):
         if self._built:
             raise Exception("GeNN model already built")
@@ -131,11 +140,35 @@ class GeNNModel( object ):
         if popName in self.synapsePopulations:
             raise ValueError( 'synapse population "{0}" already exists'.format( popName ) )
 
-        if not customWeightUpdate and wUpdateModel not in self._supportedWUpdate:
-            raise ValueError( 'weightUpdate model "{0}" is not supported'.format( wUpdateType ) )
-        
-        if not customPostsynaptic and postsynModel not in self._supportedPostsyn:
-            raise ValueError( 'postsynaptic model "{0}" is not supported'.format( postsynType ) )
+        # check whether the wUpdateModel is valid
+        if not isinstance( wUpdateModel, str ):
+            if not isinstance( wUpdateModel, lg.WeightUpdateModels.Custom ):
+                wUpdateType = type( wUpdateModel ).__name__
+                if wUpdateType not in self._supportedWUpdate:
+                    raise ValueError( 'weightUpdate model "{0}" is not supported'.format( wUpdateType ) )
+            else:
+                wUpdateType = 'Custom'
+        else:
+            wUpdateType = wUpdateModel
+            if wUpdateType not in self._supportedWUpdate:
+                raise ValueError( 'weightUpdate model "{0}" is not supported'.format( wUpdateType ) )
+            else:
+                wUpdateModel = eval( 'lg.WeightUpdateModels.' + wUpdateType + '()' )
+
+        # check whether the postsynModel is valid
+        if not isinstance( postsynModel, str ):
+            if not isinstance( postsynModel, lg.PostsynapticModels.Custom ):
+                postsynType = type( postsynModel ).__name__
+                if postsynType not in self._supportedPostsyn:
+                    raise ValueError( 'postsynaptic model "{0}" is not supported'.format( postsynType ) )
+            else:
+                postsynType = 'Custom'
+        else:
+            postsynType = postsynModel
+            if postsynType not in self._supportedPostsyn:
+                raise ValueError( 'Postsynaptic model "{0}" is not supported'.format( postsynType ) )
+            else:
+                postsynModel = eval( 'lg.PostsynapticModels.' + postsynType + '()' )
         
         """Add a synapse population to the GeNN model
 
@@ -161,40 +194,11 @@ class GeNNModel( object ):
         customPostsynaptic -- boolean which indicates whether a custom postsynaptic model is used. False by default
         """
 
-        # convert params to corresponding classes
-        if customPostsynaptic:
-            ps_params = makeCustomParamValues( postsynParamValues )
-            ps_ini = makeCustomVarValues( postsynInitVarValues )
-        else:
-            ps_params = eval( 'lg.PostsynapticModels.make_' + \
-                postsynModel + \
-                '_ParamValues( ' + \
-                ','.join( [str(p) for p in postsynParamValues] ) + ')' )
+        ps_params = parameterSpaceToParamValues( postsynModel, postsynParamSpace )
+        ps_varIni = varSpaceToVarValues( postsynModel, postsynVarSpace )
 
-            ps_ini = eval( 'lg.PostsynapticModels.make_' + \
-                postsynModel + \
-                '_VarValues( ' + \
-                ','.join( [str(v) for v in postsynInitVarValues] ) + ')' )
-            
-            postsynType = postsynModel 
-            postsynModel = eval( 'lg.PostsynapticModels.' + postsynModel + '()' )
-
-        if customWeightUpdate:
-            wu_params = makeCustomParamValues( wuParamValues )
-            wu_ini = makeCustomVarValues( wuInitVarValues )
-        else:
-            wu_params = eval( 'lg.WeightUpdateModels.make_' + \
-                wUpdateModel + \
-                '_ParamValues( ' + \
-                ','.join( [str(p) for p in wuParamValues] ) + ')' )
-
-            wu_ini = eval( 'lg.WeightUpdateModels.make_' + \
-                wUpdateModel + \
-                '_VarValues( ' + \
-                ','.join( [str(v) for v in wuInitVarValues] ) + ')' )
-            
-            wUpdateType = wUpdateModel
-            wUpdateModel = eval( 'lg.WeightUpdateModels.' + wUpdateModel + '()' )
+        wu_params = parameterSpaceToParamValues( wUpdateModel, wuParamSpace )
+        wu_varIni = varSpaceToVarValues( wUpdateModel, wuVarSpace )
 
         # convert matrix type
         mType = eval( "lg.SynapseMatrixType_" + matrixType )
@@ -202,11 +206,10 @@ class GeNNModel( object ):
         
         # add synaptic population to the GeNN model
         eval( 'self._model.addSynapsePopulation_' + \
-                ('Custom' if customWeightUpdate else wUpdateType) + '_' + \
-                ('Custom' if customPostsynaptic else postsynType) + \
+                wUpdateType + '_' + postsynType + \
                 '( popName, mType, delaySteps, source, target, ' + \
-                'wUpdateModel, wu_params, wu_ini, ' + \
-                'postsynModel, ps_params, ps_ini )' )
+                'wUpdateModel, wu_params, wu_varIni, ' + \
+                'postsynModel, ps_params, ps_varIni )' )
 
         # save synaptic population info
         tmpPopDescr = {
@@ -290,7 +293,7 @@ class GeNNModel( object ):
         lg.chooseDevice(self._model, pathToModel, self._localhost)
         lg.finalize_model_runner_generation(self._model, self._pathToModel, self._localhost)
 
-        check_call( ['make', '-C', path.join( pathToModel, self._modelName + '_CODE' ) ] )
+        check_call( ['make', '-C', path.join( pathToModel, self.modelName + '_CODE' ) ] )
         
         self._built = True
 
@@ -300,11 +303,12 @@ class GeNNModel( object ):
         pathToModel -- path to the model
         neuronPop   -- dictionary with neuron populations. Each population must have:
                         'nN' - number of neurons
-                        'vars' - dictionary with variable names
+                        'vars' - dictionary with variable names. The values of the dictionary will
+                                be overwritten with actuals variable views when the model is loaded
                         'spk' - view into internal spikes variable. Can be None. This value will be
-                                overwritten with actual variable view while the model is loaded.
+                                overwritten with actual variable view when the model is loaded.
                         'spkCnt' - view into internal spike count variable. Can be None. This value will be
-                                   overwritten with actual variable view while the model is loaded.
+                                   overwritten with actual variable view when the model is loaded.
 
                         Example: {'Pop1' : {'nN' : 10,
                                             'vars' : { 'varName1': None },
@@ -326,7 +330,7 @@ class GeNNModel( object ):
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
         
-        self._slm.open( self._pathToModel, self._modelName )
+        self._slm.open( self._pathToModel, self.modelName )
 
         self._slm.allocateMem()
         self._slm.initialize()
@@ -348,6 +352,17 @@ class GeNNModel( object ):
             #  popData['spkCnt'] = self._slm.assignExternalPointerToSpikes( popName, popData['nN'], True )
             for varName, varData in popData['vars'].items():
                 popData['vars'][varName] = self._slm.assignExternalPointerToVar( popName, popData['nN'], varName )
+
+
+    def exportModelSpec( self, path='./' ):
+        def serialize( obj ):
+            if not isinstance( obj, str ) and not isinstance(obj, dict):
+                return obj.__dict__
+            return obj
+
+        print( json.dumps( {'nPop':self.neuronPopulations, 'sPop':self.synapsePopulations},
+            default=serialize) )
+
 
 
     def stepTimeGPU( self ):
@@ -381,6 +396,34 @@ def makeCustomParamValues( params ):
 def makeCustomVarValues( varVals ):
     """This helper function converts list with variable values to CustomVarValues class"""
     return lg.NewModels.CustomVarValues( lg.DoubleVector( varVals ) )
+
+def parameterSpaceToParamValues( model, paramSpace ):
+    """Convert a paramSpace dict to ParamValues
+    
+    Args:
+    mode       -- GeNN Neuron-, Postsynaptic-, or WeightUpdateModel
+    paramSpace -- dict with parameters
+    """
+    paramNames = list( model.getParamNames() )
+    paramVals = []
+    for pn in paramNames:
+        paramVals.append( paramSpace[pn] )
+
+    return model.make_ParamValues( lg.DoubleVector( paramVals ) )
+
+def varSpaceToVarValues( model, varSpace ):
+    """Convert a iniSpace dict to VarValues
+    
+    Args:
+    model     -- GeNN Neuron-, Postsynaptic-, or WeightUpdateModel
+    varSpace  -- dict with initial values
+    """
+    varNameTypes = list( model.getVars() )
+    varVals = []
+    for vnt in varNameTypes:
+        varVals.append( varSpace[vnt[0]] )
+
+    return model.make_VarValues( lg.DoubleVector( varVals ) )
 
 
 def createCustomNeuronClass( 
