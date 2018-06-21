@@ -26,6 +26,26 @@ def generate_contructor_template( nspace, model_name, value_name, num_values ):
             ', '.join( ['double' for i in range(num_values)] )
             )
     
+def generate_value_maker_ext( nspace, model_name, value_name, num_values ):
+
+    nspace_model_name = nspace + '::' + model_name
+    model_value_maker = '{0}::{2}* make_{2}( const std::vector<double> & vals )'.format( 
+            nspace_model_name,
+            model_name,
+            value_name,
+            #  ', '.join( [('double v' + str( i )) for i in range(num_values)] )
+            )
+    model_value_maker += '{\n'
+    if num_values != 0:
+        model_value_maker += 'double ' + ', '.join( ['v{0} = vals[{0}]'.format( i ) for i in range(num_values)] ) + ';\n'
+    model_value_maker += 'return new {0}::{1}({2});'.format(
+            nspace_model_name,
+            value_name,
+            ', '.join( [('v' + str( i )) for i in range(num_values)] )
+            )
+
+    model_value_maker += '\n}\n'
+    return model_value_maker
 
 def generate_value_maker( nspace, model_name, value_name, num_values ):
 
@@ -35,7 +55,7 @@ def generate_value_maker( nspace, model_name, value_name, num_values ):
             model_name,
             value_name,
             ', '.join( [('double v' + str( i )) for i in range(num_values)] )
-)
+            )
     model_value_maker += '{\n'
     model_value_maker += 'return new {0}::{1}({2});'.format(
             nspace_model_name,
@@ -45,6 +65,17 @@ def generate_value_maker( nspace, model_name, value_name, num_values ):
 
     model_value_maker += '\n}\n'
     return model_value_maker
+
+def generate_extender( nspace, model_name, num_params, num_vars ):
+
+    extend = '%extend {}::{}'.format( nspace, model_name )
+    extend += ' {\n' + generate_value_maker_ext( nspace, model_name, 'ParamValues', num_params )
+    extend += generate_value_maker_ext( nspace, model_name, 'VarValues', num_vars )
+    extend += '};\n'
+
+    return extend
+
+
 
 def generate_configs( genn_lib_path ):
     with open( path.join( genn_lib_path, FNEURONMODELS ), 'r' ) as neuronModels_h, \
@@ -64,9 +95,9 @@ def generate_configs( genn_lib_path ):
                 postsynModels_i.writelines( postsynModels_src.readlines() )
                 wUpdateModels_i.writelines( wUpdateModels_src.readlines() )
             
-                neuronModels_i.write( '%inline %{\n' )
-                wUpdateModels_i.write( '%inline %{\n' )
-                postsynModels_i.write( '%inline %{\n' )
+                #neuronModels_i.write( '%inline %{\n' )
+                #wUpdateModels_i.write( '%inline %{\n' )
+                #postsynModels_i.write( '%inline %{\n' )
 
                 supported_neurons = []
             
@@ -84,10 +115,11 @@ def generate_configs( genn_lib_path ):
                         nnModel_template = '%template(addNeuronPopulation_{0}) NNmodel::addNeuronPopulation<{1}>;\n'.format( model_name, nspace_model_name )
 
                         libgenn_i.write( nnModel_template )
-                        neuronModels_i.write( generate_makers( 'NeuronModels', model_name, num_params, num_vars ) )
+                        #  neuronModels_i.write( generate_makers( 'NeuronModels', model_name, num_params, num_vars ) )
+                        neuronModels_i.write( generate_extender( 'NeuronModels', model_name, num_params, num_vars ) )
                         #  neuronModels_i.write( generate_value_templates( 'NeuronModels', model_name, num_params, num_vars ) )
                 
-                #  neuronModels_i.write( '%inline %{\n' )
+                neuronModels_i.write( '%inline %{\n' )
                 neuronModels_i.write( 'std::vector< std::string > getSupportedNeurons() {\nreturn std::vector<std::string>{"' + '", "'.join(supported_neurons) + '"};\n}\n' )
 
                 neuronModels_i.write( '%}\n' )
@@ -104,10 +136,11 @@ def generate_configs( genn_lib_path ):
 
                         postsyn_models.append( model_name )
 
-                        postsynModels_i.write( generate_makers( 'PostsynapticModels', model_name, num_params, num_vars ) )
+                        #  postsynModels_i.write( generate_makers( 'PostsynapticModels', model_name, num_params, num_vars ) )
+                        postsynModels_i.write( generate_extender( 'PostsynapticModels', model_name, num_params, num_vars ) )
                         #  postsynModels_i.write( generate_value_templates( 'PostsynapticModels', model_name, num_params, num_vars ) )
 
-                #  postsynModels_i.write( '%inline %{\n' )
+                postsynModels_i.write( '%inline %{\n' )
                 postsynModels_i.write( 'std::vector< std::string > getSupportedPostsyn() {\nreturn std::vector<std::string>{"' + '", "'.join(postsyn_models) + '"};\n}\n' )
                 postsynModels_i.write( '%}\n' )
 
@@ -123,10 +156,11 @@ def generate_configs( genn_lib_path ):
 
                         wupdate_models.append( model_name )
 
-                        wUpdateModels_i.write( generate_makers( 'WeightUpdateModels', model_name, num_params, num_vars ) )
+                        #  wUpdateModels_i.write( generate_makers( 'WeightUpdateModels', model_name, num_params, num_vars ) )
+                        wUpdateModels_i.write( generate_extender( 'WeightUpdateModels', model_name, num_params, num_vars ) )
                         #  wUpdateModels_i.write( generate_value_templates( 'WeightUpdateModels', model_name, num_params, num_vars ) )
 
-                #  wUpdateModels_i.write( '%inline %{\n' )
+                wUpdateModels_i.write( '%inline %{\n' )
                 wUpdateModels_i.write( 'std::vector< std::string > getSupportedWUpdate() {\nreturn std::vector<std::string>{"' + '", "'.join(wupdate_models) + '"};\n}\n' )
                 wUpdateModels_i.write( '%}\n' )
 
