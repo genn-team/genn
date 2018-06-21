@@ -567,13 +567,13 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     // If dendritic delay is required
                     if(sg->isDendriticDelayRequired()) {
                         // Get reference to dendritic delay buffer input for this timestep
-                        os << model.getPrecision() << " &denDelay = dd_denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("dd_") + localID + "];" << std::endl;
+                        os << model.getPrecision() << " &denDelay" << sg->getName() << " = dd_denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("dd_") + localID + "];" << std::endl;
 
                         // Add delayed input from buffer into inSyn
-                        os << "linSyn" + sg->getName() + " += denDelay;" << std::endl;
+                        os << "linSyn" + sg->getName() + " += denDelay" << sg->getName() << ";" << std::endl;
 
                         // Zero delay buffer slot
-                        os << "denDelay = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << "denDelay" << sg->getName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
                     }
 
                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
