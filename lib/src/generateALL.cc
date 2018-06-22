@@ -327,6 +327,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
             bool KrnlExist[KernelMax];
             for (int rep= 0; rep < 2; rep++) {
                 // do two repititions with different candidate kernel size
+                preSynapseResetBlkSize = warpSize*(rep+1);
                 synapseBlkSz = warpSize*(rep+1);
                 learnBlkSz = warpSize*(rep+1);
                 synDynBlkSz= warpSize*(rep+1);
