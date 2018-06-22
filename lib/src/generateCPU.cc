@@ -128,13 +128,19 @@ void generate_process_presynaptic_events_code_CPU(
                     os << "if (B(gp" << sgName << "[gid / 32], gid & 31))" << CodeStream::OB(2041);
                 }
 
-                os << ftype << " addtoinSyn;" << std::endl;
+
 
                 // Code substitutions ----------------------------------------------------------------------------------
                 string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
-                substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
 
-                functionSubstitute(wCode, "addToDenDelay", 2, "denDelay" + sgName + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+                if(sg.isDendriticDelayRequired()) {
+                    functionSubstitute(wCode, "addToDenDelay", 2, "denDelay" + sgName + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+                }
+                else {
+                    os << ftype << " addtoinSyn;" << std::endl;
+                    substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                    substitute(wCode, "$(inSyn)", "inSyn" + sgName + "[ipost]");
+                }
 
                 substitute(wCode, "$(t)", "t");
                 if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -152,7 +158,7 @@ void generate_process_presynaptic_events_code_CPU(
                                            sgName + "[ipre * " + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + " + ipost]");
                     }
                 }
-                substitute(wCode, "$(inSyn)", "inSyn" + sgName + "[ipost]");
+
 
                 StandardSubstitutions::weightUpdateSim(wCode, sg,
                                                     wuVars, wuDerivedParams, wuExtraGlobalParams,
