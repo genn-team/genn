@@ -131,6 +131,11 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
+    unsigned int getNumPreSynapseResetRequiredGroups() const;
+
+    //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
+    bool isPreSynapseResetRequired() const{ return getNumPreSynapseResetRequiredGroups() > 0; }
+
     //! Does this model require device initialisation kernel
     /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
     bool isDeviceInitRequired(int localHostID) const;

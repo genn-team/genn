@@ -729,28 +729,6 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << "__syncthreads();" << std::endl;
                 }
 
-                // If any synapse groups require dendritic delay
-                if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-                    [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); }))
-                {
-                    os << "if (threadIdx.x == 0)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "const unsigned int j = atomicAdd((unsigned int *) &d_done, 1);" << std::endl;
-                        os << "if (j == " << neuronGridSz - 1 << ")";
-                        {
-                            CodeStream::Scope b(os);
-
-                            for(const auto &s : model.getLocalSynapseGroups()) {
-                                if(s.second.isDendriticDelayRequired()) {
-                                    os << "dd_denDelayPtr" << s.first << " = (dd_denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelaySlots() << ";" << std::endl;
-                                }
-                            }
-                            os << "d_done = 0;" << std::endl;
-                        }   // end "if (j == " << numOfBlocks - 1 << ")"
-                    }   // end "if (threadIdx.x == 0)"
-                }
-
                 string queueOffset = n->second.getQueueOffset("dd_");
                 if (n->second.isSpikeEventRequired()) {
                     os << "if (threadIdx.x < spkEvntCount)";
@@ -821,6 +799,34 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     os << "*/" << std::endl;
     os << "//-------------------------------------------------------------------------" << std::endl << std::endl;
 
+    // If a reset kernel is required to be run before the synapse kernel
+    if(model.isPreSynapseResetRequired())
+    {
+        // SynapseDynamics kernel header
+        os << "extern \"C\" __global__ void preSynapseReset()";
+        {
+            CodeStream::Scope b(os);
+
+            os << "unsigned int id = " << preSynapseResetBlkSize << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+            // Loop through synapse groups
+            unsigned int groupID = 0;
+            for(const auto &s : model.getLocalSynapseGroups()) {
+                // If this kernel requires dendritic delay
+                if(s.second.isDendriticDelayRequired()) {
+                    if(groupID > 0) {
+                        os << "else ";
+                    }
+                    os << "if(id == " << (groupID++) << ")";
+                    {
+                        CodeStream::Scope b(os);
+
+                        os << "dd_denDelayPtr" << s.first << " = (dd_denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelaySlots() << ";" << std::endl;
+                    }
+                }
+            }
+        }
+    }
 
     if (!model.getSynapseDynamicsGroups().empty()) {
         os << "#define BLOCKSZ_SYNDYN " << synDynBlkSz << endl;

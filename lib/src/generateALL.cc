@@ -125,10 +125,10 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                   const string &path,   //!< path the generated code will be deposited
                   int localHostID)      //!< ID of local host
 {
-    enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost,
-        KernelCalcSynapseDynamics, KernelCalcNeurons, KernelInit, KernelInitSparse, KernelMax };
+    enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost, KernelCalcSynapseDynamics,
+        KernelCalcNeurons, KernelInit, KernelInitSparse, KernelPreSynapseReset, KernelMax };
     const char *kernelName[KernelMax]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons",
-                                        "initializeDevice", "initializeSparseDevice"};
+                                        "initializeDevice", "initializeSparseDevice", "preSynapseReset"};
     size_t globalMem, mostGlobalMem = 0;
     int chosenDevice = 0;
 
@@ -205,6 +205,9 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 }
             }
         }
+
+        // Add
+        groupSize[KernelPreSynapseReset].push_back(model.getNumPreSynapseResetRequiredGroups());
 
 #ifdef BLOCKSZ_DEBUG
         for (int i= 0; i < KernelMax; i++) {
@@ -559,6 +562,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
         else {
             chosenDevice= GENN_PREFERENCES::defaultDevice;
         }
+        preSynapseResetBlkSize = bestBlkSz[KernelPreSynapseReset][chosenDevice];
         synapseBlkSz = bestBlkSz[KernelCalcSynapses][chosenDevice];
         learnBlkSz = bestBlkSz[KernelLearnSynapsesPost][chosenDevice];
         synDynBlkSz= bestBlkSz[KernelCalcSynapseDynamics][chosenDevice];
@@ -570,6 +574,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
     // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
     else {
         cout << "skipping block size optimisation..." << endl;
+        preSynapseResetBlkSize = GENN_PREFERENCES::preSynapseResetBlockSize;
         synapseBlkSz= GENN_PREFERENCES::synapseBlockSize;
         learnBlkSz= GENN_PREFERENCES::learningBlockSize;
         synDynBlkSz= GENN_PREFERENCES::synapseDynamicsBlockSize;
@@ -605,6 +610,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
     sm_os << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
     sm_os.close();
 
+    cout << "pre synapse reset block size: " << preSynapseResetBlkSize << endl;
     cout << "synapse block size: " << synapseBlkSz << endl;
     cout << "learn block size: " << learnBlkSz << endl;
     cout << "synapseDynamics block size: " << synDynBlkSz << endl;

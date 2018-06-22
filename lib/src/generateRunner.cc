@@ -2552,6 +2552,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void stepTimeGPU()";
     {
         CodeStream::Scope b(os);
+        if (model.isPreSynapseResetRequired()) {
+            const unsigned int preSynapseResetGridSize = ceil((float)model.getNumPreSynapseResetRequiredGroups() / preSynapseResetBlkSize);
+            os << "dim3 sRThreads(" << preSynapseResetBlkSize << ", 1);" << std::endl;
+            os << "dim3 sRGrid(" << preSynapseResetGridSize  << ", 1);" << std::endl;
+            os << std::endl;
+        }
         if (!model.getLocalSynapseGroups().empty()) {
             unsigned int synapseGridSz = model.getSynapseKernelGridSize();
             os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << synapseGridSz << std::endl;
@@ -2585,6 +2591,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         }
         os << std::endl;
         if (!model.getLocalSynapseGroups().empty()) {
+            if (model.isPreSynapseResetRequired()) {
+                os << "preSynapseReset <<< sRGrid, sRThreads >>> ();" << std::endl;
+            }
             if (!model.getSynapseDynamicsGroups().empty()) {
                 if (model.isTimingEnabled()) {
                     os << "cudaEventRecord(synDynStart);" << std::endl;
