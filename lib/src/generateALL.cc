@@ -632,6 +632,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 int main(int argc,     //!< number of arguments; expected to be 2
          char *argv[]  //!< Arguments; expected to contain the target directory for code generation.
     )
+{
     if (argc != 2) {
         cerr << "usage: generateALL <target dir>" << endl;
         exit(EXIT_FAILURE);
@@ -686,7 +687,7 @@ void finalize_model_runner_generation(NNmodel &model, const string &path, int lo
 #endif // SWIG
 #ifndef SWIG
     if (!model->isFinalized()) {
-#endif
+#endif // SWIG
         gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
     }
 #ifndef SWIG
@@ -709,6 +710,6 @@ void finalize_model_runner_generation(NNmodel &model, const string &path, int lo
 #endif
 #ifndef SWIG
     return EXIT_SUCCESS;
-#endif
+#endif // SWIG
 }
 #endif // GENERATOR_MAIN_HANDLED
