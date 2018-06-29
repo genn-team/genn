@@ -436,6 +436,20 @@ public:
     void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
     //void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
+    
+    // PUBLIC STATIC FUNCTIONS
+    //========================
+    
+    static void allocateExtraGlobalParam( void** egp, int size )
+    {
+        cudaHostAlloc( egp, size, cudaHostAllocPortable );
+    }
+
+    static void freeExtraGlobalParam( void* egp )
+    {
+        cudaFreeHost( egp );
+    }
+
 private:
     //--------------------------------------------------------------------------
     // Private members

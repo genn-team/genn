@@ -246,6 +246,34 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// NeuronModels::SpikeSourceArray
+//----------------------------------------------------------------------------
+//! Spike source array
+/*! A neuron which reads spike times from a global spikes array
+    It has 2 variables:
+
+    - \c startSpike - Index of the next spike in the global array
+    - \c endSpike   - Index of the spike next to the last in the globel array
+
+    and 1 global parameter:
+
+    - \c spikeTimes - Array with all spike times
+
+  */
+class SpikeSourceArray : public Base
+{
+public:
+    DECLARE_MODEL(NeuronModels::SpikeSourceArray, 0, 2);
+    SET_SIM_CODE("oldSpike = false;\n")
+    SET_THRESHOLD_CONDITION_CODE(
+        "$(startSpike) != $(endSpike) && "
+        "$(t) >= $(spikeTimes)[$(startSpike)]" );
+    SET_RESET_CODE( "$(startSpike)++;\n" );
+    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int"}} );
+    SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
+};
+
+//----------------------------------------------------------------------------
 // NeuronModels::Poisson
 //----------------------------------------------------------------------------
 //! Poisson neurons
