@@ -7,6 +7,8 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
+#include "sparseProjection.h"
+#include "modelSpec.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -40,7 +42,7 @@ public:
 
 
     SharedLibraryModel() : m_Library(nullptr), m_AllocateMem(nullptr),
-        m_Initialize(nullptr), m_InitializeSparse(nullptr),
+        m_Initialize(nullptr), m_InitializeModel(nullptr),
         m_StepTimeGPU(nullptr), m_StepTimeCPU(nullptr)
     {
     }
@@ -82,7 +84,7 @@ public:
         if(m_Library != nullptr) {
             m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
             m_Initialize = (VoidFunction)getSymbol("initialize");
-            m_InitializeSparse = (VoidFunction)getSymbol("init" + modelName);
+            m_InitializeModel = (VoidFunction)getSymbol("init" + modelName);
 
             m_StepTimeCPU = (VoidFunction)getSymbol("stepTimeCPU", true);
             m_StepTimeGPU = (VoidFunction)getSymbol("stepTimeGPU", true);
@@ -166,13 +168,27 @@ public:
         std::get<1>( std::get<2>( tmpPop ) )();
     }
 
-    void assignExternalPointerToVar( const std::string &popName, const int popSize, const std::string &varName, scalar** varPtr, int* n1 )
+    void assignExternalPointerToVar( const std::string &popName,
+                                     const int popSize,
+                                     const std::string &varName,
+                                     scalar** varPtr, int* n1 )
     {
       *varPtr = *( (scalar**)getSymbol( varName + popName ));
       *n1 = popSize;
     }
+
+    template <typename T>
+    void assignExternalPointer( const std::string varName,
+                                     const int varSize,
+                                     T** varPtr, int* n1 )
+    {
+      *varPtr = *( static_cast<T**>( getSymbol( varName ) ) );
+      *n1 = varSize;
+    }
     
-    void assignExternalPointerToSpikes( const std::string &popName, int popSize, bool spkCnt, unsigned int** spkPtr, int* n1 )
+    void assignExternalPointerToSpikes( const std::string &popName,
+                                        int popSize, bool spkCnt,
+                                        unsigned int** spkPtr, int* n1 )
     {
       *spkPtr = *( (unsigned int**) getSymbol( ( spkCnt ? "glbSpkCnt" : "glbSpk" ) + popName ) );
       *n1 = popSize;
@@ -212,14 +228,57 @@ public:
         m_AllocateMem();
     }
 
+    void allocateSparsePop( const std::string &popName, unsigned int nConn )
+    {
+      typedef void(*UIntFct)(unsigned int);
+      ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
+    }
+
+    void allocateExtraGlobalParam( const std::string &popName,
+                                   const std::string &paramName,
+                                   const int size )
+    {
+        auto egp = static_cast<void**>(getSymbol( paramName + popName ));
+        NNmodel::allocateExtraGlobalParam( egp, size * sizeof( scalar ) );
+    }
+
+    void freeExtraGlobalParam( const std::string &popName,
+                               const std::string &paramName )
+    {
+        auto egp = *(static_cast<void**>( getSymbol( paramName + popName )));
+        cudaFreeHost( egp );
+    }
+
     void initialize()
     {
         m_Initialize();
     }
 
-    void initializeSparse()
+    void initializeSparsePop( const std::string &popName,
+                              unsigned int* _ind, int nConn,
+                              unsigned int* _indInG, int nPre,
+                              scalar* _g, int nG )
     {
-        m_InitializeSparse();
+        auto C = (SparseProjection*) getSymbol( "C" + popName );
+        auto g = (scalar**) getSymbol( "g" + popName );
+        C->connN = nConn;
+        for ( int i = 0; i < nConn; ++i )
+        {
+            C->ind[i] = _ind[i];
+        }
+        for ( int i = 0; i < nPre; ++i )
+        {
+            C->indInG[i] = _indInG[i];
+        }
+        for ( int i = 0; i < nG; ++i )
+        {
+            (*g)[i] = _g[i];
+        }
+    }
+
+    void initializeModel()
+    {
+        m_InitializeModel();
     }
 
     void stepTimeGPU()
@@ -254,7 +313,7 @@ private:
 
     VoidFunction m_AllocateMem;
     VoidFunction m_Initialize;
-    VoidFunction m_InitializeSparse;
+    VoidFunction m_InitializeModel;
     VoidFunction m_StepTimeGPU;
     VoidFunction m_StepTimeCPU;
     
