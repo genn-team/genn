@@ -1,9 +1,10 @@
-import libgenn as lg
-import SharedLibraryModel as slm
 from os import path
 from subprocess import check_call
-import numpy as np
 import json
+import numpy as np
+import libgenn as lg
+import SharedLibraryModel as slm
+from GeNNGroups import NeuronGroup, SynapseGroup
 
 class GeNNModel( object ):
 
@@ -11,22 +12,32 @@ class GeNNModel( object ):
     This class helps to define, build and run a GeNN model from python
     """
 
-    def __init__(self, scalar, modelName = None):
+    def __init__(self, precision=None, modelName=None):
         """Init GeNNModel
-        Args:
-        scalar    -- type of scalars as string ("float" or "double")
         Keyword args:
+        scalar    -- precision as string ("float" or "double" or "long double")
+                     Defaults to float.
         modelName -- name of the model
         """
-        self._scalar = scalar
-        if scalar == 'float':
+        self._scalar = precision
+        if precision is None or precision == 'float':
+            gennFloatType = 'GENN_FLOAT'
+            self._scalar = 'float'
             self._slm = slm.SharedLibraryModel_f()
             self._npType = np.float32
-        elif scalar == 'double':
+        elif precision == 'double':
+            gennFloatType = 'GENN_DOUBLE'
             self._slm = slm.SharedLibraryModel_d()
             self._npType = np.float64
+        elif precision == 'long double':
+            gennFloatType = 'GENN_LONG_DOUBLE'
+            self._slm = slm.SharedLibraryModel_ld()
+            self._npType = np.float128
         else:
-            raise ValueError( 'unknown scalar type "{0}"'.format( scalar ) )
+            raise ValueError( 'Supported precisions are "{0}", '
+                              'but {1} was given'.format( 
+                                  'float, double and long double',
+                                  precision ) )
         
         self._built = False
         self._localhost = lg.init_cuda_mpi()
@@ -34,14 +45,12 @@ class GeNNModel( object ):
         lg.setDefaultVarMode( lg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
         lg.initGeNN()
         self._model = lg.NNmodel()
+        self._model.setPrecision( getattr(lg, gennFloatType ) )
         self._modelName = None
         if modelName is not None:
             self.modelName = modelName
         self.neuronPopulations = {}
         self.synapsePopulations = {}
-        self._supportedNeurons = list(lg.NeuronModels.getSupportedNeurons())
-        self._supportedPostsyn = list(lg.PostsynapticModels.getSupportedPostsyn())
-        self._supportedWUpdate = list(lg.WeightUpdateModels.getSupportedWUpdate())
         self._dT = 1.0
 
     @property
@@ -69,7 +78,8 @@ class GeNNModel( object ):
         self._model.setDT( dt )
 
     
-    def addNeuronPopulation(self, popName, numNeurons, neuron, paramSpace, varSpace, customNeuron=False):
+    def addNeuronPopulation( self, popName, numNeurons, neuron,
+                             paramSpace, varSpace ):
         """Add a neuron population to the GeNN model
 
         Args:
@@ -88,88 +98,20 @@ class GeNNModel( object ):
             raise Exception("GeNN model already built")
         if popName in self.neuronPopulations:
             raise ValueError( 'neuron population "{0}" already exists'.format( popName ) )
+       
+        nGroup = NeuronGroup( popName )
+        nGroup.setSize( numNeurons )
+        nGroup.setNeuron( neuron, paramSpace, varSpace )
+        nGroup.addTo( self._model )
+
+        self.neuronPopulations[popName] = nGroup
+
+        return nGroup
         
-        
-        # check whether the neuron is valid
-        if not isinstance( neuron, str ):
-            if not isinstance( neuron, lg.NeuronModels.Custom ):
-                neuronType = type( neuron ).__name__
-                if neuronType not in self._supportedNeurons:
-                    raise ValueError( 'neuron model "{0}" is not supported'.format( neuronType ) )
-            else:
-                neuronType = 'Custom'
-        else:
-            neuronType = neuron
-            if neuronType not in self._supportedNeurons:
-                raise ValueError( 'neuron model "{0}" is not supported'.format( neuronType ) )
-            else:
-                neuron = eval( 'lg.NeuronModels.' + neuron + '()' )
-
-        params = parameterSpaceToParamValues( neuron, paramSpace )
-        varIni = varSpaceToVarValues( neuron, varSpace )
-
-        # add neuron population to the GeNN model
-        eval( 'self._model.addNeuronPopulation_' + \
-                neuronType + \
-                '( popName, numNeurons, neuron, params, varIni )' ) 
-
-        # save neuron population info
-        tmpPopDescr = {
-                'NI' : neuron,
-                'nN' : numNeurons,
-                'nParams' : len( paramSpace ),
-                'vars' : {},
-                'spk' : None,
-                'spkCnt' : None
-        }
-
-        nameTypes = tmpPopDescr['NI'].getVars()
-        for i in range( nameTypes.size() ):
-            tmpPopDescr['vars'][nameTypes[i][0]] = None
-
-        self.neuronPopulations[popName] = tmpPopDescr
-
-    
-    def addSynapsePopulation(self, popName, matrixType, delaySteps, source, target,
-                wUpdateModel, wuParamSpace, wuVarSpace,
-                postsynModel, postsynParamSpace, postsynVarSpace,
-                customWeightUpdate=False, customPostsynaptic=False):
-        if self._built:
-            raise Exception("GeNN model already built")
-
-        if popName in self.synapsePopulations:
-            raise ValueError( 'synapse population "{0}" already exists'.format( popName ) )
-
-        # check whether the wUpdateModel is valid
-        if not isinstance( wUpdateModel, str ):
-            if not isinstance( wUpdateModel, lg.WeightUpdateModels.Custom ):
-                wUpdateType = type( wUpdateModel ).__name__
-                if wUpdateType not in self._supportedWUpdate:
-                    raise ValueError( 'weightUpdate model "{0}" is not supported'.format( wUpdateType ) )
-            else:
-                wUpdateType = 'Custom'
-        else:
-            wUpdateType = wUpdateModel
-            if wUpdateType not in self._supportedWUpdate:
-                raise ValueError( 'weightUpdate model "{0}" is not supported'.format( wUpdateType ) )
-            else:
-                wUpdateModel = eval( 'lg.WeightUpdateModels.' + wUpdateType + '()' )
-
-        # check whether the postsynModel is valid
-        if not isinstance( postsynModel, str ):
-            if not isinstance( postsynModel, lg.PostsynapticModels.Custom ):
-                postsynType = type( postsynModel ).__name__
-                if postsynType not in self._supportedPostsyn:
-                    raise ValueError( 'postsynaptic model "{0}" is not supported'.format( postsynType ) )
-            else:
-                postsynType = 'Custom'
-        else:
-            postsynType = postsynModel
-            if postsynType not in self._supportedPostsyn:
-                raise ValueError( 'Postsynaptic model "{0}" is not supported'.format( postsynType ) )
-            else:
-                postsynModel = eval( 'lg.PostsynapticModels.' + postsynType + '()' )
-        
+    def addSynapsePopulation( self, popName, matrixType, delaySteps,
+                              source, target,
+                              wUpdateModel, wuParamSpace, wuVarSpace,
+                              postsynModel, psParamSpace, psVarSpace ):
         """Add a synapse population to the GeNN model
 
         Args:
@@ -193,46 +135,29 @@ class GeNNModel( object ):
         customWeightUpdate -- boolean which indicates whether a custom weight update model is used. False by default
         customPostsynaptic -- boolean which indicates whether a custom postsynaptic model is used. False by default
         """
+        if self._built:
+            raise Exception("GeNN model already built")
 
-        ps_params = parameterSpaceToParamValues( postsynModel, postsynParamSpace )
-        ps_varIni = varSpaceToVarValues( postsynModel, postsynVarSpace )
+        if popName in self.synapsePopulations:
+            raise ValueError( 'synapse population "{0}" already exists'.format( popName ) )
 
-        wu_params = parameterSpaceToParamValues( wUpdateModel, wuParamSpace )
-        wu_varIni = varSpaceToVarValues( wUpdateModel, wuVarSpace )
+        sGroup = SynapseGroup( popName )
+        sGroup.setDelaySteps( delaySteps )
+        sGroup.matrixType = matrixType
+        sGroup.setConnectedPopulations(
+                source, self.neuronPopulations[source].size,
+                target, self.neuronPopulations[target].size )
+        sGroup.setWUpdate( wUpdateModel, wuParamSpace, wuVarSpace )
+        sGroup.setPostsyn( postsynModel, psParamSpace, psVarSpace )
+        sGroup.addTo( self._model )
 
-        # convert matrix type
-        mType = eval( "lg.SynapseMatrixType_" + matrixType )
+        self.synapsePopulations[popName] = sGroup
 
-        
-        # add synaptic population to the GeNN model
-        eval( 'self._model.addSynapsePopulation_' + \
-                wUpdateType + '_' + postsynType + \
-                '( popName, mType, delaySteps, source, target, ' + \
-                'wUpdateModel, wu_params, wu_varIni, ' + \
-                'postsynModel, ps_params, ps_varIni )' )
+        return sGroup
 
-        # save synaptic population info
-        tmpPopDescr = {
-                'WUI' : wUpdateModel,
-                'PSI' : postsynModel,
-                'nN'  : self.neuronPopulations[source]['nN'] * \
-                    self.neuronPopulations[target]['nN'],
-                'src' : source,
-                'trg' : target,
-                'delay' : delaySteps,
-                'mType' : matrixType,
-                'vars' : {}
-        }
-        
-        nameTypes = tmpPopDescr['WUI'].getVars()
-        for i in range( nameTypes.size() ):
-            tmpPopDescr['vars'][nameTypes[i][0]] = None
-        
-        nameTypes = tmpPopDescr['PSI'].getVars()
-        for i in range( nameTypes.size() ):
-            tmpPopDescr['vars'][nameTypes[i][0]] = None
-        
-        self.synapsePopulations[popName] = tmpPopDescr
+
+    def setConnections( self, popName, conns, g ):
+        self.synapsePopulations[popName].setConnections( conns, g )
 
 
     def initializeVarOnDevice( self, popName, varName, mask, vals ):
@@ -251,11 +176,11 @@ class GeNNModel( object ):
                 raise ValueError( 'Failed to initialize variable "{0}": \
                         population "{1}" does not exist'.format( varName, popName ) )
             else:
-                var = self.synapsePopulations[popName]['vars'][varName]
+                var = self.synapsePopulations[popName].vars[varName]
         else:
-            var = self.neuronPopulations[popName]['vars'][varName]
+            var = self.neuronPopulations[popName].vars[varName]
 
-        var[mask] = vals
+        var.view[mask] = vals
         self._slm.pushPopulationStateToDevice( popName )
 
 
@@ -273,8 +198,8 @@ class GeNNModel( object ):
         if popName not in self.neuronPopulations:
             raise ValueError( 'Failed to initialize variable "{0}": \
                     population "{1}" does not exist'.format( varName, popName ) )
-        self.neuronPopulations[popName]['spk'][mask] = targets
-        self.neuronPopulations[popName]['spkCnt'][mask] = counts
+        self.neuronPopulations[popName].spikes[mask] = targets
+        self.neuronPopulations[popName].spikeCount[mask] = counts
         self._slm.pushPopulationSpikesToDevice( popName )
 
 
@@ -288,7 +213,12 @@ class GeNNModel( object ):
 
         if self._built:
             raise Exception("GeNN model already built")
-        self._pathToModel = pathToModel 
+        self._pathToModel = pathToModel
+
+        for popName, popData in self.synapsePopulations.items():
+            if popData.sparse:
+                popData.pop.setMaxConnections( popData.size )
+
         self._model.finalize()
         lg.chooseDevice(self._model, pathToModel, self._localhost)
         lg.finalize_model_runner_generation(self._model, self._pathToModel, self._localhost)
@@ -302,7 +232,7 @@ class GeNNModel( object ):
         Args:
         pathToModel -- path to the model
         neuronPop   -- dictionary with neuron populations. Each population must have:
-                        'nN' - number of neurons
+                        'size' - number of neurons
                         'vars' - dictionary with variable names. The values of the dictionary will
                                 be overwritten with actuals variable views when the model is loaded
                         'spk' - view into internal spikes variable. Can be None. This value will be
@@ -310,13 +240,13 @@ class GeNNModel( object ):
                         'spkCnt' - view into internal spike count variable. Can be None. This value will be
                                    overwritten with actual variable view when the model is loaded.
 
-                        Example: {'Pop1' : {'nN' : 10,
+                        Example: {'Pop1' : {'size' : 10,
                                             'vars' : { 'varName1': None },
                                             'spk' : None,
                                             'spkCnt' : None }
                                  }
                         
-        synapsePop  -- dictionary with synapse populations. Each population must have: 'nN', 'vars'. sa neuronPop.
+        synapsePop  -- dictionary with synapse populations. Each population must have: 'size', 'vars'. sa neuronPop.
         """
 
         self.neuronPopulations = neuronPop
@@ -337,31 +267,142 @@ class GeNNModel( object ):
 
         self.timestep = self._slm.assignExternalPointerToTimestep()
         self.T = self._slm.assignExternalPointerToT()
+
+        spikeSourceArrays = []
         
         for popName, popData in self.neuronPopulations.items():
-            self._slm.initNeuronPopIO( popName, popData['nN'] )
-            popData['spk'] = self._slm.assignExternalPointerToSpikes( popName, popData['nN'], False )
-            popData['spkCnt'] = self._slm.assignExternalPointerToSpikes( popName, popData['nN'], True )
-            for varName, varData in popData['vars'].items():
-                popData['vars'][varName] = self._slm.assignExternalPointerToVar( popName, popData['nN'], varName )
+            self._slm.initNeuronPopIO( popName, popData.size )
+            self._slm.pullPopulationStateFromDevice( popName )
+            popData.spikes = self.assignExternalPointerPop(
+                    popName, 'glbSpk', popData.size, 'unsigned int' )
+            popData.spikeCount = self.assignExternalPointerPop(
+                    popName, 'glbSpkCnt', popData.size, 'unsigned int' )
+
+            for varName, varData in popData.vars.items():
+                varData.view = self.assignExternalPointerPop(
+                        popName, varName, popData.size, varData.type )
+                if varData.initRequired:
+                    varData.view[:] = varData.values 
+                    #  self.initializeVarOnDevice( popName, varName,
+                    #          list( range( len( varData.values ) ) ), varData.values )
+            self._slm.pushPopulationStateToDevice( popName )
+
+            if popData.isSpikeSourceArray:
+                spikeSourceArrays.append( popData )
+            for egpName, egpData in popData.extraGlobalParams.items():
+                if egpData.needsAllocation:
+                    self._slm.allocateExtraGlobalParam( popName, egpName,
+                            len( egpData.values ) )
+                egpData.view = self.assignExternalPointerPop( popName,
+                        egpName, len( egpData.values ), egpData.type[:-1] )
+                egpData.view[:] = egpData.values
+
+
 
         for popName, popData in self.synapsePopulations.items():
+
+            self._slm.initSynapsePopIO( popName, popData.size )
+            self._slm.pullPopulationStateFromDevice( popName )
             
-            self._slm.initSynapsePopIO( popName, popData['nN'] )
-            #  popData['spk'] = self._slm.assignExternalPointerToSpikes( popName, popData['nN'], False )
-            #  popData['spkCnt'] = self._slm.assignExternalPointerToSpikes( popName, popData['nN'], True )
-            for varName, varData in popData['vars'].items():
-                popData['vars'][varName] = self._slm.assignExternalPointerToVar( popName, popData['nN'], varName )
+            if popData.sparse:
+                if popData.connectionsSet:
+                    pre = self.neuronPopulations[popData.src]
+                    self._slm.allocateSparsePop( popName, popData.size )
+                    self._slm.initializeSparsePop( popName, popData.ind,
+                                                   popData.indInG, popData.g )
+
+                else:
+                    raise Exception( 'For sparse projections, the connections must be set before loading a model' )
+
+            for varName, varData in popData.vars.items():
+                varData.view = self.assignExternalPointerPop(
+                        popName, varName, popData.size, varData.type )
+                if varName == 'g' and popData.connectionsSet:
+                    continue
+                if varData.initRequired:
+                    varData.view[:] = varData.values 
+                    #  self.initializeVarOnDevice( popName, varName,
+                    #          list( range( len( varData.values ) ) ), varData.values )
+
+            if not popData.sparse:
+                if popData.connectionsSet:
+                    self.initializeVarOnDevice( popName, 'g', popData.mask, popData.g )
+
+            self._slm.pushPopulationStateToDevice( popName )
+
+        self._slm.initializeModel()
+
+        #  for ssa in spikeSourceArrays:
+        #      if len( ssa.spikeSourceArray ) > 0:
+        #          self._slm.allocateExtraGlobalParam( ssa.name, 'spikeTimes',
+        #                  len( ssa.spikeTimes ) )
+        #          ssa.spikeTimesView = self.assignExternalPointerPop( ssa.name,
+        #                  'spikeTimes', len( ssa.spikeTimes ), 'scalar' )
+        #
+        #          ssa.spikeTimesView[:] = ssa.spikeTimes
+
+    def assignExternalPointerPop( self, popName, varName, varSize, varType ):
+        """Assign a variable to an external numpy array
+        
+        Args:
+        popName -- population name
+        varName -- a name of the variable to assing, without population name
+        varSize -- the size of the variable
+        varType -- type of the variable as string. The supported types are
+                   scalar, float, double, long double, int, unsigned int.
+
+        Returns numpy array of type varType
+
+        Raises ValueError if variable type is not supported
+        """
+
+        return self.assignExternalPointer( varName + popName, varSize, varType )
 
 
-    def exportModelSpec( self, path='./' ):
-        def serialize( obj ):
-            if not isinstance( obj, str ) and not isinstance(obj, dict):
-                return obj.__dict__
-            return obj
+    def assignExternalPointer( self, varName, varSize, varType ):
+        """Assign a variable to an external numpy array
+        
+        Args:
+        varName -- a fully qualified name of the variable to assing
+        varSize -- the size of the variable
+        varType -- type of the variable as string. The supported types are
+                   scalar, float, double, long double, int, unsigned int.
 
-        print( json.dumps( {'nPop':self.neuronPopulations, 'sPop':self.synapsePopulations},
-            default=serialize) )
+        Returns numpy array of type varType
+
+        Raises ValueError if variable type is not supported
+        """
+
+        if varType == 'scalar':
+            if self._scalar == 'float':
+                return self._slm.assignExternalPointer_f( varName, varSize )
+            elif self._scalar == 'double':
+                return self._slm.assignExternalPointer_d( varName, varSize )
+            elif self._scalar == 'long double':
+                return self._slm.assignExternalPointer_ld( varName, varSize )
+
+        elif varType == 'float':
+            return self._slm.assignExternalPointer_f( varName, varSize )
+        elif varType == 'double':
+            return self._slm.assignExternalPointer_d( varName, varSize )
+        elif varType == 'long double':
+            return self._slm.assignExternalPointer_ld( varName, varSize )
+        elif varType == 'int':
+            return self._slm.assignExternalPointer_i( varName, varSize )
+        elif varType == 'unsigned int':
+            return self._slm.assignExternalPointer_ui( varName, varSize )
+        else:
+            raise ValueError( 'unsupported varType' )
+
+
+    #  def exportModelSpec( self, path='./' ):
+    #      def serialize( obj ):
+    #          if not isinstance( obj, str ) and not isinstance(obj, dict):
+    #              return obj.__dict__
+    #          return obj
+    #
+    #      print( json.dumps( {'nPop':self.neuronPopulations, 'sPop':self.synapsePopulations},
+    #          default=serialize) )
 
 
 
@@ -388,42 +429,6 @@ class GeNNModel( object ):
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
         self._slm.pullPopulationSpikesFromDevice( popName )
-
-def makeCustomParamValues( params ):
-    """This helper function converts list with params values to CustomParamValues class"""
-    return lg.NewModels.CustomParamValues( lg.DoubleVector( params ) )
-
-def makeCustomVarValues( varVals ):
-    """This helper function converts list with variable values to CustomVarValues class"""
-    return lg.NewModels.CustomVarValues( lg.DoubleVector( varVals ) )
-
-def parameterSpaceToParamValues( model, paramSpace ):
-    """Convert a paramSpace dict to ParamValues
-    
-    Args:
-    mode       -- GeNN Neuron-, Postsynaptic-, or WeightUpdateModel
-    paramSpace -- dict with parameters
-    """
-    paramNames = list( model.getParamNames() )
-    paramVals = []
-    for pn in paramNames:
-        paramVals.append( paramSpace[pn] )
-
-    return model.make_ParamValues( lg.DoubleVector( paramVals ) )
-
-def varSpaceToVarValues( model, varSpace ):
-    """Convert a iniSpace dict to VarValues
-    
-    Args:
-    model     -- GeNN Neuron-, Postsynaptic-, or WeightUpdateModel
-    varSpace  -- dict with initial values
-    """
-    varNameTypes = list( model.getVars() )
-    varVals = []
-    for vnt in varNameTypes:
-        varVals.append( varSpace[vnt[0]] )
-
-    return model.make_VarValues( lg.DoubleVector( varVals ) )
 
 
 def createCustomNeuronClass( 

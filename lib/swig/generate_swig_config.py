@@ -120,7 +120,7 @@ def generate_configs( genn_lib_path ):
                         #  neuronModels_i.write( generate_value_templates( 'NeuronModels', model_name, num_params, num_vars ) )
                 
                 neuronModels_i.write( '%inline %{\n' )
-                neuronModels_i.write( 'std::vector< std::string > getSupportedNeurons() {\nreturn std::vector<std::string>{"' + '", "'.join(supported_neurons) + '"};\n}\n' )
+                neuronModels_i.write( 'std::vector< std::string > getBuiltInNeurons() {\nreturn std::vector<std::string>{"' + '", "'.join(supported_neurons) + '"};\n}\n' )
 
                 neuronModels_i.write( '%}\n' )
 
@@ -141,7 +141,7 @@ def generate_configs( genn_lib_path ):
                         #  postsynModels_i.write( generate_value_templates( 'PostsynapticModels', model_name, num_params, num_vars ) )
 
                 postsynModels_i.write( '%inline %{\n' )
-                postsynModels_i.write( 'std::vector< std::string > getSupportedPostsyn() {\nreturn std::vector<std::string>{"' + '", "'.join(postsyn_models) + '"};\n}\n' )
+                postsynModels_i.write( 'std::vector< std::string > getBuiltInPostsyn() {\nreturn std::vector<std::string>{"' + '", "'.join(postsyn_models) + '"};\n}\n' )
                 postsynModels_i.write( '%}\n' )
 
                 wupdate_models = []
@@ -161,7 +161,7 @@ def generate_configs( genn_lib_path ):
                         #  wUpdateModels_i.write( generate_value_templates( 'WeightUpdateModels', model_name, num_params, num_vars ) )
 
                 wUpdateModels_i.write( '%inline %{\n' )
-                wUpdateModels_i.write( 'std::vector< std::string > getSupportedWUpdate() {\nreturn std::vector<std::string>{"' + '", "'.join(wupdate_models) + '"};\n}\n' )
+                wUpdateModels_i.write( 'std::vector< std::string > getBuiltInWUpdate() {\nreturn std::vector<std::string>{"' + '", "'.join(wupdate_models) + '"};\n}\n' )
                 wUpdateModels_i.write( '%}\n' )
 
                 postsyn_models.append( 'Custom' )
