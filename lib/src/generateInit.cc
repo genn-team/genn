@@ -424,6 +424,12 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                 os << "// synapse group " << s.first << std::endl;
                 PaddedSizeScope p(os, numSrcNeurons, initBlkSz, startThread);
 
+                // If synapse group has ragged connectibity and requires synapse dynamics
+                if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) && model.isSynapseGroupDynamicsRequired(s.first)) {
+                    // **TODO**
+                    assert(false);
+                }
+
                 // If synapse group has ragged connectibity and requires postsynaptic learning
                 if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) && model.isSynapseGroupPostLearningRequired(s.first)) {
                     // If there are more target neurons than source neurons
@@ -1071,11 +1077,6 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                 }
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                    if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                        os << "initializeRaggedArraySynRemap(C" << s.first << ", ";
-                        os << "d_synRemap" << s.first << ");" << std::endl;
-                    }
-                    
                     // If sparse connectivity was initialised on host, upload to device
                     // **TODO** this may well be the wrong check i.e. zero copy
                     if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())) {
@@ -1084,6 +1085,10 @@ void genInit(const NNmodel &model,      //!< Model description
                         os << "d_rowLength" << s.first << ", ";
                         os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
 
+                        if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                            os << "initializeRaggedArraySynRemap(C" << s.first << ", ";
+                            os << "d_synRemap" << s.first << ");" << std::endl;
+                        }
                         if (model.isSynapseGroupPostLearningRequired(s.first)) {
                             os << "initializeRaggedArrayRev(C" << s.first << ", ";
                             os << "d_colLength" << s.first << ",";
