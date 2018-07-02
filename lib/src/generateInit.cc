@@ -653,7 +653,7 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                     if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                                         CodeStream::Scope b(os);
                                         os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                                cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                                                                  cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
                                     }
                                 }
 
@@ -1071,9 +1071,11 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                 }
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                    // **TODO**
-                    assert(!model.isSynapseGroupDynamicsRequired(s.first));
-
+                    if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                        os << "initializeRaggedArraySynRemap(C" << s.first << ", ";
+                        os << "d_synRemap" << s.first << ");" << std::endl;
+                    }
+                    
                     // If sparse connectivity was initialised on host, upload to device
                     // **TODO** this may well be the wrong check i.e. zero copy
                     if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())) {

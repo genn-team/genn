@@ -186,6 +186,21 @@ This is needed if SynapseDynamics accesses pre-synaptic variables.
 
 void createPreIndices(unsigned int preN, unsigned int postN, SparseProjection *C);
 
+template<typename PostIndexType>
+void createPreIndices(unsigned int preN, unsigned int, RaggedProjection<PostIndexType> * C)
+{
+    unsigned int &synRemapCount = C->synRemap[0];
+    unsigned int *synRemap = &C->synRemap[1];
+    // Loop through presynaptic neurons
+    synRemapCount  = 0;
+    for (unsigned int i = 0; i < preN; i++) {
+        // Loop through synapses in corresponding matrix row
+        for(unsigned int j = 0; j < C->rowLength[i]; j++) {
+            synRemap[synRemapCount++] = (i * C->maxRowLength) + j;
+        }
+    }
+}
+
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief Function for initializing conductance array indices for sparse matrices on the GPU
@@ -217,6 +232,14 @@ void initializeRaggedArray(const RaggedProjection<PostIndexType> &C, PostIndexTy
 void initializeSparseArrayRev(const SparseProjection &C,  unsigned int *dRevInd, unsigned int *dRevIndInG, unsigned int *dRemap, unsigned int postN);
 
 //--------------------------------------------------------------------------
+/*! \brief Function for initializing reversed conductance arrays presynaptic indices for sparse matrices on  the GPU
+(by copying the values from the host)
+ */
+//--------------------------------------------------------------------------
+
+void initializeSparseArrayPreInd(const SparseProjection &C,  unsigned int * dPreInd);
+
+//--------------------------------------------------------------------------
 /*! \brief Function for initializing reversed conductance array indices for sparse matrices on the GPU
 (by copying the values from the host)
  */
@@ -233,6 +256,9 @@ void initializeRaggedArrayRev(const RaggedProjection<PostIndexType> &C, unsigned
 (by copying the values from the host)
  */
 //--------------------------------------------------------------------------
-
-void initializeSparseArrayPreInd(const SparseProjection &C,  unsigned int *dPreInd);
-#endif
+template<typename PostIndexType>
+void initializeRaggedArraySynRemap(const RaggedProjection<PostIndexType> &C,  unsigned int *dSynRemap)
+{
+    CHECK_CUDA_ERRORS(cudaMemcpy(dSynRemap, C.synRemap, (C.synRemap[0] + 1) * sizeof(unsigned int), cudaMemcpyHostToDevice));
+}
+#endif  // CPU_ONLY

@@ -509,13 +509,17 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                 os << "for (int j = 0; j < C" << s.first << ".rowLength[i]; j++)";
                                 {
                                     CodeStream::Scope b(os);
+
+                                    // Calculate index of synapse in arrays
+                                    os << "const int n = (i * " + std::to_string(sg->getMaxConnections()) + ") + j;" << std::endl;
+
                                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                                         // name substitute synapse var names in synapseDynamics code
                                         // **TODO** seperate stride from max connections
-                                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[(ipre * " + std::to_string(sg->getMaxConnections()) + ") + j]");
+                                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[n]");
                                     }
 
-                                    const std::string postIdx = "C" + s.first + ".ind[(i * " + to_string(sg->getMaxConnections()) + ") + j";
+                                    const std::string postIdx = "C" + s.first + ".ind[n]";
 
                                     substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
 
