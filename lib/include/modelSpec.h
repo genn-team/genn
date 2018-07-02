@@ -131,6 +131,7 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
+    //! Return number of synapse groups which require a presynaptic reset kernel to be run
     unsigned int getNumPreSynapseResetRequiredGroups() const;
 
     //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
