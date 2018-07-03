@@ -180,11 +180,14 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> functions,
-    const std::string &ftype){
+    const std::string &ftype)
+{
     value_substitutions(eCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
     neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix);
+    substitute(eCode, "$(id_pre)", preIdx);
+    substitute(eCode, "$(id_post)", postIdx);
 
     functionSubstitutions(eCode, ftype, functions);
     eCode= ensureFtype(eCode, ftype);
@@ -212,6 +215,8 @@ void StandardSubstitutions::weightUpdateSim(
     name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix);
+    substitute(wCode, "$(id_pre)", preIdx);
+    substitute(wCode, "$(id_post)", postIdx);
 
     functionSubstitutions(wCode, ftype, functions);
     wCode= ensureFtype(wCode, ftype);
@@ -242,6 +247,8 @@ void StandardSubstitutions::weightUpdateDynamics(
     name_substitutions(SDcode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
     substitute(SDcode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(SDcode, sg, preIdx, postIdx, devPrefix);
+    substitute(SDcode, "$(id_pre)", preIdx);
+    substitute(SDcode, "$(id_post)", postIdx);
 
     functionSubstitutions(SDcode, ftype, functions);
     SDcode= ensureFtype(SDcode, ftype);
@@ -262,6 +269,8 @@ void StandardSubstitutions::weightUpdatePostLearn(
     value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
+    substitute(code, "$(id_pre)", code);
+    substitute(code, "$(id_post)", code);
 
     // presynaptic neuron variables and parameters
     neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix);
