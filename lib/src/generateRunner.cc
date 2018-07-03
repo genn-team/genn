@@ -203,9 +203,11 @@ void genHostSpikeQueueAdvance(CodeStream &os, const NNmodel &model, int localHos
 
 void genHostDenDelayAdvance(CodeStream &os, const NNmodel &model)
 {
-	for(const auto &s : model.getLocalSynapseGroups()) {
-        if(s.second.isDendriticDelayRequired()) {
-            os << "denDelayPtr" << s.first << " = (denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelaySlots() << ";" << std::endl;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        // Loop through incoming synaptic populations
+        for(const auto &m : n.second.getMergedInSyn()) {
+            const auto *sg = m.first;
+            os << "denDelayPtr" << sg->getName() << " = (denDelayPtr" << sg->getName() << " + 1) % " << sg->getMaxDendriticDelaySlots() << ";" << std::endl;
         }
     }
 }

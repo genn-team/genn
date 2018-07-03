@@ -163,7 +163,7 @@ void generatePreParallelisedSparseCode(
 
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
-                functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getTargetMergedPSMName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
             }
             // Otherwise
             else {
@@ -297,7 +297,7 @@ void generatePostParallelisedCode(
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                    functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getTargetMergedPSMName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
                 }
                 // Otherwise
                 else {
@@ -811,19 +811,24 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
             os << "unsigned int id = " << preSynapseResetBlkSize << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-            // Loop through synapse groups
+            // Loop through neuron groups
             unsigned int groupID = 0;
-            for(const auto &s : model.getLocalSynapseGroups()) {
-                // If this kernel requires dendritic delay
-                if(s.second.isDendriticDelayRequired()) {
-                    if(groupID > 0) {
-                        os << "else ";
-                    }
-                    os << "if(id == " << (groupID++) << ")";
-                    {
-                        CodeStream::Scope b(os);
+            for(const auto &n : model.getLocalNeuronGroups()) {
+                // Loop through incoming synaptic populations
+                for(const auto &m : n.second.getMergedInSyn()) {
+                    const auto *sg = m.first;
 
-                        os << "dd_denDelayPtr" << s.first << " = (dd_denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelaySlots() << ";" << std::endl;
+                     // If this kernel requires dendritic delay
+                    if(sg->isDendriticDelayRequired()) {
+                        if(groupID > 0) {
+                            os << "else ";
+                        }
+                        os << "if(id == " << (groupID++) << ")";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << "dd_denDelayPtr" << sg->getName() << " = (dd_denDelayPtr" << sg->getName() << " + 1) % " << sg->getMaxDendriticDelaySlots() << ";" << std::endl;
+                        }
                     }
                 }
             }

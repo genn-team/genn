@@ -307,10 +307,10 @@ std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, 
     assert(isDendriticDelayRequired());
 
     if(offset.empty()) {
-        return "(" + devPrefix + "denDelayPtr" + getName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(" + devPrefix + "denDelayPtr" + getTargetMergedPSMName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
     else {
-        return "(((" + devPrefix + "denDelayPtr" + getName() + " + " + offset + ") % " + to_string(getMaxDendriticDelaySlots()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(((" + devPrefix + "denDelayPtr" + getTargetMergedPSMName() + " + " + offset + ") % " + to_string(getMaxDendriticDelaySlots()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
 }
 
