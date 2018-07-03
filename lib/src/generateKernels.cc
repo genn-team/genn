@@ -176,7 +176,7 @@ void generatePreParallelisedSparseCode(
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
-                    substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
+                    substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getTargetMergedPSMName() + "[ipost]");
                 }
             }
 
@@ -309,7 +309,7 @@ void generatePostParallelisedCode(
                         }
                         else {
                             substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
-                            substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
+                            substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getTargetMergedPSMName() + "[ipost]");
                         }
                     }
                     else {
@@ -549,7 +549,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 }
                 os << std::endl;
 
-                if (n->second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
+                if (!n->second.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != string::npos)) {
                     os << model.getPrecision() << " Isyn = 0;" << std::endl;
                 }
 
@@ -558,7 +558,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
                 }
 
-                for(const auto *sg : n->second.getInSyn()) {
+                 for(const auto &m : n->second.getMergedInSyn()) {
+                    const auto *sg = m.first;
                     const auto *psm = sg->getPSModel();
 
                     os << "// pull inSyn values in a coalesced access" << std::endl;
@@ -670,10 +671,11 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 // store the defined parts of the neuron state into the global state variables dd_V etc
                 StandardGeneratedSections::neuronLocalVarWrite(os, n->second, nmVars, "dd_", localID);
 
-                if (!n->second.getInSyn().empty()) {
+                if (!n->second.getMergedInSyn().empty()) {
                     os << "// the post-synaptic dynamics" << std::endl;
                 }
-                for(const auto *sg : n->second.getInSyn()) {
+                for(const auto &m : n->second.getMergedInSyn()) {
+                    const auto *sg = m.first;
                     const auto *psm = sg->getPSModel();
 
                     string pdCode = psm->getDecayCode();
@@ -921,7 +923,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
 
                                 substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
-                                substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
+                                substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision());
@@ -943,7 +945,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 const std::string postIdx = localID +"%" + to_string(sg->getTrgNeuronGroup()->getNumNeurons());
                                 substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
-                                substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
+                                substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
@@ -1045,7 +1047,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "linSyn = dd_inSyn" << s->first << "[" << localID << "];" << std::endl;
+                        os << "linSyn = dd_inSyn" << s->second.getTargetMergedPSMName() << "[" << localID << "];" << std::endl;
                     }
                 }
                 // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
@@ -1054,7 +1056,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (threadIdx.x < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "shLg[threadIdx.x] = dd_inSyn" << s->first << "[threadIdx.x];"<< std::endl;
+                        os << "shLg[threadIdx.x] = dd_inSyn" << s->second.getTargetMergedPSMName() << "[threadIdx.x];"<< std::endl;
                     }
                     os << "__syncthreads();" << std::endl;
                 }
@@ -1098,7 +1100,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_inSyn" << s->first << "[" << localID << "] = linSyn;" << std::endl;
+                        os << "dd_inSyn" << s->second.getTargetMergedPSMName() << "[" << localID << "] = linSyn;" << std::endl;
                     }
                 }
                 // Otherwise, if we have been accumulating into shared memory, write value back to global memory
@@ -1108,7 +1110,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (threadIdx.x < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_inSyn" << s->first << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
+                        os << "dd_inSyn" << s->second.getTargetMergedPSMName() << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
                     }
                 }
 

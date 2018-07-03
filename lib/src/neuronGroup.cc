@@ -87,6 +87,66 @@ void NeuronGroup::calcSizes(unsigned int blockSize,  unsigned int &idStart, unsi
     m_PaddedIDRange.second = paddedIDStart;
 }
 
+void NeuronGroup::mergeIncomingPSM()
+{
+    // Create a copy of this neuron groups incoming synapse populations
+    std::vector<SynapseGroup*> inSyn = getInSyn();
+
+    std::cout << "Neuron group: " << getName() << std::endl;
+    do
+    {
+        // Remove last element from vector
+        SynapseGroup *a = inSyn.back();
+        inSyn.pop_back();
+
+        // Add A to vector of merged incoming synape populations - initially only merged with itself
+        m_MergedInSyn.emplace_back(a, std::vector<SynapseGroup*>{a});
+
+        // As such as a's target merged PSM name to its own
+        a->setTargetMergedPSMName(a->getName());
+
+        std::cout << "\tIncoming synapse group: " << a->getName() << std::endl;
+
+        // Continue if postsynaptic model has any variables
+        if(!a->getPSVarInitialisers().empty()) {
+            continue;
+        }
+
+        // Cache useful bits from A
+        const auto &aParamsBegin = a->getPSParams().cbegin();
+        const auto &aParamsEnd = a->getPSParams().cend();
+        const auto &aDerivedParamsBegin = a->getPSDerivedParams().cbegin();
+        const auto &aDerivedParamsEnd = a->getPSDerivedParams().cend();
+        const auto aModelTypeHash = typeid(a->getPSModel()).hash_code();
+
+
+        // Loop through remainder of incoming synapse populations
+        for(auto b = inSyn.begin(); b != inSyn.end();) {
+            // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
+            if(typeid((*b)->getPSModel()).hash_code() == aModelTypeHash
+                && a->getInSynVarMode() == (*b)->getInSynVarMode()
+                && std::equal(aParamsBegin, aParamsEnd, (*b)->getPSParams().cbegin())
+                && std::equal(aDerivedParamsBegin, aDerivedParamsEnd, (*b)->getPSDerivedParams().cbegin()))
+            {
+                std::cout << "\t\tIs compatible with incoming synapse group: " << (*b)->getName() << std::endl;
+
+                // Add to list of merged synapses
+                m_MergedInSyn.back().second.push_back(*b);
+
+                // Set b to target a's psm
+                (*b)->setTargetMergedPSMName(a->getName());
+
+                // Remove from temporary vector
+                b = inSyn.erase(b);
+            }
+            // Otherwise, advance to next synapse group
+            else {
+                ++b;
+            }
+        }
+    } while(!inSyn.empty());
+}
+
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
     // Return flag corresponding to variable

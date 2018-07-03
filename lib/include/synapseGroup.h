@@ -44,6 +44,8 @@ public:
     void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
+    void setTargetMergedPSMName(const std::string &targetMergedPSMName){ m_TargetMergedPSMName = targetMergedPSMName; }
+
     //!< Function to enable the use of zero-copied memory for a particular weight update model state variable (deprecated use SynapseGroup::setWUVarMode):
     /*! May improve IO performance at the expense of kernel performance */
     void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
@@ -140,6 +142,8 @@ public:
     const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
     const std::vector<NewModels::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
+
+    const std::string &getTargetMergedPSMName() const{ return m_TargetMergedPSMName; }
 
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
@@ -271,4 +275,7 @@ private:
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
     std::vector<VarMode> m_PSVarMode;
+
+    //! Because
+    std::string m_TargetMergedPSMName;
 };

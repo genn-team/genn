@@ -661,6 +661,33 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     }
     os << std::endl;
 
+    //----------------------------------
+    // HOST AND DEVICE POSTSYNAPTIC VARIABLES
+
+     os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// postsynaptic variables" << std::endl;
+    os << std::endl;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        // Loop through incoming synaptic populations
+        for(const auto &m : n.second.getMergedInSyn()) {
+            const auto *sg = m.first;
+
+            extern_variable_def(os, model.getPrecision() + " *", "inSyn" + sg->getName(), sg->getInSynVarMode());
+
+            if (sg->isDendriticDelayRequired()) {
+                extern_variable_def(os, model.getPrecision() + " *", "denDelay" + sg->getName(), sg->getDendriticDelayVarMode());
+                os << varExportPrefix << " unsigned int denDelayPtr" << sg->getName() << ";" << std::endl;
+            }
+
+            if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                for(const auto &v : sg->getPSModel()->getVars()) {
+                    extern_variable_def(os, v.second + " *", v.first + sg->getName(), sg->getPSVarMode(v.first));
+                }
+            }
+        }
+    }
+    os << std::endl;
+
 
     //----------------------------------
     // HOST AND DEVICE SYNAPSE VARIABLES
@@ -670,13 +697,6 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << std::endl;
 
     for(const auto &s : model.getLocalSynapseGroups()) {
-        extern_variable_def(os, model.getPrecision() + " *", "inSyn" + s.first, s.second.getInSynVarMode());
-
-        if (s.second.isDendriticDelayRequired()) {
-            extern_variable_def(os, model.getPrecision() + " *", "denDelay" + s.first, s.second.getDendriticDelayVarMode());
-            os << varExportPrefix << " unsigned int denDelayPtr" << s.first << ";" << std::endl;
-        }
-
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             extern_variable_def(os, "uint32_t *", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
@@ -694,12 +714,6 @@ void genDefinitions(const NNmodel &model,   //!< Model description
             }
         }
         
-        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            for(const auto &v : s.second.getPSModel()->getVars()) {
-                extern_variable_def(os, v.second + " *", v.first + s.first, s.second.getPSVarMode(v.first));
-            }
-        }
-
         for(auto const &p : s.second.getWUModel()->getExtraGlobalParams()) {
             os << "extern " << p.second << " " << p.first + s.first << ";" << std::endl;
         }
@@ -1239,6 +1253,34 @@ void genRunner(const NNmodel &model,    //!< Model description
     }
     os << std::endl;
 
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// postsynaptic variables" << std::endl;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        // Loop through incoming synaptic populations
+        for(const auto &m : n.second.getMergedInSyn()) {
+            const auto *sg = m.first;
+
+            variable_def(os, model.getPrecision() + " *", "inSyn" + sg->getName(), sg->getInSynVarMode());
+
+            if(sg->isDendriticDelayRequired()) {
+                variable_def(os, model.getPrecision() + " *", "denDelay" + sg->getName(), sg->getDendriticDelayVarMode());
+
+                os << "unsigned int denDelayPtr" << sg->getName() << ";" << std::endl;
+#ifndef CPU_ONLY
+                os << "__device__ volatile unsigned int dd_denDelayPtr" << sg->getName() << ";" << std::endl;
+#endif
+            }
+
+            // If postsynaptic model variables should be individual
+            if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                for(const auto &v : sg->getPSModel()->getVars()) {
+                    variable_def(os, v.second+" *", v.first + sg->getName(), sg->getPSVarMode(v.first));
+                }
+            }
+
+        }
+    }
+    os << std::endl;
 
     //----------------------------------
     // HOST AND DEVICE SYNAPSE VARIABLES
@@ -1249,18 +1291,6 @@ void genRunner(const NNmodel &model,    //!< Model description
 
    for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
-        const auto *psm = s.second.getPSModel();
-
-        variable_def(os, model.getPrecision() + " *", "inSyn" + s.first, s.second.getInSynVarMode());
-
-        if(s.second.isDendriticDelayRequired()) {
-            variable_def(os, model.getPrecision() + " *", "denDelay" + s.first, s.second.getDendriticDelayVarMode());
-
-            os << "unsigned int denDelayPtr" << s.first << ";" << std::endl;
-#ifndef CPU_ONLY
-            os << "__device__ volatile unsigned int dd_denDelayPtr" << s.first << ";" << std::endl;
-#endif
-        }
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
@@ -1315,12 +1345,6 @@ void genRunner(const NNmodel &model,    //!< Model description
         if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
             for(const auto &v : wu->getVars()) {
                 variable_def(os, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
-            }
-        }
-        // If postsynaptic model variables should be individual
-        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            for(const auto &v : psm->getVars()) {
-                variable_def(os, v.second+" *", v.first + s.first, s.second.getPSVarMode(v.first));
             }
         }
 
@@ -1526,23 +1550,40 @@ void genRunner(const NNmodel &model,    //!< Model description
                 mem += allocate_variable(os, v.second, v.first + n.first, n.second.getVarMode(v.first),
                                         n.second.isVarQueueRequired(v.first) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
             }
+
             os << std::endl;
+        }
+
+        // ALLOCATE POSTSYNAPTIC VARIABLES
+        for(const auto &n : model.getLocalNeuronGroups()) {
+            // Loop through incoming synaptic populations
+            for(const auto &m : n.second.getMergedInSyn()) {
+                const auto *sg = m.first;
+
+                // Allocate buffer to hold input coming from this synapse population
+                mem += allocate_variable(os, model.getPrecision(), "inSyn" + sg->getName(), sg->getInSynVarMode(),
+                                         sg->getTrgNeuronGroup()->getNumNeurons());
+
+                // Allocate buffer to delay input coming from this synapse population
+                if(sg->isDendriticDelayRequired()) {
+                    mem += allocate_variable(os, model.getPrecision(), "denDelay" + sg->getName(), sg->getDendriticDelayVarMode(),
+                                             sg->getMaxDendriticDelaySlots() * sg->getTrgNeuronGroup()->getNumNeurons());
+                }
+
+                if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                    const size_t size = sg->getTrgNeuronGroup()->getNumNeurons();
+
+                    for(const auto &v : sg->getPSModel()->getVars()) {
+                        mem += allocate_variable(os, v.second, v.first + sg->getName(), sg->getPSVarMode(v.first), size);
+                    }
+                }
+            }
         }
 
         // ALLOCATE SYNAPSE VARIABLES
         for(const auto &s : model.getLocalSynapseGroups()) {
             const auto *wu = s.second.getWUModel();
-            const auto *psm = s.second.getPSModel();
 
-            // Allocate buffer to hold input coming from this synapse population
-            mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, s.second.getInSynVarMode(),
-                                     s.second.getTrgNeuronGroup()->getNumNeurons());
-
-            // Allocate buffer to delay input coming from this synapse population
-            if(s.second.isDendriticDelayRequired()) {
-                mem += allocate_variable(os, model.getPrecision(), "denDelay" + s.first, s.second.getDendriticDelayVarMode(),
-                                         s.second.getMaxDendriticDelaySlots() * s.second.getTrgNeuronGroup()->getNumNeurons());
-            }
             // If connectivity is defined using a bitmask, allocate memory for bitmask
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = (s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
@@ -1602,14 +1643,6 @@ void genRunner(const NNmodel &model,    //!< Model description
 
                 for(const auto &v : wu->getVars()) {
                     mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
-                }
-            }
-
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                const size_t size = s.second.getTrgNeuronGroup()->getNumNeurons();
-
-                for(const auto &v : psm->getVars()) {
-                    mem += allocate_variable(os, v.second, v.first + s.first, s.second.getPSVarMode(v.first), size);
                 }
             }
             os << std::endl;
@@ -1747,14 +1780,28 @@ void genRunner(const NNmodel &model,    //!< Model description
             }
         }
 
+        // FREE POSTSYNAPTIC VARIABLES
+        for(const auto &n : model.getLocalNeuronGroups()) {
+            // Loop through incoming synaptic populations
+            for(const auto &m : n.second.getMergedInSyn()) {
+                const auto *sg = m.first;
+
+                free_variable(os, "inSyn" + sg->getName(), sg->getInSynVarMode());
+
+                if(sg->isDendriticDelayRequired()) {
+                    free_variable(os, "denDelay" + sg->getName(), sg->getDendriticDelayVarMode());
+                }
+
+                if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                    for(const auto &v : sg->getPSModel()->getVars()) {
+                        free_variable(os, v.first + sg->getName(), sg->getPSVarMode(v.first));
+                    }
+                }
+            }
+        }
+
         // FREE SYNAPSE VARIABLES
         for(const auto &s : model.getLocalSynapseGroups()) {
-            free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
-
-            if(s.second.isDendriticDelayRequired()) {
-                free_variable(os, "denDelay" + s.first, s.second.getDendriticDelayVarMode());
-            }
-
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                 os << "C" << s.first << ".connN= 0;" << std::endl;
 
@@ -1807,11 +1854,6 @@ void genRunner(const NNmodel &model,    //!< Model description
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : s.second.getWUModel()->getVars()) {
                     free_variable(os, v.first + s.first, s.second.getWUVarMode(v.first));
-                }
-            }
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                for(const auto &v : s.second.getPSModel()->getVars()) {
-                    free_variable(os, v.first + s.first, s.second.getPSVarMode(v.first));
                 }
             }
         }
@@ -2208,6 +2250,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
 
             // If synapse input variables can be pushed and pulled add copy code
+            // **TODO** sensible merging behaviour
             if(canPushPullVar(s.second.getInSynVarMode())) {
                 // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
                 if(s.second.getInSynVarMode() & VarInit::DEVICE) {
@@ -2223,6 +2266,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
 
             // If dendritic delay variables can be pushed and pulled add copy code
+            // **TODO** sensible merging behaviour
             if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
                 // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
                 if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
@@ -2374,12 +2418,14 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << std::endl;
             }
 
+            // **TODO** sensible merging behaviour
             if(canPushPullVar(s.second.getInSynVarMode())) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
                 os << ", d_inSyn" << s.first;
                 os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
 
+            // **TODO** sensible merging behaviour
             if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(denDelay" << s.first;
                 os << ", d_denDelay" << s.first;

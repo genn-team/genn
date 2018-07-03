@@ -96,6 +96,9 @@ public:
     void initDerivedParams(double dt);
     void calcSizes(unsigned int blockSize, unsigned int &idStart, unsigned int &paddedIDStart);
 
+    //! Merge incoming postsynaptic models
+    void mergeIncomingPSM();
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -115,6 +118,7 @@ public:
 
     //! Gets pointers to all synapse groups which provide input to this neuron group
     const std::vector<SynapseGroup*> &getInSyn() const{ return m_InSyn; }
+    const std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> &getMergedInSyn() const{ return m_MergedInSyn; }
 
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
@@ -202,6 +206,7 @@ private:
     std::vector<NewModels::VarInit> m_VarInitialisers;
     std::vector<SynapseGroup*> m_InSyn;
     std::vector<SynapseGroup*> m_OutSyn;
+    std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> m_MergedInSyn;
     bool m_SpikeTimeRequired;
     bool m_TrueSpikeRequired;
     bool m_SpikeEventRequired;

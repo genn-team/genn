@@ -139,7 +139,7 @@ void generate_process_presynaptic_events_code_CPU(
                 else {
                     os << ftype << " addtoinSyn;" << std::endl;
                     substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
-                    substitute(wCode, "$(inSyn)", "inSyn" + sgName + "[ipost]");
+                    substitute(wCode, "$(inSyn)", "inSyn" + sg.getTargetMergedPSMName() + "[ipost]");
                 }
 
                 substitute(wCode, "$(t)", "t");
@@ -262,7 +262,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     }
                     os << std::endl;
 
-                    if (n.second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
+                    if (!n.second.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != string::npos)) {
                         os << model.getPrecision() << " Isyn = 0;" << std::endl;
                     }
 
@@ -271,7 +271,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                         os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
                     }
 
-                    for(const auto *sg : n.second.getInSyn()) {
+                    for(const auto &m : n.second.getMergedInSyn()) {
+                        const auto *sg = m.first;
                         const auto *psm = sg->getPSModel();
 
                         // If dendritic delay is required
@@ -402,7 +403,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     // store the defined parts of the neuron state into the global state variables V etc
                     StandardGeneratedSections::neuronLocalVarWrite(os, n.second, nmVars, "", "n");
 
-                    for(const auto *sg : n.second.getInSyn()) {
+                    for(const auto &m : n.second.getMergedInSyn()) {
+                        const auto *sg = m.first;
                         const auto *psm = sg->getPSModel();
 
                         string pdCode = psm->getDecayCode();
@@ -515,7 +517,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                 }
 
                                 const std::string postIdx = "C" + s.first + ".ind[n]";
-                                substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
+                                substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             "C" + s.first + ".preInd[n]", postIdx, "",
@@ -542,7 +544,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                     const std::string postIdx = "C" + s.first + ".ind[n]";
 
-                                    substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
+                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
 
                                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                                 "i", postIdx, "", cpuFunctions, model.getPrecision());
@@ -561,10 +563,10 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     // substitute initial values as constants for synapse var names in synapseDynamics code
                                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                                         name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd,
-                                                        s.first + "[(i * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + j]");
+                                                           s.first + "[(i * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + j]");
                                     }
 
-                                    substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[j]");
+                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[j]");
 
                                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                                 "i","j", "", cpuFunctions, model.getPrecision());
