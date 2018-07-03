@@ -2767,7 +2767,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     // Start with correct NVCC flags to build shared library or object file as appropriate
     // **NOTE** -c = compile and assemble, don't link
     string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "-shared -fPIC" : "-c";
-    cxxFlags += " -DCPU_ONLY -std=c++11";
+    cxxFlags += " -DCPU_ONLY -std=c++11 -MMD -MP";
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
     if (GENN_PREFERENCES::optimizeCode) {
         cxxFlags += " -O3 -ffast-math";
@@ -2790,27 +2790,34 @@ void genMakefile(const NNmodel &model, //!< Model description
     if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "all: librunner.so" << endl;
         os << endl;
-        os << "librunner.so: runner.cc" << endl;
-        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << "-include librunner.d";
+        os << endl;
+        os << "librunner.so: runner.cc librunner.d" << endl;
+        // **HACK** for some reason GCC is only generating dependencies for the LAST source file
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) $(GENN_PATH)/lib/src/sparseUtils.cc runner.cc -o librunner.so" << endl;
+        os << endl;
+        os << "%.d: ;" << endl;
         os << endl;
         os << "clean:" << endl;
-        os << "\trm -f librunner.so" << endl;
+        os << "\trm -f librunner.so librunner.d" << endl;
     }
     else {
         os << "all: runner.o" << endl;
         os << endl;
-        os << "runner.o: runner.cc" << endl;
+        os << "-include runner.d";
+        os << endl;
+        os << "runner.o: runner.cc runner.d" << endl;
         os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
         os << endl;
+        os << "%.d: ;" << endl;
+        os << endl;
         os << "clean:" << endl;
-        os << "\trm -f runner.o" << endl;
+        os << "\trm -f runner.o runner.d" << endl;
     }
-#else
-    // Start with correct NVCC flags to build shared library or object file as appropriate
-    // **NOTE** -c = compile and assemble, don't link
-    string nvccFlags = GENN_PREFERENCES::buildSharedLibrary ? "--shared --compiler-options '-fPIC'" : "-c";
 
-    nvccFlags += " -std=c++11 -x cu -arch sm_";
+#else
+    // Build NVCC compile flags string
+    string nvccFlags = "-std=c++11 -x cu -arch sm_";
     nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
     if (GENN_PREFERENCES::optimizeCode) {
@@ -2821,6 +2828,9 @@ void genMakefile(const NNmodel &model, //!< Model description
     }
     if (GENN_PREFERENCES::showPtxInfo) {
         nvccFlags += " -Xptxas \"-v\"";
+    }
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        nvccFlags += " --compiler-options '-fPIC'";
     }
 
     os << endl;
@@ -2838,20 +2848,33 @@ void genMakefile(const NNmodel &model, //!< Model description
     if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "all: librunner.so" << endl;
         os << endl;
-        os << "librunner.so: runner.cc" << endl;
-        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << "-include librunner.d";
+        os << endl;
+        os << "librunner.d: runner.cc" << endl;
+        os << "\t$(NVCC) -M $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc 1> librunner.d" << endl;
+        // **HACK** for reasons known only to itself, NVCC won't create dependencies for targets
+        // called anything other than runner.o. Therefore we use sed to fix up the first line of the dependency file
+        os << "\tsed -i \"1s/runner.o/librunner.so/\" librunner.d" << endl;
+        os << endl;
+        os << "librunner.so: runner.cc librunner.d" << endl;
+        os << "\t$(NVCC) --shared $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
         os << endl;
         os << "clean:" << endl;
-        os << "\trm -f librunner.so" << endl;
+        os << "\trm -f librunner.so runner.d" << endl;
     }
     else {
         os << "all: runner.o" << endl;
         os << endl;
-        os << "runner.o: runner.cc" << endl;
-        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << "-include runner.d";
+        os << endl;
+        os << "runner.d: runner.cc" << endl;
+        os << "\t$(NVCC) -M $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc 1> runner.d" << endl;
+        os << endl;
+        os << "runner.o: runner.cc runner.d" << endl;
+        os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
         os << endl;
         os << "clean:" << endl;
-        os << "\trm -f runner.o" << endl;
+        os << "\trm -f runner.o runner.d" << endl;
     }
 #endif
 

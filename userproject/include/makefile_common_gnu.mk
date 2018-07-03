@@ -23,6 +23,9 @@ OS_LOWER                :=$(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
 OS_ARCH                 :=$(shell uname -m 2>/dev/null)
 DARWIN                  :=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
+# Default to C++11
+CPP_STANDARD            ?=c++11
+
 # **NOTE** if we are using GCC on x86_64, a bug in glibc 2.23 or 2.24 causes bad performance
 # (https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) so detect this combination of events here
 ifeq ($(OS_ARCH),x86_64)
@@ -52,11 +55,13 @@ endif
 ifeq ($(DARWIN),DARWIN)
     CXX                 :=clang++
 endif
-ifndef CPU_ONLY
-    CXXFLAGS            +=-std=c++11
-else
+
+# C++ flags should always include C++ standard and build dependency
+CXXFLAGS                +=-std=$(CPP_STANDARD) -MMD -MP
+
+ifdef CPU_ONLY
     LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_CPU_ONLY
-    CXXFLAGS            +=-std=c++11 -DCPU_ONLY
+    CXXFLAGS            +=-DCPU_ONLY
 endif
 ifdef DEBUG
     CXXFLAGS            +=-g -O0 -DDEBUG
@@ -107,9 +112,10 @@ endif
 
 SOURCES                 ?=$(wildcard *.cc *.cpp *.cu *.c)
 OBJECTS                 :=$(foreach obj,$(basename $(SOURCES)),$(OBJECT_PATH)$(obj).o) $(SIM_CODE)/runner.o
+DEPS                    :=$(foreach dep,$(basename $(SOURCES)),$(OBJECT_PATH)$(dep).d)
 
 # Target rules
-.PHONY: all clean purge show
+.PHONY: all clean purge show $(SIM_CODE)/runner.o
 
 all: $(EXECUTABLE)
 
@@ -129,22 +135,26 @@ endif
 $(SIM_CODE)/runner.o:
 	cd $(SIM_CODE) && make
 
-$(OBJECT_PATH)%.o: %.c
+-include $(DEPS)
+
+$(OBJECT_PATH)%.o: %.c %.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-$(OBJECT_PATH)%.o: %.cc
+$(OBJECT_PATH)%.o: %.cc %.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
-$(OBJECT_PATH)%.o: %.cpp
+$(OBJECT_PATH)%.o: %.cpp %.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 
 ifndef CPU_ONLY
-$(OBJECT_PATH)%.o: %.cu
+$(OBJECT_PATH)%.o: %.cu %.d
 	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(INCLUDE_FLAGS)
 endif
 
+%.d: ;
+
 clean:
-	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper $(OBJECT_PATH)*.o *.dSYM/ generateALL*
+	rm -rf $(EXECUTABLE) $(EXECUTABLE)_wrapper $(OBJECT_PATH)*.o $(OBJECT_PATH)*.d *.dSYM/ generateALL*
 	cd $(SIM_CODE) && make clean
 
 purge: clean
