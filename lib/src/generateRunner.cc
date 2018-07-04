@@ -207,7 +207,9 @@ void genHostDenDelayAdvance(CodeStream &os, const NNmodel &model)
         // Loop through incoming synaptic populations
         for(const auto &m : n.second.getMergedInSyn()) {
             const auto *sg = m.first;
-            os << "denDelayPtr" << sg->getName() << " = (denDelayPtr" << sg->getName() << " + 1) % " << sg->getMaxDendriticDelaySlots() << ";" << std::endl;
+            if(sg->isDendriticDelayRequired()) {
+                os << "denDelayPtr" << sg->getName() << " = (denDelayPtr" << sg->getName() << " + 1) % " << sg->getMaxDendriticDelaySlots() << ";" << std::endl;
+            }
         }
     }
 }
