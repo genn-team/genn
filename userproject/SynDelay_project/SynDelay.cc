@@ -26,9 +26,9 @@ public:
         "$(V) += 0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT; //at two times for numerical stability\n"
         "$(V) += 0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT;\n"
         "$(U) += $(a)*($(b)*$(V)-$(U))*DT;\n"
-        "//if ($(V) > 30.0) { // keep this only for visualisation -- not really necessaary otherwise\n"
-        "//    $(V) = 30.0;\n"
-        "//}\n");
+        "if ($(V) > 30.0) {   //keep this to not confuse users with unrealistiv voltage values \n"
+        "    $(V) = 30.0;\n"
+        "}\n");
     SET_PARAM_NAMES({"a", "b", "c", "d", "I0"});
 };
 IMPLEMENT_MODEL(MyIzhikevich);
@@ -120,15 +120,15 @@ void modelDefinition(NNmodel &model)
     // INPUT-INTER, INPUT-OUTPUT & INTER-OUTPUT SYNAPSES
     //==================================================
     WeightUpdateModels::StaticPulse::VarValues inputInter_ini(
-        0.06   // 0 - default synaptic conductance
+        0.001   // 0 - default synaptic conductance
     );
 
     WeightUpdateModels::StaticPulse::VarValues inputOutput_ini(
-        0.03   // 0 - default synaptic conductance
+        0.001   // 0 - default synaptic conductance
     );
 
     WeightUpdateModels::StaticPulse::VarValues interOutput_ini(
-        0.03   // 0 - default synaptic conductance
+        0.001   // 0 - default synaptic conductance
     );
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>("InputInter", SynapseMatrixType::DENSE_GLOBALG, 3,
