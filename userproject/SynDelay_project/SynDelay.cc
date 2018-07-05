@@ -10,8 +10,6 @@
 //--------------------------------------------------------------------------
 
 #include "modelSpec.h"
-#include "global.h"
-
 
 class MyIzhikevich : public NeuronModels::Izhikevich
 {
@@ -57,21 +55,17 @@ void modelDefinition(NNmodel &model)
         0.2,   // 1 - b
         -65,   // 2 - c
         6,      // 3 - d
-        4.0     // 4 - I0 (input current)
-                              );
+        4.0);   // 4 - I0 (input current)
 
     MyIzhikevich::VarValues input_ini( // Izhikevich variables - tonic spiking
         -65,   // 0 - V
-        -20    // 1 - U
-    );
+        -20);  // 1 - U
 
     PostsynapticModels::ExpCond::ParamValues postExpInp(
         1.0,            // 0 - tau_S: decay time constant for S [ms]
-        0.0              // 1 - Erev: Reversal potential
-    );
+        0.0);            // 1 - Erev: Reversal potential
 
     model.addNeuronPopulation<MyIzhikevich>("Input", 500, input_p, input_ini);
-
 
     // INTERNEURONS
     //=============
@@ -79,18 +73,16 @@ void modelDefinition(NNmodel &model)
         0.02,      // 0 - a
         0.2,       // 1 - b
         -65,       // 2 - c
-        6      // 3 - d
-    );
+        6);    // 3 - d
+
 
     NeuronModels::Izhikevich::VarValues inter_ini( // Izhikevich variables - tonic spiking
         -65,       // 0 - V
-        -20        // 1 - U
-    );
+        -20);      // 1 - U
 
     PostsynapticModels::ExpCond::ParamValues postExpInt(
         1.0,            // 0 - tau_S: decay time constant for S [ms]
-        0.0               // 1 - Erev: Reversal potential
-    );
+        0.0);             // 1 - Erev: Reversal potential
 
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Inter", 500, inter_p, inter_ini);
 
@@ -102,17 +94,13 @@ void modelDefinition(NNmodel &model)
         0.02,      // 0 - a
         0.2,       // 1 - b
         -65,       // 2 - c
-        6          // 3 - d
-    );
+        6);        // 3 - d
+
 
     NeuronModels::Izhikevich::VarValues output_ini( // Izhikevich variables - tonic spiking
         -65,    // 0 - V
-        -20     // 1 - U
-    );
-    PostsynapticModels::ExpCond::ParamValues postExpOut(
-        1.0,            // 0 - tau_S: decay time constant for S [ms]
-        0.0             // 1 - Erev: Reversal potential
-    );
+        -20);   // 1 - U
+
 
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Output", 500, output_p, output_ini);
 
@@ -120,29 +108,26 @@ void modelDefinition(NNmodel &model)
     // INPUT-INTER, INPUT-OUTPUT & INTER-OUTPUT SYNAPSES
     //==================================================
     WeightUpdateModels::StaticPulse::VarValues inputInter_ini(
-        0.001   // 0 - default synaptic conductance
-    );
+        0.06); // 0 - default synaptic conductance
 
     WeightUpdateModels::StaticPulse::VarValues inputOutput_ini(
-        0.001   // 0 - default synaptic conductance
-    );
+        0.03); // 0 - default synaptic conductance
 
     WeightUpdateModels::StaticPulse::VarValues interOutput_ini(
-        0.001   // 0 - default synaptic conductance
-    );
+        0.03); // 0 - default synaptic conductance
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>("InputInter", SynapseMatrixType::DENSE_GLOBALG, 3,
-                                                                                             "Input", "Inter",
-                                                                                             {}, inputInter_ini,
-                                                                                             postExpInp, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>("InputOutput", SynapseMatrixType::DENSE_GLOBALG, 6,
-                                                                                             "Input", "Output",
-                                                                                             {}, inputOutput_ini,
-                                                                                             postExpOut, {});
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>("InterOutput", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
-                                                                                             "Inter", "Output",
-                                                                                             {}, interOutput_ini,
-                                                                                             postExpInt, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("InputInter", SynapseMatrixType::DENSE_GLOBALG, 3,
+                                                                                               "Input", "Inter",
+                                                                                               {}, inputInter_ini,
+                                                                                               {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("InputOutput", SynapseMatrixType::DENSE_GLOBALG, 6,
+                                                                                               "Input", "Output",
+                                                                                               {}, inputOutput_ini,
+                                                                                               {}, {});
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("InterOutput", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+                                                                                               "Inter", "Output",
+                                                                                               {}, interOutput_ini,
+                                                                                               {}, {});
 
 
     model.finalize();
