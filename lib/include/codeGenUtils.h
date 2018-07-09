@@ -195,7 +195,7 @@ void writePreciseString(std::ostream &os, T value)
 
     // Reset to default formatting
     // **YUCK** GCC 4.8.X doesn't seem to include std::defaultfloat
-    os.unsetf(std::ios_base::floatfield)
+    os.unsetf(std::ios_base::floatfield);
     //os << std::defaultfloat;
 
     // Restore previous precision
