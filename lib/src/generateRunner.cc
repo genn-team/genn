@@ -363,18 +363,6 @@ void genDefinitions(const NNmodel &model,   //!< Model description
                     const string &path,     //!< Path for code generationn
                     int localHostID)        //!< Host ID of local machine
 {
-    string SCLR_MIN;
-    string SCLR_MAX;
-    if (model.getPrecision() == "float") {
-        SCLR_MIN= to_string(FLT_MIN)+"f";
-        SCLR_MAX= to_string(FLT_MAX)+"f";
-    }
-
-    if (model.getPrecision() == "double") {
-        SCLR_MIN= to_string(DBL_MIN);
-        SCLR_MAX= to_string(DBL_MAX);
-    }
-
     //=======================
     // generate definitions.h
     //=======================
@@ -457,10 +445,26 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << "typedef " << model.getPrecision() << " scalar;" << std::endl;
     os << "#endif" << std::endl;
     os << "#ifndef SCALAR_MIN" << std::endl;
-    os << "#define SCALAR_MIN " << SCLR_MIN << std::endl;
+    os << "#define SCALAR_MIN ";
+    if (model.getPrecision() == "float") {
+        writePreciseString(os, std::numeric_limits<float>::min());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::min());
+        os << std::endl;
+    }
     os << "#endif" << std::endl;
     os << "#ifndef SCALAR_MAX" << std::endl;
-    os << "#define SCALAR_MAX " << SCLR_MAX << std::endl;
+    os << "#define SCALAR_MAX ";
+    if (model.getPrecision() == "float") {
+        writePreciseString(os, std::numeric_limits<float>::max());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::max());
+        os << std::endl;
+    }
     os << "#endif" << std::endl;
     os << std::endl;
   
