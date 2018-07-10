@@ -5,6 +5,34 @@
 #include "modelSpec.h"
 
 //----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+void initVariable(
+	std::string &code,
+	const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+
+    // Substitute the name of the variable we're initialising
+    substitute(code, "$(value)", varName);
+
+    functionSubstitutions(code, ftype, functions);
+    substitute(code, "$(rng)", rng);
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, "initVar");
+}
+}
+
+//----------------------------------------------------------------------------
 // StandardSubstitutions
 //----------------------------------------------------------------------------
 void StandardSubstitutions::postSynapseApplyInput(
@@ -280,32 +308,46 @@ void StandardSubstitutions::weightUpdatePostLearn(
     checkUnreplacedVariables(code, sg->getName() + " : simLearnPost");
 }
 
-std::string StandardSubstitutions::initVariable(
+std::string StandardSubstitutions::initNeuronVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
     const std::vector<FunctionTemplate> functions,
+	const std::string &idx,
     const std::string &ftype,
     const std::string &rng)
 {
-    // Get user code string
+	 // Get user code string
     std::string code = varInit.getSnippet()->getCode();
-
-    // Substitue derived and standard parameters into init code
-    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
-    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
-    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
-
-    // Substitute the name of the variable we're initialising
-    substitute(code, "$(value)", varName);
-
-    functionSubstitutions(code, ftype, functions);
-    substitute(code, "$(rng)", rng);
-    code = ensureFtype(code, ftype);
-    checkUnreplacedVariables(code, "initVar");
-
-    return code;
+	
+	// Substitute in neuron id
+	substitute(code, "$(id)", idx);
+	
+	// Substitute in initalisation code
+	initVariable(code, varInit, varName, functions, ftype, rng);
+	return code;
 }
 
+std::string StandardSubstitutions::initWeightUpdateVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> functions,
+	const std::string &preIdx,
+	const std::string &postIdx,
+    const std::string &ftype,
+    const std::string &rng)
+{
+	 // Get user code string
+    std::string code = varInit.getSnippet()->getCode();
+
+	// Substitute in pre and postsynaptic indices
+	substitute(code, "$(id_pre)", preIdx);
+	substitute(code, "$(id_post)", postIdx);
+	
+	// Substitute in initalisation code
+	initVariable(code, varInit, varName, functions, ftype, rng);
+	return code;
+}
+	
 std::string StandardSubstitutions::initSparseConnectivity(
     const InitSparseConnectivitySnippet::Init &connectInit,
     const std::string &addSynapseFunctionTemplate,

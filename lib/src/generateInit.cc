@@ -325,8 +325,9 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             if (n.second.isVarQueueRequired(j)) {
                                 // Generate initial value into temporary variable
                                 os << neuronModelVars[j].second << " initVal;" << std::endl;
-                                os << StandardSubstitutions::initVariable(varInit, "initVal", cudaFunctions,
-                                                                        model.getPrecision(), "&initRNG") << std::endl;
+                                os << StandardSubstitutions::initNeuronVariable(varInit, "initVal",
+                                                                                cudaFunctions, "lid",
+                                                                                model.getPrecision(), "&initRNG") << std::endl;
 
                                 // Copy this into all delay slots
                                 os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
@@ -337,8 +338,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             }
                             // Otherwise, initialise directly into device variable
                             else {
-                                os << StandardSubstitutions::initVariable(varInit, "dd_" + neuronModelVars[j].first + n.first + "[lid]",
-                                                                        cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + neuronModelVars[j].first + n.first + "[lid]",
+                                                                                cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
                             }
                         }
                     }
@@ -360,8 +361,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 // Initialise directly into device variable
                                 if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                                     CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
-                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                    os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
+                                                                                    cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
                                 }
                             }
                         }
@@ -396,7 +397,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
                     }
 
-                    // Write loop through rows (presynaptic neurons)
+                    // Write loop through WUM variables
                     auto wuVars = s.second.getWUModel()->getVars();
                     for (size_t k= 0, l= wuVars.size(); k < l; k++) {
                         const auto &varInit = s.second.getWUVarInitialisers()[k];
@@ -405,8 +406,12 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         // If this variable should be initialised on the device and has any initialisation code
                         if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                             CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
-                                                                      cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                            const std::string preIdx = "lid / " + std::to_string(s.second.getTrgNeuronGroup()->getNumNeurons());
+                            const std::string postIdx = "lid % " + std::to_string(s.second.getTrgNeuronGroup()->getNumNeurons());
+                            
+                            os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
+                                                                                  cudaFunctions, preIdx, postIdx,
+                                                                                  model.getPrecision(), "&initRNG") << std::endl;
                         }
                     }
                 }
@@ -658,8 +663,11 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                     // If this variable should be initialised on the device and has any initialisation code
                                     if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                                         CodeStream::Scope b(os);
-                                        os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                                  cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                        const std::string preIdx = "((r * " + std::to_string(initSparseBlkSz) + ") + i)";
+                                        const std::string postIdx = "dd_ind" + s.first + "[idx]";
+                                        os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                                              cudaFunctions, preIdx, postIdx,
+                                                                                              model.getPrecision(), "&initRNG") << std::endl;
                                     }
                                 }
 
@@ -867,8 +875,8 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                     {
                         CodeStream::Scope b(os);
-                        os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i]",
-                                                                  cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                        os << StandardSubstitutions::initNeuronVariable(varInit, neuronModelVars[j].first + n.first + "[i]",
+                                                                        cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
                     }
                 }
             }
@@ -982,11 +990,16 @@ void genInit(const NNmodel &model,      //!< Model description
                     // If this variable should be initialised on the host and has any initialisation code
                     if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
                         CodeStream::Scope b(os);
-                        os << "for (int i = 0; i < " << numSrcNeurons * numTrgNeurons << "; i++)";
+                        os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
                         {
                             CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                            os << "for (int j = 0; j < " << numTrgNeurons << "; j++)";
+                            {
+                               
+                                const std::string idx = "(i * " + std::to_string(numTrgNeurons) + ") + j";
+                                os << StandardSubstitutions::initWeightUpdateVariable(varInit, wuVars[k].first + s.first + "[idx]",
+                                                                                      cpuFunctions, "i", "j", model.getPrecision(), "rng") << std::endl;
+                            }
                         }
                     }
                 }
@@ -1006,8 +1019,8 @@ void genInit(const NNmodel &model,      //!< Model description
                         os << "for (int i = 0; i < " << numTrgNeurons << "; i++)";
                         {
                             CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + s.first + "[i]",
-                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                            os << StandardSubstitutions::initNeuronVariable(varInit, psmVars[k].first + s.first + "[i]",
+                                                                            cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
                         }
                     }
                 }
@@ -1162,24 +1175,27 @@ void genInit(const NNmodel &model,      //!< Model description
                         // If this variable should be initialised on the host and has any initialisation code
                         if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
                             CodeStream::Scope b(os);
-                            if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
-                                os << "for (int i = 0; i < C" << s.first << ".connN; i++)";
-                                {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                            os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                    os << "for (int j = C" << s.first << ".indInG[i]; i < C" << s.first << ".indInG[i + 1]; j++)";
+                                    {
+                                        CodeStream::Scope b(os);
+                                        os << StandardSubstitutions::initWeightUpdateVariable(varInit, wuVars[k].first + s.first + "[j]",
+                                                                                              cpuFunctions, "i", "C" + s.first + ".ind[j]",
+                                                                                              model.getPrecision(), "rng") << std::endl;
+                                    }
                                 }
-                            }
-                            else {
-                                os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
-                                {
-                                    CodeStream::Scope b(os);
+                                else {
                                     os << "for (int j = 0; j < C" << s.first << ".rowLength[i]; j++)";
                                     {
                                         CodeStream::Scope b(os);
-                                        os << StandardSubstitutions::initVariable(varInit,
-                                                                                  wuVars[k].first + s.first + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + j]",
-                                                                                  cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                                        const std::string synIndex = "(i * " + std::to_string(s.second.getMaxConnections()) + ") + j";
+                                        os << StandardSubstitutions::initWeightUpdateVariable(varInit,
+                                                                                              wuVars[k].first + s.first + "[" + synIndex + "]",
+                                                                                              cpuFunctions, "i", "C" + s.first + ".ind[" + synIndex + "]", 
+                                                                                              model.getPrecision(), "rng") << std::endl;
                                     }
                                 }
                             }

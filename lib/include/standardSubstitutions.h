@@ -150,13 +150,23 @@ void weightUpdatePostLearn(
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype);
 
-std::string initVariable(
+std::string initNeuronVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
     const std::vector<FunctionTemplate> functions,
+	const std::string &idx,
     const std::string &ftype,
     const std::string &rng);
 
+std::string initWeightUpdateVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> functions,
+	const std::string &preIdx,
+	const std::string &postIdx,
+    const std::string &ftype,
+    const std::string &rng);
+	
 std::string initSparseConnectivity(
     const InitSparseConnectivitySnippet::Init &connectInit,
     const std::string &addSynapseFunctionTemplate,
