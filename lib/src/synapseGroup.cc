@@ -384,6 +384,13 @@ bool SynapseGroup::canRunOnCPU() const
     if(!(getInSynVarMode() & VarLocation::HOST)) {
         return false;
     }
+    
+    // Return false if matrix type is either ragged or bitmask and sparse connectivity should be initialised on device
+    if(((getMatrixType() & SynapseMatrixConnectivity::RAGGED) || (getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+        && (getSparseConnectivityVarMode() & VarInit::DEVICE))
+    {
+        return false;
+    }
 
     // Return false if any of the weight update variables aren't present on the host
     if(std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
