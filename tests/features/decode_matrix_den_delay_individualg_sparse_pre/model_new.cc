@@ -21,7 +21,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(1.0);
-    model.setName("decode_matrix_den_delay_individualg_ragged_new");
+    model.setName("decode_matrix_den_delay_individualg_sparse_pre_new");
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticSynapseInit(
@@ -33,11 +33,12 @@ void modelDefinition(NNmodel &model)
 
 
     auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY, "Pre", "Post",
+        "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
     syn->setNumDendriticDelaySlots(10);
     syn->setMaxConnections(1);
+    model.setSpanTypeToPre("Syn");
 
     model.setPrecision(GENN_FLOAT);
     model.finalize();

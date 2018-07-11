@@ -35,7 +35,7 @@ void modelDefinition(NNmodel &model)
         "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
-    syn->setMaxDendriticDelaySlots(10);
+    syn->setNumDendriticDelaySlots(10);
 
     model.setPrecision(GENN_FLOAT);
     model.finalize();
