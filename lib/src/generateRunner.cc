@@ -205,7 +205,7 @@ void genHostDenDelayAdvance(CodeStream &os, const NNmodel &model)
 {
 	for(const auto &s : model.getLocalSynapseGroups()) {
         if(s.second.isDendriticDelayRequired()) {
-            os << "denDelayPtr" << s.first << " = (denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelaySlots() << ";" << std::endl;
+            os << "denDelayPtr" << s.first << " = (denDelayPtr" << s.first << " + 1) % " << s.second.getNumDendriticDelaySlots() << ";" << std::endl;
         }
     }
 }
@@ -1545,7 +1545,7 @@ void genRunner(const NNmodel &model,    //!< Model description
             // Allocate buffer to delay input coming from this synapse population
             if(s.second.isDendriticDelayRequired()) {
                 mem += allocate_variable(os, model.getPrecision(), "denDelay" + s.first, s.second.getDendriticDelayVarMode(),
-                                         s.second.getMaxDendriticDelaySlots() * s.second.getTrgNeuronGroup()->getNumNeurons());
+                                         s.second.getNumDendriticDelaySlots() * s.second.getTrgNeuronGroup()->getNumNeurons());
             }
             // If connectivity is defined using a bitmask, allocate memory for bitmask
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -2234,7 +2234,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 }
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_denDelay" << s.first;
                 os << ", denDelay" << s.first;
-                os << ", " << s.second.getMaxDendriticDelaySlots() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
+                os << ", " << s.second.getNumDendriticDelaySlots() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
 
                 if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
                     os << CodeStream::CB(1104);
@@ -2387,7 +2387,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(denDelay" << s.first;
                 os << ", d_denDelay" << s.first;
-                os << ", " << s.second.getMaxDendriticDelaySlots() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+                os << ", " << s.second.getNumDendriticDelaySlots() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
         }
         os << std::endl;
