@@ -36,7 +36,7 @@ void modelDefinition(NNmodel &model)
         "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
-    syn->setNumDendriticDelaySlots(10);
+    syn->setMaxDendriticDelayTimesteps(10);
     syn->setMaxConnections(1);
     model.setSpanTypeToPre("Syn");
 

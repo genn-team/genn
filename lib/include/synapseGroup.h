@@ -82,9 +82,8 @@ public:
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation */
     void setMaxSourceConnections(unsigned int maxPostConnections);
     
-    //! Sets the number of dendritic delay slots for connection
-    /*! This dictates the maximum delay */
-    void setNumDendriticDelaySlots(unsigned int numDendriticDelaySlots);
+    //! Sets the maximum dendritic delay for synapses in this synapse group
+    void setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelay);
     
     //! Set how CUDA implementation is parallelised
     /*! with a thread per target neuron (default) or a thread per source spike */
@@ -104,7 +103,7 @@ public:
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
-    unsigned int getNumDendriticDelaySlots() const{ return m_NumDendriticDelaySlots; }
+    unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
     //! Get variable mode used for variables used to combine input from this synapse group
@@ -217,8 +216,8 @@ private:
     //!< Maximum number of source neurons any target neuron can connect to
     unsigned int m_MaxSourceConnections;
 
-    //!< Number of delay slots required for dendritic delay
-    unsigned int m_NumDendriticDelaySlots;
+    //!< Maximum dendritic delay timesteps supported for synapses in this population
+    unsigned int m_MaxDendriticDelayTimesteps;
     
     //!< Connectivity type of synapses
     SynapseMatrixType m_MatrixType;

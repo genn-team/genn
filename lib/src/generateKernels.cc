@@ -821,7 +821,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     {
                         CodeStream::Scope b(os);
 
-                        os << "dd_denDelayPtr" << s.first << " = (dd_denDelayPtr" << s.first << " + 1) % " << s.second.getNumDendriticDelaySlots() << ";" << std::endl;
+                        os << "dd_denDelayPtr" << s.first << " = (dd_denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelayTimesteps() << ";" << std::endl;
                     }
                 }
             }
