@@ -802,7 +802,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     // If a reset kernel is required to be run before the synapse kernel
     if(model.isPreSynapseResetRequired())
     {
-        // SynapseDynamics kernel header
+        // pre synapse reset kernel header
         os << "extern \"C\" __global__ void preSynapseReset()";
         {
             CodeStream::Scope b(os);
