@@ -920,8 +920,15 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     name_substitutions(SDcode, "dd_", wuVars.nameBegin, wuVars.nameEnd, s->first + "[" + synIdx +"]");
                                 }
 
-                                substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
-                                substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
+                                // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                                if(sg->isDendriticDelayRequired()) {
+                                    functionSubstitute(SDcode, "addToDenDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                }
+                                // Otherwise
+                                else {
+                                    substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
+                                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
+                                }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision());
@@ -942,8 +949,16 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
 
                                 const std::string postIdx = localID +"%" + to_string(sg->getTrgNeuronGroup()->getNumNeurons());
-                                substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
-                                substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
+
+                                // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                                if(sg->isDendriticDelayRequired()) {
+                                    functionSubstitute(SDcode, "addToDenDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                }
+                                // Otherwise
+                                else {
+                                    substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
+                                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
+                                }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
