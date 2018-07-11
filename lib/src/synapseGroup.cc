@@ -46,7 +46,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
     :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), 
-        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MaxDendriticDelaySlots(0), m_MatrixType(matrixType),
+        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_InSynVarMode(GENN_PREFERENCES::defaultVarMode), m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
@@ -103,10 +103,10 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
     }
 }
 
-void SynapseGroup::setMaxDendriticDelaySlots(unsigned int maxDendriticDelaySlots)
+void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayTimesteps)
 {
     // **TODO** constraints on this
-    m_MaxDendriticDelaySlots = maxDendriticDelaySlots;
+    m_MaxDendriticDelayTimesteps = maxDendriticDelayTimesteps;
 }
 
 void SynapseGroup::setSpanType(SpanType spanType)
@@ -310,8 +310,23 @@ std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, 
         return "(" + devPrefix + "denDelayPtr" + getTargetMergedPSMName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
     else {
-        return "(((" + devPrefix + "denDelayPtr" + getTargetMergedPSMName() + " + " + offset + ") % " + to_string(getMaxDendriticDelaySlots()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(((" + devPrefix + "denDelayPtr" + getTargetMergedPSMName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
+}
+
+bool SynapseGroup::isDendriticDelayRequired() const
+{
+    // If addToDenDelay function is used in sim code, return true
+    if(getWUModel()->getSimCode().find("$(addToDenDelay") != std::string::npos) {
+        return true;
+    }
+
+    // If addToDenDelay function is used in synapse dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToDenDelay") != std::string::npos) {
+        return true;
+    }
+
+    return false;
 }
 
 bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const

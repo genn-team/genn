@@ -278,13 +278,13 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                         // If dendritic delay is required
                         if(sg->isDendriticDelayRequired()) {
                             // Get reference to dendritic delay buffer input for this timestep
-                            os << model.getPrecision() << " &denDelay" << sg->getName() << " = denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
+                            os << model.getPrecision() << " &denDelayFront" << sg->getName() << " = denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
 
                             // Add delayed input from buffer into inSyn
-                            os << "inSyn" + sg->getName() + "[n] += denDelay" << sg->getName() << ";" << std::endl;
+                            os << "inSyn" + sg->getName() + "[n] += denDelayFront" << sg->getName() << ";" << std::endl;
 
                             // Zero delay buffer slot
-                            os << "denDelay" << sg->getName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
+                            os << "denDelayFront" << sg->getName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
 
                         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
@@ -505,7 +505,6 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                         string SDcode= wu->getSynapseDynamicsCode();
                         substitute(SDcode, "$(t)", "t");
-                        substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
 
                         if (sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
                             os << "for (int n= 0; n < C" << s.first << ".connN; n++)";
@@ -517,7 +516,13 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                 }
 
                                 const std::string postIdx = "C" + s.first + ".ind[n]";
-                                substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                if(sg->isDendriticDelayRequired()) {
+                                    functionSubstitute(SDcode, "addToDenDelay", 2, "denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                }
+                                else {
+                                    substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             "C" + s.first + ".preInd[n]", postIdx, "",
@@ -543,8 +548,13 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     }
 
                                     const std::string postIdx = "C" + s.first + ".ind[n]";
-
-                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                    if(sg->isDendriticDelayRequired()) {
+                                        functionSubstitute(SDcode, "addToDenDelay", 2, "denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                    }
+                                    else {
+                                        substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                    }
 
                                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                                 "i", postIdx, "", cpuFunctions, model.getPrecision());
@@ -566,7 +576,13 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                                            s.first + "[(i * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + j]");
                                     }
 
-                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[j]");
+                                    if(sg->isDendriticDelayRequired()) {
+                                        functionSubstitute(SDcode, "addToDenDelay", 2, "denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
+                                    }
+                                    else {
+                                        substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[j]");
+                                    }
 
                                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                                 "i","j", "", cpuFunctions, model.getPrecision());

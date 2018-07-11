@@ -346,7 +346,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
 
                             // If dendritic delays are required and these should be initialised on device
                             if(sg->isDendriticDelayRequired() && (sg->getDendriticDelayVarMode() & VarInit::DEVICE)) {
-                                os << "for (int i = 0; i < " << sg->getMaxDendriticDelaySlots() << "; i++)";
+                                os << "for (int i = 0; i < " << sg->getMaxDendriticDelayTimesteps() << "; i++)";
                                 {
                                     CodeStream::Scope b(os);
                                     const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
@@ -806,7 +806,7 @@ void genInit(const NNmodel &model,      //!< Model description
                     // If dendritic delay buffer should be initialised on the host
                     if(shouldInitOnHost(sg->getDendriticDelayVarMode())) {
                         CodeStream::Scope b(os);
-                        os << "for (int i = 0; i < " << n.second.getNumNeurons() * sg->getMaxDendriticDelaySlots() << "; i++)";
+                        os << "for (int i = 0; i < " << n.second.getNumNeurons() * sg->getMaxDendriticDelayTimesteps() << "; i++)";
                         {
                             CodeStream::Scope b(os);
                             os << "denDelay" << sg->getName() << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;

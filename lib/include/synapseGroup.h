@@ -84,8 +84,8 @@ public:
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation */
     void setMaxSourceConnections(unsigned int maxPostConnections);
     
-    //! Sets the maximum number of dendritic delay slots for connection
-    void setMaxDendriticDelaySlots(unsigned int maxDendriticDelaySlots);
+    //! Sets the maximum dendritic delay for synapses in this synapse group
+    void setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelay);
     
     //! Set how CUDA implementation is parallelised
     /*! with a thread per target neuron (default) or a thread per source spike */
@@ -105,10 +105,8 @@ public:
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
-    unsigned int getMaxDendriticDelaySlots() const{ return m_MaxDendriticDelaySlots; }
+    unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
-
-    bool isDendriticDelayRequired() const{ return (getMaxDendriticDelaySlots() > 0); }
 
     //! Get variable mode used for variables used to combine input from this synapse group
     VarMode getInSynVarMode() const { return m_InSynVarMode; }
@@ -170,6 +168,9 @@ public:
     std::string getOffsetPre() const;
     std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
+    //! Does this synapse group require dendritic delay
+    bool isDendriticDelayRequired() const;
+
     //! Does this synapse group require an RNG for it's postsynaptic init code
     bool isPSInitRNGRequired(VarInit varInitMode) const;
 
@@ -219,8 +220,8 @@ private:
     //!< Maximum number of source neurons any target neuron can connect to
     unsigned int m_MaxSourceConnections;
 
-    //!< Maximum number of delay slots required for dendritic delay
-    unsigned int m_MaxDendriticDelaySlots;
+    //!< Maximum dendritic delay timesteps supported for synapses in this population
+    unsigned int m_MaxDendriticDelayTimesteps;
     
     //!< Connectivity type of synapses
     SynapseMatrixType m_MatrixType;

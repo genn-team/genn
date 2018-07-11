@@ -125,7 +125,7 @@ void NeuronGroup::mergeIncomingPSM()
             // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
             if(typeid((*b)->getPSModel()).hash_code() == aModelTypeHash
                 && a->getInSynVarMode() == (*b)->getInSynVarMode()
-                && a->getMaxDendriticDelaySlots() == (*b)->getMaxDendriticDelaySlots()
+                && a->getMaxDendriticDelayTimesteps() == (*b)->getMaxDendriticDelayTimesteps()
                 && std::equal(aParamsBegin, aParamsEnd, (*b)->getPSParams().cbegin())
                 && std::equal(aDerivedParamsBegin, aDerivedParamsEnd, (*b)->getPSDerivedParams().cbegin()))
             {
