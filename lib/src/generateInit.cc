@@ -995,9 +995,9 @@ void genInit(const NNmodel &model,      //!< Model description
                             CodeStream::Scope b(os);
                             os << "for (int j = 0; j < " << numTrgNeurons << "; j++)";
                             {
-                               
+                                CodeStream::Scope b(os);
                                 const std::string idx = "(i * " + std::to_string(numTrgNeurons) + ") + j";
-                                os << StandardSubstitutions::initWeightUpdateVariable(varInit, wuVars[k].first + s.first + "[idx]",
+                                os << StandardSubstitutions::initWeightUpdateVariable(varInit, wuVars[k].first + s.first + "[" + idx + "]",
                                                                                       cpuFunctions, "i", "j", model.getPrecision(), "rng") << std::endl;
                             }
                         }
