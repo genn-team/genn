@@ -118,8 +118,7 @@ where the arguments are
                             either be one of the standard models or user-defined
                             (see \ref sect_postsyn).
 \arg `const string &name`: The name of the synapse population
-\arg `unsigned int mType`: How the synaptic matrix is stored. the options
-     currently are "SPARSE_GLOBALG", "SPARSE_INDIVIDUALG", "DENSE_GLOBALG", "DENSE_INDIVIDUALG" or "BITMASK_GLOBALG" (see \ref subsect34).
+\arg `unsigned int mType`: How the synaptic matrix is stored. See \ref subsect34 for available options.
 \arg `unsigned int delay`: Synaptic delay (in multiples of the simulation
      time step `DT`). 
 \arg `const string preName`: Name of the (existing!) pre-synaptic
@@ -284,6 +283,7 @@ networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1,
 
 Currently 3 predefined weight update models are available: 
 - WeightUpdateModels::StaticPulse
+- WeightUpdateModels::StaticPulseDendriticDelay
 - WeightUpdateModels::StaticGraded
 - WeightUpdateModels::PiecewiseSTDP
 
@@ -305,6 +305,14 @@ SET_SIM_CODE(
     "\$(updatelinsyn)");
 \endcode
 where "inc" is a parameter of the weight update model that defines a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. Once \$(addtoinsyn) has been assigned, the \$(updatelinsyn) keyword should be used to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
+To apply input to the post-synaptic neuron with a dendritic (i.e. between the synapse and the postsynaptic neuron) delay you can instead use the \$(addToDenDelay, weight, delay) function.
+For example
+\code
+SET_SIM_CODE(
+    "\$(addToDenDelay, $(inc), $(delay));");
+\endcode
+where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
+
 - SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
 \code
 SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > -0.02");
@@ -315,7 +323,7 @@ Whenever this expression evaluates to true, the event code set using the SET_EVE
 
 - SET_LEARN_POST_CODE(LEARN_POST_CODE) defines the code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is typically used in STDP-like models e.g. WeightUpdateModels::PiecewiseSTDP.
 
-- SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network.
+- SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
 - SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) and SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) define whether the weight update needs to know the times of the spikes emitted from the pre and postsynaptic populations. For example an STDP rule would be likely to require:
 \code
 SET_NEEDS_PRE_SPIKE_TIME(true);
