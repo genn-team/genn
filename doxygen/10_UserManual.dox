@@ -119,7 +119,7 @@ where the arguments are
                             (see \ref sect_postsyn).
 \arg `const string &name`: The name of the synapse population
 \arg `unsigned int mType`: How the synaptic matrix is stored. See \ref subsect34 for available options.
-\arg `unsigned int delay`: Synaptic delay (in multiples of the simulation
+\arg `unsigned int delay`: Homogeneous (axonal) delay for synapse population (in terms of the simulation
      time step `DT`). 
 \arg `const string preName`: Name of the (existing!) pre-synaptic
      neuron population.
@@ -133,6 +133,12 @@ where the arguments are
                                                                 postsynaptic neurons) for the postsynaptic model. 
 \arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
                                                             postsynaptic model's state variables
+
+The NNmodel::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
+- SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::RAGGED and SynapseMatrixConnectivity::YALE connectivity (see \ref subsect34).
+- SynapseGroup::setMaxDendriticDelayTimesteps() sets the maximum dendritic delay (in terms of the simulation
+     time step `DT`) allowed for synapses in this population. No values larger than this should be passed to the delay parameter of the `addToDenDelay` function in user code (see \ref sect34).
+- SynapseGroup::setSpanType() sets how incoming spike processing is parallelised for this synapse group. The default SynapseGroup::SpanType::POSTSYNAPTIC is nearly always the best option, but SynapseGroup::SpanType::PRESYNAPTIC may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.
 
 \note
 If the synapse matrix uses one of the "GLOBALG" types then the global
