@@ -35,10 +35,8 @@ public:
 
 TEST_P(SimTest, CorrectDecoding)
 {
-#ifndef CPU_ONLY
     // Initialize sparse arrays
     initdecode_matrix_cont_den_delay_individualg_ragged_new();
-#endif  // CPU_ONLY
 
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
