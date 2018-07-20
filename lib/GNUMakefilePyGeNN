@@ -27,29 +27,29 @@ PYGENN_PIC_OBJ                     :=global modelSpec neuronGroup synapseGroup n
 PYGENN_PIC_OBJ                     :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(PYGENN_PIC_OBJ))
 PYGENN_PIC_OBJ                     :=$(addsuffix _PIC.o,$(PYGENN_PIC_OBJ))
 
-SWIG_SO                            :=snippet newModels newNeuronModels newPostsynapticModels newWeightUpdateModels initVarSnippet
+SWIG_SO                            :=snippet newModels newNeuronModels newPostsynapticModels newWeightUpdateModels initVarSnippet genn_preferences
 SWIG_SO                            :=$(addprefix $(PYGENN_PATH)/_,$(SWIG_SO))
 SWIG_SO                            :=$(addsuffix .so,$(SWIG_SO))
 
-SWIG_SUBMODULES                    :=Snippet NewModels NeuronModels PostsynapticModels WeightUpdateModels InitVarSnippet
+SWIG_SUBMODULES                    :=Snippet NewModels NeuronModels PostsynapticModels WeightUpdateModels InitVarSnippet GeNNPreferences
 SWIG_SUBMODULES                    :=$(addprefix $(PYGENN_PATH)/_,$(SWIG_SUBMODULES))
 SWIG_SUBMODULES                    :=$(addsuffix .so,$(SWIG_SUBMODULES))
 
 pygenn:$(PYGENN_PATH) prepare_swig_config prepare_shared_lib $(LIBGENN_OBJ_PATH) $(SWIG_SO)
 	$(SWIG) -outdir $(PYGENN_PATH) -o $(PYGENN_PATH)/$(SWIG_MODULE_NAME)_wrap.cc $(PYGENN_SWIG_FILE_PATH)
-	$(CXX) $(CXXFLAGS) -shared -fPIC -DSWIG $(PYGENN_PIC_OBJ) $(PYGENN_PATH)/$(SWIG_MODULE_NAME)_wrap.cc -o $(PYGENN_PATH)/_$(SWIG_MODULE_NAME).so -I $(PYTHON_INCLUDE) -I/opt/cuda/include -I $(INC_PATH) -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+	$(CXX) $(CXXFLAGS) -shared -fPIC -DSWIG $(PYGENN_PIC_OBJ) $(PYGENN_PATH)/$(SWIG_MODULE_NAME)_wrap.cc -o $(PYGENN_PATH)/_$(SWIG_MODULE_NAME).so -I $(PYTHON_INCLUDE) -I $(CUDA_PATH)/include -I $(INC_PATH) -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
 	$(foreach var,$(join $(addsuffix ;,$(SWIG_SO)),$(SWIG_SUBMODULES)),mv $(subst ;, ,$(var)) &&) :
 	cp $(SWIG_PATH)/GeNNModel.py $(PYGENN_PATH)/GeNNModel.py
 	cp $(SWIG_PATH)/GeNNGroups.py $(PYGENN_PATH)/GeNNGroups.py
 
 $(LIBGENN_OBJ_PATH)/%_PIC.o: $(SRC_PATH)/%.cc
-	$(CXX) $(CXXFLAGS) -DSWIG -c -fPIC -o $@ $< -I/opt/cuda/include -I $(INC_PATH)
+	$(CXX) $(CXXFLAGS) -DSWIG -c -fPIC -o $@ $< -I $(CUDA_PATH)/include -I $(INC_PATH)
 
 $(PYGENN_PATH)/_%.so: $(PYGENN_PATH)/%_wrap.cc $(PYGENN_PIC_OBJ) 
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ -I $(PYTHON_INCLUDE) -I $(INC_PATH) -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ -I $(PYTHON_INCLUDE) -I $(CUDA_PATH)/include -I $(INC_PATH) -L"$(CUDA_PATH)/lib64" -lcuda -lcudart
 
 $(PYGENN_PATH)/%_wrap.o: $(PYGENN_PATH)/%_wrap.cc
-	$(CXX) $(CXXFLAGS) -c -fPIC -o $@ $< -I $(PYTHON_INCLUDE) -I/opt/cuda/include -I $(INC_PATH)
+	$(CXX) $(CXXFLAGS) -c -fPIC -o $@ $< -I $(PYTHON_INCLUDE) -I $(CUDA_PATH)/include -I $(INC_PATH)
 
 $(PYGENN_PATH)/%_wrap.cc: $(SWIG_PATH)/%.i
 	$(SWIG) -outdir $(PYGENN_PATH) -o $@ $< 

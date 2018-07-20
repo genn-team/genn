@@ -90,7 +90,7 @@ class Group( object ):
     def setVar( self, varName, values ):
         self.vars[varName].setValues( values )
 
-    def _addExtraGlobalParam( self, paramName, paramValues, model ):
+    def _addExtraGlobalParam( self, paramName, paramValues, model, autoAlloc=True ):
 
         pnt = list( model.getExtraGlobalParams() )
         paramType = None
@@ -99,8 +99,7 @@ class Group( object ):
                 paramType = pt
 
         egp = Variable( paramName, paramType, paramValues )
-        if paramType.endswith( '*' ):
-            egp.needsAllocation = True
+        egp.needsAllocation = autoAlloc
 
         self.extraGlobalParams[paramName] = egp
 
@@ -113,6 +112,16 @@ class NeuronGroup( Group ):
         self.spikes = None
         self.spikeCount = None
         self.isSpikeSourceArray = False
+        self._maxDelaySteps = 0
+
+    @property
+    def maxDelaySteps( self ):
+        return self._maxDelaySteps
+
+    @maxDelaySteps.setter
+    def maxDelaySteps( self, delaySteps ):
+        self._maxDelaySteps = max( self._maxDelaySteps, delaySteps )
+
 
     def setSize( self, size ):
         self.size = size
@@ -207,8 +216,8 @@ class SynapseGroup( Group ):
                     self.indInG.append( i )
                     while pre != curPre:
                         curPre += 1
-
-            self.indInG.append( len(conns) )
+            while len(self.indInG) < self.src_size + 1:
+                self.indInG.append( len(conns) )
             self.g = g
         else:
             self.mask = [ pre * self.trg_size + post for (pre, post) in conns ]

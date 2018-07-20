@@ -12,7 +12,8 @@ class GeNNModel( object ):
     This class helps to define, build and run a GeNN model from python
     """
 
-    def __init__(self, precision=None, modelName=None):
+    def __init__(self, precision=None, modelName=None, enableDebug=False,
+                 autoInitSparseVars=True):
         """Init GeNNModel
         Keyword args:
         scalar    -- precision as string ("float" or "double" or "long double")
@@ -43,6 +44,8 @@ class GeNNModel( object ):
         self._localhost = lg.init_cuda_mpi()
         
         lg.setDefaultVarMode( lg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
+        lg.GeNNPreferences.debugCode = enableDebug
+        lg.GeNNPreferences.autoInitSparseVars = autoInitSparseVars
         lg.initGeNN()
         self._model = lg.NNmodel()
         self._model.setPrecision( getattr(lg, gennFloatType ) )
@@ -152,6 +155,8 @@ class GeNNModel( object ):
         sGroup.addTo( self._model )
 
         self.synapsePopulations[popName] = sGroup
+
+        self.neuronPopulations[source].maxDelaySteps = delaySteps
 
         return sGroup
 
@@ -264,38 +269,46 @@ class GeNNModel( object ):
 
         self._slm.allocateMem()
         self._slm.initialize()
-
-        self.timestep = self._slm.assignExternalPointerToTimestep()
-        self.T = self._slm.assignExternalPointerToT()
-
-        spikeSourceArrays = []
         
+        if self._scalar == 'float':
+            self.timestep = self._slm.assignExternalPointerSingle_f('t')
+        if self._scalar == 'double':
+            self.timestep = self._slm.assignExternalPointerSingle_d('t')
+        if self._scalar == 'long double':
+            self.timestep = self._slm.assignExternalPointerSingle_ld('t')
+        self.T = self._slm.assignExternalPointerSingle_ull('iT')
+
         for popName, popData in self.neuronPopulations.items():
             self._slm.initNeuronPopIO( popName, popData.size )
             self._slm.pullPopulationStateFromDevice( popName )
-            popData.spikes = self.assignExternalPointerPop(
-                    popName, 'glbSpk', popData.size, 'unsigned int' )
-            popData.spikeCount = self.assignExternalPointerPop(
-                    popName, 'glbSpkCnt', popData.size, 'unsigned int' )
+            popData.spikes = self.assignExternalPointerPop( popName, 'glbSpk',
+                    popData.size * (popData.maxDelaySteps + 1), 'unsigned int' )
+            popData.spikeCount = self.assignExternalPointerPop( popName, 'glbSpkCnt',
+                    popData.size * (popData.maxDelaySteps + 1), 'unsigned int' )
+            if popData.maxDelaySteps > 0:
+                popData.spikeQuePtr = self._slm.assignExternalPointerSingle_ui(
+                      'spkQuePtr' + popName )
+            else:
+                popData.spikeQuePtr = [0]
 
             for varName, varData in popData.vars.items():
                 varData.view = self.assignExternalPointerPop(
                         popName, varName, popData.size, varData.type )
                 if varData.initRequired:
                     varData.view[:] = varData.values 
-                    #  self.initializeVarOnDevice( popName, varName,
-                    #          list( range( len( varData.values ) ) ), varData.values )
+
             self._slm.pushPopulationStateToDevice( popName )
 
-            if popData.isSpikeSourceArray:
-                spikeSourceArrays.append( popData )
             for egpName, egpData in popData.extraGlobalParams.items():
+                # if auto allocation is not enabled, let the user care about
+                # allocation and initialization of the EGP
                 if egpData.needsAllocation:
                     self._slm.allocateExtraGlobalParam( popName, egpName,
                             len( egpData.values ) )
-                egpData.view = self.assignExternalPointerPop( popName,
+                    egpData.view = self.assignExternalPointerPop( popName,
                         egpName, len( egpData.values ), egpData.type[:-1] )
-                egpData.view[:] = egpData.values
+                    if egpData.initRequired:
+                        egpData.view[:] = egpData.values
 
 
 
@@ -315,8 +328,11 @@ class GeNNModel( object ):
                     raise Exception( 'For sparse projections, the connections must be set before loading a model' )
 
             for varName, varData in popData.vars.items():
+                size = popData.size
+                if varName in [vnt[0] for vnt in popData.postsyn.getVars()]:
+                    size = self.neuronPopulations[popData.trg].size
                 varData.view = self.assignExternalPointerPop(
-                        popName, varName, popData.size, varData.type )
+                        popName, varName, size, varData.type )
                 if varName == 'g' and popData.connectionsSet:
                     continue
                 if varData.initRequired:
@@ -332,14 +348,6 @@ class GeNNModel( object ):
 
         self._slm.initializeModel()
 
-        #  for ssa in spikeSourceArrays:
-        #      if len( ssa.spikeSourceArray ) > 0:
-        #          self._slm.allocateExtraGlobalParam( ssa.name, 'spikeTimes',
-        #                  len( ssa.spikeTimes ) )
-        #          ssa.spikeTimesView = self.assignExternalPointerPop( ssa.name,
-        #                  'spikeTimes', len( ssa.spikeTimes ), 'scalar' )
-        #
-        #          ssa.spikeTimesView[:] = ssa.spikeTimes
 
     def assignExternalPointerPop( self, popName, varName, varSize, varType ):
         """Assign a variable to an external numpy array
@@ -356,14 +364,14 @@ class GeNNModel( object ):
         Raises ValueError if variable type is not supported
         """
 
-        return self.assignExternalPointer( varName + popName, varSize, varType )
+        return self.assignExternalPointerArray( varName + popName, varSize, varType )
 
 
-    def assignExternalPointer( self, varName, varSize, varType ):
+    def assignExternalPointerArray( self, varName, varSize, varType ):
         """Assign a variable to an external numpy array
         
         Args:
-        varName -- a fully qualified name of the variable to assing
+        varName -- a fully qualified name of the variable to assign
         varSize -- the size of the variable
         varType -- type of the variable as string. The supported types are
                    scalar, float, double, long double, int, unsigned int.
@@ -375,35 +383,24 @@ class GeNNModel( object ):
 
         if varType == 'scalar':
             if self._scalar == 'float':
-                return self._slm.assignExternalPointer_f( varName, varSize )
+                return self._slm.assignExternalPointerArray_f( varName, varSize )
             elif self._scalar == 'double':
-                return self._slm.assignExternalPointer_d( varName, varSize )
+                return self._slm.assignExternalPointerArray_d( varName, varSize )
             elif self._scalar == 'long double':
-                return self._slm.assignExternalPointer_ld( varName, varSize )
+                return self._slm.assignExternalPointerArray_ld( varName, varSize )
 
         elif varType == 'float':
-            return self._slm.assignExternalPointer_f( varName, varSize )
+            return self._slm.assignExternalPointerArray_f( varName, varSize )
         elif varType == 'double':
-            return self._slm.assignExternalPointer_d( varName, varSize )
+            return self._slm.assignExternalPointerArray_d( varName, varSize )
         elif varType == 'long double':
-            return self._slm.assignExternalPointer_ld( varName, varSize )
+            return self._slm.assignExternalPointerArray_ld( varName, varSize )
         elif varType == 'int':
-            return self._slm.assignExternalPointer_i( varName, varSize )
+            return self._slm.assignExternalPointerArray_i( varName, varSize )
         elif varType == 'unsigned int':
-            return self._slm.assignExternalPointer_ui( varName, varSize )
+            return self._slm.assignExternalPointerArray_ui( varName, varSize )
         else:
             raise ValueError( 'unsupported varType' )
-
-
-    #  def exportModelSpec( self, path='./' ):
-    #      def serialize( obj ):
-    #          if not isinstance( obj, str ) and not isinstance(obj, dict):
-    #              return obj.__dict__
-    #          return obj
-    #
-    #      print( json.dumps( {'nPop':self.neuronPopulations, 'sPop':self.synapsePopulations},
-    #          default=serialize) )
-
 
 
     def stepTimeGPU( self ):

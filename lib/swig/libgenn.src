@@ -53,14 +53,15 @@
 #include "../swig/customWeightUpdate.h"
 %}
 
-%ignore GenericFunction;
-%ignore FunctionTemplate;
+//%ignore GenericFunction;
+//%ignore FunctionTemplate;
 %include <std_string.i>
 %include <std_pair.i>
 %include <std_vector.i>
 
+%import "swig/genn_preferences.i"
 %include "include/variableMode.h"
-%include "include/global.h"
+/* %include "include/global.h" */
 
 //%include "include/codeStream.h"
 //%include "include/codeGenUtils.h"
@@ -84,7 +85,7 @@
 %include "include/modelSpec.h"
 
 %include "include/sparseProjection.h"
-%include "include/sparseUtils.h"
+//%include "include/sparseUtils.h"
 
 //%include "include/generateCPU.h"
 //%include "include/generateInit.h"

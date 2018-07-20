@@ -115,7 +115,7 @@ public:
       };
       VoidIOFuncs pushers;
       VoidIOFuncs pullers;
-      for ( int i = 0; i < data.size(); ++i )
+      for ( size_t i = 0; i < data.size(); ++i )
       {
         pullers[i] = (VoidFunction)getSymbol( "pull" + popName + data[i] + "FromDevice" );
         pushers[i] = (VoidFunction)getSymbol( "push" + popName + data[i] + "ToDevice" );
@@ -133,7 +133,7 @@ public:
       };
       VoidIOFuncs pushers;
       VoidIOFuncs pullers;
-      for ( int i = 0; i < data.size(); ++i )
+      for ( size_t i = 0; i < data.size(); ++i )
       {
         pullers[i] = (VoidFunction)getSymbol( "pull" + popName + data[i] + "FromDevice" );
         pushers[i] = (VoidFunction)getSymbol( "push" + popName + data[i] + "ToDevice" );
@@ -156,6 +156,12 @@ public:
         std::get<1>( std::get<1>( tmpPop ) )();
     }
     
+    void pullPopulationCurrentSpikesFromDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<3>( std::get<1>( tmpPop ) )();
+    }
+
     void pushPopulationStateToDevice( const std::string &popName )
     {
         auto tmpPop = populationsIO.at( popName );
@@ -168,17 +174,8 @@ public:
         std::get<1>( std::get<2>( tmpPop ) )();
     }
 
-    void assignExternalPointerToVar( const std::string &popName,
-                                     const int popSize,
-                                     const std::string &varName,
-                                     scalar** varPtr, int* n1 )
-    {
-      *varPtr = *( (scalar**)getSymbol( varName + popName ));
-      *n1 = popSize;
-    }
-
     template <typename T>
-    void assignExternalPointer( const std::string varName,
+    void assignExternalPointerArray( const std::string varName,
                                      const int varSize,
                                      T** varPtr, int* n1 )
     {
@@ -186,27 +183,14 @@ public:
       *n1 = varSize;
     }
     
-    void assignExternalPointerToSpikes( const std::string &popName,
-                                        int popSize, bool spkCnt,
-                                        unsigned int** spkPtr, int* n1 )
+    template <typename T>
+    void assignExternalPointerSingle( const std::string varName,
+                                      T** varPtr, int* n1 )
     {
-      *spkPtr = *( (unsigned int**) getSymbol( ( spkCnt ? "glbSpkCnt" : "glbSpk" ) + popName ) );
-      *n1 = popSize;
-    }
-
-    void assignExternalPointerToT( scalar** tPtr, int* n1 )
-    {
-      *tPtr = (scalar*)getSymbol( "t" );
+      *varPtr = static_cast<T*>( getSymbol( varName ) );
       *n1 = 1;
     }
     
-    void assignExternalPointerToTimestep( unsigned long long** timestepPtr, int* n1 )
-    {
-      *timestepPtr = (unsigned long long*)getSymbol( "iT" );
-      *n1 = 1;
-    }
-    
-
     void *getSymbol(const std::string &symbolName, bool allowMissing = false)
     {
 #ifdef _WIN32
