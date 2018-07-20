@@ -1948,29 +1948,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "__device__ float exponentialDistFloat(RNG *rng)";
     {
         CodeStream::Scope b(os);
-        os << "float a = 0.0f;" << std::endl;
         os << "while (true)";
         {
             CodeStream::Scope b(os);
-            os << "float u = curand_uniform(rng);" << std::endl;
-            os << "const float u0 = u;" << std::endl;
-            os << "while (true)";
+            os << "const float u = curand_uniform(rng);" << std::endl;
+            os << "if (u != 0.0f)";
             {
                 CodeStream::Scope b(os);
-                os << "float uStar = curand_uniform(rng);" << std::endl;
-                os << "if (u < uStar)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "return  a + u0;" << std::endl;
-                }
-                os << "u = curand_uniform(rng);" << std::endl;
-                os << "if (u >= uStar)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "break;" << std::endl;
-                }
+                os << "return -logf(u);" << std::endl;
             }
-            os << "a += 1.0f;" << std::endl;
         }
     }
     os << std::endl;
@@ -1978,29 +1964,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "__device__ double exponentialDistDouble(RNG *rng)";
     {
         CodeStream::Scope b(os);
-        os << "double a = 0.0f;" << std::endl;
         os << "while (true)";
         {
             CodeStream::Scope b(os);
-            os << "double u = curand_uniform_double(rng);" << std::endl;
-            os << "const double u0 = u;" << std::endl;
-            os << "while (true)";
+            os << "const double u = curand_uniform_double(rng);" << std::endl;
+            os << "if (u != 0.0)";
             {
                 CodeStream::Scope b(os);
-                os << "double uStar = curand_uniform_double(rng);" << std::endl;
-                os << "if (u < uStar)" << std::endl;
-                {
-                    CodeStream::Scope b(os);
-                    os << "return  a + u0;" << std::endl;
-                }
-                os << "u = curand_uniform_double(rng);" << std::endl;
-                os << "if (u >= uStar)" << std::endl;
-                {
-                    CodeStream::Scope b(os);
-                    os << "break;" << std::endl;
-                }
+                os << "return -log(u);" << std::endl;
             }
-            os << "a += 1.0;" << std::endl;
         }
     }
     os << std::endl;
