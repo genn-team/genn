@@ -1,5 +1,17 @@
 #include "cuda_code_generator.h"
 
+// Standard C++ includes
+#include <algorithm>
+
+// GeNN includes
+#include "codeGenUtils.h"
+#include "codeStream.h"
+#include "modelSpec.h"
+
+
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
 namespace
 {
 size_t padSize(size_t size, size_t blockSize)
@@ -23,6 +35,9 @@ private:
 };
 }   // Anonymous namespace
 
+//--------------------------------------------------------------------------
+// CUDA::CodeGenerator
+//--------------------------------------------------------------------------
 namespace CUDA
 {
 void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, 
@@ -137,7 +152,7 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
         );
     }
 }
-
+//--------------------------------------------------------------------------
 void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const NNmodel &model,
                                            std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const NeuronGroup&)> handler) const
 {
@@ -164,8 +179,7 @@ void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const NNmodel &model,
         os << CodeStream::CB(1) << std::endl;
     }
 }
-
-
+//--------------------------------------------------------------------------
 void CodeGenerator::genEmitSpike(CodeStream &os, const std::string &neuronID, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;

@@ -1,22 +1,15 @@
 #pragma once
 
 // Standard C++ includes
-#include <algorithm>
 #include <functional>
-#include <iostream>
 #include <string>
-#include <tuple>
-#include <vector>
-
-// GeNN includes
-#include "codeGenUtils.h"
-#include "codeStream.h"
-#include "modelSpec.h"
 
 // NuGeNN includes
 #include "code_generator.h"
 
-// CUDACodeGenerator
+//--------------------------------------------------------------------------
+// CUDA::CodeGenerator
+//--------------------------------------------------------------------------
 namespace CUDA
 {
 class CodeGenerator : public ::CodeGenerator::Base
@@ -26,7 +19,9 @@ public:
     {
     }
 
+    //--------------------------------------------------------------------------
     // CodeGenerator::Base virtuals
+    //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
                                        std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &ng, const std::string &, const std::string &)> handler) const override;
 
@@ -45,12 +40,18 @@ public:
     virtual const std::vector<FunctionTemplate> &getFunctions() const override{ return cudaFunctions; }
 
 private:
+    //--------------------------------------------------------------------------
+    // Private methods
+    //--------------------------------------------------------------------------
     void genParallelNeuronGroup(CodeStream &os, const NNmodel &model,
                                 std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const NeuronGroup&)> handler) const;
 
 
     void genEmitSpike(CodeStream &os, const std::string &neuronID, const std::string &suffix) const;
 
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
     const size_t m_NeuronUpdateBlockSize;
 };
 }   // CodeGenerator

@@ -2,18 +2,27 @@
 
 // Standard C++ includes
 #include <functional>
-#include <ostream>
+#include <vector>
+
+// GeNN includes
+#include "codeGenUtils.h"
 
 // Forward declarations
 class CodeStream;
+class NeuronGroup;
 class NNmodel;
 
+//--------------------------------------------------------------------------
 // CodeGenerator::Base
+//--------------------------------------------------------------------------
 namespace CodeGenerator
 {
 class Base
 {
 public:
+    //--------------------------------------------------------------------------
+    // Declared virtuals
+    //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
                                        std::function<void(CodeStream &output, const Base &, const NNmodel &, const NeuronGroup&, const std::string &, const std::string &)> handler) const = 0;
 
