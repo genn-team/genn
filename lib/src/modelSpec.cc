@@ -1031,7 +1031,9 @@ void NNmodel::finalize()
 
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
-        n.second.mergeIncomingPSM();
+        if(!n.second.getInSyn().empty()) {
+            n.second.mergeIncomingPSM();
+        }
     }
     //assert(false);
 
