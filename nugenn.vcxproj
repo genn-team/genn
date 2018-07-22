@@ -62,6 +62,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClCompile Include="cuda_code_generator.cc" />
     <ClCompile Include="main.cc" />
   </ItemGroup>
   <!-- Reference libgenn so it gets built automatically if required -->

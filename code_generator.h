@@ -15,13 +15,7 @@ class Base
 {
 public:
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream &, const Base &, const NNmodel&)> handler) const = 0;
-
-    virtual void genForEachNeuronGroup(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream &output, const Base &, const NNmodel &, const NeuronGroup&)> handler) const = 0;
-
-    virtual void genForEachNeuron(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, 
-                                  std::function<void(CodeStream &output, const Base &, const NNmodel &, const NeuronGroup&, const std::string &, const std::string &)> handler) const = 0;
+                                       std::function<void(CodeStream &output, const Base &, const NNmodel &, const NeuronGroup&, const std::string &, const std::string &)> handler) const = 0;
 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const std::string &neuronID) const = 0;
     
