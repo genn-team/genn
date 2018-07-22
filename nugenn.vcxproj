@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Define project configurations - we support x64 and Win32, debug, release and CPU_ONLY mode -->
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_CPU_ONLY|x64">
+      <Configuration>Release_CPU_ONLY</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_CPU_ONLY|x64">
+      <Configuration>Debug_CPU_ONLY</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{046FC02B-A195-4CB1-B7EC-A1B14BF908D1}</ProjectGuid>
+  </PropertyGroup>
+  <!-- Import builtin C++ properties -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
+  <!-- Configure global properties to build application (rather than library) and to use latest platform toolkit -->
+  <PropertyGroup>
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <!-- Depending on configuration, call generator different names -->
+    <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">generateSpineML_CPU_ONLY</TargetName>
+    <TargetName Condition=" '$(Configuration)' == 'Release' ">generateSpineML</TargetName>
+    <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">generateSpineML_debug_CPU_ONLY</TargetName>
+    <TargetName Condition=" '$(Configuration)' == 'Debug' ">generateSpineML_debug</TargetName>
+    <OutDir>.\</OutDir>
+  </PropertyGroup>
+  <!-- Customise C++  compilation and linking tasks -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">$(GENN_PATH)\lib\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">$(GENN_PATH)\lib\include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
+      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
+      <!-- Depending on configuration, set preprocessor options -->
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">GENERATOR_MAIN_HANDLED;CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release' ">GENERATOR_MAIN_HANDLED;NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">GENERATOR_MAIN_HANDLED;DEBUG;CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug' ">GENERATOR_MAIN_HANDLED;DEBUG;NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
+      <ExceptionHandling>Sync</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <!-- Depending on configuration, link to libraries different names -->
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Release' ">$(GENN_PATH)\lib\lib\genn.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">$(GENN_PATH)\lib\lib\genn_debug_CPU_ONLY.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)' == 'Debug' ">$(GENN_PATH)\lib\lib\genn_debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib</AdditionalDependencies>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation Condition=" $(Configuration.Contains('Debug')) ">true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup>
+    <ClCompile Include="main.cc" />
+  </ItemGroup>
+  <!-- Reference libgenn so it gets built automatically if required -->
+  <ItemGroup>
+    <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj">
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemGroup>
+  <!-- Import builtin C++ targets -->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
+</Project>
