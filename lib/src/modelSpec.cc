@@ -143,14 +143,24 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
         return true;
     }
 
-    // Check whether any synapse groups require initialisation in this kernel
-    // **NOTE** this only includes dense matrices
+    // Check whether any synapse groups' dense connectivity matrices require initialisation in this kernel
     if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
         [](const NNmodel::SynapseGroupValueType &s)
         {
             return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
                     (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
                     s.second.isWUDeviceVarInitRequired());
+        }))
+    {
+        return true;
+    }
+
+    // Check whether any synapse groups' sparse connectivity matrices require initialisation in this kernel
+    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s)
+        {
+            return ((s.second.getSparseConnectivityVarMode() & VarInit::DEVICE) &&
+                    !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty());
         }))
     {
         return true;
@@ -1027,6 +1037,22 @@ void NNmodel::finalize()
         s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
         s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
+
+        // If this synapse group has either ragged or bitmask connectivity which is initialised
+        // using a connectivity snippet AND has individual synaptic variables
+        if(((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+            || (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+            && !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()
+            && s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
+        {
+            // Loop through variables and check that they are initialised in the same place as the sparse connectivity
+            auto wuVars = s.second.getWUModel()->getVars();
+            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                if((s.second.getSparseConnectivityVarMode() & VarInit::HOST) != (s.second.getWUVarMode(k) & VarInit::HOST)) {
+                    gennError("Weight update mode variables must be initialised in same place as sparse connectivity variable '" + wuVars[k].first + "' in population '" + s.first + "' is not");
+                }
+            }
+        }
     }
 
     setPopulationSums();
