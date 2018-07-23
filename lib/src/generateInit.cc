@@ -491,26 +491,13 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
                         if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
                             os << "const uint64_t rowStartGID = lid * " << numTrgNeurons << "ull;" << std::endl;
-                            os << "const uint64_t rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
                         }
                         else {
                             os << "const unsigned int rowStartGID = lid * " << numTrgNeurons << ";" << std::endl;
-                            os << "const unsigned int rowEndGID = rowStartGID + " << numTrgNeurons << ";" << std::endl;
-                        }
-
-                        // Loop through the words in this row without overlaps and zero
-                        // **NOTE** (x + y - 1) / y is essentially ceil(x / y)
-                        os << "// Zero row words" << std::endl;
-                        os << "const unsigned int rowStartWord = (rowStartGID + 32 - 1) / 32;" << std::endl;
-                        os << "const unsigned int rowEndWord = (rowEndGID + 32 - 1) / 32;" << std::endl;
-                        os << "for(unsigned int i = rowStartWord; i < rowEndWord; i++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "dd_gp" << s.first << "[i] = 0;" << std::endl;
                         }
 
                         // Build function template to set correct bit in bitmask
-                        const std::string addSynapseTemplate = "setB(dd_gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
+                        const std::string addSynapseTemplate = "atomicOr(&dd_gp" + s.first + "[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))";
 
                         // Loop through synapses in row and generate code to initialise sparse connectivity
                         os << "// Build sparse connectivity" << std::endl;
@@ -978,6 +965,15 @@ void genInit(const NNmodel &model,      //!< Model description
                 else {
                     gennError("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
                 }
+            }
+            // Otherwise, if this synapse population has BITMASK connectivity that should be initialised on device,
+            // insert a call to cudaMemset to zero the whole bitmask as this is tricky to do in a row-wise manner in the initialise kernel
+            else if((s.second.getSparseConnectivityVarMode() & VarInit::DEVICE)
+                && (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
+                && !connectInit.getSnippet()->getRowBuildCode().empty())
+            {
+                const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                os << "cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
             }
 
             // If insyn variables should be initialised on the host
