@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <iomanip>
 #include <limits>
 #include <string>
 #include <sstream>
@@ -110,7 +111,7 @@ inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 const std::vector<FunctionTemplate> cudaFunctions = {
     {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
     {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))", "exponentialDistDouble($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
 };
 
@@ -177,6 +178,30 @@ inline void name_substitutions(string &code, const string &prefix, const vector<
 }
 
 
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+void writePreciseString(std::ostream &os, T value)
+{
+    // Cache previous precision
+    const std::streamsize previousPrecision = os.precision();
+
+    // Set scientific formatting
+    os << std::scientific;
+
+    // Set precision to what is required to fully represent T
+    os << std::setprecision(std::numeric_limits<T>::max_digits10);
+
+    // Write value to stream
+    os << value;
+
+    // Reset to default formatting
+    // **YUCK** GCC 4.8.X doesn't seem to include std::defaultfloat
+    os.unsetf(std::ios_base::floatfield);
+    //os << std::defaultfloat;
+
+    // Restore previous precision
+    os << std::setprecision(previousPrecision);
+}
+
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of value substitutions for parameters in code snippets.
 //--------------------------------------------------------------------------
@@ -187,8 +212,7 @@ inline void value_substitutions(string &code, NameIter namesBegin, NameIter name
     auto v = values.cbegin();
     for (;n != namesEnd && v != values.cend(); n++, v++) {
         stringstream stream;
-        stream.precision(std::numeric_limits<double>::max_digits10);
-        stream << std::scientific << *v;
+        writePreciseString(stream, *v);
         substitute(code,
                    "$(" + *n + ext + ")",
                    "(" + stream.str() + ")");

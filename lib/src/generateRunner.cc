@@ -363,18 +363,6 @@ void genDefinitions(const NNmodel &model,   //!< Model description
                     const string &path,     //!< Path for code generationn
                     int localHostID)        //!< Host ID of local machine
 {
-    string SCLR_MIN;
-    string SCLR_MAX;
-    if (model.getPrecision() == "float") {
-        SCLR_MIN= to_string(FLT_MIN)+"f";
-        SCLR_MAX= to_string(FLT_MAX)+"f";
-    }
-
-    if (model.getPrecision() == "double") {
-        SCLR_MIN= to_string(DBL_MIN);
-        SCLR_MAX= to_string(DBL_MAX);
-    }
-
     //=======================
     // generate definitions.h
     //=======================
@@ -457,10 +445,26 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << "typedef " << model.getPrecision() << " scalar;" << std::endl;
     os << "#endif" << std::endl;
     os << "#ifndef SCALAR_MIN" << std::endl;
-    os << "#define SCALAR_MIN " << SCLR_MIN << std::endl;
+    os << "#define SCALAR_MIN ";
+    if (model.getPrecision() == "float") {
+        writePreciseString(os, std::numeric_limits<float>::min());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::min());
+        os << std::endl;
+    }
     os << "#endif" << std::endl;
     os << "#ifndef SCALAR_MAX" << std::endl;
-    os << "#define SCALAR_MAX " << SCLR_MAX << std::endl;
+    os << "#define SCALAR_MAX ";
+    if (model.getPrecision() == "float") {
+        writePreciseString(os, std::numeric_limits<float>::max());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::max());
+        os << std::endl;
+    }
     os << "#endif" << std::endl;
     os << std::endl;
   
@@ -1957,29 +1961,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "__device__ float exponentialDistFloat(RNG *rng)";
     {
         CodeStream::Scope b(os);
-        os << "float a = 0.0f;" << std::endl;
         os << "while (true)";
         {
             CodeStream::Scope b(os);
-            os << "float u = curand_uniform(rng);" << std::endl;
-            os << "const float u0 = u;" << std::endl;
-            os << "while (true)";
+            os << "const float u = curand_uniform(rng);" << std::endl;
+            os << "if (u != 0.0f)";
             {
                 CodeStream::Scope b(os);
-                os << "float uStar = curand_uniform(rng);" << std::endl;
-                os << "if (u < uStar)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "return  a + u0;" << std::endl;
-                }
-                os << "u = curand_uniform(rng);" << std::endl;
-                os << "if (u >= uStar)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "break;" << std::endl;
-                }
+                os << "return -logf(u);" << std::endl;
             }
-            os << "a += 1.0f;" << std::endl;
         }
     }
     os << std::endl;
@@ -1987,29 +1977,15 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "__device__ double exponentialDistDouble(RNG *rng)";
     {
         CodeStream::Scope b(os);
-        os << "double a = 0.0f;" << std::endl;
         os << "while (true)";
         {
             CodeStream::Scope b(os);
-            os << "double u = curand_uniform_double(rng);" << std::endl;
-            os << "const double u0 = u;" << std::endl;
-            os << "while (true)";
+            os << "const double u = curand_uniform_double(rng);" << std::endl;
+            os << "if (u != 0.0)";
             {
                 CodeStream::Scope b(os);
-                os << "double uStar = curand_uniform_double(rng);" << std::endl;
-                os << "if (u < uStar)" << std::endl;
-                {
-                    CodeStream::Scope b(os);
-                    os << "return  a + u0;" << std::endl;
-                }
-                os << "u = curand_uniform_double(rng);" << std::endl;
-                os << "if (u >= uStar)" << std::endl;
-                {
-                    CodeStream::Scope b(os);
-                    os << "break;" << std::endl;
-                }
+                os << "return -log(u);" << std::endl;
             }
-            os << "a += 1.0;" << std::endl;
         }
     }
     os << std::endl;
@@ -2783,7 +2759,7 @@ void genMakefile(const NNmodel &model, //!< Model description
     // Start with correct NVCC flags to build shared library or object file as appropriate
     // **NOTE** -c = compile and assemble, don't link
     string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "-shared -fPIC" : "-c";
-    cxxFlags += " -DCPU_ONLY -std=c++11";
+    cxxFlags += " -DCPU_ONLY -std=c++11 -MMD -MP";
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
     if (GENN_PREFERENCES::optimizeCode) {
         cxxFlags += " -O3 -ffast-math";
@@ -2806,27 +2782,34 @@ void genMakefile(const NNmodel &model, //!< Model description
     if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "all: librunner.so" << endl;
         os << endl;
-        os << "librunner.so: runner.cc" << endl;
-        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << "-include librunner.d";
+        os << endl;
+        os << "librunner.so: runner.cc librunner.d" << endl;
+        // **HACK** for some reason GCC is only generating dependencies for the LAST source file
+        os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) $(GENN_PATH)/lib/src/sparseUtils.cc runner.cc -o librunner.so" << endl;
+        os << endl;
+        os << "%.d: ;" << endl;
         os << endl;
         os << "clean:" << endl;
-        os << "\trm -f librunner.so" << endl;
+        os << "\trm -f librunner.so librunner.d" << endl;
     }
     else {
         os << "all: runner.o" << endl;
         os << endl;
-        os << "runner.o: runner.cc" << endl;
+        os << "-include runner.d";
+        os << endl;
+        os << "runner.o: runner.cc runner.d" << endl;
         os << "\t$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
         os << endl;
+        os << "%.d: ;" << endl;
+        os << endl;
         os << "clean:" << endl;
-        os << "\trm -f runner.o" << endl;
+        os << "\trm -f runner.o runner.d" << endl;
     }
-#else
-    // Start with correct NVCC flags to build shared library or object file as appropriate
-    // **NOTE** -c = compile and assemble, don't link
-    string nvccFlags = GENN_PREFERENCES::buildSharedLibrary ? "--shared --compiler-options '-fPIC'" : "-c";
 
-    nvccFlags += " -std=c++11 -x cu -arch sm_";
+#else
+    // Build NVCC compile flags string
+    string nvccFlags = "-std=c++11 -x cu -arch sm_";
     nvccFlags += to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
     nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
     if (GENN_PREFERENCES::optimizeCode) {
@@ -2837,6 +2820,9 @@ void genMakefile(const NNmodel &model, //!< Model description
     }
     if (GENN_PREFERENCES::showPtxInfo) {
         nvccFlags += " -Xptxas \"-v\"";
+    }
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        nvccFlags += " --compiler-options '-fPIC'";
     }
 
     os << endl;
@@ -2854,20 +2840,33 @@ void genMakefile(const NNmodel &model, //!< Model description
     if(GENN_PREFERENCES::buildSharedLibrary) {
         os << "all: librunner.so" << endl;
         os << endl;
-        os << "librunner.so: runner.cc" << endl;
-        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
+        os << "-include librunner.d";
+        os << endl;
+        os << "librunner.d: runner.cc" << endl;
+        os << "\t$(NVCC) -M $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc 1> librunner.d" << endl;
+        // **HACK** for reasons known only to itself, NVCC won't create dependencies for targets
+        // called anything other than runner.o. Therefore we use sed to fix up the first line of the dependency file
+        os << "\tsed -i \"1s/runner.o/librunner.so/\" librunner.d" << endl;
+        os << endl;
+        os << "librunner.so: runner.cc librunner.d" << endl;
+        os << "\t$(NVCC) --shared $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
         os << endl;
         os << "clean:" << endl;
-        os << "\trm -f librunner.so" << endl;
+        os << "\trm -f librunner.so runner.d" << endl;
     }
     else {
         os << "all: runner.o" << endl;
         os << endl;
-        os << "runner.o: runner.cc" << endl;
-        os << "\t$(NVCC) $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
+        os << "-include runner.d";
+        os << endl;
+        os << "runner.d: runner.cc" << endl;
+        os << "\t$(NVCC) -M $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc 1> runner.d" << endl;
+        os << endl;
+        os << "runner.o: runner.cc runner.d" << endl;
+        os << "\t$(NVCC) -c $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc" << endl;
         os << endl;
         os << "clean:" << endl;
-        os << "\trm -f runner.o" << endl;
+        os << "\trm -f runner.o runner.d" << endl;
     }
 #endif
 
