@@ -43,6 +43,7 @@ namespace GENN_PREFERENCES {
     VarMode defaultSparseConnectivityMode = VarMode::LOC_HOST_DEVICE_INIT_HOST;   //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
+    unsigned int preSynapseResetBlockSize = 32;
     unsigned int neuronBlockSize= 32;
     unsigned int synapseBlockSize= 32;
     unsigned int learningBlockSize= 32;
@@ -56,6 +57,7 @@ namespace GENN_PREFERENCES {
 };
 
 // These will eventually go inside e.g. some HardwareConfig class. Putting them here meanwhile.
+unsigned int preSynapseResetBlkSize; // Global variable containing the GPU block size for the reset kernel run before the synapse kernel
 unsigned int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
 unsigned int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
 unsigned int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel

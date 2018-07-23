@@ -1,4 +1,5 @@
 # Ignore object files
+**/*.d
 **/*.o
 **/*.obj
 

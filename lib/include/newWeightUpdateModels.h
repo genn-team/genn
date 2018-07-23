@@ -159,6 +159,32 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// WeightUpdateModels::StaticPulseDendriticDelay
+//----------------------------------------------------------------------------
+//! Pulse-coupled, static synapse with heterogenous dendritic delays
+/*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
+    the synaptic conductances are simply added to the postsynaptic input variable.
+    The model has 2 variables:
+    - g - conductance of scalar type
+    - d - dendritic delay in timesteps
+    and no other parameters.
+
+    \c sim code is:
+
+    \code
+    " $(addToDenDelay, $(g), $(d));\n\
+    \endcode*/
+class StaticPulseDendriticDelay : public Base
+{
+public:
+    DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2);
+
+    SET_VARS({{"g", "scalar"},{"d", "uint8_t"}});
+
+    SET_SIM_CODE("$(addToDenDelay, $(g), $(d));\n");
+};
+
+//----------------------------------------------------------------------------
 // WeightUpdateModels::StaticGraded
 //----------------------------------------------------------------------------
 //! Graded-potential, static synapse

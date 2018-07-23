@@ -109,6 +109,12 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
+unsigned int NNmodel::getNumPreSynapseResetRequiredGroups() const
+{
+    return std::count_if(getLocalSynapseGroups().cbegin(), getLocalSynapseGroups().cend(),
+                         [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
+}
+
 bool NNmodel::isDeviceInitRequired(int localHostID) const
 {
     // If device RNG is required, device init is required to initialise it

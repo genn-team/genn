@@ -52,6 +52,7 @@ namespace GENN_PREFERENCES {
     extern VarMode defaultSparseConnectivityMode; //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
+    extern unsigned int preSynapseResetBlockSize;
     extern unsigned int neuronBlockSize;
     extern unsigned int synapseBlockSize;
     extern unsigned int learningBlockSize;
@@ -64,12 +65,13 @@ namespace GENN_PREFERENCES {
     extern std::string userNvccFlags; //!< Allows users to set specific nvcc compiler options they may want to use for all GPU code (identical for windows and unix platforms)
 }
 
-extern unsigned int neuronBlkSz;    //!< Global variable containing the GPU block size for the neuron kernel
-extern unsigned int synapseBlkSz;   //!< Global variable containing the GPU block size for the synapse kernel
-extern unsigned int learnBlkSz;     //!< Global variable containing the GPU block size for the learn kernel
-extern unsigned int synDynBlkSz;    //!< Global variable containing the GPU block size for the synapse dynamics kernel
-extern unsigned int initBlkSz;      //!< Global variable containing the GPU block size for the initialization kernel
-extern unsigned int initSparseBlkSz;      //!< Global variable containing the GPU block size for the sparse initialization kernel
+extern unsigned int neuronBlkSz;            //!< Global variable containing the GPU block size for the neuron kernel
+extern unsigned int preSynapseResetBlkSize; //!< Global variable containing the GPU block size for the reset kernel run before the synapse kernel
+extern unsigned int synapseBlkSz;           //!< Global variable containing the GPU block size for the synapse kernel
+extern unsigned int learnBlkSz;             //!< Global variable containing the GPU block size for the learn kernel
+extern unsigned int synDynBlkSz;            //!< Global variable containing the GPU block size for the synapse dynamics kernel
+extern unsigned int initBlkSz;              //!< Global variable containing the GPU block size for the initialization kernel
+extern unsigned int initSparseBlkSz;        //!< Global variable containing the GPU block size for the sparse initialization kernel
 
 //extern vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //extern vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device
