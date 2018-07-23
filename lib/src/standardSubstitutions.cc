@@ -362,7 +362,7 @@ std::string StandardSubstitutions::initSparseConnectivity(
 
     // Substitute pre and postsynaptic indices
     substitute(code, "$(prevJ)", "prevJ");
-    substitute(code, "$(i)", preIdx);
+    substitute(code, "$(id_pre)", preIdx);
 
     // Replace endRow() with break to stop loop
     functionSubstitute(code, "endRow", 0, "break");

@@ -66,7 +66,7 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::OneToOne, 0);
 
     SET_ROW_BUILD_CODE(
-        "$(addSynapse, $(i));\n"
+        "$(addSynapse, $(id_pre));\n"
         "$(endRow);\n");
     
     SET_CALC_MAX_ROW_LENGTH_FUNC(
