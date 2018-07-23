@@ -2192,10 +2192,17 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if((s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
                 && canPushPullVar(s.second.getSparseConnectivityVarMode()))
             {
+                // If sparse connectivity is initialised on device, only copy if hostInitialisedOnly isn't set
+                if(s.second.getSparseConnectivityVarMode() & VarInit::DEVICE) {
+                    os << "if(!hostInitialisedOnly)" << CodeStream::OB(1105);
+                }
                 const size_t size = ((size_t)numSrcNeurons * (size_t)numTrgNeurons) / 32 + 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_gp" << s.first;
                 os << ", gp" << s.first;
                 os << ", " << size << " * sizeof(uint32_t), cudaMemcpyHostToDevice));" << std::endl;
+                if(s.second.getSparseConnectivityVarMode() & VarInit::DEVICE) {
+                    os << CodeStream::CB(1105);
+                }
             }
 
             // If synapse input variables can be pushed and pulled add copy code
