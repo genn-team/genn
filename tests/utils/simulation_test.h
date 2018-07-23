@@ -55,16 +55,20 @@ protected:
     //--------------------------------------------------------------------------
     void StepGeNN()
     {
-#ifndef CPU_ONLY
-        if(GetParam())
+#ifdef CPU_ONLY
+        stepTimeCPU();
+#else   // CPU_ONLY
+    #ifndef CPU_GPU_NOT_SUPPORTED
+        if(!GetParam()) {
+            stepTimeCPU();
+        }
+        else
+    #else   // CPU_NOT_SUPPORTED
         {
             stepTimeGPU();
             copyStateFromDevice();
         }
-        else
+    #endif  // CPU_NOT_SUPPORTED
 #endif  // CPU_ONLY
-        {
-            stepTimeCPU();
-        }
     }
 };
