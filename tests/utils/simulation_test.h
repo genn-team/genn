@@ -63,12 +63,11 @@ protected:
             stepTimeCPU();
         }
         else
-    #else   // CPU_NOT_SUPPORTED
-        {
+    #endif  // CPU_NOT_SUPPORTED
+        if(GetParam()) {
             stepTimeGPU();
             copyStateFromDevice();
         }
-    #endif  // CPU_NOT_SUPPORTED
 #endif  // CPU_ONLY
     }
 };
