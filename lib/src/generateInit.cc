@@ -1204,7 +1204,7 @@ void genInit(const NNmodel &model,      //!< Model description
                             {
                                 CodeStream::Scope b(os);
                                 if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
-                                    os << "for (int j = C" << s.first << ".indInG[i]; i < C" << s.first << ".indInG[i + 1]; j++)";
+                                    os << "for (int j = C" << s.first << ".indInG[i]; j < C" << s.first << ".indInG[i + 1]; j++)";
                                     {
                                         CodeStream::Scope b(os);
                                         os << StandardSubstitutions::initWeightUpdateVariable(varInit, wuVars[k].first + s.first + "[j]",
