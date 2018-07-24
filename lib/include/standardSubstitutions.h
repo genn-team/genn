@@ -10,6 +10,7 @@
 // Forward declarations
 class NeuronGroup;
 class SynapseGroup;
+class CurrentSource;
 
 //----------------------------------------------------------------------------
 // NameIterCtx
@@ -152,6 +153,23 @@ void weightUpdatePostLearn(
 std::string initVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
+
+
+void currentSourceTimeCondition(
+    std::string &code,
+    const CurrentSource *sc,
+    const DerivedParamNameIterCtx &scDerivedParams,
+    const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams);
+
+void currentSourceInjection(
+    std::string &code,
+    const CurrentSource *sc,
+    const VarNameIterCtx &scmVars,
+    const DerivedParamNameIterCtx &scmDerivedParams,
+    const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
     const std::string &rng);

@@ -296,3 +296,38 @@ std::string StandardSubstitutions::initVariable(
 
     return code;
 }
+
+void StandardSubstitutions::currentSourceTimeCondition(
+    std::string &tcCode,
+    const CurrentSource *sc,
+    const DerivedParamNameIterCtx &scmDerivedParams,
+    const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams)
+{
+    substitute(tcCode, "$(t)", "t");
+    value_substitutions(tcCode, sc->getCurrentSourceModel()->getParamNames(), sc->getParams());
+    value_substitutions(tcCode, scmDerivedParams.nameBegin, scmDerivedParams.nameEnd, sc->getDerivedParams());
+    name_substitutions(tcCode, "", scmExtraGlobalParams.nameBegin, scmExtraGlobalParams.nameEnd, sc->getName());
+    checkUnreplacedVariables(tcCode, sc->getName() + " : surrent source timeConditionCode");
+}
+
+void StandardSubstitutions::currentSourceInjection(
+    std::string &iCode,
+    const CurrentSource *sc,
+    const VarNameIterCtx &scmVars,
+    const DerivedParamNameIterCtx &scmDerivedParams,
+    const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    substitute(iCode, "$(t)", "t");
+    name_substitutions(iCode, "l", scmVars.nameBegin, scmVars.nameEnd, "");
+    value_substitutions(iCode, sc->getCurrentSourceModel()->getParamNames(), sc->getParams());
+    value_substitutions(iCode, scmDerivedParams.nameBegin, scmDerivedParams.nameEnd, sc->getDerivedParams());
+    name_substitutions(iCode, "", scmExtraGlobalParams.nameBegin, scmExtraGlobalParams.nameEnd, sc->getName());
+    substitute(iCode, "$(Iinj)", "Iinj");
+    functionSubstitutions(iCode, ftype, functions);
+    substitute(iCode, "$(rng)", rng);
+    iCode = ensureFtype(iCode, ftype);
+    checkUnreplacedVariables(iCode, sc->getName() + " : current source injectionCode");
+}

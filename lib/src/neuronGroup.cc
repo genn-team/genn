@@ -253,3 +253,8 @@ std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const
         ? "(" + devPrefix + "spkQuePtr" + getName() + " * " + to_string(getNumNeurons()) + ") + "
         : "";
 }
+
+void NeuronGroup::injectCurrent(CurrentSource *src)
+{
+    m_CurrentSources.push_back(src);
+}

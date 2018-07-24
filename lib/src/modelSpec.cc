@@ -721,6 +721,52 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This function attempts to find an existing current source */
+//--------------------------------------------------------------------------
+
+const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
+{
+    // If a matching local synapse group is found, return it
+    auto localCurrentSource = m_LocalCurrentSources.find(name);
+    if(localCurrentSource != m_LocalCurrentSources.cend()) {
+        return &localCurrentSource->second;
+    }
+
+    // Otherwise, if a matching remote synapse group is found, return it
+    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
+    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
+        return &remoteCurrentSource->second;
+
+    }
+    // Otherwise, error
+    else {
+        gennError("current source " + name + " not found, aborting ...");
+        return NULL;
+    }
+}
+
+CurrentSource *NNmodel::findCurrentSource(const std::string &name)
+{
+    // If a matching local synapse group is found, return it
+    auto localCurrentSource = m_LocalCurrentSources.find(name);
+    if(localCurrentSource != m_LocalCurrentSources.cend()) {
+        return &localCurrentSource->second;
+    }
+
+    // Otherwise, if a matching remote synapse group is found, return it
+    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
+    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
+        return &remoteCurrentSource->second;
+
+    }
+    // Otherwise, error
+    else {
+        gennError("current source " + name + " not found, aborting ...");
+        return NULL;
+    }
+}
+
 
 //--------------------------------------------------------------------------
 /*! \brief This function defines the maximum number of connections for a neuron in the population
@@ -1020,6 +1066,15 @@ void NNmodel::finalize()
         s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
         s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
+    }
+
+    // CURRENT SOURCES
+    for(auto &cs : m_LocalCurrentSources) {
+        // Initialize derived parameters
+        cs.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
 
     setPopulationSums();
