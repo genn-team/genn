@@ -198,8 +198,8 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
 
         // Loop through local neuron groups
         for(const auto &n : model.getLocalNeuronGroups()) {
-            // If this group requires an RNG to simulate or requires variables to be initialised on device
-            if(n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired()) {
+            // If this neuron group require any kind of device initialisation
+            if(n.second.isDeviceInitRequired()) {
                 os << "// local neuron group " << n.first << std::endl;
                 PaddedSizeScope p(os, n.second.getNumNeurons(), initBlkSz, startThread);
 
@@ -429,48 +429,13 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
 
             // If we should initialise this synapse group's connectivity on the
             // device and it has a connectivity initialisation snippet
-            const auto &connectInit = s.second.getConnectivityInitialiser();
-            if((s.second.getSparseConnectivityVarMode() & VarInit::DEVICE)
-                && !connectInit.getSnippet()->getRowBuildCode().empty())
-            {
+            if(s.second.isDeviceSparseConnectivityInitRequired()) {
+                const auto &connectInit = s.second.getConnectivityInitialiser();
                 const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
                 os << "// synapse group " << s.first << std::endl;
                 PaddedSizeScope p(os, numSrcNeurons, initBlkSz, startThread);
-
-                // If synapse group has ragged connectibity and requires synapse dynamics
-                if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) && model.isSynapseGroupDynamicsRequired(s.first)) {
-                    // **TODO**
-                    assert(false);
-                }
-
-                // If synapse group has ragged connectibity and requires postsynaptic learning
-                if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) && model.isSynapseGroupPostLearningRequired(s.first)) {
-                    // If there are more target neurons than source neurons
-                    if(numTrgNeurons > numSrcNeurons) {
-                        // Calculate number of postsynaptic column counts to initialise per thread
-                        const unsigned int columnLengthsPerThread = (numTrgNeurons + numSrcNeurons - 1) / numSrcNeurons;
-                        os << "for(unsigned int c = 0; c < " << columnLengthsPerThread << "; c++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "const unsigned int idx = (c * " << numSrcNeurons << ") + lid;" << std::endl;
-                            os << "if(idx < " << numTrgNeurons << ")";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "dd_colLength" + s.first + "[idx] = 0;" << std::endl;
-                            }
-                        }
-                    }
-                    // Otherwise zero column lengths using first numTrgNeurons threads
-                    else {
-                        os << "if(lid < " << numTrgNeurons << ")";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "dd_colLength" + s.first + "[lid] = 0;" << std::endl;
-                        }
-                    }
-                }
 
                 os << "// only do this for existing synapses" << std::endl;
                 os << "if (lid < " << numSrcNeurons << ")";
@@ -556,20 +521,17 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
         CodeStream::Scope b(os);
 
         // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
+        // **TODO** check actually required
         os << "__shared__ unsigned int shRowLength[" << initSparseBlkSz << "];" << std::endl;
-        os << "__shared__ unsigned int shRowStart[" << initSparseBlkSz << "];" << std::endl;
+        os << "__shared__ unsigned int shRowStart[" << initSparseBlkSz + 1 << "];" << std::endl;
 
         // common variables for all cases
         os << "const unsigned int id = " << initSparseBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // Loop through local synapse groups
         for(const auto &s : model.getLocalSynapseGroups()) {
-            // If this group has sparse or ragged connectivity with individual synapse variables
-            // and it's weight update has variables that require initialising on GPU
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE
-                && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
-                && s.second.isWUDeviceVarInitRequired())
-            {
+            // If this group requires sparse initialisation
+            if(s.second.isDeviceSparseInitRequired()) {
                 // Get padded size of group and hence it's end thread
                 const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
                 const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getMaxConnections() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
@@ -634,6 +596,43 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                 os << "shRowLength[threadIdx.x] = dd_rowLength" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
                             }
                         }
+
+                        // If this synapse projection has ragged connectivity initialised on device and has synapse dynamics
+                        if(s.second.isDeviceSparseConnectivityInitRequired()
+                            && (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                            && model.isSynapseGroupDynamicsRequired(s.first))
+                        {
+                            // Use first thread to generate cumulative sum
+                            os << "if (threadIdx.x == 0)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                // Get index of last row in resultant synapse dynamics structure
+                                // **NOTE** if there IS a previous block, it will always have had initSparseBlkSz rows in it
+                                os << "unsigned int rowStart = (r == 0) ? 0 : shRowStart[" << initSparseBlkSz << "];" << std::endl;
+                                os << "shRowStart[0] = rowStart;" << std::endl;
+
+                                // Loop through rows in block
+                                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+
+                                    // Add this row's length to cumulative sum and write this to this row's end
+                                    os << "rowStart += shRowLength[i];" << std::endl;
+                                    os << "shRowStart[i + 1] = rowStart;" << std::endl;
+                                }
+
+                                // If this is the first thread block and the last block of rows,
+                                // write the total cumulative sum to the first entry of the remap structure
+                                os << "if(blockIdx.x == 0 && (r == " << numBlocks - 1 << "))";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "dd_synRemap" << s.first << "[0] = shRowStart[numRowsInBlock];" << std::endl;
+                                }
+
+                            }
+                        }
+
                         os << "__syncthreads();" << std::endl;
 
                         // Loop through rows
@@ -651,42 +650,53 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                     os << "const unsigned idx = shRowStart[i] + lid;" << std::endl;
                                 }
 
-                                // Loop through variables
-                                auto wuVars = s.second.getWUModel()->getVars();
-                                for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                                    const auto &varInit = s.second.getWUVarInitialisers()[k];
-                                    const VarMode varMode = s.second.getWUVarMode(k);
+                                // If this synapse group has individual variables
+                                if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                                    // Loop through variables
+                                    auto wuVars = s.second.getWUModel()->getVars();
+                                    for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                                        const auto &varInit = s.second.getWUVarInitialisers()[k];
+                                        const VarMode varMode = s.second.getWUVarMode(k);
 
-                                    // If this variable should be initialised on the device and has any initialisation code
-                                    if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                        CodeStream::Scope b(os);
-                                        const std::string preIdx = "((r * " + std::to_string(initSparseBlkSz) + ") + i)";
-                                        const std::string postIdx = "dd_ind" + s.first + "[idx]";
-                                        os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                                              cudaFunctions, preIdx, postIdx,
-                                                                                              model.getPrecision(), "&initRNG") << std::endl;
+                                        // If this variable should be initialised on the device and has any initialisation code
+                                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                            CodeStream::Scope b(os);
+                                            const std::string preIdx = "((r * " + std::to_string(initSparseBlkSz) + ") + i)";
+                                            const std::string postIdx = "dd_ind" + s.first + "[idx]";
+                                            os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                                                cudaFunctions, preIdx, postIdx,
+                                                                                                model.getPrecision(), "&initRNG") << std::endl;
+                                        }
                                     }
                                 }
 
-                                // If matrix is ragged, connectivity is initialised on device and postsynaptic learning is required
+                                // If matrix is ragged and connectivity is initialised on device
                                 if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
-                                    && (s.second.getSparseConnectivityVarMode() & VarInit::DEVICE)
-                                    && model.isSynapseGroupPostLearningRequired(s.first))
+                                    && s.second.isDeviceSparseConnectivityInitRequired())
                                 {
-                                    CodeStream::Scope b(os);
+                                    // If postsynaptic learning is required
+                                    if(model.isSynapseGroupPostLearningRequired(s.first)) {
+                                        CodeStream::Scope b(os);
 
-                                    // Extract index of synapse's postsynaptic target
-                                    os << "const unsigned int postIndex = dd_ind" << s.first << "[idx];" << std::endl;
+                                        // Extract index of synapse's postsynaptic target
+                                        os << "const unsigned int postIndex = dd_ind" << s.first << "[idx];" << std::endl;
 
-                                    // Atomically increment length of column of connectivity associated with this target
-                                    // **NOTE** this returns previous length i.e. where to insert new entry
-                                    os << "const unsigned int colLocation = atomicAdd(&dd_colLength" << s.first << "[postIndex], 1);" << std::endl;
+                                        // Atomically increment length of column of connectivity associated with this target
+                                        // **NOTE** this returns previous length i.e. where to insert new entry
+                                        os << "const unsigned int colLocation = atomicAdd(&dd_colLength" << s.first << "[postIndex], 1);" << std::endl;
 
-                                    // From this calculate index into column-major matrix
-                                    os << "const unsigned int colMajorIndex = (postIndex * " << s.second.getMaxSourceConnections() << ") + colLocation;" << std::endl;
+                                        // From this calculate index into column-major matrix
+                                        os << "const unsigned int colMajorIndex = (postIndex * " << s.second.getMaxSourceConnections() << ") + colLocation;" << std::endl;
 
-                                    // Add remapping entry at this location poining back to row-major index
-                                    os << "dd_remap" << s.first << "[colMajorIndex] = idx;" << std::endl;
+                                        // Add remapping entry at this location poining back to row-major index
+                                        os << "dd_remap" << s.first << "[colMajorIndex] = idx;" << std::endl;
+                                    }
+
+                                    // If synapse dynamics are required, copy idx into syn remap structure
+                                    if(model.isSynapseGroupDynamicsRequired(s.first)) {
+                                        CodeStream::Scope b(os);
+                                        os << "dd_synRemap" << s.first << "[shRowStart[i] + lid + 1] = idx;" << std::endl;
+                                    }
                                 }
                             }
 
@@ -966,14 +976,19 @@ void genInit(const NNmodel &model,      //!< Model description
                     gennError("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
                 }
             }
-            // Otherwise, if this synapse population has BITMASK connectivity that should be initialised on device,
-            // insert a call to cudaMemset to zero the whole bitmask as this is tricky to do in a row-wise manner in the initialise kernel
-            else if((s.second.getSparseConnectivityVarMode() & VarInit::DEVICE)
-                && (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
-                && !connectInit.getSnippet()->getRowBuildCode().empty())
-            {
-                const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-                os << "cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
+            // Otherwise, if this synapse group has connectivity that should be initialised on device
+            else if(s.second.isDeviceSparseConnectivityInitRequired()) {
+                // If this synapse population has BITMASK connectivity, insert a call to cudaMemset to zero the whole bitmask
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                    os << "cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
+                }
+                // If this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
+                else if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                    && model.isSynapseGroupPostLearningRequired(s.first))
+                {
+                    os << "cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int));" << std::endl;
+                }
             }
 
             // If insyn variables should be initialised on the host
