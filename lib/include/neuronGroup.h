@@ -11,6 +11,8 @@
 #include "newNeuronModels.h"
 #include "variableMode.h"
 
+class CurrentSource;
+
 //------------------------------------------------------------------------
 // NeuronGroup
 //------------------------------------------------------------------------
@@ -95,6 +97,9 @@ public:
 
     void initDerivedParams(double dt);
     void calcSizes(unsigned int blockSize, unsigned int &idStart, unsigned int &paddedIDStart);
+
+    //! add input current source
+    void injectCurrent(CurrentSource *source);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -186,6 +191,12 @@ public:
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;
 
+    //! Gets pointers to all current sources which provide input to this neuron group
+    const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
+
+    // Does this neuron group receive any input from current sources?
+    bool isInjected() const { return !m_CurrentSources.empty(); }
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -208,6 +219,7 @@ private:
     bool m_QueueRequired;
     std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
+    std::vector<CurrentSource*> m_CurrentSources;
 
     //!< Vector specifying which variables require queues
     bool m_AnyVarQueuesRequired;
