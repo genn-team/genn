@@ -406,6 +406,42 @@ bool SynapseGroup::isWUDeviceVarInitRequired() const
     }
 }
 
+bool SynapseGroup::isDeviceSparseConnectivityInitRequired() const
+{
+    // Return true if sparse connectivity should be initialised on device and there is code to do so
+    return ((getSparseConnectivityVarMode() & VarInit::DEVICE) &&
+            !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty());
+}
+
+bool SynapseGroup::isDeviceInitRequired() const
+{
+    // If the synaptic matrix is dense and some synaptic variables are initialised on device, return true
+    if((getMatrixType() & SynapseMatrixConnectivity::DENSE) && isWUDeviceVarInitRequired()) {
+        return true;
+    }
+    // Otherwise return true if there is sparse connectivity to be initialised on device
+    else {
+        return isDeviceSparseConnectivityInitRequired();
+    }
+}
+
+bool SynapseGroup::isDeviceSparseInitRequired() const
+{
+    // If the synaptic connectivity is sparse and some synaptic variables should be initialised on device, return true
+    if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) && isWUDeviceVarInitRequired()) {
+        return true;
+    }
+
+    // If sparse connectivity is initialised on device and the synapse group required either synapse dynamics or postsynaptic learning, return true
+    if(isDeviceSparseConnectivityInitRequired() &&
+        (!getWUModel()->getSynapseDynamicsCode().empty() || !getWUModel()->getLearnPostCode().empty()))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool SynapseGroup::canRunOnCPU() const
 {
 #ifndef CPU_ONLY

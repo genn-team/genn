@@ -122,13 +122,9 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
         return true;
     }
 
-    // If any local neuron groups require a sim RNG or device initialisation
-    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
+    // If any local neuron groups require device initialisation, return true
     if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
-        [](const NNmodel::NeuronGroupValueType &n)
-        {
-            return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
-        }))
+        [](const NNmodel::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
     {
         return true;
     }
@@ -143,25 +139,10 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
         return true;
     }
 
-    // Check whether any synapse groups' dense connectivity matrices require initialisation in this kernel
-    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
-                    (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                    s.second.isWUDeviceVarInitRequired());
-        }))
-    {
-        return true;
-    }
 
-    // Check whether any synapse groups' sparse connectivity matrices require initialisation in this kernel
+    // If any local synapse groups require device initialisation, return true
     if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return ((s.second.getSparseConnectivityVarMode() & VarInit::DEVICE) &&
-                    !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty());
-        }))
+        [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
     {
         return true;
     }
@@ -176,14 +157,9 @@ bool NNmodel::isDeviceSparseInitRequired() const
         return false;
     }
 
-    // Return true if any of the synapse groups have sparse connectivity which requires device initialiation
+    // Return true if any of the synapse groups require device sparse initialisation
     return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE || s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) &&
-                (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                s.second.isWUDeviceVarInitRequired());
-        });
+        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
 }
 
 bool NNmodel::isHostRNGRequired() const

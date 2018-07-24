@@ -175,20 +175,29 @@ public:
     std::string getOffsetPre() const;
     std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
-    //! Does this synapse group require dendritic delay
+    //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
 
-    //! Does this synapse group require an RNG for it's postsynaptic init code
+    //! Does this synapse group require an RNG for it's postsynaptic init code?
     bool isPSInitRNGRequired(VarInit varInitMode) const;
 
-    //! Does this synapse group require an RNG for it's weight update init code
+    //! Does this synapse group require an RNG for it's weight update init code?
     bool isWUInitRNGRequired(VarInit varInitMode) const;
 
-    //! Is device var init code required for any variables in this synapse group's postsynaptic model
+    //! Is device var init code required for any variables in this synapse group's postsynaptic model?
     bool isPSDeviceVarInitRequired() const;
 
-    //! Is device var init code required for any variables in this synapse group's weight update model
+    //! Is device var init code required for any variables in this synapse group's weight update model?
     bool isWUDeviceVarInitRequired() const;
+
+    //! Is device sparse connectivity initialisation code required for this synapse group?
+    bool isDeviceSparseConnectivityInitRequired() const;
+
+    //! Is any form of device initialisation required?
+    bool isDeviceInitRequired() const;
+
+    //! Is any form of sparse device initialisation required?
+    bool isDeviceSparseInitRequired() const;
 
     //! Can this synapse group run on the CPU?
     /*! If we are running in CPU_ONLY mode this is always true,

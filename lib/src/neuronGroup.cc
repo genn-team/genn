@@ -214,6 +214,11 @@ bool NeuronGroup::isDeviceVarInitRequired() const
                        });
 }
 
+bool NeuronGroup::isDeviceInitRequired() const
+{
+    return (isSimRNGRequired() || isDeviceVarInitRequired());
+}
+
 bool NeuronGroup::canRunOnCPU() const
 {
     // If spike var isn't present on host return false

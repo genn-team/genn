@@ -158,29 +158,32 @@ public:
     //! Get variable mode used by neuron model state variable
     VarMode getVarMode(size_t index) const{ return m_VarMode[index]; }
 
-    //! Do any of the spike event conditions tested by this neuron require specified parameter
+    //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
 
-    //! Does this neuron group require any initialisation code to be run
+    //! Does this neuron group require any initialisation code to be run?
     bool isInitCodeRequired() const;
 
-    //! Does this neuron group require an RNG to simulate
+    //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
-    //! Does this neuron group require an RNG for it's init code
+    //! Does this neuron group require an RNG for it's init code?
     bool isInitRNGRequired(VarInit varInitMode) const;
 
-    //! Is device var init code required for any variables in this neuron group
+    //! Is device var init code required for any variables in this neuron group?
     bool isDeviceVarInitRequired() const;
+
+    //! Is any form of device initialisation required?
+    bool isDeviceInitRequired() const;
 
     //! Can this neuron group run on the CPU?
     /*! If we are running in CPU_ONLY mode this is always true,
         but some GPU functionality will prevent models being run on both CPU and GPU. */
     bool canRunOnCPU() const;
 
-    //! Does this neuron group have outgoing connections specified host id
+    //! Does this neuron group have outgoing connections specified host id?
     bool hasOutputToHost(int targetHostID) const;
 
     // **THINK** do this really belong here - it is very code-generation specific
