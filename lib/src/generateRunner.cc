@@ -1581,7 +1581,6 @@ void genRunner(const NNmodel &model,    //!< Model description
                                          size);
 
                 if(model.isSynapseGroupPostLearningRequired(s.first)) {
-                     // **TODO** implement reverse array generation on device
                     const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
                     
                     // Allocate column lengths
@@ -1599,6 +1598,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
                 if(model.isSynapseGroupDynamicsRequired(s.first)) {
                     // Allocate synRemap
+                    // **THINK** this is over-allocating
                     allocate_host_variable(os,  "unsigned int", "C" + s.first + ".synRemap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                            size + 1);
                     allocate_device_variable(os,  "unsigned int", "synRemap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
