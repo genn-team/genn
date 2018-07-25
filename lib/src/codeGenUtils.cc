@@ -15,7 +15,7 @@
                       (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
     #include <regex>
 #else
-    #error "GeNN now requires a functioning std::regex implementation - please upgrade your version of GCC to at least 4.9.1, currently"
+    #error "GeNN now requires a functioning std::regex implementation - please upgrade your version of GCC to at least 4.9.1"
 #endif
 
 // Standard C includes
