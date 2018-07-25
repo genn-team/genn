@@ -140,19 +140,20 @@ for(b = 0; b < builderNodes.size; b++) {
                     // Run automatic tests
                     if (isUnix()) {
                         dir("genn/tests") {
-                            // **YUCK** if dev_toolset is in node label - enable it to get newer GCC
+                            // **YUCK** if dev_toolset is in node label - add flag to enable newer GCC using dev_toolset (CentOS)
+                            def runTestArguments = "";
                             if("dev_toolset" in nodeLabel) {
                                 echo "Enabling devtoolset 6 version of GCC";
-                                sh "source /opt/rh/devtoolset-6/enable"
+                                runTestArguments += " -d";
+                            }
+                            
+                            // If node is a CPU_ONLY node add -c option 
+                            if("cpu_only" in nodeLabel) {
+                                runTestArguments += " -c";
                             }
                             
                             // Run tests
-                            if("cpu_only" in nodeLabel) {
-                                sh "./run_tests.sh -c";
-                            }
-                            else {
-                                sh "./run_tests.sh";
-                            }
+                            sh "./run_tests.sh" + runTestArguments;
                             
                             // Parse test output for GCC warnings
                             // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
