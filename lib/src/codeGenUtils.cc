@@ -168,6 +168,61 @@ void substitute(string &s, const string &trg, const string &rep)
 }
 
 //--------------------------------------------------------------------------
+//! \brief Tool for substituting strings in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexSubstitute(string &s, const string &trg, const string &rep)
+{
+    // Build a regex to match variable name with at least one
+    // character that can't be in a variable name on either side (or an end/beginning of string)
+    // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
+    std::regex regex("(^|[^a-zA-Z_])" + trg + "(?=$|[^a-zA-Z_])");
+
+    // Create format string to replace in text
+    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
+    const std::string format = "$1" + rep;
+
+    // **NOTE** the following code performs the same function as std::regex_replace
+    // but has a return value indicating whether any replacements are made
+    // see http://en.cppreference.com/w/cpp/regex/regex_replace
+
+    // Create regex iterator to iterate over matches found in code
+    std::sregex_iterator matchesBegin(s.cbegin(), s.cend(), regex);
+    std::sregex_iterator matchesEnd;
+
+    // If there are no matches, leave s unmodified and return false
+    if(matchesBegin == matchesEnd) {
+        return false;
+    }
+    // Otherwise
+    else {
+        // Loop through matches
+        std::string output;
+        for(std::sregex_iterator m = matchesBegin;;) {
+            // Copy the non-matched subsequence (m->prefix()) onto output
+            std::copy(m->prefix().first, m->prefix().second, std::back_inserter(output));
+
+            // Then replaces the matched subsequence with the formatted replacement string
+            m->format(std::back_inserter(output), format);
+
+            // If there are no subsequent matches
+            if(std::next(m) == matchesEnd) {
+                // Copy the remaining non-matched characters onto output
+                std::copy(m->suffix().first, m->suffix().second, std::back_inserter(output));
+                break;
+            }
+            // Otherwise go onto next match
+            else {
+                m++;
+            }
+        }
+
+        // Set reference to newly processed version and return true
+        s = output;
+        return true;
+    }
+}
+
+//--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator
 //--------------------------------------------------------------------------
 bool isRNGRequired(const std::string &code)

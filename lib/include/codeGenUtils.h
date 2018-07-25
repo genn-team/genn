@@ -130,6 +130,10 @@ const std::vector<FunctionTemplate> cpuFunctions = {
 //--------------------------------------------------------------------------
 void substitute(string &s, const string &trg, const string &rep);
 
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting strings in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexSubstitute(string &s, const string &trg, const string &rep);
 
 //--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator
