@@ -605,6 +605,18 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
             os << "extern " << v.second << " " << v.first + n.first << ";" << std::endl;
         }
+        if (n.second.isInjected()) {
+            os << "// current source variables" << std::endl;
+            for (auto const *cs : n.second.getCurrentSources()) {
+                auto csModel = cs->getCurrentSourceModel();
+                for(auto const &v : csModel->getVars()) {
+                    extern_variable_def(os, v.second + " *", v.first + cs->getName() + n.first, cs->getVarMode(v.first));
+                }
+                for(auto const &v : csModel->getExtraGlobalParams()) {
+                    os << "extern " << v.second << " " <<  v.first << cs->getName() << n.first << ";" << std::endl;
+                }
+            }
+        }
     }
     os << std::endl;
     for(auto &n : model.getLocalNeuronGroups()) {
@@ -1226,6 +1238,18 @@ void genRunner(const NNmodel &model,    //!< Model description
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
             os << v.second << " " <<  v.first << n.first << ";" << std::endl;
         }
+        if (n.second.isInjected()) {
+            os << "// current source variables" << std::endl;
+            for (auto const *cs : n.second.getCurrentSources()) {
+                auto csModel = cs->getCurrentSourceModel();
+                for(auto const &v : csModel->getVars()) {
+                    variable_def(os, v.second + " *", v.first + cs->getName() + n.first, cs->getVarMode(v.first));
+                }
+                for(auto const &v : csModel->getExtraGlobalParams()) {
+                    os << v.second << " " <<  v.first << cs->getName() << n.first << ";" << std::endl;
+                }
+            }
+        }
     }
     os << std::endl;
 
@@ -1506,6 +1530,15 @@ void genRunner(const NNmodel &model,    //!< Model description
             for(const auto &v : n.second.getNeuronModel()->getVars()) {
                 mem += allocate_variable(os, v.second, v.first + n.first, n.second.getVarMode(v.first),
                                         n.second.isVarQueueRequired(v.first) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+            }
+            if (n.second.isInjected()) {
+                os << "// current source variables" << std::endl;
+                for (auto const *cs : n.second.getCurrentSources()) {
+                    auto csModel = cs->getCurrentSourceModel();
+                    for(auto const &v : csModel->getVars()) {
+                        mem += allocate_variable(os, v.second, v.first + cs->getName() + n.first, cs->getVarMode(v.first), n.second.getNumNeurons());
+                    }
+                }
             }
             os << std::endl;
         }

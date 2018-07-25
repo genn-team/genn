@@ -583,6 +583,8 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 }
 
                 // check for current sources and insert code if necessary
+                StandardGeneratedSections::neuronCurrentInjectionLocalVarDeclare(
+                                            os, n->second, "dd_", localID);
                 StandardGeneratedSections::neuronCurrentInjection(os, n->second,
                          localID, cudaFunctions, model.getPrecision(), rngName);
 

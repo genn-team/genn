@@ -358,6 +358,26 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 }
                             }
                         }
+                        // Loop through current sources
+                        if (n.second.isInjected()) {
+                            os << "// current source variables" << std::endl;
+                            for (auto const *cs : n.second.getCurrentSources()) {
+                                auto csModel = cs->getCurrentSourceModel();
+                                auto csVars = csModel->getVars();
+
+                                for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                                    const auto &varInit = cs->getVarInitialisers()[j];
+                                    const VarMode varMode = cs->getVarMode(j);
+
+                                    // If this variable should be initialised on the device and has any initialisation code
+                                    if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                        CodeStream::Scope b(os);
+                                        os << StandardSubstitutions::initVariable(varInit, "dd_" + csVars[j].first + cs->getName() + n.first + "[lid]",
+                                                                                    cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

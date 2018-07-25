@@ -473,22 +473,23 @@ public:
         if (final) {
             gennError("Trying to add a current source to a finalized model.");
         }
+        auto targetGroup = findNeuronGroup(targetNeuronGroupName);
 
         // Add current source to map
         auto result = m_CurrentSources.emplace(std::piecewise_construct,
-            std::forward_as_tuple(name),
-            std::forward_as_tuple(name, model,
+            std::forward_as_tuple(currentSourceName),
+            std::forward_as_tuple(currentSourceName, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers()));
 
         if(!result.second)
         {
-            auto targetGroup = findNeuronGroup(targetNeuronGroupName);
             auto source = findCurrentSource(currentSourceName);
             targetGroup->injectCurrent(source);
             return source;
         }
         else
         {
+            targetGroup->injectCurrent(&result.first->second);
             return &result.first->second;
         }
     }
@@ -508,17 +509,6 @@ public:
         return addCurrentSource<CurrentSourceModel>(currentSourceName, CurrentSourceModel::getInstance(),
                                 targetNeuronGroupName, paramValues, varInitialisers);
     }
-
-    //! Injects an existing current source into an existing neuron group
-    /*! \param currentSourceName string name of the current source
-        \param targetNeuronGroupName string name of the targen neuron group */
-    void injectCurrent(const string &currentSourceName, const string &targetNeuronGroupName)
-    {
-        auto targetGroup = findNeuronGroup(targetNeuronGroupName);
-        auto source = findCurrentSource(currentSourceName);
-        targetGroup->injectCurrent(source);
-    }
-    
 
 private:
     //--------------------------------------------------------------------------

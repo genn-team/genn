@@ -140,3 +140,24 @@ void StandardGeneratedSections::neuronCurrentInjection(
         }
     }
 }
+void StandardGeneratedSections::neuronCurrentInjectionLocalVarDeclare(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID)
+{
+    if (ng.isInjected()) {
+        os << "// pull injected current variables in a coalesced access" << std::endl;
+        const auto css = ng.getCurrentSources();
+        for (const auto *cs : css)
+        {
+            const auto* csm = cs->getCurrentSourceModel();
+            VarNameIterCtx csVars(csm->getVars());
+            // store the defined parts of the neuron state into the global state variables dd_V etc
+            for(const auto &v : csVars.container) {
+                os <<  v.second << " l" << v.first << cs->getName() << " = ";
+                os << devPrefix << v.first << cs->getName() << ng.getName() << "[" << localID << "];" << std::endl;
+            }
+        }
+    }
+}
