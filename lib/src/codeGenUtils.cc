@@ -11,12 +11,9 @@
     __GNUC__ > 4 || \
     (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
                       (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
-    #define REGEX_OPERATIONAL
-#endif
-
-// Standard C++ includes
-#ifdef REGEX_OPERATIONAL
-#include <regex>
+    #include <regex>
+#else
+    #error "GeNN now requires a functioning std::regex implementation - please upgrade your version of GCC to at least 4.9.1"
 #endif
 
 // Standard C includes
@@ -117,13 +114,13 @@ void ensureMathFunctionFtype(string &code, const string &type)
     // If type is double, substitute any single precision maths functions for double precision version
     if (type == "double") {
         for(const auto &m : mathsFuncs) {
-            substitute(code, string(m[MathsFuncSingle])+string("("), string(m[MathsFuncDouble])+string("("));
+            regexSubstitute(code, m[MathsFuncSingle] + string("\\("), m[MathsFuncDouble] + string("\\("));
         }
     }
     // Otherwise, substitute any double precision maths functions for single precision version
     else {
         for(const auto &m : mathsFuncs) {
-            substitute(code, string(m[MathsFuncDouble])+string("("), string(m[MathsFuncSingle])+string("("));
+            regexSubstitute(code, m[MathsFuncDouble] + string("\\("), m[MathsFuncSingle] + string("\\("));
         }
     }
 }
@@ -500,9 +497,6 @@ string ensureFtype(const string &oldcode, const string &type)
     return code;
 }
 
-
-#ifdef REGEX_OPERATIONAL
-
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */
@@ -522,11 +516,6 @@ void checkUnreplacedVariables(const string &code, const string &codeName)
         gennError("The "+vars+"undefined in code "+codeName+".");
     }
 }
-#else
-void checkUnreplacedVariables(const string &, const string &)
-{
-}
-#endif
 
 //--------------------------------------------------------------------------
 /*! \brief This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash
