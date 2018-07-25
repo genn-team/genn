@@ -114,7 +114,7 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
-            assert(false);
+            gennError("setMaxConnections: Synapse group already has max connections defined by connectivity initialisation snippet.");
         }
         
         m_MaxConnections = maxConnections;
@@ -127,6 +127,10 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc()) {
+            gennError("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
+        }
+
         m_MaxSourceConnections = maxConnections;
     }
     else {
