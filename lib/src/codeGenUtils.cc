@@ -172,7 +172,7 @@ bool regexSubstitute(string &s, const string &trg, const string &rep)
     // Build a regex to match variable name with at least one
     // character that can't be in a variable name on either side (or an end/beginning of string)
     // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
-    std::regex regex("(^|[^a-zA-Z_])" + trg + "(?=$|[^a-zA-Z_])");
+    std::regex regex("(^|[^0-9a-zA-Z_])" + trg + "(?=$|[^a-zA-Z0-9_])");
 
     // Create format string to replace in text
     // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
