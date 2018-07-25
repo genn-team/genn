@@ -105,13 +105,7 @@ for(b = 0; b < builderNodes.size; b++) {
                     
                     echo pwd()
                     echo env.PATH;
-                    
-                    // **YUCK** if dev_toolset is in node label - enable it to get newer GCC
-                    if("dev_toolset" in nodeLabel) {
-                        echo "Enabling devtoolset 6 version of GCC";
-                        sh "source /opt/rh/devtoolset-6/enable"
-                    }
-    
+
                     // Deleting existing checked out version of GeNN
                     sh "rm -rf genn";
                     
@@ -146,6 +140,12 @@ for(b = 0; b < builderNodes.size; b++) {
                     // Run automatic tests
                     if (isUnix()) {
                         dir("genn/tests") {
+                            // **YUCK** if dev_toolset is in node label - enable it to get newer GCC
+                            if("dev_toolset" in nodeLabel) {
+                                echo "Enabling devtoolset 6 version of GCC";
+                                sh "source /opt/rh/devtoolset-6/enable"
+                            }
+                            
                             // Run tests
                             if("cpu_only" in nodeLabel) {
                                 sh "./run_tests.sh -c";
