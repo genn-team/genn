@@ -11,6 +11,17 @@
 // GeNN includes
 #include "codeGenUtils.h"
 
+// Test based on https://github.com/brian-team/brian2genn/pull/60 to make sure that ensureFtype doesn't break functions it shouldn't
+TEST(EnsureMathFunctionFtype, ISinF) {
+    const std::string code =
+        "const int _infinity_int  = 1073741823;  // maximum 32bit integer divided by 2\n"
+        "if (std::isinf(t))\n"
+        "{\n";
+
+    std::string substitutedCode = ensureFtype(code, "double");
+    ASSERT_EQ(code, substitutedCode);
+}
+
 //--------------------------------------------------------------------------
 // SingleValueSubstitutionTest
 //--------------------------------------------------------------------------
