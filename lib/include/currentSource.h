@@ -18,11 +18,10 @@ class CurrentSource
 {
 public:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, int hostID, int deviceID) :
+                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers) :
         m_Name(name),
         m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
-        m_HostID(hostID), m_DeviceID(deviceID)
+        m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
     {
     }
     CurrentSource(const CurrentSource&) = delete;
@@ -31,12 +30,6 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Function to enable the use zero-copied memory for a particular state variable (deprecated use NeuronGroup::setVarMode):
-     /*! May improve IO performance at the expense of kernel performance */
-    void setVarZeroCopyEnabled(const std::string &varName, bool enabled)
-    {
-        setVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
-    }
 
     //! Set variable mode of neuron model state variable
     /*! This is ignored for CPU simulations */
@@ -55,13 +48,6 @@ public:
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
     const std::vector<NewModels::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
-
-    int getClusterHostID() const{ return m_HostID; }
-
-    int getClusterDeviceID() const{ return m_DeviceID; }
-
-    bool isZeroCopyEnabled() const;
-    bool isVarZeroCopyEnabled(const std::string &var) const{ return (getVarMode(var) & VarLocation::ZERO_COPY); }
 
     //! Get variable mode used by current source model state variable
     VarMode getVarMode(const std::string &varName) const;
@@ -101,10 +87,4 @@ private:
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
     std::vector<VarMode> m_VarMode;
-
-    //!< The ID of the cluster node which the neuron groups are computed on
-    int m_HostID;
-
-    //!< The ID of the CUDA device which the neuron groups are comnputed on
-    int m_DeviceID;
 };

@@ -42,26 +42,13 @@ void CurrentSource::initDerivedParams(double dt)
     }
 }
 
-bool CurrentSource::isZeroCopyEnabled() const
-{
-    // If there are any variables implemented in zero-copy mode return true
-    if(any_of(m_VarMode.begin(), m_VarMode.end(),
-        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
-    {
-        return true;
-    }
-
-    return false;
-}
-
 void CurrentSource::addExtraGlobalParams(std::map<string, string> &kernelParameters) const
 {
     for(auto const &p : getCurrentSourceModel()->getExtraGlobalParams()) {
         std::string pnamefull = p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getCurrentSourceModel()->getInjectionCode().find("$(" + p.first + ")") != string::npos
-                || getCurrentSourceModel()->getTimeConditionCode().find("$(" + p.first + ")") != string::npos) {
+            if (getCurrentSourceModel()->getInjectionCode().find("$(" + p.first + ")") != string::npos) {
                 kernelParameters.insert(pair<string, string>(pnamefull, p.second));
             }
         }
@@ -80,9 +67,8 @@ bool CurrentSource::isInitCodeRequired() const
 
 bool CurrentSource::isSimRNGRequired() const
 {
-    // Returns true if any parts of the neuron code require an RNG
-    if(::isRNGRequired(getCurrentSourceModel()->getInjectionCode())
-        || ::isRNGRequired(getCurrentSourceModel()->getTimeConditionCode()))
+    // Returns true if any parts of the current source code require an RNG
+    if(::isRNGRequired(getCurrentSourceModel()->getInjectionCode()))
     {
         return true;
     }

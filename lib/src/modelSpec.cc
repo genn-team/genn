@@ -727,17 +727,10 @@ SynapseGroup *NNmodel::addSynapsePopulation(
 
 const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
 {
-    // If a matching local synapse group is found, return it
-    auto localCurrentSource = m_LocalCurrentSources.find(name);
-    if(localCurrentSource != m_LocalCurrentSources.cend()) {
-        return &localCurrentSource->second;
-    }
-
-    // Otherwise, if a matching remote synapse group is found, return it
-    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
-    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
-        return &remoteCurrentSource->second;
-
+    // If a matching current source is found, return it
+    auto currentSource = m_CurrentSources.find(name);
+    if(currentSource != m_CurrentSources.cend()) {
+        return &currentSource->second;
     }
     // Otherwise, error
     else {
@@ -748,17 +741,10 @@ const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
 
 CurrentSource *NNmodel::findCurrentSource(const std::string &name)
 {
-    // If a matching local synapse group is found, return it
-    auto localCurrentSource = m_LocalCurrentSources.find(name);
-    if(localCurrentSource != m_LocalCurrentSources.cend()) {
-        return &localCurrentSource->second;
-    }
-
-    // Otherwise, if a matching remote synapse group is found, return it
-    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
-    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
-        return &remoteCurrentSource->second;
-
+    // If a matching current source is found, return it
+    auto currentSource = m_CurrentSources.find(name);
+    if(currentSource != m_CurrentSources.cend()) {
+        return &currentSource->second;
     }
     // Otherwise, error
     else {
@@ -1069,7 +1055,7 @@ void NNmodel::finalize()
     }
 
     // CURRENT SOURCES
-    for(auto &cs : m_LocalCurrentSources) {
+    for(auto &cs : m_CurrentSources) {
         // Initialize derived parameters
         cs.second.initDerivedParams(dt);
 

@@ -158,12 +158,6 @@ std::string initVariable(
     const std::string &rng);
 
 
-void currentSourceTimeCondition(
-    std::string &code,
-    const CurrentSource *sc,
-    const DerivedParamNameIterCtx &scDerivedParams,
-    const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams);
-
 void currentSourceInjection(
     std::string &code,
     const CurrentSource *sc,
@@ -172,6 +166,7 @@ void currentSourceInjection(
     const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
-    const std::string &rng);
+    const std::string &rng,
+    const std::string &popName);
 
 }   // StandardSubstitions

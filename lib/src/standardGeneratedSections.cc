@@ -109,3 +109,34 @@ void StandardGeneratedSections::neuronSpikeEventTest(
         os << CodeStream::CB(31);
     }
 }
+//----------------------------------------------------------------------------
+void StandardGeneratedSections::neuronCurrentInjection(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &localID,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    if (ng.isInjected()) {
+        os << "// add injected current from sources" << std::endl;
+        const auto css = ng.getCurrentSources();
+        for (const auto *cs : css)
+        {
+            const auto* csm = cs->getCurrentSourceModel();
+            VarNameIterCtx csVars(csm->getVars());
+            DerivedParamNameIterCtx csDerivedParams(csm->getDerivedParams());
+            ExtraGlobalParamNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
+            os << "// current source " << cs->getName() << std::endl;
+            if (!csm->getInjectionCode().empty()){
+                string iCode = csm->getInjectionCode();
+                substitute(iCode, "$(id)", localID);
+                StandardSubstitutions::currentSourceInjection(iCode, cs,
+                                    csVars, csDerivedParams, csExtraGlobalParams,
+                                    functions, ftype, rng,
+                                    ng.getName());
+                os << iCode << std::endl;
+            }
+        }
+    }
+}

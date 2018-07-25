@@ -307,34 +307,9 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                         }
                     }
 
-                    if (n.second.isInjected()) {
-                        os << "// add injected current from sources" << std::endl;
-                        os << "scalar Iinj = 0;" << std::endl;
-                        const auto scs = n.second.getCurrentSources();
-                        for (const auto *sc : scs)
-                        {
-                            const auto* scm = sc->getCurrentSourceModel();
-                            VarNameIterCtx scVars(scm->getVars());
-                            DerivedParamNameIterCtx scDerivedParams(scm->getDerivedParams());
-                            ExtraGlobalParamNameIterCtx scExtraGlobalParams(scm->getExtraGlobalParams());
-                            os << "// current source " << sc->getName() << std::endl;
-                            if (!scm->getTimeConditionCode().empty())
-                            {
-                                string tcCode = scm->getTimeConditionCode();
-                                StandardSubstitutions::currentSourceTimeCondition(tcCode, sc,
-                                                    scDerivedParams, scExtraGlobalParams);
-                                os << "if (" << tcCode << ")" << std::endl <<"{" << std::endl;
-                            }
-                            if (!scm->getInjectionCode().empty()){
-                                string iCode = scm->getInjectionCode();
-                                StandardSubstitutions::currentSourceInjection(iCode, sc,
-                                                    scVars, scDerivedParams, scExtraGlobalParams,
-                                                    cpuFunctions, model.getPrecision(), "rng");
-                                os << "    Iinj += " << iCode << ";" << std::endl;
-                            }
-                            if (!scm->getTimeConditionCode().empty()) os << "}" << std::endl;
-                        }
-                    }
+                    // check for current sources and insert code if necessary
+                    StandardGeneratedSections::neuronCurrentInjection(os, n.second,
+                                   "n", cpuFunctions, model.getPrecision(), "rng");
 
                     os << "// calculate membrane potential" << std::endl;
                     string sCode = nm->getSimCode();
