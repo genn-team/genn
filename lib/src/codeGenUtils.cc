@@ -116,13 +116,13 @@ void ensureMathFunctionFtype(string &code, const string &type)
     // If type is double, substitute any single precision maths functions for double precision version
     if (type == "double") {
         for(const auto &m : mathsFuncs) {
-            regexSubstitute(code, m[MathsFuncSingle] + string("\\("), m[MathsFuncDouble] + string("\\("));
+            regexVarSubstitute(code, m[MathsFuncSingle] + string("\\("), m[MathsFuncDouble] + string("\\("));
         }
     }
     // Otherwise, substitute any double precision maths functions for single precision version
     else {
         for(const auto &m : mathsFuncs) {
-            regexSubstitute(code, m[MathsFuncDouble] + string("\\("), m[MathsFuncSingle] + string("\\("));
+            regexVarSubstitute(code, m[MathsFuncDouble] + string("\\("), m[MathsFuncSingle] + string("\\("));
         }
     }
 }
@@ -169,7 +169,7 @@ void substitute(string &s, const string &trg, const string &rep)
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
-bool regexSubstitute(string &s, const string &trg, const string &rep)
+bool regexVarSubstitute(string &s, const string &trg, const string &rep)
 {
     // Build a regex to match variable name with at least one
     // character that can't be in a variable name on either side (or an end/beginning of string)

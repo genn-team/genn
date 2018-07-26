@@ -185,7 +185,7 @@ void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std:
                                                    const std::string &replaceVariableName)
 {
     // Replace variable name with replacement variable name, within GeNN $(XXXX) wrapper
-    regexSubstitute(code, variableName, "$(" + replaceVariableName + ")");
+    regexVarSubstitute(code, variableName, "$(" + replaceVariableName + ")");
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &variableName)
@@ -319,7 +319,7 @@ bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::stri
     // Replace all alias names with their code string
     bool aliasesExpanded = false;
     for(const auto &alias : aliases) {
-        aliasesExpanded |= regexSubstitute(code, alias.first, alias.second);
+        aliasesExpanded |= regexVarSubstitute(code, alias.first, alias.second);
     }
     return aliasesExpanded;
 }

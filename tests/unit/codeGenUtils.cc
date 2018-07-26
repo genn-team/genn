@@ -27,7 +27,7 @@ TEST(EnsureMathFunctionFtype, foo123) {
     const std::string code = "int foo123 = 6;";
 
     std::string substitutedCode = code;
-    regexSubstitute(substitutedCode, "foo", "bar");
+    regexVarSubstitute(substitutedCode, "foo", "bar");
     ASSERT_EQ(code, substitutedCode);
 }
 
@@ -36,7 +36,7 @@ TEST(EnsureMathFunctionFtype, not2well) {
     const std::string code = "int not2well = 6;";
 
     std::string substitutedCode = code;
-    regexSubstitute(substitutedCode, "well", "hell");
+    regexVarSubstitute(substitutedCode, "well", "hell");
     ASSERT_EQ(code, substitutedCode);
 }
 
