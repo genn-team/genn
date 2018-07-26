@@ -15,7 +15,8 @@ namespace CUDA
 class CodeGenerator : public ::CodeGenerator::Base
 {
 public:
-    CodeGenerator(size_t neuronUpdateBlockSize) : m_NeuronUpdateBlockSize(neuronUpdateBlockSize)
+    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize) 
+    :   m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize)
     {
     }
 
@@ -46,12 +47,22 @@ private:
     void genParallelNeuronGroup(CodeStream &os, const NNmodel &model,
                                 std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const NeuronGroup&)> handler) const;
 
-
+    void genParallelSynapseGroup(CodeStream &os, const NNmodel &model,
+                                 std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
+                                 std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const SynapseGroup&)> handler) const;
+                                 
     void genEmitSpike(CodeStream &os, const std::string &neuronID, const std::string &suffix) const;
 
+    size_t getPresynapticUpdateKernelSize(const SynapseGroup &sg) const;
+    
+    bool shouldAccumulateInLinSyn(const SynapseGroup &sg) const;
+    
+    bool shouldAccumulateInSharedMemory(const SynapseGroup &sg) const;
+    
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const size_t m_NeuronUpdateBlockSize;
+    const size_t m_PresynapticUpdateBlockSize;
 };
 }   // CodeGenerator
