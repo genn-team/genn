@@ -113,51 +113,39 @@ void StandardGeneratedSections::neuronSpikeEventTest(
 void StandardGeneratedSections::neuronCurrentInjection(
     CodeStream &os,
     const NeuronGroup &ng,
+    const std::string &devPrefix,
     const std::string &localID,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
     const std::string &rng)
 {
-    if (ng.isInjected()) {
-        os << "// add injected current from sources" << std::endl;
-        const auto css = ng.getCurrentSources();
-        for (const auto *cs : css)
-        {
-            const auto* csm = cs->getCurrentSourceModel();
-            VarNameIterCtx csVars(csm->getVars());
-            DerivedParamNameIterCtx csDerivedParams(csm->getDerivedParams());
-            ExtraGlobalParamNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
-            os << "// current source " << cs->getName() << std::endl;
-            if (!csm->getInjectionCode().empty()){
-                string iCode = csm->getInjectionCode();
-                substitute(iCode, "$(id)", localID);
-                StandardSubstitutions::currentSourceInjection(iCode, cs,
-                                    csVars, csDerivedParams, csExtraGlobalParams,
-                                    functions, ftype, rng,
-                                    ng.getName());
-                os << iCode << std::endl;
-            }
+    os << "// pull injected current variables in a coalesced access" << std::endl;
+    const auto css = ng.getCurrentSources();
+    for (const auto *cs : css)
+    {
+        const auto* csm = cs->getCurrentSourceModel();
+        VarNameIterCtx csVars(csm->getVars());
+        // store the defined parts of the neuron state into the global state variables dd_V etc
+        for(const auto &v : csVars.container) {
+            os <<  v.second << " l" << v.first << cs->getName() << " = ";
+            os << devPrefix << v.first << cs->getName() << "[" << localID << "];" << std::endl;
         }
     }
-}
-void StandardGeneratedSections::neuronCurrentInjectionLocalVarDeclare(
-    CodeStream &os,
-    const NeuronGroup &ng,
-    const std::string &devPrefix,
-    const std::string &localID)
-{
-    if (ng.isInjected()) {
-        os << "// pull injected current variables in a coalesced access" << std::endl;
-        const auto css = ng.getCurrentSources();
-        for (const auto *cs : css)
-        {
-            const auto* csm = cs->getCurrentSourceModel();
-            VarNameIterCtx csVars(csm->getVars());
-            // store the defined parts of the neuron state into the global state variables dd_V etc
-            for(const auto &v : csVars.container) {
-                os <<  v.second << " l" << v.first << cs->getName() << " = ";
-                os << devPrefix << v.first << cs->getName() << ng.getName() << "[" << localID << "];" << std::endl;
-            }
+    os << "// add injected current from sources" << std::endl;
+    for (const auto *cs : css)
+    {
+        const auto* csm = cs->getCurrentSourceModel();
+        VarNameIterCtx csVars(csm->getVars());
+        DerivedParamNameIterCtx csDerivedParams(csm->getDerivedParams());
+        ExtraGlobalParamNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
+        os << "// current source " << cs->getName() << std::endl;
+        if (!csm->getInjectionCode().empty()){
+            string iCode = csm->getInjectionCode();
+            substitute(iCode, "$(id)", localID);
+            StandardSubstitutions::currentSourceInjection(iCode, cs,
+                                csVars, csDerivedParams, csExtraGlobalParams,
+                                functions, ftype, rng);
+            os << iCode << std::endl;
         }
     }
 }

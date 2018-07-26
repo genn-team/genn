@@ -605,16 +605,14 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
             os << "extern " << v.second << " " << v.first + n.first << ";" << std::endl;
         }
-        if (n.second.isInjected()) {
-            os << "// current source variables" << std::endl;
-            for (auto const *cs : n.second.getCurrentSources()) {
-                auto csModel = cs->getCurrentSourceModel();
-                for(auto const &v : csModel->getVars()) {
-                    extern_variable_def(os, v.second + " *", v.first + cs->getName() + n.first, cs->getVarMode(v.first));
-                }
-                for(auto const &v : csModel->getExtraGlobalParams()) {
-                    os << "extern " << v.second << " " <<  v.first << cs->getName() << n.first << ";" << std::endl;
-                }
+        os << "// current source variables" << std::endl;
+        for (auto const *cs : n.second.getCurrentSources()) {
+            auto csModel = cs->getCurrentSourceModel();
+            for(auto const &v : csModel->getVars()) {
+                extern_variable_def(os, v.second + " *", v.first + cs->getName(), cs->getVarMode(v.first));
+            }
+            for(auto const &v : csModel->getExtraGlobalParams()) {
+                os << "extern " << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
             }
         }
     }
@@ -748,6 +746,9 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         os << funcExportPrefix << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
         os << funcExportPrefix << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
     }
+    for (const auto &cs : model.getCurrentSources()) {
+        os << funcExportPrefix << "void push" << cs.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
+    }
     for(const auto &s : model.getLocalSynapseGroups()) {
         os << "#define push" << s.first << "ToDevice push" << s.first << "StateToDevice" << std::endl;
         os << funcExportPrefix << "void push" << s.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
@@ -763,6 +764,9 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         os << funcExportPrefix << "void pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
         os << funcExportPrefix << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
         os << funcExportPrefix << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
+    }
+    for (const auto &cs : model.getCurrentSources()) {
+        os << funcExportPrefix << "void pull" << cs.first << "StateFromDevice();" << std::endl;
     }
     for(const auto &s : model.getLocalSynapseGroups()) {
         os << "#define pull" << s.first << "FromDevice pull" << s.first << "StateFromDevice" << std::endl;
@@ -1238,16 +1242,14 @@ void genRunner(const NNmodel &model,    //!< Model description
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
             os << v.second << " " <<  v.first << n.first << ";" << std::endl;
         }
-        if (n.second.isInjected()) {
-            os << "// current source variables" << std::endl;
-            for (auto const *cs : n.second.getCurrentSources()) {
-                auto csModel = cs->getCurrentSourceModel();
-                for(auto const &v : csModel->getVars()) {
-                    variable_def(os, v.second + " *", v.first + cs->getName() + n.first, cs->getVarMode(v.first));
-                }
-                for(auto const &v : csModel->getExtraGlobalParams()) {
-                    os << v.second << " " <<  v.first << cs->getName() << n.first << ";" << std::endl;
-                }
+        os << "// current source variables" << std::endl;
+        for (auto const *cs : n.second.getCurrentSources()) {
+            auto csModel = cs->getCurrentSourceModel();
+            for(auto const &v : csModel->getVars()) {
+                variable_def(os, v.second + " *", v.first + cs->getName(), cs->getVarMode(v.first));
+            }
+            for(auto const &v : csModel->getExtraGlobalParams()) {
+                os << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
             }
         }
     }
@@ -1531,13 +1533,11 @@ void genRunner(const NNmodel &model,    //!< Model description
                 mem += allocate_variable(os, v.second, v.first + n.first, n.second.getVarMode(v.first),
                                         n.second.isVarQueueRequired(v.first) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
             }
-            if (n.second.isInjected()) {
-                os << "// current source variables" << std::endl;
-                for (auto const *cs : n.second.getCurrentSources()) {
-                    auto csModel = cs->getCurrentSourceModel();
-                    for(auto const &v : csModel->getVars()) {
-                        mem += allocate_variable(os, v.second, v.first + cs->getName() + n.first, cs->getVarMode(v.first), n.second.getNumNeurons());
-                    }
+            os << "// current source variables" << std::endl;
+            for (auto const *cs : n.second.getCurrentSources()) {
+                auto csModel = cs->getCurrentSourceModel();
+                for(auto const &v : csModel->getVars()) {
+                    mem += allocate_variable(os, v.second, v.first + cs->getName(), cs->getVarMode(v.first), n.second.getNumNeurons());
                 }
             }
             os << std::endl;
@@ -2108,6 +2108,34 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         // Generate functions to push current spikes and spike events to device
         genPushCurrentSpikeFunctions(os, n.second, false);
         genPushCurrentSpikeFunctions(os, n.second, true);
+
+        for(const auto *cs : n.second.getCurrentSources()) {
+            // current source state variables
+            os << "void push" << cs->getName() << "StateToDevice(bool hostInitialisedOnly)";
+            {
+                CodeStream::Scope b(os);
+                for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
+                    // only copy variables which aren't pointers (pointers don't transport between GPU and CPU)
+                    // and are present on both device and host.
+                    const VarMode varMode = cs->getVarMode(v.first);
+                    if (v.second.find("*") == string::npos && canPushPullVar(varMode)){
+                        // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                        if(varMode & VarInit::DEVICE) {
+                            os << "if(!hostInitialisedOnly)" << CodeStream::OB(1051);
+                        }
+
+                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << v.first << cs->getName();
+                        os << ", " << v.first << cs->getName();
+                        os << ", " << n.second.getNumNeurons() << " * sizeof(" << v.second << "), cudaMemcpyHostToDevice));" << std::endl;
+
+                        if(varMode & VarInit::DEVICE) {
+                            os << CodeStream::CB(1051);
+                        }
+                    }
+                }
+            }
+            os << std::endl;
+        }
     }
     // synapse variables
     for(const auto &s : model.getLocalSynapseGroups()) {
@@ -2280,6 +2308,26 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
 
         genPullCurrentSpikeFunctions(os, n.second, false);
         genPullCurrentSpikeFunctions(os, n.second, true);
+
+        for(const auto *cs : n.second.getCurrentSources()) {
+            // current source state variables
+            os << "void pull" << cs->getName() << "StateFromDevice()";
+            {
+                CodeStream::Scope b(os);
+                for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
+                    // only copy variables which aren't pointers (pointers don't transport between GPU and CPU)
+                    // and are present on both device and host.
+                    const VarMode varMode = cs->getVarMode(v.first);
+                    if (v.second.find("*") == string::npos && canPushPullVar(varMode)){
+
+                        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << v.first << cs->getName();
+                        os << ", " << "d_" << v.first << cs->getName();
+                        os << ", " << n.second.getNumNeurons() << " * sizeof(" << v.second << "), cudaMemcpyDeviceToHost));" << std::endl;
+                    }
+                }
+            }
+            os << std::endl;
+        }
     }
 
     // synapse variables

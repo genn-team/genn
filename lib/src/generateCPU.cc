@@ -308,10 +308,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     }
 
                     // check for current sources and insert code if necessary
-                    StandardGeneratedSections::neuronCurrentInjectionLocalVarDeclare(
-                                            os, n.second, "", "n");
                     StandardGeneratedSections::neuronCurrentInjection(os, n.second,
-                                   "n", cpuFunctions, model.getPrecision(), "rng");
+                               "", "n", cpuFunctions, model.getPrecision(), "rng");
 
                     os << "// calculate membrane potential" << std::endl;
                     string sCode = nm->getSimCode();

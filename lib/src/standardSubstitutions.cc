@@ -305,8 +305,7 @@ void StandardSubstitutions::currentSourceInjection(
     const ExtraGlobalParamNameIterCtx &csmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
-    const std::string &rng,
-    const std::string &popName)
+    const std::string &rng)
 {
     substitute(iCode, "$(t)", "t");
     name_substitutions(iCode, "l", csmVars.nameBegin, csmVars.nameEnd, cs->getName());

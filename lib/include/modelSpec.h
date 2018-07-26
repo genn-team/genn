@@ -483,9 +483,8 @@ public:
 
         if(!result.second)
         {
-            auto source = findCurrentSource(currentSourceName);
-            targetGroup->injectCurrent(source);
-            return source;
+            gennError("Cannot add a current source with duplicate name:" + currentSourceName);
+            return NULL;
         }
         else
         {

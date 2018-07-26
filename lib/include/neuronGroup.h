@@ -194,9 +194,6 @@ public:
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
 
-    // Does this neuron group receive any input from current sources?
-    bool isInjected() const { return !m_CurrentSources.empty(); }
-
 private:
     //------------------------------------------------------------------------
     // Members
