@@ -197,10 +197,6 @@ std::pair<bool, unsigned int> generateModelCode(const pugi::xml_node &componentC
                                                 ObjectHandler::Base *objectHandlerTimeDerivative,
                                                 std::function<void(bool, unsigned int)> regimeEndFunc);
 
-//!< Search through code for references to named variable and replace it with text
-bool replaceVariableNames(std::string &code, const std::string &variableName,
-                          const std::string &replaceText);
-
 //!< Search through code for references to named variable, rename it and wrap in GeNN's $(XXXX) tags
 void wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
                                  const std::string &replaceVariableName);
