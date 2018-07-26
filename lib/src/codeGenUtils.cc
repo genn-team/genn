@@ -569,10 +569,10 @@ uint32_t hashString(const std::string &string)
     // Handle the last few bytes of the input array
     switch(len)
     {
-        case 3: h ^= data[2] << 16;
-        case 2: h ^= data[1] << 8;
+        case 3: h ^= data[2] << 16; // falls through
+        case 2: h ^= data[1] << 8;  // falls through
         case 1: h ^= data[0];
-                h *= m;
+                h *= m;             // falls through
     };
 
     // Do a few final mixes of the hash to ensure the last few
