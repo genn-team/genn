@@ -71,9 +71,13 @@ public:
     void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
 
     //! Sets the maximum number of target neurons any source neurons can connect to
-    /*! Use with SynapseMatrixType::SPARSE_GLOBALG and SynapseMatrixType::SPARSE_INDIVIDUALG to optimise CUDA implementation */
+    /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
 
+    //! Sets the maximum number of source neurons any target neuron can connect to
+    /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation */
+    void setMaxSourceConnections(unsigned int maxPostConnections);
+    
     //! Set how CUDA implementation is parallelised
     /*! with a thread per target neuron (default) or a thread per source spike */
     void setSpanType(SpanType spanType);
@@ -91,6 +95,7 @@ public:
     SpanType getSpanType() const{ return m_SpanType; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
+    unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
     //! Get variable mode used for variables used to combine input from this synapse group
@@ -191,8 +196,11 @@ private:
     //!< Global synaptic conductance delay for the group (in time steps)
     unsigned int m_DelaySteps;
 
-    //!< Padded summed maximum number of connections for a neuron in the neuron groups
+    //!< Maximum number of target neurons any source neuron can connect to
     unsigned int m_MaxConnections;
+    
+    //!< Maximum number of source neurons any target neuron can connect to
+    unsigned int m_MaxSourceConnections;
 
     //!< Connectivity type of synapses
     SynapseMatrixType m_MatrixType;

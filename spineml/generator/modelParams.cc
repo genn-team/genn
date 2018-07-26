@@ -1,5 +1,8 @@
 #include "modelParams.h"
 
+// Standard C includes
+#include <cmath>
+
 // Standard C++ includes
 #include <iostream>
 
@@ -58,7 +61,7 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
             // Otherwise, if property is normally distributed, add normal initialiser
             else if(pugi::xml_node normalDistribution = param.child("NormalDistribution")) {
                 varInitialisers.insert(std::make_pair(paramName, NewModels::VarInit(InitVarSnippet::Normal::getInstance(), {
-                    normalDistribution.attribute("mean").as_double(), sqrt(normalDistribution.attribute("variance").as_double()) })));
+                    normalDistribution.attribute("mean").as_double(), std::sqrt(normalDistribution.attribute("variance").as_double()) })));
             }
             // Otherwise, if property is exponentially distributed, add poisson initialiser
             // **NOTE** Poisson distribution isn't actually one - it is the exponential

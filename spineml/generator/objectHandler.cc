@@ -1,5 +1,8 @@
 #include "objectHandler.h"
 
+// Standard C includes
+#include <cmath>
+
 // Standard C++ includes
 #include <iostream>
 #include <regex>

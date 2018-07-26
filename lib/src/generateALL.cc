@@ -164,11 +164,12 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
         // Loop through synapse groups
         for(const auto &s : model.getLocalSynapseGroups()) {
             const unsigned int maxConnections = s.second.getMaxConnections();
+            const unsigned int maxSourceConnections = s.second.getMaxSourceConnections();
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
             // **TODO** presynaptic parallelism?
-            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSize[KernelCalcSynapses].push_back(maxConnections);
             }
             else {
@@ -177,11 +178,16 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 
             // TODO: this needs updating where learning is detected properly!
             if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    groupSize[KernelLearnSynapsesPost].push_back(maxSourceConnections);
+                }
+                else {
+                    groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
+                }
             }
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
                 }
                 else {
@@ -191,17 +197,11 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 
             // If synapse group has individual weights and needs device initialisation
             if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired()) {
-                // If matrix is dense
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                    groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    groupSize[KernelInitSparse].push_back(numSrcNeurons);
                 }
-                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    if(maxConnections > 0) {
-                        groupSize[KernelInitSparse].push_back(numSrcNeurons * maxConnections);
-                    }
-                    else {
-                        groupSize[KernelInitSparse].push_back(numSrcNeurons * numTrgNeurons);
-                    }
+                else {
+                    groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
                 }
             }
         }
@@ -329,6 +329,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 synDynBlkSz= warpSize*(rep+1);
                 neuronBlkSz = warpSize*(rep+1);
                 initBlkSz = warpSize*(rep+1);
+                initSparseBlkSz = warpSize*(rep+1);
 
                 model.setPopulationSums();
                 generate_model_runner(model, path, localHostID);
