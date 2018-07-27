@@ -939,7 +939,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
                                 // Otherwise
                                 else {
-                                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
 
                                     // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
@@ -972,7 +972,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
                                 // Otherwise
                                 else {
-                                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
 
                                     // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
