@@ -587,7 +587,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                         functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
                                     }
                                     else {
-                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + s.first + "[" + postIdx + "] += $(0)");
+                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + s.first + "[j] += $(0)");
 
                                         // **DEPRECATED**
                                         substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
