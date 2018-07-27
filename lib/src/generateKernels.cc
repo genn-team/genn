@@ -172,10 +172,14 @@ void generatePreParallelisedSparseCode(
 
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
                 if(shouldAccumulateInSharedMemory(sg)) {
+                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg" + sg.getName() + "[ipost], $(0))");
+
                     substitute(wCode, "$(inSyn)", "shLg[ipost]");
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
+                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getName() + "[ipost], $(0))");
+
                     substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
                 }
             }
@@ -304,15 +308,24 @@ void generatePostParallelisedCode(
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                         if (shouldAccumulateInSharedMemory(sg)) {
+                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg" + sg.getName() + "[ipost], $(0))");
+
+                            // **DEPRECATED**
                             substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                             substitute(wCode, "$(inSyn)", "shLg[ipost]");
                         }
                         else {
+                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getName() + "[ipost], $(0))");
+
+                            // **DEPRECATED**
                             substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
                             substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
                         }
                     }
                     else {
+                        functionSubstitute(wCode, "addToInSyn", 1, "linSyn += $(0)");
+
+                        // **DEPRECATED**
                         substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                         substitute(wCode, "$(inSyn)", "linSyn");
                     }
@@ -926,6 +939,9 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
                                 // Otherwise
                                 else {
+                                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
+
+                                    // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
                                     substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
                                 }
@@ -956,6 +972,9 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
                                 // Otherwise
                                 else {
+                                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
+
+                                    // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
                                     substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
                                 }

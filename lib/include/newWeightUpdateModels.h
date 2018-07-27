@@ -143,8 +143,7 @@ public:
     \c sim code is:
 
     \code
-    " $(addtoinSyn) = $(g);\n\
-    $(updatelinsyn);\n"
+    "$(addToInSyn, $(g));\n"
     \endcode*/
 class StaticPulse : public Base
 {
@@ -153,9 +152,7 @@ public:
 
     SET_VARS({{"g", "scalar"}});
 
-    SET_SIM_CODE(
-        "$(addtoinSyn) = $(g);\n"
-        "$(updatelinsyn);\n");
+    SET_SIM_CODE("$(addToInSyn, $(g));\n");
 };
 
 //----------------------------------------------------------------------------
@@ -200,8 +197,7 @@ public:
 
     \c event code is:
     \code
-    $(addtoinSyn) = $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope));
-    $(updatelinsyn);
+    $(addToInSyn, $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope)));
     \endcode
 
     \c event threshold condition code is:
@@ -219,10 +215,7 @@ public:
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar"}});
 
-    SET_EVENT_CODE(
-        "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n"
-        "if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n"
-        "$(updatelinsyn);\n");
+    SET_EVENT_CODE("$(addToInSyn, max(0.0, $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT));\n");
 
     SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > $(Epre)");
 };
@@ -294,8 +287,7 @@ public:
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
-        "$(addtoinSyn) = $(g);"
-        "$(updatelinsyn); \n"
+        "$(addToInSyn, $(g));\n"
         "scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n"
         "scalar dg = 0;\n"
         "if (dt > $(lim0))  \n"
