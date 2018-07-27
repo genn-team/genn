@@ -39,7 +39,7 @@ public:
     SET_VARS({{"g", "scalar"},
               {"d", "uint8_t"}});
 
-    SET_SYNAPSE_DYNAMICS_CODE("$(addToDenDelay, $(g) * $(x_pre), $(d));\n");
+    SET_SYNAPSE_DYNAMICS_CODE("$(addToInSynDelay, $(g) * $(x_pre), $(d));\n");
 };
 IMPLEMENT_MODEL(ContinuousDendriticDelay);
 

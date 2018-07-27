@@ -163,7 +163,7 @@ void generatePreParallelisedSparseCode(
 
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
-                functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
             }
             // Otherwise
             else {
@@ -297,7 +297,7 @@ void generatePostParallelisedCode(
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                    functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
                 }
                 // Otherwise
                 else {
@@ -922,7 +922,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToDenDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
                                 }
                                 // Otherwise
                                 else {
@@ -952,7 +952,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToDenDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
                                 }
                                 // Otherwise
                                 else {

@@ -172,7 +172,7 @@ public:
     \c sim code is:
 
     \code
-    " $(addToDenDelay, $(g), $(d));\n\
+    " $(addToInSynDelay, $(g), $(d));\n\
     \endcode*/
 class StaticPulseDendriticDelay : public Base
 {
@@ -181,7 +181,7 @@ public:
 
     SET_VARS({{"g", "scalar"},{"d", "uint8_t"}});
 
-    SET_SIM_CODE("$(addToDenDelay, $(g), $(d));\n");
+    SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
 };
 
 //----------------------------------------------------------------------------

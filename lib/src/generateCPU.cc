@@ -134,7 +134,7 @@ void generate_process_presynaptic_events_code_CPU(
                 string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
 
                 if(sg.isDendriticDelayRequired()) {
-                    functionSubstitute(wCode, "addToDenDelay", 2, "denDelay" + sgName + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+                    functionSubstitute(wCode, "addToInSynDelay", 2, "denDelay" + sgName + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
                 }
                 else {
                     os << ftype << " addtoinSyn;" << std::endl;
@@ -515,7 +515,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                 const std::string postIdx = "C" + s.first + ".ind[n]";
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToDenDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                    functionSubstitute(SDcode, "addtoinSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
                                 }
                                 else {
                                     substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
@@ -547,7 +547,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                     const std::string postIdx = "C" + s.first + ".ind[n]";
                                     if(sg->isDendriticDelayRequired()) {
-                                        functionSubstitute(SDcode, "addToDenDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                        functionSubstitute(SDcode, "addtoinSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
                                     }
                                     else {
                                         substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
@@ -575,7 +575,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     }
 
                                     if(sg->isDendriticDelayRequired()) {
-                                        functionSubstitute(SDcode, "addToDenDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
+                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
                                     }
                                     else {
                                         substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
