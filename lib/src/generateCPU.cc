@@ -518,7 +518,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                 const std::string postIdx = "C" + s.first + ".ind[n]";
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addtoinSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
                                 }
                                 else {
                                     functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + s.first + "[" + postIdx + "] += $(0)");
@@ -553,7 +553,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                     const std::string postIdx = "C" + s.first + ".ind[n]";
                                     if(sg->isDendriticDelayRequired()) {
-                                        functionSubstitute(SDcode, "addtoinSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + s.first + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
                                     }
                                     else {
                                         functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + s.first + "[" + postIdx + "] += $(0)");
