@@ -10,10 +10,9 @@
 #include "synapseGroup.h"
 #include "utils.h"
 
-// ------------------------------------------------------------------------
+//------------------------------------------------------------------------
 // CurrentSource
-// ------------------------------------------------------------------------
-
+//------------------------------------------------------------------------
 void CurrentSource::setVarMode(const std::string &varName, VarMode mode)
 {
     m_VarMode[getCurrentSourceModel()->getVarIndex(varName)] = mode;
@@ -90,7 +89,8 @@ bool CurrentSource::isDeviceVarInitRequired() const
 {
     // Return true if any of the variables are initialised on the device
     if(std::any_of(m_VarMode.cbegin(), m_VarMode.cend(),
-                   [](const VarMode mode){ return (mode & VarInit::DEVICE); })) {
+                   [](const VarMode mode){ return (mode & VarInit::DEVICE); }))
+    {
         return true;
     }
     return false;

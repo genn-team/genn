@@ -463,9 +463,9 @@ public:
         \return pointer to newly created CurrentSource */
     template<typename CurrentSourceModel>
     CurrentSource *addCurrentSource(const string &currentSourceName, const CurrentSourceModel *model,
-                                     const string &targetNeuronGroupName,
-                                     const typename CurrentSourceModel::ParamValues &paramValues,
-                                     const typename CurrentSourceModel::VarValues &varInitialisers)
+                                    const string &targetNeuronGroupName,
+                                    const typename CurrentSourceModel::ParamValues &paramValues,
+                                    const typename CurrentSourceModel::VarValues &varInitialisers)
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -502,8 +502,8 @@ public:
         \return pointer to newly created CurrentSource */
     template<typename CurrentSourceModel>
     CurrentSource *addCurrentSource(const string &currentSourceName, const string &targetNeuronGroupName,
-                                     const typename CurrentSourceModel::ParamValues &paramValues,
-                                     const typename CurrentSourceModel::VarValues &varInitialisers)
+                                    const typename CurrentSourceModel::ParamValues &paramValues,
+                                    const typename CurrentSourceModel::VarValues &varInitialisers)
     {
         return addCurrentSource<CurrentSourceModel>(currentSourceName, CurrentSourceModel::getInstance(),
                                 targetNeuronGroupName, paramValues, varInitialisers);
