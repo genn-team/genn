@@ -39,9 +39,7 @@ class WeightUpdateModelSpikeEvent : public WeightUpdateModels::Base
 public:
     DECLARE_MODEL(WeightUpdateModelSpikeEvent, 1, 1);
 
-    SET_EVENT_CODE(
-        "$(addtoinSyn) = $(g);\n"
-        "$(updatelinsyn);\n");
+    SET_EVENT_CODE("$(addToInSyn, $(g));\n");
     SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > $(Epre)");
 
     SET_PARAM_NAMES({"Epre"});

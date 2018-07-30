@@ -111,7 +111,7 @@ inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 const std::vector<FunctionTemplate> cudaFunctions = {
     {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
     {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))", "exponentialDistDouble($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
 };
 
@@ -130,6 +130,10 @@ const std::vector<FunctionTemplate> cpuFunctions = {
 //--------------------------------------------------------------------------
 void substitute(string &s, const string &trg, const string &rep);
 
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting variable or function names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexVarSubstitute(string &s, const string &trg, const string &rep);
 
 //--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator

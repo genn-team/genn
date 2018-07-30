@@ -45,4 +45,13 @@ void neuronSpikeEventTest(
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
+
+void neuronCurrentInjection(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 }   // namespace StandardGeneratedSections

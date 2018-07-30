@@ -11,6 +11,8 @@
 #include "newNeuronModels.h"
 #include "variableMode.h"
 
+class CurrentSource;
+
 //------------------------------------------------------------------------
 // NeuronGroup
 //------------------------------------------------------------------------
@@ -99,6 +101,9 @@ public:
     //! Merge incoming postsynaptic models
     void mergeIncomingPSM();
 
+    //! add input current source
+    void injectCurrent(CurrentSource *source);
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -122,6 +127,9 @@ public:
 
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
+
+    //! Gets pointers to all current sources which provide input to this neuron group
+    const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
 
     int getClusterHostID() const{ return m_HostID; }
 
@@ -213,6 +221,7 @@ private:
     bool m_QueueRequired;
     std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
+    std::vector<CurrentSource*> m_CurrentSources;
 
     //!< Vector specifying which variables require queues
     bool m_AnyVarQueuesRequired;

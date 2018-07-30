@@ -316,13 +316,13 @@ std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, 
 
 bool SynapseGroup::isDendriticDelayRequired() const
 {
-    // If addToDenDelay function is used in sim code, return true
-    if(getWUModel()->getSimCode().find("$(addToDenDelay") != std::string::npos) {
+    // If addToInSynDelay function is used in sim code, return true
+    if(getWUModel()->getSimCode().find("$(addToInSynDelay") != std::string::npos) {
         return true;
     }
 
-    // If addToDenDelay function is used in synapse dynamics, return true
-    if(getWUModel()->getSynapseDynamicsCode().find("$(addToDenDelay") != std::string::npos) {
+    // If addToInSynDelay function is used in synapse dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
         return true;
     }
 

@@ -6,40 +6,33 @@
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
-#include "../../utils/simulation_test_den_delay_cont_decoder_matrix.h"
+#include "../../utils/simulation_test_samples.h"
+#include "../../utils/stats.h"
 
 //----------------------------------------------------------------------------
 // SimTest
 //----------------------------------------------------------------------------
-class SimTest : public SimulationTestContDecoderDenDelayMatrix
+class SimTest : public SimulationTestSamples
 {
 public:
     //----------------------------------------------------------------------------
-    // SimulationTest virtuals
+    // SimulationTestHistogram virtuals
     //----------------------------------------------------------------------------
-    virtual void Init()
+    virtual double Test(std::vector<double> &samples) const
     {
-        // Loop through presynaptic neurons
-        for(unsigned int i = 0; i < 10; i++)
-        {
-            // Set rowlength to 1
-            CSyn.rowLength[i] = 1;
+        // Perform Kolmogorov-Smirnov test
+        double d;
+        double prob;
+        std::tie(d, prob) = Stats::kolmogorovSmirnovTest(samples, Stats::normalCDF);
 
-            // Connect row to output neuron with weight of one and dendritic delay of (9 - i)
-            CSyn.ind[i] = 0;
-            gSyn[i] = 1.0f;
-            dSyn[i] = (uint8_t)(9 - i);
-        }
+        return prob;
     }
 };
 
-TEST_P(SimTest, CorrectDecoding)
+TEST_P(SimTest, KolmogorovSmirnovTest)
 {
-    // Initialize sparse arrays
-    initdecode_matrix_cont_den_delay_individualg_ragged_new();
-
-    // Check total error is less than some tolerance
-    EXPECT_TRUE(Simulate());
+    // Check p value passes 95% confidence interval
+    EXPECT_GT(Simulate(), 0.05);
 }
 
 #ifndef CPU_ONLY
