@@ -38,7 +38,7 @@ public:
 
     SET_VARS({{"g", "scalar"}});
 
-    SET_SYNAPSE_DYNAMICS_CODE("$(addToInSyn, $(g) * $(x_pre);)\n");
+    SET_SYNAPSE_DYNAMICS_CODE("$(addToInSyn, $(g) * $(x_pre));\n");
 };
 IMPLEMENT_MODEL(Continuous);
 
