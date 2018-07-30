@@ -153,7 +153,7 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model)
+void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model) const
 {
     os << "extern \"C\" __global__ void calcSynapses(";
     for (const auto &p : model.getSynapseKernelParameters()) {
@@ -167,13 +167,13 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
 
         // We need shLg if any synapse groups accumulate into shared memory
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [](const NNmodel::SynapseGroupValueType &s){ return shouldAccumulateInSharedMemory(s.second); }))
+            [this](const NNmodel::SynapseGroupValueType &s){ return shouldAccumulateInSharedMemory(s.second); }))
         {
             os << "__shared__ " << model.getPrecision() << " shLg[" << m_PresynapticUpdateBlockSize << "];" << std::endl;
         }
         
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [](const NNmodel::SynapseGroupValueType &s)
+            [model](const NNmodel::SynapseGroupValueType &s)
             { 
                 return (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first));
             }))
@@ -182,7 +182,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         }
         
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [](const NNmodel::SynapseGroupValueType &s){ return (s.second.isisSpikeEventRequired()); }))
+            [](const NNmodel::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired()); }))
         {
             os << "__shared__ unsigned int shSpkEvnt[" << m_PresynapticUpdateBlockSize << "];" << std::endl;
         }
@@ -190,7 +190,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         // Parallelise over synapse groups
         genParallelSynapseGroup(os, model, 
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
-            [handler](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg)
+            [this/*,handler*/](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg)
             {
                 if (sg.getSrcNeuronGroup()->isDelayRequired()) {
                     os << "const unsigned int delaySlot = (dd_spkQuePtr" <<sg.getSrcNeuronGroup()->getName();
@@ -316,9 +316,9 @@ void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const NNmodel &model
     // Populate neuron update groups
     size_t idStart = 0;
     for (const auto &sg : model.getLocalSynapseGroups()) {
-        const size_t paddedSize = getPaddedSizeFunc(sg);
+        const size_t paddedSize = getPaddedSizeFunc(sg.second);
 
-        os << "// Synapse group " << ng.first << std::endl;
+        os << "// Synapse group " << sg.first << std::endl;
 
         // If this is the first  group
         if (idStart == 0) {
@@ -343,10 +343,10 @@ void CodeGenerator::genEmitSpike(CodeStream &os, const std::string &neuronID, co
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << neuronID << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-size_t CodeGenerator::getPresynapticUpdateKernelSize(const SynapseGroup &sg)
+size_t CodeGenerator::getPresynapticUpdateKernelSize(const SynapseGroup &sg) const
 {
      if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (sg.getSpanType() == SpanType::PRESYNAPTIC) {
+        if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
             // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
             // **TODO** integer ceil trick
             return ceil((double)sg.getSrcNeuronGroup()->getNumNeurons() / (double)m_PresynapticUpdateBlockSize) * (double)m_PresynapticUpdateBlockSize;
@@ -373,7 +373,7 @@ bool CodeGenerator::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
 {
     // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
-    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC && deviceProp[theDevice].major < 5) {
+    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC/* && deviceProp[theDevice].major < 5*/) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse

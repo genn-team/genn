@@ -5,8 +5,10 @@
 #include <vector>
 
 // GeNN includes
+#include "codeGenUtils.h"
 #include "codeStream.h"
 #include "modelSpec.h"
+
 #include "standardGeneratedSections.h"
 #include "standardSubstitutions.h"
 
@@ -14,6 +16,42 @@
 #include "code_generator.h"
 #include "cuda_code_generator.h"
 
+// **TODO** move into NeuronModels::Base
+void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng, 
+                                   const std::string &varPrefix, const std::string &varSuffix = "", const std::string &varExt = "")
+{
+    const NeuronModels::Base *nm = ng.getNeuronModel();
+
+     // Create iteration context to iterate over the variables; derived and extra global parameters
+    VarNameIterCtx nmVars(nm->getVars());
+    DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
+    ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
+
+    name_substitutions(code, varPrefix, nmVars.nameBegin, nmVars.nameEnd, varSuffix, varExt);
+    value_substitutions(code, nm->getParamNames(), ng.getParams());
+    value_substitutions(code, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
+    name_substitutions(code, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
+}
+
+void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroup &sg, const std::string &varPrefix)
+{
+    const auto *psm = sg.getPSModel();
+
+    // Create iterators to iterate over the names of the postsynaptic model's initial values
+    auto psmVars = VarNameIterCtx(psm->getVars());
+    auto psmDerivedParams = DerivedParamNameIterCtx(psm->getDerivedParams());
+
+    if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+        name_substitutions(code, varPrefix, psmVars.nameBegin, psmVars.nameEnd, sg.getName());
+    }
+    else {
+        value_substitutions(code, psmVars.nameBegin, psmVars.nameEnd, sg.getPSConstInitVals());
+    }
+    value_substitutions(code, psm->getParamNames(), sg.getPSParams());
+
+    // Create iterators to iterate over the names of the postsynaptic model's derived parameters
+    value_substitutions(code, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg.getPSDerivedParams());
+}
 
 void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
 {
@@ -24,13 +62,16 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
         {
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
-            // Create iteration context to iterate over the variables; derived and extra global parameters
-            VarNameIterCtx nmVars(nm->getVars());
-            DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
-            ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
-
             // Generate code to copy neuron state into local variable
-            StandardGeneratedSections::neuronLocalVarInit(os, ng, nmVars, codeGenerator.getVarPrefix(), neuronID);
+            // **TODO** basic behaviour could exist in NewModels::Base, NeuronModels::Base could add queuing logic
+            for(const auto &v : nm->getVars()) {
+                os << v.second << " l" << v.first << " = ";
+                os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[";
+                if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
+                    os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
+                }
+                os << neuronID << "];" << std::endl;
+            }
 
             if ((nm->getSimCode().find("$(sT)") != std::string::npos)
                 || (nm->getThresholdConditionCode().find("$(sT)") != std::string::npos)
@@ -75,6 +116,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
 
                 // If synapse group has individual postsynaptic variables, also pull these in a coalesced access
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                    // **TODO** base behaviour from NewModels::Base
                     for (const auto &v : psm->getVars()) {
                         os << v.second << " lps" << v.first << sg->getName();
                         os << " = " << codeGenerator.getVarPrefix() << v.first << sg->getName() << "[n];" << std::endl;
@@ -85,9 +127,16 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 string psCode = psm->getApplyInputCode();
                 substitute(psCode, "$(id)", neuronID);
                 substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
-                StandardSubstitutions::postSynapseApplyInput(psCode, sg, ng,
-                                                                nmVars, nmDerivedParams, nmExtraGlobalParams, 
-                                                                codeGenerator.getFunctions(), model.getPrecision(), rngName);
+                substitute(psCode, "$(t)", "t");
+                substitute(psCode, "$(Isyn)", "Isyn");
+                substitute(psCode, "$(rng)", rngName);
+                functionSubstitutions(psCode, model.getPrecision(), codeGenerator.getFunctions());
+
+                applyNeuronModelSubstitutions(psCode, ng, "l");
+                applyPostsynapticModelSubstitutions(psCode, *sg, "lps");
+                
+                psCode = ensureFtype(psCode, model.getPrecision());
+                checkUnreplacedVariables(psCode, sg->getName() + " : postSyntoCurrent");
 
                 if (!psm->getSupportCode().empty()) {
                     os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
@@ -109,9 +158,16 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
                 substitute(thCode, "$(id)", neuronID);
-                StandardSubstitutions::neuronThresholdCondition(thCode, ng,
-                                                                nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                                codeGenerator.getFunctions(), model.getPrecision(), rngName);
+                substitute(thCode, "$(t)", "t");
+                substitute(thCode, "$(Isyn)", "Isyn");
+                substitute(thCode, "$(sT)", "lsT");
+                substitute(thCode, "$(rng)", rngName);
+                functionSubstitutions(thCode, model.getPrecision(), codeGenerator.getFunctions());
+
+                applyNeuronModelSubstitutions(thCode, ng, "l");
+                
+                thCode= ensureFtype(thCode, model.getPrecision());
+                checkUnreplacedVariables(thCode, ng.getName() + " : thresholdConditionCode");
                                 
                 if (GENN_PREFERENCES::autoRefractory) {
                     os << "const bool oldSpike= (" << thCode << ");" << std::endl;
@@ -121,18 +177,56 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
             os << "// calculate membrane potential" << std::endl;
             string sCode = nm->getSimCode();
             substitute(sCode, "$(id)", neuronID);
-            StandardSubstitutions::neuronSim(sCode, ng,
-                                                nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                codeGenerator.getFunctions(), model.getPrecision(), rngName);
+            substitute(sCode, "$(t)", "t");
+            substitute(sCode, "$(Isyn)", "Isyn");
+            substitute(sCode, "$(sT)", "lsT");  // ?
+            substitute(sCode, "$(rng)", rngName);
+
+            functionSubstitutions(sCode, model.getPrecision(), codeGenerator.getFunctions());
+
+            applyNeuronModelSubstitutions(sCode, ng, "l");
+            
+            sCode = ensureFtype(sCode, model.getPrecision());
+            checkUnreplacedVariables(sCode, ng.getName() + " : neuron simCode");
                             
             os << sCode << std::endl;
 
             // look for spike type events first.
             if (ng.isSpikeEventRequired()) {
-                // Generate spike event test
-                StandardGeneratedSections::neuronSpikeEventTest(os, ng,
-                                                                nmVars, nmExtraGlobalParams, neuronID,
-                                                                codeGenerator.getFunctions(), model.getPrecision(), rngName);
+                // Create local variable
+                os << "bool spikeLikeEvent = false;" << std::endl;
+
+                // Loop through outgoing synapse populations that will contribute to event condition code
+                for(const auto &spkEventCond : ng.getSpikeEventCondition()) {
+                    // Replace of parameters, derived parameters and extraglobalsynapse parameters
+                    string eCode = spkEventCond.first;
+
+                    // code substitutions ----
+                    substitute(eCode, "$(id)", "n");
+                    substitute(eCode, "$(t)", "t");
+                    substitute(eCode, "$(rng)", rngName);
+
+                    functionSubstitutions(eCode, model.getPrecision(), codeGenerator.getFunctions());
+                    
+                    applyNeuronModelSubstitutions(eCode, ng, "l", "", "_pre");
+                   
+                    eCode = ensureFtype(eCode, model.getPrecision());
+                    checkUnreplacedVariables(eCode, ng.getName() + " : neuronSpkEvntCondition");
+
+                    // Open scope for spike-like event test
+                    os << CodeStream::OB(31);
+
+                    // Use synapse population support code namespace if required
+                    if (!spkEventCond.second.empty()) {
+                        os << " using namespace " << spkEventCond.second << ";" << std::endl;
+                    }
+
+                    // Combine this event threshold test with
+                    os << "spikeLikeEvent |= (" << eCode << ");" << std::endl;
+
+                    // Close scope for spike-like event test
+                    os << CodeStream::CB(31);
+                }
 
                 os << "// register a spike-like event" << std::endl;
                 os << "if (spikeLikeEvent)";
@@ -160,9 +254,16 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                     if (!nm->getResetCode().empty()) {
                         string rCode = nm->getResetCode();
                         substitute(rCode, "$(id)", neuronID);
-                        StandardSubstitutions::neuronReset(rCode, ng,
-                                                            nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            codeGenerator.getFunctions(), model.getPrecision(), rngName);
+                        substitute(rCode, "$(t)", "t");
+                        substitute(rCode, "$(Isyn)", "Isyn");
+                        substitute(rCode, "$(sT)", "lsT");  // ?
+                        substitute(rCode, "$(rng)", rngName);
+                        functionSubstitutions(rCode, model.getPrecision(), codeGenerator.getFunctions());
+
+                        applyNeuronModelSubstitutions(rCode, ng, "l");
+                        
+                        rCode = ensureFtype(rCode, model.getPrecision());
+                        checkUnreplacedVariables(rCode, ng.getName() + " : resetCode");
 
                         os << "// spike reset code" << std::endl;
                         os << rCode << std::endl;
@@ -170,8 +271,15 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 }
             }
 
-            // store the defined parts of the neuron state into the global state variables V etc
-            StandardGeneratedSections::neuronLocalVarWrite(os, ng, nmVars, codeGenerator.getVarPrefix(), neuronID);
+            // store the defined parts of the neuron state into the global state variables dd_V etc
+            for(const auto &v : nm->getVars()) {
+                if (ng.isVarQueueRequired(v.first)) {
+                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << ng.getQueueOffset(codeGenerator.getVarPrefix()) << neuronID << "] = l" << v.first << ";" << std::endl;
+                }
+                else {
+                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << neuronID << "] = l" << v.first << ";" << std::endl;
+                }
+            }
 
             for (const auto &m : ng.getMergedInSyn()) {
                 const auto *sg = m.first;
@@ -180,9 +288,16 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 string pdCode = psm->getDecayCode();
                 substitute(pdCode, "$(id)", neuronID);
                 substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
-                StandardSubstitutions::postSynapseDecay(pdCode, sg, ng,
-                                                        nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                        codeGenerator.getFunctions(), model.getPrecision(), rngName);
+                substitute(pdCode, "$(t)", "t");
+                substitute(pdCode, "$(rng)", rngName);
+                functionSubstitutions(pdCode, model.getPrecision(), codeGenerator.getFunctions());
+
+                applyNeuronModelSubstitutions(pdCode, ng, "l");
+                applyPostsynapticModelSubstitutions(pdCode, *sg, "lps");
+                
+                pdCode = ensureFtype(pdCode, model.getPrecision());
+                checkUnreplacedVariables(pdCode, sg->getName() + " : postSynDecay");
+
                 os << "// the post-synaptic dynamics" << std::endl;
                 if (!psm->getSupportCode().empty()) {
                     os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
@@ -200,16 +315,15 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
         }
     );    
 }
-
+/*
 void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
 {
     // Neuron update kernel
     codeGenerator.genPresynapticUpdateKernel(os, model,
         [](CodeStream &os, const CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg,
-            const std::string &preIdx, const std::string &postIdx,
-        )
+            const std::string &preIdx, const std::string &postIdx)
         {
-            const WeightUpdateModel::Base *wu = sg.getWeightUpdateModel();
+            const WeightUpdateModel::Base *wu = sg.getWUModel();
             
             // Create iteration context to iterate over the variables; derived and extra global parameters
             DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
@@ -256,7 +370,7 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
         }
         }
     );
-}
+}*/
 
 int main()
 {
@@ -276,7 +390,7 @@ int main()
     
     CodeStream output(std::cout);
     
-    CUDA::CodeGenerator codeGenerator(128);
+    CUDA::CodeGenerator codeGenerator(128, 128);
 
     
     generateNeuronUpdateKernel(output, model, codeGenerator);

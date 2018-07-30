@@ -26,6 +26,8 @@ public:
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
                                        std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &ng, const std::string &, const std::string &)> handler) const override;
 
+    virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model) const override;
+
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &, const NeuronGroup &, const std::string &neuronID) const override
     {
         genEmitSpike(os, neuronID, "");
