@@ -2,14 +2,17 @@
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
+    ["cuda9", "linux", "x86_64"] as Set,
     ["cuda8", "linux", "x86_64"] as Set,
     ["cuda7", "linux", "x86_64"] as Set, 
     ["cuda6", "linux", "x86_64"] as Set, 
-    ["cpu_only", "linux", "x86_64"] as Set, 
+    ["cpu_only", "linux", "x86_64"] as Set,
+    ["cuda9", "linux", "x86"] as Set,
     ["cuda8", "linux", "x86"] as Set,
     ["cuda7", "linux", "x86"] as Set, 
     ["cuda6", "linux", "x86"] as Set, 
     ["cpu_only", "linux", "x86"] as Set,
+    ["cuda9", "mac"] as Set,
     ["cuda8", "mac"] as Set,
     ["cuda7", "mac"] as Set, 
     ["cuda6", "mac"] as Set, 
@@ -102,7 +105,7 @@ for(b = 0; b < builderNodes.size; b++) {
                     
                     echo pwd()
                     echo env.PATH;
-    
+
                     // Deleting existing checked out version of GeNN
                     sh "rm -rf genn";
                     
@@ -137,13 +140,20 @@ for(b = 0; b < builderNodes.size; b++) {
                     // Run automatic tests
                     if (isUnix()) {
                         dir("genn/tests") {
-                            // Run tests
+                            // **YUCK** if dev_toolset is in node label - add flag to enable newer GCC using dev_toolset (CentOS)
+                            def runTestArguments = "";
+                            if("dev_toolset" in nodeLabel) {
+                                echo "Enabling devtoolset 6 version of GCC";
+                                runTestArguments += " -d";
+                            }
+                            
+                            // If node is a CPU_ONLY node add -c option 
                             if("cpu_only" in nodeLabel) {
-                                sh "./run_tests.sh -c";
+                                runTestArguments += " -c";
                             }
-                            else {
-                                sh "./run_tests.sh";
-                            }
+                            
+                            // Run tests
+                            sh "./run_tests.sh" + runTestArguments;
                             
                             // Parse test output for GCC warnings
                             // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented

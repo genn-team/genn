@@ -11,6 +11,7 @@
 // Forward declarations
 class NeuronGroup;
 class SynapseGroup;
+class CurrentSource;
 
 //----------------------------------------------------------------------------
 // NameIterCtx
@@ -154,7 +155,7 @@ std::string initNeuronVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
     const std::vector<FunctionTemplate> functions,
-	const std::string &idx,
+    const std::string &idx,
     const std::string &ftype,
     const std::string &rng);
 
@@ -172,6 +173,16 @@ std::string initSparseConnectivity(
     const std::string &addSynapseFunctionTemplate,
     unsigned int numTrgNeurons,
     const std::string &preIdx,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
+
+void currentSourceInjection(
+    std::string &code,
+    const CurrentSource *sc,
+    const VarNameIterCtx &scmVars,
+    const DerivedParamNameIterCtx &scmDerivedParams,
+    const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
     const std::string &rng);

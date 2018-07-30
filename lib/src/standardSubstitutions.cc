@@ -386,3 +386,25 @@ std::string StandardSubstitutions::initSparseConnectivity(
 
     return code;
 }
+
+void StandardSubstitutions::currentSourceInjection(
+    std::string &iCode,
+    const CurrentSource *cs,
+    const VarNameIterCtx &csmVars,
+    const DerivedParamNameIterCtx &csmDerivedParams,
+    const ExtraGlobalParamNameIterCtx &csmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    substitute(iCode, "$(t)", "t");
+    name_substitutions(iCode, "l", csmVars.nameBegin, csmVars.nameEnd, cs->getName());
+    value_substitutions(iCode, cs->getCurrentSourceModel()->getParamNames(), cs->getParams());
+    value_substitutions(iCode, csmDerivedParams.nameBegin, csmDerivedParams.nameEnd, cs->getDerivedParams());
+    name_substitutions(iCode, "", csmExtraGlobalParams.nameBegin, csmExtraGlobalParams.nameEnd, cs->getName());
+    functionSubstitute(iCode, "injectCurrent", 1, "Isyn += $(0)");
+    functionSubstitutions(iCode, ftype, functions);
+    substitute(iCode, "$(rng)", rng);
+    iCode = ensureFtype(iCode, ftype);
+    checkUnreplacedVariables(iCode, cs->getName() + " : current source injectionCode");
+}

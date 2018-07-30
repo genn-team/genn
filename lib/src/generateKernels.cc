@@ -163,7 +163,7 @@ void generatePreParallelisedSparseCode(
 
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
-                functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
             }
             // Otherwise
             else {
@@ -172,10 +172,14 @@ void generatePreParallelisedSparseCode(
 
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
                 if(shouldAccumulateInSharedMemory(sg)) {
+                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg[ipost], $(0))");
+
                     substitute(wCode, "$(inSyn)", "shLg[ipost]");
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
+                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getName() + "[ipost], $(0))");
+
                     substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
                 }
             }
@@ -303,22 +307,31 @@ void generatePostParallelisedCode(
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    functionSubstitute(wCode, "addToDenDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                    functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
                 }
                 // Otherwise
                 else {
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                         if (shouldAccumulateInSharedMemory(sg)) {
+                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg[ipost], $(0))");
+
+                            // **DEPRECATED**
                             substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                             substitute(wCode, "$(inSyn)", "shLg[ipost]");
                         }
                         else {
+                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getName() + "[ipost], $(0))");
+
+                            // **DEPRECATED**
                             substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
                             substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getName() + "[ipost]");
                         }
                     }
                     else {
+                        functionSubstitute(wCode, "addToInSyn", 1, "linSyn += $(0)");
+
+                        // **DEPRECATED**
                         substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
                         substitute(wCode, "$(inSyn)", "linSyn");
                     }
@@ -621,6 +634,11 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                         os << "bool oldSpike= (" << thCode << ");" << std::endl;
                     }
                 }
+
+                // check for current sources and insert code if necessary
+                StandardGeneratedSections::neuronCurrentInjection(os, n->second,
+                                                 "dd_", localID, cudaFunctions,
+                                                 model.getPrecision(), rngName);
 
                 os << "// calculate membrane potential" << std::endl;
                 string sCode = nm->getSimCode();
@@ -928,10 +946,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToDenDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
                                 }
                                 // Otherwise
                                 else {
+                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
+
+                                    // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
                                     substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
                                 }
@@ -958,10 +979,13 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToDenDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + s->first + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
                                 }
                                 // Otherwise
                                 else {
+                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + s->first + "[" + postIdx + "], $(0))");
+
+                                    // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
                                     substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
                                 }
