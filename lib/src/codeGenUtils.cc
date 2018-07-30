@@ -625,11 +625,11 @@ void neuron_substitutions_in_synaptic_code(
     
     // postsynaptic neuron variables, parameters, and global parameters
     const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
-    substitute(wCode, "$(sT_post)", devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
+    substitute(wCode, "$(sT_post)", devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getTrgNeuronGroup()->getQueueOffset(devPrefix) + postIdx + "]");
     for(const auto &v : trgNeuronModel->getVars()) {
         if (sg->getTrgNeuronGroup()->isVarQueueRequired(v.first)) {
             substitute(wCode, "$(" + v.first + "_post)",
-                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
+                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + sg->getTrgNeuronGroup()->getQueueOffset(devPrefix) + postIdx + "]");
         }
         else {
             substitute(wCode, "$(" + v.first + "_post)",

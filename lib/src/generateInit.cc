@@ -342,6 +342,16 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
 
+                            // If dendritic delays are required and these should be initialised on device
+                            if(s->isDendriticDelayRequired() && (s->getDendriticDelayVarMode() & VarInit::DEVICE)) {
+                                os << "for (int i = 0; i < " << s->getMaxDendriticDelayTimesteps() << "; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
+                                    os << "dd_denDelay" << s->getName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                }
+                            }
+
                             // If postsynaptic model variables should be individual
                             if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                                 auto psmVars = s->getPSModel()->getVars();
@@ -787,6 +797,25 @@ void genInit(const NNmodel &model,      //!< Model description
                 {
                     CodeStream::Scope b(os);
                     os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                }
+            }
+
+            if(s.second.isDendriticDelayRequired()) {
+                os << "denDelayPtr" << s.first << " = 0;" << std::endl;
+#ifndef CPU_ONLY
+                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_denDelayPtr" << s.first;
+                os << ", &denDelayPtr" << s.first;
+                os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
+#endif
+
+                // If dendritic delay buffer should be initialised on the host
+                if(shouldInitOnHost(s.second.getDendriticDelayVarMode())) {
+                    CodeStream::Scope b(os);
+                    os << "for (int i = 0; i < " << numTrgNeurons * s.second.getMaxDendriticDelayTimesteps() << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "denDelay" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    }
                 }
             }
 

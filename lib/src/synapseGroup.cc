@@ -46,9 +46,10 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
     :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), 
-        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+        m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MaxSourceConnections(srcNeuronGroup->getNumNeurons()), m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
+        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+        m_InSynVarMode(GENN_PREFERENCES::defaultVarMode), m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
 {
@@ -100,6 +101,12 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
     else {
         gennError("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
+}
+
+void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayTimesteps)
+{
+    // **TODO** constraints on this
+    m_MaxDendriticDelayTimesteps = maxDendriticDelayTimesteps;
 }
 
 void SynapseGroup::setSpanType(SpanType spanType)
@@ -295,9 +302,31 @@ std::string SynapseGroup::getOffsetPre() const
         : "";
 }
 
-std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
+std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset) const
 {
-    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
+    assert(isDendriticDelayRequired());
+
+    if(offset.empty()) {
+        return "(" + devPrefix + "denDelayPtr" + getName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+    }
+    else {
+        return "(((" + devPrefix + "denDelayPtr" + getName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+    }
+}
+
+bool SynapseGroup::isDendriticDelayRequired() const
+{
+    // If addToInSynDelay function is used in sim code, return true
+    if(getWUModel()->getSimCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
+    // If addToInSynDelay function is used in synapse dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
+    return false;
 }
 
 bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
@@ -343,6 +372,11 @@ bool SynapseGroup::canRunOnCPU() const
 #ifndef CPU_ONLY
     // Return false if insyn variable isn't present on the host
     if(!(getInSynVarMode() & VarLocation::HOST)) {
+        return false;
+    }
+
+    // Return false if den delay variable isn't present on the host
+    if(!(getDendriticDelayVarMode() & VarLocation::HOST)) {
         return false;
     }
 

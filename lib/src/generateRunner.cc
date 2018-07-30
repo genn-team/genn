@@ -189,14 +189,23 @@ void free_variable(CodeStream &os, const string &name, VarMode mode)
 
 void genHostSpikeQueueAdvance(CodeStream &os, const NNmodel &model, int localHostID)
 {
-    for(auto &n : model.getRemoteNeuronGroups()) {
+    for(const auto &n : model.getRemoteNeuronGroups()) {
         if(n.second.isDelayRequired() && n.second.hasOutputToHost(localHostID)) {
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
         }
     }
-    for(auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         if (n.second.isDelayRequired()) {
             os << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+        }
+    }
+}
+
+void genHostDenDelayAdvance(CodeStream &os, const NNmodel &model)
+{
+	for(const auto &s : model.getLocalSynapseGroups()) {
+        if(s.second.isDendriticDelayRequired()) {
+            os << "denDelayPtr" << s.first << " = (denDelayPtr" << s.first << " + 1) % " << s.second.getMaxDendriticDelayTimesteps() << ";" << std::endl;
         }
     }
 }
@@ -665,7 +674,12 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << std::endl;
 
     for(const auto &s : model.getLocalSynapseGroups()) {
-        extern_variable_def(os, model.getPrecision()+" *", "inSyn" + s.first, s.second.getInSynVarMode());
+        extern_variable_def(os, model.getPrecision() + " *", "inSyn" + s.first, s.second.getInSynVarMode());
+
+        if (s.second.isDendriticDelayRequired()) {
+            extern_variable_def(os, model.getPrecision() + " *", "denDelay" + s.first, s.second.getDendriticDelayVarMode());
+            os << varExportPrefix << " unsigned int denDelayPtr" << s.first << ";" << std::endl;
+        }
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             extern_variable_def(os, "uint32_t *", "gp" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
@@ -1243,6 +1257,15 @@ void genRunner(const NNmodel &model,    //!< Model description
 
         variable_def(os, model.getPrecision() + " *", "inSyn" + s.first, s.second.getInSynVarMode());
 
+        if(s.second.isDendriticDelayRequired()) {
+            variable_def(os, model.getPrecision() + " *", "denDelay" + s.first, s.second.getDendriticDelayVarMode());
+
+            os << "unsigned int denDelayPtr" << s.first << ";" << std::endl;
+#ifndef CPU_ONLY
+            os << "__device__ volatile unsigned int dd_denDelayPtr" << s.first << ";" << std::endl;
+#endif
+        }
+
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             variable_def(os, "uint32_t *", "gp"+s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
         }
@@ -1517,8 +1540,13 @@ void genRunner(const NNmodel &model,    //!< Model description
 
             // Allocate buffer to hold input coming from this synapse population
             mem += allocate_variable(os, model.getPrecision(), "inSyn" + s.first, s.second.getInSynVarMode(),
-                                    s.second.getTrgNeuronGroup()->getNumNeurons());
+                                     s.second.getTrgNeuronGroup()->getNumNeurons());
 
+            // Allocate buffer to delay input coming from this synapse population
+            if(s.second.isDendriticDelayRequired()) {
+                mem += allocate_variable(os, model.getPrecision(), "denDelay" + s.first, s.second.getDendriticDelayVarMode(),
+                                         s.second.getMaxDendriticDelayTimesteps() * s.second.getTrgNeuronGroup()->getNumNeurons());
+            }
             // If connectivity is defined using a bitmask, allocate memory for bitmask
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = (s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
@@ -1727,6 +1755,10 @@ void genRunner(const NNmodel &model,    //!< Model description
         for(const auto &s : model.getLocalSynapseGroups()) {
             free_variable(os, "inSyn" + s.first, s.second.getInSynVarMode());
 
+            if(s.second.isDendriticDelayRequired()) {
+                free_variable(os, "denDelay" + s.first, s.second.getDendriticDelayVarMode());
+            }
+
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                 os << "C" << s.first << ".connN= 0;" << std::endl;
 
@@ -1848,6 +1880,10 @@ void genRunner(const NNmodel &model,    //!< Model description
                 os << "neuron_timer.stopTimer();" << std::endl;
                 os << "neuron_tme+= neuron_timer.getElapsedTime();" << std::endl;
             }
+
+            // Generate code to advance host side dendritic delay buffers
+            genHostDenDelayAdvance(os, model);
+
             os << "iT++;" << std::endl;
             os << "t= iT*DT;" << std::endl;
         }
@@ -2161,6 +2197,21 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                     os << CodeStream::CB(1103);
                 }
             }
+
+            // If dendritic delay variables can be pushed and pulled add copy code
+            if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
+                // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
+                    os << "if(!hostInitialisedOnly)" << CodeStream::OB(1104);
+                }
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_denDelay" << s.first;
+                os << ", denDelay" << s.first;
+                os << ", " << s.second.getMaxDendriticDelayTimesteps() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
+
+                if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
+                    os << CodeStream::CB(1104);
+                }
+            }
         }
         os << std::endl;
     }
@@ -2214,7 +2265,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             CodeStream::Scope b(os);
 
             if(canPushPullVar(n.second.getSpikeVarMode())) {
-                size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
+                const size_t glbSpkCntSize = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(glbSpkCnt" << n.first;
                 os << ", d_glbSpkCnt" << n.first;
                 os << ", " << glbSpkCntSize << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
@@ -2293,7 +2344,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             }
             
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
+                const size_t size = (numSrcNeurons * numTrgNeurons) / 32 + 1;
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(gp" << s.first;
                 os << ", d_gp" << s.first;
                 os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << std::endl;
@@ -2303,6 +2354,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
                 os << ", d_inSyn" << s.first;
                 os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+            }
+
+            if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(denDelay" << s.first;
+                os << ", d_denDelay" << s.first;
+                os << ", " << s.second.getMaxDendriticDelayTimesteps() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
         }
         os << std::endl;
@@ -2471,6 +2528,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << "void stepTimeGPU()";
     {
         CodeStream::Scope b(os);
+        if (model.isPreSynapseResetRequired()) {
+            const unsigned int preSynapseResetGridSize = ceil((float)model.getNumPreSynapseResetRequiredGroups() / preSynapseResetBlkSize);
+            os << "dim3 sRThreads(" << preSynapseResetBlkSize << ", 1);" << std::endl;
+            os << "dim3 sRGrid(" << preSynapseResetGridSize  << ", 1);" << std::endl;
+            os << std::endl;
+        }
         if (!model.getLocalSynapseGroups().empty()) {
             unsigned int synapseGridSz = model.getSynapseKernelGridSize();
             os << "//model.padSumSynapseTrgN[model.synapseGrpN - 1] is " << synapseGridSz << std::endl;
@@ -2504,6 +2567,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         }
         os << std::endl;
         if (!model.getLocalSynapseGroups().empty()) {
+            if (model.isPreSynapseResetRequired()) {
+                os << "preSynapseReset <<< sRGrid, sRThreads >>> ();" << std::endl;
+            }
             if (!model.getSynapseDynamicsGroups().empty()) {
                 if (model.isTimingEnabled()) {
                     os << "cudaEventRecord(synDynStart);" << std::endl;
@@ -2575,13 +2641,17 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "neuron_tme+= tmp/1000.0;" << std::endl;
         }
 
+
+        // Generate code to advance host side dendritic delay buffers
+        genHostDenDelayAdvance(os, model);
+
+        os << "iT++;" << std::endl;
+        os << "t= iT*DT;" << std::endl;
+
         // Synchronise if zero-copy is in use
         if(model.zeroCopyInUse()) {
             os << "cudaDeviceSynchronize();" << std::endl;
         }
-
-        os << "iT++;" << std::endl;
-        os << "t= iT*DT;" << std::endl;
     }
     fs.close();
     //cout << "done with generating GPU runner" << std::endl;

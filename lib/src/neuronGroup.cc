@@ -210,7 +210,7 @@ bool NeuronGroup::isDeviceVarInitRequired() const
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroup *sg)
                        {
-                           return sg->isPSDeviceVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE);
+                           return sg->isPSDeviceVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE) || (sg->getDendriticDelayVarMode() & VarInit::DEVICE);
                        });
 }
 
