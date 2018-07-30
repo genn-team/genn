@@ -364,7 +364,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             auto csModel = cs->getCurrentSourceModel();
                             auto csVars = csModel->getVars();
 
-                            for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                            for (size_t j = 0; j < csVars.size(); j++) {
                                 const auto &varInit = cs->getVarInitialisers()[j];
                                 const VarMode varMode = cs->getVarMode(j);
 
