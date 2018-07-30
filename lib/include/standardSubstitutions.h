@@ -10,6 +10,7 @@
 // Forward declarations
 class NeuronGroup;
 class SynapseGroup;
+class CurrentSource;
 
 //----------------------------------------------------------------------------
 // NameIterCtx
@@ -156,4 +157,13 @@ std::string initVariable(
     const std::string &ftype,
     const std::string &rng);
 
+void currentSourceInjection(
+    std::string &code,
+    const CurrentSource *sc,
+    const VarNameIterCtx &scmVars,
+    const DerivedParamNameIterCtx &scmDerivedParams,
+    const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng);
 }   // StandardSubstitions
