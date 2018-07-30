@@ -746,7 +746,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         os << funcExportPrefix << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
         os << funcExportPrefix << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;
     }
-    for (const auto &cs : model.getCurrentSources()) {
+    for (const auto &cs : model.getLocalCurrentSources()) {
         os << funcExportPrefix << "void push" << cs.first << "StateToDevice(bool hostInitialisedOnly = false);" << std::endl;
     }
     for(const auto &s : model.getLocalSynapseGroups()) {
@@ -765,7 +765,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         os << funcExportPrefix << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
         os << funcExportPrefix << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
     }
-    for (const auto &cs : model.getCurrentSources()) {
+    for (const auto &cs : model.getLocalCurrentSources()) {
         os << funcExportPrefix << "void pull" << cs.first << "StateFromDevice();" << std::endl;
     }
     for(const auto &s : model.getLocalSynapseGroups()) {

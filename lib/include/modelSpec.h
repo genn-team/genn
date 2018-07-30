@@ -441,8 +441,11 @@ public:
     // PUBLIC CURRENT SOURCE FUNCTIONS
     //================================
 
-    //! Get std::map containing named CurrentSource objects in model
-    const map<string, CurrentSource> &getCurrentSources() const{ return m_CurrentSources; }
+    //! Get std::map containing local named CurrentSource objects in model
+    const map<string, CurrentSource> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
+
+    //! Get std::map containing remote named CurrentSource objects in model
+    const map<string, CurrentSource> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the current source kernel
     const map<string, string> &getCurrentSourceKernelParameters() const{ return currentSourceKernelParameters; }
@@ -475,8 +478,23 @@ public:
         }
         auto targetGroup = findNeuronGroup(targetNeuronGroupName);
 
+#ifdef MPI_ENABLE
+        // Get host ID of target neuron group
+        const int hostID = targetGroup->getClusterHostID();
+
+        // Determine the host ID
+        int mpiHostID = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+        // Pick map to add group to appropriately
+        auto &groupMap = (hostID == mpiHostID) ? m_LocalCurrentSources : m_RemoteCurrentSources;
+#else
+        // If MPI is disabled always add to local current sources
+        auto &groupMap = m_LocalCurrentSources;
+#endif
+
         // Add current source to map
-        auto result = m_CurrentSources.emplace(std::piecewise_construct,
+        auto result = groupMap.emplace(std::piecewise_construct,
             std::forward_as_tuple(currentSourceName),
             std::forward_as_tuple(currentSourceName, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers()));
@@ -525,8 +543,11 @@ private:
     //!< Named remote synapse groups
     map<string, SynapseGroup> m_RemoteSynapseGroups;
 
-    //!< Named current sources
-    map<string, CurrentSource> m_CurrentSources;
+    //!< Named local current sources
+    map<string, CurrentSource> m_LocalCurrentSources;
+
+    //!< Named remote current sources
+    map<string, CurrentSource> m_RemoteCurrentSources;
 
     //!< Mapping  of synapse group names which have postsynaptic learning to their start and end padded indices
     //!< **THINK** is this the right container?
