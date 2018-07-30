@@ -172,7 +172,7 @@ void generatePreParallelisedSparseCode(
 
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
                 if(shouldAccumulateInSharedMemory(sg)) {
-                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg" + sg.getName() + "[ipost], $(0))");
+                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg[ipost], $(0))");
 
                     substitute(wCode, "$(inSyn)", "shLg[ipost]");
                 }
@@ -308,7 +308,7 @@ void generatePostParallelisedCode(
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                         if (shouldAccumulateInSharedMemory(sg)) {
-                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg" + sg.getName() + "[ipost], $(0))");
+                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&shLg[ipost], $(0))");
 
                             // **DEPRECATED**
                             substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
