@@ -752,13 +752,11 @@ void genInit(const NNmodel &model,      //!< Model description
             genHostInitSpikeCode(os, n.second, true);
 
             if (n.second.isSpikeTimeRequired() && shouldInitOnHost(n.second.getSpikeTimeVarMode())) {
+                CodeStream::Scope b(os);
+                os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
-                    }
+                    os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
                 }
             }
 
@@ -790,6 +788,29 @@ void genInit(const NNmodel &model,      //!< Model description
                 {
                     CodeStream::Scope b(os);
                     os << "seed" << n.first << "[i] = rand();" << std::endl;
+                }
+            }
+
+            // Loop through current sources injecting into neuron model
+            os << "// current source variables" << std::endl;
+            for (auto const *cs : n.second.getCurrentSources()) {
+                auto csModel = cs->getCurrentSourceModel();
+                auto csVars = csModel->getVars();
+
+                for (size_t j = 0; j < csVars.size(); j++) {
+                    const auto &varInit = cs->getVarInitialisers()[j];
+                    const VarMode varMode = cs->getVarMode(j);
+
+                    // If this variable should be initialised on host and has any initialisation code
+                    if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
+                        CodeStream::Scope b(os);
+                        os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << StandardSubstitutions::initVariable(varInit, csVars[j].first + cs->getName() + "[i]",
+                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                        }
+                    }
                 }
             }
 
