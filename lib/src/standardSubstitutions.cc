@@ -308,7 +308,7 @@ void StandardSubstitutions::currentSourceInjection(
     const std::string &rng)
 {
     substitute(iCode, "$(t)", "t");
-    name_substitutions(iCode, "l", csmVars.nameBegin, csmVars.nameEnd, cs->getName());
+    name_substitutions(iCode, "l", csmVars.nameBegin, csmVars.nameEnd);
     value_substitutions(iCode, cs->getCurrentSourceModel()->getParamNames(), cs->getParams());
     value_substitutions(iCode, csmDerivedParams.nameBegin, csmDerivedParams.nameEnd, cs->getDerivedParams());
     name_substitutions(iCode, "", csmExtraGlobalParams.nameBegin, csmExtraGlobalParams.nameEnd, cs->getName());
