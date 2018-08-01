@@ -163,7 +163,7 @@ void generatePreParallelisedSparseCode(
 
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
-                functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getTargetMergedPSMName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
             }
             // Otherwise
             else {
@@ -178,9 +178,9 @@ void generatePreParallelisedSparseCode(
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
-                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getTargetMergedPSMName() + "[ipost], $(0))");
+                    functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
 
-                    substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getTargetMergedPSMName() + "[ipost]");
+                    substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getPSModelTargetName() + "[ipost]");
                 }
             }
 
@@ -301,7 +301,7 @@ void generatePostParallelisedCode(
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getTargetMergedPSMName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                    functionSubstitute(wCode, "addToInSynDelay", 2, getFloatAtomicAdd(ftype) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
                 }
                 // Otherwise
                 else {
@@ -315,11 +315,11 @@ void generatePostParallelisedCode(
                             substitute(wCode, "$(inSyn)", "shLg[ipost]");
                         }
                         else {
-                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getTargetMergedPSMName() + "[ipost], $(0))");
+                            functionSubstitute(wCode, "addToInSyn", 1, getFloatAtomicAdd(ftype) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
 
                             // **DEPRECATED**
                             substitute(wCode, "$(updatelinsyn)", getFloatAtomicAdd(ftype) + "(&$(inSyn), $(addtoinSyn))");
-                            substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getTargetMergedPSMName() + "[ipost]");
+                            substitute(wCode, "$(inSyn)", "dd_inSyn" + sg.getPSModelTargetName() + "[ipost]");
                         }
                     }
                     else {
@@ -947,15 +947,15 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
                                 }
                                 // Otherwise
                                 else {
-                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "], $(0))");
 
                                     // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
-                                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                 }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
@@ -980,15 +980,15 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + postIdx + "], $(0))");
                                 }
                                 // Otherwise
                                 else {
-                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "], $(0))");
+                                    functionSubstitute(SDcode, "addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "], $(0))");
 
                                     // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
-                                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                    substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                 }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
@@ -1091,7 +1091,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "linSyn = dd_inSyn" << s->second.getTargetMergedPSMName() << "[" << localID << "];" << std::endl;
+                        os << "linSyn = dd_inSyn" << s->second.getPSModelTargetName() << "[" << localID << "];" << std::endl;
                     }
                 }
                 // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
@@ -1100,7 +1100,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (threadIdx.x < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "shLg[threadIdx.x] = dd_inSyn" << s->second.getTargetMergedPSMName() << "[threadIdx.x];"<< std::endl;
+                        os << "shLg[threadIdx.x] = dd_inSyn" << s->second.getPSModelTargetName() << "[threadIdx.x];"<< std::endl;
                     }
                     os << "__syncthreads();" << std::endl;
                 }
@@ -1144,7 +1144,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (" << localID << " < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_inSyn" << s->second.getTargetMergedPSMName() << "[" << localID << "] = linSyn;" << std::endl;
+                        os << "dd_inSyn" << s->second.getPSModelTargetName() << "[" << localID << "] = linSyn;" << std::endl;
                     }
                 }
                 // Otherwise, if we have been accumulating into shared memory, write value back to global memory
@@ -1154,7 +1154,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "if (threadIdx.x < " << s->second.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_inSyn" << s->second.getTargetMergedPSMName() << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
+                        os << "dd_inSyn" << s->second.getPSModelTargetName() << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
                     }
                 }
 

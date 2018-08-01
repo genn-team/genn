@@ -93,7 +93,6 @@ void NeuronGroup::mergeIncomingPSM()
     // Create a copy of this neuron groups incoming synapse populations
     std::vector<SynapseGroup*> inSyn = getInSyn();
 
-    std::cout << "Neuron group: " << getName() << std::endl;
     do
     {
         // Remove last element from vector
@@ -103,10 +102,10 @@ void NeuronGroup::mergeIncomingPSM()
         // Add A to vector of merged incoming synape populations - initially only merged with itself
         m_MergedInSyn.emplace_back(a, std::vector<SynapseGroup*>{a});
 
-        // As such as a's target merged PSM name to its own
-        a->setTargetMergedPSMName(a->getName());
-
-        std::cout << "\tIncoming synapse group: " << a->getName() << std::endl;
+        // Continue if merging of postsynaptic models is disabled
+        if(!GENN_PREFERENCES::mergePostsynapticModels) {
+            continue;
+        }
 
         // Continue if postsynaptic model has any variables
         if(!a->getPSVarInitialisers().empty()) {
@@ -130,13 +129,11 @@ void NeuronGroup::mergeIncomingPSM()
                 && std::equal(aParamsBegin, aParamsEnd, (*b)->getPSParams().cbegin())
                 && std::equal(aDerivedParamsBegin, aDerivedParamsEnd, (*b)->getPSDerivedParams().cbegin()))
             {
-                std::cout << "\t\tIs compatible with incoming synapse group: " << (*b)->getName() << std::endl;
-
                 // Add to list of merged synapses
                 m_MergedInSyn.back().second.push_back(*b);
 
-                // Set b to target a's psm
-                (*b)->setTargetMergedPSMName(a->getName());
+                // Set a as b's merge target
+                (*b)->setPSModelMergeTarget(a->getName());
 
                 // Remove from temporary vector
                 b = inSyn.erase(b);
@@ -145,6 +142,11 @@ void NeuronGroup::mergeIncomingPSM()
             else {
                 ++b;
             }
+        }
+
+        // If synapse group A was successfully merged with anything, mark it as the merge origin
+        if(m_MergedInSyn.back().second.size() > 1) {
+            a->setPSModelMergeOrigin();
         }
     } while(!inSyn.empty());
 }

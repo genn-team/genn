@@ -2290,35 +2290,36 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << ", " << size << " * sizeof(uint32_t), cudaMemcpyHostToDevice));" << std::endl;
             }
 
-            // If synapse input variables can be pushed and pulled add copy code
-            // **TODO** sensible merging behaviour
-            if(canPushPullVar(s.second.getInSynVarMode())) {
-                // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
-                if(s.second.getInSynVarMode() & VarInit::DEVICE) {
-                    os << "if(!hostInitialisedOnly)" << CodeStream::OB(1103);
-                }
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_inSyn" << s.first;
-                os << ", inSyn" << s.first;
-                os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
+            // If this synapse group's postsynaptic models haven't been merged, making pushing them somewhat ambiguous
+            if(!s.second.isPSModelMerged()) {
+                // If synapse input variables can be pushed and pulled add copy code
+                if(canPushPullVar(s.second.getInSynVarMode())) {
+                    // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                    if(s.second.getInSynVarMode() & VarInit::DEVICE) {
+                        os << "if(!hostInitialisedOnly)" << CodeStream::OB(1103);
+                    }
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_inSyn" << s.first;
+                    os << ", inSyn" << s.first;
+                    os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
 
-                if(s.second.getInSynVarMode() & VarInit::DEVICE) {
-                    os << CodeStream::CB(1103);
+                    if(s.second.getInSynVarMode() & VarInit::DEVICE) {
+                        os << CodeStream::CB(1103);
+                    }
                 }
-            }
 
-            // If dendritic delay variables can be pushed and pulled add copy code
-            // **TODO** sensible merging behaviour
-            if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
-                // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
-                if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
-                    os << "if(!hostInitialisedOnly)" << CodeStream::OB(1104);
-                }
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_denDelay" << s.first;
-                os << ", denDelay" << s.first;
-                os << ", " << s.second.getMaxDendriticDelayTimesteps() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
+                // If dendritic delay variables can be pushed and pulled add copy code
+                if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
+                    // If variable is initialised on device, only copy if hostInitialisedOnly isn't set
+                    if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
+                        os << "if(!hostInitialisedOnly)" << CodeStream::OB(1104);
+                    }
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_denDelay" << s.first;
+                    os << ", denDelay" << s.first;
+                    os << ", " << s.second.getMaxDendriticDelayTimesteps() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
 
-                if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
-                    os << CodeStream::CB(1104);
+                    if(s.second.getDendriticDelayVarMode() & VarInit::DEVICE) {
+                        os << CodeStream::CB(1104);
+                    }
                 }
             }
         }
@@ -2479,18 +2480,19 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << ", " << size << " * sizeof(uint32_t), cudaMemcpyDeviceToHost));" << std::endl;
             }
 
-            // **TODO** sensible merging behaviour
-            if(canPushPullVar(s.second.getInSynVarMode())) {
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
-                os << ", d_inSyn" << s.first;
-                os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
-            }
+            // If this synapse group's postsynaptic models haven't been merged, making pulling them somewhat ambiguous
+            if(!s.second.isPSModelMerged()) {
+                if(canPushPullVar(s.second.getInSynVarMode())) {
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(inSyn" << s.first;
+                    os << ", d_inSyn" << s.first;
+                    os << ", " << numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+                }
 
-            // **TODO** sensible merging behaviour
-            if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
-                os << "CHECK_CUDA_ERRORS(cudaMemcpy(denDelay" << s.first;
-                os << ", d_denDelay" << s.first;
-                os << ", " << s.second.getMaxDendriticDelayTimesteps() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+                if(s.second.isDendriticDelayRequired() && canPushPullVar(s.second.getDendriticDelayVarMode())) {
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpy(denDelay" << s.first;
+                    os << ", d_denDelay" << s.first;
+                    os << ", " << s.second.getMaxDendriticDelayTimesteps() * numTrgNeurons << " * sizeof(" << model.getPrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
+                }
             }
         }
         os << std::endl;

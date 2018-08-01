@@ -134,15 +134,15 @@ void generate_process_presynaptic_events_code_CPU(
                 string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
 
                 if(sg.isDendriticDelayRequired()) {
-                    functionSubstitute(wCode, "addToInSynDelay", 2, "denDelay" + sg.getTargetMergedPSMName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+                    functionSubstitute(wCode, "addToInSynDelay", 2, "denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
                 }
                 else {
-                    functionSubstitute(wCode, "addToInSyn", 1, "inSyn" + sg.getTargetMergedPSMName() + "[ipost] += $(0)");
+                    functionSubstitute(wCode, "addToInSyn", 1, "inSyn" + sg.getPSModelTargetName() + "[ipost] += $(0)");
 
                     // **DEPRECATED**
                     os << ftype << " addtoinSyn;" << std::endl;
                     substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
-                    substitute(wCode, "$(inSyn)", "inSyn" + sg.getTargetMergedPSMName() + "[ipost]");
+                    substitute(wCode, "$(inSyn)", "inSyn" + sg.getPSModelTargetName() + "[ipost]");
                 }
 
                 substitute(wCode, "$(t)", "t");
@@ -524,14 +524,14 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                 const std::string postIdx = "C" + s.first + ".ind[n]";
                                 if(sg->isDendriticDelayRequired()) {
-                                    functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
                                 }
                                 else {
-                                    functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "] += $(0)");
+                                    functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "] += $(0)");
 
                                     // **DEPRECATED**
                                     substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
-                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                 }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
@@ -559,14 +559,14 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                     const std::string postIdx = "C" + s.first + ".ind[n]";
                                     if(sg->isDendriticDelayRequired()) {
-                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
                                     }
                                     else {
-                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "] += $(0)");
+                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "] += $(0)");
 
                                         // **DEPRECATED**
                                         substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
-                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[" + postIdx + "]");
+                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                     }
 
                                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
@@ -590,14 +590,14 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     }
 
                                     if(sg->isDendriticDelayRequired()) {
-                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getTargetMergedPSMName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
+                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
                                     }
                                     else {
-                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getTargetMergedPSMName() + "[j] += $(0)");
+                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getPSModelTargetName() + "[j] += $(0)");
 
                                         // **DEPRECATED**
                                         substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
-                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getTargetMergedPSMName() + "[j]");
+                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[j]");
                                     }
 
                                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
