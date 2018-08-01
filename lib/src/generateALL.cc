@@ -257,9 +257,16 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 break;
 
             case 6:
-            latest:
                 smemAllocGran = 256;
                 warpAllocGran = (deviceProp[theDevice].minor == 0) ? 2 : 4;
+                regAllocGran = 256;
+                maxBlocksPerSM = 32;
+                break;
+
+            case 7:
+            latest:
+                smemAllocGran = 256;
+                warpAllocGran = 4;
                 regAllocGran = 256;
                 maxBlocksPerSM = 32;
                 break;
