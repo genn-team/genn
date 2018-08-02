@@ -93,8 +93,8 @@ void NeuronGroup::mergeIncomingPSM()
     // Create a copy of this neuron groups incoming synapse populations
     std::vector<SynapseGroup*> inSyn = getInSyn();
 
-    do
-    {
+    // Loop through un-merged incoming synapse populations
+    for(unsigned int i = 0; !inSyn.empty(); i++) {
         // Remove last element from vector
         SynapseGroup *a = inSyn.back();
         inSyn.pop_back();
@@ -108,9 +108,14 @@ void NeuronGroup::mergeIncomingPSM()
         }
 
         // Continue if postsynaptic model has any variables
+        // **NOTE** many models with variables would work fine, but nothing stops 
+        // initialisers being used to configure PS models to behave totally different
         if(!a->getPSVarInitialisers().empty()) {
             continue;
         }
+        
+        // Create a name for mmerged
+        const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
 
         // Cache useful bits from A
         const auto &aParamsBegin = a->getPSParams().cbegin();
@@ -132,8 +137,8 @@ void NeuronGroup::mergeIncomingPSM()
                 // Add to list of merged synapses
                 m_MergedInSyn.back().second.push_back(*b);
 
-                // Set a as b's merge target
-                (*b)->setPSModelMergeTarget(a->getName());
+                // Set b's merge target to our unique name
+                (*b)->setPSModelMergeTarget(mergedPSMName);
 
                 // Remove from temporary vector
                 b = inSyn.erase(b);
@@ -144,11 +149,11 @@ void NeuronGroup::mergeIncomingPSM()
             }
         }
 
-        // If synapse group A was successfully merged with anything, mark it as the merge origin
+        // If synapse group A was successfully merged with anything, set it's merge target to the unique name
         if(m_MergedInSyn.back().second.size() > 1) {
-            a->setPSModelMergeOrigin();
+            a->setPSModelMergeTarget(mergedPSMName);
         }
-    } while(!inSyn.empty());
+    }
 }
 
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const

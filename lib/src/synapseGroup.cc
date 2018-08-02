@@ -52,7 +52,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_InSynVarMode(GENN_PREFERENCES::defaultVarMode), m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
-        m_PSModelTargetName(name), m_PSModelMerged(false)
+        m_PSModelTargetName(name)
 {
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);

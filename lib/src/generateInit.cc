@@ -341,7 +341,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
 
                             // If this synapse group's input variable should be initialised on device
                             if(sg->getInSynVarMode() & VarInit::DEVICE) {
-                                os << "dd_inSyn" << sg->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                os << "dd_inSyn" << sg->getPSModelTargetName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
 
                             // If dendritic delays are required and these should be initialised on device
@@ -350,7 +350,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 {
                                     CodeStream::Scope b(os);
                                     const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
-                                    os << "dd_denDelay" << sg->getName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                    os << "dd_denDelay" << sg->getPSModelTargetName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                                 }
                             }
 
@@ -809,15 +809,15 @@ void genInit(const NNmodel &model,      //!< Model description
                     os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
                     {
                         CodeStream::Scope b(os);
-                        os << "inSyn" << sg->getName() << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << "inSyn" << sg->getPSModelTargetName() << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
                     }
                 }
 
                 if(sg->isDendriticDelayRequired()) {
-                    os << "denDelayPtr" << sg->getName() << " = 0;" << std::endl;
+                    os << "denDelayPtr" << sg->getPSModelTargetName() << " = 0;" << std::endl;
 #ifndef CPU_ONLY
-                    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_denDelayPtr" << sg->getName();
-                    os << ", &denDelayPtr" << sg->getName();
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_denDelayPtr" << sg->getPSModelTargetName();
+                    os << ", &denDelayPtr" << sg->getPSModelTargetName();
                     os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
 #endif
 
@@ -827,7 +827,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         os << "for (int i = 0; i < " << n.second.getNumNeurons() * sg->getMaxDendriticDelayTimesteps() << "; i++)";
                         {
                             CodeStream::Scope b(os);
-                            os << "denDelay" << sg->getName() << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                            os << "denDelay" << sg->getPSModelTargetName() << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
                     }
                 }
@@ -846,7 +846,7 @@ void genInit(const NNmodel &model,      //!< Model description
                             os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
                             {
                                 CodeStream::Scope b(os);
-                                os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + sg->getName() + "[i]",
+                                os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + sg->getPSModelTargetName() + "[i]",
                                                                           cpuFunctions, model.getPrecision(), "rng") << std::endl;
                             }
                         }

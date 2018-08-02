@@ -208,7 +208,7 @@ void genHostDenDelayAdvance(CodeStream &os, const NNmodel &model)
         for(const auto &m : n.second.getMergedInSyn()) {
             const auto *sg = m.first;
             if(sg->isDendriticDelayRequired()) {
-                os << "denDelayPtr" << sg->getName() << " = (denDelayPtr" << sg->getName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                os << "denDelayPtr" << sg->getPSModelTargetName() << " = (denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
             }
         }
     }
@@ -690,16 +690,16 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         for(const auto &m : n.second.getMergedInSyn()) {
             const auto *sg = m.first;
 
-            extern_variable_def(os, model.getPrecision() + " *", "inSyn" + sg->getName(), sg->getInSynVarMode());
+            extern_variable_def(os, model.getPrecision() + " *", "inSyn" + sg->getPSModelTargetName(), sg->getInSynVarMode());
 
             if (sg->isDendriticDelayRequired()) {
-                extern_variable_def(os, model.getPrecision() + " *", "denDelay" + sg->getName(), sg->getDendriticDelayVarMode());
-                os << varExportPrefix << " unsigned int denDelayPtr" << sg->getName() << ";" << std::endl;
+                extern_variable_def(os, model.getPrecision() + " *", "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayVarMode());
+                os << varExportPrefix << " unsigned int denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 for(const auto &v : sg->getPSModel()->getVars()) {
-                    extern_variable_def(os, v.second + " *", v.first + sg->getName(), sg->getPSVarMode(v.first));
+                    extern_variable_def(os, v.second + " *", v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first));
                 }
             }
         }
@@ -1294,21 +1294,21 @@ void genRunner(const NNmodel &model,    //!< Model description
         for(const auto &m : n.second.getMergedInSyn()) {
             const auto *sg = m.first;
 
-            variable_def(os, model.getPrecision() + " *", "inSyn" + sg->getName(), sg->getInSynVarMode());
+            variable_def(os, model.getPrecision() + " *", "inSyn" + sg->getPSModelTargetName(), sg->getInSynVarMode());
 
             if(sg->isDendriticDelayRequired()) {
-                variable_def(os, model.getPrecision() + " *", "denDelay" + sg->getName(), sg->getDendriticDelayVarMode());
+                variable_def(os, model.getPrecision() + " *", "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayVarMode());
 
-                os << "unsigned int denDelayPtr" << sg->getName() << ";" << std::endl;
+                os << "unsigned int denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
 #ifndef CPU_ONLY
-                os << "__device__ volatile unsigned int dd_denDelayPtr" << sg->getName() << ";" << std::endl;
+                os << "__device__ volatile unsigned int dd_denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
 #endif
             }
 
             // If postsynaptic model variables should be individual
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 for(const auto &v : sg->getPSModel()->getVars()) {
-                    variable_def(os, v.second+" *", v.first + sg->getName(), sg->getPSVarMode(v.first));
+                    variable_def(os, v.second+" *", v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first));
                 }
             }
 
@@ -1602,12 +1602,12 @@ void genRunner(const NNmodel &model,    //!< Model description
                 const auto *sg = m.first;
 
                 // Allocate buffer to hold input coming from this synapse population
-                mem += allocate_variable(os, model.getPrecision(), "inSyn" + sg->getName(), sg->getInSynVarMode(),
+                mem += allocate_variable(os, model.getPrecision(), "inSyn" + sg->getPSModelTargetName(), sg->getInSynVarMode(),
                                          sg->getTrgNeuronGroup()->getNumNeurons());
 
                 // Allocate buffer to delay input coming from this synapse population
                 if(sg->isDendriticDelayRequired()) {
-                    mem += allocate_variable(os, model.getPrecision(), "denDelay" + sg->getName(), sg->getDendriticDelayVarMode(),
+                    mem += allocate_variable(os, model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayVarMode(),
                                              sg->getMaxDendriticDelayTimesteps() * sg->getTrgNeuronGroup()->getNumNeurons());
                 }
 
@@ -1615,7 +1615,7 @@ void genRunner(const NNmodel &model,    //!< Model description
                     const size_t size = sg->getTrgNeuronGroup()->getNumNeurons();
 
                     for(const auto &v : sg->getPSModel()->getVars()) {
-                        mem += allocate_variable(os, v.second, v.first + sg->getName(), sg->getPSVarMode(v.first), size);
+                        mem += allocate_variable(os, v.second, v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first), size);
                     }
                 }
             }
@@ -1827,15 +1827,15 @@ void genRunner(const NNmodel &model,    //!< Model description
             for(const auto &m : n.second.getMergedInSyn()) {
                 const auto *sg = m.first;
 
-                free_variable(os, "inSyn" + sg->getName(), sg->getInSynVarMode());
+                free_variable(os, "inSyn" + sg->getPSModelTargetName(), sg->getInSynVarMode());
 
                 if(sg->isDendriticDelayRequired()) {
-                    free_variable(os, "denDelay" + sg->getName(), sg->getDendriticDelayVarMode());
+                    free_variable(os, "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayVarMode());
                 }
 
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     for(const auto &v : sg->getPSModel()->getVars()) {
-                        free_variable(os, v.first + sg->getName(), sg->getPSVarMode(v.first));
+                        free_variable(os, v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first));
                     }
                 }
             }

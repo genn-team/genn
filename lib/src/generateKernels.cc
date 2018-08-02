@@ -576,29 +576,29 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     const auto *psm = sg->getPSModel();
 
                     os << "// pull inSyn values in a coalesced access" << std::endl;
-                    os << model.getPrecision() << " linSyn" << sg->getName() << " = dd_inSyn" << sg->getName() << "[" << localID << "];" << std::endl;
+                    os << model.getPrecision() << " linSyn" << sg->getPSModelTargetName() << " = dd_inSyn" << sg->getPSModelTargetName() << "[" << localID << "];" << std::endl;
 
                     // If dendritic delay is required
                     if(sg->isDendriticDelayRequired()) {
                         // Get reference to dendritic delay buffer input for this timestep
-                        os << model.getPrecision() << " &denDelayFront" << sg->getName() << " = dd_denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("dd_") + localID + "];" << std::endl;
+                        os << model.getPrecision() << " &denDelayFront" << sg->getPSModelTargetName() << " = dd_denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("dd_") + localID + "];" << std::endl;
 
                         // Add delayed input from buffer into inSyn
-                        os << "linSyn" + sg->getName() + " += denDelayFront" << sg->getName() << ";" << std::endl;
+                        os << "linSyn" + sg->getPSModelTargetName() + " += denDelayFront" << sg->getPSModelTargetName() << ";" << std::endl;
 
                         // Zero delay buffer slot
-                        os << "denDelayFront" << sg->getName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << "denDelayFront" << sg->getPSModelTargetName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
                     }
 
                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                         for(const auto &v : psm->getVars()) {
-                            os << v.second << " lps" << v.first << sg->getName();
-                            os << " = dd_" <<  v.first << sg->getName() << "[" << localID << "];" << std::endl;
+                            os << v.second << " lps" << v.first << sg->getPSModelTargetName();
+                            os << " = dd_" <<  v.first << sg->getPSModelTargetName() << "[" << localID << "];" << std::endl;
                         }
                     }
                     string psCode = psm->getApplyInputCode();
                     substitute(psCode, "$(id)", localID);
-                    substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
+                    substitute(psCode, "$(inSyn)", "linSyn" + sg->getPSModelTargetName());
                     StandardSubstitutions::postSynapseApplyInput(psCode, sg, n->second,
                         nmVars, nmDerivedParams, nmExtraGlobalParams,
                         cudaFunctions, model.getPrecision(), rngName);
@@ -698,7 +698,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
 
                     string pdCode = psm->getDecayCode();
                     substitute(pdCode, "$(id)", localID);
-                    substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
+                    substitute(pdCode, "$(inSyn)", "linSyn" + sg->getPSModelTargetName());
                     StandardSubstitutions::postSynapseDecay(pdCode, sg, n->second,
                                                             nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                             cudaFunctions, model.getPrecision(), rngName);
@@ -710,9 +710,9 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                         os << CodeStream::CB(29) << " // namespace bracket closed" << endl;
                     }
 
-                    os << "dd_inSyn"  << sg->getName() << "[" << localID << "] = linSyn" << sg->getName() << ";" << std::endl;
+                    os << "dd_inSyn"  << sg->getPSModelTargetName() << "[" << localID << "] = linSyn" << sg->getPSModelTargetName() << ";" << std::endl;
                     for(const auto &v : psm->getVars()) {
-                        os << "dd_" <<  v.first << sg->getName() << "[" << localID << "] = lps" << v.first << sg->getName() << ";"<< std::endl;
+                        os << "dd_" <<  v.first << sg->getPSModelTargetName() << "[" << localID << "] = lps" << v.first << sg->getPSModelTargetName() << ";"<< std::endl;
                     }
                 }
 
@@ -845,7 +845,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         {
                             CodeStream::Scope b(os);
 
-                            os << "dd_denDelayPtr" << sg->getName() << " = (dd_denDelayPtr" << sg->getName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                            os << "dd_denDelayPtr" << sg->getPSModelTargetName() << " = (dd_denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
                         }
                     }
                 }

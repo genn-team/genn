@@ -281,26 +281,26 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                         // If dendritic delay is required
                         if(sg->isDendriticDelayRequired()) {
                             // Get reference to dendritic delay buffer input for this timestep
-                            os << model.getPrecision() << " &denDelayFront" << sg->getName() << " = denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
+                            os << model.getPrecision() << " &denDelayFront" << sg->getPSModelTargetName() << " = denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
 
                             // Add delayed input from buffer into inSyn
-                            os << "inSyn" + sg->getName() + "[n] += denDelayFront" << sg->getName() << ";" << std::endl;
+                            os << "inSyn" + sg->getPSModelTargetName() + "[n] += denDelayFront" << sg->getPSModelTargetName() << ";" << std::endl;
 
                             // Zero delay buffer slot
-                            os << "denDelayFront" << sg->getName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
+                            os << "denDelayFront" << sg->getPSModelTargetName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
 
                         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                             for(const auto &v : psm->getVars()) {
-                                os << v.second << " lps" << v.first << sg->getName();
-                                os << " = " <<  v.first << sg->getName() << "[n];" << std::endl;
+                                os << v.second << " lps" << v.first << sg->getPSModelTargetName();
+                                os << " = " <<  v.first << sg->getPSModelTargetName() << "[n];" << std::endl;
                             }
                         }
 
                         // Apply substitutions to current converter code
                         string psCode = psm->getApplyInputCode();
                         substitute(psCode, "$(id)", "n");
-                        substitute(psCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
+                        substitute(psCode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[n]");
                         StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
                             nmVars, nmDerivedParams, nmExtraGlobalParams, cpuFunctions, model.getPrecision(), "rng");
 
