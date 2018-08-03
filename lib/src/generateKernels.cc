@@ -436,6 +436,9 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     for(const auto &p : model.getNeuronKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
+    for(const auto &p : model.getCurrentSourceKernelParameters()) {
+        os << p.second << " " << p.first << ", ";
+    }
     os << model.getPrecision() << " t)" << std::endl;
     {
         // kernel code

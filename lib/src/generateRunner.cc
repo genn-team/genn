@@ -2701,6 +2701,9 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         for(const auto &p : model.getNeuronKernelParameters()) {
             os << p.first << ", ";
         }
+        for(const auto &p : model.getCurrentSourceKernelParameters()) {
+            os << p.first << ", ";
+        }
         os << "t);" << std::endl;
         if (model.isTimingEnabled()) {
             os << "cudaEventRecord(neuronStop);" << std::endl;
