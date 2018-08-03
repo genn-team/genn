@@ -6,6 +6,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "currentSource.h"
 #include "standardSubstitutions.h"
 #include "synapseGroup.h"
 #include "utils.h"
@@ -159,6 +160,13 @@ bool NeuronGroup::isSimRNGRequired() const
         return true;
     }
 
+    // Return true if any current sources require an RNG for simulation
+    if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
+        [](const CurrentSource *cs){ return cs->isSimRNGRequired(); }))
+    {
+        return true;
+    }
+
     // Return true if any of the incoming synapse groups require an RNG in their postsynaptic model
     // **NOTE** these are included as they are simulated in the neuron kernel/function
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
@@ -173,6 +181,13 @@ bool NeuronGroup::isInitRNGRequired(VarInit varInitMode) const
 {
     // If initialising the neuron variables require an RNG, return true
     if(::isInitRNGRequired(m_VarInitialisers, m_VarMode, varInitMode)) {
+        return true;
+    }
+
+    // Return true if any current sources require an RNG for initialisation
+    if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
+        [varInitMode](const CurrentSource *cs){ return cs->isInitRNGRequired(varInitMode); }))
+    {
         return true;
     }
 
@@ -201,7 +216,15 @@ bool NeuronGroup::isDeviceVarInitRequired() const
 
     // Return true if any of the variables are initialised on the device
     if(std::any_of(m_VarMode.cbegin(), m_VarMode.cend(),
-                   [](const VarMode mode){ return (mode & VarInit::DEVICE); })) {
+                   [](const VarMode mode){ return (mode & VarInit::DEVICE); }))
+    {
+        return true;
+    }
+
+    // Return true if any current sources require variable initialisation on device
+    if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
+        [](const CurrentSource *cs){ return cs->isDeviceVarInitRequired(); }))
+    {
         return true;
     }
 
@@ -210,7 +233,7 @@ bool NeuronGroup::isDeviceVarInitRequired() const
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroup *sg)
                        {
-                           return sg->isPSDeviceVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE);
+                           return sg->isPSDeviceVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE) || (sg->getDendriticDelayVarMode() & VarInit::DEVICE);
                        });
 }
 

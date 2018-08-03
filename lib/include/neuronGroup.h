@@ -124,6 +124,9 @@ public:
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
 
+    //! Gets pointers to all current sources which provide input to this neuron group
+    const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
+
     int getClusterHostID() const{ return m_HostID; }
 
     int getClusterDeviceID() const{ return m_DeviceID; }
@@ -190,9 +193,6 @@ public:
 
     // **THINK** do this really belong here - it is very code-generation specific
     std::string getQueueOffset(const std::string &devPrefix) const;
-
-    //! Gets pointers to all current sources which provide input to this neuron group
-    const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
 
 private:
     //------------------------------------------------------------------------

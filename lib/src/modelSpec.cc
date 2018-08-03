@@ -109,6 +109,12 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
+unsigned int NNmodel::getNumPreSynapseResetRequiredGroups() const
+{
+    return std::count_if(getLocalSynapseGroups().cbegin(), getLocalSynapseGroups().cend(),
+                         [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
+}
+
 bool NNmodel::isDeviceInitRequired(int localHostID) const
 {
     // If device RNG is required, device init is required to initialise it
@@ -727,10 +733,17 @@ SynapseGroup *NNmodel::addSynapsePopulation(
 
 const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
 {
-    // If a matching current source is found, return it
-    auto currentSource = m_CurrentSources.find(name);
-    if(currentSource != m_CurrentSources.cend()) {
-        return &currentSource->second;
+    // If a matching local current source is found, return it
+    auto localCurrentSource = m_LocalCurrentSources.find(name);
+    if(localCurrentSource != m_LocalCurrentSources.cend()) {
+        return &localCurrentSource->second;
+    }
+
+    // Otherwise, if a matching remote current source is found, return it
+    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
+    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
+        return &remoteCurrentSource->second;
+
     }
     // Otherwise, error
     else {
@@ -741,10 +754,17 @@ const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
 
 CurrentSource *NNmodel::findCurrentSource(const std::string &name)
 {
-    // If a matching current source is found, return it
-    auto currentSource = m_CurrentSources.find(name);
-    if(currentSource != m_CurrentSources.cend()) {
-        return &currentSource->second;
+    // If a matching local current source is found, return it
+    auto localCurrentSource = m_LocalCurrentSources.find(name);
+    if(localCurrentSource != m_LocalCurrentSources.cend()) {
+        return &localCurrentSource->second;
+    }
+
+    // Otherwise, if a matching remote current source is found, return it
+    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
+    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
+        return &remoteCurrentSource->second;
+
     }
     // Otherwise, error
     else {
@@ -1055,7 +1075,7 @@ void NNmodel::finalize()
     }
 
     // CURRENT SOURCES
-    for(auto &cs : m_CurrentSources) {
+    for(auto &cs : m_LocalCurrentSources) {
         // Initialize derived parameters
         cs.second.initDerivedParams(dt);
 

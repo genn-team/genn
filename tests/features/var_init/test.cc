@@ -85,6 +85,7 @@ TEST_P(SimTest, Vars)
 
     // Test host-generated vars
     PROB_TEST(, Pop, 10000)
+    PROB_TEST(, CurrSource, 10000)
     PROB_TEST(p, Dense, 10000)
     PROB_TEST(, Dense, 10000)
     PROB_TEST(, Sparse, 10000)
@@ -93,12 +94,14 @@ TEST_P(SimTest, Vars)
 #ifndef CPU_ONLY
     // Pull device-generated vars back to host
     pullPopGPUStateFromDevice();
+    pullCurrSourceGPUStateFromDevice();
     pullDenseGPUStateFromDevice();
     pullSparseGPUStateFromDevice();
     pullRaggedGPUStateFromDevice();
 
     // Test device-generated vars
     PROB_TEST(, PopGPU, 10000)
+    PROB_TEST(, CurrSourceGPU, 10000)
     PROB_TEST(p, DenseGPU, 10000)
     PROB_TEST(, DenseGPU, 10000)
     PROB_TEST(, SparseGPU, 10000)

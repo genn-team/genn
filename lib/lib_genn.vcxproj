@@ -72,10 +72,12 @@
     <ClCompile Include="src\codeGenUtils.cc" />
     <ClCompile Include="src\sparseUtils.cc" />
     <ClCompile Include="src\hr_time.cc" />
+    <ClCompile Include="src\currentSourceModels.cc" />
     <ClCompile Include="src\newNeuronModels.cc" />
     <ClCompile Include="src\newWeightUpdateModels.cc" />
     <ClCompile Include="src\newPostsynapticModels.cc" />
     <ClCompile Include="src\initVarSnippet.cc" />
+    <ClCompile Include="src\currentSource.cc" />
     <ClCompile Include="src\neuronGroup.cc" />
     <ClCompile Include="src\synapseGroup.cc" />
     <ClCompile Include="src\standardSubstitutions.cc" />

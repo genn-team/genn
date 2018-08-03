@@ -95,18 +95,17 @@ void StandardGeneratedSections::neuronSpikeEventTest(
                                                          functions, ftype, rng);
 
         // Open scope for spike-like event test
-        os << CodeStream::OB(31);
+        {
+            CodeStream::Scope b(os);
 
-        // Use synapse population support code namespace if required
-        if (!spkEventCond.second.empty()) {
-            os << " using namespace " << spkEventCond.second << ";" << std::endl;
+            // Use synapse population support code namespace if required
+            if (!spkEventCond.second.empty()) {
+                os << " using namespace " << spkEventCond.second << ";" << std::endl;
+            }
+
+            // Combine this event threshold test with
+            os << "spikeLikeEvent |= (" << eCode << ");" << std::endl;
         }
-
-        // Combine this event threshold test with
-        os << "spikeLikeEvent |= (" << eCode << ");" << std::endl;
-
-        // Close scope for spike-like event test
-        os << CodeStream::CB(31);
     }
 }
 //----------------------------------------------------------------------------
@@ -119,33 +118,32 @@ void StandardGeneratedSections::neuronCurrentInjection(
     const std::string &ftype,
     const std::string &rng)
 {
-    os << "// pull injected current variables in a coalesced access" << std::endl;
-    const auto css = ng.getCurrentSources();
-    for (const auto *cs : css)
+    // Loop through all of neuron group's current sources
+    for (const auto *cs : ng.getCurrentSources())
     {
-        const auto* csm = cs->getCurrentSourceModel();
-        VarNameIterCtx csVars(csm->getVars());
-        // store the defined parts of the neuron state into the global state variables dd_V etc
-        for(const auto &v : csVars.container) {
-            os <<  v.second << " l" << v.first << cs->getName() << " = ";
-            os << devPrefix << v.first << cs->getName() << "[" << localID << "];" << std::endl;
-        }
-    }
-    os << "// add injected current from sources" << std::endl;
-    for (const auto *cs : css)
-    {
+        os << "// current source " << cs->getName() << std::endl;
+        CodeStream::Scope b(os);
+
         const auto* csm = cs->getCurrentSourceModel();
         VarNameIterCtx csVars(csm->getVars());
         DerivedParamNameIterCtx csDerivedParams(csm->getDerivedParams());
         ExtraGlobalParamNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
-        os << "// current source " << cs->getName() << std::endl;
-        if (!csm->getInjectionCode().empty()){
-            string iCode = csm->getInjectionCode();
-            substitute(iCode, "$(id)", localID);
-            StandardSubstitutions::currentSourceInjection(iCode, cs,
-                                csVars, csDerivedParams, csExtraGlobalParams,
-                                functions, ftype, rng);
-            os << iCode << std::endl;
+
+        // Read current source variables into registers
+        for(const auto &v : csVars.container) {
+            os <<  v.second << " l" << v.first << " = " << devPrefix << v.first << cs->getName() << "[" << localID << "];" << std::endl;
+        }
+
+        string iCode = csm->getInjectionCode();
+        substitute(iCode, "$(id)", localID);
+        StandardSubstitutions::currentSourceInjection(iCode, cs,
+                            csVars, csDerivedParams, csExtraGlobalParams,
+                            functions, ftype, rng);
+        os << iCode << std::endl;
+
+        // Write updated variables back to global memory
+        for(const auto &v : csVars.container) {
+             os << devPrefix << v.first << cs->getName() << "[" << localID << "] = l" << v.first << ";" << std::endl;
         }
     }
 }

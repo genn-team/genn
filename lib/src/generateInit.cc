@@ -342,6 +342,16 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                                 os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
 
+                            // If dendritic delays are required and these should be initialised on device
+                            if(s->isDendriticDelayRequired() && (s->getDendriticDelayVarMode() & VarInit::DEVICE)) {
+                                os << "for (int i = 0; i < " << s->getMaxDendriticDelayTimesteps() << "; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
+                                    os << "dd_denDelay" << s->getName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                }
+                            }
+
                             // If postsynaptic model variables should be individual
                             if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                                 auto psmVars = s->getPSModel()->getVars();
@@ -364,7 +374,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             auto csModel = cs->getCurrentSourceModel();
                             auto csVars = csModel->getVars();
 
-                            for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                            for (size_t j = 0; j < csVars.size(); j++) {
                                 const auto &varInit = cs->getVarInitialisers()[j];
                                 const VarMode varMode = cs->getVarMode(j);
 
@@ -742,13 +752,11 @@ void genInit(const NNmodel &model,      //!< Model description
             genHostInitSpikeCode(os, n.second, true);
 
             if (n.second.isSpikeTimeRequired() && shouldInitOnHost(n.second.getSpikeTimeVarMode())) {
+                CodeStream::Scope b(os);
+                os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
-                    }
+                    os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
                 }
             }
 
@@ -783,6 +791,29 @@ void genInit(const NNmodel &model,      //!< Model description
                 }
             }
 
+            // Loop through current sources injecting into neuron model
+            os << "// current source variables" << std::endl;
+            for (auto const *cs : n.second.getCurrentSources()) {
+                auto csModel = cs->getCurrentSourceModel();
+                auto csVars = csModel->getVars();
+
+                for (size_t j = 0; j < csVars.size(); j++) {
+                    const auto &varInit = cs->getVarInitialisers()[j];
+                    const VarMode varMode = cs->getVarMode(j);
+
+                    // If this variable should be initialised on host and has any initialisation code
+                    if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
+                        CodeStream::Scope b(os);
+                        os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << StandardSubstitutions::initVariable(varInit, csVars[j].first + cs->getName() + "[i]",
+                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                        }
+                    }
+                }
+            }
+
             /*if ((model.neuronType[i] == IZHIKEVICH) && (model.getDT() != 1.0)) {
                 os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << std::endl;
             }*/
@@ -805,6 +836,25 @@ void genInit(const NNmodel &model,      //!< Model description
                 {
                     CodeStream::Scope b(os);
                     os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                }
+            }
+
+            if(s.second.isDendriticDelayRequired()) {
+                os << "denDelayPtr" << s.first << " = 0;" << std::endl;
+#ifndef CPU_ONLY
+                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_denDelayPtr" << s.first;
+                os << ", &denDelayPtr" << s.first;
+                os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
+#endif
+
+                // If dendritic delay buffer should be initialised on the host
+                if(shouldInitOnHost(s.second.getDendriticDelayVarMode())) {
+                    CodeStream::Scope b(os);
+                    os << "for (int i = 0; i < " << numTrgNeurons * s.second.getMaxDendriticDelayTimesteps() << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "denDelay" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    }
                 }
             }
 

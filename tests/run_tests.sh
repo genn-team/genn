@@ -27,12 +27,14 @@ REPORT=0
 
 # Parse command line arguments
 OPTIND=1
-while getopts "cr" opt; do
+while getopts "crd" opt; do
     case "$opt" in
     c)  BUILD_FLAGS="-c"
         MAKE_FLAGS="CPU_ONLY=1"
         ;;
     r) REPORT=1
+        ;;
+    d) source /opt/rh/devtoolset-6/enable
         ;;
     esac
 done

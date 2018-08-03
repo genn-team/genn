@@ -11,6 +11,43 @@
 // GeNN includes
 #include "codeGenUtils.h"
 
+// Test based on original issue found in https://github.com/brian-team/brian2genn/pull/60 to make sure that ensureFtype doesn't break functions it shouldn't
+TEST(EnsureMathFunctionFtype, ISinF) {
+    const std::string code =
+        "const int _infinity_int  = 1073741823;  // maximum 32bit integer divided by 2\n"
+        "if (std::isinf(t))\n"
+        "{\n";
+
+    std::string substitutedCode = ensureFtype(code, "double");
+    ASSERT_EQ(code, substitutedCode);
+}
+
+// Test based on comments by Marcel in https://github.com/brian-team/brian2genn/pull/60
+TEST(EnsureMathFunctionFtype, foo123) {
+    const std::string code = "int foo123 = 6;";
+
+    std::string substitutedCode = code;
+    regexVarSubstitute(substitutedCode, "foo", "bar");
+    ASSERT_EQ(code, substitutedCode);
+}
+
+// Test based on comments by Thomas in https://github.com/brian-team/brian2genn/pull/60
+TEST(EnsureMathFunctionFtype, not2well) {
+    const std::string code = "int not2well = 6;";
+
+    std::string substitutedCode = code;
+    regexVarSubstitute(substitutedCode, "well", "hell");
+    ASSERT_EQ(code, substitutedCode);
+}
+
+// Test based on my own discovering this wasn't actually working
+TEST(EnsureMathFunctionFtype, rint) {
+    const std::string code = "$(value) = (uint8_t)rint(normal / DT);";
+
+    std::string substitutedCode = ensureFtype(code, "float");
+    ASSERT_EQ(substitutedCode, "$(value) = (uint8_t)rintf(normal / DT);");
+}
+
 //--------------------------------------------------------------------------
 // SingleValueSubstitutionTest
 //--------------------------------------------------------------------------

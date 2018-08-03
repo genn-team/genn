@@ -2,21 +2,20 @@
 
 // Is C++ regex library operational?
 // We assume it is for:
-// 1) Non GCC compilers
-// 2) GCC 5.X.X and future
-// 3) Any future (4.10.X?) releases
-// 4) 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
-// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working)
+// 1) Compilers that don't define __GNUCC__
+// 2) Clang
+// 3) GCC 5.X.Y and future
+// 4) Any future (4.10.Y?) GCC 4.X.Y releases
+// 5) GCC 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
+// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working until 4.9.1)
 #if !defined(__GNUC__) || \
+    __clang__ || \
     __GNUC__ > 4 || \
     (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
                       (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
-    #define REGEX_OPERATIONAL
-#endif
-
-// Standard C++ includes
-#ifdef REGEX_OPERATIONAL
-#include <regex>
+    #include <regex>
+#else
+    #error "GeNN now requires a functioning std::regex implementation - please upgrade your version of GCC to at least 4.9.1"
 #endif
 
 // Standard C includes
@@ -117,13 +116,13 @@ void ensureMathFunctionFtype(string &code, const string &type)
     // If type is double, substitute any single precision maths functions for double precision version
     if (type == "double") {
         for(const auto &m : mathsFuncs) {
-            substitute(code, string(m[MathsFuncSingle])+string("("), string(m[MathsFuncDouble])+string("("));
+            regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncDouble]);
         }
     }
     // Otherwise, substitute any double precision maths functions for single precision version
     else {
         for(const auto &m : mathsFuncs) {
-            substitute(code, string(m[MathsFuncDouble])+string("("), string(m[MathsFuncSingle])+string("("));
+            regexFuncSubstitute(code, m[MathsFuncDouble], m[MathsFuncSingle]);
         }
     }
 }
@@ -153,6 +152,49 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
         }
     }
 }
+
+bool regexSubstitute(string &s, const std::regex &regex, const std::string &format)
+{
+    // **NOTE** the following code performs the same function as std::regex_replace
+    // but has a return value indicating whether any replacements are made
+    // see http://en.cppreference.com/w/cpp/regex/regex_replace
+
+    // Create regex iterator to iterate over matches found in code
+    std::sregex_iterator matchesBegin(s.cbegin(), s.cend(), regex);
+    std::sregex_iterator matchesEnd;
+
+    // If there are no matches, leave s unmodified and return false
+    if(matchesBegin == matchesEnd) {
+        return false;
+    }
+    // Otherwise
+    else {
+        // Loop through matches
+        std::string output;
+        for(std::sregex_iterator m = matchesBegin;;) {
+            // Copy the non-matched subsequence (m->prefix()) onto output
+            std::copy(m->prefix().first, m->prefix().second, std::back_inserter(output));
+
+            // Then replaces the matched subsequence with the formatted replacement string
+            m->format(std::back_inserter(output), format);
+
+            // If there are no subsequent matches
+            if(std::next(m) == matchesEnd) {
+                // Copy the remaining non-matched characters onto output
+                std::copy(m->suffix().first, m->suffix().second, std::back_inserter(output));
+                break;
+            }
+            // Otherwise go onto next match
+            else {
+                m++;
+            }
+        }
+
+        // Set reference to newly processed version and return true
+        s = output;
+        return true;
+    }
+}
 }    // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -165,6 +207,40 @@ void substitute(string &s, const string &trg, const string &rep)
         s.replace(found,trg.length(),rep);
         found= s.find(trg);
     }
+}
+
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexVarSubstitute(string &s, const string &trg, const string &rep)
+{
+    // Build a regex to match variable name with at least one
+    // character that can't be in a variable name on either side (or an end/beginning of string)
+    // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
+    std::regex regex("(^|[^0-9a-zA-Z_])" + trg + "(?=$|[^a-zA-Z0-9_])");
+
+    // Create format string to replace in text
+    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
+    const std::string format = "$1" + rep;
+
+    return regexSubstitute(s, regex, format);
+}
+
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting function  names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexFuncSubstitute(string &s, const string &trg, const string &rep)
+{
+    // Build a regex to match function name with at least one
+    // character that can't be part of the function name on the left and a bracket on the right (with optional whitespace)
+    // **NOTE** the suffix is non-capturing so two instances of functions separated by a single character are matched e.g. sin(cos(x));
+    std::regex regex("(^|[^0-9a-zA-Z_])" + trg + "(?=\\s*\\()");
+
+    // Create format string to replace in text
+    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
+    const std::string format = "$1" + rep;
+
+    return regexSubstitute(s, regex, format);
 }
 
 //--------------------------------------------------------------------------
@@ -445,9 +521,6 @@ string ensureFtype(const string &oldcode, const string &type)
     return code;
 }
 
-
-#ifdef REGEX_OPERATIONAL
-
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */
@@ -467,11 +540,6 @@ void checkUnreplacedVariables(const string &code, const string &codeName)
         gennError("The "+vars+"undefined in code "+codeName+".");
     }
 }
-#else
-void checkUnreplacedVariables(const string &, const string &)
-{
-}
-#endif
 
 //--------------------------------------------------------------------------
 /*! \brief This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash
@@ -523,10 +591,10 @@ uint32_t hashString(const std::string &string)
     // Handle the last few bytes of the input array
     switch(len)
     {
-        case 3: h ^= data[2] << 16;
-        case 2: h ^= data[1] << 8;
+        case 3: h ^= data[2] << 16; // falls through
+        case 2: h ^= data[1] << 8;  // falls through
         case 1: h ^= data[0];
-                h *= m;
+                h *= m;             // falls through
     };
 
     // Do a few final mixes of the hash to ensure the last few
@@ -579,11 +647,11 @@ void neuron_substitutions_in_synaptic_code(
     
     // postsynaptic neuron variables, parameters, and global parameters
     const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
-    substitute(wCode, "$(sT_post)", devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
+    substitute(wCode, "$(sT_post)", devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getTrgNeuronGroup()->getQueueOffset(devPrefix) + postIdx + "]");
     for(const auto &v : trgNeuronModel->getVars()) {
         if (sg->getTrgNeuronGroup()->isVarQueueRequired(v.first)) {
             substitute(wCode, "$(" + v.first + "_post)",
-                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + sg->getOffsetPost(devPrefix) + postIdx + "]");
+                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + sg->getTrgNeuronGroup()->getQueueOffset(devPrefix) + postIdx + "]");
         }
         else {
             substitute(wCode, "$(" + v.first + "_post)",

@@ -39,49 +39,36 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CurrentSourceModels::DCSource
+// CurrentSourceModels::DC
 //----------------------------------------------------------------------------
 //! DC source
-/*! It has 3 parameters:
+/*! It has a single parameter:
 
-    - \c tStart - time at which the current starts [ms]
-    - \c tStop  - time at which the current stops [ms]
     - \c amp    - amplitude of the current [nA]
 */
-class DCSource : public Base
+class DC : public Base
 {
-    DECLARE_MODEL(DCSource, 3, 0);
+    DECLARE_MODEL(DC, 1, 0);
 
-    SET_INJECTION_CODE(
-        "if ($(t) > $(tStart) && $(t) < $(tStop))\n"
-        "{\n"
-        "    $(injectCurrent, $(amp));\n"
-        "}\n");
+    SET_INJECTION_CODE("$(injectCurrent, $(amp));\n");
 
-    SET_PARAM_NAMES({"tStart", "tStop", "amp"});
+    SET_PARAM_NAMES({"amp"});
 };
 
 //----------------------------------------------------------------------------
-// CurrentSourceModels::NoisyNormalCurrentSource
+// CurrentSourceModels::GaussianNoise
 //----------------------------------------------------------------------------
 //! Noisy current source with noise drawn from normal distribution
-/*! It has 4 parameters:
-
-    - \c tStart - time at which the current starts [ms]
-    - \c tStop  - time at which the current stops [ms]
+/*! It has 2 parameters:
     - \c mean   - mean of the normal distribution [nA]
     - \c sd     - standard deviation of the normal distribution [nA]
 */
-class NoisyNormalCurrentSource : public Base
+class GaussianNoise : public Base
 {
-    DECLARE_MODEL(NoisyNormalCurrentSource, 3, 0);
+    DECLARE_MODEL(GaussianNoise, 2, 0);
 
-    SET_INJECTION_CODE(
-        "if ($(t) > $(tStart) && $(t) < $(tStop))\n"
-        "{\n"
-        "    $(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n"
-        "}\n");
+    SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
 
-    SET_PARAM_NAMES({"tStart", "tStop", "mean", "sd"} );
+    SET_PARAM_NAMES({"mean", "sd"} );
 };
 } // CurrentSourceModels
