@@ -115,6 +115,9 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
+    //! Virtual destructor
+    virtual ~Base() {}
+
     //! Gets names of of (independent) model parameters
     virtual StringVec getParamNames() const{ return {}; }
 

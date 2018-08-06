@@ -11,8 +11,6 @@
   
 --------------------------------------------------------------------------*/
 
-%include "swig/helper.i"
-
 %module GeNNPreferences
 %{
 #include "global.h"
@@ -31,6 +29,8 @@
 %ignore deviceCount;
 %ignore hostCount;
 %include "include/global.h"
+
+%define %unignore %rename("%s") %enddef
 // unignore variables so that they still can be wrapped
 %unignore GENN_FLAGS;
 %unignore neuronBlkSz;

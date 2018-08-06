@@ -1,4 +1,5 @@
-
+#ifndef CUSTOMVALUES_H
+#define CUSTOMVALUES_H
 namespace CustomValues
 {
 class ParamValues
@@ -74,4 +75,4 @@ private:
     InitialiserArray m_Initialisers;
 };
 }
-
+#endif // CUSTOMVALUES_H

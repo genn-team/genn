@@ -1,5 +1,4 @@
-
-import libgenn as lg
+import pygenn as pg
 
 class Variable(object):
 
@@ -75,7 +74,7 @@ class Group( object ):
         """
         paramVals = [paramSpace[pn] for pn in model.getParamNames()]
 
-        return model.make_ParamValues( lg.DoubleVector( paramVals ) )
+        return model.make_ParamValues( pg.StlContainers.DoubleVector( paramVals ) )
 
     def varSpaceToVarValues( self, model, varSpace ):
         """Convert a iniSpace dict to VarValues
@@ -85,7 +84,7 @@ class Group( object ):
         """
         varVals = [v.initVal for v in varSpace.values()]
 
-        return model.make_VarValues( lg.DoubleVector( varVals ) )
+        return model.make_VarValues( pg.StlContainers.DoubleVector( varVals ) )
 
     def setVar( self, varName, values ):
         self.vars[varName].setValues( values )
@@ -111,8 +110,13 @@ class NeuronGroup( Group ):
         self.neuron = None
         self.spikes = None
         self.spikeCount = None
+        self.spikeQuePtr = [0]
         self.isSpikeSourceArray = False
         self._maxDelaySteps = 0
+
+    @property
+    def currentSpikes( self ):
+        return self.spikes[self.spikeQuePtr[0] * self.size : self.spikeQuePtr[0] * self.size + self.spikeCount[self.spikeQuePtr[0]]]
 
     @property
     def maxDelaySteps( self ):
@@ -130,7 +134,7 @@ class NeuronGroup( Group ):
         ( self.neuron, self.type, self.paramNames,
           self.params, self.vars ) = self.prepareModel( model, paramSpace,
                                                         varSpace,
-                                                        lg.NeuronModels )
+                                                        pg.NeuronModels )
         if self.type == 'SpikeSourceArray':
             self.isSpikeSourceArray = True
 
@@ -173,7 +177,7 @@ class SynapseGroup( Group ):
         ( self.wUpdate, self.wuType, self.wuParamNames,
           self.wuParams, varrs ) = self.prepareModel( model, paramSpace,
                                                       varSpace,
-                                                      lg.WeightUpdateModels )
+                                                      pg.WeightUpdateModels )
         self.wuVarNames = varrs.keys()
         self.vars.update( varrs )
 
@@ -181,7 +185,7 @@ class SynapseGroup( Group ):
         ( self.postsyn, self.psType, self.psParamNames,
           self.psParams, varrs ) = self.prepareModel( model, paramSpace,
                                                       varSpace,
-                                                      lg.PostsynapticModels )
+                                                      pg.PostsynapticModels )
         self.psVarNames = varrs.keys()
         self.vars.update( varrs )
     
@@ -194,7 +198,7 @@ class SynapseGroup( Group ):
 
     @matrixType.setter
     def matrixType( self, matrixType ):
-        self._matrixType = getattr( lg, 'SynapseMatrixType_' + matrixType )
+        self._matrixType = getattr( pg, 'SynapseMatrixType_' + matrixType )
         if matrixType.split('_')[0] == 'SPARSE':
             self.sparse = True
             self.ind = None
@@ -250,3 +254,36 @@ class SynapseGroup( Group ):
     
     def addExtraGlobalParam( self, paramName, paramValues ):
         self._addExtraGlobalParam( paramName, paramValues, self.wUpdate )
+
+
+class CurrentSource( Group ):
+
+    def __init__( self, name ):
+        super( CurrentSource, self ).__init__( name )
+        self.currentSourceModel = None
+        self.targetPop = None
+
+    @property
+    def size( self ):
+        return self.targetPop.size
+
+    @size.setter
+    def size( self, _ ):
+        pass
+
+    def setCurrentSourceModel( self, model, paramSpace, varSpace ):
+        ( self.currentSourceModel, self.type, self.paramNames,
+          self.params, self.vars ) = self.prepareModel( model, paramSpace,
+                                                        varSpace,
+                                                        pg.CurrentSourceModels )
+
+    def addTo( self, nnModel, pop ):
+        addFct = getattr( nnModel, 'addCurrentSource_' + self.type )
+        self.targetPop = pop
+
+        varIni = self.varSpaceToVarValues( self.currentSourceModel, self.vars )
+        self.pop = addFct( self.name, self.currentSourceModel, pop.name,
+                           self.params, varIni )
+
+    def addExtraGlobalParam( self, paramName, paramValues ):
+        self._addExtraGlobalParam( paramName, paramValues, self.currentSourceModel )

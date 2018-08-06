@@ -2,9 +2,9 @@ from os import path
 from subprocess import check_call
 import json
 import numpy as np
-import libgenn as lg
+import pygenn as pg
 import SharedLibraryModel as slm
-from GeNNGroups import NeuronGroup, SynapseGroup
+from GeNNGroups import NeuronGroup, SynapseGroup, CurrentSource
 
 class GeNNModel( object ):
 
@@ -18,7 +18,7 @@ class GeNNModel( object ):
         Keyword args:
         scalar    -- precision as string ("float" or "double" or "long double")
                      Defaults to float.
-        modelName -- name of the model
+        modelName -- name of the model. Default to "GeNNModel"
         """
         self._scalar = precision
         if precision is None or precision == 'float':
@@ -41,20 +41,20 @@ class GeNNModel( object ):
                                   precision ) )
         
         self._built = False
-        self._localhost = lg.init_cuda_mpi()
+        self._localhost = pg.init_cuda_mpi()
         
-        lg.setDefaultVarMode( lg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
-        lg.GeNNPreferences.debugCode = enableDebug
-        lg.GeNNPreferences.autoInitSparseVars = autoInitSparseVars
-        lg.initGeNN()
-        self._model = lg.NNmodel()
-        self._model.setPrecision( getattr(lg, gennFloatType ) )
-        self._modelName = None
+        pg.setDefaultVarMode( pg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
+        pg.GeNNPreferences.debugCode = enableDebug
+        pg.GeNNPreferences.autoInitSparseVars = autoInitSparseVars
+        self._model = pg.NNmodel()
+        self._model.setPrecision( getattr(pg, gennFloatType ) )
+        self.modelName = 'GeNNModel'
         if modelName is not None:
             self.modelName = modelName
         self.neuronPopulations = {}
         self.synapsePopulations = {}
-        self._dT = 1.0
+        self.currentSources = {}
+        self._dT = 0.1
 
     @property
     def modelName( self ):
@@ -69,6 +69,15 @@ class GeNNModel( object ):
         self._model.setName( modelName )
 
     @property
+    def t( self ):
+        """Simulation time in ms"""
+        return self._T[0]
+
+    def timestep( self ):
+        """Simulation time step"""
+        return self._TS[0]
+
+    @property
     def dT( self ):
         """Step sise"""
         return self._dT
@@ -79,7 +88,6 @@ class GeNNModel( object ):
             raise Exception("GeNN model already built")
         self._dT = dt
         self._model.setDT( dt )
-
     
     def addNeuronPopulation( self, popName, numNeurons, neuron,
                              paramSpace, varSpace ):
@@ -160,6 +168,38 @@ class GeNNModel( object ):
 
         return sGroup
 
+    def addCurrentSource( self, csName, currentSourceModel, popName,
+                             paramSpace, varSpace ):
+        """Add a current source to the GeNN model
+
+        Args:
+        csName      -- name of the new current source
+        currentSourceModel -- type of the CurrentSourceModels class as string or
+                              instance of CurrentSourceModels class derived from
+                              CurrentSourceModels::Custom class
+                              sa createCustomCurrentSourceClass
+        popName     -- name of the population into which the current source should be injected
+        paramSpace  -- dict with param values for the CurrentSourceModels class
+        varSpace    -- dict with initial variable values for the CurrentSourceModels class
+
+        Keyword args:
+        customNeuron -- boolean which indicates whether a custom neuron model is used. False by default
+        """
+        if self._built:
+            raise Exception("GeNN model already built")
+        if popName not in self.neuronPopulations:
+            raise ValueError( 'neuron population "{0}" does not exist'.format( popName ) )
+        if csName in self.currentSources:
+            raise ValueError( 'current source "{0}" already exists'.format( csName ) )
+
+        cSource = CurrentSource( csName )
+        cSource.setCurrentSourceModel( currentSourceModel, paramSpace, varSpace )
+        cSource.addTo( self._model, self.neuronPopulations[popName] )
+
+        self.currentSources[csName] = cSource
+
+        return cSource
+
 
     def setConnections( self, popName, conns, g ):
         self.synapsePopulations[popName].setConnections( conns, g )
@@ -186,7 +226,7 @@ class GeNNModel( object ):
             var = self.neuronPopulations[popName].vars[varName]
 
         var.view[mask] = vals
-        self._slm.pushPopulationStateToDevice( popName )
+        self._slm.pushStateToDevice( popName )
 
 
     def initializeSpikesOnDevice( self, popName, mask, targets, counts ):
@@ -205,7 +245,7 @@ class GeNNModel( object ):
                     population "{1}" does not exist'.format( varName, popName ) )
         self.neuronPopulations[popName].spikes[mask] = targets
         self.neuronPopulations[popName].spikeCount[mask] = counts
-        self._slm.pushPopulationSpikesToDevice( popName )
+        self._slm.pushSpikesToDevice( popName )
 
 
     def build( self, pathToModel = "./" ):
@@ -225,8 +265,8 @@ class GeNNModel( object ):
                 popData.pop.setMaxConnections( popData.size )
 
         self._model.finalize()
-        lg.chooseDevice(self._model, pathToModel, self._localhost)
-        lg.finalize_model_runner_generation(self._model, self._pathToModel, self._localhost)
+        pg.chooseDevice(self._model, pathToModel, self._localhost)
+        pg.finalize_model_runner_generation(self._model, self._pathToModel, self._localhost)
 
         check_call( ['make', '-C', path.join( pathToModel, self.modelName + '_CODE' ) ] )
         
@@ -271,25 +311,23 @@ class GeNNModel( object ):
         self._slm.initialize()
         
         if self._scalar == 'float':
-            self.timestep = self._slm.assignExternalPointerSingle_f('t')
+            self._T = self._slm.assignExternalPointerSingle_f('t')
         if self._scalar == 'double':
-            self.timestep = self._slm.assignExternalPointerSingle_d('t')
+            self.T = self._slm.assignExternalPointerSingle_d('t')
         if self._scalar == 'long double':
-            self.timestep = self._slm.assignExternalPointerSingle_ld('t')
-        self.T = self._slm.assignExternalPointerSingle_ull('iT')
+            self._T = self._slm.assignExternalPointerSingle_ld('t')
+        self._TS = self._slm.assignExternalPointerSingle_ull('iT')
 
         for popName, popData in self.neuronPopulations.items():
-            self._slm.initNeuronPopIO( popName, popData.size )
-            self._slm.pullPopulationStateFromDevice( popName )
+            self._slm.initNeuronPopIO( popName )
+            self._slm.pullStateFromDevice( popName )
             popData.spikes = self.assignExternalPointerPop( popName, 'glbSpk',
                     popData.size * (popData.maxDelaySteps + 1), 'unsigned int' )
             popData.spikeCount = self.assignExternalPointerPop( popName, 'glbSpkCnt',
-                    popData.size * (popData.maxDelaySteps + 1), 'unsigned int' )
+                    popData.maxDelaySteps + 1, 'unsigned int' )
             if popData.maxDelaySteps > 0:
                 popData.spikeQuePtr = self._slm.assignExternalPointerSingle_ui(
                       'spkQuePtr' + popName )
-            else:
-                popData.spikeQuePtr = [0]
 
             for varName, varData in popData.vars.items():
                 varData.view = self.assignExternalPointerPop(
@@ -297,7 +335,7 @@ class GeNNModel( object ):
                 if varData.initRequired:
                     varData.view[:] = varData.values 
 
-            self._slm.pushPopulationStateToDevice( popName )
+            self._slm.pushStateToDevice( popName )
 
             for egpName, egpData in popData.extraGlobalParams.items():
                 # if auto allocation is not enabled, let the user care about
@@ -310,12 +348,10 @@ class GeNNModel( object ):
                     if egpData.initRequired:
                         egpData.view[:] = egpData.values
 
-
-
         for popName, popData in self.synapsePopulations.items():
 
-            self._slm.initSynapsePopIO( popName, popData.size )
-            self._slm.pullPopulationStateFromDevice( popName )
+            self._slm.initSynapsePopIO( popName )
+            self._slm.pullStateFromDevice( popName )
             
             if popData.sparse:
                 if popData.connectionsSet:
@@ -337,14 +373,35 @@ class GeNNModel( object ):
                     continue
                 if varData.initRequired:
                     varData.view[:] = varData.values 
-                    #  self.initializeVarOnDevice( popName, varName,
-                    #          list( range( len( varData.values ) ) ), varData.values )
 
             if not popData.sparse:
                 if popData.connectionsSet:
                     self.initializeVarOnDevice( popName, 'g', popData.mask, popData.g )
 
-            self._slm.pushPopulationStateToDevice( popName )
+            self._slm.pushStateToDevice( popName )
+
+        for srcName, srcData in self.currentSources.items():
+            self._slm.initCurrentSourceIO( srcName )
+            self._slm.pullStateFromDevice( srcName )
+
+            for varName, varData in srcData.vars.items():
+                varData.view = self.assignExternalPointerPop(
+                        srcName, varName, srcData.size, varData.type )
+                if varData.initRequired:
+                    varData.view[:] = varData.values
+
+            self._slm.pushStateToDevice( srcName )
+
+            for egpName, egpData in srcData.extraGlobalParams.items():
+                # if auto allocation is not enabled, let the user care about
+                # allocation and initialization of the EGP
+                if egpData.needsAllocation:
+                    self._slm.allocateExtraGlobalParam( srcName, egpName,
+                            len( egpData.values ) )
+                    egpData.view = self.assignExternalPointerPop( srcName,
+                        egpName, len( egpData.values ), egpData.type[:-1] )
+                    if egpData.initRequired:
+                        egpData.view[:] = egpData.values
 
         self._slm.initializeModel()
 
@@ -389,19 +446,34 @@ class GeNNModel( object ):
             elif self._scalar == 'long double':
                 return self._slm.assignExternalPointerArray_ld( varName, varSize )
 
+        elif varType == 'char':
+            return self._slm.assignExternalPointerArray_c( varName, varSize )
+        elif varType == 'unsigned char':
+            return self._slm.assignExternalPointerArray_uc( varName, varSize )
+        elif varType == 'short':
+            return self._slm.assignExternalPointerArray_s( varName, varSize )
+        elif varType == 'unsigned short':
+            return self._slm.assignExternalPointerArray_us( varName, varSize )
+        elif varType == 'int':
+            return self._slm.assignExternalPointerArray_i( varName, varSize )
+        elif varType == 'unsigned int':
+            return self._slm.assignExternalPointerArray_ui( varName, varSize )
+        elif varType == 'long':
+            return self._slm.assignExternalPointerArray_l( varName, varSize )
+        elif varType == 'unsigned long':
+            return self._slm.assignExternalPointerArray_ul( varName, varSize )
+        elif varType == 'long long':
+            return self._slm.assignExternalPointerArray_ll( varName, varSize )
+        elif varType == 'unsigned long long':
+            return self._slm.assignExternalPointerArray_ull( varName, varSize )
         elif varType == 'float':
             return self._slm.assignExternalPointerArray_f( varName, varSize )
         elif varType == 'double':
             return self._slm.assignExternalPointerArray_d( varName, varSize )
         elif varType == 'long double':
             return self._slm.assignExternalPointerArray_ld( varName, varSize )
-        elif varType == 'int':
-            return self._slm.assignExternalPointerArray_i( varName, varSize )
-        elif varType == 'unsigned int':
-            return self._slm.assignExternalPointerArray_ui( varName, varSize )
         else:
-            raise ValueError( 'unsupported varType' )
-
+            raise TypeError( 'unsupported varType "{}"'.format( varType ) )
 
     def stepTimeGPU( self ):
         """Make one simulation step"""
@@ -415,17 +487,22 @@ class GeNNModel( object ):
             raise Exception( "GeNN model has to be built before running" )
         self._slm.stepTimeCPU()
 
-    def pullPopulationStateFromDevice( self, popName ):
+    def pullStateFromDevice( self, popName ):
         """Pull state from the device for a given population"""
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
-        self._slm.pullPopulationStateFromDevice( popName )
+        self._slm.pullStateFromDevice( popName )
     
-    def pullPopulationSpikesFromDevice( self, popName ):
+    def pullSpikesFromDevice( self, popName ):
         """Pull spikes from the device for a given population"""
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
-        self._slm.pullPopulationSpikesFromDevice( popName )
+        self._slm.pullSpikesFromDevice( popName )
+    def pullCurrentSpikesFromDevice( self, popName ):
+        """Pull spikes from the device for a given population"""
+        if not self._built:
+            raise Exception( "GeNN model has to be built before running" )
+        self._slm.pullCurrentSpikesFromDevice( popName )
 
 
 def createCustomNeuronClass( 
@@ -443,7 +520,7 @@ def createCustomNeuronClass(
         custom_body=None ):
 
     """This helper function creates a custom NeuronModel class.
-    
+
     sa createCustomNeuronClass
     sa createCustomWeightUpdateClass
 
@@ -485,12 +562,12 @@ def createCustomNeuronClass(
         body['getSupportCode'] = lambda self: supportCode
     
     if extraGlobalParams is not None:
-        body['getxtraGlobalParams'] = lambda self: lg.StringPairVector(
-                [lg.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
+        body['getxtraGlobalParams'] = lambda self: pg.StlContainers.StringPairVector(
+                [pg.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
  
     if additionalInputVars:
-        body['getAdditionalInputVars'] = lambda self: lg.StringStringDoublePairPairVector(
-                [lg.StringStringDoublePairPair( aiv[0], lg.StringDoublePair( aiv[1], aiv[2] ) ) \
+        body['getAdditionalInputVars'] = lambda self: pg.StlContainers.StringStringDoublePairPairVector(
+                [pg.StlContainers.StringStringDoublePairPair( aiv[0], pg.StlContainers.StringDoublePair( aiv[1], aiv[2] ) ) \
                         for aiv in additionalInputVars] )
 
     if isPoisson is not None:
@@ -501,7 +578,7 @@ def createCustomNeuronClass(
 
     return createCustomModelClass(
             className,
-            lg.NeuronModels.Custom,
+            pg.NeuronModels.Custom,
             paramNames,
             varNameTypes,
             derivedParams,
@@ -518,7 +595,7 @@ def createCustomPostsynapticClass(
         custom_body=None ):
 
     """This helper function creates a custom PostsynapticModel class.
-    
+
     sa createCustomNeuronClass
     sa createCustomWeightUpdateClass
 
@@ -556,12 +633,11 @@ def createCustomPostsynapticClass(
 
     return createCustomModelClass(
             className,
-            lg.PostsynapticModels.Custom,
+            pg.PostsynapticModels.Custom,
             paramNames,
             varNameTypes,
             derivedParams,
             body )
-
 
 def createCustomWeightUpdateClass( 
         className,
@@ -582,7 +658,7 @@ def createCustomWeightUpdateClass(
         custom_body=None ):
 
     """This helper function creates a custom WeightUpdateModel class.
-    
+
     sa createCustomNeuronClass
     sa createCustomPostsynapticClass
 
@@ -639,8 +715,8 @@ def createCustomWeightUpdateClass(
         body['getSynapseDynamicsSuppportCode'] = lambda self: synapseDynamicsSuppportCode
 
     if extraGlobalParams is not None:
-        body['getExtraGlobalParams'] = lambda self: lg.StringPairVector(
-                [lg.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
+        body['getExtraGlobalParams'] = lambda self: pg.StlContainers.StringPairVector(
+                [pg.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
 
     if isPreSpikeTimeRequired is not None:
         body['isPreSpikeTimeRequired'] = lambda self: isPreSpikeTimeRequired
@@ -653,28 +729,62 @@ def createCustomWeightUpdateClass(
     
     return createCustomModelClass(
             className,
-            lg.WeightUpdateModels.Custom,
+            pg.WeightUpdateModels.Custom,
             paramNames,
             varNameTypes,
             derivedParams,
             body )
 
-def createDPFClass( dpfunc ):
+def createCustomCurrentSourceClass(
+        className,
+        paramNames=None,
+        varNameTypes=None,
+        derivedParams=None,
+        injectionCode=None,
+        extraGlobalParams=None,
+        custom_body=None ):
 
-    """Helper function to create derived parameter function class
+    """This helper function creates a custom NeuronModel class.
+
+    sa createCustomNeuronClass
+    sa createCustomWeightUpdateClass
 
     Args:
-    dpfunc -- a function which computes the derived parameter and takes 
-                two args "pars" (vector of double) and "dt" (double)
+    className     -- name of the new class
+
+    Keyword args:
+    paramNames    -- list of strings with param names of the model
+    varNameTypes  -- list of pairs of strings with varible names and types of the model
+    derivedParams -- list of pairs, where the first member is string with name of
+                        the derived parameter and the second MUST be an instance of the class
+                        which inherits from libgenn.Snippet.DerivedParamFunc
+    injectionCode -- string with the current injection code
+    extraGlobalParams -- list of pairs of strings with names and types of additional parameters
+
+    custom_body   -- dictionary with additional attributes and methods of the new class
     """
+    if not isinstance( custom_body, dict ) and custom_body is not None:
+        raise ValueError( "custom_body must be an isinstance of dict or None" )
 
-    def ctor( self ):
-        lg.Snippet.DerivedParamFunc.__init__( self )
+    body = {}
 
-    def call( self, pars, dt ):
-        return dpfunc( pars, dt )
+    if injectionCode is not None:
+        body['getInjectionCode'] = lambda self: injectionCode
 
-    return type( '', ( lg.Snippet.DerivedParamFunc, ), {'__init__' : ctor, '__call__' : call} )
+    if extraGlobalParams is not None:
+        body['getExtraGlobalParams'] = lambda self: pg.StlContainers.StringPairVector(
+                [pg.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
+
+    if custom_body is not None:
+        body.update( custom_body )
+
+    return createCustomModelClass(
+            className,
+            pg.CurrentSourceModels.Custom,
+            paramNames,
+            varNameTypes,
+            derivedParams,
+            body )
 
 def createCustomModelClass(
         className,
@@ -690,6 +800,7 @@ def createCustomModelClass(
     sa createCustomNeuronClass
     sa createCustomWeightUpdateClass
     sa createCustomPostsynapticClass
+    sa createCustomCurrentSourceClass
 
     Args:
     className     -- name of the new class
@@ -710,18 +821,35 @@ def createCustomModelClass(
     }
     
     if paramNames is not None:
-        body['getParamNames'] = lambda self: lg.StringVector( paramNames )
+        body['getParamNames'] = lambda self: pg.StlContainers.StringVector( paramNames )
 
     if varNameTypes is not None:
-        body['getVars'] = lambda self: lg.StringPairVector( [lg.StringPair( vn[0], vn[1] ) for vn in varNameTypes] )
+        body['getVars'] = lambda self: pg.StlContainers.StringPairVector( [pg.StlContainers.StringPair( vn[0], vn[1] ) for vn in varNameTypes] )
 
     if derivedParams is not None:
         
-        body['getDerivedParams'] = lambda self: lg.Snippet.StringDPFPairVector(
-                [lg.Snippet.StringDPFPair( dp[0], lg.Snippet.makeDPF( dp[1] ) )
+        body['getDerivedParams'] = lambda self: pg.StlContainers.StringDPFPairVector(
+                [pg.StlContainers.StringDPFPair( dp[0], pg.Snippet.makeDPF( dp[1] ) )
                     for dp in derivedParams] )
 
     if custom_body is not None:
         body.update( custom_body )
 
     return type( className, (base,), body )
+
+def createDPFClass( dpfunc ):
+
+    """Helper function to create derived parameter function class
+
+    Args:
+    dpfunc -- a function which computes the derived parameter and takes
+                two args "pars" (vector of double) and "dt" (double)
+    """
+
+    def ctor( self ):
+        pg.Snippet.DerivedParamFunc.__init__( self )
+
+    def call( self, pars, dt ):
+        return dpfunc( pars, dt )
+
+    return type( '', ( pg.Snippet.DerivedParamFunc, ), {'__init__' : ctor, '__call__' : call} )

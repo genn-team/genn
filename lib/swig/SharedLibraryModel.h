@@ -32,12 +32,8 @@ public:
     //----------------------------------------------------------------------------
     typedef void (*VoidFunction)(void);
 
-
-    typedef std::unordered_map< std::string, scalar** > VarMap;
-    typedef std::unordered_map< std::string, std::tuple< int, VoidFunction, VarMap > > PopMap;
-    
     typedef std::array< VoidFunction, 5 > VoidIOFuncs;
-    typedef std::tuple< int, VoidIOFuncs, VoidIOFuncs > PopulationIO;
+    typedef std::tuple< VoidIOFuncs, VoidIOFuncs > PopulationIO;
     typedef std::unordered_map< std::string, PopulationIO > PopIOMap;
 
 
@@ -89,8 +85,6 @@ public:
             m_StepTimeCPU = (VoidFunction)getSymbol("stepTimeCPU", true);
             m_StepTimeGPU = (VoidFunction)getSymbol("stepTimeGPU", true);
 
-            m_T = (scalar*)getSymbol("t");
-            m_Timestep = (unsigned long long*)getSymbol("iT");
             return true;
         }
         else {
@@ -103,10 +97,11 @@ public:
         }
 
     }
-   
-    void initNeuronPopIO( const std::string &popName, int popSize )
+
+    void initIO( const std::string &popName,
+                 const std::array<bool, 5> &availableDTypes )
     {
-      std::array< std::string, 5 > data = {
+      std::array< std::string, 5 > dataTypes = {
         "State",
         "Spikes",
         "SpikeEvents",
@@ -115,67 +110,71 @@ public:
       };
       VoidIOFuncs pushers;
       VoidIOFuncs pullers;
-      for ( size_t i = 0; i < data.size(); ++i )
+      for ( size_t i = 0; i < dataTypes.size(); ++i )
       {
-        pullers[i] = (VoidFunction)getSymbol( "pull" + popName + data[i] + "FromDevice" );
-        pushers[i] = (VoidFunction)getSymbol( "push" + popName + data[i] + "ToDevice" );
+        if (availableDTypes[i]){
+          pullers[i] = (VoidFunction)getSymbol( "pull" + popName + dataTypes[i] + "FromDevice" );
+          pushers[i] = (VoidFunction)getSymbol( "push" + popName + dataTypes[i] + "ToDevice" );
+        }
+        else
+        {
+          pullers[i] = []{ throw std::runtime_error("You cannot pull from this population"); };
+          pushers[i] = []{ throw std::runtime_error("You cannot push to this population"); };
+        }
       }
 
       populationsIO.emplace( std::piecewise_construct,
                              std::forward_as_tuple( popName ),
-                             std::forward_as_tuple( popSize, pullers, pushers ) );
+                             std::forward_as_tuple( pullers, pushers ) );
     }
-    
-    void initSynapsePopIO( const std::string &popName, int popSize )
+
+    void initNeuronPopIO( const std::string &popName )
     {
-      std::array< std::string, 1 > data = {
-        "State",
-      };
-      VoidIOFuncs pushers;
-      VoidIOFuncs pullers;
-      for ( size_t i = 0; i < data.size(); ++i )
-      {
-        pullers[i] = (VoidFunction)getSymbol( "pull" + popName + data[i] + "FromDevice" );
-        pushers[i] = (VoidFunction)getSymbol( "push" + popName + data[i] + "ToDevice" );
-      }
-
-      populationsIO.emplace( std::piecewise_construct,
-                             std::forward_as_tuple( popName ),
-                             std::forward_as_tuple( popSize, pullers, pushers ) );
+      initIO( popName, {true, true, true, true, true} );
     }
     
-    void pullPopulationStateFromDevice( const std::string &popName )
+    void initSynapsePopIO( const std::string &popName )
+    {
+      initIO( popName, {true, false, false, false, false} );
+    }
+
+    void initCurrentSourceIO( const std::string &csName )
+    {
+      initIO( csName, {true, false, false, false, false} );
+    }
+    
+    void pullStateFromDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<0>( std::get<0>( tmpPop ) )();
+    }
+    
+    void pullSpikesFromDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<1>( std::get<0>( tmpPop ) )();
+    }
+    
+    void pullCurrentSpikesFromDevice( const std::string &popName )
+    {
+        auto tmpPop = populationsIO.at( popName );
+        std::get<3>( std::get<0>( tmpPop ) )();
+    }
+
+    void pushStateToDevice( const std::string &popName )
     {
         auto tmpPop = populationsIO.at( popName );
         std::get<0>( std::get<1>( tmpPop ) )();
     }
     
-    void pullPopulationSpikesFromDevice( const std::string &popName )
+    void pushSpikesToDevice( const std::string &popName )
     {
         auto tmpPop = populationsIO.at( popName );
         std::get<1>( std::get<1>( tmpPop ) )();
     }
-    
-    void pullPopulationCurrentSpikesFromDevice( const std::string &popName )
-    {
-        auto tmpPop = populationsIO.at( popName );
-        std::get<3>( std::get<1>( tmpPop ) )();
-    }
-
-    void pushPopulationStateToDevice( const std::string &popName )
-    {
-        auto tmpPop = populationsIO.at( popName );
-        std::get<0>( std::get<2>( tmpPop ) )();
-    }
-    
-    void pushPopulationSpikesToDevice( const std::string &popName )
-    {
-        auto tmpPop = populationsIO.at( popName );
-        std::get<1>( std::get<2>( tmpPop ) )();
-    }
 
     template <typename T>
-    void assignExternalPointerArray( const std::string varName,
+    void assignExternalPointerArray( const std::string &varName,
                                      const int varSize,
                                      T** varPtr, int* n1 )
     {
@@ -184,7 +183,7 @@ public:
     }
     
     template <typename T>
-    void assignExternalPointerSingle( const std::string varName,
+    void assignExternalPointerSingle( const std::string &varName,
                                       T** varPtr, int* n1 )
     {
       *varPtr = static_cast<T*>( getSymbol( varName ) );
@@ -275,16 +274,6 @@ public:
         m_StepTimeCPU();
     }
 
-    scalar getT() const
-    {
-        return *m_T;
-    }
-
-    unsigned long long getTimestep() const
-    {
-        return *m_Timestep;
-    }
-
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -302,17 +291,10 @@ private:
     VoidFunction m_StepTimeCPU;
     
     PopIOMap populationsIO;
-
-    int max_pop_size = 0;
-    int total_state_vars = 0;
-    int totalPopVars = 0;
-
-    scalar *m_T;
-    unsigned long long *m_Timestep;
 };
 
 //----------------------------------------------------------------------------
 // Typedefines
 //----------------------------------------------------------------------------
-typedef SharedLibraryModel<float> SharedLibraryModelFloat;
-typedef SharedLibraryModel<double> SharedLibraryModelDouble;
+// typedef SharedLibraryModel<float> SharedLibraryModelFloat;
+// typedef SharedLibraryModel<double> SharedLibraryModelDouble;

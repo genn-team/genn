@@ -233,9 +233,11 @@ public:
                                      const typename NeuronModel::VarValues &varInitialisers,
                                      int hostID = 0, int deviceID = 0)
     {
+#ifndef SWIG
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
         }
+#endif // SWIG
         if (final) {
             gennError("Trying to add a neuron population to a finalized model.");
         }
@@ -368,9 +370,11 @@ public:
                                        const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
                                        const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
     {
+#ifndef SWIG
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
         }
+#endif // SWIG
         if (final) {
             gennError("Trying to add a synapse population to a finalized model.");
         }
@@ -475,9 +479,11 @@ public:
                                     const typename CurrentSourceModel::ParamValues &paramValues,
                                     const typename CurrentSourceModel::VarValues &varInitialisers)
     {
+#ifndef SWIG
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
         }
+#endif // SWIG
         if (final) {
             gennError("Trying to add a current source to a finalized model.");
         }

@@ -390,9 +390,11 @@ NeuronGroup *NNmodel::addNeuronPopulation(
   int hostID,
   int deviceID)
 {
+#ifndef SWIG
     if (!GeNNReady) {
         gennError("You need to call initGeNN first.");
     }
+#endif // SWIG
     if (final) {
         gennError("Trying to add a neuron population to a finalized model.");
     }
@@ -635,9 +637,11 @@ SynapseGroup *NNmodel::addSynapsePopulation(
   const vector<double> &PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
   const vector<double> &ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
 {
+#ifndef SWIG
     if (!GeNNReady) {
         gennError("You need to call initGeNN first.");
     }
+#endif // SWIG
     if (final) {
         gennError("Trying to add a synapse population to a finalized model.");
     }
