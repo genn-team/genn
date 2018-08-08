@@ -345,53 +345,55 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                     }
 
                     // Loop through incoming synaptic populations
-                    for(const auto *s : n.second.getInSyn()) {
+                    for(const auto &m : n.second.getMergedInSyn()) {
+                        const auto *sg = m.first;
+
                         // If this synapse group's input variable should be initialised on device
-                        if(s->getInSynVarMode() & VarInit::DEVICE) {
-                            os << "dd_inSyn" << s->getName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        if(sg->getInSynVarMode() & VarInit::DEVICE) {
+                            os << "dd_inSyn" << sg->getPSModelTargetName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
 
                         // If dendritic delays are required and these should be initialised on device
-                        if(s->isDendriticDelayRequired() && (s->getDendriticDelayVarMode() & VarInit::DEVICE)) {
-                            os << "for (int i = 0; i < " << s->getMaxDendriticDelayTimesteps() << "; i++)";
+                        if(sg->isDendriticDelayRequired() && (sg->getDendriticDelayVarMode() & VarInit::DEVICE)) {
+                            os << "for (int i = 0; i < " << sg->getMaxDendriticDelayTimesteps() << "; i++)";
                             {
                                 CodeStream::Scope b(os);
                                 const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
-                                os << "dd_denDelay" << s->getName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                os << "dd_denDelay" << sg->getPSModelTargetName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         }
 
                         // If postsynaptic model variables should be individual
-                        if(s->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                            auto psmVars = s->getPSModel()->getVars();
+                        if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                            auto psmVars = sg->getPSModel()->getVars();
                             for(size_t j = 0; j < psmVars.size(); j++) {
-                                const auto &varInit = s->getPSVarInitialisers()[j];
-                                const VarMode varMode = s->getPSVarMode(j);
+                                const auto &varInit = sg->getPSVarInitialisers()[j];
+                                const VarMode varMode = sg->getPSVarMode(j);
 
                                 // Initialise directly into device variable
                                 if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                                     CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + psmVars[j].first + s->getName() + "[lid]",
+                                    os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + psmVars[j].first + sg->getName() + "[lid]",
                                                                                     cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
                                 }
                             }
                         }
-                        // Loop through current sources
-                        os << "// current source variables" << std::endl;
-                        for (auto const *cs : n.second.getCurrentSources()) {
-                            auto csModel = cs->getCurrentSourceModel();
-                            auto csVars = csModel->getVars();
+                    }
+                    // Loop through current sources
+                    os << "// current source variables" << std::endl;
+                    for (auto const *cs : n.second.getCurrentSources()) {
+                        auto csModel = cs->getCurrentSourceModel();
+                        auto csVars = csModel->getVars();
 
-                            for (size_t j = 0; j < csVars.size(); j++) {
-                                const auto &varInit = cs->getVarInitialisers()[j];
-                                const VarMode varMode = cs->getVarMode(j);
+                        for (size_t j = 0; j < csVars.size(); j++) {
+                            const auto &varInit = cs->getVarInitialisers()[j];
+                            const VarMode varMode = cs->getVarMode(j);
 
-                                // If this variable should be initialised on the device and has any initialisation code
-                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + csVars[j].first + cs->getName() + "[lid]",
-                                                                                    cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
-                                }
+                            // If this variable should be initialised on the device and has any initialisation code
+                            if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                CodeStream::Scope b(os);
+                                os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + csVars[j].first + cs->getName() + "[lid]",
+                                                                                cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
                             }
                         }
                     }
@@ -874,13 +876,11 @@ void genInit(const NNmodel &model,      //!< Model description
             genHostInitSpikeCode(os, n.second, true);
 
             if (n.second.isSpikeTimeRequired() && shouldInitOnHost(n.second.getSpikeTimeVarMode())) {
+                CodeStream::Scope b(os);
+                os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
-                    }
+                    os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
                 }
             }
 
@@ -915,9 +915,88 @@ void genInit(const NNmodel &model,      //!< Model description
                 }
             }
 
+            // Loop through current sources injecting into neuron model
+            os << "// current source variables" << std::endl;
+            for (auto const *cs : n.second.getCurrentSources()) {
+                auto csModel = cs->getCurrentSourceModel();
+                auto csVars = csModel->getVars();
+
+                for (size_t j = 0; j < csVars.size(); j++) {
+                    const auto &varInit = cs->getVarInitialisers()[j];
+                    const VarMode varMode = cs->getVarMode(j);
+
+                    // If this variable should be initialised on host and has any initialisation code
+                    if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
+                        CodeStream::Scope b(os);
+                        os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << StandardSubstitutions::initNeuronVariable(varInit, csVars[j].first + cs->getName() + "[i]",
+                                                                            cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
+                        }
+                    }
+                }
+            }
+
             /*if ((model.neuronType[i] == IZHIKEVICH) && (model.getDT() != 1.0)) {
                 os << "    fprintf(stderr,\"WARNING: You use a time step different than 1 ms. Izhikevich model behaviour may not be robust.\\n\"); " << std::endl;
             }*/
+
+            // Loop through incoming synaptic populations
+            for(const auto &m : n.second.getMergedInSyn()) {
+                const auto *sg = m.first;
+
+                // If insyn variables should be initialised on the host
+                if(shouldInitOnHost(sg->getInSynVarMode())) {
+                    CodeStream::Scope b(os);
+                    os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "inSyn" << sg->getPSModelTargetName() << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    }
+                }
+
+                if(sg->isDendriticDelayRequired()) {
+                    os << "denDelayPtr" << sg->getPSModelTargetName() << " = 0;" << std::endl;
+#ifndef CPU_ONLY
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_denDelayPtr" << sg->getPSModelTargetName();
+                    os << ", &denDelayPtr" << sg->getPSModelTargetName();
+                    os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
+#endif
+
+                    // If dendritic delay buffer should be initialised on the host
+                    if(shouldInitOnHost(sg->getDendriticDelayVarMode())) {
+                        CodeStream::Scope b(os);
+                        os << "for (int i = 0; i < " << n.second.getNumNeurons() * sg->getMaxDendriticDelayTimesteps() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "denDelay" << sg->getPSModelTargetName() << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        }
+                    }
+                }
+
+                // If matrix has individual postsynaptic variables
+                if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                    auto psmVars = sg->getPSModel()->getVars();
+                    for (size_t k= 0, l= psmVars.size(); k < l; k++) {
+                        const auto &varInit = sg->getPSVarInitialisers()[k];
+                        const VarMode varMode = sg->getPSVarMode(k);
+
+                        // If this variable should be initialised on the host and has any initialisation code
+                        if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
+                            // Loop through postsynaptic neurons and substitute in initialisation code
+                            CodeStream::Scope b(os);
+                            os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << StandardSubstitutions::initNeuronVariable(varInit, psmVars[k].first + sg->getPSModelTargetName() + "[i]",
+                                                                                cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
+                            }
+                        }
+                    }
+                }
+            }
+
         }
         os << std::endl;
 
@@ -925,7 +1004,6 @@ void genInit(const NNmodel &model,      //!< Model description
         os << "// synapse variables" << std::endl;
         for(const auto &s : model.getLocalSynapseGroups()) {
             const auto *wu = s.second.getWUModel();
-            const auto *psm = s.second.getPSModel();
 
             const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
@@ -1009,35 +1087,6 @@ void genInit(const NNmodel &model,      //!< Model description
                 }
             }
 
-            // If insyn variables should be initialised on the host
-            if(shouldInitOnHost(s.second.getInSynVarMode())) {
-                CodeStream::Scope b(os);
-                os << "for (int i = 0; i < " << numTrgNeurons << "; i++)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "inSyn" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
-                }
-            }
-
-            if(s.second.isDendriticDelayRequired()) {
-                os << "denDelayPtr" << s.first << " = 0;" << std::endl;
-#ifndef CPU_ONLY
-                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_denDelayPtr" << s.first;
-                os << ", &denDelayPtr" << s.first;
-                os << ", sizeof(unsigned int), 0, cudaMemcpyHostToDevice));" << std::endl;
-#endif
-
-                // If dendritic delay buffer should be initialised on the host
-                if(shouldInitOnHost(s.second.getDendriticDelayVarMode())) {
-                    CodeStream::Scope b(os);
-                    os << "for (int i = 0; i < " << numTrgNeurons * s.second.getMaxDendriticDelayTimesteps() << "; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "denDelay" << s.first << "[i] = " << model.scalarExpr(0.0) << ";" << std::endl;
-                    }
-                }
-            }
-
             // If matrix is dense (i.e. can be initialised here) and each synapse has individual values (i.e. needs initialising at all)
             if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
                 auto wuVars = wu->getVars();
@@ -1062,29 +1111,7 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                 }
             }
-
-            // If matrix has individual postsynaptic variables
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                auto psmVars = psm->getVars();
-                for (size_t k= 0, l= psmVars.size(); k < l; k++) {
-                    const auto &varInit = s.second.getPSVarInitialisers()[k];
-                    const VarMode varMode = s.second.getPSVarMode(k);
-
-                    // If this variable should be initialised on the host and has any initialisation code
-                    if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
-                        // Loop through postsynaptic neurons and substitute in initialisation code
-                        CodeStream::Scope b(os);
-                        os << "for (int i = 0; i < " << numTrgNeurons << "; i++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initNeuronVariable(varInit, psmVars[k].first + s.first + "[i]",
-                                                                            cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
-                        }
-                    }
-                }
-            }
         }
-
         os << std::endl << std::endl;
         if (model.isTimingEnabled()) {
             os << "initHost_timer.stopTimer();" << std::endl;

@@ -19,6 +19,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <numeric>
+#include <typeinfo>
 
 // Standard C includes
 #include <cstdio>
@@ -1074,6 +1075,22 @@ void NNmodel::finalize()
                     gennError("Weight update mode variables must be initialised in same place as sparse connectivity variable '" + wuVars[k].first + "' in population '" + s.first + "' is not");
                 }
             }
+        }
+    }
+
+    // CURRENT SOURCES
+    for(auto &cs : m_LocalCurrentSources) {
+        // Initialize derived parameters
+        cs.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        cs.second.addExtraGlobalParams(currentSourceKernelParameters);
+    }
+
+    // Merge incoming postsynaptic models
+    for(auto &n : m_LocalNeuronGroups) {
+        if(!n.second.getInSyn().empty()) {
+            n.second.mergeIncomingPSM();
         }
     }
 

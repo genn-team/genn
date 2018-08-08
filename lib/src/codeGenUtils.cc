@@ -116,13 +116,13 @@ void ensureMathFunctionFtype(string &code, const string &type)
     // If type is double, substitute any single precision maths functions for double precision version
     if (type == "double") {
         for(const auto &m : mathsFuncs) {
-            regexVarSubstitute(code, m[MathsFuncSingle] + string("\\("), m[MathsFuncDouble] + string("\\("));
+            regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncDouble]);
         }
     }
     // Otherwise, substitute any double precision maths functions for single precision version
     else {
         for(const auto &m : mathsFuncs) {
-            regexVarSubstitute(code, m[MathsFuncDouble] + string("\\("), m[MathsFuncSingle] + string("\\("));
+            regexFuncSubstitute(code, m[MathsFuncDouble], m[MathsFuncSingle]);
         }
     }
 }
@@ -152,34 +152,9 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
         }
     }
 }
-}    // Anonymous namespace
 
-//--------------------------------------------------------------------------
-//! \brief Tool for substituting strings in the neuron code strings or other templates
-//--------------------------------------------------------------------------
-void substitute(string &s, const string &trg, const string &rep)
+bool regexSubstitute(string &s, const std::regex &regex, const std::string &format)
 {
-    size_t found= s.find(trg);
-    while (found != string::npos) {
-        s.replace(found,trg.length(),rep);
-        found= s.find(trg);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief Tool for substituting strings in the neuron code strings or other templates using regular expressions
-//--------------------------------------------------------------------------
-bool regexVarSubstitute(string &s, const string &trg, const string &rep)
-{
-    // Build a regex to match variable name with at least one
-    // character that can't be in a variable name on either side (or an end/beginning of string)
-    // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
-    std::regex regex("(^|[^0-9a-zA-Z_])" + trg + "(?=$|[^a-zA-Z0-9_])");
-
-    // Create format string to replace in text
-    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
-    const std::string format = "$1" + rep;
-
     // **NOTE** the following code performs the same function as std::regex_replace
     // but has a return value indicating whether any replacements are made
     // see http://en.cppreference.com/w/cpp/regex/regex_replace
@@ -219,6 +194,53 @@ bool regexVarSubstitute(string &s, const string &trg, const string &rep)
         s = output;
         return true;
     }
+}
+}    // Anonymous namespace
+
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting strings in the neuron code strings or other templates
+//--------------------------------------------------------------------------
+void substitute(string &s, const string &trg, const string &rep)
+{
+    size_t found= s.find(trg);
+    while (found != string::npos) {
+        s.replace(found,trg.length(),rep);
+        found= s.find(trg);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexVarSubstitute(string &s, const string &trg, const string &rep)
+{
+    // Build a regex to match variable name with at least one
+    // character that can't be in a variable name on either side (or an end/beginning of string)
+    // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
+    std::regex regex("(^|[^0-9a-zA-Z_])" + trg + "(?=$|[^a-zA-Z0-9_])");
+
+    // Create format string to replace in text
+    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
+    const std::string format = "$1" + rep;
+
+    return regexSubstitute(s, regex, format);
+}
+
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting function  names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexFuncSubstitute(string &s, const string &trg, const string &rep)
+{
+    // Build a regex to match function name with at least one
+    // character that can't be part of the function name on the left and a bracket on the right (with optional whitespace)
+    // **NOTE** the suffix is non-capturing so two instances of functions separated by a single character are matched e.g. sin(cos(x));
+    std::regex regex("(^|[^0-9a-zA-Z_])" + trg + "(?=\\s*\\()");
+
+    // Create format string to replace in text
+    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
+    const std::string format = "$1" + rep;
+
+    return regexSubstitute(s, regex, format);
 }
 
 //--------------------------------------------------------------------------

@@ -46,6 +46,11 @@ public:
     void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
+    void setPSModelMergeTarget(const std::string &targetName)
+    {
+        m_PSModelTargetName = targetName;
+    }
+
     //!< Function to enable the use of zero-copied memory for a particular weight update model state variable (deprecated use SynapseGroup::setWUVarMode):
     /*! May improve IO performance at the expense of kernel performance */
     void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
@@ -149,7 +154,10 @@ public:
     const std::vector<double> getPSConstInitVals() const;
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
-    
+
+    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
+    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
@@ -298,4 +306,8 @@ private:
 
     //!< Variable mode used for sparse connectivity
     VarMode m_SparseConnectivityVarMode;
+
+    //! Name of the synapse group in which postsynaptic model is located
+    /*! This may not be the name of this group if it has been merged*/
+    std::string m_PSModelTargetName;
 };

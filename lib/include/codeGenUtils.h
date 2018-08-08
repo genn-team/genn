@@ -131,9 +131,14 @@ const std::vector<FunctionTemplate> cpuFunctions = {
 void substitute(string &s, const string &trg, const string &rep);
 
 //--------------------------------------------------------------------------
-//! \brief Tool for substituting variable or function names in the neuron code strings or other templates using regular expressions
+//! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
 bool regexVarSubstitute(string &s, const string &trg, const string &rep);
+
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting function names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexFuncSubstitute(string &s, const string &trg, const string &rep);
 
 //--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator

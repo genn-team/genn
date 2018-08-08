@@ -54,7 +54,8 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
         m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
-        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityVarMode(GENN_PREFERENCES::defaultSparseConnectivityMode)
+        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityVarMode(GENN_PREFERENCES::defaultSparseConnectivityMode),
+        m_PSModelTargetName(name)
 {
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
     // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
@@ -67,7 +68,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     else {
         m_MaxConnections = trgNeuronGroup->getNumNeurons();
     }
-    
+
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
     // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
@@ -79,7 +80,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     else {
         m_MaxSourceConnections = srcNeuronGroup->getNumNeurons();
     }
-    
+
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
 
@@ -345,10 +346,10 @@ std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, 
     assert(isDendriticDelayRequired());
 
     if(offset.empty()) {
-        return "(" + devPrefix + "denDelayPtr" + getName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
     else {
-        return "(((" + devPrefix + "denDelayPtr" + getName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
 }
 
