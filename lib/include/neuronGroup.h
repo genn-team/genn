@@ -23,7 +23,7 @@ public:
                 const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, int hostID, int deviceID) :
         m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
+        m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false),
         m_NumDelaySlots(1), m_AnyVarQueuesRequired(false), m_VarQueueRequired(varInitialisers.size(), false),
         m_SpikeVarMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventVarMode(GENN_PREFERENCES::defaultVarMode),
         m_SpikeTimeVarMode(GENN_PREFERENCES::defaultVarMode), m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
@@ -138,7 +138,6 @@ public:
     bool isSpikeTimeRequired() const{ return m_SpikeTimeRequired; }
     bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
     bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }
-    bool isQueueRequired() const{ return m_QueueRequired; }
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
@@ -221,7 +220,6 @@ private:
     bool m_SpikeTimeRequired;
     bool m_TrueSpikeRequired;
     bool m_SpikeEventRequired;
-    bool m_QueueRequired;
     std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSource*> m_CurrentSources;
