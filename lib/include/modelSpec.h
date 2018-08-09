@@ -538,19 +538,6 @@ public:
                                 targetNeuronGroupName, paramValues, varInitialisers);
     }
 
-     // PUBLIC STATIC FUNCTIONS
-     //========================
-
-     static void allocateExtraGlobalParam( void** egp, int size )
-     {
-         cudaHostAlloc( egp, size, cudaHostAllocPortable );
-     }
-
-     static void freeExtraGlobalParam( void* egp )
-     {
-         cudaFreeHost( egp );
-     }
-
 
 private:
     //--------------------------------------------------------------------------

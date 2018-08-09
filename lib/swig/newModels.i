@@ -14,19 +14,32 @@
 %module(directors="1") NewModels // for inheritance in python
 %{
 #include "newModels.h"
-#include "../swig/customValues.h"
+#include "../swig/customParamValues.h"
+#include "../swig/customVarValues.h"
+#include "../swig/initVarSnippetCustom.h"
 %}
 %ignore LegacyWrapper;
+
+%include <std_vector.i>
 
 %import "snippet.i"
 %import "initVarSnippet.i"
 
 %feature("director") NewModels::Base; // for inheritance in python
+%nodefaultctor NewModels::VarInit;
 %include "include/newModels.h"
 
 %nodefaultctor CustomValues::VarValues;
+%include "customVarValues.h"
 %nodefaultctor CustomValues::ParamValues;
-%include "customValues.h"
+%include "customParamValues.h"
 
 %template(CustomParamValues) CustomValues::ParamValues::ParamValues<double>; 
 %template(CustomVarValues) CustomValues::VarValues::VarValues<double>;
+%template(CustomVarValues) CustomValues::VarValues::VarValues<NewModels::VarInit>;
+
+// ignore vector(size) contructor & resize, otherwise compiler will complain about
+// missing default ctor in VarInit
+%ignore std::vector<NewModels::VarInit>::vector(size_type);
+%ignore std::vector<NewModels::VarInit>::resize;
+%template(VarInitVector) std::vector<NewModels::VarInit>;

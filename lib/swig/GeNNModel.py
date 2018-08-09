@@ -12,13 +12,16 @@ class GeNNModel( object ):
     This class helps to define, build and run a GeNN model from python
     """
 
-    def __init__(self, precision=None, modelName=None, enableDebug=False,
-                 autoInitSparseVars=True):
+    def __init__(self, precision=None, modelName='GeNNModel', enableDebug=False,
+                 autoInitSparseVars=False, cpuOnly=False):
         """Init GeNNModel
         Keyword args:
-        scalar    -- precision as string ("float" or "double" or "long double")
+        precision    -- string precision as string ("float" or "double" or "long double")
                      Defaults to float.
-        modelName -- name of the model. Default to "GeNNModel"
+        modelName    -- string name of the model. Defaults to "GeNNModel".
+        enableDebug  -- boolean enable debug mode. Disabled by default.
+        autoInitSparseVars -- boolean auto initialize sparse variables. Disabled by default.
+        cpuOnly      -- boolean whether GeNN should run only on CPU. Disabled by default.
         """
         self._scalar = precision
         if precision is None or precision == 'float':
@@ -41,16 +44,20 @@ class GeNNModel( object ):
                                   precision ) )
         
         self._built = False
-        self._localhost = pg.init_cuda_mpi()
+        self._cpuOnly = cpuOnly
+        if not cpuOnly:
+            self._localhost = pg.init_cuda_mpi()
+        else:
+            self._localhost = 0
+
         
         pg.setDefaultVarMode( pg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
-        pg.GeNNPreferences.debugCode = enableDebug
-        pg.GeNNPreferences.autoInitSparseVars = autoInitSparseVars
+        pg.cvar.debugCode = enableDebug
+        pg.cvar.autoInitSparseVars = autoInitSparseVars
+        pg.cvar.buildSharedLibrary = True
         self._model = pg.NNmodel()
         self._model.setPrecision( getattr(pg, gennFloatType ) )
-        self.modelName = 'GeNNModel'
-        if modelName is not None:
-            self.modelName = modelName
+        self.modelName = modelName
         self.neuronPopulations = {}
         self.synapsePopulations = {}
         self.currentSources = {}
@@ -97,13 +104,10 @@ class GeNNModel( object ):
         popName     -- name of the new population
         numNeurons  -- number of neurons in the new population
         neuron      -- type of the NeuronModels class as string or instance of neuron class
-                        derived from NeuronModels::Custom class if customNeuron is True;
+                        derived from NeuronModels::Custom class.
                         sa createCustomNeuronClass
         paramSpace  -- dict with param values for the NeuronModels class
         varSpace    -- dict with initial variable values for the NeuronModels class
-
-        Keyword args:
-        customNeuron -- boolean which indicates whether a custom neuron model is used. False by default
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -111,7 +115,7 @@ class GeNNModel( object ):
             raise ValueError( 'neuron population "{0}" already exists'.format( popName ) )
        
         nGroup = NeuronGroup( popName )
-        nGroup.setSize( numNeurons )
+        nGroup.setSize( int(numNeurons) )
         nGroup.setNeuron( neuron, paramSpace, varSpace )
         nGroup.addTo( self._model )
 
@@ -132,19 +136,15 @@ class GeNNModel( object ):
         source       -- name of the source population
         target       -- name of the target population
         wUptateModel -- type of the WeightUpdateModels class as string or instance of weight update model class
-                            derived from WeightUpdateModels::Custom class if customWeightUpdate is True;
+                            derived from WeightUpdateModels::Custom class.
                             sa createCustomWeightUpdateClass
-        wuParamValues -- list with param values for the WeightUpdateModels class
-        wuInitVarValues -- list with initial variable values for the WeightUpdateModels class
-        postsynModel -- type of the PostsynapticModels class as string or instance of postsynaptic model class
-                            derived from PostsynapticModels::Custom class if customPostsynaptic is True;
+        wuParamValues   -- dict with param values for the WeightUpdateModels class
+        wuInitVarValues -- dict with initial variable values for the WeightUpdateModels class
+        postsynModel    -- type of the PostsynapticModels class as string or instance of postsynaptic model class
+                            derived from PostsynapticModels::Custom class.
                             sa createCustomPostsynapticClass
-        postsynParamValues -- list with param values for the PostsynapticModels class
-        postsynInitVarValues -- list with initial variable values for the PostsynapticModels class
-
-        Keyword args:
-        customWeightUpdate -- boolean which indicates whether a custom weight update model is used. False by default
-        customPostsynaptic -- boolean which indicates whether a custom postsynaptic model is used. False by default
+        postsynParamValues   -- dict with param values for the PostsynapticModels class
+        postsynInitVarValues -- dict with initial variable values for the PostsynapticModels class
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -153,7 +153,7 @@ class GeNNModel( object ):
             raise ValueError( 'synapse population "{0}" already exists'.format( popName ) )
 
         sGroup = SynapseGroup( popName )
-        sGroup.setDelaySteps( delaySteps )
+        sGroup.setDelaySteps( int(delaySteps) )
         sGroup.matrixType = matrixType
         sGroup.setConnectedPopulations(
                 source, self.neuronPopulations[source].size,
@@ -181,9 +181,6 @@ class GeNNModel( object ):
         popName     -- name of the population into which the current source should be injected
         paramSpace  -- dict with param values for the CurrentSourceModels class
         varSpace    -- dict with initial variable values for the CurrentSourceModels class
-
-        Keyword args:
-        customNeuron -- boolean which indicates whether a custom neuron model is used. False by default
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -226,7 +223,7 @@ class GeNNModel( object ):
             var = self.neuronPopulations[popName].vars[varName]
 
         var.view[mask] = vals
-        self._slm.pushStateToDevice( popName )
+        self.pushStateToDevice( popName )
 
 
     def initializeSpikesOnDevice( self, popName, mask, targets, counts ):
@@ -245,7 +242,7 @@ class GeNNModel( object ):
                     population "{1}" does not exist'.format( varName, popName ) )
         self.neuronPopulations[popName].spikes[mask] = targets
         self.neuronPopulations[popName].spikeCount[mask] = counts
-        self._slm.pushSpikesToDevice( popName )
+        self.pushSpikesToDevice( popName )
 
 
     def build( self, pathToModel = "./" ):
@@ -265,47 +262,21 @@ class GeNNModel( object ):
                 popData.pop.setMaxConnections( popData.size )
 
         self._model.finalize()
-        pg.chooseDevice(self._model, pathToModel, self._localhost)
+        #  if not self._cpuOnly:
+        #      pg.chooseDevice(self._model, pathToModel, self._localhost)
         pg.finalize_model_runner_generation(self._model, self._pathToModel, self._localhost)
 
         check_call( ['make', '-C', path.join( pathToModel, self.modelName + '_CODE' ) ] )
         
         self._built = True
 
-    def loadExistingModel( self, pathToModel, neuronPop, synapsePop ):
-        """import the existing model as shared library and initialize it
-        Args:
-        pathToModel -- path to the model
-        neuronPop   -- dictionary with neuron populations. Each population must have:
-                        'size' - number of neurons
-                        'vars' - dictionary with variable names. The values of the dictionary will
-                                be overwritten with actuals variable views when the model is loaded
-                        'spk' - view into internal spikes variable. Can be None. This value will be
-                                overwritten with actual variable view when the model is loaded.
-                        'spkCnt' - view into internal spike count variable. Can be None. This value will be
-                                   overwritten with actual variable view when the model is loaded.
-
-                        Example: {'Pop1' : {'size' : 10,
-                                            'vars' : { 'varName1': None },
-                                            'spk' : None,
-                                            'spkCnt' : None }
-                                 }
-                        
-        synapsePop  -- dictionary with synapse populations. Each population must have: 'size', 'vars'. sa neuronPop.
-        """
-
-        self.neuronPopulations = neuronPop
-        self.synapsePopulations = synapsePop
-        self._pathToModel = pathToModel
-        self._built = True
-        self.load()
-       
     def load( self ):
         """import the model as shared library and initialize it"""
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
         
         self._slm.open( self._pathToModel, self.modelName )
+
 
         self._slm.allocateMem()
         self._slm.initialize()
@@ -320,7 +291,7 @@ class GeNNModel( object ):
 
         for popName, popData in self.neuronPopulations.items():
             self._slm.initNeuronPopIO( popName )
-            self._slm.pullStateFromDevice( popName )
+            self.pullStateFromDevice( popName )
             popData.spikes = self.assignExternalPointerPop( popName, 'glbSpk',
                     popData.size * (popData.maxDelaySteps + 1), 'unsigned int' )
             popData.spikeCount = self.assignExternalPointerPop( popName, 'glbSpkCnt',
@@ -335,7 +306,7 @@ class GeNNModel( object ):
                 if varData.initRequired:
                     varData.view[:] = varData.values 
 
-            self._slm.pushStateToDevice( popName )
+            self.pushStateToDevice( popName )
 
             for egpName, egpData in popData.extraGlobalParams.items():
                 # if auto allocation is not enabled, let the user care about
@@ -351,7 +322,7 @@ class GeNNModel( object ):
         for popName, popData in self.synapsePopulations.items():
 
             self._slm.initSynapsePopIO( popName )
-            self._slm.pullStateFromDevice( popName )
+            self.pullStateFromDevice( popName )
             
             if popData.sparse:
                 if popData.connectionsSet:
@@ -378,11 +349,11 @@ class GeNNModel( object ):
                 if popData.connectionsSet:
                     self.initializeVarOnDevice( popName, 'g', popData.mask, popData.g )
 
-            self._slm.pushStateToDevice( popName )
+            self.pushStateToDevice( popName )
 
         for srcName, srcData in self.currentSources.items():
             self._slm.initCurrentSourceIO( srcName )
-            self._slm.pullStateFromDevice( srcName )
+            self.pullStateFromDevice( srcName )
 
             for varName, varData in srcData.vars.items():
                 varData.view = self.assignExternalPointerPop(
@@ -390,7 +361,7 @@ class GeNNModel( object ):
                 if varData.initRequired:
                     varData.view[:] = varData.values
 
-            self._slm.pushStateToDevice( srcName )
+            self.pushStateToDevice( srcName )
 
             for egpName, egpData in srcData.extraGlobalParams.items():
                 # if auto allocation is not enabled, let the user care about
@@ -405,16 +376,23 @@ class GeNNModel( object ):
 
         self._slm.initializeModel()
 
+        if self._cpuOnly:
+            self.stepTime = self._slm.stepTimeCPU
+        else:
+            self.stepTime = self._slm.stepTimeGPU
+
 
     def assignExternalPointerPop( self, popName, varName, varSize, varType ):
-        """Assign a variable to an external numpy array
+        """Assign a population variable to an external numpy array
         
         Args:
-        popName -- population name
-        varName -- a name of the variable to assing, without population name
-        varSize -- the size of the variable
-        varType -- type of the variable as string. The supported types are
-                   scalar, float, double, long double, int, unsigned int.
+        popName -- string population name
+        varName -- string a name of the variable to assing, without population name
+        varSize -- int the size of the variable
+        varType -- string type of the variable. The supported types are
+                   char, unsigned char, short, unsigned short, int, unsigned int,
+                   long, unsigned long, long long, unsigned long long,
+                   float, double, long double and scalar.
 
         Returns numpy array of type varType
 
@@ -428,10 +406,12 @@ class GeNNModel( object ):
         """Assign a variable to an external numpy array
         
         Args:
-        varName -- a fully qualified name of the variable to assign
-        varSize -- the size of the variable
-        varType -- type of the variable as string. The supported types are
-                   scalar, float, double, long double, int, unsigned int.
+        varName -- string a fully qualified name of the variable to assign
+        varSize -- int the size of the variable
+        varType -- string type of the variable. The supported types are
+                   char, unsigned char, short, unsigned short, int, unsigned int,
+                   long, unsigned long, long long, unsigned long long,
+                   float, double, long double and scalar.
 
         Returns numpy array of type varType
 
@@ -475,34 +455,78 @@ class GeNNModel( object ):
         else:
             raise TypeError( 'unsupported varType "{}"'.format( varType ) )
 
-    def stepTimeGPU( self ):
-        """Make one simulation step"""
-        if not self._built:
-            raise Exception( "GeNN model has to be built before running" )
+    def _stepTimeGPU( self ):
+        """Make one simulation step (for library built for CPU)"""
         self._slm.stepTimeGPU()
     
-    def stepTimeCPU( self ):
-        """Make one simulation step"""
-        if not self._built:
-            raise Exception( "GeNN model has to be built before running" )
+    def _stepTimeCPU( self ):
+        """Make one simulation step (for library built for CPU)"""
         self._slm.stepTimeCPU()
+
+    def stepTime( self ):
+        """Make one simulation step"""
+        pass
 
     def pullStateFromDevice( self, popName ):
         """Pull state from the device for a given population"""
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
-        self._slm.pullStateFromDevice( popName )
+        if not self._cpuOnly:
+            self._slm.pullStateFromDevice( popName )
     
     def pullSpikesFromDevice( self, popName ):
         """Pull spikes from the device for a given population"""
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
-        self._slm.pullSpikesFromDevice( popName )
+        if not self._cpuOnly:
+            self._slm.pullSpikesFromDevice( popName )
+
     def pullCurrentSpikesFromDevice( self, popName ):
         """Pull spikes from the device for a given population"""
         if not self._built:
             raise Exception( "GeNN model has to be built before running" )
-        self._slm.pullCurrentSpikesFromDevice( popName )
+        if not self._cpuOnly:
+            self._slm.pullCurrentSpikesFromDevice( popName )
+
+    def pushStateToDevice( self, popName ):
+        """Push state to the device for a given population"""
+        if not self._built:
+            raise Exception( "GeNN model has to be built before running" )
+        if not self._cpuOnly:
+            self._slm.pushStateToDevice( popName )
+
+    def pushSpikesToDevice( self, popName ):
+        """Push spikes from the device for a given population"""
+        if not self._built:
+            raise Exception( "GeNN model has to be built before running" )
+        if not self._cpuOnly:
+            self._slm.pushSpikesToDevice( popName )
+
+    def pushCurrentSpikesFromDevice( self, popName ):
+        """Push spikes from the device for a given population"""
+        if not self._built:
+            raise Exception( "GeNN model has to be built before running" )
+        if not self._cpuOnly:
+            self._slm.pushCurrentSpikesToDevice( popName )
+
+    def end( self ):
+        """Free memory"""
+        for group in [self.neuronPopulations, self.currentSources]:
+            for groupName, groupData in group.items():
+
+                for egpName in groupData.extraGlobalParams.keys():
+                    # if auto allocation is not enabled, let the user care about
+                    # freeing of the EGP
+                    if egpData.needsAllocation:
+                        self._slm.freeExtraGlobalParam( groupName, egpName )
+
+        for srcName, srcData in self.currentSources.items():
+
+            for egpName in srcData.extraGlobalParams.keys():
+                # if auto allocation is not enabled, let the user care about
+                # freeing of the EGP
+                if egpData.needsAllocation:
+                    self._slm.freeExtraGlobalParam( srcName, egpName )
 
 
 def createCustomNeuronClass( 
@@ -593,11 +617,12 @@ def createCustomPostsynapticClass(
         applyInputCode=None,
         supportCode=None,
         custom_body=None ):
-
     """This helper function creates a custom PostsynapticModel class.
 
     sa createCustomNeuronClass
     sa createCustomWeightUpdateClass
+    sa createCustomCurrentSourceClass
+    sa createCustomInitVarSnippetClass
 
     Args:
     className      -- name of the new class
@@ -639,6 +664,7 @@ def createCustomPostsynapticClass(
             derivedParams,
             body )
 
+
 def createCustomWeightUpdateClass( 
         className,
         paramNames=None,
@@ -656,11 +682,12 @@ def createCustomWeightUpdateClass(
         isPreSpikeTimeRequired=None,
         isPostSpikeTimeRequired=None,
         custom_body=None ):
-
     """This helper function creates a custom WeightUpdateModel class.
 
     sa createCustomNeuronClass
     sa createCustomPostsynapticClass
+    sa createCustomCurrentSourceClass
+    sa createCustomInitVarSnippetClass
 
     Args:
     className     -- name of the new class
@@ -686,7 +713,7 @@ def createCustomWeightUpdateClass(
     custom_body   -- dictionary with additional attributes and methods of the new class
     """
     if not isinstance( custom_body, dict ) and custom_body is not None:
-        raise ValueError( "custom_body must be an isinstance of dict or None" )
+        raise ValueError( "custom_body must be an instance of dict or None" )
 
     body = {}
 
@@ -735,6 +762,7 @@ def createCustomWeightUpdateClass(
             derivedParams,
             body )
 
+
 def createCustomCurrentSourceClass(
         className,
         paramNames=None,
@@ -743,11 +771,12 @@ def createCustomCurrentSourceClass(
         injectionCode=None,
         extraGlobalParams=None,
         custom_body=None ):
-
     """This helper function creates a custom NeuronModel class.
 
     sa createCustomNeuronClass
     sa createCustomWeightUpdateClass
+    sa createCustomCurrentSourceClass
+    sa createCustomInitVarSnippetClass
 
     Args:
     className     -- name of the new class
@@ -764,7 +793,7 @@ def createCustomCurrentSourceClass(
     custom_body   -- dictionary with additional attributes and methods of the new class
     """
     if not isinstance( custom_body, dict ) and custom_body is not None:
-        raise ValueError( "custom_body must be an isinstance of dict or None" )
+        raise ValueError( "custom_body must be an instance of dict or None" )
 
     body = {}
 
@@ -793,14 +822,15 @@ def createCustomModelClass(
         varNameTypes,
         derivedParams,
         custom_body ):
-
     """This helper function completes a custom model class creation.
+
     This part is common for all model classes and is nearly useless on its own
     unless you specify custom_body.
     sa createCustomNeuronClass
     sa createCustomWeightUpdateClass
     sa createCustomPostsynapticClass
     sa createCustomCurrentSourceClass
+    sa createCustomInitVarSnippetClass
 
     Args:
     className     -- name of the new class
@@ -812,7 +842,6 @@ def createCustomModelClass(
                         which inherits from libgenn.Snippet.DerivedParamFunc
     custom_body   -- dictionary with attributes and methods of the new class
     """
-
     def ctor( self ):
         base.__init__(self)
 
@@ -837,6 +866,7 @@ def createCustomModelClass(
 
     return type( className, (base,), body )
 
+
 def createDPFClass( dpfunc ):
 
     """Helper function to create derived parameter function class
@@ -853,3 +883,52 @@ def createDPFClass( dpfunc ):
         return dpfunc( pars, dt )
 
     return type( '', ( pg.Snippet.DerivedParamFunc, ), {'__init__' : ctor, '__call__' : call} )
+
+
+def createCustomInitVarSnippetClass(
+        className,
+        paramNames=None,
+        derivedParams=None,
+        varInitCode=None,
+        custom_body=None ):
+    """This helper function creates a custom InitVarSnippet class.
+
+    This part is common for all model classes and is nearly useless on its own
+    unless you specify custom_body.
+    sa createCustomNeuronClass
+    sa createCustomWeightUpdateClass
+    sa createCustomPostsynapticClass
+    sa createCustomCurrentSourceClass
+
+    Args:
+    className     -- name of the new class
+
+    Keyword args:
+    paramNames    -- list of strings with param names of the model
+    derivedParams -- list of pairs, where the first member is string with name of
+                        the derived parameter and the second MUST be an instance of the class
+                        which inherits from libgenn.Snippet.DerivedParamFunc
+    varInitcode       -- string with the variable initialization code
+    extraGlobalParams -- list of pairs of strings with names and types of additional parameters
+
+    custom_body       -- dictionary with additional attributes and methods of the new class
+    """
+
+    if not isinstance( custom_body, dict ) and custom_body is not None:
+        raise ValueError( "custom_body must be an instance of dict or None" )
+
+    body = {}
+
+    if getCode is not None:
+        body['getCode'] = lambda self: varInitCode
+
+    if custom_body is not None:
+        body.update( custom_body )
+
+    return createCustomModelClass(
+            className,
+            pg.InitVarSnippet.Custom,
+            paramNames,
+            None,
+            derivedParams,
+            body )

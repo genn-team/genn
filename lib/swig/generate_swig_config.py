@@ -6,6 +6,7 @@ NEURONMODELS = 'newNeuronModels'
 POSTSYNMODELS = 'newPostsynapticModels'
 WUPDATEMODELS = 'newWeightUpdateModels'
 CURRSOURCEMODELS = 'currentSourceModels'
+INITVARSNIPPET = 'initVarSnippet'
 NNMODEL = 'modelSpec'
 MAIN_MODULE = 'pygenn'
 INDIR = 'include/'
@@ -141,16 +142,21 @@ def writeValueMakerFunc( modelName, valueName, numValues, mg ):
     vals = 'vals'
     if numValues == 0:
         vals = ''
+    paramType = 'double'
+    if valueName == 'VarValues':
+        paramType = 'NewModels::VarInit'
 
-    mg.write( 'static {0}::{1}::{2}* make_{2}( const std::vector<double> & {3} )'.format(
+
+    mg.write( 'static {0}::{1}::{2}* make{2}( const std::vector<{3}> & {4} )'.format(
         mg.name,
         modelName,
         valueName,
+        paramType,
         vals
         ) )
     with CppBlockScope( mg ):
         if numValues != 0:
-            mg.write( 'double ' + ', '.join( ['v{0} = vals[{0}]'.format( i )
+            mg.write( paramType + ' ' + ', '.join( ['v{0} = vals[{0}]'.format( i )
                                           for i in range(numValues)] ) + ';\n' )
         mg.write( 'return new {}::{}({});\n'.format(
             mg.name + '::' + modelName,
@@ -158,7 +164,16 @@ def writeValueMakerFunc( modelName, valueName, numValues, mg ):
             ', '.join( [('v' + str( i )) for i in range(numValues)] ) ) )
 
 
-def generateCustomClassDeclaration( nSpace ):
+def generateCustomClassDeclaration( nSpace, initVarSnippet=False ):
+
+    varValuesTypedef = 'typedef CustomValues::VarValues VarValues;'
+    varValuesMaker = '''static CustomValues::VarValues* makeVarValues( const std::vector< NewModels::VarInit > & vals )
+    {
+        return new CustomValues::VarValues( vals );
+    }'''
+    if initVarSnippet:
+        varValuesTypedef = ''
+        varValuesMaker = ''
 
     return Template('''
 namespace ${NAMESPACE}
@@ -177,18 +192,15 @@ public:
         return s_Instance;
     }
     typedef CustomValues::ParamValues ParamValues;
-    typedef CustomValues::VarValues VarValues;
-    static CustomValues::ParamValues* make_ParamValues( const std::vector< double > & vals )
+    ${varValuesTypedef}
+    static CustomValues::ParamValues* makeParamValues( const std::vector< double > & vals )
     {
         return new CustomValues::ParamValues( vals );
     }
-    static CustomValues::VarValues* make_VarValues( const std::vector< double > & vals )
-    {
-        return new CustomValues::VarValues( vals );
-    }
+    ${varValuesMaker}
 };
 } // namespace ${NAMESPACE}
-''').substitute(NAMESPACE=nSpace)
+''').substitute(NAMESPACE=nSpace, varValuesTypedef=varValuesTypedef, varValuesMaker=varValuesMaker)
 
 def generateNumpyApplyArgoutviewArray1D( dataType, varName, sizeName ):
     '''Generates a line which applies numpy ARGOUTVIEW_ARRAY1 typemap to variable. ARGOUTVIEW_ARRAY1 gives access to C array via numpy array.'''
@@ -318,25 +330,30 @@ def generateStlContainersInterface( genn_lib_path ):
 def generateCustomModelDeclImpls( genn_lib_path ):
     '''Generates headers/sources with Custom classes'''
     # generate Custom models
-    models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS]
+    models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET]
     for model in models:
         nSpace = model[:]
         if model.startswith('new'):
             nSpace = nSpace[3:]
         else:
-            nSpace = 'C' + nSpace[1:]
+            nSpace = nSpace[0].upper() + nSpace[1:]
         with SwigModuleGenerator( 'decl',
                 os.path.join( genn_lib_path, SWIGDIR, model + 'Custom.h' ) ) as mg:
             mg.addAutoGenWarning()
             with CppIncludeGuardScope( mg, model.upper() + 'CUSTOM_H'):
                 mg.addCppInclude( '"' + model + '.h"' )
-                mg.addCppInclude( '"customValues.h"' )
-                mg.write(generateCustomClassDeclaration(nSpace))
+                mg.addCppInclude( '"customParamValues.h"' )
+                if model != INITVARSNIPPET:
+                    mg.addCppInclude( '"customVarValues.h"' )
+                mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET))
         with SwigModuleGenerator( 'impl',
                 os.path.join( genn_lib_path, SWIGDIR, model + 'Custom.cc' ) ) as mg:
             mg.addAutoGenWarning()
             mg.addCppInclude( '"' + model + 'Custom.h"' )
-            mg.write('IMPLEMENT_MODEL({}::Custom);\n'.format(nSpace))
+            if model != INITVARSNIPPET:
+                mg.write('IMPLEMENT_MODEL({}::Custom);\n'.format(nSpace))
+            else:
+                mg.write('IMPLEMENT_SNIPPET({}::Custom);\n'.format(nSpace))
 
 
 def generateConfigs( genn_lib_path ):
@@ -350,6 +367,7 @@ def generateConfigs( genn_lib_path ):
             open( os.path.join( genn_lib_path, INDIR + POSTSYNMODELS + ".h" ), 'r' ) as postsynModels_h, \
             open( os.path.join( genn_lib_path, INDIR + WUPDATEMODELS + ".h" ), 'r' ) as wUpdateModels_h, \
             open( os.path.join( genn_lib_path, INDIR + CURRSOURCEMODELS + ".h" ), 'r' ) as currSrcModels_h, \
+            open( os.path.join( genn_lib_path, INDIR + INITVARSNIPPET + ".h" ), 'r' ) as initVarSnippet_h, \
             SwigModuleGenerator( MAIN_MODULE,
                     os.path.join( genn_lib_path, MAIN_MODULE + '.i' ) ) as pygennSmg, \
             SwigModuleGenerator( 'NeuronModels',
@@ -359,9 +377,11 @@ def generateConfigs( genn_lib_path ):
             SwigModuleGenerator( 'WeightUpdateModels',
                     os.path.join( genn_lib_path, SWIGDIR + WUPDATEMODELS + ".i" ) ) as wUpdateSmg, \
             SwigModuleGenerator( 'CurrentSourceModels',
-                    os.path.join( genn_lib_path, SWIGDIR + CURRSOURCEMODELS + ".i" ) ) as currSrcSmg:
+                    os.path.join( genn_lib_path, SWIGDIR + CURRSOURCEMODELS + ".i" ) ) as currSrcSmg, \
+            SwigModuleGenerator( 'InitVarSnippet',
+                    os.path.join( genn_lib_path, SWIGDIR + INITVARSNIPPET + ".i" ) ) as iniVarSmg:
 
-        mgs = [ neuronSmg, postsynSmg, wUpdateSmg, currSrcSmg ]
+        mgs = [ neuronSmg, postsynSmg, wUpdateSmg, currSrcSmg, iniVarSmg ]
 
         pygennSmg.addAutoGenWarning()
         pygennSmg.addSwigModuleHeadline()
@@ -380,13 +400,13 @@ def generateConfigs( genn_lib_path ):
             pygennSmg.addCppInclude( '"currentSource.h"' )
             pygennSmg.addCppInclude( '"' + NNMODEL + '.h"' )
             for header in (NEURONMODELS, POSTSYNMODELS,
-                           WUPDATEMODELS, CURRSOURCEMODELS):
+                           WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET):
                 pygennSmg.addCppInclude( '"' + header + 'Custom.h"' )
 
         pygennSmg.addSwigImport( '"swig/stl_containers.i"' )
 
         for mg, header in zip(mgs, (neuronModels_h, postsynModels_h,
-                                   wUpdateModels_h, currSrcModels_h)):
+                                   wUpdateModels_h, currSrcModels_h, initVarSnippet_h)):
             _, headerFilename = os.path.split( header.name )
             pygennSmg.addSwigImport( '"swig/' + headerFilename.split('.')[0] + '.i"' )
             mg.addAutoGenWarning()
@@ -394,9 +414,16 @@ def generateConfigs( genn_lib_path ):
             with SwigAsIsScope( mg ):
                 mg.addCppInclude( '"' + headerFilename + '"' )
                 mg.addCppInclude( '"' + headerFilename.split('.')[0] + 'Custom.h"' )
-                mg.addCppInclude( '"../swig/customValues.h"' )
-            mg.addSwigIgnore( 'LegacyWrapper' )
-            mg.addSwigImport( '"newModels.i"' )
+                mg.addCppInclude( '"../swig/customParamValues.h"' )
+                if mg.name != 'InitVarSnippet':
+                    mg.addCppInclude( '"initVarSnippetCustom.h"' )
+                    mg.addCppInclude( '"../swig/customVarValues.h"' )
+
+            if mg.name == 'InitVarSnippet':
+                mg.addSwigImport( '"snippet.i"' )
+            else:
+                mg.addSwigIgnore( 'LegacyWrapper' )
+                mg.addSwigImport( '"newModels.i"' )
             mg.addSwigFeatureDirector( mg.name + '::Base' )
             mg.addSwigInclude( '"include/' + headerFilename + '"' )
             mg.addSwigFeatureDirector( mg.name + '::Custom' )
@@ -405,9 +432,12 @@ def generateConfigs( genn_lib_path ):
             mg.models = []
             for line in header.readlines():
                 line = line.lstrip()
-                if line.startswith( 'DECLARE_MODEL(' ):
-                    nspace_model_name, num_params, num_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
-                    if mg.name == 'NeuronModels':
+                if line.startswith( 'DECLARE_' ):
+                    if mg.name == 'InitVarSnippet':
+                        nspace_model_name, num_params = line.split( '(' )[1].split( ')' )[0].split( ',' )
+                    else:
+                        nspace_model_name, num_params, num_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
+                    if mg.name == 'NeuronModels' or mg.name == 'InitVarSnippet':
                         model_name = nspace_model_name.split( '::' )[1]
                     else:
                         model_name = nspace_model_name
@@ -419,7 +449,8 @@ def generateConfigs( genn_lib_path ):
 
                     with SwigExtendScope( mg, mg.name + '::' + model_name ):
                         writeValueMakerFunc( model_name, 'ParamValues', num_params, mg )
-                        writeValueMakerFunc( model_name, 'VarValues', num_vars, mg )
+                        if mg.name != 'InitVarSnippet':
+                            writeValueMakerFunc( model_name, 'VarValues', num_vars, mg )
 
         pygennSmg.addSwigInclude( '"include/neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"include/synapseGroup.h"' )
@@ -453,13 +484,16 @@ def generateConfigs( genn_lib_path ):
                 'NNmodel::addCurrentSource<{}::{}>'.format( mgs[3].name, cs_model ),
                 'addCurrentSource_{}'.format( cs_model ) )
 
+        for ivsnippet in mgs[4].models:
+            pygennSmg.addSwigTemplate(
+                'initVar<{}::{}>'.format( mgs[4].name, ivsnippet ),
+                'initVar_{}'.format( ivsnippet ) )
+
         pygennSmg.write( '\n// wrap necessary functions from generateALL.h\n' )
         pygennSmg.addSwigIgnore( 'generate_model_runner' )
         pygennSmg.addSwigInclude( '"include/generateALL.h"' )
 
-        pygennSmg.write( '\n// wrap variables from global.h. Note that GENN_PREFERENCES is' )
-        pygennSmg.write( '// already covered in the genn_preferences.i interface\n' )
-        pygennSmg.addSwigIgnore( 'GENN_PREFERENCES' )
+        pygennSmg.write( '\n// wrap variables from global.h.' )
         pygennSmg.addSwigIgnore( 'deviceProp' )
         pygennSmg.addSwigInclude( '"include/global.h"' )
         pygennSmg.addSwigIgnore( 'operator&' )
@@ -470,7 +504,6 @@ def generateConfigs( genn_lib_path ):
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( 'void setDefaultVarMode( const VarMode &varMode ) {\n' )
             pygennSmg.write( '  GENN_PREFERENCES::defaultVarMode = varMode;\n}' )
-        pygennSmg.addSwigImport( '"swig/genn_preferences.i"' )
 
 
 if __name__ == '__main__':

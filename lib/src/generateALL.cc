@@ -697,27 +697,19 @@ int init_cuda_mpi()
 #else // SWIG
     return localHostID;
 }
-void finalize_model_runner_generation(NNmodel &model, const string &path, int localHostID) {
-    if (!model.isFinalized()) {
+void finalize_model_runner_generation(NNmodel &model_, const string &path, int localHostID) {
+    auto model = &model_;
 #endif // SWIG
-#ifndef SWIG
     if (!model->isFinalized()) {
-#endif // SWIG
         gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
     }
 #ifndef SWIG
     string path = argv[1];
-
+#endif // SWIG
 # ifndef CPU_ONLY
     chooseDevice(*model, path, localHostID);
 # endif // CPU_ONLY
     generate_model_runner(*model, path, localHostID);
-#else // SWIG
-# ifndef CPU_ONLY
-    chooseDevice(model, path, localHostID);
-# endif // CPU_ONLY
-    generate_model_runner(model, path, localHostID);
-#endif // SWIG
 
 #ifdef MPI_ENABLE
     MPI_Finalize();

@@ -8,7 +8,7 @@
 #include <utility>
 #include <unordered_map>
 #include "sparseProjection.h"
-#include "modelSpec.h"
+#include "utils.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -55,6 +55,7 @@ public:
         // Close model library if loaded successfully
         if(m_Library)
         {
+            exitGeNN();
 #ifdef _WIN32
             FreeLibrary(m_Library);
 #else
@@ -85,6 +86,8 @@ public:
             m_StepTimeCPU = (VoidFunction)getSymbol("stepTimeCPU", true);
             m_StepTimeGPU = (VoidFunction)getSymbol("stepTimeGPU", true);
 
+            m_ExitGeNN = (VoidFunction)getSymbol("exitGeNN");
+
             return true;
         }
         else {
@@ -98,9 +101,12 @@ public:
 
     }
 
+    // Retrive symbols to pull/push from/to the device from shared model
+    // and store them in a map for fast lookup
     void initIO( const std::string &popName,
                  const std::array<bool, 5> &availableDTypes )
     {
+#ifndef CPU_ONLY
       std::array< std::string, 5 > dataTypes = {
         "State",
         "Spikes",
@@ -118,6 +124,7 @@ public:
         }
         else
         {
+          // SynapseGroups and CurrentSources only have states. Throw if attempted to pull/push anything but state
           pullers[i] = []{ throw std::runtime_error("You cannot pull from this population"); };
           pushers[i] = []{ throw std::runtime_error("You cannot push to this population"); };
         }
@@ -126,6 +133,7 @@ public:
       populationsIO.emplace( std::piecewise_construct,
                              std::forward_as_tuple( popName ),
                              std::forward_as_tuple( pullers, pushers ) );
+#endif
     }
 
     void initNeuronPopIO( const std::string &popName )
@@ -173,6 +181,9 @@ public:
         std::get<1>( std::get<1>( tmpPop ) )();
     }
 
+    // Assign symbol from shared model to the provided pointer.
+    // The symbol is supposed to be an array
+    // When used with numpy, wrapper automatically provides varPtr and n1
     template <typename T>
     void assignExternalPointerArray( const std::string &varName,
                                      const int varSize,
@@ -182,6 +193,9 @@ public:
       *n1 = varSize;
     }
     
+    // Assign symbol from shared model to the provided pointer.
+    // The symbol is supposed to be a single value
+    // When used with numpy, wrapper automatically provides varPtr and n1
     template <typename T>
     void assignExternalPointerSingle( const std::string &varName,
                                       T** varPtr, int* n1 )
@@ -222,14 +236,22 @@ public:
                                    const int size )
     {
         auto egp = static_cast<void**>(getSymbol( paramName + popName ));
-        NNmodel::allocateExtraGlobalParam( egp, size * sizeof( scalar ) );
+#ifndef CPU_ONLY
+        CHECK_CUDA_ERRORS( cudaHostAlloc( egp, size * sizeof( scalar ), cudaHostAllocPortable ) );
+#else
+        *egp = malloc( size * sizeof( scalar ) );
+#endif
     }
 
     void freeExtraGlobalParam( const std::string &popName,
                                const std::string &paramName )
     {
-        auto egp = *(static_cast<void**>( getSymbol( paramName + popName )));
-        cudaFreeHost( egp );
+        auto egp = static_cast<void**>( getSymbol( paramName + popName ));
+#ifndef CPU_ONLY
+        CHECK_CUDA_ERRORS( cudaFreeHost( egp ) );
+#else
+        free(*egp);
+#endif
     }
 
     void initialize()
@@ -242,8 +264,8 @@ public:
                               unsigned int* _indInG, int nPre,
                               scalar* _g, int nG )
     {
-        auto C = (SparseProjection*) getSymbol( "C" + popName );
-        auto g = (scalar**) getSymbol( "g" + popName );
+        auto C = static_cast<SparseProjection*>( getSymbol( "C" + popName ) );
+        auto g = static_cast<scalar**>( getSymbol( "g" + popName ) );
         C->connN = nConn;
         for ( int i = 0; i < nConn; ++i )
         {
@@ -274,6 +296,11 @@ public:
         m_StepTimeCPU();
     }
 
+    void exitGeNN()
+    {
+        m_ExitGeNN();
+    }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -289,12 +316,7 @@ private:
     VoidFunction m_InitializeModel;
     VoidFunction m_StepTimeGPU;
     VoidFunction m_StepTimeCPU;
+    VoidFunction m_ExitGeNN;
     
     PopIOMap populationsIO;
 };
-
-//----------------------------------------------------------------------------
-// Typedefines
-//----------------------------------------------------------------------------
-// typedef SharedLibraryModel<float> SharedLibraryModelFloat;
-// typedef SharedLibraryModel<double> SharedLibraryModelDouble;

@@ -1,38 +1,7 @@
-#ifndef CUSTOMVALUES_H
-#define CUSTOMVALUES_H
+#ifndef CUSTOMVARVALUES_H
+#define CUSTOMVARVALUES_H
 namespace CustomValues
 {
-class ParamValues
-{
-public:
-    template<typename T>
-    ParamValues( const std::vector<T> &vals) : m_Values( vals )
-    {
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Gets values as a vector of doubles
-    const std::vector<double> &getValues() const
-    {
-        return m_Values;
-    }
-
-    //----------------------------------------------------------------------------
-    // Operators
-    //----------------------------------------------------------------------------
-    double operator[](size_t pos) const
-    {
-        return m_Values[pos];
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    std::vector<double> m_Values;
-};
 //------------------------------------------------------------------------
 // VarValues
 //------------------------------------------------------------------------
@@ -49,7 +18,7 @@ public:
     // number of parameters e.g. std::array<VarInit, 4> can be initialized with <= 4 elements
     template<typename T>
     VarValues( const std::vector<T> &initialisers ) :
-      m_Initialisers(InitialiserArray( initialisers.begin(), initialisers.end() )){}
+      m_Initialisers(initialisers.begin(), initialisers.end()){}
 
     //----------------------------------------------------------------------------
     // Public API
@@ -75,4 +44,4 @@ private:
     InitialiserArray m_Initialisers;
 };
 }
-#endif // CUSTOMVALUES_H
+#endif // CUSTOMVARVALUES_H
