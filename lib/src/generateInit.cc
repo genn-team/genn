@@ -412,11 +412,10 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
             {
                 os << "// synapse group " << s.first << std::endl;
 
-                const unsigned int numSynapses = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons();
-                PaddedSizeScope p(os, numSynapses, initBlkSz, startThread);
+                PaddedSizeScope p(os, s.second.getTrgNeuronGroup()->getNumNeurons(), initBlkSz, startThread);
 
                 os << "// only do this for existing synapses" << std::endl;
-                os << "if (lid < " << numSynapses << ")";
+                os << "if (lid < " << s.second.getTrgNeuronGroup()->getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
 
@@ -427,22 +426,29 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
                     }
 
-                    // Write loop through WUM variables
-                    auto wuVars = s.second.getWUModel()->getVars();
-                    for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                        const auto &varInit = s.second.getWUVarInitialisers()[k];
-                        const VarMode varMode = s.second.getWUVarMode(k);
+                    // Loop through rows of matrix
+                    os << "unsigned int idx = lid;" << std::endl;
+                    os << "for(unsigned int i = 0; i < " << s.second.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
 
-                        // If this variable should be initialised on the device and has any initialisation code
-                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                            CodeStream::Scope b(os);
-                            const std::string preIdx = "lid / " + std::to_string(s.second.getTrgNeuronGroup()->getNumNeurons());
-                            const std::string postIdx = "lid % " + std::to_string(s.second.getTrgNeuronGroup()->getNumNeurons());
-                            
-                            os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[lid]",
-                                                                                  cudaFunctions, preIdx, postIdx,
-                                                                                  model.getPrecision(), "&initRNG") << std::endl;
+                        // Write loop through WUM variables
+                        auto wuVars = s.second.getWUModel()->getVars();
+                        for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                            const auto &varInit = s.second.getWUVarInitialisers()[k];
+                            const VarMode varMode = s.second.getWUVarMode(k);
+
+                            // If this variable should be initialised on the device and has any initialisation code
+                            if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                CodeStream::Scope b(os);
+                                os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                                    cudaFunctions, "i", "lid",
+                                                                                    model.getPrecision(), "&initRNG") << std::endl;
+                            }
                         }
+
+                        // Advance to next row
+                        os << "idx += " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
                 }
             }
