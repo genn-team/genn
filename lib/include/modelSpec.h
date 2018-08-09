@@ -27,6 +27,7 @@ Part of the code generation and generated code sections.
 
 #include "neuronGroup.h"
 #include "synapseGroup.h"
+#include "currentSource.h"
 #include "utils.h"
 
 #include <map>
@@ -141,6 +142,12 @@ public:
 
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
+
+    //! Return number of synapse groups which require a presynaptic reset kernel to be run
+    unsigned int getNumPreSynapseResetRequiredGroups() const;
+
+    //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
+    bool isPreSynapseResetRequired() const{ return getNumPreSynapseResetRequiredGroups() > 0; }
 
     //! Does this model require device initialisation kernel
     /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
@@ -484,6 +491,96 @@ public:
     void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
     void setSynapseClusterIndex(const string &synapseGroup, int hostID, int deviceID); //!< Function for setting which host and which device a synapse group will be simulated on
 
+
+    // PUBLIC CURRENT SOURCE FUNCTIONS
+    //================================
+
+    //! Get std::map containing local named CurrentSource objects in model
+    const map<string, CurrentSource> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
+
+    //! Get std::map containing remote named CurrentSource objects in model
+    const map<string, CurrentSource> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
+
+    //! Gets std::map containing names and types of each parameter that should be passed through to the current source kernel
+    const map<string, string> &getCurrentSourceKernelParameters() const{ return currentSourceKernelParameters; }
+
+    //! Find a current source by name
+    const CurrentSource *findCurrentSource(const std::string &name) const;
+
+    //! Find a current source by name
+    CurrentSource *findCurrentSource(const std::string &name);
+
+    //! Adds a new current source to the model using a current source model managed by the user
+    /*! \tparam CurrentSourceModel type of current source model (derived from CurrentSourceModels::Base).
+        \param name string containing unique name of current source.
+        \param model current source model to use for current source.
+        \param targetNeuronGroupName string name of the target neuron group
+        \param paramValues parameters for model wrapped in CurrentSourceModel::ParamValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSource::VarValues object.
+        \return pointer to newly created CurrentSource */
+    template<typename CurrentSourceModel>
+    CurrentSource *addCurrentSource(const string &currentSourceName, const CurrentSourceModel *model,
+                                    const string &targetNeuronGroupName,
+                                    const typename CurrentSourceModel::ParamValues &paramValues,
+                                    const typename CurrentSourceModel::VarValues &varInitialisers)
+    {
+        if (!GeNNReady) {
+            gennError("You need to call initGeNN first.");
+        }
+        if (final) {
+            gennError("Trying to add a current source to a finalized model.");
+        }
+        auto targetGroup = findNeuronGroup(targetNeuronGroupName);
+
+#ifdef MPI_ENABLE
+        // Get host ID of target neuron group
+        const int hostID = targetGroup->getClusterHostID();
+
+        // Determine the host ID
+        int mpiHostID = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+        // Pick map to add group to appropriately
+        auto &groupMap = (hostID == mpiHostID) ? m_LocalCurrentSources : m_RemoteCurrentSources;
+#else
+        // If MPI is disabled always add to local current sources
+        auto &groupMap = m_LocalCurrentSources;
+#endif
+
+        // Add current source to map
+        auto result = groupMap.emplace(std::piecewise_construct,
+            std::forward_as_tuple(currentSourceName),
+            std::forward_as_tuple(currentSourceName, model,
+                                  paramValues.getValues(), varInitialisers.getInitialisers()));
+
+        if(!result.second)
+        {
+            gennError("Cannot add a current source with duplicate name:" + currentSourceName);
+            return NULL;
+        }
+        else
+        {
+            targetGroup->injectCurrent(&result.first->second);
+            return &result.first->second;
+        }
+    }
+
+    //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
+    /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
+        \param currentSourceName string containing unique name of current source.
+        \param targetNeuronGroupName string name of the target neuron group
+        \param paramValues parameters for model wrapped in CurrentSourceModel::ParamValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSourceModel::VarValues object.
+        \return pointer to newly created CurrentSource */
+    template<typename CurrentSourceModel>
+    CurrentSource *addCurrentSource(const string &currentSourceName, const string &targetNeuronGroupName,
+                                    const typename CurrentSourceModel::ParamValues &paramValues,
+                                    const typename CurrentSourceModel::VarValues &varInitialisers)
+    {
+        return addCurrentSource<CurrentSourceModel>(currentSourceName, CurrentSourceModel::getInstance(),
+                                targetNeuronGroupName, paramValues, varInitialisers);
+    }
+
 private:
     //--------------------------------------------------------------------------
     // Private members
@@ -500,6 +597,12 @@ private:
     //!< Named remote synapse groups
     map<string, SynapseGroup> m_RemoteSynapseGroups;
 
+    //!< Named local current sources
+    map<string, CurrentSource> m_LocalCurrentSources;
+
+    //!< Named remote current sources
+    map<string, CurrentSource> m_RemoteCurrentSources;
+
     //!< Mapping  of synapse group names which have postsynaptic learning to their start and end padded indices
     //!< **THINK** is this the right container?
     map<string, std::pair<unsigned int, unsigned int>> m_SynapsePostLearnGroups;
@@ -513,6 +616,7 @@ private:
     map<string, string> synapseKernelParameters;
     map<string, string> simLearnPostKernelParameters;
     map<string, string> synapseDynamicsKernelParameters;
+    map<string, string> currentSourceKernelParameters;
 
      // Model members
     string name;                //!< Name of the neuronal newtwork model

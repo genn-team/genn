@@ -77,7 +77,7 @@ void StandardGeneratedSections::neuronSpikeEventTest(
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -95,17 +95,55 @@ void StandardGeneratedSections::neuronSpikeEventTest(
                                                          functions, ftype, rng);
 
         // Open scope for spike-like event test
-        os << CodeStream::OB(31);
+        {
+            CodeStream::Scope b(os);
 
-        // Use synapse population support code namespace if required
-        if (!spkEventCond.second.empty()) {
-            os << " using namespace " << spkEventCond.second << ";" << std::endl;
+            // Use synapse population support code namespace if required
+            if (!spkEventCond.second.empty()) {
+                os << " using namespace " << spkEventCond.second << ";" << std::endl;
+            }
+
+            // Combine this event threshold test with
+            os << "spikeLikeEvent |= (" << eCode << ");" << std::endl;
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void StandardGeneratedSections::neuronCurrentInjection(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Loop through all of neuron group's current sources
+    for (const auto *cs : ng.getCurrentSources())
+    {
+        os << "// current source " << cs->getName() << std::endl;
+        CodeStream::Scope b(os);
+
+        const auto* csm = cs->getCurrentSourceModel();
+        VarNameIterCtx csVars(csm->getVars());
+        DerivedParamNameIterCtx csDerivedParams(csm->getDerivedParams());
+        ExtraGlobalParamNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
+
+        // Read current source variables into registers
+        for(const auto &v : csVars.container) {
+            os <<  v.second << " l" << v.first << " = " << devPrefix << v.first << cs->getName() << "[" << localID << "];" << std::endl;
         }
 
-        // Combine this event threshold test with
-        os << "spikeLikeEvent |= (" << eCode << ");" << std::endl;
+        string iCode = csm->getInjectionCode();
+        substitute(iCode, "$(id)", localID);
+        StandardSubstitutions::currentSourceInjection(iCode, cs,
+                            csVars, csDerivedParams, csExtraGlobalParams,
+                            functions, ftype, rng);
+        os << iCode << std::endl;
 
-        // Close scope for spike-like event test
-        os << CodeStream::CB(31);
+        // Write updated variables back to global memory
+        for(const auto &v : csVars.container) {
+             os << devPrefix << v.first << cs->getName() << "[" << localID << "] = l" << v.first << ";" << std::endl;
+        }
     }
 }

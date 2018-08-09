@@ -4,6 +4,9 @@
 #include <iostream>
 #include <regex>
 
+// GeNN includes
+#include "codeGenUtils.h"
+
 // SpineML generator includes
 #include "objectHandler.h"
 
@@ -178,64 +181,11 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
     return std::make_pair(multipleRegimes, initialRegime->second);
 }
 //----------------------------------------------------------------------------
-bool SpineMLGenerator::replaceVariableNames(std::string &code, const std::string &variableName,
-                                            const std::string &replaceText)
-{
-    // Build a regex to match variable name with at least one
-    // character that can't be in a variable name on either side (or an end/beginning of string)
-    // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
-    std::regex regex("(^|[^a-zA-Z_])" + variableName + "(?=$|[^a-zA-Z_])");
-
-    // Create format string to replace in text
-    // **NOTE** preceding character is captured as C++ regex doesn't support lookbehind so this needs to be replaced in
-    const std::string format = "$1" + replaceText;
-
-    // **NOTE** the following code performs the same function as std::regex_replace 
-    // but has a return value indicating whether any replacements are made
-    // see http://en.cppreference.com/w/cpp/regex/regex_replace
-
-    // Create regex iterator to iterate over matches found in code
-    std::sregex_iterator matchesBegin(code.cbegin(), code.cend(), regex);
-    std::sregex_iterator matchesEnd;
-
-    // If there are no matches, leave code unmodified and return false
-    if(matchesBegin == matchesEnd) {
-        return false;
-    }
-    // Otherwise
-    else {
-        // Loop through matches
-        std::string outputCode;
-        for(std::sregex_iterator m = matchesBegin;;) {
-            // Copy the non-matched subsequence (m->prefix()) onto output
-            std::copy(m->prefix().first, m->prefix().second, std::back_inserter(outputCode));
-
-            // Then replaces the matched subsequence with the formatted replacement string 
-            m->format(std::back_inserter(outputCode), format);
-
-            // If there are no subsequent matches
-            if(std::next(m) == matchesEnd) {
-                // Copy the remaining non-matched characters onto output
-                std::copy(m->suffix().first, m->suffix().second, std::back_inserter(outputCode)); 
-                break;
-            }
-            // Otherwise go onto next match
-            else {
-                m++;
-            }
-        }
-
-        // Set code reference to newly processed version and return true
-        code = outputCode;
-        return true;
-    }
-}
-//----------------------------------------------------------------------------
 void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std::string &variableName,
                                                    const std::string &replaceVariableName)
 {
     // Replace variable name with replacement variable name, within GeNN $(XXXX) wrapper
-    replaceVariableNames(code, variableName, "$(" + replaceVariableName + ")");
+    regexVarSubstitute(code, variableName, "$(" + replaceVariableName + ")");
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &variableName)
@@ -369,7 +319,7 @@ bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::stri
     // Replace all alias names with their code string
     bool aliasesExpanded = false;
     for(const auto &alias : aliases) {
-        aliasesExpanded |= replaceVariableNames(code, alias.first, alias.second);
+        aliasesExpanded |= regexVarSubstitute(code, alias.first, alias.second);
     }
     return aliasesExpanded;
 }

@@ -16,11 +16,12 @@ http://genn-team.github.io/genn/
 
 1. Download and unpack GeNN.zip to a convenient location, then download
     and install the Microsoft Visual C++ compiler and IDE from:
-    http://www.visualstudio.com/en-us/downloads. Be sure to click custom
-    install and select all the Visual C++ tools when installing Visual Studio.
-    Then download and install a compatible version of the Nvidia CUDA toolkit
-    from: https://developer.nvidia.com/cuda-downloads. Note that the latest
-    version of Visual Studio is not necessarily compatible with the latest
+    http://www.visualstudio.com/en-us/downloads. Be sure to select the 'Desktop 
+    development with C++' configuration' and the 'Windows 8.1 SDK' and 'Windows 
+    Universal CRT' individual components. If your machine has an NVIDIA GPU, 
+    then download and install a compatible version of the Nvidia CUDA toolkit 
+    from: https://developer.nvidia.com/cuda-downloads. Note that the latest 
+    version of Visual Studio is not necessarily compatible with the latest 
     version of the CUDA toolkit.
 
 2. Ensure that the `CUDA_PATH` environment variable is defined, and
@@ -39,7 +40,7 @@ http://genn-team.github.io/genn/
 
 5. To access a developer command prompt, use the shortcut link in:
     start menu -\> all programs -\> Microsoft Visual Studio
-    -\> Visual Studio Tools -\> Native Tools Command Prompt
+    -\> Visual Studio Tools -\> x64 Native Tools Command Prompt
     which will launch an instance of cmd.exe with a build environment
     already set up. Alternatively, from any cmd console window, run the
     vscvsrsall.bat script under the Visual C++ directory before

@@ -39,10 +39,12 @@ namespace GENN_PREFERENCES {
     bool showPtxInfo = false; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
     bool buildSharedLibrary = false;   //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
     bool autoInitSparseVars = false; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
+    bool mergePostsynapticModels = false; //!< Should compatible postsynaptic models and dendritic delay buffers be merged? This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved
     VarMode defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_HOST;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
     VarMode defaultSparseConnectivityMode = VarMode::LOC_HOST_DEVICE_INIT_HOST;   //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
     double asGoodAsZero = 1e-19; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     int defaultDevice= 0; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
+    unsigned int preSynapseResetBlockSize = 32;
     unsigned int neuronBlockSize= 32;
     unsigned int synapseBlockSize= 32;
     unsigned int learningBlockSize= 32;
@@ -56,6 +58,7 @@ namespace GENN_PREFERENCES {
 };
 
 // These will eventually go inside e.g. some HardwareConfig class. Putting them here meanwhile.
+unsigned int preSynapseResetBlkSize; // Global variable containing the GPU block size for the reset kernel run before the synapse kernel
 unsigned int neuronBlkSz; //!< Global variable containing the GPU block size for the neuron kernel
 unsigned int synapseBlkSz; //!< Global variable containing the GPU block size for the synapse kernel
 unsigned int learnBlkSz; //!< Global variable containing the GPU block size for the learn kernel

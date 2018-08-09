@@ -190,8 +190,7 @@ public:
     \c sim code is:
 
     \code
-    " $(addtoinSyn) = $(g);\n\
-    $(updatelinsyn);\n"
+    "$(addToInSyn, $(g));\n"
     \endcode*/
 class StaticPulse : public Base
 {
@@ -200,9 +199,33 @@ public:
 
     SET_VARS({{"g", "scalar"}});
 
-    SET_SIM_CODE(
-        "$(addtoinSyn) = $(g);\n"
-        "$(updatelinsyn);\n");
+    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+};
+
+//----------------------------------------------------------------------------
+// WeightUpdateModels::StaticPulseDendriticDelay
+//----------------------------------------------------------------------------
+//! Pulse-coupled, static synapse with heterogenous dendritic delays
+/*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
+    the synaptic conductances are simply added to the postsynaptic input variable.
+    The model has 2 variables:
+    - g - conductance of scalar type
+    - d - dendritic delay in timesteps
+    and no other parameters.
+
+    \c sim code is:
+
+    \code
+    " $(addToInSynDelay, $(g), $(d));\n\
+    \endcode*/
+class StaticPulseDendriticDelay : public Base
+{
+public:
+    DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2);
+
+    SET_VARS({{"g", "scalar"},{"d", "uint8_t"}});
+
+    SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
 };
 
 //----------------------------------------------------------------------------
@@ -221,8 +244,7 @@ public:
 
     \c event code is:
     \code
-    $(addtoinSyn) = $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope));
-    $(updatelinsyn);
+    $(addToInSyn, $(g)* tanh(($(V_pre)-($(Epre)))*DT*2/$(Vslope)));
     \endcode
 
     \c event threshold condition code is:
@@ -240,10 +262,7 @@ public:
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar"}});
 
-    SET_EVENT_CODE(
-        "$(addtoinSyn) = $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT;\n"
-        "if ($(addtoinSyn) < 0) $(addtoinSyn) = 0.0;\n"
-        "$(updatelinsyn);\n");
+    SET_EVENT_CODE("$(addToInSyn, max(0.0, $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT));\n");
 
     SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > $(Epre)");
 };
@@ -315,8 +334,7 @@ public:
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
-        "$(addtoinSyn) = $(g);"
-        "$(updatelinsyn); \n"
+        "$(addToInSyn, $(g));\n"
         "scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n"
         "scalar dg = 0;\n"
         "if (dt > $(lim0))  \n"

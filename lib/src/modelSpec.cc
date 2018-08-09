@@ -19,6 +19,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <numeric>
+#include <typeinfo>
 
 // Standard C includes
 #include <cstdio>
@@ -109,6 +110,12 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
+unsigned int NNmodel::getNumPreSynapseResetRequiredGroups() const
+{
+    return std::count_if(getLocalSynapseGroups().cbegin(), getLocalSynapseGroups().cend(),
+                         [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
+}
+
 bool NNmodel::isDeviceInitRequired(int localHostID) const
 {
     // If device RNG is required, device init is required to initialise it
@@ -116,13 +123,9 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
         return true;
     }
 
-    // If any local neuron groups require a sim RNG or device initialisation
-    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
+    // If any local neuron groups require device initialisation, return true
     if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
-        [](const NNmodel::NeuronGroupValueType &n)
-        {
-            return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
-        }))
+        [](const NNmodel::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
     {
         return true;
     }
@@ -137,15 +140,10 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
         return true;
     }
 
-    // Check whether any synapse groups require initialisation in this kernel
-    // **NOTE** this only includes dense matrices
+
+    // If any local synapse groups require device initialisation, return true
     if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
-                    (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                    s.second.isWUDeviceVarInitRequired());
-        }))
+        [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
     {
         return true;
     }
@@ -160,14 +158,9 @@ bool NNmodel::isDeviceSparseInitRequired() const
         return false;
     }
 
-    // Return true if any of the synapse groups have sparse connectivity which requires device initialiation
+    // Return true if any of the synapse groups require device sparse initialisation
     return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE || s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) &&
-                (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                s.second.isWUDeviceVarInitRequired());
-        });
+        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
 }
 
 bool NNmodel::isHostRNGRequired() const
@@ -725,6 +718,52 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     }
 }
 
+//--------------------------------------------------------------------------
+/*! \brief This function attempts to find an existing current source */
+//--------------------------------------------------------------------------
+
+const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
+{
+    // If a matching local current source is found, return it
+    auto localCurrentSource = m_LocalCurrentSources.find(name);
+    if(localCurrentSource != m_LocalCurrentSources.cend()) {
+        return &localCurrentSource->second;
+    }
+
+    // Otherwise, if a matching remote current source is found, return it
+    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
+    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
+        return &remoteCurrentSource->second;
+
+    }
+    // Otherwise, error
+    else {
+        gennError("current source " + name + " not found, aborting ...");
+        return NULL;
+    }
+}
+
+CurrentSource *NNmodel::findCurrentSource(const std::string &name)
+{
+    // If a matching local current source is found, return it
+    auto localCurrentSource = m_LocalCurrentSources.find(name);
+    if(localCurrentSource != m_LocalCurrentSources.cend()) {
+        return &localCurrentSource->second;
+    }
+
+    // Otherwise, if a matching remote current source is found, return it
+    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
+    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
+        return &remoteCurrentSource->second;
+
+    }
+    // Otherwise, error
+    else {
+        gennError("current source " + name + " not found, aborting ...");
+        return NULL;
+    }
+}
+
 
 //--------------------------------------------------------------------------
 /*! \brief This function defines the maximum number of connections for a neuron in the population
@@ -1024,6 +1063,47 @@ void NNmodel::finalize()
         s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
         s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
+
+        // If this synapse group has either ragged or bitmask connectivity which is initialised
+        // using a connectivity snippet AND has individual synaptic variables
+        if(((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+            || (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+            && !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()
+            && s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
+        {
+            // Loop through variables and check that they are initialised in the same place as the sparse connectivity
+            auto wuVars = s.second.getWUModel()->getVars();
+            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                if((s.second.getSparseConnectivityVarMode() & VarInit::HOST) != (s.second.getWUVarMode(k) & VarInit::HOST)) {
+                    gennError("Weight update mode variables must be initialised in same place as sparse connectivity variable '" + wuVars[k].first + "' in population '" + s.first + "' is not");
+                }
+            }
+        }
+    }
+
+    // CURRENT SOURCES
+    for(auto &cs : m_LocalCurrentSources) {
+        // Initialize derived parameters
+        cs.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        cs.second.addExtraGlobalParams(currentSourceKernelParameters);
+    }
+
+    // Merge incoming postsynaptic models
+    for(auto &n : m_LocalNeuronGroups) {
+        if(!n.second.getInSyn().empty()) {
+            n.second.mergeIncomingPSM();
+        }
+    }
+
+    // CURRENT SOURCES
+    for(auto &cs : m_LocalCurrentSources) {
+        // Initialize derived parameters
+        cs.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
 
     setPopulationSums();

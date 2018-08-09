@@ -13,6 +13,18 @@ public:
 IMPLEMENT_MODEL(Neuron);
 
 //----------------------------------------------------------------------------
+// CurrentSrc
+//----------------------------------------------------------------------------
+class CurrentSrc : public CurrentSourceModels::Base
+{
+public:
+    DECLARE_MODEL(CurrentSrc, 0, 4);
+
+    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}});
+};
+IMPLEMENT_MODEL(CurrentSrc);
+
+//----------------------------------------------------------------------------
 // PostsynapticModel
 //----------------------------------------------------------------------------
 class PostsynapticModel : public PostsynapticModels::Base
@@ -65,6 +77,13 @@ void modelDefinition(NNmodel &model)
         initVar<InitVarSnippet::Normal>(normalParams),
         initVar<InitVarSnippet::Exponential>(exponentialParams));
 
+    // Current source parameters
+    CurrentSrc::VarValues currentSourceInit(
+        13.0,
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams),
+        initVar<InitVarSnippet::Exponential>(exponentialParams));
+
     // PostsynapticModel parameters
     PostsynapticModel::VarValues postsynapticInit(
         13.0,
@@ -82,12 +101,19 @@ void modelDefinition(NNmodel &model)
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 1, {}, {});
     model.addNeuronPopulation<Neuron>("Pop", 10000, {}, neuronInit);
+    model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
 #ifndef CPU_ONLY
     auto *popGPU = model.addNeuronPopulation<Neuron>("PopGPU", 10000, {}, neuronInit);
     popGPU->setVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     popGPU->setVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     popGPU->setVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     popGPU->setVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+
+    auto *currSourceGPU = model.addCurrentSource<CurrentSrc>("CurrSourceGPU", "PopGPU", {}, neuronInit);
+    currSourceGPU->setVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    currSourceGPU->setVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    currSourceGPU->setVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    currSourceGPU->setVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
 #endif
 
     // Dense synapse populations

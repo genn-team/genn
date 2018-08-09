@@ -11,6 +11,8 @@
 #include "newNeuronModels.h"
 #include "variableMode.h"
 
+class CurrentSource;
+
 //------------------------------------------------------------------------
 // NeuronGroup
 //------------------------------------------------------------------------
@@ -96,6 +98,12 @@ public:
     void initDerivedParams(double dt);
     void calcSizes(unsigned int blockSize, unsigned int &idStart, unsigned int &paddedIDStart);
 
+    //! Merge incoming postsynaptic models
+    void mergeIncomingPSM();
+
+    //! add input current source
+    void injectCurrent(CurrentSource *source);
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -115,9 +123,13 @@ public:
 
     //! Gets pointers to all synapse groups which provide input to this neuron group
     const std::vector<SynapseGroup*> &getInSyn() const{ return m_InSyn; }
+    const std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> &getMergedInSyn() const{ return m_MergedInSyn; }
 
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
+
+    //! Gets pointers to all current sources which provide input to this neuron group
+    const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
 
     int getClusterHostID() const{ return m_HostID; }
 
@@ -158,29 +170,32 @@ public:
     //! Get variable mode used by neuron model state variable
     VarMode getVarMode(size_t index) const{ return m_VarMode[index]; }
 
-    //! Do any of the spike event conditions tested by this neuron require specified parameter
+    //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
 
-    //! Does this neuron group require any initialisation code to be run
+    //! Does this neuron group require any initialisation code to be run?
     bool isInitCodeRequired() const;
 
-    //! Does this neuron group require an RNG to simulate
+    //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
-    //! Does this neuron group require an RNG for it's init code
+    //! Does this neuron group require an RNG for it's init code?
     bool isInitRNGRequired(VarInit varInitMode) const;
 
-    //! Is device var init code required for any variables in this neuron group
+    //! Is device var init code required for any variables in this neuron group?
     bool isDeviceVarInitRequired() const;
+
+    //! Is any form of device initialisation required?
+    bool isDeviceInitRequired() const;
 
     //! Can this neuron group run on the CPU?
     /*! If we are running in CPU_ONLY mode this is always true,
         but some GPU functionality will prevent models being run on both CPU and GPU. */
     bool canRunOnCPU() const;
 
-    //! Does this neuron group have outgoing connections specified host id
+    //! Does this neuron group have outgoing connections specified host id?
     bool hasOutputToHost(int targetHostID) const;
 
     // **THINK** do this really belong here - it is very code-generation specific
@@ -202,12 +217,14 @@ private:
     std::vector<NewModels::VarInit> m_VarInitialisers;
     std::vector<SynapseGroup*> m_InSyn;
     std::vector<SynapseGroup*> m_OutSyn;
+    std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> m_MergedInSyn;
     bool m_SpikeTimeRequired;
     bool m_TrueSpikeRequired;
     bool m_SpikeEventRequired;
     bool m_QueueRequired;
     std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
+    std::vector<CurrentSource*> m_CurrentSources;
 
     //!< Vector specifying which variables require queues
     bool m_AnyVarQueuesRequired;

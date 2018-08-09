@@ -46,6 +46,11 @@ public:
     void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
+    void setPSModelMergeTarget(const std::string &targetName)
+    {
+        m_PSModelTargetName = targetName;
+    }
+
     //!< Function to enable the use of zero-copied memory for a particular weight update model state variable (deprecated use SynapseGroup::setWUVarMode):
     /*! May improve IO performance at the expense of kernel performance */
     void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
@@ -76,6 +81,10 @@ public:
     /*! This is ignored for CPU simulations */
     void setSparseConnectivityVarMode(VarMode mode){ m_SparseConnectivityVarMode = mode; }
 
+    //! Set variable mode used for this synapse group's dendritic delay buffers
+    /*! This is ignored for CPU simulations */
+    void setDendriticDelayVarMode(VarMode mode) { m_DendriticDelayVarMode = mode; }
+
     //! Sets the maximum number of target neurons any source neurons can connect to
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
@@ -83,6 +92,9 @@ public:
     //! Sets the maximum number of source neurons any target neuron can connect to
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation */
     void setMaxSourceConnections(unsigned int maxPostConnections);
+    
+    //! Sets the maximum dendritic delay for synapses in this synapse group
+    void setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelay);
     
     //! Set how CUDA implementation is parallelised
     /*! with a thread per target neuron (default) or a thread per source spike */
@@ -102,6 +114,7 @@ public:
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
+    unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
     //! Get variable mode used for variables used to combine input from this synapse group
@@ -109,6 +122,9 @@ public:
 
     //! Get variable mode used for sparse connectivity
     VarMode getSparseConnectivityVarMode() const{ return m_SparseConnectivityVarMode; }
+
+    //! Get variable mode used for this synapse group's dendritic delay buffers
+    VarMode getDendriticDelayVarMode() const{ return m_DendriticDelayVarMode; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
@@ -140,7 +156,10 @@ public:
     const std::vector<double> getPSConstInitVals() const;
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
-    
+
+    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
+    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+
     bool isZeroCopyEnabled() const;
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
@@ -176,18 +195,21 @@ public:
 
     // **THINK** do these really belong here - they are very code-generation specific
     std::string getOffsetPre() const;
-    std::string getOffsetPost(const std::string &devPrefix) const;
+    std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
-    //! Does this synapse group require an RNG for it's postsynaptic init code
+    //! Does this synapse group require dendritic delay?
+    bool isDendriticDelayRequired() const;
+
+    //! Does this synapse group require an RNG for it's postsynaptic init code?
     bool isPSInitRNGRequired(VarInit varInitMode) const;
 
-    //! Does this synapse group require an RNG for it's weight update init code
+    //! Does this synapse group require an RNG for it's weight update init code?
     bool isWUInitRNGRequired(VarInit varInitMode) const;
 
-    //! Is device var init code required for any variables in this synapse group's postsynaptic model
+    //! Is device var init code required for any variables in this synapse group's postsynaptic model?
     bool isPSDeviceVarInitRequired() const;
 
-    //! Is device var init code required for any variables in this synapse group's weight update model
+    //! Is device var init code required for any variables in this synapse group's weight update model?
     bool isWUDeviceVarInitRequired() const;
 
     //! Is device var init code required for any presynaptic variables in this synapse group's weight update model
@@ -195,6 +217,15 @@ public:
 
     //! Is device var init code required for any postsynaptic variables in this synapse group's weight update model
     bool isWUDevicePostVarInitRequired() const;
+
+    //! Is device sparse connectivity initialisation code required for this synapse group?
+    bool isDeviceSparseConnectivityInitRequired() const;
+
+    //! Is any form of device initialisation required?
+    bool isDeviceInitRequired() const;
+
+    //! Is any form of sparse device initialisation required?
+    bool isDeviceSparseInitRequired() const;
 
     //! Can this synapse group run on the CPU?
     /*! If we are running in CPU_ONLY mode this is always true,
@@ -233,6 +264,9 @@ private:
     //!< Maximum number of source neurons any target neuron can connect to
     unsigned int m_MaxSourceConnections;
 
+    //!< Maximum dendritic delay timesteps supported for synapses in this population
+    unsigned int m_MaxDendriticDelayTimesteps;
+    
     //!< Connectivity type of synapses
     SynapseMatrixType m_MatrixType;
 
@@ -253,6 +287,9 @@ private:
 
     //!< Variable mode used for variables used to combine input from this synapse group
     VarMode m_InSynVarMode;
+
+    //!< Variable mode used for this synapse group's dendritic delay buffers
+    VarMode m_DendriticDelayVarMode;
 
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
@@ -301,4 +338,8 @@ private:
 
     //!< Variable mode used for sparse connectivity
     VarMode m_SparseConnectivityVarMode;
+
+    //! Name of the synapse group in which postsynaptic model is located
+    /*! This may not be the name of this group if it has been merged*/
+    std::string m_PSModelTargetName;
 };
