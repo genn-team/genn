@@ -662,7 +662,7 @@ void postNeuronSubstitutionsInSynapticCode(
     const string &devPrefix) //!< device prefix, "dd_" for GPU, nothing for CPU
 {
     // postsynaptic neuron variables, parameters, and global parameters
-    neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), sg->getOffsetPost(devPrefix), postIdx, "_post", devPrefix);
+    neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), sg->getTrgNeuronGroup()->getQueueOffset(devPrefix), postIdx, "_post", devPrefix);
 }
 
 void neuron_substitutions_in_synaptic_code(

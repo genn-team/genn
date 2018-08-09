@@ -1007,10 +1007,6 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                 }
 
-                                const std::string postIdx = "dd_ind" + s->first + "[" + localID + "]";
-                                substitute(SDcode, "$(updatelinsyn)", getFloatAtomicAdd(model.getPrecision()) + "(&$(inSyn), $(addtoinSyn))");
-                                substitute(SDcode, "$(inSyn)", "dd_inSyn" + s->first + "[" + postIdx + "]");
-
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision());
                                 os << SDcode << std::endl;
