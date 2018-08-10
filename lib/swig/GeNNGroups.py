@@ -44,7 +44,7 @@ class Variable(object):
         """
         self.initRequired = False
         if initVar is not None:
-            setRandomInit( initVar, values )
+            self.setInitVar( initVar, values )
         else:
             try:
                 iter( values )
@@ -134,7 +134,7 @@ class ModelPreprocessor(object):
         Return:
         native model's VarValues
         """
-        varVals = [v.initVal for v in varSpace.values()]
+        varVals = [varSpace[vnt[0]].initVal for vnt in model.getVars()]
 
         return model.makeVarValues( pg.NewModels.VarInitVector( varVals ) )
 

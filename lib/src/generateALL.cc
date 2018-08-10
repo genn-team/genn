@@ -642,7 +642,6 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 */
 //--------------------------------------------------------------------------
 #ifndef GENERATOR_MAIN_HANDLED
-#ifndef SWIG
 #include MODEL
 int main(int argc,     //!< number of arguments; expected to be 2
          char *argv[]  //!< Arguments; expected to contain the target directory for code generation.
@@ -658,11 +657,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
         cout << argv[i] << " ";
     }
     cout << endl;
-#else // SWIG
-int init_cuda_mpi()
-{
-    GENN_PREFERENCES::buildSharedLibrary = true;
-#endif // SWIG
+
 #ifdef DEBUG
     GENN_PREFERENCES::optimizeCode = false;
     GENN_PREFERENCES::debugCode = true;
@@ -685,38 +680,27 @@ int init_cuda_mpi()
     cout << "MPI initialized - host ID:" << localHostID << endl;
 #endif
 
-#ifndef SWIG
-
     NNmodel *model = new NNmodel();
 #ifdef DT
     model->setDT(DT);
     cout << "Setting integration step size from global DT macro: " << DT << endl;
 #endif // DT
     modelDefinition(*model);
-
-#else // SWIG
-    return localHostID;
-}
-void finalize_model_runner_generation(NNmodel &model_, const string &path, int localHostID) {
-    auto model = &model_;
-#endif // SWIG
     if (!model->isFinalized()) {
         gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
     }
-#ifndef SWIG
+
     string path = argv[1];
-#endif // SWIG
-# ifndef CPU_ONLY
+#ifndef CPU_ONLY
     chooseDevice(*model, path, localHostID);
-# endif // CPU_ONLY
+#endif // CPU_ONLY
     generate_model_runner(*model, path, localHostID);
 
 #ifdef MPI_ENABLE
     MPI_Finalize();
     cout << "MPI finalized." << endl;
 #endif
-#ifndef SWIG
+
     return EXIT_SUCCESS;
-#endif // SWIG
 }
 #endif // GENERATOR_MAIN_HANDLED

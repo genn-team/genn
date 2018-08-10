@@ -1,7 +1,8 @@
-import sys
-import os
-from string import Template
+import sys # to parse command line args
+import os  # to work with paths nicely
+from string import Template # for better text substitutions
 
+# global vars
 NEURONMODELS = 'newNeuronModels'
 POSTSYNMODELS = 'newPostsynapticModels'
 WUPDATEMODELS = 'newWeightUpdateModels'
@@ -138,7 +139,7 @@ class SwigModuleGenerator( object ):
 
 
 def writeValueMakerFunc( modelName, valueName, numValues, mg ):
-
+    '''Generates a helper make*Values function and writes it'''
     vals = 'vals'
     if numValues == 0:
         vals = ''
@@ -165,6 +166,7 @@ def writeValueMakerFunc( modelName, valueName, numValues, mg ):
 
 
 def generateCustomClassDeclaration( nSpace, initVarSnippet=False ):
+    '''Generates nSpace::Custom class declaration'''
 
     varValuesTypedef = 'typedef CustomValues::VarValues VarValues;'
     varValuesMaker = '''static CustomValues::VarValues* makeVarValues( const std::vector< NewModels::VarInit > & vals )
@@ -264,8 +266,8 @@ def generateSharedLibraryModelInterface( genn_lib_path ):
 
 
 def generateStlContainersInterface( genn_lib_path ):
-    '''Generates headers/sources with Custom classes'''
-    # generate Custom models
+    '''Generates StlContainers interface which wraps std::string, std::pair,
+       std::vector, std::function and creates template specializations for pairs and vectors'''
     with SwigModuleGenerator( 'StlContainers',
             os.path.join( genn_lib_path, SWIGDIR, 'stl_containers.i' ) ) as mg:
         mg.addAutoGenWarning()
@@ -328,8 +330,7 @@ def generateStlContainersInterface( genn_lib_path ):
 
 
 def generateCustomModelDeclImpls( genn_lib_path ):
-    '''Generates headers/sources with Custom classes'''
-    # generate Custom models
+    '''Generates headers/sources with *::Custom classes'''
     models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET]
     for model in models:
         nSpace = model[:]
@@ -340,12 +341,12 @@ def generateCustomModelDeclImpls( genn_lib_path ):
         with SwigModuleGenerator( 'decl',
                 os.path.join( genn_lib_path, SWIGDIR, model + 'Custom.h' ) ) as mg:
             mg.addAutoGenWarning()
-            with CppIncludeGuardScope( mg, model.upper() + 'CUSTOM_H'):
-                mg.addCppInclude( '"' + model + '.h"' )
-                mg.addCppInclude( '"customParamValues.h"' )
-                if model != INITVARSNIPPET:
-                    mg.addCppInclude( '"customVarValues.h"' )
-                mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET))
+            mg.write( '#pragma once\n' )
+            mg.addCppInclude( '"' + model + '.h"' )
+            mg.addCppInclude( '"customParamValues.h"' )
+            if model != INITVARSNIPPET:
+                mg.addCppInclude( '"customVarValues.h"' )
+            mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET))
         with SwigModuleGenerator( 'impl',
                 os.path.join( genn_lib_path, SWIGDIR, model + 'Custom.cc' ) ) as mg:
             mg.addAutoGenWarning()
@@ -381,6 +382,9 @@ def generateConfigs( genn_lib_path ):
             SwigModuleGenerator( 'InitVarSnippet',
                     os.path.join( genn_lib_path, SWIGDIR + INITVARSNIPPET + ".i" ) ) as iniVarSmg:
 
+        # pygennSmg generates main SWIG interface file,
+        # mgs generate SWIG interfaces for models and InitVarSnippet
+
         mgs = [ neuronSmg, postsynSmg, wUpdateSmg, currSrcSmg, iniVarSmg ]
 
         pygennSmg.addAutoGenWarning()
@@ -405,6 +409,58 @@ def generateConfigs( genn_lib_path ):
 
         pygennSmg.addSwigImport( '"swig/stl_containers.i"' )
 
+        # do initialization when module is loaded
+        with SwigInitScope( pygennSmg ):
+            pygennSmg.write( '''
+            initGeNN();
+            GENN_PREFERENCES::buildSharedLibrary = true;\n
+            #ifdef DEBUG
+                GENN_PREFERENCES::optimizeCode = false;
+                GENN_PREFERENCES::debugCode = true;
+            #endif // DEBUG
+
+            #ifndef CPU_ONLY
+                CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+                deviceProp = new cudaDeviceProp[deviceCount];
+                for (int device = 0; device < deviceCount; device++) {
+                    CHECK_CUDA_ERRORS(cudaSetDevice(device));
+                    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
+                }
+            #endif // CPU_ONLY
+            ''' )
+
+        # define and wrap two functions which replace main in generateALL.cc
+        with SwigInlineScope( pygennSmg ):
+            pygennSmg.write( '''
+            int initMPI_pygenn() {
+                int localHostID = 0;
+
+            #ifdef MPI_ENABLE
+                    MPI_Init(NULL, NULL);
+                    MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
+                    cout << "MPI initialized - host ID:" << localHostID << endl;
+            #endif
+                return localHostID;
+            }
+            void generate_model_runner_pygenn( NNmodel & model, const std::string &path, int localHostID ) {
+
+                if (!model.isFinalized()) {
+                gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
+                    }
+
+                #ifndef CPU_ONLY
+                    chooseDevice(model, path, localHostID);
+                #endif // CPU_ONLY
+                    generate_model_runner(model, path, localHostID);
+
+                #ifdef MPI_ENABLE
+                    MPI_Finalize();
+                    cout << "MPI finalized." << endl;
+                #endif
+            }
+            ''' )
+
+        # generate SWIG interface files for models and InitVarSnippet
         for mg, header in zip(mgs, (neuronModels_h, postsynModels_h,
                                    wUpdateModels_h, currSrcModels_h, initVarSnippet_h)):
             _, headerFilename = os.path.split( header.name )
@@ -430,6 +486,8 @@ def generateConfigs( genn_lib_path ):
             mg.addSwigInclude( '"' + headerFilename.split('.')[0] + 'Custom.h"' )
 
             mg.models = []
+
+            # parse models files and collect models declared there
             for line in header.readlines():
                 line = line.lstrip()
                 if line.startswith( 'DECLARE_' ):
@@ -447,11 +505,13 @@ def generateConfigs( genn_lib_path ):
 
                     mg.models.append( model_name )
 
+                    # add a helper function to create Param- and VarVarlues to each model
                     with SwigExtendScope( mg, mg.name + '::' + model_name ):
                         writeValueMakerFunc( model_name, 'ParamValues', num_params, mg )
                         if mg.name != 'InitVarSnippet':
                             writeValueMakerFunc( model_name, 'VarValues', num_vars, mg )
 
+        # wrap NeuronGroup, SynapseGroup and CurrentSource
         pygennSmg.addSwigInclude( '"include/neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"include/synapseGroup.h"' )
         pygennSmg.addSwigInclude( '"include/currentSource.h"' )
@@ -460,12 +520,16 @@ def generateConfigs( genn_lib_path ):
             for mg in mgs:
                 mg.models.append( 'Custom' )
 
+        # wrap modelSpec.h
+        # initGeNN is called in the initialization block so no need to wrap it
         pygennSmg.addSwigIgnore( 'initGeNN' )
         pygennSmg.addSwigIgnore( 'GeNNReady' )
         pygennSmg.addSwigIgnore( 'SynapseConnType' )
         pygennSmg.addSwigIgnore( 'SynapseGType' )
         pygennSmg.addSwigInclude( '"include/' + NNMODEL + '.h"' )
 
+        # the next three for-loop create template specializations to add
+        # various populations to NNmodel
         for n_model in mgs[0].models:
             pygennSmg.addSwigTemplate(
                 'NNmodel::addNeuronPopulation<{}::{}>'.format( mgs[0].name, n_model ),
@@ -484,18 +548,19 @@ def generateConfigs( genn_lib_path ):
                 'NNmodel::addCurrentSource<{}::{}>'.format( mgs[3].name, cs_model ),
                 'addCurrentSource_{}'.format( cs_model ) )
 
+        # creates template specializations for initVar function
         for ivsnippet in mgs[4].models:
             pygennSmg.addSwigTemplate(
                 'initVar<{}::{}>'.format( mgs[4].name, ivsnippet ),
                 'initVar_{}'.format( ivsnippet ) )
 
-        pygennSmg.write( '\n// wrap necessary functions from generateALL.h\n' )
-        pygennSmg.addSwigIgnore( 'generate_model_runner' )
-        pygennSmg.addSwigInclude( '"include/generateALL.h"' )
-
-        pygennSmg.write( '\n// wrap variables from global.h.' )
+        pygennSmg.write( '\n// wrap variables from global.h. Note that GENN_PREFERENCES is\n' )
+        pygennSmg.write( '// already covered in the genn_preferences.i interface\n' )
+        pygennSmg.addSwigIgnore( 'GENN_PREFERENCES' )
         pygennSmg.addSwigIgnore( 'deviceProp' )
         pygennSmg.addSwigInclude( '"include/global.h"' )
+
+        pygennSmg.write( '\n// wrap variableMode.h.\n' )
         pygennSmg.addSwigIgnore( 'operator&' )
         pygennSmg.addSwigInclude( '"include/variableMode.h"' )
 
@@ -504,6 +569,7 @@ def generateConfigs( genn_lib_path ):
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( 'void setDefaultVarMode( const VarMode &varMode ) {\n' )
             pygennSmg.write( '  GENN_PREFERENCES::defaultVarMode = varMode;\n}' )
+        pygennSmg.addSwigImport( '"swig/genn_preferences.i"' )
 
 
 if __name__ == '__main__':

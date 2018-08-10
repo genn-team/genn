@@ -22,10 +22,6 @@
 # Include makefile which builds libgenn
 include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 
-# Include makefile which builds python wrapper
-include $(GENN_PATH)/lib/GNUMakefilePyGeNN
-
-
 # Source, Include, Object and Library directories
 GENERATEALL_PATH         :=$(CURDIR)
 

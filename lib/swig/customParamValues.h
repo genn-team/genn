@@ -1,5 +1,5 @@
-#ifndef CUSTOMPARAMVALUES_H
-#define CUSTOMPARAMVALUES_H
+#pragma once
+
 namespace CustomValues
 {
 class ParamValues
@@ -34,4 +34,3 @@ private:
     std::vector<double> m_Values;
 };
 }
-#endif // CUSTOMPARAMVALUES_H

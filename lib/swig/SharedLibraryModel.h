@@ -7,6 +7,7 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
+#include <bitset>
 #include "sparseProjection.h"
 #include "utils.h"
 
@@ -104,7 +105,7 @@ public:
     // Retrive symbols to pull/push from/to the device from shared model
     // and store them in a map for fast lookup
     void initIO( const std::string &popName,
-                 const std::array<bool, 5> &availableDTypes )
+                 const std::bitset<5> &availableDTypes ) // the bits are indexed backwards
     {
 #ifndef CPU_ONLY
       std::array< std::string, 5 > dataTypes = {
@@ -118,7 +119,7 @@ public:
       VoidIOFuncs pullers;
       for ( size_t i = 0; i < dataTypes.size(); ++i )
       {
-        if (availableDTypes[i]){
+        if (availableDTypes.test(i)){
           pullers[i] = (VoidFunction)getSymbol( "pull" + popName + dataTypes[i] + "FromDevice" );
           pushers[i] = (VoidFunction)getSymbol( "push" + popName + dataTypes[i] + "ToDevice" );
         }
@@ -130,7 +131,7 @@ public:
         }
       }
 
-      populationsIO.emplace( std::piecewise_construct,
+      m_PopulationsIO.emplace( std::piecewise_construct,
                              std::forward_as_tuple( popName ),
                              std::forward_as_tuple( pullers, pushers ) );
 #endif
@@ -138,46 +139,49 @@ public:
 
     void initNeuronPopIO( const std::string &popName )
     {
-      initIO( popName, {true, true, true, true, true} );
+      // the bits are indexed backwards
+      initIO( popName, std::bitset<5>("11111") );
     }
     
     void initSynapsePopIO( const std::string &popName )
     {
-      initIO( popName, {true, false, false, false, false} );
+      // the bits are indexed backwards
+      initIO( popName, std::bitset<5>("00001") );
     }
 
     void initCurrentSourceIO( const std::string &csName )
     {
-      initIO( csName, {true, false, false, false, false} );
+      // the bits are indexed backwards
+      initIO( csName, std::bitset<5>("00001") );
     }
     
     void pullStateFromDevice( const std::string &popName )
     {
-        auto tmpPop = populationsIO.at( popName );
+        auto tmpPop = m_PopulationsIO.at( popName );
         std::get<0>( std::get<0>( tmpPop ) )();
     }
     
     void pullSpikesFromDevice( const std::string &popName )
     {
-        auto tmpPop = populationsIO.at( popName );
+        auto tmpPop = m_PopulationsIO.at( popName );
         std::get<1>( std::get<0>( tmpPop ) )();
     }
     
     void pullCurrentSpikesFromDevice( const std::string &popName )
     {
-        auto tmpPop = populationsIO.at( popName );
+        auto tmpPop = m_PopulationsIO.at( popName );
         std::get<3>( std::get<0>( tmpPop ) )();
     }
 
     void pushStateToDevice( const std::string &popName )
     {
-        auto tmpPop = populationsIO.at( popName );
+        auto tmpPop = m_PopulationsIO.at( popName );
         std::get<0>( std::get<1>( tmpPop ) )();
     }
     
     void pushSpikesToDevice( const std::string &popName )
     {
-        auto tmpPop = populationsIO.at( popName );
+        auto tmpPop = m_PopulationsIO.at( popName );
         std::get<1>( std::get<1>( tmpPop ) )();
     }
 
@@ -318,5 +322,5 @@ private:
     VoidFunction m_StepTimeCPU;
     VoidFunction m_ExitGeNN;
     
-    PopIOMap populationsIO;
+    PopIOMap m_PopulationsIO;
 };

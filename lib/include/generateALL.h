@@ -51,9 +51,3 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                   const string &path,   //!< path the generated code will be deposited
                   int localHostID);     //!< ID of local host
 #endif
-
-#ifdef SWIG
-int init_cuda_mpi();
-void finalize_model_runner_generation(NNmodel &model, const string &path, int localHostID);
-#endif
-

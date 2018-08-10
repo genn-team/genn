@@ -1,7 +1,9 @@
+# python imports
 from os import path
-from subprocess import check_call
-import json
+from subprocess import check_call # to call make
+# 3rd party imports
 import numpy as np
+# pygenn imports
 import pygenn as pg
 import SharedLibraryModel as slm
 from GeNNGroups import NeuronGroup, SynapseGroup, CurrentSource
@@ -45,16 +47,11 @@ class GeNNModel( object ):
         
         self._built = False
         self._cpuOnly = cpuOnly
-        if not cpuOnly:
-            self._localhost = pg.init_cuda_mpi()
-        else:
-            self._localhost = 0
-
+        self._localhost = pg.initMPI_pygenn()
         
         pg.setDefaultVarMode( pg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
-        pg.cvar.debugCode = enableDebug
-        pg.cvar.autoInitSparseVars = autoInitSparseVars
-        pg.cvar.buildSharedLibrary = True
+        pg.GeNNPreferences.cvar.debugCode = enableDebug
+        pg.GeNNPreferences.cvar.autoInitSparseVars = autoInitSparseVars
         self._model = pg.NNmodel()
         self._model.setPrecision( getattr(pg, gennFloatType ) )
         self.modelName = modelName
@@ -86,7 +83,7 @@ class GeNNModel( object ):
 
     @property
     def dT( self ):
-        """Step sise"""
+        """Step size"""
         return self._dT
 
     @dT.setter 
@@ -262,9 +259,7 @@ class GeNNModel( object ):
                 popData.pop.setMaxConnections( popData.size )
 
         self._model.finalize()
-        #  if not self._cpuOnly:
-        #      pg.chooseDevice(self._model, pathToModel, self._localhost)
-        pg.finalize_model_runner_generation(self._model, self._pathToModel, self._localhost)
+        pg.generate_model_runner_pygenn(self._model, self._pathToModel, self._localhost)
 
         check_call( ['make', '-C', path.join( pathToModel, self.modelName + '_CODE' ) ] )
         

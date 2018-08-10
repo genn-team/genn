@@ -30,6 +30,10 @@ ifdef COVERAGE
     LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_COVERAGE
 endif
 
+ifdef PYGENN
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_PYGENN
+endif
+
 # Source, Include, Object and Library directories
 SRC_PATH                 :=$(GENN_PATH)/lib/src
 INC_PATH                 :=$(GENN_PATH)/lib/include
@@ -75,6 +79,10 @@ endif
 # **TODO** seperate libraries with and without coverage
 ifdef COVERAGE
     CXXFLAGS             +=-O0 --coverage
+endif
+
+ifdef PYGENN
+    CXXFLAGS             +=-fPIC
 endif
 
 ARFLAGS                  :=-rcs

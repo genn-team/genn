@@ -13,13 +13,18 @@
 ##
 ##--------------------------------------------------------------------------
 
+# Define PyGeNN and SWIG related variables
 SWIG                               :=swig -c++ -python
-SWIG_MODULE_NAME                   :=pygenn
+PYGENN                             :=pygenn
 SWIG_PATH                          :=$(GENN_PATH)/lib/swig
 PYGENN_PATH                        :=$(GENN_PATH)/lib/pygenn
-PYGENN_SWIG_FILE_PATH              :=$(GENN_PATH)/lib/$(SWIG_MODULE_NAME).i
+PYGENN_SWIG_FILE_PATH              :=$(GENN_PATH)/lib/$(PYGENN).i
 PYTHON_INCLUDE                     ?=$(shell python-config --includes)
-PYTHON_NUMPY_INCLUDE               ?=$(shell find /usr/lib -type d -path "*/site-packages/numpy/core/include" | grep python3)
+PYTHON_NUMPY_INCLUDE               ?=$(shell find $$(python-config --prefix)/lib -type d -path "*/site-packages/numpy/core/include" | grep python)
+
+# include a Makefile to build libgenn objects and define flags
+include $(GENN_PATH)/lib/GNUMakefileLibGeNN
+LIBGENN_PYGENN                    :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).so
 
 # Check whether python includes are defined
 ifeq ($(strip $(PYTHON_INCLUDE)),)
@@ -28,94 +33,77 @@ endif
 ifeq ($(strip $(PYTHON_NUMPY_INCLUDE)),)
 $(error attempt to automatically detect python numpy package include path failed. Try specifying the path as PYTHON_NUMPY_INCLUDE=)
 endif
-# PYGENN link flags
-ifndef CPU_ONLY
-    ifeq ($(DARWIN),DARWIN)
-        PYGENN_LINK_FLAGS       =-rpath $(CUDA_PATH)/lib -L"$(CUDA_PATH)/lib" -lcuda -lcudart -lstdc++ -lc++
-    else
-        ifeq ($(OS_SIZE),32)
-            PYGENN_LINK_FLAGS   =-L"$(CUDA_PATH)/lib" -lcuda -lcudart
-        else
-            PYGENN_LINK_FLAGS   =-L"$(CUDA_PATH)/lib64" -lcuda -lcudart
-        endif
-    endif
-else
-    SWIG_CPU                    :=-DCPU_ONLY
-    PYGENN_PATH                 :=$(addsuffix _CPU,$(PYGENN_PATH))
-    PYGENN_LINK_FLAGS           :=
-    ifeq ($(DARWIN),DARWIN)
-        PYGENN_LINK_FLAGS       :=-lstdc++ -lc++
-    endif
-endif
 
-$(info $$PYGENN_PATH = ${PYGENN_PATH})
+INCLUDE_FLAGS +=-I$(SWIG_PATH)
+INCLUDE_FLAGS +=$(PYTHON_INCLUDE)
+INCLUDE_FLAGS +=-I$(PYTHON_NUMPY_INCLUDE)
+INCLUDE_FLAGS +=-DGENERATOR_MAIN_HANDLED
 
-ifdef MPI_ENABLE
-    PYGENN_LINK_FLAGS           +=$(shell mpiCC -showme:link)
-endif
 
-PYGENN_PIC_OBJ                     :=global modelSpec neuronGroup synapseGroup currentSource initVarSnippet utils codeStream codeGenUtils sparseUtils neuronModels postSynapseModels synapseModels newNeuronModels newPostsynapticModels newWeightUpdateModels currentSourceModels standardSubstitutions standardGeneratedSections generateALL generateCPU generateInit generateKernels generateMPI generateRunner
-PYGENN_PIC_OBJ                     :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(PYGENN_PIC_OBJ))
-PYGENN_PIC_OBJ                     :=$(addsuffix _PIC.o,$(PYGENN_PIC_OBJ))
+GENERATOR_OBJ                      :=generateALL generateCPU generateInit generateKernels generateMPI generateRunner
+GENERATOR_OBJ                      :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(GENERATOR_OBJ))
+GENERATOR_OBJ                      :=$(addsuffix .o,$(GENERATOR_OBJ))
 
 PYGENN_CUSTOM_OBJ                  :=newNeuronModelsCustom newPostsynapticModelsCustom newWeightUpdateModelsCustom currentSourceModelsCustom initVarSnippetCustom
 PYGENN_CUSTOM_OBJ                  :=$(addprefix $(LIBGENN_OBJ_PATH)/,$(PYGENN_CUSTOM_OBJ))
-PYGENN_CUSTOM_OBJ                  :=$(addsuffix _PIC.o,$(PYGENN_CUSTOM_OBJ))
+PYGENN_CUSTOM_OBJ                  :=$(addsuffix .o,$(PYGENN_CUSTOM_OBJ))
 
-SWIG_SUBMODULES                    :=Snippet InitVarSnippet NewModels NeuronModels PostsynapticModels WeightUpdateModels CurrentSourceModels StlContainers SharedLibraryModel
+SWIG_SUBMODULES                    :=Snippet InitVarSnippet NewModels NeuronModels PostsynapticModels WeightUpdateModels CurrentSourceModels StlContainers SharedLibraryModel GeNNPreferences
 SWIG_SUBMODULES                    :=$(addprefix $(PYGENN_PATH)/_,$(SWIG_SUBMODULES))
 SWIG_SUBMODULES                    :=$(addsuffix .so,$(SWIG_SUBMODULES))
 
+SWIG_CXX_FLAGS                     :=-shared -Wl,-rpath=$(LIBGENN_PATH)
+
+# building pygenn is split in two parts:
+# first generates the swig interfaces and custom models
+# and the second builds and links
+# Otherwise there are dependency issues when building in parallel (-j option)
 pygenn:
-	$(MAKE) pygenn_pre
-	$(MAKE) pygenn_post
+	$(MAKE) -f GNUMakefilePyGeNN pygenn_pre
+	$(MAKE) -f GNUMakefilePyGeNN pygenn_post
 
-pygenn_pre: prepare_swig_config $(PYGENN_PATH) $(LIBGENN_OBJ_PATH) $(PYGENN_PIC_OBJ)
+pygenn_pre: prepare_swig_config $(PYGENN_PATH)
 
-pygenn_post: $(PYGENN_CUSTOM_OBJ) $(SWIG_SUBMODULES)
-	$(SWIG) $(SWIG_CPU) -outdir $(PYGENN_PATH) -o $(PYGENN_PATH)/$(SWIG_MODULE_NAME)_wrap.cc $(PYGENN_SWIG_FILE_PATH)
-	$(CXX) $(CXXFLAGS) -shared -fPIC -DSWIG $(PYGENN_PATH)/$(SWIG_MODULE_NAME)_wrap.cc -o $(PYGENN_PATH)/_$(SWIG_MODULE_NAME).so $(PYGENN_PIC_OBJ) $(PYGENN_CUSTOM_OBJ) $(INCLUDE_FLAGS) -I $(PYTHON_INCLUDE) -I $(SWIG_PATH) $(PYGENN_LINK_FLAGS)
+pygenn_post: $(LIBGENN_PYGENN) $(SWIG_SUBMODULES) $(GENERATOR_OBJ)
+	$(SWIG) $(SWIG_CPU) -outdir $(PYGENN_PATH) -o $(PYGENN_PATH)/$(PYGENN)_wrap.cc $(PYGENN_SWIG_FILE_PATH)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) $(PYGENN_PATH)/$(PYGENN)_wrap.cc \
+           -o $(PYGENN_PATH)/_$(PYGENN).so $(GENERATOR_OBJ) $(INCLUDE_FLAGS) $(LINK_FLAGS)
 	cp $(SWIG_PATH)/GeNNModel.py $(PYGENN_PATH)/GeNNModel.py
 	cp $(SWIG_PATH)/GeNNGroups.py $(PYGENN_PATH)/GeNNGroups.py
 
-$(PYGENN_PATH)/_StlContainers.so: $(PYGENN_PATH)/stl_containers_wrap.cc
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
+# targets to generate swig submodule shared libraries. SWIG expects that
+# .so matches the module name and has a prefix "_".
+$(PYGENN_PATH)/_StlContainers.so: $(LIBGENN_OBJ_PATH)/stl_containers_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-$(PYGENN_PATH)/_Snippet.so: $(PYGENN_PATH)/snippet_wrap.cc
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
+$(PYGENN_PATH)/_GeNNPreferences.so: $(LIBGENN_OBJ_PATH)/genn_preferences_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-$(PYGENN_PATH)/_InitVarSnippet.so: $(PYGENN_PATH)/initVarSnippet_wrap.cc $(LIBGENN_OBJ_PATH)/initVarSnippetCustom_PIC.o
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(LIBGENN_OBJ_PATH)/initVarSnippet_PIC.o $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
+$(PYGENN_PATH)/_Snippet.so: $(LIBGENN_OBJ_PATH)/snippet_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-$(PYGENN_PATH)/_NewModels.so: $(PYGENN_PATH)/newModels_wrap.cc $(LIBGENN_OBJ_PATH)/initVarSnippetCustom_PIC.o
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(LIBGENN_OBJ_PATH)/initVarSnippet_PIC.o $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
+$(PYGENN_PATH)/_InitVarSnippet.so: $(LIBGENN_OBJ_PATH)/initVarSnippet_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-$(PYGENN_PATH)/_NeuronModels.so: $(PYGENN_PATH)/newNeuronModels_wrap.cc $(LIBGENN_OBJ_PATH)/newNeuronModelsCustom_PIC.o
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(LIBGENN_OBJ_PATH)/newNeuronModels_PIC.o $(LIBGENN_OBJ_PATH)/neuronModels_PIC.o $(LIBGENN_OBJ_PATH)/initVarSnippet_PIC.o $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
+$(PYGENN_PATH)/_NewModels.so: $(LIBGENN_OBJ_PATH)/newModels_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-$(PYGENN_PATH)/_PostsynapticModels.so: $(PYGENN_PATH)/newPostsynapticModels_wrap.cc $(LIBGENN_OBJ_PATH)/newPostsynapticModelsCustom_PIC.o
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(LIBGENN_OBJ_PATH)/newPostsynapticModels_PIC.o $(LIBGENN_OBJ_PATH)/postSynapseModels_PIC.o $(LIBGENN_OBJ_PATH)/initVarSnippet_PIC.o $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
+$(PYGENN_PATH)/_%.so: $(LIBGENN_OBJ_PATH)/new%_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-$(PYGENN_PATH)/_WeightUpdateModels.so: $(PYGENN_PATH)/newWeightUpdateModels_wrap.cc $(LIBGENN_OBJ_PATH)/newWeightUpdateModelsCustom_PIC.o
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(LIBGENN_OBJ_PATH)/newWeightUpdateModels_PIC.o $(LIBGENN_OBJ_PATH)/synapseModels_PIC.o $(LIBGENN_OBJ_PATH)/initVarSnippet_PIC.o $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
+$(PYGENN_PATH)/_CurrentSourceModels.so: $(LIBGENN_OBJ_PATH)/currentSourceModels_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
-$(PYGENN_PATH)/_CurrentSourceModels.so: $(PYGENN_PATH)/currentSourceModels_wrap.cc $(LIBGENN_OBJ_PATH)/currentSourceModelsCustom_PIC.o
-	$(CXX) $(CXXFLAGS) -shared -fPIC -o $@ $^ $(LIBGENN_OBJ_PATH)/currentSourceModels_PIC.o $(LIBGENN_OBJ_PATH)/initVarSnippet_PIC.o $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE)
-
-$(PYGENN_PATH)/_SharedLibraryModel.so: $(PYGENN_PATH)/SharedLibraryModel_wrap.cc
-	$(CXX) $(CXXFLAGS) -shared -DSWIG -fPIC -o $@ $^ $(INCLUDE_FLAGS) -I $(SWIG_PATH) -I $(PYTHON_INCLUDE) -I $(PYTHON_NUMPY_INCLUDE) -ldl $(PYGENN_LINK_FLAGS)
+$(PYGENN_PATH)/_SharedLibraryModel.so: $(LIBGENN_OBJ_PATH)/SharedLibraryModel_wrap.cc $(LIBGENN_PYGENN)
+	$(CXX) $(CXXFLAGS) $(SWIG_CXX_FLAGS) -o $@ $< $(INCLUDE_FLAGS) -ldl $(LINK_FLAGS)
 
 # Generate wrapper C++ code from swig interfaces
-$(PYGENN_PATH)/%_wrap.cc: $(SWIG_PATH)/%.i
+$(LIBGENN_OBJ_PATH)/%_wrap.cc: $(SWIG_PATH)/%.i
 	$(SWIG) $(SWIG_CPU) -outdir $(PYGENN_PATH) -o $@ $<
 
-# Build GeNN source files
-$(LIBGENN_OBJ_PATH)/%_PIC.o: $(SRC_PATH)/%.cc
-	$(CXX) $(CXXFLAGS) -DSWIG -c -fPIC -o $@ $< $(INCLUDE_FLAGS)
-
-# Build custom models
-$(LIBGENN_OBJ_PATH)/%_PIC.o: $(SWIG_PATH)/%.cc
-	$(CXX) $(CXXFLAGS) -DSWIG -c -fPIC -o $@ $< -I $(INC_PATH) -I $(SWIG_PATH)
+# Build custom model objects
+$(LIBGENN_OBJ_PATH)/%.o: $(SWIG_PATH)/%.cc $(LIBGENN_OBJ_PATH)
+	$(CXX) $(CXXFLAGS) -DSWIG -c $< -o $@ -I $(INC_PATH) -I $(SWIG_PATH)
 
 $(PYGENN_PATH):
 	mkdir -p $@
@@ -123,6 +111,10 @@ $(PYGENN_PATH):
 # Generate swig interfaces
 prepare_swig_config: 
 	python $(GENN_PATH)/lib/swig/generate_swig_config.py $(GENN_PATH)/lib
+
+# Build libgenn as shared library
+$(LIBGENN_PYGENN): $(LIBGENN_PATH) $(PYGENN_CUSTOM_OBJ) $(LIBGENN_OBJ)
+	$(CXX) -shared -o $@ $(LIBGENN_OBJ) $(PYGENN_CUSTOM_OBJ)
 
 clean_pygenn: clean_libgenn
 	rm -rf $(PYGENN_PATH)

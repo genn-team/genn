@@ -1,5 +1,5 @@
-#ifndef CUSTOMVARVALUES_H
-#define CUSTOMVARVALUES_H
+#pragma once
+
 namespace CustomValues
 {
 //------------------------------------------------------------------------
@@ -44,4 +44,3 @@ private:
     InitialiserArray m_Initialisers;
 };
 }
-#endif // CUSTOMVARVALUES_H
