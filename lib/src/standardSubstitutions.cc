@@ -318,8 +318,8 @@ void StandardSubstitutions::weightUpdatePostLearn(
     substitute(code, "$(id_post)", code);
 
     // Substitute names of pre and postsynaptic weight update variables
-    name_substitutions(code, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]");
-    name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
+    name_substitutions(code, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + preIdx + "]", "", preVarWrapFunc);
+    name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]", "", postVarWrapFunc);
 
     // presynaptic neuron variables and parameters
     neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix,

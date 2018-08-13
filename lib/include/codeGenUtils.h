@@ -187,6 +187,21 @@ inline void name_substitutions(string &code, const string &prefix, NameIter name
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of name substitutions for variables in code snippets.
 //--------------------------------------------------------------------------
+template<typename NameIter>
+inline void name_substitutions(string &code, const string &prefix, NameIter namesBegin, NameIter namesEnd, const string &postfix, const string &ext,
+                               StringWrapFunc varWrapFunc)
+{
+    for (NameIter n = namesBegin; n != namesEnd; n++) {
+        const std::string target = prefix + *n + postfix;
+        substitute(code,
+                   "$(" + *n + ext + ")",
+                   varWrapFunc ? varWrapFunc(target) : target);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function performs a list of name substitutions for variables in code snippets.
+//--------------------------------------------------------------------------
 inline void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix= "", const string &ext = "")
 {
     name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
