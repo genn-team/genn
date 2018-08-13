@@ -116,7 +116,7 @@ public:
     //=======================
     typedef map<string, NeuronGroup>::value_type NeuronGroupValueType;
     typedef map<string, SynapseGroup>::value_type SynapseGroupValueType;
-
+    typedef map<string, std::pair<unsigned int, unsigned int>>::value_type SynapseGroupSubsetValueType;
 
     NNmodel();
     ~NNmodel();

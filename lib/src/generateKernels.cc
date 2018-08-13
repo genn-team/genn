@@ -251,7 +251,11 @@ void generatePostParallelisedCode(
         os << "if (threadIdx.x < lmax)";
         {
             CodeStream::Scope b(os);
-            os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
+            os << "const unsigned int spk = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
+            os << "shSpk" << postfix << "[threadIdx.x] = spk;" << std::endl;
+            if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                os << "shRowLength" << postfix << "[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
+            }
         }
         os << "__syncthreads();" << std::endl;
 
@@ -308,7 +312,7 @@ void generatePostParallelisedCode(
                     }
                     else {
                         os << "prePos = shSpk" << postfix << "[j] * " << to_string(sg.getMaxConnections()) << ";" << std::endl;
-                        os << "npost = dd_rowLength" << sg.getName() << "[shSpk" << postfix << "[j]];" << std::endl;
+                        os << "npost = shRowLength" << postfix << "[j];" << std::endl;
                     }
 
                     os << "if (" << localID << " < npost)" << CodeStream::OB(140);
@@ -1108,20 +1112,52 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 break;
             }
         }
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            if (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first)) {
-                os << "__shared__ unsigned int shSpk[BLOCKSZ_SYN];" << std::endl;
-                //os << "__shared__ " << model.getPrecision() << " shSpkV[BLOCKSZ_SYN];" << std::endl;
-                os << "unsigned int lscnt, numSpikeSubsets;" << std::endl;
-                break;
-            }
+
+        // If any synapse groups handle true spikes or have post-synaptic learning(why?) and have postsynaptic parallelism
+        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [&model](const NNmodel::SynapseGroupValueType &s)
+            {
+                return ((s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first))
+                        && s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
+            }))
+        {
+            os << "__shared__ unsigned int shSpk[BLOCKSZ_SYN];" << std::endl;
+            os << "unsigned int lscnt, numSpikeSubsets;" << std::endl;
         }
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            if (s.second.isSpikeEventRequired()) {
-                os << "__shared__ unsigned int shSpkEvnt[BLOCKSZ_SYN];" << std::endl;
-                os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt;" << std::endl;
-                break;
-            }
+
+        // If any of these synapse groups also have ragged connectivity, allocate shared memory for row length
+        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [&model](const NNmodel::SynapseGroupValueType &s)
+            {
+                return ((s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first))
+                        && s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
+                        && (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED));
+            }))
+        {
+            os << "__shared__ unsigned int shRowLength[BLOCKSZ_SYN];" << std::endl;
+        }
+
+        // If any synapse groups handle spike-like events and have postsynaptic parallelism
+        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [](const NNmodel::SynapseGroupValueType &s)
+            {
+                return (s.second.isSpikeEventRequired() && s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
+            }))
+        {
+            os << "__shared__ unsigned int shSpkEvnt[BLOCKSZ_SYN];" << std::endl;
+            os << "unsigned int lscntEvnt, numSpikeSubsetsEvnt;" << std::endl;
+        }
+
+        // If any of these synapse groups also have ragged connectivity, allocate shared memory for row length
+        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [](const NNmodel::SynapseGroupValueType &s)
+            {
+                return (s.second.isSpikeEventRequired()
+                        && s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
+                        && (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED));
+            }))
+        {
+            os << "__shared__ unsigned int shRowLengthEvnt[BLOCKSZ_SYN];" << std::endl;
         }
         os << std::endl;
 
@@ -1273,7 +1309,17 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             CodeStream::Scope b(os);
             os << "unsigned int id = " << learnBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
             os << "__shared__ unsigned int shSpk[" << learnBlkSz << "];" << std::endl;
+            if(std::any_of(model.getSynapsePostLearnGroups().cbegin(), model.getSynapsePostLearnGroups().cend(),
+                [&model](const NNmodel::SynapseGroupSubsetValueType &s)
+                {
+                    const SynapseGroup *sg = model.findSynapseGroup(s.first);
+                    return (sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED);
+                }))
+            {
+                os << "__shared__ unsigned int shColLength[" << learnBlkSz << "];" << std::endl;
+            }
             os << "unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << std::endl;
+
             os << std::endl;
             for(auto s = model.getSynapsePostLearnGroups().cbegin(); s != model.getSynapsePostLearnGroups().cend(); ++s)
             {
@@ -1324,7 +1370,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         os << "if (threadIdx.x < lmax)";
                         {
                             CodeStream::Scope b(os);
-                            os << "shSpk[threadIdx.x] = dd_glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << std::endl;
+                            os << "const unsigned int spk = dd_glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << std::endl;
+                            os << "shSpk[threadIdx.x] = spk;" << std::endl;
+
+                            if(sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                os << "shColLength[threadIdx.x] = dd_colLength" << s->first << "[spk];" << std::endl;
+                            }
                         }
 
                         os << "__syncthreads();" << std::endl;
@@ -1343,7 +1394,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     }
                                     else {
                                         os << "unsigned int iprePos = shSpk[j] * " << to_string(sg->getMaxSourceConnections()) << ";" << std::endl;
-                                        os << "unsigned int npre = dd_colLength" << s->first << "[shSpk[j]];" << std::endl;
+                                        os << "unsigned int npre = shColLength[j];" << std::endl;
                                     }
                                     os << "if (" << localID << " < npre)" << CodeStream::OB(1540);
                                     os << "iprePos += " << localID << ";" << std::endl;
