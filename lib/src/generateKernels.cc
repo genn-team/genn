@@ -1256,7 +1256,17 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
             CodeStream::Scope b(os);
             os << "unsigned int id = " << learnBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
             os << "__shared__ unsigned int shSpk[" << learnBlkSz << "];" << std::endl;
+            if(std::any_of(model.getSynapsePostLearnGroups().cbegin(), model.getSynapsePostLearnGroups().cend(),
+                [&model](const NNmodel::SynapseGroupSubsetValueType &s)
+                {
+                    const SynapseGroup *sg = model.findSynapseGroup(s.first);
+                    return (sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED);
+                }))
+            {
+                os << "__shared__ unsigned int shColLength[" << learnBlkSz << "];" << std::endl;
+            }
             os << "unsigned int lscnt, numSpikeSubsets, lmax, j, r;" << std::endl;
+
             os << std::endl;
             for(auto s = model.getSynapsePostLearnGroups().cbegin(); s != model.getSynapsePostLearnGroups().cend(); ++s)
             {
@@ -1307,7 +1317,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         os << "if (threadIdx.x < lmax)";
                         {
                             CodeStream::Scope b(os);
-                            os << "shSpk[threadIdx.x] = dd_glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << std::endl;
+                            os << "const unsigned int spk = dd_glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << std::endl;
+                            os << "shSpk[threadIdx.x] = spk;" << std::endl;
+
+                            if(sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                os << "shColLength[threadIdx.x] = dd_colLength" << s->first << "[spk];" << std::endl;
+                            }
                         }
 
                         os << "__syncthreads();" << std::endl;
@@ -1326,7 +1341,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     }
                                     else {
                                         os << "unsigned int iprePos = shSpk[j] * " << to_string(sg->getMaxSourceConnections()) << ";" << std::endl;
-                                        os << "unsigned int npre = dd_colLength" << s->first << "[shSpk[j]];" << std::endl;
+                                        os << "unsigned int npre = shColLength[j];" << std::endl;
                                     }
                                     os << "if (" << localID << " < npre)" << CodeStream::OB(1540);
                                     os << "iprePos += " << localID << ";" << std::endl;
