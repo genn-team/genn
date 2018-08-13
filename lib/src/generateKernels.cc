@@ -55,7 +55,7 @@ std::string getROCacheRead(const std::string &variable)
 {
     // If device has at least compute capability 3.5, load it using RO cache
     if(deviceProp[theDevice].major > 3
-        || (deviceProp[theDevice].major == 3 && deviceProp[theDevice].minor > 5))
+        || (deviceProp[theDevice].major == 3 && deviceProp[theDevice].minor >= 5))
     {
         return "__ldg(&" + variable + ")";
     }
