@@ -5,8 +5,7 @@ namespace CustomValues
 class ParamValues
 {
 public:
-    template<typename T>
-    ParamValues( const std::vector<T> &vals) : m_Values( vals )
+    ParamValues( const std::vector<double> &vals) : m_Values( vals )
     {
     }
 
