@@ -229,7 +229,7 @@ public:
         m_AllocateMem();
     }
 
-    void allocateSparsePop( const std::string &popName, unsigned int nConn )
+    void allocateSparseProj( const std::string &popName, unsigned int nConn )
     {
       typedef void(*UIntFct)(unsigned int);
       ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
@@ -263,26 +263,14 @@ public:
         m_Initialize();
     }
 
-    void initializeSparsePop( const std::string &popName,
+    // when called from python with numpy array, integers are substituted on the fly
+    void initializeSparseProj( const std::string &popName,
                               unsigned int* _ind, int nConn,
-                              unsigned int* _indInG, int nPre,
-                              scalar* _g, int nG )
+                              unsigned int* _indInG, int nPre)
     {
         auto C = static_cast<SparseProjection*>( getSymbol( "C" + popName ) );
-        auto g = static_cast<scalar**>( getSymbol( "g" + popName ) );
-        C->connN = nConn;
-        for ( int i = 0; i < nConn; ++i )
-        {
-            C->ind[i] = _ind[i];
-        }
-        for ( int i = 0; i < nPre; ++i )
-        {
-            C->indInG[i] = _indInG[i];
-        }
-        for ( int i = 0; i < nG; ++i )
-        {
-            (*g)[i] = _g[i];
-        }
+        std::copy( _indInG, _indInG + nPre, C->indInG );
+        std::copy( _ind, _ind + nConn, C->ind );
     }
 
     void initializeModel()

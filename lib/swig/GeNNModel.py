@@ -1,3 +1,43 @@
+"""GeNNModel
+
+This module provides GeNNModel class to simplify working with pygenn module and
+helper functions to derive custom model classes.
+
+``GeNNModel`` can be (and should be) used to configure a model, build, load and
+finally run it. Recording is done manually by pulling from the population of
+interest and then copying the values from ``Variable.view`` attribute. Each
+simulation step must be triggered manually by calling ``stepTime`` function.
+
+Example:
+    The following example shows in a (very) simplified manner how to build and
+    run a simulation using GeNNModel::
+
+        import GeNNModel
+        gm = GeNNModel.GeNNModel()
+
+        # add populations
+        neuronPop = gm.addNeuronPopulation( _parameters_truncated_ )
+        synPop = gm.addSynapsePopulation( _parameters_truncated_ )
+
+        # build and load model
+        gm.build( path_to_model )
+        gm.load()
+
+        Vs = numpy.empty( (simulation_length, population_size) )
+        # Variable.view provides a view into a raw C array
+        # here a Variable call V (voltage) will be recorded
+        vView = neuronPop.vars['V'].view
+
+        # run a simulation for 1000 steps
+        for i in range 1000:
+            # manually trigger one simulation step
+            gm.stepTime()
+            # when you pull state from device, views of all variables are updated
+            # and show current simulated values
+            gm.pullStateFromDevice( neuronPopName )
+            # finally, record voltage by copying form view into array.
+            Vs[i,:] = vView
+"""
 # python imports
 from os import path
 from subprocess import check_call # to call make
@@ -15,14 +55,14 @@ class GeNNModel( object ):
     """
 
     def __init__(self, precision=None, modelName='GeNNModel', enableDebug=False,
-                 autoInitSparseVars=False, cpuOnly=False):
+                 autoInitSparseVars=True, cpuOnly=False):
         """Init GeNNModel
         Keyword args:
         precision    -- string precision as string ("float" or "double" or "long double")
                      Defaults to float.
         modelName    -- string name of the model. Defaults to "GeNNModel".
         enableDebug  -- boolean enable debug mode. Disabled by default.
-        autoInitSparseVars -- boolean auto initialize sparse variables. Disabled by default.
+        autoInitSparseVars -- boolean auto initialize sparse variables. Enabled by default.
         cpuOnly      -- boolean whether GeNN should run only on CPU. Disabled by default.
         """
         self._scalar = precision
@@ -112,9 +152,8 @@ class GeNNModel( object ):
             raise ValueError( 'neuron population "{0}" already exists'.format( popName ) )
        
         nGroup = NeuronGroup( popName )
-        nGroup.setSize( int(numNeurons) )
         nGroup.setNeuron( neuron, paramSpace, varSpace )
-        nGroup.addTo( self._model )
+        nGroup.addTo( self._model, int(numNeurons) )
 
         self.neuronPopulations[popName] = nGroup
 
@@ -150,18 +189,15 @@ class GeNNModel( object ):
             raise ValueError( 'synapse population "{0}" already exists'.format( popName ) )
 
         sGroup = SynapseGroup( popName )
-        sGroup.setDelaySteps( int(delaySteps) )
         sGroup.matrixType = matrixType
         sGroup.setConnectedPopulations(
                 source, self.neuronPopulations[source].size,
                 target, self.neuronPopulations[target].size )
         sGroup.setWUpdate( wUpdateModel, wuParamSpace, wuVarSpace )
         sGroup.setPostsyn( postsynModel, psParamSpace, psVarSpace )
-        sGroup.addTo( self._model )
+        sGroup.addTo( self._model, delaySteps )
 
         self.synapsePopulations[popName] = sGroup
-
-        self.neuronPopulations[source].maxDelaySteps = delaySteps
 
         return sGroup
 
@@ -256,7 +292,7 @@ class GeNNModel( object ):
 
         for popName, popData in self.synapsePopulations.items():
             if popData.sparse:
-                popData.pop.setMaxConnections( popData.size )
+                popData.pop.setMaxConnections( popData.maxConn )
 
         self._model.finalize()
         pg.generate_model_runner_pygenn(self._model, self._pathToModel, self._localhost)
@@ -286,12 +322,11 @@ class GeNNModel( object ):
 
         for popName, popData in self.neuronPopulations.items():
             self._slm.initNeuronPopIO( popName )
-            self.pullStateFromDevice( popName )
             popData.spikes = self.assignExternalPointerPop( popName, 'glbSpk',
-                    popData.size * (popData.maxDelaySteps + 1), 'unsigned int' )
+                    popData.size * popData.delaySlots, 'unsigned int' )
             popData.spikeCount = self.assignExternalPointerPop( popName, 'glbSpkCnt',
-                    popData.maxDelaySteps + 1, 'unsigned int' )
-            if popData.maxDelaySteps > 0:
+                    popData.delaySlots, 'unsigned int' )
+            if popData.delaySlots > 0:
                 popData.spikeQuePtr = self._slm.assignExternalPointerSingle_ui(
                       'spkQuePtr' + popName )
 
@@ -301,7 +336,6 @@ class GeNNModel( object ):
                 if varData.initRequired:
                     varData.view[:] = varData.values 
 
-            self.pushStateToDevice( popName )
 
             for egpName, egpData in popData.extraGlobalParams.items():
                 # if auto allocation is not enabled, let the user care about
@@ -317,14 +351,12 @@ class GeNNModel( object ):
         for popName, popData in self.synapsePopulations.items():
 
             self._slm.initSynapsePopIO( popName )
-            self.pullStateFromDevice( popName )
             
             if popData.sparse:
                 if popData.connectionsSet:
-                    pre = self.neuronPopulations[popData.src]
-                    self._slm.allocateSparsePop( popName, popData.size )
-                    self._slm.initializeSparsePop( popName, popData.ind,
-                                                   popData.indInG, popData.g )
+                    self._slm.allocateSparseProj( popName, len( popData.ind ) )
+                    self._slm.initializeSparseProj( popName, popData.ind,
+                                                   popData.indInG )
 
                 else:
                     raise Exception( 'For sparse projections, the connections must be set before loading a model' )
@@ -333,30 +365,25 @@ class GeNNModel( object ):
                 size = popData.size
                 if varName in [vnt[0] for vnt in popData.postsyn.getVars()]:
                     size = self.neuronPopulations[popData.trg].size
+                if varName == 'g' and popData.globalG:
+                    continue
                 varData.view = self.assignExternalPointerPop(
                         popName, varName, size, varData.type )
-                if varName == 'g' and popData.connectionsSet:
-                    continue
                 if varData.initRequired:
-                    varData.view[:] = varData.values 
-
-            if not popData.sparse:
-                if popData.connectionsSet:
-                    self.initializeVarOnDevice( popName, 'g', popData.mask, popData.g )
-
-            self.pushStateToDevice( popName )
+                    if varName == 'g' and popData.connectionsSet and not popData.sparse:
+                        varData.view[:] = np.zeros( (size,) )
+                        varData.view[popData.gMask] = varData.values
+                    else:
+                        varData.view[:] = varData.values
 
         for srcName, srcData in self.currentSources.items():
             self._slm.initCurrentSourceIO( srcName )
-            self.pullStateFromDevice( srcName )
 
             for varName, varData in srcData.vars.items():
                 varData.view = self.assignExternalPointerPop(
                         srcName, varName, srcData.size, varData.type )
                 if varData.initRequired:
                     varData.view[:] = varData.values
-
-            self.pushStateToDevice( srcName )
 
             for egpName, egpData in srcData.extraGlobalParams.items():
                 # if auto allocation is not enabled, let the user care about
@@ -514,14 +541,7 @@ class GeNNModel( object ):
                     # freeing of the EGP
                     if egpData.needsAllocation:
                         self._slm.freeExtraGlobalParam( groupName, egpName )
-
-        for srcName, srcData in self.currentSources.items():
-
-            for egpName in srcData.extraGlobalParams.keys():
-                # if auto allocation is not enabled, let the user care about
-                # freeing of the EGP
-                if egpData.needsAllocation:
-                    self._slm.freeExtraGlobalParam( srcName, egpName )
+        # "normal" variables are freed when SharedLibraryModel is destoyed
 
 
 def createCustomNeuronClass( 

@@ -1,143 +1,10 @@
+"""GeNNGroups
+This module provides classes which automatize model checks and parameter
+convesions for GeNN Groups
+"""
 import pygenn as pg
-
-class Variable(object):
-
-    """Class holding information about GeNN variables"""
-
-    def __init__(self, variableName, variableType, values=None):
-        """Init Variable
-
-        Args:
-        variableName -- string name of the variable
-        variableType -- string type of the variable
-
-        Keyword args:
-        values       -- iterable or sigle value.
-        """
-        self.name = variableName
-        self.type = variableType
-        self.view = None
-        self.needsAllocation = False
-        if values is not None:
-            self.setValues( values )
-
-    def setInitVar( self, initVarSnippet, paramSpace ):
-        """Set variable initialization using InitVarSnippet
-
-        Args:
-        initVarSnippet -- type as string or instance of a class derived from InitVarSnippet.Custom
-        paramSpace     -- dict mapping parameter names to their values for InitVarSnippet
-        """
-        ivsInst, ivsType = ModelPreprocessor.isModelValid( initVarSnippet, pg.InitVarSnippet )
-        params = ModelPreprocessor.parameterSpaceToParamValues( ivsInst, paramSpace )
-        initFct = getattr( pg, 'initVar_' + ivsType )
-        self.initVal = initFct( params )
-
-    def setValues( self, values, initVar=None ):
-        """Set Variable's values
-
-        Args:
-        values -- iterable or single value or parameter space is initVar is specified
-
-        Keyword args:
-        initVar -- type as string or instance of a class derived from InitVarSnippet.Custom
-        """
-        self.initRequired = False
-        if initVar is not None:
-            self.setInitVar( initVar, values )
-        else:
-            try:
-                iter( values )
-                self.initVal = pg.uninitialisedVar()
-                self.values = list( values )
-                self.initRequired = True
-            except TypeError:
-                self.initVal = pg.NewModels.VarInit( values )
-
-class ModelPreprocessor(object):
-    @staticmethod
-    def prepareModel( model, paramSpace, varSpace, modelFamily ):
-        """Prepare a model by checking its validity and extracting information about variables and parameters
-
-        Args:
-        model -- string or instance of a class derived from modelFamily.Custom
-        paramSpace  -- dict with model parameters
-        varSpace    -- dict with model variables
-        modelFamily -- pygenn.NeuronModels or pygenn.WeightUpdateModels or pygenn.CurrentSourceModels
-
-        Return: tuple consisting of
-                0. model instance,
-                1. model type,
-                2. model parameter names,
-                3. model parameters,
-                4. dict mapping names of variables to instances of class Variable.
-
-        """
-        mInstance, mType = ModelPreprocessor.isModelValid( model, modelFamily )
-        paramNames = list( mInstance.getParamNames() )
-        params = ModelPreprocessor.parameterSpaceToParamValues( mInstance, paramSpace )
-        var_dict = { vnt[0] : Variable( vnt[0], vnt[1], varSpace[vnt[0]] )
-                  for vnt in mInstance.getVars() }
-        return ( mInstance, mType, paramNames, params, var_dict )
-
-    @staticmethod
-    def isModelValid( model, modelFamily ):
-        """Check whether the model is valid, i.e is native or derived from modelFamily.Custom
-        Args:
-        model -- string or instance of modelFamily.Custom
-        modelFamily -- model family (NeuronModels, WeightUpdateModels or PostsynapticModels) to which model should belong to
-
-        Return:
-        instance of the model and its type as string
-
-        Raises ValueError if model is not valid (i.e. is not custom and is not natively available)
-        """
-
-        if not isinstance( model, str ):
-            if not isinstance( model, modelFamily.Custom ):
-                modelType = type( model ).__name__
-                if not hasattr( modelFamily, modelType ):
-                    raise ValueError( 'model "{0}" is not supported'.format( modelType ) )
-            else:
-                modelType = 'Custom'
-        else:
-            modelType = model
-            if not hasattr( modelFamily, modelType ):
-                raise ValueError( 'model "{0}" is not supported'.format( modelType ) )
-            else:
-                model = getattr( modelFamily, modelType ).getInstance()
-        return model, modelType
-    
-    @staticmethod
-    def parameterSpaceToParamValues( model, paramSpace ):
-        """Convert a paramSpace dict to ParamValues
-    
-        Args:
-        model     -- instance of the model
-        paramSpace -- dict with parameters
-
-        Return:
-        native model's ParamValues
-        """
-        paramVals = [paramSpace[pn] for pn in model.getParamNames()]
-
-        return model.makeParamValues( pg.StlContainers.DoubleVector( paramVals ) )
-
-    @staticmethod
-    def varSpaceToVarValues( model, varSpace ):
-        """Convert a varSpace dict to VarValues
-
-        Args:
-        model     -- instance of the model
-        varSpace  -- dict with Variables
-
-        Return:
-        native model's VarValues
-        """
-        varVals = [varSpace[vnt[0]].initVal for vnt in model.getVars()]
-
-        return model.makeVarValues( pg.NewModels.VarInitVector( varVals ) )
-
+import model_preprocessor
+from model_preprocessor import Variable
 
 
 class Group( object ):
@@ -153,8 +20,6 @@ class Group( object ):
         self.name = name
         self.vars = {}
         self.extraGlobalParams = {}
-        self.size = None
-
 
     def setVar( self, varName, values ):
         """Set values for a Variable
@@ -212,18 +77,13 @@ class NeuronGroup( Group ):
                 self.spikeQuePtr[0] * self.size + self.spikeCount[self.spikeQuePtr[0]]]
 
     @property
-    def maxDelaySteps( self ):
+    def delaySlots( self ):
         """Maximum delay steps needed for this group"""
-        return self._maxDelaySteps
+        return self.pop.getNumDelaySlots()
 
-    @maxDelaySteps.setter
-    def maxDelaySteps( self, delaySteps ):
-        self._maxDelaySteps = int(max( self._maxDelaySteps, delaySteps ))
-
-
-    def setSize( self, size ):
-        """Set number of neurons in the group"""
-        self.size = size
+    @property
+    def size( self ):
+        return self.pop.getNumNeurons()
 
     def setNeuron( self, model, paramSpace, varSpace ):
         """Set neuron, its parameters and initial variables
@@ -233,24 +93,29 @@ class NeuronGroup( Group ):
         paramSpace -- dict with model parameters
         varSpace   -- dict with model variables
         """
-        ( self.neuron, self.type, self.paramNames,
-          self.params, self.vars ) = ModelPreprocessor.prepareModel( model, paramSpace,
-                                                        varSpace,
-                                                        pg.NeuronModels )
+        ( self.neuron, self.type, self.paramNames, self.params, self.varNames,
+            self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
+                                                           varSpace,
+                                                           pg.NeuronModels )
         if self.type == 'SpikeSourceArray':
             self.isSpikeSourceArray = True
 
-    def addTo( self, nnModel ):
+    def addTo( self, nnModel, numNeurons ):
         """Add this NeuronGroup to the GeNN NNmodel
 
         Args:
-        nnModel -- GeNN NNmodel
+        nnModel    -- GeNN NNmodel
+        numNeurons -- int number of neurons
         """
         addFct = getattr( nnModel, 'addNeuronPopulation_' + self.type )
 
-        varIni = ModelPreprocessor.varSpaceToVarValues( self.neuron, self.vars )
-        self.pop = addFct( self.name, self.size, self.neuron,
+        varIni = model_preprocessor.varSpaceToVarValues( self.neuron, self.vars )
+        self.pop = addFct( self.name, numNeurons, self.neuron,
                            self.params, varIni )
+
+        for varName, var in self.vars.items():
+            if var.initRequired:
+                self.pop.setVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 
     def addExtraGlobalParam( self, paramName, paramValues ):
         """Add extra global parameter
@@ -277,13 +142,12 @@ class SynapseGroup( Group ):
         super( SynapseGroup, self ).__init__( name )
         self.wUpdate = None
         self.postsyn = None
-        self.vars['g'] = None
         self.src = None
         self.trg = None
     
     @property
     def size( self ):
-        """Number of synaptic connections"""
+        """Size of connection matrix"""
         if not self.sparse:
             return self.trg_size * self.src_size
         else:
@@ -302,12 +166,11 @@ class SynapseGroup( Group ):
         paramSpace -- dict with model parameters
         varSpace   -- dict with model variables
         """
-        ( self.wUpdate, self.wuType, self.wuParamNames,
-          self.wuParams, varrs ) = ModelPreprocessor.prepareModel( model, paramSpace,
-                                                      varSpace,
-                                                      pg.WeightUpdateModels )
-        self.wuVarNames = varrs.keys()
-        self.vars.update( varrs )
+        ( self.wUpdate, self.wuType, self.wuParamNames, self.wuParams, self.wuVarNames,
+            varDict ) = model_preprocessor.prepareModel( model, paramSpace,
+                                                         varSpace,
+                                                         pg.WeightUpdateModels )
+        self.vars.update( varDict )
 
     def setPostsyn( self, model, paramSpace, varSpace ):
         """Set postsynaptic model, its parameters and initial variables
@@ -317,17 +180,12 @@ class SynapseGroup( Group ):
         paramSpace -- dict with model parameters
         varSpace   -- dict with model variables
         """
-        ( self.postsyn, self.psType, self.psParamNames,
-          self.psParams, varrs ) = ModelPreprocessor.prepareModel( model, paramSpace,
-                                                      varSpace,
-                                                      pg.PostsynapticModels )
-        self.psVarNames = varrs.keys()
-        self.vars.update( varrs )
-    
-    def setDelaySteps( self, delaySteps ):
-        """Set number delay steps"""
-        self.delaySteps = delaySteps
-    
+        ( self.postsyn, self.psType, self.psParamNames, self.psParams, self.psVarNames,
+            varDict ) = model_preprocessor.prepareModel( model, paramSpace,
+                                                         varSpace,
+                                                         pg.PostsynapticModels )
+        self.vars.update( varDict )
+
     @property
     def matrixType( self ):
         """Type of the projection matrix"""
@@ -336,12 +194,17 @@ class SynapseGroup( Group ):
     @matrixType.setter
     def matrixType( self, matrixType ):
         self._matrixType = getattr( pg, 'SynapseMatrixType_' + matrixType )
-        if matrixType.split('_')[0] == 'SPARSE':
+        if matrixType.startswith( 'SPARSE' ):
             self.sparse = True
             self.ind = None
             self.indInG = None
         else:
             self.sparse = False
+
+        if matrixType.endswith( 'GLOBALG' ):
+            self.globalG = True
+        else:
+            self.globalG = False
 
     def setConnections( self, conns, g ):
         """Set connections between two groups of neurons
@@ -357,18 +220,25 @@ class SynapseGroup( Group ):
             self.indInG = []
             self.indInG.append( 0 )
             curPre = 0
+            self.maxConn = 0
             for i, (pre, _) in enumerate( conns ):
+                mc = 0
                 if pre > curPre:
                     self.indInG.append( i )
                     while pre != curPre:
                         curPre += 1
+                        mc += 1
+                self.maxConn = max( self.maxConn, mc )
+            self.maxConn = int( self.maxConn )
             while len(self.indInG) < self.src_size + 1:
                 self.indInG.append( len(conns) )
-            self.g = g
         else:
-            self.mask = [ pre * self.trg_size + post for (pre, post) in conns ]
-            self.g = g
+            self.gMask = [ pre * self.trg_size + post for (pre, post) in conns ]
             self.size = self.trg_size * self.src_size
+
+        if not self.globalG:
+            self.vars['g'].setValues( g )
+            self.pop.setWUVarMode( 'g', pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 
         self.connectionsSet = True
         
@@ -387,7 +257,7 @@ class SynapseGroup( Group ):
         self.src_size = src_size
         self.trg_size = trg_size
 
-    def addTo( self, nnModel ):
+    def addTo( self, nnModel, delaySteps ):
         """Add this SynapseGroup to the GeNN NNmodel
 
         Args:
@@ -397,15 +267,22 @@ class SynapseGroup( Group ):
                           ( 'addSynapsePopulation_' + 
                             self.wuType + '_' + self.psType ) )
 
-        wuVarIni = ModelPreprocessor.varSpaceToVarValues( self.wUpdate,
+        wuVarIni = model_preprocessor.varSpaceToVarValues( self.wUpdate,
                 { vn : self.vars[vn] for vn in self.wuVarNames } )
-        psVarIni = ModelPreprocessor.varSpaceToVarValues( self.postsyn,
+        psVarIni = model_preprocessor.varSpaceToVarValues( self.postsyn,
                 { vn : self.vars[vn] for vn in self.psVarNames } )
 
-        self.pop = addFct( self.name, self.matrixType, self.delaySteps,
+        self.pop = addFct( self.name, self.matrixType, delaySteps,
                            self.src, self.trg,
                            self.wUpdate, self.wuParams, wuVarIni,
                            self.postsyn, self.psParams, psVarIni )
+
+        for varName, var in self.vars.items():
+            if var.initRequired:
+                if varName in self.wuVarNames:
+                    self.pop.setWUVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+                if varName in self.psVarNames:
+                    self.pop.setPSVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
     
     def addExtraGlobalParam( self, paramName, paramValues ):
         """Add extra global parameter
@@ -448,10 +325,10 @@ class CurrentSource( Group ):
         paramSpace -- dict with model parameters
         varSpace   -- dict with model variables
         """
-        ( self.currentSourceModel, self.type, self.paramNames,
-          self.params, self.vars ) = ModelPreprocessor.prepareModel( model, paramSpace,
-                                                        varSpace,
-                                                        pg.CurrentSourceModels )
+        ( self.currentSourceModel, self.type, self.paramNames, self.params, self.varNames,
+            self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
+                                                           varSpace,
+                                                           pg.CurrentSourceModels )
 
     def addTo( self, nnModel, pop ):
         """Inject this CurrentSource into population and add add it to the GeNN NNmodel
@@ -463,9 +340,13 @@ class CurrentSource( Group ):
         addFct = getattr( nnModel, 'addCurrentSource_' + self.type )
         self.targetPop = pop
 
-        varIni = ModelPreprocessor.varSpaceToVarValues( self.currentSourceModel, self.vars )
+        varIni = model_preprocessor.varSpaceToVarValues( self.currentSourceModel, self.vars )
         self.pop = addFct( self.name, self.currentSourceModel, pop.name,
                            self.params, varIni )
+
+        for varName, var in self.vars.items():
+            if var.initRequired:
+                self.pop.setVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 
     def addExtraGlobalParam( self, paramName, paramValues ):
         """Add extra global parameter
