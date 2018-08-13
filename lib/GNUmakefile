@@ -34,7 +34,7 @@ INCLUDE_FLAGS            +=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 GENERATEALL          :=$(GENERATEALL_PATH)/generateALL$(LIBGENN_PREFIX)
 
 # Target rules
-.PHONY: all clean clean_libgenn clean_generateall always_compile pygenn clean_pygenn
+.PHONY: all clean clean_libgenn clean_generateall always_compile
 
 all: $(GENERATEALL)
 

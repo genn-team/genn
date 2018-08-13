@@ -22,8 +22,8 @@
 
 %include <std_vector.i>
 
-%import "snippet.i"
-%import "initVarSnippet.i"
+%import "Snippet.i"
+%import "InitVarSnippet.i"
 
 %feature("director") NewModels::Base; // for inheritance in python
 %nodefaultctor NewModels::VarInit;
@@ -34,7 +34,6 @@
 %nodefaultctor CustomValues::ParamValues;
 %include "customParamValues.h"
 
-%template(CustomParamValues) CustomValues::ParamValues::ParamValues<double>; 
 %template(CustomVarValues) CustomValues::VarValues::VarValues<double>;
 %template(CustomVarValues) CustomValues::VarValues::VarValues<NewModels::VarInit>;
 

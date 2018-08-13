@@ -16,7 +16,7 @@
 #include "snippet.h"
 %}
 
-%import "swig/stl_containers.i"
+%import "swig/StlContainers.i"
 
 %feature("director") Snippet::Base; // for inheritance in python
 %include "include/snippet.h"
