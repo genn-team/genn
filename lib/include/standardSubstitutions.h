@@ -155,7 +155,10 @@ void weightUpdatePostLearn(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    StringWrapFunc preVarWrapFunc = StringWrapFunc(),   //!< function used to 'wrap' presynaptic variable accesses
+    StringWrapFunc postVarWrapFunc = StringWrapFunc()); //!< function used to 'wrap' postsynaptic variable accesses
+
 
 
 void weightUpdatePreSpike(

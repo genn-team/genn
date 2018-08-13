@@ -51,6 +51,20 @@ string getFloatAtomicAdd(const string &ftype)
     }
 }
 
+std::string getROCacheRead(const std::string &variable)
+{
+    // If device has at least compute capability 3.5, load it using RO cache
+    if(deviceProp[theDevice].major > 3
+        || (deviceProp[theDevice].major == 3 && deviceProp[theDevice].minor > 5))
+    {
+        return "__ldg(&" + variable + ")";
+    }
+    // Otherwise return variable as is
+    else {
+        return variable;
+    }
+}
+
 bool shouldAccumulateInLinSyn(const SynapseGroup &sg)
 {
     // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield (where each thread represents an individual neuron)
@@ -1367,7 +1381,8 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     preIndex = localID;
                                 }
                                 StandardSubstitutions::weightUpdatePostLearn(code, sg, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision());
+                                                                             preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision(),
+                                                                             getROCacheRead);
                                 // end Code substitutions -------------------------------------------------------------------------
                                 os << code << std::endl;
                                 if (sparse) {

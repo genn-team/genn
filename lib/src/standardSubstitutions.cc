@@ -307,7 +307,9 @@ void StandardSubstitutions::weightUpdatePostLearn(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype)
+    const std::string &ftype,
+    StringWrapFunc preVarWrapFunc,  //!< function used to 'wrap' presynaptic variable accesses
+    StringWrapFunc postVarWrapFunc) //!< function used to 'wrap' postsynaptic variable accesses
 {
     value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
@@ -320,7 +322,8 @@ void StandardSubstitutions::weightUpdatePostLearn(
     name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
 
     // presynaptic neuron variables and parameters
-    neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix);
+    neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix,
+                                          preVarWrapFunc, postVarWrapFunc);
 
     functionSubstitutions(code, ftype, functions);
     code= ensureFtype(code, ftype);

@@ -159,20 +159,18 @@ void neuronSubstitutionsInSynapticCode(
     const string &offset,
     const string &idx,
     const string &varSuffix,
-    const string &devPrefix) //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    StringWrapFunc varWrapFunc)
 {
     // presynaptic neuron variables, parameters, and global parameters
     const auto *neuronModel = ng->getNeuronModel();
-    substitute(wCode, "$(sT" + varSuffix + ")", devPrefix+ "sT" + ng->getName() + "[" + offset + idx + "]");
+    const std::string stTarget = devPrefix+ "sT" + ng->getName() + "[" + offset + idx + "]";
+    substitute(wCode, "$(sT" + varSuffix + ")", varWrapFunc ? varWrapFunc(stTarget) : stTarget);
     for(const auto &v : neuronModel->getVars()) {
-        if (ng->isVarQueueRequired(v.first)) {
-            substitute(wCode, "$(" + v.first + varSuffix + ")",
-                       devPrefix + v.first + ng->getName() + "[" + offset + idx + "]");
-        }
-        else {
-            substitute(wCode, "$(" + v.first + varSuffix + ")",
-                       devPrefix + v.first + ng->getName() + "[" + idx + "]");
-        }
+        const std::string varIdx = ng->isVarQueueRequired(v.first) ? offset + idx : idx;
+        const std::string varTarget = devPrefix + v.first + ng->getName() + "[" + varIdx + "]";
+        
+        substitute(wCode, "$(" + v.first + varSuffix + ")", varWrapFunc ? varWrapFunc(varTarget) : varTarget);                   
     }
     value_substitutions(wCode, neuronModel->getParamNames(), ng->getParams(), varSuffix);
 
@@ -645,24 +643,26 @@ void preNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
     const string &preIdx,
-    const string &devPrefix) //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    StringWrapFunc varWrapFunc)
 {
     // presynaptic neuron variables, parameters, and global parameters
     const auto *srcNeuronModel = sg->getSrcNeuronGroup()->getNeuronModel();
     if (srcNeuronModel->isPoisson()) {
         substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
-    neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), sg->getOffsetPre(), preIdx, "_pre", devPrefix);
+    neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), sg->getOffsetPre(), preIdx, "_pre", devPrefix, varWrapFunc);
 }
 
 void postNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
     const string &postIdx,
-    const string &devPrefix) //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    StringWrapFunc varWrapFunc)
 {
     // postsynaptic neuron variables, parameters, and global parameters
-    neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), sg->getTrgNeuronGroup()->getQueueOffset(devPrefix), postIdx, "_post", devPrefix);
+    neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), sg->getTrgNeuronGroup()->getQueueOffset(devPrefix), postIdx, "_post", devPrefix, varWrapFunc);
 }
 
 void neuron_substitutions_in_synaptic_code(
@@ -670,9 +670,10 @@ void neuron_substitutions_in_synaptic_code(
     const SynapseGroup *sg,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix) //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &devPrefix,        //!< device prefix, "dd_" for GPU, nothing for CPU
+    StringWrapFunc preVarWrapFunc,  //!< function used to 'wrap' presynaptic variable accesses
+    StringWrapFunc postVarWrapFunc) //!<function used to 'wrap' postsynaptic variable accesses
 {
-    preNeuronSubstitutionsInSynapticCode(wCode, sg, preIdx, devPrefix);
-    postNeuronSubstitutionsInSynapticCode(wCode, sg, postIdx, devPrefix);
-
+    preNeuronSubstitutionsInSynapticCode(wCode, sg, preIdx, devPrefix, preVarWrapFunc);
+    postNeuronSubstitutionsInSynapticCode(wCode, sg, postIdx, devPrefix, postVarWrapFunc);
 }

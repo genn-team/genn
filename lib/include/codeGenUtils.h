@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <functional>
 #include <iomanip>
 #include <limits>
 #include <string>
@@ -25,6 +26,11 @@ namespace NewModels
 {
     class VarInit;
 }
+
+//--------------------------------------------------------------------------
+// Typdefines
+//--------------------------------------------------------------------------
+typedef std::function<std::string(const std::string&)> StringWrapFunc;
 
 //--------------------------------------------------------------------------
 // GenericFunction
@@ -266,13 +272,15 @@ void preNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
     const string &postIdx,
-    const string &devPrefix); //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
+    StringWrapFunc varWrapFunc = StringWrapFunc());
 
 void postNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
     const string &preIdx,
-    const string &devPrefix); //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    StringWrapFunc varWrapFunc = StringWrapFunc());
 
 //-------------------------------------------------------------------------
 /*!
@@ -280,8 +288,10 @@ void postNeuronSubstitutionsInSynapticCode(
 */
 //-------------------------------------------------------------------------
 void neuron_substitutions_in_synaptic_code(
-    string &wCode,              //!< the code string to work on
-    const SynapseGroup *sg,     //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const string &preIdx,       //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const string &postIdx,      //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix);   //!< device prefix, "dd_" for GPU, nothing for CPU
+    string &wCode,                                      //!< the code string to work on
+    const SynapseGroup *sg,                             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const string &preIdx,                               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx,                              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,                            //!< device prefix, "dd_" for GPU, nothing for CPU
+    StringWrapFunc preVarWrapFunc = StringWrapFunc(),   //!< function used to 'wrap' presynaptic variable accesses
+    StringWrapFunc postVarWrapFunc = StringWrapFunc()); //!< function used to 'wrap' postsynaptic variable accesses
