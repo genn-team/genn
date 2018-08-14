@@ -55,14 +55,13 @@ class GeNNModel( object ):
     """
 
     def __init__(self, precision=None, modelName='GeNNModel', enableDebug=False,
-                 autoInitSparseVars=True, cpuOnly=False):
+                 cpuOnly=False):
         """Init GeNNModel
         Keyword args:
         precision    -- string precision as string ("float" or "double" or "long double")
                      Defaults to float.
         modelName    -- string name of the model. Defaults to "GeNNModel".
         enableDebug  -- boolean enable debug mode. Disabled by default.
-        autoInitSparseVars -- boolean auto initialize sparse variables. Enabled by default.
         cpuOnly      -- boolean whether GeNN should run only on CPU. Disabled by default.
         """
         self._scalar = precision
@@ -91,7 +90,6 @@ class GeNNModel( object ):
         
         pg.setDefaultVarMode( pg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
         pg.GeNNPreferences.cvar.debugCode = enableDebug
-        pg.GeNNPreferences.cvar.autoInitSparseVars = autoInitSparseVars
         self._model = pg.NNmodel()
         self._model.setPrecision( getattr(pg, gennFloatType ) )
         self.modelName = modelName
@@ -326,7 +324,7 @@ class GeNNModel( object ):
                     popData.size * popData.delaySlots, 'unsigned int' )
             popData.spikeCount = self.assignExternalPointerPop( popName, 'glbSpkCnt',
                     popData.delaySlots, 'unsigned int' )
-            if popData.delaySlots > 0:
+            if popData.delaySlots > 1:
                 popData.spikeQuePtr = self._slm.assignExternalPointerSingle_ui(
                       'spkQuePtr' + popName )
 
@@ -536,7 +534,7 @@ class GeNNModel( object ):
         for group in [self.neuronPopulations, self.currentSources]:
             for groupName, groupData in group.items():
 
-                for egpName in groupData.extraGlobalParams.keys():
+                for egpName, egpData in groupData.extraGlobalParams.items():
                     # if auto allocation is not enabled, let the user care about
                     # freeing of the EGP
                     if egpData.needsAllocation:
