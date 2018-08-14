@@ -221,15 +221,18 @@ class SynapseGroup( Group ):
             self.indInG.append( 0 )
             curPre = 0
             self.maxConn = 0
+            # convert connection tuples to indInG
             for i, (pre, _) in enumerate( conns ):
                 mc = 0
-                if pre > curPre:
+                #  if pre > curPre:
+                while pre != curPre:
                     self.indInG.append( i )
-                    while pre != curPre:
-                        curPre += 1
-                        mc += 1
+                    curPre += 1
+                    mc += 1
                 self.maxConn = max( self.maxConn, mc )
             self.maxConn = int( self.maxConn )
+            # if there are any "hanging" presynaptic neurons without connections,
+            # they should all point to the end of indInG
             while len(self.indInG) < self.src_size + 1:
                 self.indInG.append( len(conns) )
         else:
