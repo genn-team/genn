@@ -1204,26 +1204,29 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "__syncthreads();" << std::endl;
                 }
 
-                if (s->second.isSpikeEventRequired()) {
-                    os << "lscntEvnt = dd_glbSpkCntEvnt" << s->second.getSrcNeuronGroup()->getName();
-                    if (s->second.getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "[delaySlot];" << std::endl;
+                // If span type is postsynaptic, get number of spikes/events and calculate how many blocks should be used to process them
+                if(s->second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC) {
+                    if (s->second.isSpikeEventRequired()) {
+                        os << "lscntEvnt = dd_glbSpkCntEvnt" << s->second.getSrcNeuronGroup()->getName();
+                        if (s->second.getSrcNeuronGroup()->isDelayRequired()) {
+                            os << "[delaySlot];" << std::endl;
+                        }
+                        else {
+                            os << "[0];" << std::endl;
+                        }
+                        os << "numSpikeSubsetsEvnt = (lscntEvnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
                     }
-                    else {
-                        os << "[0];" << std::endl;
-                    }
-                    os << "numSpikeSubsetsEvnt = (lscntEvnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
-                }
 
-                if (s->second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s->first)) {
-                    os << "lscnt = dd_glbSpkCnt" << s->second.getSrcNeuronGroup()->getName();
-                    if (s->second.getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "[delaySlot];" << std::endl;
+                    if (s->second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s->first)) {
+                        os << "lscnt = dd_glbSpkCnt" << s->second.getSrcNeuronGroup()->getName();
+                        if (s->second.getSrcNeuronGroup()->isDelayRequired()) {
+                            os << "[delaySlot];" << std::endl;
+                        }
+                        else {
+                            os << "[0];" << std::endl;
+                        }
+                        os << "numSpikeSubsets = (lscnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
                     }
-                    else {
-                        os << "[0];" << std::endl;
-                    }
-                    os << "numSpikeSubsets = (lscnt+BLOCKSZ_SYN-1) / BLOCKSZ_SYN;" << std::endl;
                 }
 
                 // generate the code for processing spike-like events
