@@ -50,8 +50,8 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_NeuronUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
 
-        Substitutions substitutions;
-        substitutions.addSubstitution("t", "t");
+        Substitutions baseSubs;
+        baseSubs.addSubstitution("t", "t");
 
         // If any neuron groups emit spike events
         if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
@@ -90,18 +90,18 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
 
         // Parallelise over neuron groups
         genParallelNeuronGroup(os, model,
-            [handler, &substitutions](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng)
+            [handler, &baseSubs](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng)
             {
-                Substitutions ngSubstitutions(&substitutions);
+                Substitutions subs(&baseSubs);
                 
                 // Neuron ID
-                ngSubstitutions.addSubstitution("id", "lid");
+                subs.addSubstitution("id", "lid");
 
                 // Get name of rng to use for this neuron
-                ngSubstitutions.addSubstitution("rng", "&dd_rng" + ng.getName() + "[lid]");
+                subs.addSubstitution("rng", "&dd_rng" + ng.getName() + "[lid]");
                 
                 // Call handler to generate generic neuron code
-                handler(os, codeGenerator, model, ng, ngSubstitutions);
+                handler(os, codeGenerator, model, ng, subs);
 
                 os << "__syncthreads();" << std::endl;
 
