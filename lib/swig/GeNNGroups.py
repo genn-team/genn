@@ -223,18 +223,15 @@ class SynapseGroup( Group ):
             self.maxConn = 0
             # convert connection tuples to indInG
             for i, (pre, _) in enumerate( conns ):
-                mc = 0
-                #  if pre > curPre:
                 while pre != curPre:
                     self.indInG.append( i )
                     curPre += 1
-                    mc += 1
-                self.maxConn = max( self.maxConn, mc )
-            self.maxConn = int( self.maxConn )
             # if there are any "hanging" presynaptic neurons without connections,
             # they should all point to the end of indInG
             while len(self.indInG) < self.src_size + 1:
                 self.indInG.append( len(conns) )
+            # compute max number of connections from taget neuron to source
+            self.maxConn = int(max( [ self.indInG[i] - self.indInG[i-1] for i in range( len( self.indInG ) ) if i != 0 ] ) )
         else:
             self.gMask = [ pre * self.trg_size + post for (pre, post) in conns ]
             self.size = self.trg_size * self.src_size
