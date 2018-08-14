@@ -2,6 +2,8 @@
 This module provides classes which automatize model checks and parameter
 convesions for GeNN Groups
 """
+
+from six import iteritems
 import pygenn as pg
 import model_preprocessor
 from model_preprocessor import Variable
@@ -113,7 +115,7 @@ class NeuronGroup( Group ):
         self.pop = addFct( self.name, numNeurons, self.neuron,
                            self.params, varIni )
 
-        for varName, var in self.vars.items():
+        for varName, var in iteritems( self.vars ):
             if var.initRequired:
                 self.pop.setVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 
@@ -277,7 +279,7 @@ class SynapseGroup( Group ):
                            self.wUpdate, self.wuParams, wuVarIni,
                            self.postsyn, self.psParams, psVarIni )
 
-        for varName, var in self.vars.items():
+        for varName, var in iteritems( self.vars ):
             if var.initRequired:
                 if varName in self.wuVarNames:
                     self.pop.setWUVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
@@ -344,7 +346,7 @@ class CurrentSource( Group ):
         self.pop = addFct( self.name, self.currentSourceModel, pop.name,
                            self.params, varIni )
 
-        for varName, var in self.vars.items():
+        for varName, var in iteritems( self.vars ):
             if var.initRequired:
                 self.pop.setVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 

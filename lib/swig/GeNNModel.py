@@ -43,6 +43,7 @@ from os import path
 from subprocess import check_call # to call make
 # 3rd party imports
 import numpy as np
+from six import iteritems
 # pygenn imports
 import pygenn as pg
 import SharedLibraryModel as slm
@@ -288,7 +289,7 @@ class GeNNModel( object ):
             raise Exception("GeNN model already built")
         self._pathToModel = pathToModel
 
-        for popName, popData in self.synapsePopulations.items():
+        for popName, popData in iteritems( self.synapsePopulations ):
             if popData.sparse:
                 popData.pop.setMaxConnections( popData.maxConn )
 
@@ -318,7 +319,7 @@ class GeNNModel( object ):
             self._T = self._slm.assignExternalPointerSingle_ld('t')
         self._TS = self._slm.assignExternalPointerSingle_ull('iT')
 
-        for popName, popData in self.neuronPopulations.items():
+        for popName, popData in iteritems( self.neuronPopulations ):
             self._slm.initNeuronPopIO( popName )
             popData.spikes = self.assignExternalPointerPop( popName, 'glbSpk',
                     popData.size * popData.delaySlots, 'unsigned int' )
@@ -328,14 +329,14 @@ class GeNNModel( object ):
                 popData.spikeQuePtr = self._slm.assignExternalPointerSingle_ui(
                       'spkQuePtr' + popName )
 
-            for varName, varData in popData.vars.items():
+            for varName, varData in iteritems( popData.vars ):
                 varData.view = self.assignExternalPointerPop(
                         popName, varName, popData.size, varData.type )
                 if varData.initRequired:
                     varData.view[:] = varData.values 
 
 
-            for egpName, egpData in popData.extraGlobalParams.items():
+            for egpName, egpData in iteritems( popData.extraGlobalParams ):
                 # if auto allocation is not enabled, let the user care about
                 # allocation and initialization of the EGP
                 if egpData.needsAllocation:
@@ -346,7 +347,7 @@ class GeNNModel( object ):
                     if egpData.initRequired:
                         egpData.view[:] = egpData.values
 
-        for popName, popData in self.synapsePopulations.items():
+        for popName, popData in iteritems( self.synapsePopulations ):
 
             self._slm.initSynapsePopIO( popName )
             
@@ -359,7 +360,7 @@ class GeNNModel( object ):
                 else:
                     raise Exception( 'For sparse projections, the connections must be set before loading a model' )
 
-            for varName, varData in popData.vars.items():
+            for varName, varData in iteritems( popData.vars ):
                 size = popData.size
                 if varName in [vnt[0] for vnt in popData.postsyn.getVars()]:
                     size = self.neuronPopulations[popData.trg].size
@@ -374,16 +375,16 @@ class GeNNModel( object ):
                     else:
                         varData.view[:] = varData.values
 
-        for srcName, srcData in self.currentSources.items():
+        for srcName, srcData in iteritems( self.currentSources ):
             self._slm.initCurrentSourceIO( srcName )
 
-            for varName, varData in srcData.vars.items():
+            for varName, varData in iteritems( srcData.vars ):
                 varData.view = self.assignExternalPointerPop(
                         srcName, varName, srcData.size, varData.type )
                 if varData.initRequired:
                     varData.view[:] = varData.values
 
-            for egpName, egpData in srcData.extraGlobalParams.items():
+            for egpName, egpData in iteritems( srcData.extraGlobalParams ):
                 # if auto allocation is not enabled, let the user care about
                 # allocation and initialization of the EGP
                 if egpData.needsAllocation:
@@ -532,9 +533,9 @@ class GeNNModel( object ):
     def end( self ):
         """Free memory"""
         for group in [self.neuronPopulations, self.currentSources]:
-            for groupName, groupData in group.items():
+            for groupName, groupData in iteritems( group ):
 
-                for egpName, egpData in groupData.extraGlobalParams.items():
+                for egpName, egpData in iteritems( groupData.extraGlobalParams ):
                     # if auto allocation is not enabled, let the user care about
                     # freeing of the EGP
                     if egpData.needsAllocation:
