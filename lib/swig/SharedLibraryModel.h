@@ -252,7 +252,7 @@ public:
     {
         auto egp = static_cast<void**>( getSymbol( paramName + popName ));
 #ifndef CPU_ONLY
-        CHECK_CUDA_ERRORS( cudaFreeHost( egp ) );
+        CHECK_CUDA_ERRORS( cudaFreeHost( *egp ) );
 #else
         free(*egp);
 #endif
