@@ -8,6 +8,8 @@
 #include "codeStream.h"
 #include "modelSpec.h"
 
+// NuGeNN includes
+#include "substitution_stack.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -41,12 +43,15 @@ private:
 namespace CUDA
 {
 void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, 
-                                          std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &ng, const std::string &, const std::string &)> handler) const
+                                          std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &ng, const Substitutions &)> handler) const
 {
     os << "extern \"C\" __global__ void calcNeurons(float time)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_NeuronUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+        Substitutions substitutions;
+        substitutions.addSubstitution("t", "t");
 
         // If any neuron groups emit spike events
         if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
@@ -81,19 +86,22 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
             
         os << "__syncthreads();" << std::endl;
             
+        
+
         // Parallelise over neuron groups
         genParallelNeuronGroup(os, model,
-            [handler](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng)
+            [handler, &substitutions](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng)
             {
+                Substitutions ngSubstitutions(&substitutions);
+                
                 // Neuron ID
-                const std::string neuronID = "lid"; 
+                ngSubstitutions.addSubstitution("id", "lid");
 
                 // Get name of rng to use for this neuron
-                // **TODO** Phillox option
-                const std::string rngName = "&dd_rng" + ng.getName() + "[" + neuronID + "]";
-
+                ngSubstitutions.addSubstitution("rng", "&dd_rng" + ng.getName() + "[lid]");
+                
                 // Call handler to generate generic neuron code
-                handler(os, codeGenerator, model, ng, neuronID, rngName);
+                handler(os, codeGenerator, model, ng, ngSubstitutions);
 
                 os << "__syncthreads();" << std::endl;
 
@@ -173,7 +181,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         }
         
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [model](const NNmodel::SynapseGroupValueType &s)
+            [&model](const NNmodel::SynapseGroupValueType &s)
             { 
                 return (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first));
             }))
@@ -190,7 +198,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         // Parallelise over synapse groups
         genParallelSynapseGroup(os, model, 
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
-            [this/*,handler*/](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg)
+            [this](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg)
             {
                 if (sg.getSrcNeuronGroup()->isDelayRequired()) {
                     os << "const unsigned int delaySlot = (dd_spkQuePtr" <<sg.getSrcNeuronGroup()->getName();
@@ -337,10 +345,10 @@ void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const NNmodel &model
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genEmitSpike(CodeStream &os, const std::string &neuronID, const std::string &suffix) const
+void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
-    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << neuronID << ";" << std::endl;
+    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getSubstitution("id") << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 size_t CodeGenerator::getPresynapticUpdateKernelSize(const SynapseGroup &sg) const

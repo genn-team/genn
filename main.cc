@@ -15,6 +15,7 @@
 // NuGeNN includes
 #include "code_generator.h"
 #include "cuda_code_generator.h"
+#include "substitution_stack.h"
 
 // **TODO** move into NeuronModels::Base
 void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng, 
@@ -57,8 +58,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
 {
     // Neuron update kernel
     codeGenerator.genNeuronUpdateKernel(os, model,
-        [](CodeStream &os, const CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng, 
-           const std::string &neuronID, const std::string &rngName)
+        [](CodeStream &os, const CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng, const Substitutions &s)
         {
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
@@ -70,7 +70,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
                     os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
                 }
-                os << neuronID << "];" << std::endl;
+                os << s.getSubstitution("id") << "];" << std::endl;
             }
 
             if ((nm->getSimCode().find("$(sT)") != std::string::npos)
@@ -82,13 +82,17 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 if (ng.isDelayRequired()) {
                     os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
                 }
-                os << neuronID << "];" << std::endl;
+                os << s.getSubstitution("id") << "];" << std::endl;
             }
             os << std::endl;
 
             if (!ng.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != std::string::npos)) {
                 os << model.getPrecision() << " Isyn = 0;" << std::endl;
             }
+
+            Substitutions nSubstitutions(&s);
+            nSubstitutions.addSubstitution("Isyn", "Isyn");
+            nSubstitutions.addSubstitution("sT", "lsT");
 
             // Initialise any additional input variables supported by neuron model
             for (const auto &a : nm->getAdditionalInputVars()) {
@@ -100,7 +104,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn" << sg->getName() << " = " << codeGenerator.getVarPrefix() << "inSyn" << sg->getName() << "[" << neuronID << "];" << std::endl;
+                os << model.getPrecision() << " linSyn" << sg->getName() << " = " << codeGenerator.getVarPrefix() << "inSyn" << sg->getName() << "[" << s.getSubstitution("id") << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
@@ -123,13 +127,12 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                     }
                 }
 
+                Substitutions psmSubstitutions(&nSubstitutions);
+                psmSubstitutions.addSubstitution("inSyn", "linSyn" + sg->getName());
+                
                 // Apply substitutions to current converter code
                 string psCode = psm->getApplyInputCode();
-                substitute(psCode, "$(id)", neuronID);
-                substitute(psCode, "$(inSyn)", "linSyn" + sg->getName());
-                substitute(psCode, "$(t)", "t");
-                substitute(psCode, "$(Isyn)", "Isyn");
-                substitute(psCode, "$(rng)", rngName);
+                psmSubstitutions.apply(psCode);
                 functionSubstitutions(psCode, model.getPrecision(), codeGenerator.getFunctions());
 
                 applyNeuronModelSubstitutions(psCode, ng, "l");
@@ -157,11 +160,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
             }
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
-                substitute(thCode, "$(id)", neuronID);
-                substitute(thCode, "$(t)", "t");
-                substitute(thCode, "$(Isyn)", "Isyn");
-                substitute(thCode, "$(sT)", "lsT");
-                substitute(thCode, "$(rng)", rngName);
+                nSubstitutions.apply(thCode);
                 functionSubstitutions(thCode, model.getPrecision(), codeGenerator.getFunctions());
 
                 applyNeuronModelSubstitutions(thCode, ng, "l");
@@ -176,11 +175,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
 
             os << "// calculate membrane potential" << std::endl;
             string sCode = nm->getSimCode();
-            substitute(sCode, "$(id)", neuronID);
-            substitute(sCode, "$(t)", "t");
-            substitute(sCode, "$(Isyn)", "Isyn");
-            substitute(sCode, "$(sT)", "lsT");  // ?
-            substitute(sCode, "$(rng)", rngName);
+            nSubstitutions.apply(sCode);
 
             functionSubstitutions(sCode, model.getPrecision(), codeGenerator.getFunctions());
 
@@ -202,9 +197,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                     string eCode = spkEventCond.first;
 
                     // code substitutions ----
-                    substitute(eCode, "$(id)", "n");
-                    substitute(eCode, "$(t)", "t");
-                    substitute(eCode, "$(rng)", rngName);
+                    nSubstitutions.apply(eCode);
 
                     functionSubstitutions(eCode, model.getPrecision(), codeGenerator.getFunctions());
                     
@@ -232,7 +225,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 os << "if (spikeLikeEvent)";
                 {
                     CodeStream::Scope b(os);
-                    codeGenerator.genEmitSpikeLikeEvent(os, model, ng, neuronID);
+                    codeGenerator.genEmitSpikeLikeEvent(os, model, ng, nSubstitutions);
                 }
             }
 
@@ -248,16 +241,12 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 {
                     CodeStream::Scope b(os);
 
-                    codeGenerator.genEmitTrueSpike(os, model, ng, neuronID);
+                    codeGenerator.genEmitTrueSpike(os, model, ng, nSubstitutions);
 
                     // add after-spike reset if provided
                     if (!nm->getResetCode().empty()) {
                         string rCode = nm->getResetCode();
-                        substitute(rCode, "$(id)", neuronID);
-                        substitute(rCode, "$(t)", "t");
-                        substitute(rCode, "$(Isyn)", "Isyn");
-                        substitute(rCode, "$(sT)", "lsT");  // ?
-                        substitute(rCode, "$(rng)", rngName);
+                        nSubstitutions.apply(rCode);
                         functionSubstitutions(rCode, model.getPrecision(), codeGenerator.getFunctions());
 
                         applyNeuronModelSubstitutions(rCode, ng, "l");
@@ -274,10 +263,10 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
             // store the defined parts of the neuron state into the global state variables dd_V etc
             for(const auto &v : nm->getVars()) {
                 if (ng.isVarQueueRequired(v.first)) {
-                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << ng.getQueueOffset(codeGenerator.getVarPrefix()) << neuronID << "] = l" << v.first << ";" << std::endl;
+                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << ng.getQueueOffset(codeGenerator.getVarPrefix()) << nSubstitutions.getSubstitution("id") << "] = l" << v.first << ";" << std::endl;
                 }
                 else {
-                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << neuronID << "] = l" << v.first << ";" << std::endl;
+                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << nSubstitutions.getSubstitution("id") << "] = l" << v.first << ";" << std::endl;
                 }
             }
 
@@ -285,11 +274,11 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 const auto *sg = m.first;
                 const auto *psm = sg->getPSModel();
 
+                Substitutions psmSubstitutions(&nSubstitutions);
+                psmSubstitutions.addSubstitution("inSyn", "linSyn" + sg->getName());
+
                 string pdCode = psm->getDecayCode();
-                substitute(pdCode, "$(id)", neuronID);
-                substitute(pdCode, "$(inSyn)", "linSyn" + sg->getName());
-                substitute(pdCode, "$(t)", "t");
-                substitute(pdCode, "$(rng)", rngName);
+                psmSubstitutions.apply(pdCode);
                 functionSubstitutions(pdCode, model.getPrecision(), codeGenerator.getFunctions());
 
                 applyNeuronModelSubstitutions(pdCode, ng, "l");
@@ -307,7 +296,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                     os << CodeStream::CB(29) << " // namespace bracket closed" << endl;
                 }
 
-                os << codeGenerator.getVarPrefix() << "inSyn"  << sg->getName() << "[" << neuronID << "] = linSyn" << sg->getName() << ";" << std::endl;
+                os << codeGenerator.getVarPrefix() << "inSyn"  << sg->getName() << "[" << nSubstitutions.getSubstitution("id") << "] = linSyn" << sg->getName() << ";" << std::endl;
                 for (const auto &v : psm->getVars()) {
                     os << codeGenerator.getVarPrefix() << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << std::endl;
                 }

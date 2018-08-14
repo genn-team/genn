@@ -13,6 +13,7 @@
 class CodeStream;
 class NeuronGroup;
 class NNmodel;
+class Substitutions;
 
 //--------------------------------------------------------------------------
 // CodeGenerator::Base
@@ -22,19 +23,16 @@ namespace CodeGenerator
 class Base
 {
 public:
-    typedef std::map<std::string, std::string> VariableSubstitutions;
-    typedef std::map<std::string, std::pair<size_t, std::string>> FunctionSubstitutions;
-
     //--------------------------------------------------------------------------
     // Declared virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream &output, const Base &, const NNmodel &, const NeuronGroup&, const std::string &, const std::string &)> handler) const = 0;
+                                       std::function<void(CodeStream &output, const Base &, const NNmodel &, const NeuronGroup&, const Substitutions&)> handler) const = 0;
     virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model) const = 0;
 
-    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const std::string &neuronID) const = 0;
+    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     
-    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const std::string &neuronID) const = 0;
+    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
 
     virtual std::string getVarPrefix() const{ return ""; }
 

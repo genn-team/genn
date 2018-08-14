@@ -72,6 +72,9 @@
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="substitution_stack.h" />
+  </ItemGroup>
   <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
 </Project>
