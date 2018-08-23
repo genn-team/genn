@@ -20,7 +20,7 @@ public:
         "   $(endRow);\n"
         "}\n"
         "j++;\n");
-    SET_ROW_BUILD_STATE_VARS({{"j", {"unsigned int", 0}}
+    SET_ROW_BUILD_STATE_VARS({{"j", {"unsigned int", 0}}});
 };
 IMPLEMENT_SNIPPET(Decoder);
 
