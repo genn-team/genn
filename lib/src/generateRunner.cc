@@ -789,6 +789,10 @@ void genDefinitions(const NNmodel &model,   //!< Model description
         for(auto const &p : s.second.getWUModel()->getExtraGlobalParams()) {
             os << "extern " << p.second << " " << p.first + s.first << ";" << std::endl;
         }
+
+        for(auto const &p : s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
+            os << "extern " << p.second << " initSparseConn" << p.first + s.first << ";" << std::endl;
+        }
     }
     os << std::endl;
 
@@ -1453,6 +1457,10 @@ void genRunner(const NNmodel &model,    //!< Model description
 
         for(const auto &v : wu->getExtraGlobalParams()) {
             os << v.second << " " <<  v.first << s.first << ";" << std::endl;
+        }
+
+        for(auto const &p : s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
+            os << p.second << " initSparseConn" << p.first + s.first << ";" << std::endl;
         }
     }
     os << std::endl;

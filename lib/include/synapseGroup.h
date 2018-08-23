@@ -188,6 +188,7 @@ public:
     //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
 
+    void addExtraGlobalConnectivityInitialiserParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;

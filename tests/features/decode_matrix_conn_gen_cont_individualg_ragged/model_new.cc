@@ -9,17 +9,18 @@ public:
     DECLARE_SNIPPET(Decoder, 0);
 
     SET_ROW_BUILD_CODE(
-        "$(prevJ)++;\n"
-        "if($(isPostNeuronValid, $(prevJ))) {\n"
-        "   const unsigned int jValue = (1 << $(prevJ));\n"
+        "if($(isPostNeuronValid, j)) {\n"
+        "   const unsigned int jValue = (1 << j);\n"
         "   if((($(id_pre) + 1) & jValue) != 0)\n"
         "   {\n"
-        "       $(addSynapse, $(prevJ));\n"
+        "       $(addSynapse, j);\n"
         "   }\n"
         "}\n"
         "else {\n"
         "   $(endRow);\n"
-        "}\n");
+        "}\n"
+        "j++;\n");
+    SET_ROW_BUILD_STATE_VARS({{"j", {"unsigned int", 0}}});
 };
 IMPLEMENT_SNIPPET(Decoder);
 

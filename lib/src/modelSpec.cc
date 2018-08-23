@@ -116,52 +116,6 @@ unsigned int NNmodel::getNumPreSynapseResetRequiredGroups() const
                          [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
 }
 
-bool NNmodel::isDeviceInitRequired(int localHostID) const
-{
-    // If device RNG is required, device init is required to initialise it
-    if(isDeviceRNGRequired()) {
-        return true;
-    }
-
-    // If any local neuron groups require device initialisation, return true
-    if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
-        [](const NNmodel::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
-    {
-        return true;
-    }
-
-    // If any remote neuron groups with local outputs require their spike variables to be initialised on device
-    if(std::any_of(std::begin(m_RemoteNeuronGroups), std::end(m_RemoteNeuronGroups),
-        [localHostID](const NNmodel::NeuronGroupValueType &n)
-        {
-            return (n.second.hasOutputToHost(localHostID) && (n.second.getSpikeVarMode() & VarInit::DEVICE));
-        }))
-    {
-        return true;
-    }
-
-
-    // If any local synapse groups require device initialisation, return true
-    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool NNmodel::isDeviceSparseInitRequired() const
-{
-    // If automatic initialisation of sparse variables isn't enabled, return false
-    if(!GENN_PREFERENCES::autoInitSparseVars) {
-        return false;
-    }
-
-    // Return true if any of the synapse groups require device sparse initialisation
-    return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
-}
 
 bool NNmodel::isHostRNGRequired() const
 {
@@ -252,6 +206,53 @@ std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::st
     return path + "/" + getName() + "_CODE/" + filename;
 #endif
     }
+
+bool NNmodel::isDeviceInitRequired(int localHostID) const
+{
+    // If device RNG is required, device init is required to initialise it
+    if(isDeviceRNGRequired()) {
+        return true;
+    }
+
+    // If any local neuron groups require device initialisation, return true
+    if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
+        [](const NNmodel::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
+    {
+        return true;
+    }
+
+    // If any remote neuron groups with local outputs require their spike variables to be initialised on device
+    if(std::any_of(std::begin(m_RemoteNeuronGroups), std::end(m_RemoteNeuronGroups),
+        [localHostID](const NNmodel::NeuronGroupValueType &n)
+        {
+            return (n.second.hasOutputToHost(localHostID) && (n.second.getSpikeVarMode() & VarInit::DEVICE));
+        }))
+    {
+        return true;
+    }
+
+
+    // If any local synapse groups require device initialisation, return true
+    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::isDeviceSparseInitRequired() const
+{
+    // If automatic initialisation of sparse variables isn't enabled, return false
+    if(!GENN_PREFERENCES::autoInitSparseVars) {
+        return false;
+    }
+
+    // Return true if any of the synapse groups require device sparse initialisation
+    return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a neuron group will be simulated on
@@ -1059,6 +1060,7 @@ void NNmodel::finalize()
         }
 
         // Make extra global parameter lists
+        s.second.addExtraGlobalConnectivityInitialiserParams(m_InitKernelParameters);
         s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
         s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);

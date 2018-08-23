@@ -196,7 +196,7 @@ std::string initWeightUpdateVariable(
     const std::string &rng);
 
 std::string initSparseConnectivity(
-    const InitSparseConnectivitySnippet::Init &connectInit,
+    const SynapseGroup &sg,
     const std::string &addSynapseFunctionTemplate,
     unsigned int numTrgNeurons,
     const std::string &preIdx,

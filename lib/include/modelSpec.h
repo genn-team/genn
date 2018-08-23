@@ -149,14 +149,6 @@ public:
     //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
     bool isPreSynapseResetRequired() const{ return getNumPreSynapseResetRequiredGroups() > 0; }
 
-    //! Does this model require device initialisation kernel
-    /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
-    bool isDeviceInitRequired(int localHostID) const;
-
-    //! Does this model require a device sparse initialisation kernel
-    /*! **NOTE** this is for sparsely connected synapse groups only */
-    bool isDeviceSparseInitRequired() const;
-
     //! Do any populations or initialisation code in this model require a host RNG?
     bool isHostRNGRequired() const;
 
@@ -195,6 +187,18 @@ public:
 
     //! Generate path for generated code
     std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
+
+    // PUBLIC INITIALISATION FUNCTIONS
+    //================================
+    const map<string, string> &getInitKernelParameters() const{ return m_InitKernelParameters; }
+
+    //! Does this model require device initialisation kernel
+    /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
+    bool isDeviceInitRequired(int localHostID) const;
+
+    //! Does this model require a device sparse initialisation kernel
+    /*! **NOTE** this is for sparsely connected synapse groups only */
+    bool isDeviceSparseInitRequired() const;
 
     // PUBLIC NEURON FUNCTIONS
     //========================
@@ -612,6 +616,7 @@ private:
     map<string, std::pair<unsigned int, unsigned int>> m_SynapseDynamicsGroups;
 
     // Kernel members
+    map<string, string> m_InitKernelParameters;
     map<string, string> neuronKernelParameters;
     map<string, string> synapseKernelParameters;
     map<string, string> simLearnPostKernelParameters;

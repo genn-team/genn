@@ -178,7 +178,15 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
 {
     // init kernel header
-    os << "extern \"C\" __global__ void initializeDevice()";
+    os << "extern \"C\" __global__ void initializeDevice(";
+    const auto &params = model.getInitKernelParameters();
+    for(auto p = params.cbegin(); p != params.cend(); p++) {
+        os << p->second << " " << p->first;
+        if (std::next(p) != params.cend()) {
+            os  << ", ";
+        }
+    }
+    os << ")";
 
     // initialization kernel code
     unsigned int startThread = 0;
@@ -526,13 +534,16 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         // Build function template to set correct bit in bitmask
                         const std::string addSynapseTemplate = "atomicOr(&dd_gp" + s.first + "[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))";
 
-                        // Loop through synapses in row and generate code to initialise sparse connectivity
+                        // Initialise row building state variables and loop on generated code to initialise sparse connectivity
                         os << "// Build sparse connectivity" << std::endl;
-                        os << "for(int prevJ = -1;;)";
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "lid",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "lid",
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
@@ -547,13 +558,16 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         // Build function template to increment row length and insert synapse into ind array
                         const std::string addSynapseTemplate = ind + "[(lid * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)";
 
-                        // Loop through synapses in row
+                        /// Initialise row building state variables and loop on generated code to initialise sparse connectivity
                         os << "// Build sparse connectivity" << std::endl;
-                        os << "for(int prevJ = -1;;)";
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "lid",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "lid",
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
@@ -1043,12 +1057,16 @@ void genInit(const NNmodel &model,      //!< Model description
                         // Build function template to increment row length and insert synapse into ind array
                         const std::string addSynapseTemplate = ind + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "[i]++)] = $(0)";
 
-                        // Loop through synapses in row
-                        os << "for(int prevJ = -1;;)";
+                        // Initialise row building state variables and loop on generated code to initialise sparse connectivity
+                        os << "// Build sparse connectivity" << std::endl;
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "i",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "i",
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
                     }
@@ -1069,12 +1087,16 @@ void genInit(const NNmodel &model,      //!< Model description
                         // Build function template to set correct bit in bitmask
                         const std::string addSynapseTemplate = "setB(gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
 
-                        // Loop through synapses in row
-                        os << "for(int prevJ = -1;;)";
+                        // Initialise row building state variables and loop on generated code to initialise sparse connectivity
+                        os << "// Build sparse connectivity" << std::endl;
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "i",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "i",
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
                     }
@@ -1143,7 +1165,15 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "// perform on-device init" << std::endl;
             os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
             os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
-            os << "initializeDevice <<<iGrid, iThreads>>>();" << std::endl;
+            os << "initializeDevice <<<iGrid, iThreads>>>(";
+            const auto &params = model.getInitKernelParameters();
+            for(auto p = params.cbegin(); p != params.cend(); p++) {
+                os << p->first;
+                if (std::next(p) != params.cend()) {
+                    os  << ", ";
+                }
+            }
+            os << ");" << std::endl;
 
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(initDeviceStop);" << std::endl;

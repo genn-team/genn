@@ -283,16 +283,32 @@ VarMode SynapseGroup::getPSVarMode(const std::string &var) const
     return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
+void SynapseGroup::addExtraGlobalConnectivityInitialiserParams(std::map<string, string> &kernelParameters) const
+{
+    // Loop through list of global parameters
+    for(auto const &p : getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
+        std::string pnamefull = "initSparseConn" + p.first + getName();
+        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
+            // parameter wasn't registered yet - is it used?
+            if (getConnectivityInitialiser().getSnippet()->getRowBuildCode().find("$(" + p.first + ")") != string::npos) {
+                kernelParameters.emplace(pnamefull, p.second);
+            }
+        }
+    }
+}
+
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Loop through list of extra global weight update parameters
     for(auto const &p : getWUModel()->getExtraGlobalParams()) {
         // If it's not already in set
         std::string pnamefull = p.first + getName();
+        std::cout << pnamefull << std::endl;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
             if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+                std::cout << pnamefull << "," << p.second;
+                kernelParameters.emplace(pnamefull, p.second);
             }
         }
     }
