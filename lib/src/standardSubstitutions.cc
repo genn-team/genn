@@ -363,8 +363,7 @@ std::string StandardSubstitutions::initSparseConnectivity(
     // Get user code string
     std::string code = connectInit.getSnippet()->getRowBuildCode();
 
-    // Substitute pre and postsynaptic indices
-    substitute(code, "$(prevJ)", "prevJ");
+    // Substitute presynaptic index
     substitute(code, "$(id_pre)", preIdx);
 
     // Replace endRow() with break to stop loop

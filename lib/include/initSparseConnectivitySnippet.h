@@ -16,8 +16,11 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const{ return CODE; }
+#define SET_ROW_BUILD_STATE_VARS(...) virtual NameTypeValVec getRowBuildStateVars() const{ return __VA_ARGS__; }
+
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const{ return FUNC; }
+
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
@@ -38,7 +41,12 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getRowBuildCode() const{ return ""; }
+    virtual NameTypeValVec getRowBuildStateVars() const{ return {}; }
+
+    //! Get function to calculate the maximum row length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return CalcMaxLengthFunc(); }
+
+    //! Get function to calculate the maximum column length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const{ return CalcMaxLengthFunc(); }
 
     //! Gets names and types (as strings) of additional
@@ -99,13 +107,14 @@ public:
 
     SET_ROW_BUILD_CODE(
         "const scalar u = $(gennrand_uniform);\n"
-        "$(prevJ) += (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "if($(isPostNeuronValid, $(prevJ))) {\n"
-        "   $(addSynapse, $(prevJ));\n"
+        "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
+        "if($(isPostNeuronValid, prevJ)) {\n"
+        "   $(addSynapse, prevJ);\n"
         "}\n"
         "else {\n"
         "   $(endRow);\n"
         "}\n");
+    SET_ROW_BUILD_STATE_VARS({{"prevJ", {"int", -1}}});
 
     SET_PARAM_NAMES({"prob"});
     SET_DERIVED_PARAMS({{"probLogRecip", [](const std::vector<double> &pars, double){ return 1.0 / log(1.0 - pars[0]); }}});
