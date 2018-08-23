@@ -528,6 +528,48 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                             os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "lid",
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
+
+                        // If row should be sorted, insert a simple selection sort (curtesy of https://en.wikipedia.org/wiki/Selection_sort)
+                        // More profiling of algorithms is required but:
+                        // 1) Selection sort should result in minimal divergence because loops are going to be similar across threads in block (assuming relatively similar row lenghts)
+                        // 2) (rowLength * rowLength) < (numRows * rowLength * log(rowLength)) i.e. parallel bad O(N*N) search is better than better searches done serially for pretty large numbers
+                        // 3) At least memory is only WRITTEN rowLength times
+                        if(connectInit.getSnippet()->isRowSortRequired()) {
+                            CodeStream::Scope b(os);
+                            os << "unsigned int *rowIndices = &" << ind << "[lid * " + std::to_string(s.second.getMaxConnections()) + "];" << std::endl;
+                            os << "const unsigned int rowLength = " << rowLength << ";" << std::endl;
+                            os << "// advance the position through the entire array" << std::endl;
+                            os << "// (could do j < n-1 because single element is also min element)" << std::endl;
+                            os << "for(unsigned int j = 0; j < rowLength - 1; j++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "// find the min element in the unsorted a[j .. n-1]" << std::endl;
+                                os << "// assume the min is the first element" << std::endl;
+                                os << "unsigned int minIdx = j;" << std::endl;
+                                os << "unsigned int minVal = rowIndices[j];" << std::endl;
+
+                                os << "// test against elements after j to find the smallest" << std::endl;
+                                os << "for (unsigned int i = j + 1; i < rowLength; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "// if this element is less, then it is the new minimum" << std::endl;
+                                    os << "if(rowIndices[i] < minVal)";
+                                    {
+                                        CodeStream::Scope b(os);
+                                        os << "// found new minimum; remember its index" << std::endl;
+                                        os << "minVal = rowIndices[i];" << std::endl;
+                                        os << "minIdx = i;" << std::endl;
+                                    }
+                                }
+
+                                os << "if(minIdx != j)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "rowIndices[minIdx] = rowIndices[j];" << std::endl;
+                                    os << "rowIndices[j] = minVal;" << std::endl;
+                                }
+                            }
+                        }
                     }
                     // Otherwise, give an error
                     else {
@@ -1054,7 +1096,14 @@ void genInit(const NNmodel &model,      //!< Model description
                             os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "i",
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
+
+                        // If row should be sorted, use std::sort
+                        if(connectInit.getSnippet()->isRowSortRequired()) {
+                            CodeStream::Scope b(os);
+                            os << "std::sort(&ind[i * " << std::to_string(s.second.getMaxConnections()) << "], &ind[(i * " << std::to_string(s.second.getMaxConnections()) << ") + " << rowLength << "[i]]);" << std::endl;
+                        }
                     }
+
 
                 }
                 // Otherwise, if matrix connectivity is a bitmask
