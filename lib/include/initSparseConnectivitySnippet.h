@@ -18,6 +18,7 @@
 #define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const{ return CODE; }
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const{ return FUNC; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base
@@ -39,6 +40,10 @@ public:
     virtual std::string getRowBuildCode() const{ return ""; }
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return CalcMaxLengthFunc(); }
     virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const{ return CalcMaxLengthFunc(); }
+
+    //! Gets names and types (as strings) of additional
+    //! per-population parameters for the connection initialisation snippet
+    virtual StringPairVec getExtraGlobalParams() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------

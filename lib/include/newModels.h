@@ -126,16 +126,10 @@ public:
 //----------------------------------------------------------------------------
 // NewModels::Base
 //----------------------------------------------------------------------------
-//! Base class for all models
+//! Base class for all models - in addition to the parameters snippets have, models can have state variables
 class Base : public Snippet::Base
 {
 public:
-    //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    typedef std::vector<std::pair<std::string, std::string>> StringPairVec;
-    typedef std::vector<std::pair<std::string, std::pair<std::string, double>>> NameTypeValVec;
-
     //----------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------

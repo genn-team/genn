@@ -110,6 +110,8 @@ public:
     //----------------------------------------------------------------------------
     typedef std::function<double(const std::vector<double> &, double)> DerivedParamFunc;
     typedef std::vector<std::string> StringVec;
+    typedef std::vector<std::pair<std::string, std::string>> StringPairVec;
+    typedef std::vector<std::pair<std::string, std::pair<std::string, double>>> NameTypeValVec;
     typedef std::vector<std::pair<std::string, DerivedParamFunc>> DerivedParamVec;
 
     //----------------------------------------------------------------------------
