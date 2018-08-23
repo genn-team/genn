@@ -123,7 +123,15 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
 {
     // init kernel header
-    os << "extern \"C\" __global__ void initializeDevice()";
+    os << "extern \"C\" __global__ void initializeDevice(";
+    const auto &params = model.getInitKernelParameters();
+    for(auto p = params.cbegin(); p != params.cend(); p++) {
+        os << p->second << " " << p->first;
+        if (std::next(p) != params.cend()) {
+            os  << ", ";
+        }
+    }
+    os << ")";
 
     // initialization kernel code
     unsigned int startThread = 0;
@@ -496,7 +504,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "lid",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "lid",
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
@@ -517,7 +525,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "lid",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "lid",
                                                                                 cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
@@ -1043,7 +1051,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "i",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "i",
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
                     }
@@ -1069,7 +1077,7 @@ void genInit(const NNmodel &model,      //!< Model description
                         {
                             CodeStream::Scope b(os);
 
-                            os << StandardSubstitutions::initSparseConnectivity(connectInit, addSynapseTemplate, numTrgNeurons, "i",
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "i",
                                                                                 cpuFunctions, model.getPrecision(), "rng");
                         }
                     }
@@ -1138,7 +1146,15 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "// perform on-device init" << std::endl;
             os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
             os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
-            os << "initializeDevice <<<iGrid, iThreads>>>();" << std::endl;
+            os << "initializeDevice <<<iGrid, iThreads>>>(";
+            const auto &params = model.getInitKernelParameters();
+            for(auto p = params.cbegin(); p != params.cend(); p++) {
+                os << p->first;
+                if (std::next(p) != params.cend()) {
+                    os  << ", ";
+                }
+            }
+            os << ");" << std::endl;
 
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(initDeviceStop);" << std::endl;

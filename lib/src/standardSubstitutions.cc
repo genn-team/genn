@@ -349,7 +349,7 @@ std::string StandardSubstitutions::initWeightUpdateVariable(
 }
 
 std::string StandardSubstitutions::initSparseConnectivity(
-    const InitSparseConnectivitySnippet::Init &connectInit,
+    const SynapseGroup &sg,
     const std::string &addSynapseFunctionTemplate,
     unsigned int numTrgNeurons,
     const std::string &preIdx,
@@ -357,6 +357,9 @@ std::string StandardSubstitutions::initSparseConnectivity(
     const std::string &ftype,
     const std::string &rng)
 {
+    // Get connection initialiser
+    const auto &connectInit = sg.getConnectivityInitialiser();
+
     // Get user code string
     std::string code = connectInit.getSnippet()->getRowBuildCode();
 
@@ -375,8 +378,10 @@ std::string StandardSubstitutions::initSparseConnectivity(
 
     // Substitue derived and standard parameters into init code
     DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
     value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+    name_substitutions(code, "initSparseConn", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
 
     // Perform standard substitutions
     functionSubstitutions(code, ftype, functions);
