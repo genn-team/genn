@@ -77,7 +77,7 @@ void StandardGeneratedSections::neuronSpikeEventTest(
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {

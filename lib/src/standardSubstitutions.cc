@@ -14,7 +14,7 @@ void StandardSubstitutions::postSynapseApplyInput(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -55,7 +55,7 @@ void StandardSubstitutions::postSynapseDecay(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -85,7 +85,7 @@ void StandardSubstitutions::neuronThresholdCondition(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -109,7 +109,7 @@ void StandardSubstitutions::neuronSim(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -132,7 +132,7 @@ void StandardSubstitutions::neuronSpikeEventCondition(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -153,7 +153,7 @@ void StandardSubstitutions::neuronReset(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -179,7 +179,7 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype){
     value_substitutions(eCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
@@ -200,7 +200,7 @@ void StandardSubstitutions::weightUpdateSim(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype)
 {
      if (sg.getMatrixType() & SynapseMatrixWeight::GLOBAL) {
@@ -227,7 +227,7 @@ void StandardSubstitutions::weightUpdateDynamics(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype)
 {
      if (sg->getMatrixType() & SynapseMatrixWeight::GLOBAL) {
@@ -256,7 +256,7 @@ void StandardSubstitutions::weightUpdatePostLearn(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     StringWrapFunc preVarWrapFunc,  //!< function used to 'wrap' presynaptic variable accesses
     StringWrapFunc postVarWrapFunc) //!< function used to 'wrap' postsynaptic variable accesses
@@ -277,7 +277,7 @@ void StandardSubstitutions::weightUpdatePostLearn(
 std::string StandardSubstitutions::initVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {

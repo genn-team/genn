@@ -51,7 +51,8 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_InSynVarMode(GENN_PREFERENCES::defaultVarMode), m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
-        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
+        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
+        m_PSModelTargetName(name)
 {
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
@@ -307,10 +308,10 @@ std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, 
     assert(isDendriticDelayRequired());
 
     if(offset.empty()) {
-        return "(" + devPrefix + "denDelayPtr" + getName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
     else {
-        return "(((" + devPrefix + "denDelayPtr" + getName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
 }
 

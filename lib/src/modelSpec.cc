@@ -19,6 +19,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <numeric>
+#include <typeinfo>
 
 // Standard C includes
 #include <cstdio>
@@ -1072,6 +1073,13 @@ void NNmodel::finalize()
         s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
         s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
+    }
+
+    // Merge incoming postsynaptic models
+    for(auto &n : m_LocalNeuronGroups) {
+        if(!n.second.getInSyn().empty()) {
+            n.second.mergeIncomingPSM();
+        }
     }
 
     // CURRENT SOURCES
