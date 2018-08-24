@@ -78,7 +78,7 @@ void modelDefinition(NNmodel &model)
     GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
 
     model.setDT(1.0);
-    model.setName("decode_matrix_conn_genn_cont_individualg_ragged_new");
+    model.setName("decode_matrix_conn_gen_cont_individualg_ragged_new");
 
     // Continuous synapse parameters
     Continuous::VarValues staticSynapseInit(1.0);    // 0 - Wij (nA)
