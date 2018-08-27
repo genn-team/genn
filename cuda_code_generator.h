@@ -24,11 +24,13 @@ public:
     // CodeGenerator::Base virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &ng, const Substitutions&)> handler) const override;
+                                       std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const NeuronGroup &ng, const Substitutions&)> handler) const override;
 
-    virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model) const override;
+    virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
+                                            std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const SynapseGroup &, const Substitutions&)> wumThreshHandler,
+                                            std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const override;
 
-    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &, const NeuronGroup &, const Substitutions &subs) const override
+    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
     {
         genEmitSpike(os, subs, "");
     }
@@ -47,13 +49,17 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     void genParallelNeuronGroup(CodeStream &os, const NNmodel &model,
-                                std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const NeuronGroup&)> handler) const;
+                                std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const NeuronGroup&)> handler) const;
 
     void genParallelSynapseGroup(CodeStream &os, const NNmodel &model,
                                  std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
-                                 std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const SynapseGroup&)> handler) const;
+                                 std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&)> handler) const;
                                  
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
+
+    void genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &subs, bool trueSpike,
+                                           std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
+                                           std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const;
 
     size_t getPresynapticUpdateKernelSize(const SynapseGroup &sg) const;
     

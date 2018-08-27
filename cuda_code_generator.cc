@@ -3,9 +3,13 @@
 // Standard C++ includes
 #include <algorithm>
 
+// CUDA includes
+#include <cuda_runtime.h>
+
 // GeNN includes
 #include "codeGenUtils.h"
 #include "codeStream.h"
+#include "global.h"
 #include "modelSpec.h"
 
 // NuGeNN includes
@@ -21,20 +25,18 @@ size_t padSize(size_t size, size_t blockSize)
     return ((size + blockSize - 1) / blockSize) * blockSize;
 }
 
-// Helpers::Variable
-template<typename Type>
-class Variable
+std::string getFloatAtomicAdd(const std::string &ftype)
 {
-public:
-    Variable(const std::string &variableName) : m_Text(variableName)
-    {
+    /*int version;
+    cudaRuntimeGetVersion(&version);
+    if (((deviceProp[theDevice].major < 2) && (ftype == "float"))
+        || (((deviceProp[theDevice].major < 6) || (version < 8000)) && (ftype == "double"))) {
+        return "atomicAddSW";
     }
-
-    const std::string &getText() const{ return m_Text; }
-
-private:
-    const std::string m_Text;
-};
+    else {*/
+        return "atomicAdd";
+    //}
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -51,7 +53,7 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
         os << "const unsigned int id = " << m_NeuronUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
 
         Substitutions baseSubs;
-        baseSubs.addSubstitution("t", "t");
+        baseSubs.addVarSubstitution("t", "t");
 
         // If any neuron groups emit spike events
         if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
@@ -95,10 +97,10 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
                 Substitutions subs(&baseSubs);
                 
                 // Neuron ID
-                subs.addSubstitution("id", "lid");
+                subs.addVarSubstitution("id", "lid");
 
                 // Get name of rng to use for this neuron
-                subs.addSubstitution("rng", "&dd_rng" + ng.getName() + "[lid]");
+                subs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[lid]");
                 
                 // Call handler to generate generic neuron code
                 handler(os, codeGenerator, model, ng, subs);
@@ -161,7 +163,9 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model) const
+void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
+                                               std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const SynapseGroup &, const Substitutions&)> wumThreshHandler,
+                                               std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const
 {
     os << "extern \"C\" __global__ void calcSynapses(";
     for (const auto &p : model.getSynapseKernelParameters()) {
@@ -171,11 +175,14 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
     {
         CodeStream::Scope b(os);
         
+        Substitutions baseSubs;
+        baseSubs.addVarSubstitution("t", "t");
+
         os << "const unsigned int id = " << m_PresynapticUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
 
         // We need shLg if any synapse groups accumulate into shared memory
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [this](const NNmodel::SynapseGroupValueType &s){ return shouldAccumulateInSharedMemory(s.second); }))
+            [this](const NNmodel::SynapseGroupValueType &s){ return this->shouldAccumulateInSharedMemory(s.second); }))
         {
             os << "__shared__ " << model.getPrecision() << " shLg[" << m_PresynapticUpdateBlockSize << "];" << std::endl;
         }
@@ -198,8 +205,13 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         // Parallelise over synapse groups
         genParallelSynapseGroup(os, model, 
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
-            [this](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg)
+            [wumThreshHandler, wumSimHandler, this, &baseSubs](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg)
             {
+                Substitutions subs(&baseSubs);
+                
+                // Neuron ID
+                subs.addVarSubstitution("id", "lid");
+
                 if (sg.getSrcNeuronGroup()->isDelayRequired()) {
                     os << "const unsigned int delaySlot = (dd_spkQuePtr" <<sg.getSrcNeuronGroup()->getName();
                     os << " + " << (sg.getSrcNeuronGroup()->getNumDelaySlots() - sg.getDelaySteps());
@@ -250,6 +262,9 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
                 // If spike events should be processed
                 if (sg.isSpikeEventRequired()) {
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
+                        assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+                        genPresynapticUpdateKernelPreSpan(os, model, sg, subs, false, 
+                                                          wumThreshHandler, wumSimHandler);
                     }
                     else {
                     }
@@ -258,6 +273,9 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
                 // If true spikes should be processed
                 if (sg.isTrueSpikeRequired()) {
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
+                        assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+                        genPresynapticUpdateKernelPreSpan(os, model, sg, subs, true, 
+                                                          wumThreshHandler, wumSimHandler);
                     }
                     else {
                     }
@@ -286,7 +304,6 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
                 }
             }
         );
-                                
     }
 }
 //--------------------------------------------------------------------------
@@ -348,7 +365,103 @@ void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const NNmodel &model
 void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
-    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getSubstitution("id") << ";" << std::endl;
+    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getVarSubstitution("id") << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &baseSubs, bool trueSpike,
+                                                      std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
+                                                      std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const
+{
+    // Get suffix based on type of events
+    const std::string eventSuffix = trueSpike ? "" : "evnt";
+    const auto *wu = sg.getWUModel();
+
+    os << "if (" << baseSubs.getVarSubstitution("id") << " < " ;
+    if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[delaySlot])";
+    }
+    else {
+        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[0])";
+    }
+    {
+        CodeStream::Scope b(os);
+
+        if (!wu->getSimSupportCode().empty()) {
+            os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
+        }
+
+        if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+            os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
+            os << "[(delaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << baseSubs.getVarSubstitution("id") << "];" << std::endl;
+        }
+        else {
+            os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
+            os << "[" << baseSubs.getVarSubstitution("id") << "];" << std::endl;
+        }
+
+        if(sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+            os << "unsigned int synAddress = dd_indInG" << sg.getName() << "[preInd];" << std::endl;
+            os << "const unsigned int npost = dd_indInG" << sg.getName() << "[preInd + 1] - prePos;" << std::endl;
+        }
+        else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
+            os << "const unsigned int npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
+        }
+
+        if (!trueSpike && sg.isEventThresholdReTestRequired()) {
+            os << "if(";
+ 
+            Substitutions subs(&baseSubs);
+            subs.addVarSubstitution("id_pre", "preInd");
+            subs.addVarSubstitution("id_post", "i");
+
+            // Generate weight update threshold condition
+            wumThreshHandler(os, *this, model, sg, subs);
+            
+            // end code substitutions ----
+            os << ")";
+
+            os << CodeStream::OB(130);
+        }
+
+        os << "for(unsigned int i = 0; i < npost; i++, synAddress++)";
+        {
+            CodeStream::Scope b(os);
+
+            // **TODO** pretty sure __ldg will boost performance here - basically will bring whole row into cache
+            os << "const unsigned int ipost = dd_ind" <<  sg.getName() << "[prePos];" << std::endl;
+
+            // Code substitutions ----------------------------------------------------------------------------------
+            string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
+
+            Substitutions subs(&baseSubs);
+            subs.addVarSubstitution("id_pre", "preInd");
+            subs.addVarSubstitution("id_post", "ipost");
+            subs.addVarSubstitution("syn_address", "synAddress");
+
+            // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+            if(sg.isDendriticDelayRequired()) {
+                subs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+            }
+            // Otherwise
+            else {
+                // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
+                if(shouldAccumulateInSharedMemory(sg)) {
+                    subs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
+                }
+                // Otherwise, substitute global memory array for $(inSyn)
+                else {
+                    subs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
+                }
+            }
+
+            wumSimHandler(os, *this, model, sg, subs);
+        }
+
+        if (!trueSpike && sg.isEventThresholdReTestRequired()) {
+            os << CodeStream::CB(130);
+        }
+    }
 }
 //--------------------------------------------------------------------------
 size_t CodeGenerator::getPresynapticUpdateKernelSize(const SynapseGroup &sg) const

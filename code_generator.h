@@ -27,8 +27,10 @@ public:
     // Declared virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream &output, const Base &, const NNmodel &, const NeuronGroup&, const Substitutions&)> handler) const = 0;
-    virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model) const = 0;
+                                       std::function<void(CodeStream &output, const Base&, const NNmodel&, const NeuronGroup&, const Substitutions&)> handler) const = 0;
+    virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
+                                            std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
+                                            std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const = 0;
 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     

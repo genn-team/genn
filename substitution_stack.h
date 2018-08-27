@@ -19,19 +19,26 @@ public:
     {
     }
 
-    void addSubstitution(const std::string &source, const std::string &destionation) 
+    void addVarSubstitution(const std::string &source, const std::string &destionation) 
     {
-        m_Substitutions.emplace(source, destionation);
+        m_VarSubstitutions.emplace(source, destionation);
     }
 
-    const std::string &getSubstitution(const std::string &source) const
+    void addFuncSubstitution(const std::string &source, unsigned int numArguments, const std::string &funcTemplate)
     {
-        auto var = m_Substitutions.find(source);
-        if(var != m_Substitutions.end()) {
+        m_FuncSubstitutions.emplace(std::piecewise_construct,
+                                    std::forward_as_tuple(source),
+                                    std::forward_as_tuple(numArguments, funcTemplate));
+    }
+
+    const std::string &getVarSubstitution(const std::string &source) const
+    {
+        auto var = m_VarSubstitutions.find(source);
+        if(var != m_VarSubstitutions.end()) {
             return var->second;
         }
         else if(m_Parent) {
-            return m_Parent->getSubstitution(source);
+            return m_Parent->getVarSubstitution(source);
         }
         else {
             throw std::runtime_error("Nothing to substitute for '" + source + "'");
@@ -40,9 +47,14 @@ public:
 
     void apply(std::string &code) const
     {
-        // Apply substitutions
-        for(const auto &s : m_Substitutions) {
-            substitute(code, "$(" + s.first + ")", s.second);
+        // Apply variable substitutions
+        for(const auto &v : m_VarSubstitutions) {
+            substitute(code, "$(" + v.first + ")", v.second);
+        }
+
+        // Apply function substitutions
+        for(const auto &f : m_FuncSubstitutions) {
+            functionSubstitute(code, f.first, f.second.first, f.second.second);
         }
 
         // If we have a parent, apply their substitutions too
@@ -52,6 +64,7 @@ public:
     }
 
 private:
-    std::map<std::string, std::string> m_Substitutions;
+    std::map<std::string, std::string> m_VarSubstitutions;
+    std::map<std::string, std::pair<unsigned int, std::string>> m_FuncSubstitutions;
     const Substitutions *m_Parent;
 };
