@@ -72,7 +72,7 @@ public:
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::OneToOne
 //----------------------------------------------------------------------------
-//! Initialises variable to a constant value
+//! Initialises connectivity to a 'one-to-one' diagonal matrix
 class OneToOne : public Base
 {
 public:
@@ -99,7 +99,17 @@ public:
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::FixedProbability
 //----------------------------------------------------------------------------
-//! Initialises variable by sampling from the uniform distribution
+//! Initialises connectivity with a fixed probability of a synapse existing
+//! between a pair of pre and postsynaptic neurons.
+/*! Whether a synapse exists between a pair of pre and a postsynaptic
+    neurons can be modelled using a Bernoulli distribution. While this COULD
+    br sampling directly by repeatedly drawing from the uniform distribution, 
+    this is innefficient. Instead we sample from the gemetric distribution 
+    which describes "the probability distribution of the number of Bernoulli 
+    trials needed to get one success" -- essentially the distribution of the 
+    'gaps' between synapses. We do this using the "inversion method"
+    described by Devroye (1986) -- essentially inverting the CDF of the
+    equivalent continuous distribution (in this case the exponential distribution)*/
 class FixedProbability : public Base
 {
 public:
@@ -136,5 +146,4 @@ public:
             return binomialInverseCDF(quantile, numPre, pars[0]);
         });
 };
-
 }   // namespace InitVarSnippet
