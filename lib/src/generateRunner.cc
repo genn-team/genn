@@ -2593,6 +2593,10 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "push" << n.first << "SpikesToDevice(hostInitialisedOnly);" << std::endl;
         }
 
+        for(const auto &cs : model.getLocalCurrentSources()) {
+            os << "push" << cs.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
+        }
+
         for(const auto &s : model.getLocalSynapseGroups()) {
             os << "push" << s.first << "StateToDevice(hostInitialisedOnly);" << std::endl;
         }
