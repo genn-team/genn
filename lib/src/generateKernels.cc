@@ -445,7 +445,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
     for(const auto &p : model.getCurrentSourceKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
-    os << model.getPrecision() << " t)" << std::endl;
+    os << model.getTimePrecision() << " t)" << std::endl;
     {
         // kernel code
         CodeStream::Scope b(os);
@@ -870,7 +870,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
             os << p.second << " " << p.first << ", ";
         }
-        os << model.getPrecision() << " t)" << std::endl; // end of synapse kernel header
+        os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
 
         // synapse dynamics kernel code
         {
@@ -1021,7 +1021,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
     for (const auto &p : model.getSynapseKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
-    os << model.getPrecision() << " t)" << std::endl; // end of synapse kernel header
+    os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
 
     // synapse kernel code
     {
@@ -1211,7 +1211,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
         for(const auto &p : model.getSimLearnPostKernelParameters()) {
             os << p.second << " " << p.first << ", ";
         }
-        os << model.getPrecision() << " t)";
+        os << model.getTimePrecision() << " t)";
         os << std::endl;
 
         // kernel code
