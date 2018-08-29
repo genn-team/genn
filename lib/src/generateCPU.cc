@@ -416,7 +416,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
 
                         string pdCode = psm->getDecayCode();
                         substitute(pdCode, "$(id)", "n");
-                        substitute(pdCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
+                        substitute(pdCode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[n]");
                         StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                                 nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                                 cpuFunctions, model.getPrecision(), "rng");
@@ -429,7 +429,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                             os << CodeStream::CB(29) << " // namespace bracket closed" << endl;
                         }
                         for (const auto &v : psm->getVars()) {
-                            os << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << std::endl;
+                            os << v.first << sg->getPSModelTargetName() << "[n]" << " = lps" << v.first << sg->getPSModelTargetName() << ";" << std::endl;
                         }
                     }
                 }
