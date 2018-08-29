@@ -246,7 +246,13 @@ void generatePostParallelisedCode(
             {
                 CodeStream::Scope b(os);
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "unsigned int gid = (shSpk" << postfix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << localID << ");" << std::endl;
+                    const size_t maxSynapses = (size_t)sg.getTrgNeuronGroup()->getNumNeurons() * (size_t)sg.getSrcNeuronGroup()->getNumNeurons();
+                    if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                        os << "uint64_t gid = (shSpk" << postfix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << localID << ");" << std::endl;
+                    }
+                    else {
+                        os << "unsigned int gid = (shSpk" << postfix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << localID << ");" << std::endl;
+                    }
                 }
 
                 if (!wu->getSimSupportCode().empty()) {

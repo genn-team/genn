@@ -5,6 +5,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "initSparseConnectivitySnippet.h"
 #include "newNeuronModels.h"
 
 // Forward declarations
@@ -150,9 +151,28 @@ void weightUpdatePostLearn(
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype);
 
-std::string initVariable(
+std::string initNeuronVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &idx,
+    const std::string &ftype,
+    const std::string &rng);
+
+std::string initWeightUpdateVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> &functions,
+	const std::string &preIdx,
+	const std::string &postIdx,
+    const std::string &ftype,
+    const std::string &rng);
+	
+std::string initSparseConnectivity(
+    const SynapseGroup &sg,
+    const std::string &addSynapseFunctionTemplate,
+    unsigned int numTrgNeurons,
+    const std::string &preIdx,
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
@@ -163,7 +183,7 @@ void currentSourceInjection(
     const VarNameIterCtx &scmVars,
     const DerivedParamNameIterCtx &scmDerivedParams,
     const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
 }   // StandardSubstitions

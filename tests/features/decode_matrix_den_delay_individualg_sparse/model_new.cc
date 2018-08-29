@@ -21,7 +21,7 @@ void modelDefinition(NNmodel &model)
     initGeNN();
 
     model.setDT(1.0);
-    model.setName("decode_matrix_den_delay_individualg_sparse_pre_new");
+    model.setName("decode_matrix_den_delay_individualg_sparse_new");
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticSynapseInit(
