@@ -10,8 +10,8 @@
 namespace
 {
 void initVariable(
-	std::string &code,
-	const NewModels::VarInit &varInit,
+    std::string &code,
+    const NewModels::VarInit &varInit,
     const std::string &varName,
     const std::vector<FunctionTemplate> functions,
     const std::string &ftype,
