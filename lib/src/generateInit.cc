@@ -67,9 +67,10 @@ bool shouldInitOnHost(VarMode varMode)
 #endif
 }
 // ------------------------------------------------------------------------
-template<typename I, typename M>
-void genHostInitNeuronVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, size_t count, const std::string &popName, const std::string &ftype,
-                              I getVarInitialiser, M getVarMode)
+template<typename I, typename M, typename Q>
+void genHostInitNeuronVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, size_t count, size_t numDelaySlots,
+                              const std::string &popName, const std::string &ftype,
+                              I getVarInitialiser, M getVarMode, Q isVarQueueRequired)
 {
     for (size_t k= 0, l= vars.size(); k < l; k++) {
         const auto &varInit = getVarInitialiser(k);
@@ -78,19 +79,46 @@ void genHostInitNeuronVarCode(CodeStream &os, const NewModels::Base::StringPairV
         // If this variable should be initialised on the host and has any initialisation code
         if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
+
             os << "for (int i = 0; i < " << count << "; i++)";
             {
                 CodeStream::Scope b(os);
-                os << StandardSubstitutions::initNeuronVariable(varInit, vars[k].first + popName + "[i]",
-                                                                cpuFunctions, "i", ftype, "rng") << std::endl;
+
+                // If variable requires a queue
+                if (isVarQueueRequired(k)) {
+                    // Generate initial value into temporary variable
+                    os << vars[k].second << " initVal;" << std::endl;
+                    os << StandardSubstitutions::initNeuronVariable(varInit, "initVal", cpuFunctions, "i",
+                                                                    ftype, "rng") << std::endl;
+                    // Copy this into all delay slots
+                    os << "for (int d = 0; d < " << numDelaySlots << "; d++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << vars[k].first << popName << "[(d * " << count << ") + i] = initVal;" << std::endl;
+                    }
+                }
+                else {
+                    os << StandardSubstitutions::initNeuronVariable(varInit, vars[k].first + popName + "[i]",
+                                                                    cpuFunctions, "i", ftype, "rng") << std::endl;
+                }
             }
         }
     }
 }
-// ------------------------------------------------------------------------
+//------------------------------------------------------------------------
 template<typename I, typename M>
-void genDeviceNeuronInitVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, const std::string &idx, const std::string &popName, const std::string &ftype,
-                                I getVarInitialiser, M getVarMode)
+void genHostInitNeuronVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, size_t count,
+                              const std::string &popName, const std::string &ftype,
+                              I getVarInitialiser, M getVarMode)
+{
+    genHostInitNeuronVarCode(os, vars, count, 0, popName, ftype, getVarInitialiser, getVarMode,
+                             [](size_t){ return false; });
+}
+//------------------------------------------------------------------------
+template<typename I, typename M, typename Q>
+void genDeviceNeuronInitVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, size_t count, size_t numDelaySlots,
+                                const std::string &idx, const std::string &popName, const std::string &ftype,
+                                I getVarInitialiser, M getVarMode, Q isVarQueueRequired)
 {
     for(size_t j = 0; j < vars.size(); j++) {
         const auto &varInit = getVarInitialiser(j);
@@ -99,10 +127,36 @@ void genDeviceNeuronInitVarCode(CodeStream &os, const NewModels::Base::StringPai
         // Initialise directly into device variable
         if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
-            os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + vars[j].first + popName + "[" + idx + "]",
-                                                            cudaFunctions, idx, ftype, "&initRNG") << std::endl;
+
+            // If variable requires a queue
+            if (isVarQueueRequired(j)) {
+                // Generate initial value into temporary variable
+                os << vars[j].second << " initVal;" << std::endl;
+                os << StandardSubstitutions::initNeuronVariable(varInit, "initVal", cudaFunctions, idx,
+                                                                ftype, "&initRNG") << std::endl;
+
+                // Copy this into all delay slots
+                os << "for (int i = 0; i < " << numDelaySlots << "; i++)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "dd_" << vars[j].first << popName << "[(i * " << count << ") + " << idx << "] = initVal;" << std::endl;
+                }
+            }
+            // Otherwise, initialise directly into device variable
+            else {
+                os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + vars[j].first + popName + "[" + idx + "]",
+                                                                cudaFunctions, idx, ftype, "&initRNG") << std::endl;
+            }
         }
     }
+}
+//------------------------------------------------------------------------
+template<typename I, typename M>
+void genDeviceNeuronInitVarCode(CodeStream &os, const NewModels::Base::StringPairVec &vars, const std::string &idx, const std::string &popName, const std::string &ftype,
+                                I getVarInitialiser, M getVarMode)
+{
+    genDeviceNeuronInitVarCode(os, vars, 0, 0, idx, popName, ftype, getVarInitialiser, getVarMode,
+                               [](size_t){ return false; });
 }
 // ------------------------------------------------------------------------
 template<typename I, typename M>
@@ -328,11 +382,11 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
                     }
 
-                    // Build string to use for delayed variable index
-                    const std::string delayedIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
-
                     // If spike variables are initialised on device
                     if(shouldInitSpikeVar || shouldInitSpikeEventVar || shouldInitSpikeTimeVar) {
+                        // Build string to use for delayed variable index
+                        const std::string delayedIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
+
                         // If delay is required, loop over delay bins
                         if(n.second.isDelayRequired()) {
                             os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(31);
@@ -374,37 +428,13 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         }
                     }
 
-                    // Loop through neuron variables
-                    auto neuronModelVars = n.second.getNeuronModel()->getVars();
-                    for (size_t j = 0; j < neuronModelVars.size(); j++) {
-                        const auto &varInit = n.second.getVarInitialisers()[j];
-                        const VarMode varMode = n.second.getVarMode(j);
+                    // Initialise neuron variables
+                    genDeviceNeuronInitVarCode(os, n.second.getNeuronModel()->getVars(), n.second.getNumNeurons(), n.second.getNumDelaySlots(),
+                                               "lid", n.first, model.getPrecision(),
+                                               [&n](size_t i){ return n.second.getVarInitialisers()[i]; },
+                                               [&n](size_t i){ return n.second.getVarMode(i); },
+                                               [&n](size_t i){ return n.second.isVarQueueRequired(i); });
 
-                        // If this variable should be initialised on the device and has any initialisation code
-                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                            CodeStream::Scope b(os);
-
-                            // If variable requires a queue
-                            if (n.second.isVarQueueRequired(j)) {
-                                // Generate initial value into temporary variable
-                                os << neuronModelVars[j].second << " initVal;" << std::endl;
-                                os << StandardSubstitutions::initNeuronVariable(varInit, "initVal", cudaFunctions, "lid",
-                                                                                model.getPrecision(), "&initRNG") << std::endl;
-
-                                // Copy this into all delay slots
-                                os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-                                {
-                                    CodeStream::Scope b(os);
-                                    os << "dd_" << neuronModelVars[j].first << n.first << "[" << delayedIndex << "] = initVal;" << std::endl;
-                                }
-                            }
-                            // Otherwise, initialise directly into device variable
-                            else {
-                                os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + neuronModelVars[j].first + n.first + "[lid]",
-                                                                                cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
-                            }
-                        }
-                    }
                     // Loop through incoming synaptic populations
                     for(const auto &m : n.second.getMergedInSyn()) {
                         const auto *sg = m.first;
@@ -929,27 +959,11 @@ void genInit(const NNmodel &model,      //!< Model description
                 }
             }
 
-            auto neuronModelVars = n.second.getNeuronModel()->getVars();
-            for (size_t j = 0; j < neuronModelVars.size(); j++) {
-                const auto &varInit = n.second.getVarInitialisers()[j];
-                const VarMode varMode = n.second.getVarMode(j);
-
-                // If this variable should be initialised on the host and has any initialisation code
-                if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
-                    CodeStream::Scope b(os);
-                    if (n.second.isVarQueueRequired(j)) {
-                        os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
-                    }
-                    else {
-                        os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
-                    }
-                    {
-                        CodeStream::Scope b(os);
-                        os << StandardSubstitutions::initNeuronVariable(varInit, neuronModelVars[j].first + n.first + "[i]",
-                                                                        cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
-                    }
-                }
-            }
+            // Initialise neuron variables
+            genHostInitNeuronVarCode(os, n.second.getNeuronModel()->getVars(),n.second.getNumNeurons(), n.second.getNumDelaySlots(), n.first, model.getPrecision(),
+                                     [&n](size_t i){ return n.second.getVarInitialisers()[i]; },
+                                     [&n](size_t i){ return n.second.getVarMode(i); },
+                                     [&n](size_t i){ return n.second.isVarQueueRequired(i); });
 
             if (n.second.getNeuronModel()->isPoisson()) {
                 CodeStream::Scope b(os);
