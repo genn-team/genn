@@ -175,7 +175,8 @@ void StandardGeneratedSections::weightUpdatePreSpike(
             // Perform standard substitutions
             string pCode = sg->getWUModel()->getPreSpikeCode();
             StandardSubstitutions::weightUpdatePreSpike(pCode, sg, localID, devPrefix, functions, ftype);
-
+            os << pCode;
+            
             // Write back presynaptic variables into global memory
             for(const auto &v : sg->getWUModel()->getPreVars()) {
                 os << devPrefix << v.first << sg->getName() << "[";
@@ -184,8 +185,6 @@ void StandardGeneratedSections::weightUpdatePreSpike(
                 }
                 os << localID <<  "] = l" << v.first << ";" << std::endl;
             }
-
-            os << pCode;
         }
     }
 
