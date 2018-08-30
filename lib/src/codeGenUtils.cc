@@ -642,6 +642,7 @@ uint32_t hashString(const std::string &string)
 void preNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
+    const string &offset,
     const string &preIdx,
     const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
     StringWrapFunc varWrapFunc)
@@ -652,19 +653,18 @@ void preNeuronSubstitutionsInSynapticCode(
         substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
 
-    const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), offset, preIdx, "_pre", devPrefix, varWrapFunc);
 }
 
 void postNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
+    const string &offset,
     const string &postIdx,
     const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
     StringWrapFunc varWrapFunc)
 {
     // postsynaptic neuron variables, parameters, and global parameters
-    const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), offset, postIdx, "_post", devPrefix, varWrapFunc);
 }
 
@@ -677,6 +677,10 @@ void neuron_substitutions_in_synaptic_code(
     StringWrapFunc preVarWrapFunc,  //!< function used to 'wrap' presynaptic variable accesses
     StringWrapFunc postVarWrapFunc) //!<function used to 'wrap' postsynaptic variable accesses
 {
-    preNeuronSubstitutionsInSynapticCode(wCode, sg, preIdx, devPrefix, preVarWrapFunc);
-    postNeuronSubstitutionsInSynapticCode(wCode, sg, postIdx, devPrefix, postVarWrapFunc);
+    
+    const std::string preOffset = sg->getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+    preNeuronSubstitutionsInSynapticCode(wCode, sg, preOffset, preIdx, devPrefix, preVarWrapFunc);
+    
+    const std::string postOffset = sg->getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
+    postNeuronSubstitutionsInSynapticCode(wCode, sg, postOffset, postIdx, devPrefix, postVarWrapFunc);
 }
