@@ -358,6 +358,34 @@ void genPullCurrentSpikeFunctions(CodeStream &os, const NeuronGroup &ng, bool sp
     os << std::endl;
 }
 #endif  // CPU_ONLY
+
+void writeTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
+{
+    os << "#ifndef " << prefix << "_MIN" << std::endl;
+    os << "#define " << prefix << "_MIN ";
+    if (precision == "float") {
+        writePreciseString(os, std::numeric_limits<float>::min());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::min());
+        os << std::endl;
+    }
+    os << "#endif" << std::endl;
+
+    os << "#ifndef " << prefix << "_MAX" << std::endl;
+    os << "#define " << prefix << "_MAX ";
+    if (precision == "float") {
+        writePreciseString(os, std::numeric_limits<float>::max());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::max());
+        os << std::endl;
+    }
+    os << "#endif" << std::endl;
+    os << std::endl;
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -439,7 +467,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
 
     // write DT macro
     os << "#undef DT" << std::endl;
-    if (model.getPrecision() == "float") {
+    if (model.getTimePrecision() == "float") {
         os << "#define DT " << to_string(model.getDT()) << "f" << std::endl;
     } else {
         os << "#define DT " << to_string(model.getDT()) << std::endl;
@@ -457,29 +485,10 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << "#ifndef scalar" << std::endl;
     os << "typedef " << model.getPrecision() << " scalar;" << std::endl;
     os << "#endif" << std::endl;
-    os << "#ifndef SCALAR_MIN" << std::endl;
-    os << "#define SCALAR_MIN ";
-    if (model.getPrecision() == "float") {
-        writePreciseString(os, std::numeric_limits<float>::min());
-        os << "f" << std::endl;
-    }
-    else {
-        writePreciseString(os, std::numeric_limits<double>::min());
-        os << std::endl;
-    }
-    os << "#endif" << std::endl;
-    os << "#ifndef SCALAR_MAX" << std::endl;
-    os << "#define SCALAR_MAX ";
-    if (model.getPrecision() == "float") {
-        writePreciseString(os, std::numeric_limits<float>::max());
-        os << "f" << std::endl;
-    }
-    else {
-        writePreciseString(os, std::numeric_limits<double>::max());
-        os << std::endl;
-    }
-    os << "#endif" << std::endl;
-    os << std::endl;
+
+    // Write ranges of scalar and time types
+    writeTypeRange(os, model.getPrecision(), "SCALAR");
+    writeTypeRange(os, model.getTimePrecision(), "TIME");
   
     // Begin extern C block around ALL definitions
     if(GENN_PREFERENCES::buildSharedLibrary) {
@@ -501,7 +510,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
     os << std::endl;
 
     os << varExportPrefix << " unsigned long long iT;" << std::endl;
-    os << varExportPrefix << " " << model.getPrecision() << " t;" << std::endl;
+    os << varExportPrefix << " " << model.getTimePrecision() << " t;" << std::endl;
     if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
         os << varExportPrefix << " cudaEvent_t neuronStart, neuronStop;" << std::endl;
@@ -604,7 +613,7 @@ void genDefinitions(const NNmodel &model,   //!< Model description
             os << varExportPrefix << " unsigned int spkQuePtr" << n.first << ";" << std::endl;
         }
         if (n.second.isSpikeTimeRequired()) {
-            extern_variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
+            extern_variable_def(os, model.getTimePrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
         }
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
@@ -1161,7 +1170,7 @@ void genRunner(const NNmodel &model,    //!< Model description
     }
     
     os << "unsigned long long iT;" << std::endl;
-    os << model.getPrecision() << " t;" << std::endl;
+    os << model.getTimePrecision() << " t;" << std::endl;
     if (model.isTimingEnabled()) {
 #ifndef CPU_ONLY
         os << "cudaEvent_t neuronStart, neuronStop;" << std::endl;
@@ -1268,7 +1277,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 #endif
         }
         if (n.second.isSpikeTimeRequired()) {
-            variable_def(os, model.getPrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
+            variable_def(os, model.getTimePrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
         }
 #ifndef CPU_ONLY
         if(n.second.isSimRNGRequired()) {
@@ -1588,7 +1597,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
             // Allocate buffer to hold last spike times if required
             if (n.second.isSpikeTimeRequired()) {
-                mem += allocate_variable(os, model.getPrecision(), "sT" + n.first, n.second.getSpikeTimeVarMode(),
+                mem += allocate_variable(os, model.getTimePrecision(), "sT" + n.first, n.second.getSpikeTimeVarMode(),
                                          n.second.getNumNeurons() * n.second.getNumDelaySlots());
             }
 
@@ -2191,7 +2200,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 size_t size = n.second.getNumNeurons() * n.second.getNumDelaySlots();
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_sT" << n.first;
                 os << ", sT" << n.first;
-                os << ", " << size << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+                os << ", " << size << " * sizeof(" << model.getTimePrecision() << "), cudaMemcpyHostToDevice));" << std::endl;
 
                 if(spikeTimeVarMode & VarInit::DEVICE) {
                     os << CodeStream::CB(1062);
@@ -2430,7 +2439,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             if (n.second.isSpikeTimeRequired() && canPushPullVar(n.second.getSpikeTimeVarMode())) {
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy(sT" << n.first;
                 os << ", d_sT" << n.first;
-                os << ", " << "glbSpkCnt" << n.first << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+                os << ", " << "glbSpkCnt" << n.first << "[0] * sizeof(" << model.getTimePrecision() << "), cudaMemcpyDeviceToHost));" << std::endl;
             }
 
         }

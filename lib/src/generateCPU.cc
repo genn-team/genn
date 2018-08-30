@@ -219,7 +219,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
     os << "#include \"support_code.h\"" << std::endl << std::endl;
 
     // function header
-    os << "void calcNeuronsCPU(" << model.getPrecision() << " t)";
+    os << "void calcNeuronsCPU(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
 
@@ -257,7 +257,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     if ((nm->getSimCode().find("$(sT)") != string::npos)
                         || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
                         || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
-                        os << model.getPrecision() << " lsT= sT" <<  n.first << "[";
+                        os << model.getTimePrecision() << " lsT= sT" <<  n.first << "[";
                         if (n.second.isDelayRequired()) {
                             os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
                         }
@@ -476,7 +476,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
     if (!model.getSynapseDynamicsGroups().empty()) {
         // synapse dynamics function
-        os << "void calcSynapseDynamicsCPU(" << model.getPrecision() << " t)";
+        os << "void calcSynapseDynamicsCPU(" << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
             os << model.getPrecision() << " addtoinSyn;" << std::endl;
@@ -613,7 +613,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     }
 
     // synapse function header
-    os << "void calcSynapsesCPU(" << model.getPrecision() << " t)";
+    os << "void calcSynapsesCPU(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
         os << std::endl;
@@ -649,7 +649,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
     if (!model.getSynapsePostLearnGroups().empty()) {
 
-        os << "void learnSynapsesPostHost(" << model.getPrecision() << " t)";
+        os << "void learnSynapsesPostHost(" << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
 
