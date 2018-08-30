@@ -535,12 +535,13 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << "unsigned int lid = id - " << groupIDRange.first << ";" << std::endl;
                 }
 
-
+                // If axonal delays are required and we need variable queues, we should READ from delay slot before spkQuePtr
                 if (n->second.isVarQueueRequired() && n->second.isDelayRequired()) {
-                    // If axonal delays are required, we should READ from delay slot before spkQuePtr
                     os << "const unsigned int readDelayOffset = " << n->second.getPrevQueueOffset("dd_") << ";" << std::endl;
+                }
 
-                    // And WRITE to delay slot pointed to be spkQuePtr
+                // If axonal delays are required, we should WRITE to delay slot pointed to be spkQuePtr
+                if(n->second.isDelayRequired()){
                     os << "const unsigned int writeDelayOffset = " << n->second.getCurrentQueueOffset("dd_") << ";";
                 }
                 os << std::endl;
@@ -762,7 +763,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << "__syncthreads();" << std::endl;
                 }
 
-                const string queueOffset = (n->second.isVarQueueRequired() && n->second.isDelayRequired()) ? "writeDelayOffset + " : "";
+                const string queueOffset = n->second.isDelayRequired() ? "writeDelayOffset + " : "";
                 if (n->second.isSpikeEventRequired()) {
                     os << "if (threadIdx.x < spkEvntCount)";
                     {
