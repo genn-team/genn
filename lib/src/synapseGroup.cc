@@ -362,6 +362,8 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> 
 
 std::string SynapseGroup::getPresynapticAxonalDelaySlot(const std::string &devPrefix) const
 {
+    assert(getSrcNeuronGroup()->isDelayRequired());
+
     return "((" + devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName() + " + " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots() - getDelaySteps()) + ") % " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots()) + ")";
 }
 
