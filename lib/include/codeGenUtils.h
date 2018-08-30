@@ -286,6 +286,7 @@ uint32_t hashString(const std::string &string);
 void preNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
+    const string &offset,
     const string &postIdx,
     const string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
     StringWrapFunc varWrapFunc = StringWrapFunc());
@@ -293,6 +294,7 @@ void preNeuronSubstitutionsInSynapticCode(
 void postNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
+    const string &offset,
     const string &preIdx,
     const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
     StringWrapFunc varWrapFunc = StringWrapFunc());
