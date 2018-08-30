@@ -63,7 +63,7 @@ void StandardGeneratedSections::neuronLocalVarWrite(
     // store the defined parts of the neuron state into the global state variables dd_V etc
     for(const auto &v : nmVars.container) {
         os << devPrefix << v.first << ng.getName() << "[";
-        if (ng.isVarQueueRequired(v.first)) {
+        if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
              os << "writeDelayOffset + ";
         }
         os << localID <<  "] = l" << v.first << ";" << std::endl;
