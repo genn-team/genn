@@ -802,21 +802,9 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                         CodeStream::Scope b(os);
                         os << "const unsigned int n = shSpk[threadIdx.x];" << std::endl;
 
-                        // Loop through outgoing synaptic populations
-                        for(const auto *sg : n->second.getOutSyn()) {
-                            // If weight update model has any presynaptic update code
-                            if(!sg->getWUModel()->getPreSpikeCode().empty()) {
-                                // Perform standard substitutions
-                                string pCode = sg->getWUModel()->getPreSpikeCode();
-                                StandardSubstitutions::weightUpdatePreSpike(
-                                    pCode, sg, "n", "dd_", cudaFunctions, model.getPrecision());
-                                os << "// perform presynaptic update required for " << sg->getName() << std::endl;
-                                {
-                                    CodeStream::Scope b(os);
-                                    os << pCode;
-                                }
-                            }
-                        }
+                        // Insert code to update any weight update model presynaptic variables associated with outgoing connections
+                        StandardGeneratedSections::weightUpdatePreSpike(os, n->second, "dd_", "n",
+                                                                        cudaFunctions, model.getPrecision());
 
                         // Loop through incoming synaptic populations
                         for(const auto *sg : n->second.getInSyn()) {

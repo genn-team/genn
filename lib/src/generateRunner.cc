@@ -1703,7 +1703,10 @@ void genRunner(const NNmodel &model,    //!< Model description
             const auto *wu = s.second.getWUModel();
 
             // Allocate presynaptic weight update variables
-            const size_t preSize = s.second.getSrcNeuronGroup()->getNumNeurons();
+            // **NOTE** for simplicity these are sized based on the number of source neuron delay slots rather than the synapse's
+            const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
+                ? s.second.getSrcNeuronGroup()->getNumNeurons()
+                : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
             for(const auto &v : wu->getPreVars()) {
                 mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUPreVarMode(v.first),
                                          preSize);

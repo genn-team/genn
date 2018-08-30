@@ -471,9 +471,11 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
 
                     // Loop through outgoing synaptic populations
                     for(const auto *s : n.second.getOutSyn()) {
-                        genDeviceNeuronInitVarCode(os, s->getWUModel()->getPreVars(), "lid", s->getName(), model.getPrecision(),
+                        // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
+                        genDeviceNeuronInitVarCode(os, s->getWUModel()->getPreVars(), s->getSrcNeuronGroup()->getNumNeurons(), s->getSrcNeuronGroup()->getNumDelaySlots(), "lid", s->getName(), model.getPrecision(),
                                                    [&s](size_t i){ return s->getWUPreVarInitialisers()[i]; },
-                                                   [&s](size_t i){ return s->getWUPreVarMode(i); });
+                                                   [&s](size_t i){ return s->getWUPreVarMode(i); },
+                                                   [&s](size_t){ return (s->getDelaySteps() != NO_DELAY); });
                     }
 
                     // Loop through current sources
