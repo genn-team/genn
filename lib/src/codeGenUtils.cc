@@ -651,7 +651,9 @@ void preNeuronSubstitutionsInSynapticCode(
     if (srcNeuronModel->isPoisson()) {
         substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
-    neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), sg->getOffsetPre(), preIdx, "_pre", devPrefix, varWrapFunc);
+
+    const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+    neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), offset, preIdx, "_pre", devPrefix, varWrapFunc);
 }
 
 void postNeuronSubstitutionsInSynapticCode(
@@ -662,7 +664,8 @@ void postNeuronSubstitutionsInSynapticCode(
     StringWrapFunc varWrapFunc)
 {
     // postsynaptic neuron variables, parameters, and global parameters
-    neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), sg->getTrgNeuronGroup()->getQueueOffset(devPrefix), postIdx, "_post", devPrefix, varWrapFunc);
+    const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
+    neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), offset, postIdx, "_post", devPrefix, varWrapFunc);
 }
 
 void neuron_substitutions_in_synaptic_code(

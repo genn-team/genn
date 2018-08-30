@@ -351,11 +351,18 @@ bool NeuronGroup::hasOutputToHost(int targetHostID) const
 
 }
 
-std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const
+std::string NeuronGroup::getCurrentQueueOffset(const std::string &devPrefix) const
 {
-    return isDelayRequired()
-        ? "(" + devPrefix + "spkQuePtr" + getName() + " * " + to_string(getNumNeurons()) + ") + "
-        : "";
+    assert(isDelayRequired());
+
+    return "(" + devPrefix + "spkQuePtr" + getName() + " * " + std::to_string(getNumNeurons()) + ")";
+}
+
+std::string NeuronGroup::getPrevQueueOffset(const std::string &devPrefix) const
+{
+    assert(isDelayRequired());
+
+    return "(((" + devPrefix + "spkQuePtr" + getName() + " + " + std::to_string(getNumDelaySlots() - 1) + ") % " + std::to_string(getNumDelaySlots()) + ") * " + std::to_string(getNumNeurons()) + ")";
 }
 
 void NeuronGroup::injectCurrent(CurrentSource *src)

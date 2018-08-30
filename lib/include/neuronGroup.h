@@ -197,8 +197,11 @@ public:
     //! Does this neuron group have outgoing connections specified host id?
     bool hasOutputToHost(int targetHostID) const;
 
-    // **THINK** do this really belong here - it is very code-generation specific
-    std::string getQueueOffset(const std::string &devPrefix) const;
+    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
+    std::string getCurrentQueueOffset(const std::string &devPrefix) const;
+
+    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
+    std::string getPrevQueueOffset(const std::string &devPrefix) const;
 
 private:
     //------------------------------------------------------------------------

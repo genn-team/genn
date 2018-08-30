@@ -360,12 +360,9 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> 
     addExtraGlobalSynapseDynamicsParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 }
 
-
-std::string SynapseGroup::getOffsetPre() const
+std::string SynapseGroup::getPresynapticAxonalDelaySlot(const std::string &devPrefix) const
 {
-    return getSrcNeuronGroup()->isDelayRequired()
-        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
-        : "";
+    return "((" + devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName() + " + " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots() - getDelaySteps()) + ") % " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots()) + ")";
 }
 
 std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset) const
