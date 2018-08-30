@@ -235,14 +235,13 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 // increment spike queue pointer and reset spike count
                 StandardGeneratedSections::neuronOutputInit(os, n.second, "");
 
-                // If axonal delays are required and we need variable queues, we should READ from delay slot before spkQuePtr
-                if (n.second.isVarQueueRequired() && n.second.isDelayRequired()) {
+                // If axonal delays are required
+                if (n.second.isDelayRequired()) {
+                    // We should READ from delay slot before spkQuePtr
                     os << "const unsigned int readDelayOffset = " << n.second.getPrevQueueOffset("") << ";" << std::endl;
-                }
-
-                // If axonal delays are required, we should WRITE to delay slot pointed to be spkQuePtr
-                if(n.second.isDelayRequired()) {
-                    os << "const unsigned int writeDelayOffset = " << n.second.getCurrentQueueOffset("") << ";";
+                    
+                    // And we should WRITE to delay slot pointed to be spkQuePtr
+                    os << "const unsigned int writeDelayOffset = " << n.second.getCurrentQueueOffset("") << ";" << std::endl;
                 }
                 os << std::endl;
 

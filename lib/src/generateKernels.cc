@@ -557,14 +557,13 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << "unsigned int lid = id - " << groupIDRange.first << ";" << std::endl;
                 }
 
-                // If axonal delays are required and we need variable queues, we should READ from delay slot before spkQuePtr
-                if (n->second.isVarQueueRequired() && n->second.isDelayRequired()) {
+                // If axonal delays are required
+                if (n->second.isDelayRequired()) {
+                    // We should READ from delay slot before spkQuePtr
                     os << "const unsigned int readDelayOffset = " << n->second.getPrevQueueOffset("dd_") << ";" << std::endl;
-                }
-
-                // If axonal delays are required, we should WRITE to delay slot pointed to be spkQuePtr
-                if(n->second.isDelayRequired()){
-                    os << "const unsigned int writeDelayOffset = " << n->second.getCurrentQueueOffset("dd_") << ";";
+                    
+                    // And we should WRITE to delay slot pointed to be spkQuePtr
+                    os << "const unsigned int writeDelayOffset = " << n->second.getCurrentQueueOffset("dd_") << ";" << std::endl;
                 }
                 os << std::endl;
 
