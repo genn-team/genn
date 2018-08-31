@@ -8,7 +8,7 @@ class PreNeuron : public NeuronModels::Base
 public:
     DECLARE_MODEL(PreNeuron, 0, 0);
 
-    SET_THRESHOLD_CONDITION_CODE("fmodf($(t), 10.0f)< 1e-4");
+    SET_THRESHOLD_CONDITION_CODE("$(t) >= (scalar)$(id) && fmodf($(t) - (scalar)$(id), 10.0f)< 1e-4");
 };
 
 IMPLEMENT_MODEL(PreNeuron);
