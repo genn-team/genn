@@ -702,11 +702,22 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                             string rCode = nm->getResetCode();
                             substitute(rCode, "$(id)", localID);
                             StandardSubstitutions::neuronReset(rCode, n->second,
-                                                            nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            cudaFunctions, model.getPrecision(), rngName);
+                                                               nmVars, nmDerivedParams, nmExtraGlobalParams,
+                                                               cudaFunctions, model.getPrecision(), rngName);
                             os << "// spike reset code" << std::endl;
                             os << rCode << std::endl;
                         }
+                    }
+                    // store spike time back into global memory
+                    // **NOTE** if neuron does spike this happens later in kernel
+                    if(n->second.isSpikeTimeRequired()) {
+                        os << "else";
+                        CodeStream::Scope b(os);
+                        os << "dd_sT" << n->first << "[";
+                        if (n->second.isDelayRequired()) {
+                            os << "writeDelayOffset + ";
+                        }
+                        os << localID << "] = lsT;" << std::endl;
                     }
                 }
 

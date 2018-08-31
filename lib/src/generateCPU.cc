@@ -419,6 +419,17 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                                 os << rCode << std::endl;
                             }
                         }
+                        // store spike time back into global memory
+                        // **NOTE** this is so updates written when neuron DOES spike aren't overwritten
+                        if(n.second.isSpikeTimeRequired()) {
+                            os << "else";
+                            CodeStream::Scope b(os);
+                            os << "sT" << n.first << "[";
+                            if (n.second.isDelayRequired()) {
+                                os << "writeDelayOffset + ";
+                            }
+                            os << "n] = lsT;" << std::endl;
+                        }
                     }
 
                     // store the defined parts of the neuron state into the global state variables V etc
