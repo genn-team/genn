@@ -564,17 +564,6 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 // Generate code to copy neuron state into local variables
                 StandardGeneratedSections::neuronLocalVarInit(os, n->second, nmVars, "dd_", localID, model.getTimePrecision());
 
-                if ((nm->getSimCode().find("$(sT)") != string::npos)
-                    || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
-                    || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
-                    os << model.getPrecision() << " lsT = dd_sT" <<  n->first << "[";
-                    if (n->second.isDelayRequired()) {
-                        os << "readDelayOffset + ";
-                    }
-                    os << localID << "];" << std::endl;
-                }
-                os << std::endl;
-
                 if (!n->second.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != string::npos)) {
                     os << model.getPrecision() << " Isyn = 0;" << std::endl;
                 }
