@@ -41,12 +41,22 @@ void StandardGeneratedSections::neuronLocalVarInit(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &devPrefix,
-    const std::string &localID)
+    const std::string &localID,
+    const std::string &ttype)
 {
     for(const auto &v : nmVars.container) {
         os << v.second << " l" << v.first << " = ";
         os << devPrefix << v.first << ng.getName() << "[";
         if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
+            os << "readDelayOffset + ";
+        }
+        os << localID << "];" << std::endl;
+    }
+    
+    // Also read spike time into local variable
+    if(ng.isSpikeTimeRequired()) {
+        os << ttype << " lsT = " << devPrefix << "sT" << ng.getName() << "[";
+        if (ng.isDelayRequired()) {
             os << "readDelayOffset + ";
         }
         os << localID << "];" << std::endl;
@@ -67,6 +77,15 @@ void StandardGeneratedSections::neuronLocalVarWrite(
              os << "writeDelayOffset + ";
         }
         os << localID <<  "] = l" << v.first << ";" << std::endl;
+    }
+    
+    // store spike time back into global memory
+    if(ng.isSpikeTimeRequired()) {
+        os << devPrefix << "sT" << ng.getName() << "[";
+        if (ng.isDelayRequired()) {
+            os << "writeDelayOffset + ";
+        }
+        os << localID << "] = lsT;" << std::endl;
     }
 }
 //----------------------------------------------------------------------------

@@ -27,7 +27,8 @@ void neuronLocalVarInit(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &devPrefix,
-    const std::string &localID);
+    const std::string &localID,
+    const std::string &ttype);
 
 void neuronLocalVarWrite(
     CodeStream &os,

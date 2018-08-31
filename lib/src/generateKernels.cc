@@ -562,7 +562,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
 
                 // Generate code to copy neuron state into local variables
-                StandardGeneratedSections::neuronLocalVarInit(os, n->second, nmVars, "dd_", localID);
+                StandardGeneratedSections::neuronLocalVarInit(os, n->second, nmVars, "dd_", localID, model.getTimePrecision());
 
                 if ((nm->getSimCode().find("$(sT)") != string::npos)
                     || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)

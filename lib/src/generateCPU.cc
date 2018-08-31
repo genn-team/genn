@@ -256,18 +256,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
 
                     // Generate code to copy neuron state into local variable
-                    StandardGeneratedSections::neuronLocalVarInit(os, n.second, nmVars, "", "n");
-
-                    if ((nm->getSimCode().find("$(sT)") != string::npos)
-                        || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
-                        || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
-                        os << model.getTimePrecision() << " lsT= sT" <<  n.first << "[";
-                        if (n.second.isDelayRequired()) {
-                            os << "(preReadDelaySlot * " << n.second.getNumNeurons() << ") + ";
-                        }
-                        os << "n];" << std::endl;
-                    }
-                    os << std::endl;
+                    StandardGeneratedSections::neuronLocalVarInit(os, n.second, nmVars, "", "n", model.getTimePrecision());
 
                     if (!n.second.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != string::npos)) {
                         os << model.getPrecision() << " Isyn = 0;" << std::endl;
