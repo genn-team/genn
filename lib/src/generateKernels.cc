@@ -584,7 +584,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
 
                 // Generate code to copy neuron state into local variables
-                StandardGeneratedSections::neuronLocalVarInit(os, n->second, nmVars, "dd_", localID);
+                StandardGeneratedSections::neuronLocalVarInit(os, n->second, nmVars, "dd_", localID, model.getTimePrecision());
 
                 if ((nm->getSimCode().find("$(sT)") != string::npos)
                     || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
@@ -794,8 +794,6 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 }
 
                 if (!nm->getThresholdConditionCode().empty()) {
-                    string queueOffsetTrueSpk = n->second.isTrueSpikeRequired() ? queueOffset : "";
-
                     os << "if (threadIdx.x < spkCount)";
                     {
                         CodeStream::Scope b(os);
@@ -821,6 +819,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                             }
                         }
 
+                        string queueOffsetTrueSpk = n->second.isTrueSpikeRequired() ? queueOffset : "";
                         os << "dd_glbSpk" << n->first << "[" << queueOffsetTrueSpk << "posSpk + threadIdx.x] = n;" << std::endl;
                         if (n->second.isSpikeTimeRequired()) {
                             os << "dd_sT" << n->first << "[" << queueOffset << "n] = t;" << std::endl;
