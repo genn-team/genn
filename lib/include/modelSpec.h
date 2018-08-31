@@ -71,12 +71,20 @@ enum SynapseGType
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
 
-// Floating point precision to use for models
+//!< Floating point precision to use for models
 enum FloatType
 {
     GENN_FLOAT,
     GENN_DOUBLE,
     GENN_LONG_DOUBLE,
+};
+
+//!< Precision to use for variables which store time
+enum class TimePrecision
+{
+    DEFAULT,    //!< Time uses default model precision
+    FLOAT,      //!< Time uses single precision - not suitable for long simulations
+    DOUBLE,     //!< Time uses double precision - may reduce performance
 };
 
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
@@ -126,6 +134,7 @@ public:
     void setName(const std::string&); //!< Method to set the neuronal network model name
 
     void setPrecision(FloatType); //!< Set numerical precision for floating point
+    void setTimePrecision(TimePrecision timePrecision); //!< Set numerical precision for time
     void setDT(double); //!< Set the integration step size of the model
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
@@ -166,6 +175,9 @@ public:
 
     //! Gets the floating point numerical precision
     const std::string &getPrecision() const{ return ftype; }
+
+    //! Gets the floating point numerical precision used to represent time
+    std::string getTimePrecision() const;
 
     //! Which kernel should contain the reset logic? Specified in terms of GENN_FLAGS
     unsigned int getResetKernel() const{ return resetKernel; }
@@ -624,14 +636,15 @@ private:
     map<string, string> currentSourceKernelParameters;
 
      // Model members
-    string name;                //!< Name of the neuronal newtwork model
-    string ftype;               //!< Type of floating point variables (float, double, ...; default: float)
-    string RNtype;              //!< Underlying type for random number generation (default: uint64_t)
-    double dt;                  //!< The integration time step of the model
-    bool final;                 //!< Flag for whether the model has been finalized
+    string name;                    //!< Name of the neuronal newtwork model
+    string ftype;                   //!< Type of floating point variables (float, double, ...; default: float)
+    TimePrecision m_TimePrecision;  //!< Type of floating point variables used to store time
+    string RNtype;                  //!< Underlying type for random number generation (default: uint64_t)
+    double dt;                      //!< The integration time step of the model
+    bool final;                     //!< Flag for whether the model has been finalized
     bool timing;
     unsigned int seed;
-    unsigned int resetKernel;   //!< The identity of the kernel in which the spike counters will be reset.
+    unsigned int resetKernel;       //!< The identity of the kernel in which the spike counters will be reset.
 };
 
 #endif
