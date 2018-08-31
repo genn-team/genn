@@ -66,13 +66,11 @@ void createVarInitialiserFromLegacyVars(const std::vector<double> &ini, std::vec
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel()
+NNmodel::NNmodel() : m_TimePrecision(TimePrecision::DEFAULT), RNtype{"uint64_t"}, final(false)
 {
-    final= false;
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
-    RNtype= "uint64_t";
 #ifndef CPU_ONLY
     setGPUDevice(AUTODEVICE);
 #endif
@@ -195,6 +193,21 @@ bool NNmodel::canRunOnCPU() const
     }
 #endif
     return true;
+}
+
+std::string NNmodel::getTimePrecision() const
+{
+    // If time precision is set to match model precision
+    if(m_TimePrecision == TimePrecision::DEFAULT) {
+        return getPrecision();
+    }
+    // Otherwise return appropriate type
+    else if(m_TimePrecision == TimePrecision::FLOAT) {
+        return "float";
+    }
+    else {
+        return "double";
+    }
 }
 
 std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
@@ -861,6 +874,14 @@ void NNmodel::setPrecision(FloatType floattype /**<  */)
     }
 }
 
+void NNmodel::setTimePrecision(TimePrecision timePrecision)
+{
+    if (final) {
+        gennError("Trying to set time precision of a finalized model.");
+    }
+
+    m_TimePrecision = timePrecision;
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function sets a flag to determine whether timers and timing commands are to be included in generated code.

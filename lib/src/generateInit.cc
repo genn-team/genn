@@ -415,10 +415,10 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         // Reset spike times
                         if(shouldInitSpikeTimeVar) {
                             if(n.second.isDelayRequired()) {
-                                os << "dd_sT" << n.first << "[" << delayedIndex << "] = -SCALAR_MAX;" << std::endl;
+                                os << "dd_sT" << n.first << "[" << delayedIndex << "] = -TIME_MAX;" << std::endl;
                             }
                             else {
-                                os << "dd_sT" << n.first << "[lid] = -SCALAR_MAX;" << std::endl;
+                                os << "dd_sT" << n.first << "[lid] = -TIME_MAX;" << std::endl;
                             }
                         }
 
@@ -957,7 +957,7 @@ void genInit(const NNmodel &model,      //!< Model description
                 os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
+                    os << "sT" <<  n.first << "[i] = -TIME_MAX;" << std::endl;
                 }
             }
 
