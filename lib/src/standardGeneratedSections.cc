@@ -78,15 +78,6 @@ void StandardGeneratedSections::neuronLocalVarWrite(
         }
         os << localID <<  "] = l" << v.first << ";" << std::endl;
     }
-    
-    // store spike time back into global memory
-    if(ng.isSpikeTimeRequired()) {
-        os << devPrefix << "sT" << ng.getName() << "[";
-        if (ng.isDelayRequired()) {
-            os << "writeDelayOffset + ";
-        }
-        os << localID << "] = lsT;" << std::endl;
-    }
 }
 //----------------------------------------------------------------------------
 void StandardGeneratedSections::neuronSpikeEventTest(
