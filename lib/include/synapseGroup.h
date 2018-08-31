@@ -180,8 +180,10 @@ public:
     void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const;
 
-    // **THINK** do these really belong here - they are very code-generation specific
-    std::string getOffsetPre() const;
+    //! Get the expression to calculate the delay slot for accessing
+    //! Presynaptic neuron state variables taking into account axonal delay
+    std::string getPresynapticAxonalDelaySlot(const std::string &devPrefix) const;
+
     std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
     //! Does this synapse group require dendritic delay?

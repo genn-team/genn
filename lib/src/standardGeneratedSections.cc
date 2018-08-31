@@ -47,7 +47,7 @@ void StandardGeneratedSections::neuronLocalVarInit(
         os << v.second << " l" << v.first << " = ";
         os << devPrefix << v.first << ng.getName() << "[";
         if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
-            os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
+            os << "readDelayOffset + ";
         }
         os << localID << "];" << std::endl;
     }
@@ -61,13 +61,12 @@ void StandardGeneratedSections::neuronLocalVarWrite(
     const std::string &localID)
 {
     // store the defined parts of the neuron state into the global state variables dd_V etc
-   for(const auto &v : nmVars.container) {
+    for(const auto &v : nmVars.container) {
+        os << devPrefix << v.first << ng.getName() << "[";
         if (ng.isVarQueueRequired(v.first)) {
-            os << devPrefix << v.first << ng.getName() << "[" << ng.getQueueOffset(devPrefix) << localID << "] = l" << v.first << ";" << std::endl;
+             os << "writeDelayOffset + ";
         }
-        else {
-            os << devPrefix << v.first << ng.getName() << "[" << localID << "] = l" << v.first << ";" << std::endl;
-        }
+        os << localID <<  "] = l" << v.first << ";" << std::endl;
     }
 }
 //----------------------------------------------------------------------------
