@@ -207,7 +207,9 @@ inline void name_substitutions(string &code, const string &prefix, const vector<
     name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
 }
 
-
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
+//--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
 void writePreciseString(std::ostream &os, T value)
 {
@@ -230,6 +232,17 @@ void writePreciseString(std::ostream &os, T value)
 
     // Restore previous precision
     os << std::setprecision(previousPrecision);
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
+//--------------------------------------------------------------------------
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+std::string writePreciseString(T value)
+{
+    std::stringstream s;
+    writePreciseString(s, value);
+    return s.str();
 }
 
 //--------------------------------------------------------------------------
@@ -287,6 +300,7 @@ void preNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
     const string &offset,
+    const string &axonalDelayOffset,
     const string &postIdx,
     const string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
     StringWrapFunc varWrapFunc = StringWrapFunc());
@@ -295,6 +309,7 @@ void postNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
     const string &offset,
+    const string &backPropDelayOffset,
     const string &preIdx,
     const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
     StringWrapFunc varWrapFunc = StringWrapFunc());
@@ -310,5 +325,6 @@ void neuron_substitutions_in_synaptic_code(
     const string &preIdx,                               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx,                              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,                            //!< device prefix, "dd_" for GPU, nothing for CPU
+    double dt,                                          //!< simulation timestep (ms)
     StringWrapFunc preVarWrapFunc = StringWrapFunc(),   //!< function used to 'wrap' presynaptic variable accesses
     StringWrapFunc postVarWrapFunc = StringWrapFunc()); //!< function used to 'wrap' postsynaptic variable accesses

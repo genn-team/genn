@@ -20,14 +20,14 @@ public:
         while(t < 200.0f) {
             StepGeNN();
 
-            // Ignore first timestep as no postsynaptic events will be processed so wsyn is in it's initial state
+            // Ignore first timestep as no presynaptic events will be processed so wsyn is in it's initial state
             if(t > DT) {
                 // Loop through neurons
                 for(unsigned int i = 0; i < 10; i++) {
                     // Calculate time of spikes we SHOULD be reading
                     // **NOTE** we delay by 22 timesteps because:
                     // 1) delay = 20
-                    // 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
+                    // 2) spike times are read in presynaptic kernel one timestep AFTER being emitted
                     // 3) t is incremented one timestep at te end of StepGeNN
                     const float delayedTime = (scalar)i + 20.0f + (10.0f * std::floor((t - 22.0f - (scalar)i) / 10.0f));
 

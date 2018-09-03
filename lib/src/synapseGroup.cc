@@ -46,7 +46,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser)
-    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps),
+    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
     	m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
@@ -154,6 +154,13 @@ void SynapseGroup::setSpanType(SpanType spanType)
     else {
         gennError("setSpanType: This function is not enabled for dense connectivity type.");
     }
+}
+
+void SynapseGroup::setBackPropDelaySteps(unsigned int timesteps)
+{
+    m_BackPropDelaySteps = timesteps;
+
+    m_TrgNeuronGroup->checkNumDelaySlots(m_BackPropDelaySteps);
 }
 
 void SynapseGroup::initDerivedParams(double dt)
@@ -364,7 +371,24 @@ std::string SynapseGroup::getPresynapticAxonalDelaySlot(const std::string &devPr
 {
     assert(getSrcNeuronGroup()->isDelayRequired());
 
-    return "((" + devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName() + " + " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots() - getDelaySteps()) + ") % " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots()) + ")";
+    if(getDelaySteps() == 0) {
+        return devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName();
+    }
+    else {
+        return "((" + devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName() + " + " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots() - getDelaySteps()) + ") % " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots()) + ")";
+    }
+}
+
+std::string SynapseGroup::getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const
+{
+    assert(getTrgNeuronGroup()->isDelayRequired());
+
+    if(getBackPropDelaySteps() == 0) {
+        return devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName();
+    }
+    else {
+        return "((" + devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName() + " + " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots() - getBackPropDelaySteps()) + ") % " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots()) + ")";
+    }
 }
 
 std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset) const

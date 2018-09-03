@@ -46,7 +46,8 @@ void generate_process_presynaptic_events_code_CPU(
     const string &sgName,
     const SynapseGroup &sg,
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     bool evnt = postfix == "Evnt";
 
@@ -115,9 +116,9 @@ void generate_process_presynaptic_events_code_CPU(
                     substitute(eCode, "$(id)", "n");
                     substitute(eCode, "$(t)", "t");
                     StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
-                                                                        wuDerivedParams, wuExtraGlobalParams,
-                                                                        "ipre", "ipost", "",
-                                                                        cpuFunctions, ftype);
+                                                                          wuDerivedParams, wuExtraGlobalParams,
+                                                                          "ipre", "ipost", "",
+                                                                          cpuFunctions, ftype, dt);
 
                     // end code substitutions ----
                     os << "(" << eCode << ")";
@@ -167,8 +168,8 @@ void generate_process_presynaptic_events_code_CPU(
 
 
                 StandardSubstitutions::weightUpdateSim(wCode, sg,
-                                                    wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
-                                                    "ipre", "ipost", "", cpuFunctions, ftype);
+                                                       wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
+                                                       "ipre", "ipost", "", cpuFunctions, ftype, dt);
                 // end Code substitutions -------------------------------------------------------------------------
                 os << wCode << std::endl;
 
@@ -527,7 +528,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                         // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                         if(sg->getTrgNeuronGroup()->isDelayRequired()) {
-                            os << "const unsigned int postReadDelayOffset = " << sg->getTrgNeuronGroup()->getCurrentQueueOffset("") << ";" << std::endl;
+                            os << "const unsigned int postReadDelayOffset = " << sg->getPostsynapticBackPropDelaySlot("") << " * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                         }
 
                         if (!wu->getSynapseDynamicsSuppportCode().empty()) {
@@ -567,7 +568,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             "C" + s.first + ".preInd[n]", postIdx, "",
-                                                                            cpuFunctions, model.getPrecision());
+                                                                            cpuFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
                             }
                         }
@@ -600,8 +601,8 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                         substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                     }
 
-                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                                "i", postIdx, "", cpuFunctions, model.getPrecision());
+                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuPreVars, wuPostVars, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                                "i", postIdx, "", cpuFunctions, model.getPrecision(), model.getDT());
                                     os << SDcode << std::endl;
                                 }
                             }
@@ -632,7 +633,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     }
 
                                     StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                                "i","j", "", cpuFunctions, model.getPrecision());
+                                                                                "i","j", "", cpuFunctions, model.getPrecision(), model.getDT());
                                     os << SDcode << std::endl;
                                 }
                             }
@@ -662,17 +663,18 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                 // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                 if(s.second.getTrgNeuronGroup()->isDelayRequired()) {
-                    os << "const unsigned int postReadDelayOffset = " << s.second.getTrgNeuronGroup()->getCurrentQueueOffset("") << ";" << std::endl;
+                    os << "const unsigned int postReadDelaySlot = " << s.second.getPostsynapticBackPropDelaySlot("") << ";" << std::endl;
+                    os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                 }
 
                 // generate the code for processing spike-like events
                 if (s.second.isSpikeEventRequired()) {
-                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "Evnt", model.getPrecision());
+                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "Evnt", model.getPrecision(), model.getDT());
                 }
 
                 // generate the code for processing true spike events
                 if (s.second.isTrueSpikeRequired()) {
-                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "", model.getPrecision());
+                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "", model.getPrecision(), model.getDT());
                 }
             }
             os << std::endl;
@@ -795,8 +797,8 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                 preIndex = "ipre";
                             }
                             StandardSubstitutions::weightUpdatePostLearn(code, sg,
-                                                                        wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                        preIndex, "lSpk", "", cpuFunctions, model.getPrecision());
+                                                                         wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                         preIndex, "lSpk", "", cpuFunctions, model.getPrecision(), model.getDT());
 
                             // end Code substitutions -------------------------------------------------------------------------
                             os << code << std::endl;
