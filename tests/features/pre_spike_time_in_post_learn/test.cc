@@ -29,17 +29,17 @@ public:
                     // 1) delay = 20
                     // 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
                     // 3) t is incremented one timestep at te end of StepGeNN
+                    const float delayedTime = (scalar)i + 20.0f + (10.0f * std::floor((t - 22.0f - (scalar)i) / 10.0f));
 
-                    const float delayedTime = (scalar)i + (10.0f * std::floor((t - 22.0f - (scalar)i) / 10.0f));
-                    if(delayedTime < 0) {
-                        ASSERT_FLOAT_EQ(wsyn[i], -SCALAR_MAX);
+                    // If, theoretically, spike would have arrived before delay it's impossible so time should be a very large negative number
+                    if(delayedTime < 20.0f) {
+                        ASSERT_LT(wsyn[i], -1.0E6);
                     }
                     else {
                         ASSERT_FLOAT_EQ(wsyn[i], delayedTime);
                     }
                 }
             }
-
         }
     }
 };

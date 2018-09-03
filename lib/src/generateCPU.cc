@@ -506,7 +506,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                         // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                         if(sg->getTrgNeuronGroup()->isDelayRequired()) {
-                            os << "const unsigned int postReadDelayOffset = " << sg->getTrgNeuronGroup()->getCurrentQueueOffset("") << ";" << std::endl;
+                            os << "const unsigned int postReadDelayOffset = " << sg->getPostsynapticBackPropDelaySlot("") << " * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                         }
 
                         if (!wu->getSynapseDynamicsSuppportCode().empty()) {
@@ -639,7 +639,8 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
                 // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                 if(s.second.getTrgNeuronGroup()->isDelayRequired()) {
-                    os << "const unsigned int postReadDelayOffset = " << s.second.getTrgNeuronGroup()->getCurrentQueueOffset("") << ";" << std::endl;
+                    os << "const unsigned int postReadDelaySlot = " << s.second.getPostsynapticBackPropDelaySlot("") << ";" << std::endl;
+                    os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                 }
 
                 // generate the code for processing spike-like events

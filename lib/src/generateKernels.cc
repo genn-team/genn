@@ -923,7 +923,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                         // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                         if(sg->getTrgNeuronGroup()->isDelayRequired()) {
-                            os << "const unsigned int postReadDelayOffset = " << sg->getTrgNeuronGroup()->getCurrentQueueOffset("dd_") << ";" << std::endl;
+                            os << "const unsigned int postReadDelayOffset = " << sg->getPostsynapticBackPropDelaySlot("dd_") << " * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                         }
 
                         string SDcode = wu->getSynapseDynamicsCode();
@@ -1107,7 +1107,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                 // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                 if(s->second.getTrgNeuronGroup()->isDelayRequired()) {
-                    os << "const unsigned int postReadDelayOffset = " << s->second.getTrgNeuronGroup()->getCurrentQueueOffset("dd_") << ";" << std::endl;
+                    os << "const unsigned int postReadDelayOffset = " << s->second.getPostsynapticBackPropDelaySlot("dd_") << " * " << s->second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                 }
 
                 // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
@@ -1267,11 +1267,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                     // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                     if(sg->getTrgNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int postReadDelayOffset = " << sg->getTrgNeuronGroup()->getCurrentQueueOffset("dd_") << ";" << std::endl;
+                        os << "const unsigned int postReadDelaySlot = " << sg->getPostsynapticBackPropDelaySlot("dd_") << ";" << std::endl;
+                        os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
                     if (sg->getTrgNeuronGroup()->isDelayRequired() && sg->getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                        os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[dd_spkQuePtr" << sg->getTrgNeuronGroup()->getName() << "];" << std::endl;
+                        os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
                     }
                     else {
                         os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[0];" << std::endl;
