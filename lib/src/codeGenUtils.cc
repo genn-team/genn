@@ -628,7 +628,7 @@ void neuron_substitutions_in_synaptic_code(
         substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
 
-    std::string axonalDelayMs = writePreciseString(dt * (double)sg->getDelaySteps());
+    const std::string axonalDelayMs = writePreciseString(dt * (double)sg->getDelaySteps());
     substitute(wCode, "$(sT_pre)", "(" + devPrefix+ "sT" + sg->getSrcNeuronGroup()->getName() + "[" + preOffset + preIdx + "] + " + axonalDelayMs + ")");
     for(const auto &v : srcNeuronModel->getVars()) {
         if (sg->getSrcNeuronGroup()->isVarQueueRequired(v.first)) {
@@ -651,7 +651,8 @@ void neuron_substitutions_in_synaptic_code(
     // postsynaptic neuron variables, parameters, and global parameters
     const std::string postOffset = sg->getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
     const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
-    substitute(wCode, "$(sT_post)", devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + postOffset + postIdx + "]");
+    const std::string backPropDelayMs = writePreciseString(dt * (double)sg->getBackPropDelaySteps());
+    substitute(wCode, "$(sT_post)", "(" + devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + postOffset + postIdx + "] + " + backPropDelayMs + ")");
     for(const auto &v : trgNeuronModel->getVars()) {
         if (sg->getTrgNeuronGroup()->isVarQueueRequired(v.first)) {
             substitute(wCode, "$(" + v.first + "_post)",
