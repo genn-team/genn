@@ -391,18 +391,9 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                             StandardGeneratedSections::weightUpdatePreSpike(os, n.second, "", "n",
                                                                             cpuFunctions, model.getPrecision());
 
-                            // Loop through incoming synaptic populations
-                            for(const auto *sg : n.second.getInSyn()) {
-                                // If weight update model has any postsynaptic update code
-                                if(!sg->getWUModel()->getPostSpikeCode().empty()) {
-                                    // Perform standard substitutions
-                                    string pCode = sg->getWUModel()->getPostSpikeCode();
-                                    StandardSubstitutions::weightUpdatePostSpike(
-                                        pCode, sg, "n", "", cpuFunctions, model.getPrecision());
-                                    os << "// perform postsynaptic update required for " << sg->getName() << std::endl;
-                                    os << CodeStream::OB(42) << pCode << CodeStream::CB(42);
-                                }
-                            }
+                            // Insert code to update any weight update model postsynaptic variables associated with incoming connections
+                            StandardGeneratedSections::weightUpdatePostSpike(os, n.second, "", "n",
+                                                                            cpuFunctions, model.getPrecision());
 
                             // Reset spike time
                             if (n.second.isSpikeTimeRequired()) {

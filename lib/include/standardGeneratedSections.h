@@ -63,4 +63,12 @@ void weightUpdatePreSpike(
     const std::string &localID,
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype);
+
+void weightUpdatePostSpike(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype);
 }   // namespace StandardGeneratedSections

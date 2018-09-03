@@ -249,7 +249,9 @@ void StandardSubstitutions::weightUpdateSim(
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? preIdx : "preReadDelayOffset + " + preIdx;
     name_substitutions(wCode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg.getName() + "[" + delayedPreIdx + "]");
-    name_substitutions(wCode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg.getName() + "[" + postIdx + "]");
+
+    const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? postIdx : "postReadDelayOffset + " + postIdx;
+    name_substitutions(wCode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg.getName() + "[" + delayedPostIdx + "]");
 
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
     neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix, dt);
@@ -286,7 +288,9 @@ void StandardSubstitutions::weightUpdateDynamics(
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg->getDelaySteps() == NO_DELAY) ? preIdx : "preReadDelayOffset + " + preIdx;
     name_substitutions(SDcode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + delayedPreIdx + "]");
-    name_substitutions(SDcode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
+
+    const std::string delayedPostIdx = (sg->getBackPropDelaySteps() == NO_DELAY) ? postIdx : "postReadDelayOffset + " + postIdx;
+    name_substitutions(SDcode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + delayedPostIdx + "]");
 
     // substitute values for derived parameters in synapseDynamics code
     value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
@@ -326,7 +330,9 @@ void StandardSubstitutions::weightUpdatePostLearn(
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg->getDelaySteps() == NO_DELAY) ? preIdx : "preReadDelayOffset + " + preIdx;
     name_substitutions(code, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + delayedPreIdx + "]", "", preVarWrapFunc);
-    name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]", "", postVarWrapFunc);
+
+    const std::string delayedPostIdx = (sg->getBackPropDelaySteps() == NO_DELAY) ? postIdx : "postReadDelayOffset + " + postIdx;
+    name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + delayedPostIdx + "]", "", postVarWrapFunc);
 
     // presynaptic neuron variables and parameters
     neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix,
@@ -388,7 +394,7 @@ void StandardSubstitutions::weightUpdatePostSpike(
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
-    name_substitutions(code, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + postIdx + "]");
+    name_substitutions(code, "l", wuPostVars.nameBegin, wuPostVars.nameEnd, "");
 
     const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
     postNeuronSubstitutionsInSynapticCode(code, sg, offset, "", postIdx, devPrefix);

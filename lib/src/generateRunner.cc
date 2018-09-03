@@ -1722,10 +1722,12 @@ void genRunner(const NNmodel &model,    //!< Model description
             }
 
             // Allocate postsynaptic weight update variables
-            const size_t postSize = s.second.getTrgNeuronGroup()->getNumNeurons();
+            const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
+                ? s.second.getTrgNeuronGroup()->getNumNeurons()
+                : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
             for(const auto &v : wu->getPostVars()) {
-                        mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUPostVarMode(v.first),
-                                                 postSize);
+                mem += allocate_variable(os, v.second, v.first + s.first, s.second.getWUPostVarMode(v.first),
+                                         postSize);
             }
         
             // If connectivity is defined using a bitmask, allocate memory for bitmask

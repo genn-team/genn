@@ -197,5 +197,46 @@ void StandardGeneratedSections::weightUpdatePreSpike(
             }
         }
     }
+}
 
+void StandardGeneratedSections::weightUpdatePostSpike(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype)
+{
+    // Loop through incoming synaptic populations
+    for(const auto *sg : ng.getInSyn()) {
+        // If weight update model has any postsynaptic update code
+        if(!sg->getWUModel()->getPostSpikeCode().empty()) {
+            CodeStream::Scope b(os);
+            os << "// perform postsynaptic update required for " << sg->getName() << std::endl;
+
+            // Fetch postsynaptic variables from global memory
+            for(const auto &v : sg->getWUModel()->getPostVars()) {
+                os << v.second << " l" << v.first << " = ";
+                os << devPrefix << v.first << sg->getName() << "[";
+                if (sg->getBackPropDelaySteps() != NO_DELAY) {
+                    os << "readDelayOffset + ";
+                }
+                os << localID << "];" << std::endl;
+            }
+
+            // Perform standard substitutions
+            string pCode = sg->getWUModel()->getPostSpikeCode();
+            StandardSubstitutions::weightUpdatePostSpike(pCode, sg, localID, devPrefix, functions, ftype);
+            os << pCode;
+
+            // Write back presynaptic variables into global memory
+            for(const auto &v : sg->getWUModel()->getPostVars()) {
+                os << devPrefix << v.first << sg->getName() << "[";
+                if (sg->getBackPropDelaySteps() != NO_DELAY) {
+                    os << "writeDelayOffset + ";
+                }
+                os << localID <<  "] = l" << v.first << ";" << std::endl;
+            }
+        }
+    }
 }

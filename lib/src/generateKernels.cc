@@ -806,21 +806,9 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                         StandardGeneratedSections::weightUpdatePreSpike(os, n->second, "dd_", "n",
                                                                         cudaFunctions, model.getPrecision());
 
-                        // Loop through incoming synaptic populations
-                        for(const auto *sg : n->second.getInSyn()) {
-                            // If weight update model has any postsynaptic update code
-                            if(!sg->getWUModel()->getPostSpikeCode().empty()) {
-                                // Perform standard substitutions
-                                string pCode = sg->getWUModel()->getPostSpikeCode();
-                                StandardSubstitutions::weightUpdatePostSpike(
-                                    pCode, sg, "n", "dd_", cudaFunctions, model.getPrecision());
-                                os << "// perform postsynaptic update required for " << sg->getName() << std::endl;
-                                {
-                                    CodeStream::Scope b(os);
-                                    os << pCode;
-                                };
-                            }
-                        }
+                        // Insert code to update any weight update model postsynaptic variables associated with incoming connections
+                        StandardGeneratedSections::weightUpdatePostSpike(os, n->second, "dd_", "n",
+                                                                        cudaFunctions, model.getPrecision());
 
                         string queueOffsetTrueSpk = n->second.isTrueSpikeRequired() ? queueOffset : "";
                         os << "dd_glbSpk" << n->first << "[" << queueOffsetTrueSpk << "posSpk + threadIdx.x] = n;" << std::endl;

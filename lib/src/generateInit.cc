@@ -464,9 +464,10 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                     
                     // Loop through incoming synaptic populations
                     for(const auto *s : n.second.getInSyn()) {
-                        genDeviceNeuronInitVarCode(os, s->getWUModel()->getPostVars(), "lid", s->getName(), model.getPrecision(),
+                        genDeviceNeuronInitVarCode(os, s->getWUModel()->getPostVars(), s->getTrgNeuronGroup()->getNumNeurons(), s->getTrgNeuronGroup()->getNumDelaySlots(), "lid", s->getName(), model.getPrecision(),
                                                    [&s](size_t i){ return s->getWUPostVarInitialisers()[i]; },
-                                                   [&s](size_t i){ return s->getWUPostVarMode(i); });
+                                                   [&s](size_t i){ return s->getWUPostVarMode(i); },
+                                                   [&s](size_t){ return (s->getBackPropDelaySteps() != NO_DELAY); });
                     }
 
                     // Loop through outgoing synaptic populations
