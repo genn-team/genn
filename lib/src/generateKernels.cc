@@ -81,7 +81,8 @@ void generatePreParallelisedSparseCode(
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     const bool evnt = (postfix == "Evnt");
     const auto *wu = sg.getWUModel();
@@ -137,7 +138,7 @@ void generatePreParallelisedSparseCode(
             string eCode = wu->getEventThresholdConditionCode();
             StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
                                                                 wuDerivedParams, wuExtraGlobalParams,
-                                                                "preInd", "i", "dd_", cudaFunctions, ftype);
+                                                                "preInd", "i", "dd_", cudaFunctions, ftype, dt);
             // end code substitutions ----
             os << "(" << eCode << ")";
 
@@ -190,7 +191,7 @@ void generatePreParallelisedSparseCode(
 
             StandardSubstitutions::weightUpdateSim(wCode, sg,
                                                    wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                   "preInd", "ipost", "dd_", cudaFunctions, ftype);
+                                                   "preInd", "ipost", "dd_", cudaFunctions, ftype, dt);
             // end code substitutions -------------------------------------------------------------------------
 
             os << wCode << std::endl;
@@ -213,7 +214,8 @@ void generatePostParallelisedCode(
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     const bool evnt = (postfix == "Evnt");
     const auto *wu = sg.getWUModel();
@@ -269,8 +271,8 @@ void generatePostParallelisedCode(
                     // code substitutions ----
                     string eCode = wu->getEventThresholdConditionCode();
                     StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                                        "shSpkEvnt[j]", "ipost", "dd_",
-                                                                        cudaFunctions, ftype);
+                                                                          "shSpkEvnt[j]", "ipost", "dd_",
+                                                                          cudaFunctions, ftype, dt);
                     // end code substitutions ----
                     os << "(" << eCode << ")";
 
@@ -350,8 +352,8 @@ void generatePostParallelisedCode(
                 }
 
                 StandardSubstitutions::weightUpdateSim(wCode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                    "shSpk" + postfix + "[j]", "ipost", "dd_",
-                                                    cudaFunctions, ftype);
+                                                       "shSpk" + postfix + "[j]", "ipost", "dd_",
+                                                       cudaFunctions, ftype, dt);
                 // end Code substitutions -------------------------------------------------------------------------
                 os << wCode << std::endl;
 
@@ -381,18 +383,19 @@ void generate_process_presynaptic_events_code(
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     const bool evnt = (postfix == "Evnt");
 
      if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
         if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-            generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype);
+            generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype, dt);
         }
         // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
         else {
-            generatePostParallelisedCode(os, sg, localID, postfix, ftype);
+            generatePostParallelisedCode(os, sg, localID, postfix, ftype, dt);
         }
     }
 }
@@ -976,7 +979,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                            preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision());
+                                                                            preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
                             }
                         }
@@ -1010,7 +1013,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
-                                                                            postIdx, "dd_", cudaFunctions, model.getPrecision());
+                                                                            postIdx, "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
                             }
                         }
@@ -1151,12 +1154,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                 // generate the code for processing spike-like events
                 if (s->second.isSpikeEventRequired()) {
-                    generate_process_presynaptic_events_code(os, s->second, localID, "Evnt", model.getPrecision());
+                    generate_process_presynaptic_events_code(os, s->second, localID, "Evnt", model.getPrecision(), model.getDT());
                 }
 
                 // generate the code for processing true spike events
                 if (s->second.isTrueSpikeRequired()) {
-                    generate_process_presynaptic_events_code(os, s->second, localID, "", model.getPrecision());
+                    generate_process_presynaptic_events_code(os, s->second, localID, "", model.getPrecision(), model.getDT());
                 }
                 os << std::endl;
 
@@ -1340,7 +1343,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     preIndex = localID;
                                 }
                                 StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision());
+                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 // end Code substitutions -------------------------------------------------------------------------
                                 os << code << std::endl;
                                 if (sparse) {

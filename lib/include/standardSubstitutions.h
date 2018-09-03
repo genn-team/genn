@@ -114,7 +114,8 @@ void weightUpdateThresholdCondition(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    double dt);
 
 void weightUpdateSim(
     std::string &wCode,
@@ -126,7 +127,8 @@ void weightUpdateSim(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    double dt);
 
 void weightUpdateDynamics(
     std::string &SDcode,
@@ -138,7 +140,8 @@ void weightUpdateDynamics(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    double dt);
 
 void weightUpdatePostLearn(
     std::string &code,
@@ -149,7 +152,8 @@ void weightUpdatePostLearn(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    double dt);
 
 std::string initNeuronVariable(
     const NewModels::VarInit &varInit,

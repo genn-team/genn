@@ -186,7 +186,9 @@ inline void name_substitutions(string &code, const string &prefix, const vector<
     name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
 }
 
-
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
+//--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
 void writePreciseString(std::ostream &os, T value)
 {
@@ -209,6 +211,17 @@ void writePreciseString(std::ostream &os, T value)
 
     // Restore previous precision
     os << std::setprecision(previousPrecision);
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
+//--------------------------------------------------------------------------
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+std::string writePreciseString(T value)
+{
+    std::stringstream s;
+    writePreciseString(s, value);
+    return s.str();
 }
 
 //--------------------------------------------------------------------------
@@ -271,4 +284,5 @@ void neuron_substitutions_in_synaptic_code(
     const SynapseGroup *sg,     //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
     const string &preIdx,       //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx,      //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix);   //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &devPrefix,    //!< device prefix, "dd_" for GPU, nothing for CPU
+    double dt);                 //!< simulation timestep (ms)
