@@ -683,11 +683,11 @@ void neuron_substitutions_in_synaptic_code(
     StringWrapFunc postVarWrapFunc) //!<function used to 'wrap' postsynaptic variable accesses
 {
     
-    const std::string axonalDelayOffset = writePreciseString(dt * (double)sg->getDelaySteps()) + " + ";
+    const std::string axonalDelayOffset = writePreciseString(dt * (double)(sg->getDelaySteps() + 1)) + " + ";
     const std::string preOffset = sg->getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
     preNeuronSubstitutionsInSynapticCode(wCode, sg, preOffset, axonalDelayOffset, preIdx, devPrefix, preVarWrapFunc);
     
-    const std::string backPropDelayMs = writePreciseString(dt * (double)sg->getBackPropDelaySteps()) + " + ";
+    const std::string backPropDelayMs = writePreciseString(dt * (double)(sg->getBackPropDelaySteps() + 1)) + " + ";
     const std::string postOffset = sg->getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
     postNeuronSubstitutionsInSynapticCode(wCode, sg, postOffset, backPropDelayMs, postIdx, devPrefix, postVarWrapFunc);
 }
