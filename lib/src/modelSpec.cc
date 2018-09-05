@@ -1073,6 +1073,7 @@ void NNmodel::finalize()
         }
 
         if (!wu->getLearnPostCode().empty()) {
+            s.second.getTrgNeuronGroup()->setTrueSpikeRequired(true);
             s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
         }
 
