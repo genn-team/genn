@@ -711,17 +711,9 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                             os << rCode << std::endl;
                         }
                     }
-                    // store spike time back into global memory
-                    // **NOTE** if neuron does spike this happens later in kernel
-                    if(n->second.isSpikeTimeRequired()) {
-                        os << "else";
-                        CodeStream::Scope b(os);
-                        os << "dd_sT" << n->first << "[";
-                        if (n->second.isDelayRequired()) {
-                            os << "writeDelayOffset + ";
-                        }
-                        os << localID << "] = lsT;" << std::endl;
-                    }
+
+                    // Insert code to copy spike triggered variables back to global memory if necessary
+                    StandardGeneratedSections::neuronCopySpikeTriggeredVars(os, n->second, "dd_", localID);
                 }
 
                 // store the defined parts of the neuron state into the global state variables dd_V etc

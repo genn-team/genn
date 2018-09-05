@@ -56,6 +56,12 @@ void neuronCurrentInjection(
     const std::string &ftype,
     const std::string &rng);
 
+void neuronCopySpikeTriggeredVars(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID);
+
 void weightUpdatePreSpike(
     CodeStream &os,
     const NeuronGroup &ng,
