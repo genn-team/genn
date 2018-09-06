@@ -1138,7 +1138,7 @@ void NNmodel::finalize()
         resetKernel= GENN_FLAGS::calcNeurons;
     }
     else { // there are synapses
-        if (!m_SynapsePostLearnGroups.empty()) {
+        if (!GENN_PREFERENCES::learnPostBeforePre && !m_SynapsePostLearnGroups.empty()) {
             resetKernel= GENN_FLAGS::learnSynapsesPost;
         }
         else {

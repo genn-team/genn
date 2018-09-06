@@ -2812,6 +2812,21 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                     os << "cudaEventRecord(synDynStop);" << std::endl;
                 }
             }
+
+            if(GENN_PREFERENCES::learnPostBeforePre && !model.getSynapsePostLearnGroups().empty()) {
+                if (model.isTimingEnabled()) {
+                    os << "cudaEventRecord(learningStart);" << std::endl;
+                }
+                os << "learnSynapsesPost <<< lGrid, lThreads >>> (";
+                for(const auto &p : model.getSimLearnPostKernelParameters()) {
+                    os << p.first << ", ";
+                }
+                os << "t);" << std::endl;
+                if (model.isTimingEnabled()) {
+                    os << "cudaEventRecord(learningStop);" << std::endl;
+                }
+            }
+
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(synapseStart);" << std::endl;
             }
@@ -2824,7 +2839,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
                 os << "cudaEventRecord(synapseStop);" << std::endl;
             }
 
-            if (!model.getSynapsePostLearnGroups().empty()) {
+            if(!GENN_PREFERENCES::learnPostBeforePre && !model.getSynapsePostLearnGroups().empty()) {
                 if (model.isTimingEnabled()) {
                     os << "cudaEventRecord(learningStart);" << std::endl;
                 }
