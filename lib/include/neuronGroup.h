@@ -39,8 +39,11 @@ public:
     //! Checks delay slots currently provided by the neuron group against a required delay and extends if required
     void checkNumDelaySlots(unsigned int requiredDelay);
 
-    //! Update which variables require queues based on piece of code
-    void updateVarQueues(const std::string &code);
+    //! Update which presynaptic variables require queues based on piece of code
+    void updatePreVarQueues(const std::string &code);
+
+    //! Update which postsynaptic variables  require queues based on piece of code
+    void updatePostVarQueues(const std::string &code);
 
     void setSpikeTimeRequired(bool req){ m_SpikeTimeRequired = req; }
     void setTrueSpikeRequired(bool req){ m_TrueSpikeRequired = req; }
@@ -205,6 +208,12 @@ public:
     std::string getPrevQueueOffset(const std::string &devPrefix) const;
 
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    //! Update which variables require queues based on piece of code
+    void updateVarQueues(const std::string &code, const std::string &suffix);
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

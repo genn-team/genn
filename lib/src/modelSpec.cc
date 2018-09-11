@@ -1033,7 +1033,7 @@ void NNmodel::finalize()
                 n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
 
                 // analyze which neuron variables need queues
-                n.second.updateVarQueues(wu->getEventCode());
+                n.second.updatePreVarQueues(wu->getEventCode());
             }
         }
         if (n.second.getSpikeEventCondition().size() > 1) {
@@ -1066,16 +1066,20 @@ void NNmodel::finalize()
             s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
 
             // analyze which neuron variables need queues
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSimCode());
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
         }
 
         if (!wu->getLearnPostCode().empty()) {
             s.second.getTrgNeuronGroup()->setTrueSpikeRequired(true);
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
+
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
         }
 
         if (!wu->getSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSynapseDynamicsCode());
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
         }
 
         // Make extra global parameter lists
