@@ -71,3 +71,48 @@ protected:
 #endif  // CPU_ONLY
     }
 };
+
+//----------------------------------------------------------------------------
+// SimulationTestModern
+//----------------------------------------------------------------------------
+class SimulationTestModern : public ::testing::TestWithParam<bool>
+{
+protected:
+    //--------------------------------------------------------------------------
+    // test virtuals
+    //--------------------------------------------------------------------------
+    virtual void SetUp()
+    {
+        // Perform GeNN initialization
+        allocateMem();
+        initialize();
+
+        INIT_SPARSE(MODEL_NAME);
+    }
+
+    virtual void TearDown()
+    {
+        freeMem();
+    }
+
+    //--------------------------------------------------------------------------
+    // Protected methods
+    //--------------------------------------------------------------------------
+    void StepGeNN()
+    {
+#ifdef CPU_ONLY
+        stepTimeCPU();
+#else   // CPU_ONLY
+    #ifndef CPU_GPU_NOT_SUPPORTED
+        if(!GetParam()) {
+            stepTimeCPU();
+        }
+        else
+    #endif  // CPU_NOT_SUPPORTED
+        if(GetParam()) {
+            stepTimeGPU();
+            copyStateFromDevice();
+        }
+#endif  // CPU_ONLY
+    }
+};

@@ -81,7 +81,8 @@ void generatePreParallelisedSparseCode(
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     const bool evnt = (postfix == "Evnt");
     const auto *wu = sg.getWUModel();
@@ -93,7 +94,7 @@ void generatePreParallelisedSparseCode(
 
     os << "if (" << localID << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-        os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[delaySlot])";
+        os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot])";
     }
     else {
         os << "dd_glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[0])";
@@ -107,7 +108,7 @@ void generatePreParallelisedSparseCode(
 
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
-            os << "[(delaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << localID << "];" << std::endl;
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << localID << "];" << std::endl;
         }
         else {
             os << "const unsigned int preInd = dd_glbSpk"  << postfix << sg.getSrcNeuronGroup()->getName();
@@ -137,7 +138,7 @@ void generatePreParallelisedSparseCode(
             string eCode = wu->getEventThresholdConditionCode();
             StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
                                                                 wuDerivedParams, wuExtraGlobalParams,
-                                                                "preInd", "i", "dd_", cudaFunctions, ftype);
+                                                                "preInd", "i", "dd_", cudaFunctions, ftype, dt);
             // end code substitutions ----
             os << "(" << eCode << ")";
 
@@ -190,7 +191,7 @@ void generatePreParallelisedSparseCode(
 
             StandardSubstitutions::weightUpdateSim(wCode, sg,
                                                    wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                   "preInd", "ipost", "dd_", cudaFunctions, ftype);
+                                                   "preInd", "ipost", "dd_", cudaFunctions, ftype, dt);
             // end code substitutions -------------------------------------------------------------------------
 
             os << wCode << std::endl;
@@ -213,7 +214,8 @@ void generatePostParallelisedCode(
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     const bool evnt = (postfix == "Evnt");
     const auto *wu = sg.getWUModel();
@@ -233,7 +235,8 @@ void generatePostParallelisedCode(
         os << "if (threadIdx.x < lmax)";
         {
             CodeStream::Scope b(os);
-            os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
+            const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+            os << "shSpk" << postfix << "[threadIdx.x] = dd_glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * BLOCKSZ_SYN) + threadIdx.x];" << std::endl;
         }
         os << "__syncthreads();" << std::endl;
 
@@ -268,8 +271,8 @@ void generatePostParallelisedCode(
                     // code substitutions ----
                     string eCode = wu->getEventThresholdConditionCode();
                     StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                                        "shSpkEvnt[j]", "ipost", "dd_",
-                                                                        cudaFunctions, ftype);
+                                                                          "shSpkEvnt[j]", "ipost", "dd_",
+                                                                          cudaFunctions, ftype, dt);
                     // end code substitutions ----
                     os << "(" << eCode << ")";
 
@@ -349,8 +352,8 @@ void generatePostParallelisedCode(
                 }
 
                 StandardSubstitutions::weightUpdateSim(wCode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                    "shSpk" + postfix + "[j]", "ipost", "dd_",
-                                                    cudaFunctions, ftype);
+                                                       "shSpk" + postfix + "[j]", "ipost", "dd_",
+                                                       cudaFunctions, ftype, dt);
                 // end Code substitutions -------------------------------------------------------------------------
                 os << wCode << std::endl;
 
@@ -380,18 +383,19 @@ void generate_process_presynaptic_events_code(
     const SynapseGroup &sg,
     const string &localID, //!< the variable name of the local ID of the thread within the synapse group
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     const bool evnt = (postfix == "Evnt");
 
      if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         // parallelisation along pre-synaptic spikes, looped over post-synaptic neurons
         if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-            generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype);
+            generatePreParallelisedSparseCode(os, sg, localID, postfix, ftype, dt);
         }
         // classical parallelisation of post-synaptic neurons in parallel and spikes in a loop
         else {
-            generatePostParallelisedCode(os, sg, localID, postfix, ftype);
+            generatePostParallelisedCode(os, sg, localID, postfix, ftype, dt);
         }
     }
 }
@@ -534,10 +538,13 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << "unsigned int lid = id - " << groupIDRange.first << ";" << std::endl;
                 }
 
-                if (n->second.isVarQueueRequired() && n->second.isDelayRequired()) {
-                    os << "unsigned int delaySlot = (dd_spkQuePtr" << n->first;
-                    os << " + " << (n->second.getNumDelaySlots() - 1);
-                    os << ") % " << n->second.getNumDelaySlots() << ";" << std::endl;
+                // If axonal delays are required
+                if (n->second.isDelayRequired()) {
+                    // We should READ from delay slot before spkQuePtr
+                    os << "const unsigned int readDelayOffset = " << n->second.getPrevQueueOffset("dd_") << ";" << std::endl;
+                    
+                    // And we should WRITE to delay slot pointed to be spkQuePtr
+                    os << "const unsigned int writeDelayOffset = " << n->second.getCurrentQueueOffset("dd_") << ";" << std::endl;
                 }
                 os << std::endl;
 
@@ -558,18 +565,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
 
                 // Generate code to copy neuron state into local variables
-                StandardGeneratedSections::neuronLocalVarInit(os, n->second, nmVars, "dd_", localID);
-
-                if ((nm->getSimCode().find("$(sT)") != string::npos)
-                    || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
-                    || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
-                    os << model.getPrecision() << " lsT = dd_sT" <<  n->first << "[";
-                    if (n->second.isDelayRequired()) {
-                        os << "(delaySlot * " << n->second.getNumNeurons() << ") + ";
-                    }
-                    os << localID << "];" << std::endl;
-                }
-                os << std::endl;
+                StandardGeneratedSections::neuronLocalVarInit(os, n->second, nmVars, "dd_", localID, model.getTimePrecision());
 
                 if (!n->second.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != string::npos)) {
                     os << model.getPrecision() << " Isyn = 0;" << std::endl;
@@ -687,11 +683,22 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                             string rCode = nm->getResetCode();
                             substitute(rCode, "$(id)", localID);
                             StandardSubstitutions::neuronReset(rCode, n->second,
-                                                            nmVars, nmDerivedParams, nmExtraGlobalParams,
-                                                            cudaFunctions, model.getPrecision(), rngName);
+                                                               nmVars, nmDerivedParams, nmExtraGlobalParams,
+                                                               cudaFunctions, model.getPrecision(), rngName);
                             os << "// spike reset code" << std::endl;
                             os << rCode << std::endl;
                         }
+                    }
+                    // store spike time back into global memory
+                    // **NOTE** if neuron does spike this happens later in kernel
+                    if(n->second.isSpikeTimeRequired()) {
+                        os << "else";
+                        CodeStream::Scope b(os);
+                        os << "dd_sT" << n->first << "[";
+                        if (n->second.isDelayRequired()) {
+                            os << "writeDelayOffset + ";
+                        }
+                        os << localID << "] = lsT;" << std::endl;
                     }
                 }
 
@@ -758,7 +765,7 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                     os << "__syncthreads();" << std::endl;
                 }
 
-                string queueOffset = n->second.getQueueOffset("dd_");
+                const string queueOffset = n->second.isDelayRequired() ? "writeDelayOffset + " : "";
                 if (n->second.isSpikeEventRequired()) {
                     os << "if (threadIdx.x < spkEvntCount)";
                     {
@@ -909,10 +916,14 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                             os << "unsigned int lid = id - " << s->second.first << ";" << std::endl;
                         }
 
-                        if (sg->getSrcNeuronGroup()->isDelayRequired()) {
-                            os << "unsigned int delaySlot = (dd_spkQuePtr" << sg->getSrcNeuronGroup()->getName();
-                            os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
-                            os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
+                        // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                        if(sg->getSrcNeuronGroup()->isDelayRequired()) {
+                            os << "const unsigned int preReadDelayOffset = " << sg->getPresynapticAxonalDelaySlot("dd_") << " * " << sg->getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        }
+
+                        // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                        if(sg->getTrgNeuronGroup()->isDelayRequired()) {
+                            os << "const unsigned int postReadDelayOffset = " << sg->getPostsynapticBackPropDelaySlot("dd_") << " * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                         }
 
                         string SDcode = wu->getSynapseDynamicsCode();
@@ -968,7 +979,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 }
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                            preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision());
+                                                                            preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
                             }
                         }
@@ -1002,7 +1013,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                                 StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
-                                                                            postIdx, "dd_", cudaFunctions, model.getPrecision());
+                                                                            postIdx, "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
                             }
                         }
@@ -1088,10 +1099,15 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     os << "unsigned int lid = id - " << groupIDRange.first<< ";" << std::endl;
                 }
 
-                if (s->second.getSrcNeuronGroup()->isDelayRequired()) {
-                    os << "unsigned int delaySlot = (dd_spkQuePtr" << s->second.getSrcNeuronGroup()->getName();
-                    os << " + " << (s->second.getSrcNeuronGroup()->getNumDelaySlots() - s->second.getDelaySteps());
-                    os << ") % " << s->second.getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
+                // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                if(s->second.getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int preReadDelaySlot = " << s->second.getPresynapticAxonalDelaySlot("dd_") << ";" << std::endl;
+                    os << "const unsigned int preReadDelayOffset = preReadDelaySlot * " << s->second.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                if(s->second.getTrgNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int postReadDelayOffset = " << s->second.getPostsynapticBackPropDelaySlot("dd_") << " * " << s->second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                 }
 
                 // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
@@ -1117,7 +1133,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 if (s->second.isSpikeEventRequired()) {
                     os << "lscntEvnt = dd_glbSpkCntEvnt" << s->second.getSrcNeuronGroup()->getName();
                     if (s->second.getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "[delaySlot];" << std::endl;
+                        os << "[preReadDelaySlot];" << std::endl;
                     }
                     else {
                         os << "[0];" << std::endl;
@@ -1128,7 +1144,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                 if (s->second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s->first)) {
                     os << "lscnt = dd_glbSpkCnt" << s->second.getSrcNeuronGroup()->getName();
                     if (s->second.getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "[delaySlot];" << std::endl;
+                        os << "[preReadDelaySlot];" << std::endl;
                     }
                     else {
                         os << "[0];" << std::endl;
@@ -1138,12 +1154,12 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
 
                 // generate the code for processing spike-like events
                 if (s->second.isSpikeEventRequired()) {
-                    generate_process_presynaptic_events_code(os, s->second, localID, "Evnt", model.getPrecision());
+                    generate_process_presynaptic_events_code(os, s->second, localID, "Evnt", model.getPrecision(), model.getDT());
                 }
 
                 // generate the code for processing true spike events
                 if (s->second.isTrueSpikeRequired()) {
-                    generate_process_presynaptic_events_code(os, s->second, localID, "", model.getPrecision());
+                    generate_process_presynaptic_events_code(os, s->second, localID, "", model.getPrecision(), model.getDT());
                 }
                 os << std::endl;
 
@@ -1244,14 +1260,19 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         os << "unsigned int lid = id - " << s->second.first << ";" << std::endl;
                     }
 
-                    if (sg->getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "unsigned int delaySlot = (dd_spkQuePtr" << sg->getSrcNeuronGroup()->getName();
-                        os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
-                        os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
+                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                    if(sg->getSrcNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int preReadDelayOffset = " << sg->getPresynapticAxonalDelaySlot("dd_") << " * " << sg->getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                    if(sg->getTrgNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int postReadDelaySlot = " << sg->getPostsynapticBackPropDelaySlot("dd_") << ";" << std::endl;
+                        os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
                     if (sg->getTrgNeuronGroup()->isDelayRequired() && sg->getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                        os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[dd_spkQuePtr" << sg->getTrgNeuronGroup()->getName() << "];" << std::endl;
+                        os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
                     }
                     else {
                         os << "lscnt = dd_glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[0];" << std::endl;
@@ -1264,12 +1285,10 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                         os << "if (r == numSpikeSubsets - 1) lmax = ((lscnt-1) % " << learnBlkSz << ")+1;" << std::endl;
                         os << "else lmax = " << learnBlkSz << ";" << std::endl;
 
-                        const string offsetTrueSpkPost = sg->getTrgNeuronGroup()->isTrueSpikeRequired()
-                            ? sg->getTrgNeuronGroup()->getQueueOffset("dd_")
-                            : "";
                         os << "if (threadIdx.x < lmax)";
                         {
                             CodeStream::Scope b(os);
+                            const string offsetTrueSpkPost = (sg->getTrgNeuronGroup()->isTrueSpikeRequired() && sg->getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
                             os << "shSpk[threadIdx.x] = dd_glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << std::endl;
                         }
 
@@ -1325,7 +1344,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     preIndex = localID;
                                 }
                                 StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision());
+                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 // end Code substitutions -------------------------------------------------------------------------
                                 os << code << std::endl;
                                 if (sparse) {

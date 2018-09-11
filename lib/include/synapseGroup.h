@@ -100,6 +100,9 @@ public:
     /*! with a thread per target neuron (default) or a thread per source spike */
     void setSpanType(SpanType spanType);
 
+    //! Sets the number of delay steps used to delay postsynaptic spikes travelling back along dendrites to synapses
+    void setBackPropDelaySteps(unsigned int timesteps);
+
     void initDerivedParams(double dt);
     void calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart);
 
@@ -112,6 +115,7 @@ public:
 
     SpanType getSpanType() const{ return m_SpanType; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
+    unsigned int getBackPropDelaySteps() const{ return m_BackPropDelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
@@ -180,8 +184,14 @@ public:
     void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;
     void addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const;
 
-    // **THINK** do these really belong here - they are very code-generation specific
-    std::string getOffsetPre() const;
+    //! Get the expression to calculate the delay slot for accessing
+    //! Presynaptic neuron state variables, taking into account axonal delay
+    std::string getPresynapticAxonalDelaySlot(const std::string &devPrefix) const;
+
+    //! Get the expression to calculate the delay slot for accessing
+    //! Postsynaptic neuron state variables, taking into account back propagation delay
+    std::string getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const;
+
     std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
     //! Does this synapse group require dendritic delay?
@@ -238,6 +248,9 @@ private:
 
     //!< Global synaptic conductance delay for the group (in time steps)
     unsigned int m_DelaySteps;
+
+    //!< Global backpropagation delay for postsynaptic spikes to synapse (in time
+    unsigned int m_BackPropDelaySteps;
 
     //!< Maximum number of target neurons any source neuron can connect to
     unsigned int m_MaxConnections;
