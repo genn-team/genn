@@ -24,7 +24,7 @@ public:
         m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
-        m_NumDelaySlots(1), m_AnyVarQueuesRequired(false), m_VarQueueRequired(varInitialisers.size(), false),
+        m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false),
         m_SpikeVarMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventVarMode(GENN_PREFERENCES::defaultVarMode),
         m_SpikeTimeVarMode(GENN_PREFERENCES::defaultVarMode), m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_HostID(hostID), m_DeviceID(deviceID)
@@ -145,7 +145,6 @@ public:
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
-    bool isVarQueueRequired() const{ return m_AnyVarQueuesRequired; }
 
     const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
@@ -239,7 +238,6 @@ private:
     std::vector<CurrentSource*> m_CurrentSources;
 
     //!< Vector specifying which variables require queues
-    bool m_AnyVarQueuesRequired;
     std::vector<bool> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory

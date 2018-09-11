@@ -366,7 +366,6 @@ void NeuronGroup::updateVarQueues(const string &code, const std::string &suffix)
 
         // If the code contains a reference to this variable, set corresponding flag
         if (code.find(varName + suffix) != string::npos) {
-            m_AnyVarQueuesRequired = true;
             m_VarQueueRequired[i] = true;
         }
     }
