@@ -22,19 +22,14 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
     }
 }
 
-void NeuronGroup::updateVarQueues(const string &code)
+void NeuronGroup::updatePreVarQueues(const string &code)
 {
-    // Loop through variables
-    const auto vars = getNeuronModel()->getVars();
-    for(size_t i = 0; i < vars.size(); i++) {
-        const std::string &varName = vars[i].first;
+    updateVarQueues(code, "_pre");
+}
 
-        // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(varName + "_pre") != string::npos) {
-            m_AnyVarQueuesRequired = true;
-            m_VarQueueRequired[i] = true;
-        }
-    }
+void NeuronGroup::updatePostVarQueues(const string &code)
+{
+    updateVarQueues(code, "_post");
 }
 
 void NeuronGroup::setVarMode(const std::string &varName, VarMode mode)
@@ -368,4 +363,18 @@ std::string NeuronGroup::getPrevQueueOffset(const std::string &devPrefix) const
 void NeuronGroup::injectCurrent(CurrentSource *src)
 {
     m_CurrentSources.push_back(src);
+}
+
+void NeuronGroup::updateVarQueues(const string &code, const std::string &suffix)
+{
+    // Loop through variables
+    const auto vars = getNeuronModel()->getVars();
+    for(size_t i = 0; i < vars.size(); i++) {
+        const std::string &varName = vars[i].first;
+
+        // If the code contains a reference to this variable, set corresponding flag
+        if (code.find(varName + suffix) != string::npos) {
+            m_VarQueueRequired[i] = true;
+        }
+    }
 }
