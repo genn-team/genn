@@ -584,7 +584,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                         substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                     }
 
-                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuPreVars, wuPostVars, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                                                 "i", postIdx, "", cpuFunctions, model.getPrecision(), model.getDT());
                                     os << SDcode << std::endl;
                                 }
