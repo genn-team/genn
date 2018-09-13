@@ -97,38 +97,20 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitSparseConnectivitySnippet::FixedProbability
+// InitSparseConnectivitySnippet::FixedProbabilityBase
 //----------------------------------------------------------------------------
-//! Initialises connectivity with a fixed probability of a synapse existing
-//! between a pair of pre and postsynaptic neurons.
-/*! Whether a synapse exists between a pair of pre and a postsynaptic
-    neurons can be modelled using a Bernoulli distribution. While this COULD
-    br sampling directly by repeatedly drawing from the uniform distribution, 
-    this is innefficient. Instead we sample from the gemetric distribution 
-    which describes "the probability distribution of the number of Bernoulli 
-    trials needed to get one success" -- essentially the distribution of the 
-    'gaps' between synapses. We do this using the "inversion method"
-    described by Devroye (1986) -- essentially inverting the CDF of the
-    equivalent continuous distribution (in this case the exponential distribution)*/
-class FixedProbability : public Base
+//! Base class for snippets which initialise connectivity with a fixed probability
+//! of a synapse existing between a pair of pre and postsynaptic neurons.
+class FixedProbabilityBase : public Base
 {
 public:
-    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbability, 1);
+    virtual std::string getRowBuildCode() const = 0;
 
-    SET_ROW_BUILD_CODE(
-        "const scalar u = $(gennrand_uniform);\n"
-        "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "if($(isPostNeuronValid, prevJ)) {\n"
-        "   $(addSynapse, prevJ);\n"
-        "}\n"
-        "else {\n"
-        "   $(endRow);\n"
-        "}\n");
     SET_ROW_BUILD_STATE_VARS({{"prevJ", {"int", -1}}});
 
     SET_PARAM_NAMES({"prob"});
     SET_DERIVED_PARAMS({{"probLogRecip", [](const std::vector<double> &pars, double){ return 1.0 / log(1.0 - pars[0]); }}});
-    
+
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
         {
@@ -146,4 +128,71 @@ public:
             return binomialInverseCDF(quantile, numPre, pars[0]);
         });
 };
+
+//----------------------------------------------------------------------------
+// InitSparseConnectivitySnippet::FixedProbability
+//----------------------------------------------------------------------------
+//! Initialises connectivity with a fixed probability of a synapse existing
+//! between a pair of pre and postsynaptic neurons.
+/*! Whether a synapse exists between a pair of pre and a postsynaptic
+    neurons can be modelled using a Bernoulli distribution. While this COULD
+    br sampling directly by repeatedly drawing from the uniform distribution,
+    this is innefficient. Instead we sample from the gemetric distribution
+    which describes "the probability distribution of the number of Bernoulli
+    trials needed to get one success" -- essentially the distribution of the
+    'gaps' between synapses. We do this using the "inversion method"
+    described by Devroye (1986) -- essentially inverting the CDF of the
+    equivalent continuous distribution (in this case the exponential distribution)*/
+class FixedProbability : public FixedProbabilityBase
+{
+public:
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbability, 1);
+
+    SET_ROW_BUILD_CODE(
+        "const scalar u = $(gennrand_uniform);\n"
+        "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
+        "if($(isPostNeuronValid, prevJ)) {\n"
+        "   $(addSynapse, prevJ);\n"
+        "}\n"
+        "else {\n"
+        "   $(endRow);\n"
+        "}\n");
+};
+
+//----------------------------------------------------------------------------
+// InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
+//----------------------------------------------------------------------------
+//! Initialises connectivity with a fixed probability of a synapse existing
+//! between a pair of pre and postsynaptic neurons. This version ensures there
+//! are no autapses - connections between neurons with the same id
+//! so should be used for recurrent connections.
+/*! Whether a synapse exists between a pair of pre and a postsynaptic
+    neurons can be modelled using a Bernoulli distribution. While this COULD
+    br sampling directly by repeatedly drawing from the uniform distribution, 
+    this is innefficient. Instead we sample from the gemetric distribution 
+    which describes "the probability distribution of the number of Bernoulli 
+    trials needed to get one success" -- essentially the distribution of the 
+    'gaps' between synapses. We do this using the "inversion method"
+    described by Devroye (1986) -- essentially inverting the CDF of the
+    equivalent continuous distribution (in this case the exponential distribution)*/
+class FixedProbabilityNoAutapse : public FixedProbabilityBase
+{
+public:
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbabilityNoAutapse, 1);
+
+    SET_ROW_BUILD_CODE(
+        "int nextJ;\n"
+        "do {\n"
+        "   const scalar u = $(gennrand_uniform);\n"
+        "   nextJ = prevJ + (1 + (int)(log(u) * $(probLogRecip)));\n"
+        "} while(nextJ == $(id_pre));\n"
+        "prevJ = nextJ;\n"
+        "if($(isPostNeuronValid, prevJ)) {\n"
+        "   $(addSynapse, prevJ);\n"
+        "}\n"
+        "else {\n"
+        "   $(endRow);\n"
+        "}\n");
+};
+
 }   // namespace InitVarSnippet
