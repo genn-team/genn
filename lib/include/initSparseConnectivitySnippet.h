@@ -151,7 +151,7 @@ public:
     SET_ROW_BUILD_CODE(
         "const scalar u = $(gennrand_uniform);\n"
         "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "if($(isPostNeuronValid, prevJ)) {\n"
+        "if(prevJ < $(num_post)) {\n"
         "   $(addSynapse, prevJ);\n"
         "}\n"
         "else {\n"
@@ -187,7 +187,7 @@ public:
         "   nextJ = prevJ + (1 + (int)(log(u) * $(probLogRecip)));\n"
         "} while(nextJ == $(id_pre));\n"
         "prevJ = nextJ;\n"
-        "if($(isPostNeuronValid, prevJ)) {\n"
+        "if(prevJ < $(num_post)) {\n"
         "   $(addSynapse, prevJ);\n"
         "}\n"
         "else {\n"
