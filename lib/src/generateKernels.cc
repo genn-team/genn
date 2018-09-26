@@ -51,18 +51,20 @@ string getFloatAtomicAdd(const string &ftype)
     }
 }
 
-std::string getROCacheRead(const std::string &variable)
+bool shouldUseROCache()
 {
-    // If device has at least compute capability 3.5, load it using RO cache
-    if(deviceProp[theDevice].major > 3
-        || (deviceProp[theDevice].major == 3 && deviceProp[theDevice].minor >= 5))
-    {
-        return "__ldg(&" + variable + ")";
-    }
-    // Otherwise return variable as is
-    else {
-        return variable;
-    }
+    // If device has at least compute capability 3.5, we can use RO cache
+    return (deviceProp[theDevice].major > 3) || (deviceProp[theDevice].major == 3 && deviceProp[theDevice].minor >= 5);
+}
+
+std::string getROCacheReadPrefix()
+{
+    return shouldUseROCache() ? "__ldg(&" : "";
+}
+
+std::string getROCacheReadSuffix()
+{
+    return shouldUseROCache() ? ")" : "";
 }
 
 bool shouldAccumulateInLinSyn(const SynapseGroup &sg)
@@ -1387,8 +1389,8 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     preIndex = localID;
                                 }
                                 StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision(),
-                                                                            getROCacheRead);
+                                                                             preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision(),
+                                                                             getROCacheReadPrefix(), getROCacheReadSuffix());
                                 // end Code substitutions -------------------------------------------------------------------------
                                 os << code << std::endl;
                                 if (sparse) {

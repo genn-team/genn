@@ -618,8 +618,10 @@ void neuron_substitutions_in_synaptic_code(
      const string &preIdx,          //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx,          //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,        //!< device prefix, "dd_" for GPU, nothing for CPU
-    StringWrapFunc preVarWrapFunc,  //!< function used to 'wrap' presynaptic variable accesses
-    StringWrapFunc postVarWrapFunc) //!<function used to 'wrap' postsynaptic variable accesses
+    const string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix,     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
 
     // presynaptic neuron variables, parameters, and global parameters
@@ -628,13 +630,10 @@ void neuron_substitutions_in_synaptic_code(
         substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
 
-    const std::string stPreTarget = devPrefix + "sT" + sg->getSrcNeuronGroup()->getName() + "[" + sg->getOffsetPre() + preIdx + "]";
-    substitute(wCode, "$(sT_pre)", preVarWrapFunc ? preVarWrapFunc(stPreTarget) : stPreTarget);
+    substitute(wCode, "$(sT_pre)", preVarPrefix + devPrefix + "sT" + sg->getSrcNeuronGroup()->getName() + "[" + sg->getOffsetPre() + preIdx + "]" + preVarSuffix);
     for(const auto &v : srcNeuronModel->getVars()) {
         const std::string preVarIdx = sg->getSrcNeuronGroup()->isVarQueueRequired(v.first) ? (sg->getOffsetPre() + preIdx) : preIdx;
-        const std::string preVarTarget = devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preVarIdx + "]";
-
-        substitute(wCode, "$(" + v.first + "_pre)", preVarWrapFunc ? preVarWrapFunc(preVarTarget) : preVarTarget);
+        substitute(wCode, "$(" + v.first + "_pre)", preVarPrefix + devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preVarIdx + "]" + preVarSuffix);
     }
     value_substitutions(wCode, srcNeuronModel->getParamNames(), sg->getSrcNeuronGroup()->getParams(), "_pre");
 
@@ -646,12 +645,10 @@ void neuron_substitutions_in_synaptic_code(
     
     // postsynaptic neuron variables, parameters, and global parameters
     const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
-    const std::string stPostTarget = devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getTrgNeuronGroup()->getQueueOffset(devPrefix) + postIdx + "]";
-    substitute(wCode, "$(sT_post)", postVarWrapFunc ? postVarWrapFunc(stPostTarget) : stPostTarget);
+    substitute(wCode, "$(sT_post)", postVarPrefix + devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + sg->getTrgNeuronGroup()->getQueueOffset(devPrefix) + postIdx + "]" + postVarSuffix);
     for(const auto &v : trgNeuronModel->getVars()) {
         const std::string postVarIdx = sg->getTrgNeuronGroup()->isVarQueueRequired(v.first) ? (sg->getTrgNeuronGroup()->getQueueOffset(devPrefix) + postIdx) : postIdx;
-        const std::string postVarTarget = devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postVarIdx + "]";
-        substitute(wCode, "$(" + v.first + "_post)", postVarWrapFunc ? postVarWrapFunc(postVarTarget) : postVarTarget);
+        substitute(wCode, "$(" + v.first + "_post)", postVarPrefix + devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postVarIdx + "]" + postVarSuffix);
 
     }
     value_substitutions(wCode, trgNeuronModel->getParamNames(), sg->getTrgNeuronGroup()->getParams(), "_post");
