@@ -71,12 +71,20 @@ enum SynapseGType
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
 
-// Floating point precision to use for models
+//!< Floating point precision to use for models
 enum FloatType
 {
     GENN_FLOAT,
     GENN_DOUBLE,
     GENN_LONG_DOUBLE,
+};
+
+//!< Precision to use for variables which store time
+enum class TimePrecision
+{
+    DEFAULT,    //!< Time uses default model precision
+    FLOAT,      //!< Time uses single precision - not suitable for long simulations
+    DOUBLE,     //!< Time uses double precision - may reduce performance
 };
 
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
@@ -91,6 +99,17 @@ inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
 inline NewModels::VarInit uninitialisedVar()
 {
     return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
+}
+
+template<typename Snippet>
+inline InitSparseConnectivitySnippet::Init initConnectivity(const typename Snippet::ParamValues &params)
+{
+    return InitSparseConnectivitySnippet::Init(Snippet::getInstance(), params.getValues());
+}
+
+inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
+{
+    return InitSparseConnectivitySnippet::Init(InitSparseConnectivitySnippet::Uninitialised::getInstance(), {});
 }
 
 /*===============================================================
@@ -115,6 +134,7 @@ public:
     void setName(const std::string&); //!< Method to set the neuronal network model name
 
     void setPrecision(FloatType); //!< Set numerical precision for floating point
+    void setTimePrecision(TimePrecision timePrecision); //!< Set numerical precision for time
     void setDT(double); //!< Set the integration step size of the model
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
@@ -138,14 +158,6 @@ public:
     //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
     bool isPreSynapseResetRequired() const{ return getNumPreSynapseResetRequiredGroups() > 0; }
 
-    //! Does this model require device initialisation kernel
-    /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
-    bool isDeviceInitRequired(int localHostID) const;
-
-    //! Does this model require a device sparse initialisation kernel
-    /*! **NOTE** this is for sparsely connected synapse groups only */
-    bool isDeviceSparseInitRequired() const;
-
     //! Do any populations or initialisation code in this model require a host RNG?
     bool isHostRNGRequired() const;
 
@@ -163,6 +175,9 @@ public:
 
     //! Gets the floating point numerical precision
     const std::string &getPrecision() const{ return ftype; }
+
+    //! Gets the floating point numerical precision used to represent time
+    std::string getTimePrecision() const;
 
     //! Which kernel should contain the reset logic? Specified in terms of GENN_FLAGS
     unsigned int getResetKernel() const{ return resetKernel; }
@@ -184,6 +199,18 @@ public:
 
     //! Generate path for generated code
     std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
+
+    // PUBLIC INITIALISATION FUNCTIONS
+    //================================
+    const map<string, string> &getInitKernelParameters() const{ return m_InitKernelParameters; }
+
+    //! Does this model require device initialisation kernel
+    /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
+    bool isDeviceInitRequired(int localHostID) const;
+
+    //! Does this model require a device sparse initialisation kernel
+    /*! **NOTE** this is for sparsely connected synapse groups only */
+    bool isDeviceSparseInitRequired() const;
 
     // PUBLIC NEURON FUNCTIONS
     //========================
@@ -366,7 +393,8 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
-                                       const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+                                       const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         if (!GeNNReady) {
             gennError("You need to call initGeNN first.");
@@ -401,7 +429,8 @@ public:
             std::forward_as_tuple(name, mtype, delaySteps,
                                   wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
-                                  srcNeuronGrp, trgNeuronGrp));
+                                  srcNeuronGrp, trgNeuronGrp,
+                                  connectivityInitialiser));
 
         if(!result.second)
         {
@@ -430,11 +459,13 @@ public:
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers,
-                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers);
+                                    PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
+                                    connectivityInitialiser);
 
     }
 
@@ -564,6 +595,7 @@ private:
     map<string, std::pair<unsigned int, unsigned int>> m_SynapseDynamicsGroups;
 
     // Kernel members
+    map<string, string> m_InitKernelParameters;
     map<string, string> neuronKernelParameters;
     map<string, string> synapseKernelParameters;
     map<string, string> simLearnPostKernelParameters;
@@ -571,14 +603,15 @@ private:
     map<string, string> currentSourceKernelParameters;
 
      // Model members
-    string name;                //!< Name of the neuronal newtwork model
-    string ftype;               //!< Type of floating point variables (float, double, ...; default: float)
-    string RNtype;              //!< Underlying type for random number generation (default: uint64_t)
-    double dt;                  //!< The integration time step of the model
-    bool final;                 //!< Flag for whether the model has been finalized
+    string name;                    //!< Name of the neuronal newtwork model
+    string ftype;                   //!< Type of floating point variables (float, double, ...; default: float)
+    TimePrecision m_TimePrecision;  //!< Type of floating point variables used to store time
+    string RNtype;                  //!< Underlying type for random number generation (default: uint64_t)
+    double dt;                      //!< The integration time step of the model
+    bool final;                     //!< Flag for whether the model has been finalized
     bool timing;
     unsigned int seed;
-    unsigned int resetKernel;   //!< The identity of the kernel in which the spike counters will be reset.
+    unsigned int resetKernel;       //!< The identity of the kernel in which the spike counters will be reset.
 };
 
 #endif

@@ -50,6 +50,7 @@ namespace GENN_PREFERENCES {
     extern bool autoInitSparseVars; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
     extern bool mergePostsynapticModels; //!< Should compatible postsynaptic models and dendritic delay buffers be merged? This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved
     extern VarMode defaultVarMode;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
+    extern VarMode defaultSparseConnectivityMode; //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
     extern unsigned int preSynapseResetBlockSize;

@@ -24,7 +24,7 @@ public:
         m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
         m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_QueueRequired(false),
-        m_NumDelaySlots(1), m_AnyVarQueuesRequired(false), m_VarQueueRequired(varInitialisers.size(), false),
+        m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false),
         m_SpikeVarMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventVarMode(GENN_PREFERENCES::defaultVarMode),
         m_SpikeTimeVarMode(GENN_PREFERENCES::defaultVarMode), m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
         m_HostID(hostID), m_DeviceID(deviceID)
@@ -39,8 +39,11 @@ public:
     //! Checks delay slots currently provided by the neuron group against a required delay and extends if required
     void checkNumDelaySlots(unsigned int requiredDelay);
 
-    //! Update which variables require queues based on piece of code
-    void updateVarQueues(const std::string &code);
+    //! Update which presynaptic variables require queues based on piece of code
+    void updatePreVarQueues(const std::string &code);
+
+    //! Update which postsynaptic variables  require queues based on piece of code
+    void updatePostVarQueues(const std::string &code);
 
     void setSpikeTimeRequired(bool req){ m_SpikeTimeRequired = req; }
     void setTrueSpikeRequired(bool req){ m_TrueSpikeRequired = req; }
@@ -142,7 +145,6 @@ public:
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
-    bool isVarQueueRequired() const{ return m_AnyVarQueuesRequired; }
 
     const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
@@ -170,35 +172,47 @@ public:
     //! Get variable mode used by neuron model state variable
     VarMode getVarMode(size_t index) const{ return m_VarMode[index]; }
 
-    //! Do any of the spike event conditions tested by this neuron require specified parameter
+    //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
 
-    //! Does this neuron group require any initialisation code to be run
+    //! Does this neuron group require any initialisation code to be run?
     bool isInitCodeRequired() const;
 
-    //! Does this neuron group require an RNG to simulate
+    //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
-    //! Does this neuron group require an RNG for it's init code
+    //! Does this neuron group require an RNG for it's init code?
     bool isInitRNGRequired(VarInit varInitMode) const;
 
-    //! Is device var init code required for any variables in this neuron group
+    //! Is device var init code required for any variables in this neuron group?
     bool isDeviceVarInitRequired() const;
+
+    //! Is any form of device initialisation required?
+    bool isDeviceInitRequired() const;
 
     //! Can this neuron group run on the CPU?
     /*! If we are running in CPU_ONLY mode this is always true,
         but some GPU functionality will prevent models being run on both CPU and GPU. */
     bool canRunOnCPU() const;
 
-    //! Does this neuron group have outgoing connections specified host id
+    //! Does this neuron group have outgoing connections specified host id?
     bool hasOutputToHost(int targetHostID) const;
 
-    // **THINK** do this really belong here - it is very code-generation specific
-    std::string getQueueOffset(const std::string &devPrefix) const;
+    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
+    std::string getCurrentQueueOffset(const std::string &devPrefix) const;
+
+    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
+    std::string getPrevQueueOffset(const std::string &devPrefix) const;
 
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    //! Update which variables require queues based on piece of code
+    void updateVarQueues(const std::string &code, const std::string &suffix);
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -224,7 +238,6 @@ private:
     std::vector<CurrentSource*> m_CurrentSources;
 
     //!< Vector specifying which variables require queues
-    bool m_AnyVarQueuesRequired;
     std::vector<bool> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory

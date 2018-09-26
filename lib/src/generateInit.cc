@@ -19,6 +19,44 @@
 // ------------------------------------------------------------------------
 namespace
 {
+class PaddedSizeScope
+{
+public:
+    PaddedSizeScope(CodeStream &codeStream, unsigned int count, unsigned int blockSize, unsigned int &startThread)
+    :   m_CodeStream(codeStream), m_Level(s_NextLevel++), m_StartThread(startThread),
+        m_EndThread(m_StartThread + (unsigned int)(ceil((double)count / (double)blockSize) * (double)blockSize))
+    {
+        // Write if block to determine if this thread should be used for this neuron group
+        if(m_StartThread == 0) {
+            m_CodeStream << "if (id < " << m_EndThread << ")";
+        }
+        else {
+            m_CodeStream << "if ((id >= " << m_StartThread << ") && (id < " << m_EndThread << "))";
+        }
+        m_CodeStream << CodeStream::OB(m_Level);
+        m_CodeStream << "const unsigned int lid = id - " << m_StartThread << ";" << std::endl;
+    }
+
+    ~PaddedSizeScope()
+    {
+        m_CodeStream << CodeStream::CB(m_Level);
+        m_StartThread = m_EndThread;
+    }
+private:
+    //------------------------------------------------------------------------
+    // Static members
+    //------------------------------------------------------------------------
+    static unsigned int s_NextLevel;
+
+    CodeStream &m_CodeStream;
+
+    const unsigned int m_Level;
+
+    unsigned int &m_StartThread;
+    const unsigned int m_EndThread;
+};
+unsigned int PaddedSizeScope::s_NextLevel = 0;
+
 bool shouldInitOnHost(VarMode varMode)
 {
 #ifndef CPU_ONLY
@@ -85,7 +123,15 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
 {
     // init kernel header
-    os << "extern \"C\" __global__ void initializeDevice()";
+    os << "extern \"C\" __global__ void initializeDevice(";
+    const auto &params = model.getInitKernelParameters();
+    for(auto p = params.cbegin(); p != params.cend(); p++) {
+        os << p->second << " " << p->first;
+        if (std::next(p) != params.cend()) {
+            os  << ", ";
+        }
+    }
+    os << ")";
 
     // initialization kernel code
     unsigned int startThread = 0;
@@ -106,293 +152,260 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
         // Loop through remote neuron groups
         for(const auto &n : model.getRemoteNeuronGroups()) {
             if(n.second.hasOutputToHost(localHostID) && n.second.getSpikeVarMode() & VarInit::DEVICE) {
-                // Get padded size of group and hence it's end thread
-                const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
-                const unsigned int endThread = startThread + paddedSize;
-
-                // Write if block to determine if this thread should be used for this neuron group
                 os << "// remote neuron group " << n.first << std::endl;
-                if(startThread == 0) {
-                    os << "if (id < " << endThread << ")";
-                }
-                else {
-                    os << "if ((id >= " << startThread << ") && (id < " << endThread << "))";
-                }
+                PaddedSizeScope p(os, n.second.getNumNeurons(), initBlkSz, startThread);
+
+                os << "if(lid == 0)";
                 {
                     CodeStream::Scope b(os);
-                    os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
 
+                    // If delay is required, loop over delay bins
+                    if(n.second.isDelayRequired()) {
+                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(14);
+                    }
+
+                    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                        os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                    }
+                    else {
+                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                    }
+
+                    // If delay was required, close loop brace
+                    if(n.second.isDelayRequired()) {
+                        os << CodeStream::CB(14);
+                    }
+                }
+
+
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if (lid < " << n.second.getNumNeurons() << ")";
+                {
+                    CodeStream::Scope b(os);
+
+                    // If delay is required, loop over delay bins
+                    if(n.second.isDelayRequired()) {
+                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(16);
+                    }
+
+                    // Zero spikes
+                    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                        os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
+                    }
+                    else {
+                        os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
+                    }
+
+                    // If delay was required, close loop brace
+                    if(n.second.isDelayRequired()) {
+                        os << CodeStream::CB(16) << std::endl;
+                    }
+                }
+            }
+        }
+
+        // Loop through local neuron groups
+        for(const auto &n : model.getLocalNeuronGroups()) {
+            // If this neuron group require any kind of device initialisation
+            if(n.second.isDeviceInitRequired()) {
+                os << "// local neuron group " << n.first << std::endl;
+                PaddedSizeScope p(os, n.second.getNumNeurons(), initBlkSz, startThread);
+
+                // Determine which built in variables should be initialised on device
+                const bool shouldInitSpikeVar = (n.second.getSpikeVarMode() & VarInit::DEVICE);
+                const bool shouldInitSpikeEventVar = n.second.isSpikeEventRequired() && (n.second.getSpikeEventVarMode() & VarInit::DEVICE);
+                const bool shouldInitSpikeTimeVar = n.second.isSpikeTimeRequired() && (n.second.getSpikeTimeVarMode() & VarInit::DEVICE);
+
+                // If per-population spike variables should be initialised on device
+                // **NOTE** could optimise here and use getNumDelaySlots threads if getNumDelaySlots < numthreads
+                if(shouldInitSpikeVar || shouldInitSpikeEventVar)
+                {
                     os << "if(lid == 0)";
                     {
                         CodeStream::Scope b(os);
 
                         // If delay is required, loop over delay bins
                         if(n.second.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(14);
+                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(22);
                         }
 
-                        if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                            os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                        // Zero spike count
+                        if(shouldInitSpikeVar) {
+                            if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                                os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                            }
+                            else {
+                                os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                            }
                         }
-                        else {
-                            os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+
+                        // Zero spike event count
+                        if(shouldInitSpikeEventVar) {
+                            if(n.second.isDelayRequired()) {
+                                os << "dd_glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
+                            }
+                            else {
+                                os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                            }
                         }
 
                         // If delay was required, close loop brace
                         if(n.second.isDelayRequired()) {
-                            os << CodeStream::CB(14);
+                            os << CodeStream::CB(22);
                         }
                     }
+                }
 
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if (lid < " << n.second.getNumNeurons() << ")";
+                {
+                    CodeStream::Scope b(os);
 
-                    os << "// only do this for existing neurons" << std::endl;
-                    os << "if (lid < " << n.second.getNumNeurons() << ")";
-                    {
-                        CodeStream::Scope b(os);
+                    // If this neuron is going to require a simulation RNG, initialise one using thread id for sequence
+                    if(n.second.isSimRNGRequired()) {
+                        os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+                    }
 
+                    // If this neuron requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    if(n.second.isInitRNGRequired(VarInit::DEVICE)) {
+                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+                    }
+
+                    // Build string to use for delayed variable index
+                    const std::string delayedIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
+
+                    // If spike variables are initialised on device
+                    if(shouldInitSpikeVar || shouldInitSpikeEventVar || shouldInitSpikeTimeVar) {
                         // If delay is required, loop over delay bins
                         if(n.second.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(16);
+                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(31);
                         }
 
                         // Zero spikes
-                        if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                            os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
+                        if(shouldInitSpikeVar) {
+                            if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                                os << "dd_glbSpk" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
+                            }
+                            else {
+                                os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
+                            }
                         }
-                        else {
-                            os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
+
+                        // Zero spike events
+                        if(shouldInitSpikeEventVar) {
+                            if(n.second.isDelayRequired()) {
+                                os << "dd_glbSpkEvnt" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
+                            }
+                            else {
+                                os << "dd_glbSpkCnt" << n.first << "[lid] = 0;" << std::endl;
+                            }
+                        }
+
+                        // Reset spike times
+                        if(shouldInitSpikeTimeVar) {
+                            if(n.second.isDelayRequired()) {
+                                os << "dd_sT" << n.first << "[" << delayedIndex << "] = -TIME_MAX;" << std::endl;
+                            }
+                            else {
+                                os << "dd_sT" << n.first << "[lid] = -TIME_MAX;" << std::endl;
+                            }
                         }
 
                         // If delay was required, close loop brace
                         if(n.second.isDelayRequired()) {
-                            os << CodeStream::CB(16) << std::endl;
+                            os << CodeStream::CB(31) << std::endl;
                         }
                     }
-                }
 
-                // Update start thread
-                startThread = endThread;
-            }
-        }
+                    // Loop through neuron variables
+                    auto neuronModelVars = n.second.getNeuronModel()->getVars();
+                    for (size_t j = 0; j < neuronModelVars.size(); j++) {
+                        const auto &varInit = n.second.getVarInitialisers()[j];
+                        const VarMode varMode = n.second.getVarMode(j);
 
-        // Loop through local neuron groups
-        for(const auto &n : model.getLocalNeuronGroups()) {
-            // If this group requires an RNG to simulate or requires variables to be initialised on device
-            if(n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired()) {
-                // Get padded size of group and hence it's end thread
-                const unsigned int paddedSize = (unsigned int)(ceil((double)n.second.getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
-                const unsigned int endThread = startThread + paddedSize;
-
-                // Write if block to determine if this thread should be used for this neuron group
-                os << "// local neuron group " << n.first << std::endl;
-                if(startThread == 0) {
-                    os << "if (id < " << endThread << ")";
-                }
-                else {
-                    os << "if ((id >= " << startThread << ") && (id < " << endThread << "))";
-                }
-                {
-                    CodeStream::Scope b(os);
-                    os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
-
-                    // Determine which built in variables should be initialised on device
-                    const bool shouldInitSpikeVar = (n.second.getSpikeVarMode() & VarInit::DEVICE);
-                    const bool shouldInitSpikeEventVar = n.second.isSpikeEventRequired() && (n.second.getSpikeEventVarMode() & VarInit::DEVICE);
-                    const bool shouldInitSpikeTimeVar = n.second.isSpikeTimeRequired() && (n.second.getSpikeTimeVarMode() & VarInit::DEVICE);
-
-                    // If per-population spike variables should be initialised on device
-                    // **NOTE** could optimise here and use getNumDelaySlots threads if getNumDelaySlots < numthreads
-                    if(shouldInitSpikeVar || shouldInitSpikeEventVar)
-                    {
-                        os << "if(lid == 0)";
-                        {
+                        // If this variable should be initialised on the device and has any initialisation code
+                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                             CodeStream::Scope b(os);
 
-                            // If delay is required, loop over delay bins
-                            if(n.second.isDelayRequired()) {
-                                os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(22);
-                            }
+                            // If variable requires a queue
+                            if (n.second.isVarQueueRequired(j)) {
+                                // Generate initial value into temporary variable
+                                os << neuronModelVars[j].second << " initVal;" << std::endl;
+                                os << StandardSubstitutions::initNeuronVariable(varInit, "initVal",
+                                                                                cudaFunctions, "lid",
+                                                                                model.getPrecision(), "&initRNG") << std::endl;
 
-                            // Zero spike count
-                            if(shouldInitSpikeVar) {
-                                if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                                    os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-                                }
-                                else {
-                                    os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                                }
-                            }
-
-                            // Zero spike event count
-                            if(shouldInitSpikeEventVar) {
-                                if(n.second.isDelayRequired()) {
-                                    os << "dd_glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
-                                }
-                                else {
-                                    os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                                // Copy this into all delay slots
+                                os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "dd_" << neuronModelVars[j].first << n.first << "[" << delayedIndex << "] = initVal;" << std::endl;
                                 }
                             }
-
-                            // If delay was required, close loop brace
-                            if(n.second.isDelayRequired()) {
-                                os << CodeStream::CB(22);
+                            // Otherwise, initialise directly into device variable
+                            else {
+                                os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + neuronModelVars[j].first + n.first + "[lid]",
+                                                                                cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
                             }
                         }
                     }
 
-                    os << "// only do this for existing neurons" << std::endl;
-                    os << "if (lid < " << n.second.getNumNeurons() << ")";
-                    {
-                        CodeStream::Scope b(os);
+                    // Loop through incoming synaptic populations
+                    for(const auto &m : n.second.getMergedInSyn()) {
+                        const auto *sg = m.first;
 
-                        // If this neuron is going to require a simulation RNG, initialise one using thread id for sequence
-                        if(n.second.isSimRNGRequired()) {
-                            os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+                        // If this synapse group's input variable should be initialised on device
+                        if(sg->getInSynVarMode() & VarInit::DEVICE) {
+                            os << "dd_inSyn" << sg->getPSModelTargetName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
                         }
 
-                        // If this neuron requires an RNG for initialisation,
-                        // make copy of global phillox RNG and skip ahead by thread id
-                        if(n.second.isInitRNGRequired(VarInit::DEVICE)) {
-                            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                            os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
-                        }
-
-                        // Build string to use for delayed variable index
-                        const std::string delayedIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
-
-                        // If spike variables are initialised on device
-                        if(shouldInitSpikeVar || shouldInitSpikeEventVar || shouldInitSpikeTimeVar) {
-                            // If delay is required, loop over delay bins
-                            if(n.second.isDelayRequired()) {
-                                os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(31);
-                            }
-
-                            // Zero spikes
-                            if(shouldInitSpikeVar) {
-                                if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                                    os << "dd_glbSpk" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
-                                }
-                                else {
-                                    os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
-                                }
-                            }
-
-                            // Zero spike events
-                            if(shouldInitSpikeEventVar) {
-                                if(n.second.isDelayRequired()) {
-                                    os << "dd_glbSpkEvnt" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
-                                }
-                                else {
-                                    os << "dd_glbSpkCnt" << n.first << "[lid] = 0;" << std::endl;
-                                }
-                            }
-
-                            // Reset spike times
-                            if(shouldInitSpikeTimeVar) {
-                                if(n.second.isDelayRequired()) {
-                                    os << "dd_sT" << n.first << "[" << delayedIndex << "] = -SCALAR_MAX;" << std::endl;
-                                }
-                                else {
-                                    os << "dd_sT" << n.first << "[lid] = -SCALAR_MAX;" << std::endl;
-                                }
-                            }
-
-                            // If delay was required, close loop brace
-                            if(n.second.isDelayRequired()) {
-                                os << CodeStream::CB(31) << std::endl;
+                        // If dendritic delays are required and these should be initialised on device
+                        if(sg->isDendriticDelayRequired() && (sg->getDendriticDelayVarMode() & VarInit::DEVICE)) {
+                            os << "for (int i = 0; i < " << sg->getMaxDendriticDelayTimesteps() << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
+                                os << "dd_denDelay" << sg->getPSModelTargetName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         }
 
-                        // Loop through neuron variables
-                        auto neuronModelVars = n.second.getNeuronModel()->getVars();
-                        for (size_t j = 0; j < neuronModelVars.size(); j++) {
-                            const auto &varInit = n.second.getVarInitialisers()[j];
-                            const VarMode varMode = n.second.getVarMode(j);
+                        // If postsynaptic model variables should be individual
+                        if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                            auto psmVars = sg->getPSModel()->getVars();
+                            for(size_t j = 0; j < psmVars.size(); j++) {
+                                const auto &varInit = sg->getPSVarInitialisers()[j];
+                                const VarMode varMode = sg->getPSVarMode(j);
+
+                                // Initialise directly into device variable
+                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                    CodeStream::Scope b(os);
+                                    os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + psmVars[j].first + sg->getName() + "[lid]",
+                                                                                    cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
+                                }
+                            }
+                        }
+                    }
+                    // Loop through current sources
+                    os << "// current source variables" << std::endl;
+                    for (auto const *cs : n.second.getCurrentSources()) {
+                        auto csModel = cs->getCurrentSourceModel();
+                        auto csVars = csModel->getVars();
+
+                        for (size_t j = 0; j < csVars.size(); j++) {
+                            const auto &varInit = cs->getVarInitialisers()[j];
+                            const VarMode varMode = cs->getVarMode(j);
 
                             // If this variable should be initialised on the device and has any initialisation code
                             if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
                                 CodeStream::Scope b(os);
-
-                                // If variable requires a queue
-                                if (n.second.isVarQueueRequired(j)) {
-                                    // Generate initial value into temporary variable
-                                    os << neuronModelVars[j].second << " initVal;" << std::endl;
-                                    os << StandardSubstitutions::initVariable(varInit, "initVal", cudaFunctions,
-                                                                            model.getPrecision(), "&initRNG") << std::endl;
-
-                                    // Copy this into all delay slots
-                                    os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-                                    {
-                                        CodeStream::Scope b(os);
-                                        os << "dd_" << neuronModelVars[j].first << n.first << "[" << delayedIndex << "] = initVal;" << std::endl;
-                                    }
-                                }
-                                // Otherwise, initialise directly into device variable
-                                else {
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + neuronModelVars[j].first + n.first + "[lid]",
-                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                }
-                            }
-                        }
-
-                        // Loop through incoming synaptic populations
-                        for(const auto &m : n.second.getMergedInSyn()) {
-                            const auto *sg = m.first;
-
-                            // If this synapse group's input variable should be initialised on device
-                            if(sg->getInSynVarMode() & VarInit::DEVICE) {
-                                os << "dd_inSyn" << sg->getPSModelTargetName() << "[lid] = " << model.scalarExpr(0.0) << ";" << std::endl;
-                            }
-
-                            // If dendritic delays are required and these should be initialised on device
-                            if(sg->isDendriticDelayRequired() && (sg->getDendriticDelayVarMode() & VarInit::DEVICE)) {
-                                os << "for (int i = 0; i < " << sg->getMaxDendriticDelayTimesteps() << "; i++)";
-                                {
-                                    CodeStream::Scope b(os);
-                                    const std::string denDelayIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
-                                    os << "dd_denDelay" << sg->getPSModelTargetName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
-                                }
-                            }
-
-                            // If postsynaptic model variables should be individual
-                            if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                                auto psmVars = sg->getPSModel()->getVars();
-                                for(size_t j = 0; j < psmVars.size(); j++) {
-                                    const auto &varInit = sg->getPSVarInitialisers()[j];
-                                    const VarMode varMode = sg->getPSVarMode(j);
-
-                                    // Initialise directly into device variable
-                                    if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                        CodeStream::Scope b(os);
-                                        os << StandardSubstitutions::initVariable(varInit, "dd_" + psmVars[j].first + sg->getName() + "[lid]",
-                                                                                  cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                    }
-                                }
-                            }
-                        }
-                        // Loop through current sources
-                        os << "// current source variables" << std::endl;
-                        for (auto const *cs : n.second.getCurrentSources()) {
-                            auto csModel = cs->getCurrentSourceModel();
-                            auto csVars = csModel->getVars();
-
-                            for (size_t j = 0; j < csVars.size(); j++) {
-                                const auto &varInit = cs->getVarInitialisers()[j];
-                                const VarMode varMode = cs->getVarMode(j);
-
-                                // If this variable should be initialised on the device and has any initialisation code
-                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + csVars[j].first + cs->getName() + "[lid]",
-                                                                                cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                }
+                                os << StandardSubstitutions::initNeuronVariable(varInit, "dd_" + csVars[j].first + cs->getName() + "[lid]",
+                                                                                cudaFunctions, "lid", model.getPrecision(), "&initRNG") << std::endl;
                             }
                         }
                     }
                 }
-
-                // Update start thread
-                startThread = endThread;
             }
         }
 
@@ -405,62 +418,128 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                 && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) 
                 && s.second.isWUDeviceVarInitRequired())
             {
-                // Get padded size of group and hence it's end thread
-                const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getTrgNeuronGroup()->getNumNeurons() / (double)initBlkSz) * (double)initBlkSz);
-                const unsigned int endThread = startThread + paddedSize;
-
-                // Write if block to determine if this thread should be used for this neuron group
                 os << "// synapse group " << s.first << std::endl;
-                if(startThread == 0) {
-                    os << "if (id < " << endThread << ")";
-                }
-                else {
-                    os << "if ((id >= " << startThread << ") && (id < " << endThread << "))";
-                }
+
+                PaddedSizeScope p(os, s.second.getTrgNeuronGroup()->getNumNeurons(), initBlkSz, startThread);
+
+                os << "// only do this for existing synapses" << std::endl;
+                os << "if (lid < " << s.second.getTrgNeuronGroup()->getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
-                    os << "const unsigned int lid = id - " << startThread << ";" << std::endl;
 
-                    os << "// only do this for existing synapses" << std::endl;
-                    os << "if (lid < " << s.second.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    // If this post synapse requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    if(s.second.isWUInitRNGRequired(VarInit::DEVICE)) {
+                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+                    }
+
+                    // Loop through rows of matrix
+                    os << "unsigned int idx = lid;" << std::endl;
+                    os << "for(unsigned int i = 0; i < " << s.second.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
                     {
                         CodeStream::Scope b(os);
 
-                        // If this post synapse requires an RNG for initialisation,
-                        // make copy of global phillox RNG and skip ahead by thread id
-                        if(s.second.isWUInitRNGRequired(VarInit::DEVICE)) {
-                            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                            os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+                        // Write loop through WUM variables
+                        auto wuVars = s.second.getWUModel()->getVars();
+                        for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                            const auto &varInit = s.second.getWUVarInitialisers()[k];
+                            const VarMode varMode = s.second.getWUVarMode(k);
+
+                            // If this variable should be initialised on the device and has any initialisation code
+                            if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                CodeStream::Scope b(os);
+                                os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                                    cudaFunctions, "i", "lid",
+                                                                                    model.getPrecision(), "&initRNG") << std::endl;
+                            }
                         }
 
-                        // Loop through rows of matrix
-                        os << "unsigned int idx = lid;" << std::endl;
-                        os << "for(unsigned int i = 0; i < " << s.second.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
+                        // Advance to next row
+                        os << "idx += " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+                }
+            }
+
+            // If we should initialise this synapse group's connectivity on the
+            // device and it has a connectivity initialisation snippet
+            if(s.second.isDeviceSparseConnectivityInitRequired()) {
+                const auto &connectInit = s.second.getConnectivityInitialiser();
+                const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+                const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+
+                os << "// synapse group " << s.first << std::endl;
+                PaddedSizeScope p(os, numSrcNeurons, initBlkSz, startThread);
+
+                os << "// only do this for existing synapses" << std::endl;
+                os << "if (lid < " << numSrcNeurons << ")";
+                {
+                    CodeStream::Scope b(os);
+
+                    // If this connectivity requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    if(::isRNGRequired(connectInit.getSnippet()->getRowBuildCode())) {
+                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+                    }
+
+                    // If the synapse group has bitmask connectivity
+                    if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                        // Calculate indices of bits at start and end of row
+                        os << "// Calculate indices" << std::endl;
+                        const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
+                        if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                            os << "const uint64_t rowStartGID = lid * " << numTrgNeurons << "ull;" << std::endl;
+                        }
+                        else {
+                            os << "const unsigned int rowStartGID = lid * " << numTrgNeurons << ";" << std::endl;
+                        }
+
+                        // Build function template to set correct bit in bitmask
+                        const std::string addSynapseTemplate = "atomicOr(&dd_gp" + s.first + "[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))";
+
+                        // Initialise row building state variables and loop on generated code to initialise sparse connectivity
+                        os << "// Build sparse connectivity" << std::endl;
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
                         {
                             CodeStream::Scope b(os);
 
-                            // Write loop through rows (presynaptic neurons)
-                            auto wuVars = s.second.getWUModel()->getVars();
-                            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                                const auto &varInit = s.second.getWUVarInitialisers()[k];
-                                const VarMode varMode = s.second.getWUVarMode(k);
-
-                                // If this variable should be initialised on the device and has any initialisation code
-                                if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                            cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
-                                }
-                            }
-
-                            // Advance to next row
-                            os << "idx += " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "lid",
+                                                                                cudaFunctions, model.getPrecision(), "&initRNG");
                         }
                     }
-                }
+                    // Otherwise, if synapse group has ragged connectivity
+                    else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                        const std::string rowLength = "dd_rowLength" + s.first + "[lid]";
+                        const std::string ind = "dd_ind" + s.first;
 
-                // Update start thread
-                startThread = endThread;
+                        // Zero row length
+                        os << rowLength << " = 0;" << std::endl;
+
+                        // Build function template to increment row length and insert synapse into ind array
+                        const std::string addSynapseTemplate = ind + "[(lid * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)";
+
+                        /// Initialise row building state variables and loop on generated code to initialise sparse connectivity
+                        os << "// Build sparse connectivity" << std::endl;
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "lid",
+                                                                                cudaFunctions, model.getPrecision(), "&initRNG");
+                        }
+                    }
+                    // Otherwise, give an error
+                    else {
+                        gennError("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
+                    }
+                }
             }
         }
     }   // end initialization kernel code
@@ -482,26 +561,17 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
         CodeStream::Scope b(os);
 
         // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
+        // **TODO** check actually required
         os << "__shared__ unsigned int shRowLength[" << initSparseBlkSz << "];" << std::endl;
-
-        // If any of the synapse groups have yale format connectivity we also need a shared memory array to containt the row start indices
-        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [](const NNmodel::SynapseGroupValueType &s){ return (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE); }))
-        {
-            os << "__shared__ unsigned int shRowStart[" << initSparseBlkSz << "];" << std::endl;
-        }
+        os << "__shared__ unsigned int shRowStart[" << initSparseBlkSz + 1 << "];" << std::endl;
 
         // common variables for all cases
         os << "const unsigned int id = " << initSparseBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // Loop through local synapse groups
         for(const auto &s : model.getLocalSynapseGroups()) {
-            // If this group has sparse or ragged connectivity with individual synapse variables
-            // and it's weight update has variables that require initialising on GPU
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE
-                && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
-                && s.second.isWUDeviceVarInitRequired())
-            {
+            // If this group requires sparse initialisation
+            if(s.second.isDeviceSparseInitRequired()) {
                 // Get padded size of group and hence it's end thread
                 const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
                 const unsigned int paddedSize = (unsigned int)(ceil((double)s.second.getMaxConnections() / (double)initSparseBlkSz) * (double)initSparseBlkSz);
@@ -566,6 +636,43 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                 os << "shRowLength[threadIdx.x] = dd_rowLength" << s.first << "[(r * " << initSparseBlkSz << ") + threadIdx.x];" << std::endl;
                             }
                         }
+
+                        // If this synapse projection has ragged connectivity initialised on device and has synapse dynamics
+                        if(s.second.isDeviceSparseConnectivityInitRequired()
+                            && (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                            && model.isSynapseGroupDynamicsRequired(s.first))
+                        {
+                            // Use first thread to generate cumulative sum
+                            os << "if (threadIdx.x == 0)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                // Get index of last row in resultant synapse dynamics structure
+                                // **NOTE** if there IS a previous block, it will always have had initSparseBlkSz rows in it
+                                os << "unsigned int rowStart = (r == 0) ? 0 : shRowStart[" << initSparseBlkSz << "];" << std::endl;
+                                os << "shRowStart[0] = rowStart;" << std::endl;
+
+                                // Loop through rows in block
+                                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+
+                                    // Add this row's length to cumulative sum and write this to this row's end
+                                    os << "rowStart += shRowLength[i];" << std::endl;
+                                    os << "shRowStart[i + 1] = rowStart;" << std::endl;
+                                }
+
+                                // If this is the first thread block and the last block of rows,
+                                // write the total cumulative sum to the first entry of the remap structure
+                                os << "if(blockIdx.x == 0 && (r == " << numBlocks - 1 << "))";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "dd_synRemap" << s.first << "[0] = shRowStart[numRowsInBlock];" << std::endl;
+                                }
+
+                            }
+                        }
+
                         os << "__syncthreads();" << std::endl;
 
                         // Loop through rows
@@ -583,17 +690,52 @@ unsigned int genInitializeSparseDeviceKernel(unsigned int numStaticInitThreads, 
                                     os << "const unsigned idx = shRowStart[i] + lid;" << std::endl;
                                 }
 
-                                // Loop through variables
-                                auto wuVars = s.second.getWUModel()->getVars();
-                                for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                                    const auto &varInit = s.second.getWUVarInitialisers()[k];
-                                    const VarMode varMode = s.second.getWUVarMode(k);
+                                // If this synapse group has individual variables
+                                if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                                    // Loop through variables
+                                    auto wuVars = s.second.getWUModel()->getVars();
+                                    for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                                        const auto &varInit = s.second.getWUVarInitialisers()[k];
+                                        const VarMode varMode = s.second.getWUVarMode(k);
 
-                                    // If this variable should be initialised on the device and has any initialisation code
-                                    if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                        // If this variable should be initialised on the device and has any initialisation code
+                                        if((varMode & VarInit::DEVICE) && !varInit.getSnippet()->getCode().empty()) {
+                                            CodeStream::Scope b(os);
+                                            const std::string preIdx = "((r * " + std::to_string(initSparseBlkSz) + ") + i)";
+                                            const std::string postIdx = "dd_ind" + s.first + "[idx]";
+                                            os << StandardSubstitutions::initWeightUpdateVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
+                                                                                                cudaFunctions, preIdx, postIdx,
+                                                                                                model.getPrecision(), "&initRNG") << std::endl;
+                                        }
+                                    }
+                                }
+
+                                // If matrix is ragged and connectivity is initialised on device
+                                if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                                    && s.second.isDeviceSparseConnectivityInitRequired())
+                                {
+                                    // If postsynaptic learning is required
+                                    if(model.isSynapseGroupPostLearningRequired(s.first)) {
                                         CodeStream::Scope b(os);
-                                        os << StandardSubstitutions::initVariable(varInit, "dd_" + wuVars[k].first + s.first + "[idx]",
-                                                                                  cudaFunctions, model.getPrecision(), "&initRNG") << std::endl;
+
+                                        // Extract index of synapse's postsynaptic target
+                                        os << "const unsigned int postIndex = dd_ind" << s.first << "[idx];" << std::endl;
+
+                                        // Atomically increment length of column of connectivity associated with this target
+                                        // **NOTE** this returns previous length i.e. where to insert new entry
+                                        os << "const unsigned int colLocation = atomicAdd(&dd_colLength" << s.first << "[postIndex], 1);" << std::endl;
+
+                                        // From this calculate index into column-major matrix
+                                        os << "const unsigned int colMajorIndex = (postIndex * " << s.second.getMaxSourceConnections() << ") + colLocation;" << std::endl;
+
+                                        // Add remapping entry at this location poining back to row-major index
+                                        os << "dd_remap" << s.first << "[colMajorIndex] = idx;" << std::endl;
+                                    }
+
+                                    // If synapse dynamics are required, copy idx into syn remap structure
+                                    if(model.isSynapseGroupDynamicsRequired(s.first)) {
+                                        CodeStream::Scope b(os);
+                                        os << "dd_synRemap" << s.first << "[shRowStart[i] + lid + 1] = idx;" << std::endl;
                                     }
                                 }
                             }
@@ -758,7 +900,7 @@ void genInit(const NNmodel &model,      //!< Model description
                 os << "for (int i = 0; i < " << n.second.getNumNeurons() * n.second.getNumDelaySlots() << "; i++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "sT" <<  n.first << "[i] = -SCALAR_MAX;" << std::endl;
+                    os << "sT" <<  n.first << "[i] = -TIME_MAX;" << std::endl;
                 }
             }
 
@@ -778,8 +920,8 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                     {
                         CodeStream::Scope b(os);
-                        os << StandardSubstitutions::initVariable(varInit, neuronModelVars[j].first + n.first + "[i]",
-                                                                  cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                        os << StandardSubstitutions::initNeuronVariable(varInit, neuronModelVars[j].first + n.first + "[i]",
+                                                                        cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
                     }
                 }
             }
@@ -809,8 +951,8 @@ void genInit(const NNmodel &model,      //!< Model description
                         os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
                         {
                             CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, csVars[j].first + cs->getName() + "[i]",
-                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                            os << StandardSubstitutions::initNeuronVariable(varInit, csVars[j].first + cs->getName() + "[i]",
+                                                                            cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
                         }
                     }
                 }
@@ -867,13 +1009,14 @@ void genInit(const NNmodel &model,      //!< Model description
                             os << "for (int i = 0; i < " << n.second.getNumNeurons() << "; i++)";
                             {
                                 CodeStream::Scope b(os);
-                                os << StandardSubstitutions::initVariable(varInit, psmVars[k].first + sg->getPSModelTargetName() + "[i]",
-                                                                          cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                                os << StandardSubstitutions::initNeuronVariable(varInit, psmVars[k].first + sg->getPSModelTargetName() + "[i]",
+                                                                                cpuFunctions, "i", model.getPrecision(), "rng") << std::endl;
                             }
                         }
                     }
                 }
             }
+
         }
         os << std::endl;
 
@@ -881,6 +1024,97 @@ void genInit(const NNmodel &model,      //!< Model description
         os << "// synapse variables" << std::endl;
         for(const auto &s : model.getLocalSynapseGroups()) {
             const auto *wu = s.second.getWUModel();
+
+            const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+
+            // If we should initialise this synapse group's connectivity on the
+            // host and it has a connectivity initialisation snippet
+            const auto &connectInit = s.second.getConnectivityInitialiser();
+            if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())
+                && !connectInit.getSnippet()->getRowBuildCode().empty())
+            {
+                CodeStream::Scope b(os);
+
+                // If matrix connectivity is ragged
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    const std::string rowLength = "C" + s.first + ".rowLength";
+                    const std::string ind = "C" + s.first + ".ind";
+
+                    // Zero row lengths
+                    os << "memset(" << rowLength << ", 0, " << numSrcNeurons << " * sizeof(unsigned int));" << std::endl;
+
+                    // Loop through source neurons
+                    os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // Build function template to increment row length and insert synapse into ind array
+                        const std::string addSynapseTemplate = ind + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "[i]++)] = $(0)";
+
+                        // Initialise row building state variables and loop on generated code to initialise sparse connectivity
+                        os << "// Build sparse connectivity" << std::endl;
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "i",
+                                                                                cpuFunctions, model.getPrecision(), "rng");
+                        }
+                    }
+
+                }
+                // Otherwise, if matrix connectivity is a bitmask
+                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    // Zero memory before setting sparse bits
+                    os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << " * sizeof(uint32_t));" << std::endl;
+
+                    // Loop through source neurons
+                    os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                    {
+                        // Calculate index of bit at start of this row
+                        CodeStream::Scope b(os);
+                        os << "const int64_t rowStartGID = i * " << numTrgNeurons << "ll;" << std::endl;
+
+                        // Build function template to set correct bit in bitmask
+                        const std::string addSynapseTemplate = "setB(gp" + s.first + "[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)";
+
+                        // Initialise row building state variables and loop on generated code to initialise sparse connectivity
+                        os << "// Build sparse connectivity" << std::endl;
+                        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                            os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                        }
+                        os << "while(true)";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << StandardSubstitutions::initSparseConnectivity(s.second, addSynapseTemplate, numTrgNeurons, "i",
+                                                                                cpuFunctions, model.getPrecision(), "rng");
+                        }
+                    }
+                }
+                else {
+                    gennError("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
+                }
+            }
+            // Otherwise, if this synapse group has connectivity that should be initialised on device
+            else if(s.second.isDeviceSparseConnectivityInitRequired()) {
+                // If this synapse population has BITMASK connectivity, insert a call to cudaMemset to zero the whole bitmask
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                    os << "cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
+                }
+                // If this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
+                else if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                    && model.isSynapseGroupPostLearningRequired(s.first))
+                {
+                    os << "cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int));" << std::endl;
+                }
+            }
+
             // If matrix is dense (i.e. can be initialised here) and each synapse has individual values (i.e. needs initialising at all)
             if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
                 auto wuVars = wu->getVars();
@@ -891,17 +1125,21 @@ void genInit(const NNmodel &model,      //!< Model description
                     // If this variable should be initialised on the host and has any initialisation code
                     if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
                         CodeStream::Scope b(os);
-                        os << "for (int i = 0; i < " << s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons() << "; i++)";
+                        os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
                         {
                             CodeStream::Scope b(os);
-                            os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                                      cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                            os << "for (int j = 0; j < " << numTrgNeurons << "; j++)";
+                            {
+                                CodeStream::Scope b(os);
+                                const std::string idx = "(i * " + std::to_string(numTrgNeurons) + ") + j";
+                                os << StandardSubstitutions::initWeightUpdateVariable(varInit, wuVars[k].first + s.first + "[" + idx + "]",
+                                                                                      cpuFunctions, "i", "j", model.getPrecision(), "rng") << std::endl;
+                            }
                         }
                     }
                 }
             }
         }
-
         os << std::endl << std::endl;
         if (model.isTimingEnabled()) {
             os << "initHost_timer.stopTimer();" << std::endl;
@@ -922,7 +1160,15 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "// perform on-device init" << std::endl;
             os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
             os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
-            os << "initializeDevice <<<iGrid, iThreads>>>();" << std::endl;
+            os << "initializeDevice <<<iGrid, iThreads>>>(";
+            const auto &params = model.getInitKernelParameters();
+            for(auto p = params.cbegin(); p != params.cend(); p++) {
+                os << p->first;
+                if (std::next(p) != params.cend()) {
+                    os  << ", ";
+                }
+            }
+            os << ");" << std::endl;
 
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(initDeviceStop);" << std::endl;
@@ -965,21 +1211,24 @@ void genInit(const NNmodel &model,      //!< Model description
                     }
                 }
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                    os << "initializeRaggedArray(C" << s.first << ", ";
-                    os << "d_ind" << s.first << ", ";
-                    os << "d_rowLength" << s.first << ", ";
-                    os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                    // If sparse connectivity was initialised on host, upload to device
+                    // **TODO** this may well be the wrong check i.e. zero copy
+                    if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())) {
+                        os << "initializeRaggedArray(C" << s.first << ", ";
+                        os << "d_ind" << s.first << ", ";
+                        os << "d_rowLength" << s.first << ", ";
+                        os << s.second.getSrcNeuronGroup()->getNumNeurons() << ");" << std::endl;
 
-                    if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                        os << "initializeRaggedArraySynRemap(C" << s.first << ", ";
-                        os << "d_synRemap" << s.first << ");" << std::endl;
-                    }
-
-                    if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                        os << "initializeRaggedArrayRev(C" << s.first << ", ";
-                        os << "d_colLength" << s.first << ",";
-                        os << "d_remap" << s.first << ",";
-                        os << s.second.getTrgNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                        if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                            os << "initializeRaggedArraySynRemap(C" << s.first << ", ";
+                            os << "d_synRemap" << s.first << ");" << std::endl;
+                        }
+                        if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                            os << "initializeRaggedArrayRev(C" << s.first << ", ";
+                            os << "d_colLength" << s.first << ",";
+                            os << "d_remap" << s.first << ",";
+                            os << s.second.getTrgNeuronGroup()->getNumNeurons() << ");" << std::endl;
+                        }
                     }
                 }
 
@@ -1026,11 +1275,15 @@ void genInit(const NNmodel &model,      //!< Model description
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 anySparse = true;
-                if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                    os << "createPreIndices(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
-                }
-                if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                    os << "createPosttoPreArray(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
+
+                // If we should initialise sparse connectivity on the host
+                if(shouldInitOnHost(s.second.getSparseConnectivityVarMode())) {
+                    if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                        os << "createPreIndices(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
+                    }
+                    if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                        os << "createPosttoPreArray(" << numSrcNeurons << ", " << numTrgNeurons << ", &C" << s.first << ");" << std::endl;
+                    }
                 }
 
                 // If synapses in this population have individual variables
@@ -1043,24 +1296,27 @@ void genInit(const NNmodel &model,      //!< Model description
                         // If this variable should be initialised on the host and has any initialisation code
                         if(shouldInitOnHost(varMode) && !varInit.getSnippet()->getCode().empty()) {
                             CodeStream::Scope b(os);
-                            if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
-                                os << "for (int i = 0; i < C" << s.first << ".connN; i++)";
-                                {
-                                    CodeStream::Scope b(os);
-                                    os << StandardSubstitutions::initVariable(varInit, wuVars[k].first + s.first + "[i]",
-                                                                              cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                            os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                if(s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                    os << "for (int j = C" << s.first << ".indInG[i]; j < C" << s.first << ".indInG[i + 1]; j++)";
+                                    {
+                                        CodeStream::Scope b(os);
+                                        os << StandardSubstitutions::initWeightUpdateVariable(varInit, wuVars[k].first + s.first + "[j]",
+                                                                                              cpuFunctions, "i", "C" + s.first + ".ind[j]",
+                                                                                              model.getPrecision(), "rng") << std::endl;
+                                    }
                                 }
-                            }
-                            else {
-                                os << "for (int i = 0; i < " << numSrcNeurons << "; i++)";
-                                {
-                                    CodeStream::Scope b(os);
+                                else {
                                     os << "for (int j = 0; j < C" << s.first << ".rowLength[i]; j++)";
                                     {
                                         CodeStream::Scope b(os);
-                                        os << StandardSubstitutions::initVariable(varInit,
-                                                                                  wuVars[k].first + s.first + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + j]",
-                                                                                  cpuFunctions, model.getPrecision(), "rng") << std::endl;
+                                        const std::string synIndex = "(i * " + std::to_string(s.second.getMaxConnections()) + ") + j";
+                                        os << StandardSubstitutions::initWeightUpdateVariable(varInit,
+                                                                                              wuVars[k].first + s.first + "[" + synIndex + "]",
+                                                                                              cpuFunctions, "i", "C" + s.first + ".ind[" + synIndex + "]", 
+                                                                                              model.getPrecision(), "rng") << std::endl;
                                     }
                                 }
                             }
@@ -1093,7 +1349,7 @@ void genInit(const NNmodel &model,      //!< Model description
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(sparseInitDeviceStart);" << std::endl;
             }
-            
+
             os << "// perform on-device sparse init" << std::endl;
             os << "dim3 iThreads(" << initSparseBlkSz << ", 1);" << std::endl;
             os << "dim3 iGrid(" << numSparseInitThreads / initSparseBlkSz << ", 1);" << std::endl;

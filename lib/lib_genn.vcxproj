@@ -62,6 +62,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClCompile Include="src\binomial.cc" />
     <ClCompile Include="src\global.cc" />
     <ClCompile Include="src\modelSpec.cc" />
     <ClCompile Include="src\neuronModels.cc" />
@@ -76,6 +77,7 @@
     <ClCompile Include="src\newNeuronModels.cc" />
     <ClCompile Include="src\newWeightUpdateModels.cc" />
     <ClCompile Include="src\newPostsynapticModels.cc" />
+    <ClCompile Include="src\initSparseConnectivitySnippet.cc" />
     <ClCompile Include="src\initVarSnippet.cc" />
     <ClCompile Include="src\currentSource.cc" />
     <ClCompile Include="src\neuronGroup.cc" />

@@ -41,13 +41,23 @@ void StandardGeneratedSections::neuronLocalVarInit(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &devPrefix,
-    const std::string &localID)
+    const std::string &localID,
+    const std::string &ttype)
 {
     for(const auto &v : nmVars.container) {
         os << v.second << " l" << v.first << " = ";
         os << devPrefix << v.first << ng.getName() << "[";
         if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
-            os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
+            os << "readDelayOffset + ";
+        }
+        os << localID << "];" << std::endl;
+    }
+    
+    // Also read spike time into local variable
+    if(ng.isSpikeTimeRequired()) {
+        os << ttype << " lsT = " << devPrefix << "sT" << ng.getName() << "[";
+        if (ng.isDelayRequired()) {
+            os << "readDelayOffset + ";
         }
         os << localID << "];" << std::endl;
     }
@@ -61,13 +71,12 @@ void StandardGeneratedSections::neuronLocalVarWrite(
     const std::string &localID)
 {
     // store the defined parts of the neuron state into the global state variables dd_V etc
-   for(const auto &v : nmVars.container) {
-        if (ng.isVarQueueRequired(v.first)) {
-            os << devPrefix << v.first << ng.getName() << "[" << ng.getQueueOffset(devPrefix) << localID << "] = l" << v.first << ";" << std::endl;
+    for(const auto &v : nmVars.container) {
+        os << devPrefix << v.first << ng.getName() << "[";
+        if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
+             os << "writeDelayOffset + ";
         }
-        else {
-            os << devPrefix << v.first << ng.getName() << "[" << localID << "] = l" << v.first << ";" << std::endl;
-        }
+        os << localID <<  "] = l" << v.first << ";" << std::endl;
     }
 }
 //----------------------------------------------------------------------------
@@ -114,7 +123,7 @@ void StandardGeneratedSections::neuronCurrentInjection(
     const NeuronGroup &ng,
     const std::string &devPrefix,
     const std::string &localID,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {

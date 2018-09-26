@@ -66,13 +66,11 @@ void createVarInitialiserFromLegacyVars(const std::vector<double> &ini, std::vec
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel()
+NNmodel::NNmodel() : m_TimePrecision(TimePrecision::DEFAULT), RNtype{"uint64_t"}, final(false)
 {
-    final= false;
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
-    RNtype= "uint64_t";
 #ifndef CPU_ONLY
     setGPUDevice(AUTODEVICE);
 #endif
@@ -116,66 +114,6 @@ unsigned int NNmodel::getNumPreSynapseResetRequiredGroups() const
                          [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
 }
 
-bool NNmodel::isDeviceInitRequired(int localHostID) const
-{
-    // If device RNG is required, device init is required to initialise it
-    if(isDeviceRNGRequired()) {
-        return true;
-    }
-
-    // If any local neuron groups require a sim RNG or device initialisation
-    // **NOTE** this includes both simulation RNG seeds and variables initialised on device
-    if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
-        [](const NNmodel::NeuronGroupValueType &n)
-        {
-            return (n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired());
-        }))
-    {
-        return true;
-    }
-
-    // If any remote neuron groups with local outputs require their spike variables to be initialised on device
-    if(std::any_of(std::begin(m_RemoteNeuronGroups), std::end(m_RemoteNeuronGroups),
-        [localHostID](const NNmodel::NeuronGroupValueType &n)
-        {
-            return (n.second.hasOutputToHost(localHostID) && (n.second.getSpikeVarMode() & VarInit::DEVICE));
-        }))
-    {
-        return true;
-    }
-
-    // Check whether any synapse groups require initialisation in this kernel
-    // **NOTE** this only includes dense matrices
-    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) &&
-                    (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                    s.second.isWUDeviceVarInitRequired());
-        }))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool NNmodel::isDeviceSparseInitRequired() const
-{
-    // If automatic initialisation of sparse variables isn't enabled, return false
-    if(!GENN_PREFERENCES::autoInitSparseVars) {
-        return false;
-    }
-
-    // Return true if any of the synapse groups have sparse connectivity which requires device initialiation
-    return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s)
-        {
-            return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE || s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) &&
-                (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
-                s.second.isWUDeviceVarInitRequired());
-        });
-}
 
 bool NNmodel::isHostRNGRequired() const
 {
@@ -257,6 +195,21 @@ bool NNmodel::canRunOnCPU() const
     return true;
 }
 
+std::string NNmodel::getTimePrecision() const
+{
+    // If time precision is set to match model precision
+    if(m_TimePrecision == TimePrecision::DEFAULT) {
+        return getPrecision();
+    }
+    // Otherwise return appropriate type
+    else if(m_TimePrecision == TimePrecision::FLOAT) {
+        return "float";
+    }
+    else {
+        return "double";
+    }
+}
+
 std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
 #ifdef MPI_ENABLE
     int localHostID = 0;
@@ -266,6 +219,53 @@ std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::st
     return path + "/" + getName() + "_CODE/" + filename;
 #endif
     }
+
+bool NNmodel::isDeviceInitRequired(int localHostID) const
+{
+    // If device RNG is required, device init is required to initialise it
+    if(isDeviceRNGRequired()) {
+        return true;
+    }
+
+    // If any local neuron groups require device initialisation, return true
+    if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
+        [](const NNmodel::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
+    {
+        return true;
+    }
+
+    // If any remote neuron groups with local outputs require their spike variables to be initialised on device
+    if(std::any_of(std::begin(m_RemoteNeuronGroups), std::end(m_RemoteNeuronGroups),
+        [localHostID](const NNmodel::NeuronGroupValueType &n)
+        {
+            return (n.second.hasOutputToHost(localHostID) && (n.second.getSpikeVarMode() & VarInit::DEVICE));
+        }))
+    {
+        return true;
+    }
+
+
+    // If any local synapse groups require device initialisation, return true
+    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NNmodel::isDeviceSparseInitRequired() const
+{
+    // If automatic initialisation of sparse variables isn't enabled, return false
+    if(!GENN_PREFERENCES::autoInitSparseVars) {
+        return false;
+    }
+
+    // Return true if any of the synapse groups require device sparse initialisation
+    return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
+        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function is for setting which host and which device a neuron group will be simulated on
@@ -715,7 +715,8 @@ SynapseGroup *NNmodel::addSynapsePopulation(
         std::forward_as_tuple(name, mtype, delaySteps,
                               new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers,
                               new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
-                              srcNeuronGrp, trgNeuronGrp));
+                              srcNeuronGrp, trgNeuronGrp,
+                              uninitialisedConnectivity()));
 
     if(!result.second)
     {
@@ -870,6 +871,14 @@ void NNmodel::setPrecision(FloatType floattype /**<  */)
     }
 }
 
+void NNmodel::setTimePrecision(TimePrecision timePrecision)
+{
+    if (final) {
+        gennError("Trying to set time precision of a finalized model.");
+    }
+
+    m_TimePrecision = timePrecision;
+}
 
 //--------------------------------------------------------------------------
 /*! \brief This function sets a flag to determine whether timers and timing commands are to be included in generated code.
@@ -1024,7 +1033,7 @@ void NNmodel::finalize()
                 n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
 
                 // analyze which neuron variables need queues
-                n.second.updateVarQueues(wu->getEventCode());
+                n.second.updatePreVarQueues(wu->getEventCode());
             }
         }
         if (n.second.getSpikeEventCondition().size() > 1) {
@@ -1057,22 +1066,53 @@ void NNmodel::finalize()
             s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
 
             // analyze which neuron variables need queues
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSimCode());
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
         }
 
         if (!wu->getLearnPostCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getLearnPostCode());
+            s.second.getTrgNeuronGroup()->setTrueSpikeRequired(true);
+
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
         }
 
         if (!wu->getSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updateVarQueues(wu->getSynapseDynamicsCode());
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
         }
 
         // Make extra global parameter lists
+        s.second.addExtraGlobalConnectivityInitialiserParams(m_InitKernelParameters);
         s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
         s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
         s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
         s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
+
+        // If this synapse group has either ragged or bitmask connectivity which is initialised
+        // using a connectivity snippet AND has individual synaptic variables
+        if(((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+            || (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+            && !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()
+            && s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
+        {
+            // Loop through variables and check that they are initialised in the same place as the sparse connectivity
+            auto wuVars = s.second.getWUModel()->getVars();
+            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
+                if((s.second.getSparseConnectivityVarMode() & VarInit::HOST) != (s.second.getWUVarMode(k) & VarInit::HOST)) {
+                    gennError("Weight update mode variables must be initialised in same place as sparse connectivity variable '" + wuVars[k].first + "' in population '" + s.first + "' is not");
+                }
+            }
+        }
+    }
+
+    // CURRENT SOURCES
+    for(auto &cs : m_LocalCurrentSources) {
+        // Initialize derived parameters
+        cs.second.initDerivedParams(dt);
+
+        // Make extra global parameter lists
+        cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
 
     // Merge incoming postsynaptic models

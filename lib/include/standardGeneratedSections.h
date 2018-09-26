@@ -27,7 +27,8 @@ void neuronLocalVarInit(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &devPrefix,
-    const std::string &localID);
+    const std::string &localID,
+    const std::string &ttype);
 
 void neuronLocalVarWrite(
     CodeStream &os,
@@ -51,7 +52,7 @@ void neuronCurrentInjection(
     const NeuronGroup &ng,
     const std::string &devPrefix,
     const std::string &localID,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
 }   // namespace StandardGeneratedSections

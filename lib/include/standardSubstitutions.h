@@ -5,6 +5,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "initSparseConnectivitySnippet.h"
 #include "newNeuronModels.h"
 
 // Forward declarations
@@ -113,7 +114,8 @@ void weightUpdateThresholdCondition(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    double dt);
 
 void weightUpdateSim(
     std::string &wCode,
@@ -125,7 +127,8 @@ void weightUpdateSim(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    double dt);
 
 void weightUpdateDynamics(
     std::string &SDcode,
@@ -137,7 +140,8 @@ void weightUpdateDynamics(
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
-    const std::string &ftype);
+    const std::string &ftype,
+    double dt);
 
 void weightUpdatePostLearn(
     std::string &code,
@@ -149,14 +153,34 @@ void weightUpdatePostLearn(
     const string &devPrefix,
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
+    double dt,
     const string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
     const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
-std::string initVariable(
+std::string initNeuronVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &idx,
+    const std::string &ftype,
+    const std::string &rng);
+
+std::string initWeightUpdateVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> &functions,
+	const std::string &preIdx,
+	const std::string &postIdx,
+    const std::string &ftype,
+    const std::string &rng);
+	
+std::string initSparseConnectivity(
+    const SynapseGroup &sg,
+    const std::string &addSynapseFunctionTemplate,
+    unsigned int numTrgNeurons,
+    const std::string &preIdx,
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
@@ -167,7 +191,7 @@ void currentSourceInjection(
     const VarNameIterCtx &scmVars,
     const DerivedParamNameIterCtx &scmDerivedParams,
     const ExtraGlobalParamNameIterCtx &scmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
 }   // StandardSubstitions
