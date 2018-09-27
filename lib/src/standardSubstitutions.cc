@@ -373,17 +373,15 @@ std::string StandardSubstitutions::initSparseConnectivity(
     // Get user code string
     std::string code = connectInit.getSnippet()->getRowBuildCode();
 
-    // Substitute presynaptic index
+    // Substitute presynaptic index and number of postsynaptic neurons
     substitute(code, "$(id_pre)", preIdx);
+    substitute(code, "$(num_post)", std::to_string(numTrgNeurons));
 
     // Replace endRow() with break to stop loop
     functionSubstitute(code, "endRow", 0, "break");
 
     // Replace addSynapse(j) with template to increment count var
     functionSubstitute(code, "addSynapse", 1, addSynapseFunctionTemplate);
-
-    // Replace isPostNeuronValid(j) for test against size of target neuron group
-    functionSubstitute(code, "isPostNeuronValid", 1, "($(0) < " + std::to_string(numTrgNeurons) + ")");
 
     // Substitue derived and standard parameters into init code
     DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
