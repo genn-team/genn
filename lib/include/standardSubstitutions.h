@@ -160,8 +160,10 @@ void weightUpdatePostLearn(
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     double dt,
-    StringWrapFunc preVarWrapFunc = StringWrapFunc(),   //!< function used to 'wrap' presynaptic variable accesses
-    StringWrapFunc postVarWrapFunc = StringWrapFunc()); //!< function used to 'wrap' postsynaptic variable accesses
+    const string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
 void weightUpdatePreSpike(
     std::string &code,

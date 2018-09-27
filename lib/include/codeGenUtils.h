@@ -1,7 +1,6 @@
 #pragma once
 
 // Standard includes
-#include <functional>
 #include <iomanip>
 #include <limits>
 #include <string>
@@ -26,11 +25,6 @@ namespace NewModels
 {
     class VarInit;
 }
-
-//--------------------------------------------------------------------------
-// Typdefines
-//--------------------------------------------------------------------------
-typedef std::function<std::string(const std::string&)> StringWrapFunc;
 
 //--------------------------------------------------------------------------
 // GenericFunction
@@ -187,21 +181,6 @@ inline void name_substitutions(string &code, const string &prefix, NameIter name
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of name substitutions for variables in code snippets.
 //--------------------------------------------------------------------------
-template<typename NameIter>
-inline void name_substitutions(string &code, const string &prefix, NameIter namesBegin, NameIter namesEnd, const string &postfix, const string &ext,
-                               StringWrapFunc varWrapFunc)
-{
-    for (NameIter n = namesBegin; n != namesEnd; n++) {
-        const std::string target = prefix + *n + postfix;
-        substitute(code,
-                   "$(" + *n + ext + ")",
-                   varWrapFunc ? varWrapFunc(target) : target);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets.
-//--------------------------------------------------------------------------
 inline void name_substitutions(string &code, const string &prefix, const vector<string> &names, const string &postfix= "", const string &ext = "")
 {
     name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
@@ -303,7 +282,8 @@ void preNeuronSubstitutionsInSynapticCode(
     const string &axonalDelayOffset,
     const string &postIdx,
     const string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
-    StringWrapFunc varWrapFunc = StringWrapFunc());
+    const string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix = "");   //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
 void postNeuronSubstitutionsInSynapticCode(
     string &wCode, //!< the code string to work on
@@ -312,7 +292,8 @@ void postNeuronSubstitutionsInSynapticCode(
     const string &backPropDelayOffset,
     const string &preIdx,
     const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
-    StringWrapFunc varWrapFunc = StringWrapFunc());
+    const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
 //-------------------------------------------------------------------------
 /*!
@@ -320,11 +301,13 @@ void postNeuronSubstitutionsInSynapticCode(
 */
 //-------------------------------------------------------------------------
 void neuron_substitutions_in_synaptic_code(
-    string &wCode,                                      //!< the code string to work on
-    const SynapseGroup *sg,                             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const string &preIdx,                               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const string &postIdx,                              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix,                            //!< device prefix, "dd_" for GPU, nothing for CPU
-    double dt,                                          //!< simulation timestep (ms)
-    StringWrapFunc preVarWrapFunc = StringWrapFunc(),   //!< function used to 'wrap' presynaptic variable accesses
-    StringWrapFunc postVarWrapFunc = StringWrapFunc()); //!< function used to 'wrap' postsynaptic variable accesses
+    string &wCode,                      //!< the code string to work on
+    const SynapseGroup *sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,            //!< device prefix, "dd_" for GPU, nothing for CPU
+    double dt,                          //!< simulation timestep (ms)
+    const string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)

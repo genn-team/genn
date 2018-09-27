@@ -2955,7 +2955,7 @@ void genMakefile(const NNmodel &model, //!< Model description
 
 #ifdef _WIN32
 #ifdef CPU_ONLY
-    string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "/LD" : "/C";
+    string cxxFlags = GENN_PREFERENCES::buildSharedLibrary ? "/LD" : "/c";
     cxxFlags += " /DCPU_ONLY";
     cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsWIN;
     if (GENN_PREFERENCES::optimizeCode) {
