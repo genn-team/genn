@@ -613,12 +613,16 @@ uint32_t hashString(const std::string &string)
 //-------------------------------------------------------------------------
 
 void neuron_substitutions_in_synaptic_code(
-    string &wCode,              //!< the code string to work on
-    const SynapseGroup *sg,     //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const string &preIdx,       //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const string &postIdx,      //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix,    //!< device prefix, "dd_" for GPU, nothing for CPU
-    double dt)                  //!< simulation timestep (ms)
+    string &wCode,                  //!< the code string to work on
+    const SynapseGroup *sg,
+     const string &preIdx,          //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx,          //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,        //!< device prefix, "dd_" for GPU, nothing for CPU
+    double dt,                      //!< simulation timestep (ms)
+    const string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix,     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
 
     // presynaptic neuron variables, parameters, and global parameters
@@ -629,15 +633,16 @@ void neuron_substitutions_in_synaptic_code(
     }
 
     const std::string axonalDelayMs = writePreciseString(dt * (double)(sg->getDelaySteps() + 1));
-    substitute(wCode, "$(sT_pre)", "(" + devPrefix+ "sT" + sg->getSrcNeuronGroup()->getName() + "[" + preOffset + preIdx + "] + " + axonalDelayMs + ")");
+    substitute(wCode, "$(sT_pre)",
+               "(" + preVarPrefix + devPrefix+ "sT" + sg->getSrcNeuronGroup()->getName() + "[" + preOffset + preIdx + "]" + preVarSuffix + " + " + axonalDelayMs + ")");
     for(const auto &v : srcNeuronModel->getVars()) {
         if (sg->getSrcNeuronGroup()->isVarQueueRequired(v.first)) {
             substitute(wCode, "$(" + v.first + "_pre)",
-                       devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preOffset + preIdx + "]");
+                       preVarPrefix + devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preOffset + preIdx + "]" + preVarSuffix);
         }
         else {
             substitute(wCode, "$(" + v.first + "_pre)",
-                       devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preIdx + "]");
+                       preVarPrefix + devPrefix + v.first + sg->getSrcNeuronGroup()->getName() + "[" + preIdx + "]" + preVarSuffix);
         }
     }
     value_substitutions(wCode, srcNeuronModel->getParamNames(), sg->getSrcNeuronGroup()->getParams(), "_pre");
@@ -652,15 +657,16 @@ void neuron_substitutions_in_synaptic_code(
     const std::string postOffset = sg->getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
     const auto *trgNeuronModel = sg->getTrgNeuronGroup()->getNeuronModel();
     const std::string backPropDelayMs = writePreciseString(dt * (double)(sg->getBackPropDelaySteps() + 1));
-    substitute(wCode, "$(sT_post)", "(" + devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + postOffset + postIdx + "] + " + backPropDelayMs + ")");
+    substitute(wCode, "$(sT_post)",
+               "(" + postVarPrefix + devPrefix + "sT" + sg->getTrgNeuronGroup()->getName() + "[" + postOffset + postIdx + "]" + postVarSuffix + " + " + backPropDelayMs + ")");
     for(const auto &v : trgNeuronModel->getVars()) {
         if (sg->getTrgNeuronGroup()->isVarQueueRequired(v.first)) {
             substitute(wCode, "$(" + v.first + "_post)",
-                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postOffset + postIdx + "]");
+                       postVarPrefix + devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postOffset + postIdx + "]" + postVarSuffix);
         }
         else {
             substitute(wCode, "$(" + v.first + "_post)",
-                       devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postIdx + "]");
+                       postVarPrefix + devPrefix + v.first + sg->getTrgNeuronGroup()->getName() + "[" + postIdx + "]" + postVarSuffix);
         }
     }
     value_substitutions(wCode, trgNeuronModel->getParamNames(), sg->getTrgNeuronGroup()->getParams(), "_post");
