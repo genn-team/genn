@@ -1043,13 +1043,16 @@ void genInit(const NNmodel &model,      //!< Model description
             const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
             // Generate code to initialise pre and postsynaptic weight update variables on host if necessary
-            genHostInitNeuronVarCode(os, wu->getPreVars(), numSrcNeurons, s.first, model.getPrecision(),
+            genHostInitNeuronVarCode(os, wu->getPreVars(), numSrcNeurons, s.second.getSrcNeuronGroup()->getNumDelaySlots(), s.first, model.getPrecision(),
                                      [&s](size_t i){ return s.second.getWUPreVarInitialisers()[i]; },
-                                     [&s](size_t i){ return s.second.getWUPreVarMode(i); });
+                                     [&s](size_t i){ return s.second.getWUPreVarMode(i); },
+                                     [&s](size_t){ return (s.second.getDelaySteps() != NO_DELAY); });
 
-            genHostInitNeuronVarCode(os, wu->getPostVars(), numTrgNeurons, s.first, model.getPrecision(),
+            genHostInitNeuronVarCode(os, wu->getPostVars(), numTrgNeurons, s.second.getTrgNeuronGroup()->getNumDelaySlots(), s.first, model.getPrecision(),
                                      [&s](size_t i){ return s.second.getWUPostVarInitialisers()[i]; },
-                                     [&s](size_t i){ return s.second.getWUPostVarMode(i); });
+                                     [&s](size_t i){ return s.second.getWUPostVarMode(i); },
+                                     [&s](size_t){ return (s.second.getBackPropDelaySteps() != NO_DELAY); });
+
             // If we should initialise this synapse group's connectivity on the
             // host and it has a connectivity initialisation snippet
             const auto &connectInit = s.second.getConnectivityInitialiser();
