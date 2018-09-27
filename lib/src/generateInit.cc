@@ -268,21 +268,15 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                 {
                     CodeStream::Scope b(os);
 
-                    // If delay is required, loop over delay bins
-                    if(n.second.isDelayRequired()) {
-                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(14);
-                    }
-
                     if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                        os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                        }
                     }
                     else {
                         os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                    }
-
-                    // If delay was required, close loop brace
-                    if(n.second.isDelayRequired()) {
-                        os << CodeStream::CB(14);
                     }
                 }
 
@@ -292,22 +286,16 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                 {
                     CodeStream::Scope b(os);
 
-                    // If delay is required, loop over delay bins
-                    if(n.second.isDelayRequired()) {
-                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(16);
-                    }
-
                     // Zero spikes
                     if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                        os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
+                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
+                        }
                     }
                     else {
                         os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
-                    }
-
-                    // If delay was required, close loop brace
-                    if(n.second.isDelayRequired()) {
-                        os << CodeStream::CB(16) << std::endl;
                     }
                 }
             }
@@ -333,15 +321,14 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                     {
                         CodeStream::Scope b(os);
 
-                        // If delay is required, loop over delay bins
-                        if(n.second.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(22);
-                        }
-
                         // Zero spike count
                         if(shouldInitSpikeVar) {
                             if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                                os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                                os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                                }
                             }
                             else {
                                 os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
@@ -351,16 +338,15 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         // Zero spike event count
                         if(shouldInitSpikeEventVar) {
                             if(n.second.isDelayRequired()) {
-                                os << "dd_glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
+                                os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                                {
+                                    CodeStream::Scope b(os);
+                                    os << "dd_glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
+                                }
                             }
                             else {
                                 os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
                             }
-                        }
-
-                        // If delay was required, close loop brace
-                        if(n.second.isDelayRequired()) {
-                            os << CodeStream::CB(22);
                         }
                     }
                 }
@@ -382,49 +368,43 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
                     }
 
-                    // If spike variables are initialised on device
-                    if(shouldInitSpikeVar || shouldInitSpikeEventVar || shouldInitSpikeTimeVar) {
+                    // If delay is required and spike vars, spike event vars or spike times should be initialised on device
+                    if(n.second.isDelayRequired() &&
+                        ((shouldInitSpikeVar && n.second.isTrueSpikeRequired()) || shouldInitSpikeEventVar || shouldInitSpikeTimeVar))
+                    {
                         // Build string to use for delayed variable index
                         const std::string delayedIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
 
-                        // If delay is required, loop over delay bins
-                        if(n.second.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)" << CodeStream::OB(31);
-                        }
+                        // Loop through delay slots
+                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
 
-                        // Zero spikes
-                        if(shouldInitSpikeVar) {
-                            if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                            if(shouldInitSpikeVar && n.second.isTrueSpikeRequired()) {
                                 os << "dd_glbSpk" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
                             }
-                            else {
-                                os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
-                            }
-                        }
 
-                        // Zero spike events
-                        if(shouldInitSpikeEventVar) {
-                            if(n.second.isDelayRequired()) {
+                            if(shouldInitSpikeEventVar) {
                                 os << "dd_glbSpkEvnt" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
                             }
-                            else {
-                                os << "dd_glbSpkCnt" << n.first << "[lid] = 0;" << std::endl;
-                            }
-                        }
 
-                        // Reset spike times
-                        if(shouldInitSpikeTimeVar) {
-                            if(n.second.isDelayRequired()) {
+                            if(shouldInitSpikeTimeVar) {
                                 os << "dd_sT" << n.first << "[" << delayedIndex << "] = -TIME_MAX;" << std::endl;
                             }
-                            else {
-                                os << "dd_sT" << n.first << "[lid] = -TIME_MAX;" << std::endl;
-                            }
+                        }
+                    }
+
+                    if(shouldInitSpikeVar && !(n.second.isTrueSpikeRequired() && n.second.isDelayRequired())) {
+                        os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
+                    }
+
+                    if(!n.second.isDelayRequired()) {
+                        if(shouldInitSpikeEventVar) {
+                            os << "dd_glbSpkEvnt" << n.first << "[lid] = 0;" << std::endl;
                         }
 
-                        // If delay was required, close loop brace
-                        if(n.second.isDelayRequired()) {
-                            os << CodeStream::CB(31) << std::endl;
+                        if(shouldInitSpikeTimeVar) {
+                            os << "dd_sT" << n.first << "[lid] = -TIME_MAX;" << std::endl;
                         }
                     }
 
