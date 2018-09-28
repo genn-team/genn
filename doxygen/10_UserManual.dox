@@ -307,15 +307,14 @@ Typically, spikes lead to update of synaptic variables that then lead to the act
 For example
 \code
 SET_SIM_CODE(
-    "\$(addtoinsyn) = $(inc);\n"
-    "\$(updatelinsyn)");
+    "$(addToInSyn, $(inc));\n"
 \endcode
 where "inc" is a parameter of the weight update model that defines a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. Once \$(addtoinsyn) has been assigned, the \$(updatelinsyn) keyword should be used to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
 To apply input to the post-synaptic neuron with a dendritic (i.e. between the synapse and the postsynaptic neuron) delay you can instead use the \$(addToDenDelay, weight, delay) function.
 For example
 \code
 SET_SIM_CODE(
-    "\$(addToDenDelay, $(inc), $(delay));");
+    "$(addToInSynDelay, $(inc), $(delay));");
 \endcode
 where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
 
