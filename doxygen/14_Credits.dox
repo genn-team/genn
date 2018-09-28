@@ -4,6 +4,8 @@
  
 GeNN was created by Thomas Nowotny. 
 
+GeNN is currently maintained and developed by James Knight.
+
 Izhikevich model and sparse connectivity by Esin Yavuz.
 
 Block size optimisations, delayed synapses and page-locked memory by James Turner.
@@ -14,6 +16,9 @@ User-defined synaptic and postsynaptic methods by Alex Cope and Esin Yavuz.
 
 Example projects were provided by Alan Diamond, James Turner, Esin Yavuz and Thomas Nowotny.
 
+MPI support was largely developed by Mengchi Zhang.
+
+Current sources were implemented by Anton Komissarov.
 <br />
 
 
