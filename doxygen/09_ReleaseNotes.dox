@@ -1,5 +1,45 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v3.2.0
+====
+This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for a more sophisticated synaptic delay model and includes several other small features, optimisations and bug fixes for certain system configurations.
+
+User Side Changes
+----
+1. Sparse synaptic connectivity can now be initialised using small _snippets_ of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models. See \ref sectSparseConnectivityInitialisation for more details.
+2. New 'ragged matrix' data structure for representing sparse synaptic connections -- supports initialisation using new sparse synaptic connecivity initialisation system and enables future optimisations. See \ref subsect34 for more details.
+3. Added support for devices with Compute Capability 7.0 (Volta) to block-size optimizer.
+4. Added support for a new class of 'current source' model which allows non-synaptic input to be efficiently injected into neurons. See \ref sectCurrentSourceModels for more details.
+5. Added support for heterogeneous dendritic delays. See \ref sect34 for more details.
+6. Added support for (homogeneous) synaptic back propagation delays using `SynapseGroup::setBackPropDelaySteps`.
+7. For long simulations, using single precision to represent simulation time does not work well. Added `NNmodel::setTimePrecision` to allow data type used to represent time to be set independently.
+
+Optimisations
+----
+1. `GENN_PREFERENCES::mergePostsynapticModels` flag can be used to enable the merging together of postsynaptic models from a neuron population's incoming synapse populations - improves performance and saves memory.
+2. On devices with compute capability > 3.5 GeNN now uses the read only cache to improve performance of postsynaptic learning kernel.
+
+Bug fixes:
+----
+1. Fixed bug enabling support for CUDA 9.1 and 9.2 on Windows.
+2. Fixed bug in SynDelay example where membrane voltage went to NaN.
+3. Fixed bug in code generation of `SCALAR_MIN` and `SCALAR_MAX` values.
+4. Fixed bug in substitution of trancendental functions with single-precision variants.
+5. Fixed various issues involving using spike times with delayed synapse projections.
+
+Release Notes for GeNN v3.1.1
+====
+This release fixes several small bugs found in GeNN 3.1.0 and implements some small features:
+
+User Side Changes
+----
+1. Added new synapse matrix types `SPARSE_GLOBALG_INDIVIDUAL_PSM`, `DENSE_GLOBALG_INDIVIDUAL_PSM` and `BITMASK_GLOBALG_INDIVIDUAL_PSM` to handle case where synapses with no individual state have a postsynaptic model with state variables e.g. an alpha synapse. See \ref subsect34 for more details.
+
+Bug fixes
+----
+1. Correctly handle aliases which refer to other aliases in SpineML models.
+2. Fixed issues with presynaptically parallelised synapse populations where the postsynaptic population is small enough for input to be accumulated in shared memory.
+
 Release Notes for GeNN v3.1.0
 ====
 This release builds on the changes made in 3.0.0 to further streamline the process of building models with GeNN and includes several bug fixes for certain system configurations.
