@@ -24,8 +24,9 @@
 - \subpage sectDefiningNetwork
 - \subpage sectNeuronModels
 - \subpage sectSynapseModels
-- \subpage subsect34
 - \subpage sect_postsyn
+- \subpage sectCurrentSourceModels
+- \subpage subsect34
 - \subpage sectVariableInitialisation
 
 \section sIntro Introduction
@@ -276,8 +277,8 @@ Many neuron models have probabilistic terms, for example a source of noise or a 
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
 \code
 networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1, 
-                                                  LeakyIntegrator::ParamValues(20.0 /*tau*/),
-                                                  LeakyIntegrator::VarValues(0.0/*V*/));
+                                                  LeakyIntegrator::ParamValues(20.0), // tau
+                                                  LeakyIntegrator::VarValues(0.0)); // V
 \endcode
 
 \link sectDefiningNetwork Previous\endlink | \link UserManual Top\endlink | \link sectSynapseModels Next\endlink
@@ -337,6 +338,72 @@ SET_NEEDS_POST_SPIKE_TIME(true);
 
 All code snippets can be used to manipulate any synapse variable and so implement both synaptic dynamics and learning processes.
 
+\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
+*/
+
+//----------------------------------------------------------------------------
+/*! 
+
+\page sect_postsyn Postsynaptic integration methods
+
+There are currently 2 built-in postsynaptic integration methods:
+- PostsynapticModels::ExpCond
+- PostsynapticModels::DeltaCurr
+
+\section sect_new_postsynaptic Defining a new postsynaptic model
+The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
+
+In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:
+- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- SET_DECAY_CODE(DECAY_CODE) defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
+- SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
+\code
+SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
+\endcode
+where \$(E) is a postsynaptic model parameter specifying reversal potential and \$(V) is the variable containing the postsynaptic neuron's membrane potential.
+As discussed in \ref predefinedVars, \$(Isyn) is the built in variable used to sum neuron input.
+However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
+
+-----
+\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectCurrentSourceModels Next\endlink
+*/
+
+//----------------------------------------------------------------------------
+/*! 
+\page sectCurrentSourceModels Current source models
+There is a number of predefined models which can be used with the NNmodel::addCurrentSource function:
+- CurrentSourceModels::DC
+- CurrentSourceModels::GaussianNoise
+
+\section sect_own_current_source Defining your own current source model 
+
+In order to define a new current source type for use in a GeNN application,
+it is necessary to define a new class derived from CurrentSourceModels::Base. 
+For convenience the methods this class should implement can be implemented using macros:
+
+- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- SET_INJECTION_CODE(INJECTION_CODE): where INJECTION_CODE contains the code for injecting current into the neuron every simulation timestep.
+  The \$(injectCurrent, $(amp)) function is used to inject current.
+
+For example, using these macros, we can define a uniformly distributed noisy current source:
+
+\code
+class UniformNoise : public CurrentSourceModels::Base
+{
+public:
+    DECLARE_MODEL(UniformNoise, 1, 0);
+    
+    SET_SIM_CODE("$(injectCurrent, $(gennrand_uniform) * $(magnitude));");
+    
+    SET_PARAM_NAMES({"magnitude"});
+};
+\endcode
+-----
+\link sect_postsyn Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
+*/
+
+//----------------------------------------------------------------------------
+/*! 
 \page subsect34 Synaptic matrix types
 
 Synaptic matrix types are made up of two components: SynapseMatrixConnectivity and SynapseMatrixWeight.
@@ -394,29 +461,11 @@ Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight a
 - SynapseMatrixType::BITMASK_GLOBALG
 - SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM
 
-\page sect_postsyn Postsynaptic integration methods
-
-There are currently 2 built-in postsynaptic integration methods:
-- PostsynapticModels::ExpCond
-- PostsynapticModels::DeltaCurr
-
-\section sect_new_postsynaptic Defining a new postsynaptic model
-The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
-
-In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
-- SET_DECAY_CODE(DECAY_CODE) defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
-- SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
-\code
-SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
-\endcode
-where \$(E) is a postsynaptic model parameter specifying reversal potential and \$(V) is the variable containing the postsynaptic neuron's membrane potential.
-As discussed in \ref predefinedVars, \$(Isyn) is the built in variable used to sum neuron input.
-However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
-
 -----
-\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
-
+\link sectCurrentSourceModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
+*/
+//----------------------------------------------------------------------------
+/*! 
 \page sectVariableInitialisation Variable initialisation
 
 Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
@@ -505,6 +554,6 @@ These modes can be set as a global default using ``GENN_PREFERENCES::defaultVarM
 - SynapseGroup::setInSynVarMode
 
 -----
-\link sect_new_postsynaptic Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
 */
 
