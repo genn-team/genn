@@ -28,6 +28,7 @@
 - \subpage sectCurrentSourceModels
 - \subpage subsect34
 - \subpage sectVariableInitialisation
+- \subpage sectSparseConnectivityInitialisation
 
 \section sIntro Introduction
 
@@ -107,7 +108,7 @@ predefined models and their parameters and initial values are detailed
 
 Synapse populations are added with the function
 \code{.cc}
-model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues);
+model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues, connectivityInitialiser);
 \endcode
 where the arguments are
 \arg `WeightUpdateModel`:   Template parameter specifying the type of weight update model.
@@ -134,9 +135,13 @@ where the arguments are
                                                                 postsynaptic neurons) for the postsynaptic model. 
 \arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
                                                             postsynaptic model's state variables
+\arg `InitSparseConnectivitySnippet::Init connectivityInitialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
 The NNmodel::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
 - SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::RAGGED and SynapseMatrixConnectivity::YALE connectivity (see \ref subsect34).
+\note
+When using a sparse connectivity initialisation snippet, these values are set automatically.
+
 - SynapseGroup::setMaxDendriticDelayTimesteps() sets the maximum dendritic delay (in terms of the simulation
      time step `DT`) allowed for synapses in this population. No values larger than this should be passed to the delay parameter of the `addToDenDelay` function in user code (see \ref sect34).
 - SynapseGroup::setSpanType() sets how incoming spike processing is parallelised for this synapse group. The default SynapseGroup::SpanType::POSTSYNAPTIC is nearly always the best option, but SynapseGroup::SpanType::PRESYNAPTIC may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.
@@ -531,6 +536,8 @@ public:
 };
 IMPLEMENT_SNIPPET(NormalPositive);
 \endcode
+Within the snippet of code specified using the `SET_CODE()` macro, when initialisising neuron and postaynaptic model state variables , the \$(id) variable can be used to access the id of the neuron being initialised.
+Similarly, when initialising weight update model state variables, the \$(id_pre) and \$(id_post) variables can used to access the ids of the pre and postsynaptic neurons connected by the synapse being initialised.
 
 \section sect_var_init_modes Variable initialisation modes
 Once you have defined <b>how</b> your variables are going to be initialised you need to configure <b>where</b> they will be initialised and allocated. 
@@ -556,6 +563,60 @@ These modes can be set as a global default using ``GENN_PREFERENCES::defaultVarM
 - SynapseGroup::setInSynVarMode
 
 -----
-\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectSparseConnectivityInitialisation Next\endlink
 */
+//----------------------------------------------------------------------------
+/*! 
+\page sectSparseConnectivityInitialisation Sparse connectivity initialisation
 
+Sparse synaptic connectivity implemented using SynapseMatrixConnectivity::RAGGED and SynapseMatrixConnectivity::BITMASK can be automatically initialised. 
+
+This can be done using one of a number of predefined _sparse connectivity initialisation snippets_:
+- InitSparseConnectivitySnippet::OneToOne
+- InitSparseConnectivitySnippet::FixedProbability
+- InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
+
+For example, to initialise synaptic connectivity with a 10% connection probability (allowing connections between neurons with the same id):
+\code
+InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProb(0.1);
+    
+model.addSynapsePopulation<...>(
+        ...
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
+\endcode
+
+\section sect_new_sparse_connect Defining a new sparse connectivity snippet
+Similarly to variable initialisation snippets, sparse connectivity initialisation snippets can be created by simply defining a class in the model description.
+
+For example, the following sparse connectivity initialisation snippet could be used to initialise a 'ring' of connectivity where each neuron is connected to a number of subsequent neurons specified using the ``numNeighbours`` parameter:
+\code
+class Ring : public InitSparseConnectivitySnippet::Base
+{
+public:
+    DECLARE_SNIPPET(Ring, 1);
+
+    SET_ROW_BUILD_STATE_VARS({{"offset", {"unsigned int", 1}}}});
+    SET_ROW_BUILD_CODE(
+        "const unsigned int target = ($(id_pre) + offset) % $(num_post);\n"
+        "$(addSynapse, target);\n"
+        "offset++;\n"
+        "if(offset > (unsigned int)$(numNeighbours)) {\n"
+        "   $(endRow);\n"
+        "}\n");
+
+    SET_PARAM_NAMES({"numNeighbours"});
+};
+IMPLEMENT_SNIPPET(Ring);
+\endcode
+Each <i>row</i> of sparse connectivity is initialised independantly by running the snippet of code specified using the `SET_ROW_BUILD_CODE()` macro within a loop.
+The \$(num_post) variable can be used to access the number of neurons in the postsynaptic population and the \$(id_pre) variable can be used to access the index of the presynaptic neuron associated with the row being generated.
+The `SET_ROW_BUILD_STATE_VARS()` macro can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row.
+Synapses are added to the row using the \$(addSynapse, target) function and iteration is stopped using the \$(endRow) function.
+
+\section sect_sparse_connect_init_modes Sparse connectivity initialisation modes
+Once you have defined <b>how</b> sparse connectivity is going to be initialised, you need to configure <b>where</b> it will be initialised and allocated. 
+This is controlled using the same ``VarMode`` options described in section \ref sect_var_init_modes and can either be set using the global default specifiued with ``GENN_PREFERENCES::defaultSparseConnectivityMode`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityVarMode``.
+
+-----
+\link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+*/
