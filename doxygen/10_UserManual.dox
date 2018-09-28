@@ -317,7 +317,9 @@ For example
 SET_SIM_CODE(
     "$(addToInSynDelay, $(inc), $(delay));");
 \endcode
-where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. When using dendritic delays, the <b>maximum</b> dendritic delay for a synapse populations must be specified using the `SynapseGroup::setMaxDendriticDelayTimesteps()` function.
+where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
+\note
+When using dendritic delays, the <b>maximum</b> dendritic delay for a synapse populations must be specified using the `SynapseGroup::setMaxDendriticDelayTimesteps()` function.
 
 - SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
 \code
