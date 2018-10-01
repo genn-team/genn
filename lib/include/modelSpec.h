@@ -90,10 +90,16 @@ enum class TimePrecision
 #define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
 
 // Wrappers to save typing when declaring VarInitialisers structures
-template<typename Snippet>
-inline NewModels::VarInit initVar(const typename Snippet::ParamValues &params)
+template<typename S>
+inline NewModels::VarInit initVar(const typename S::ParamValues &params)
 {
-    return NewModels::VarInit(Snippet::getInstance(), params.getValues());
+    return NewModels::VarInit(S::getInstance(), params.getValues());
+}
+
+template<typename S>
+inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::ValueBase<0>>::value, NewModels::VarInit>::type initVar()
+{
+   return NewModels::VarInit(S::getInstance(), {});
 }
 
 inline NewModels::VarInit uninitialisedVar()
@@ -101,10 +107,16 @@ inline NewModels::VarInit uninitialisedVar()
     return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
 }
 
-template<typename Snippet>
-inline InitSparseConnectivitySnippet::Init initConnectivity(const typename Snippet::ParamValues &params)
+template<typename S>
+inline InitSparseConnectivitySnippet::Init initConnectivity(const typename S::ParamValues &params)
 {
-    return InitSparseConnectivitySnippet::Init(Snippet::getInstance(), params.getValues());
+    return InitSparseConnectivitySnippet::Init(S::getInstance(), params.getValues());
+}
+
+template<typename S>
+inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::ValueBase<0>>::value, InitSparseConnectivitySnippet::Init>::type initConnectivity()
+{
+    return InitSparseConnectivitySnippet::Init(S::getInstance(), {});
 }
 
 inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
