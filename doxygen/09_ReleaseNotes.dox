@@ -2,7 +2,7 @@
 
 Release Notes for GeNN v3.2.0
 ====
-This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for a more sophisticated synaptic delay model and includes several other small features, optimisations and bug fixes for certain system configurations.
+This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for a more sophisticated synaptic delay model and includes several other small features, optimisations and bug fixes for certain system configurations. This release supports GCC >= 4.9.1 on Linux, Visual Studio >= 2013 on Windows and recent versions of Clang on Mac OS X.
 
 User Side Changes
 ----
