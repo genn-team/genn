@@ -108,7 +108,9 @@ predefined models and their parameters and initial values are detailed
 
 Synapse populations are added with the function
 \code{.cc}
-model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues, connectivityInitialiser);
+model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, 
+                                                                 weightParamValues, weightVarValues, weightPreVarInitialisers, weightPostVarInitialisers,
+                                                                 postsynapticParamValues, postsynapticVarValues, connectivityInitialiser);
 \endcode
 where the arguments are
 \arg `WeightUpdateModel`:   Template parameter specifying the type of weight update model.
@@ -131,6 +133,10 @@ where the arguments are
                                                             the population) for the weight update model. 
 \arg `WeightUpdateModel::VarValues weightVarInitialisers`:    Initial values or initialisation snippets for the weight
                                                         update model's state variables
+\arg `WeightUpdateModel::PreVarValues weightPreVarInitialisers`:    Initial values or initialisation snippets for the weight
+                                                        update model's presynaptic state variables
+\arg `WeightUpdateModel::PostVarValues weightPostVarInitialisers`:    Initial values or initialisation snippets for the weight
+                                                        update model's postsynaptic state variables
 \arg `PostsynapticModel::ParamValues postsynapticParamValues`:  The parameter values (common to all 
                                                                 postsynaptic neurons) for the postsynaptic model. 
 \arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
@@ -181,19 +187,19 @@ For convenience the methods this class should implement can be implemented using
   specialisations of NewModels::ValueBase used to wrap the neuron model parameters and values.
 - SET_SIM_CODE(SIM_CODE): where SIM_CODE contains the code for executing 
   the integration of the model for one time stepWithin this code string, variables need to be
-  referred to by $(NAME), where NAME is the name of the variable as
+  referred to by \$(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
   primitives `DT` for the
   time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id).
 - SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) defines the condition for true spike detection.
 - SET_PARAM_NAMES() defines the names of the model parameters. 
-    If defined as `NAME` here, they can then be referenced as `$(NAME)` in the code string. 
+    If defined as `NAME` here, they can then be referenced as \$(NAME) in the code string. 
     The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. 
     Parameters are assumed to be always of type double.
 - SET_VARS() defines the names and type strings (e.g. "float", "double", etc) 
     of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model with NNmodel::setPrecision.
     The variables defined here as `NAME` can then be used in the
-    syntax `$(NAME)` in the code string. 
+    syntax \$(NAME) in the code string. 
 
 For example, using these macros, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
 
@@ -306,8 +312,10 @@ For more details about these built-in synapse models, see \cite Nowotny2010.
 Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class.
 Weight update models should all be derived from WeightUpdateModel::Base and, for convenience, the methods a new weight update model should implement can be implemented using macros:
 
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() and SET_EXTRA_GLOBAL_PARAMS() perform the same roles as they do in the neuron
+- SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() and SET_EXTRA_GLOBAL_PARAMS() perform the same roles as they do in the neuron
   models discussed in \ref sect_own.
+- DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a weight update model with pre and postsynaptic as well as per-synapse state variables.
+- SET_PRE_VARS() and SET_POST_VARS() define state variables associated with pre or postsynaptic neurons rather than synapses. These are typically used to efficiently implement <i>trace</i> variables for use in STDP learning rules \cite Morrison2008. Like other state variables, variables defined here as `NAME` can be accessed in weight update model code strings using the \$(NAME) syntax. 
 - SET_SIM_CODE(SIM_CODE): defines the simulation code that is used when a true spike is detected. The update is performed only in timesteps after a neuron in the presynaptic population has fulfilled its threshold detection condition.
 Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be applied using the the \$(addToInSyn, weight) function. 
 For example
@@ -337,13 +345,14 @@ Whenever this expression evaluates to true, the event code set using the SET_EVE
 - SET_LEARN_POST_CODE(LEARN_POST_CODE) defines the code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is typically used in STDP-like models e.g. WeightUpdateModels::PiecewiseSTDP.
 
 - SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
+- SET_PRE_SPIKE_CODE() and SET_POST_SPIKE_CODE() define code that is called whenever there is a pre or postsynaptic spike. Typically these code strings are used to update any pre or postsynaptic state variables.
 - SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) and SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) define whether the weight update needs to know the times of the spikes emitted from the pre and postsynaptic populations. For example an STDP rule would be likely to require:
 \code
 SET_NEEDS_PRE_SPIKE_TIME(true);
 SET_NEEDS_POST_SPIKE_TIME(true);
 \endcode
 
-All code snippets can be used to manipulate any synapse variable and so implement both synaptic dynamics and learning processes.
+All code snippets, aside from those defined with ``SET_PRE_SPIKE_CODE()`` and ``SET_POST_SPIKE_CODE()``, can be used to manipulate any synapse variable and so learning rules can combine both time-drive and event-driven processes.
 
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
 */

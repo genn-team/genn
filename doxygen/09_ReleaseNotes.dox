@@ -2,17 +2,18 @@
 
 Release Notes for GeNN v3.2.0
 ====
-This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for a more sophisticated synaptic delay model and includes several other small features, optimisations and bug fixes for certain system configurations. This release supports GCC >= 4.9.1 on Linux, Visual Studio >= 2013 on Windows and recent versions of Clang on Mac OS X.
+This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for networks with more sophisticated models of synaptic plasticity and delay as well as including several other small features, optimisations and bug fixes for certain system configurations. This release supports GCC >= 4.9.1 on Linux, Visual Studio >= 2013 on Windows and recent versions of Clang on Mac OS X.
 
 User Side Changes
 ----
 1. Sparse synaptic connectivity can now be initialised using small _snippets_ of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models. See \ref sectSparseConnectivityInitialisation for more details.
 2. New 'ragged matrix' data structure for representing sparse synaptic connections -- supports initialisation using new sparse synaptic connecivity initialisation system and enables future optimisations. See \ref subsect34 for more details.
-3. Added support for devices with Compute Capability 7.0 (Volta) to block-size optimizer.
-4. Added support for a new class of 'current source' model which allows non-synaptic input to be efficiently injected into neurons. See \ref sectCurrentSourceModels for more details.
-5. Added support for heterogeneous dendritic delays. See \ref sect34 for more details.
-6. Added support for (homogeneous) synaptic back propagation delays using `SynapseGroup::setBackPropDelaySteps`.
-7. For long simulations, using single precision to represent simulation time does not work well. Added `NNmodel::setTimePrecision` to allow data type used to represent time to be set independently.
+3. Added support for pre and postsynaptic state variables for weight update models to allow more efficient implementatation of trace based STDP rules. See \ref sect34 for more details.
+4. Added support for devices with Compute Capability 7.0 (Volta) to block-size optimizer.
+5. Added support for a new class of 'current source' model which allows non-synaptic input to be efficiently injected into neurons. See \ref sectCurrentSourceModels for more details.
+6. Added support for heterogeneous dendritic delays. See \ref sect34 for more details.
+7. Added support for (homogeneous) synaptic back propagation delays using `SynapseGroup::setBackPropDelaySteps`.
+8. For long simulations, using single precision to represent simulation time does not work well. Added `NNmodel::setTimePrecision` to allow data type used to represent time to be set independently.
 
 Optimisations
 ----
