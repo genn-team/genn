@@ -14,9 +14,9 @@
 %module(directors="1") NewModels // for inheritance in python
 %{
 #include "newModels.h"
-#include "../swig/customParamValues.h"
-#include "../swig/customVarValues.h"
-#include "../swig/initVarSnippetCustom.h"
+#include "include/customParamValues.h"
+#include "include/customVarValues.h"
+#include "include/initVarSnippetCustom.h"
 %}
 %ignore LegacyWrapper;
 
@@ -30,9 +30,9 @@
 %include "include/newModels.h"
 
 %nodefaultctor CustomValues::VarValues;
-%include "customVarValues.h"
+%include "include/customVarValues.h"
 %nodefaultctor CustomValues::ParamValues;
-%include "customParamValues.h"
+%include "include/customParamValues.h"
 
 %template(CustomVarValues) CustomValues::VarValues::VarValues<double>;
 %template(CustomVarValues) CustomValues::VarValues::VarValues<NewModels::VarInit>;
