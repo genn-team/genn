@@ -47,7 +47,7 @@ from six import iteritems
 # pygenn imports
 import pygenn as pg
 import SharedLibraryModel as slm
-from GeNNGroups import NeuronGroup, SynapseGroup, CurrentSource
+from genn_groups import NeuronGroup, SynapseGroup, CurrentSource
 
 class GeNNModel( object ):
 
