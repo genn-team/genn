@@ -30,8 +30,8 @@ ifdef COVERAGE
     LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_COVERAGE
 endif
 
-ifdef PYGENN
-    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_PYGENN
+ifdef RELOCATABLE
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_RELOCATABLE
 endif
 
 # Source, Include, Object and Library directories
@@ -81,7 +81,7 @@ ifdef COVERAGE
     CXXFLAGS             +=-O0 --coverage
 endif
 
-ifdef PYGENN
+ifdef RELOCATABLE
     CXXFLAGS             +=-fPIC
 endif
 

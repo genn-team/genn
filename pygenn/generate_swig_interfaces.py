@@ -35,8 +35,6 @@ Attrbutes:
     INITVARSNIPPET -- common name of InitVarSnippet header and interface files without extention
     NNMODEL -- common name of NNmodel header and interface files without extention
     MAIN_MODULE -- name of the main SWIG module
-    INDIR -- include directory of GeNN
-    SWIGDIR = SWIG directory
 """
 import os  # to work with paths nicely
 from string import Template # for better text substitutions
@@ -50,8 +48,6 @@ CURRSOURCEMODELS = 'currentSourceModels'
 INITVARSNIPPET = 'initVarSnippet'
 NNMODEL = 'modelSpec'
 MAIN_MODULE = 'pygenn'
-INDIR = 'include'
-SWIGDIR = 'swig'
 
 # Scope classes should be used with 'with' statement. They write code in the
 # beginning and in the end of the with-block.
@@ -262,10 +258,10 @@ def generateBuiltInGetter( models ):
 ''').substitute( MODELS='", "'.join( models ) )
 
 
-def generateSharedLibraryModelInterface( gennPath ):
+def generateSharedLibraryModelInterface( swigPath ):
     '''Generates SharedLibraryModel.i file'''
     with SwigModuleGenerator('SharedLibraryModel',
-            os.path.join( gennPath, SWIGDIR, 'SharedLibraryModel.i' ) ) as mg:
+            os.path.join( swigPath, 'SharedLibraryModel.i' ) ) as mg:
         mg.addAutoGenWarning()
         mg.addSwigModuleHeadline()
         with SwigAsIsScope( mg ):
@@ -308,11 +304,11 @@ def generateSharedLibraryModelInterface( gennPath ):
                 'SharedLibraryModel_' + dtShort )
 
 
-def generateStlContainersInterface( gennPath ):
+def generateStlContainersInterface( swigPath ):
     '''Generates StlContainers interface which wraps std::string, std::pair,
        std::vector, std::function and creates template specializations for pairs and vectors'''
     with SwigModuleGenerator( 'StlContainers',
-            os.path.join( gennPath, SWIGDIR, 'StlContainers.i' ) ) as mg:
+            os.path.join( swigPath, 'StlContainers.i' ) ) as mg:
         mg.addAutoGenWarning()
         mg.addSwigModuleHeadline()
         with SwigAsIsScope( mg ):
@@ -372,7 +368,7 @@ def generateStlContainersInterface( gennPath ):
             mg.addSwigTemplate( 'std::vector<{}>'.format(npDType), camelDT )
 
 
-def generateCustomModelDeclImpls( gennPath ):
+def generateCustomModelDeclImpls( swigPath ):
     '''Generates headers/sources with *::Custom classes'''
     models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET]
     for model in models:
@@ -382,7 +378,7 @@ def generateCustomModelDeclImpls( gennPath ):
         else:
             nSpace = nSpace[0].upper() + nSpace[1:]
         with SwigModuleGenerator( 'decl',
-                os.path.join( gennPath, SWIGDIR, model + 'Custom.h' ) ) as mg:
+                os.path.join( swigPath, model + 'Custom.h' ) ) as mg:
             mg.addAutoGenWarning()
             mg.write( '#pragma once\n' )
             mg.addCppInclude( '"' + model + '.h"' )
@@ -391,7 +387,7 @@ def generateCustomModelDeclImpls( gennPath ):
                 mg.addCppInclude( '"customVarValues.h"' )
             mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET))
         with SwigModuleGenerator( 'impl',
-                os.path.join( gennPath, SWIGDIR, model + 'Custom.cc' ) ) as mg:
+                os.path.join( swigPath, model + 'Custom.cc' ) ) as mg:
             mg.addAutoGenWarning()
             mg.addCppInclude( '"' + model + 'Custom.h"' )
             if model != INITVARSNIPPET:
@@ -401,12 +397,15 @@ def generateCustomModelDeclImpls( gennPath ):
 
 
 def generateConfigs( gennPath ):
+    swigPath = os.path.join( gennPath, 'pygenn', 'generated' )
+    includePath = os.path.join( gennPath, 'lib', 'include' )
+    
     '''Generates SWIG interfaces'''
-    generateStlContainersInterface( gennPath )
-    generateCustomModelDeclImpls( gennPath )
-    generateSharedLibraryModelInterface( gennPath )
-    includePath = os.path.join( gennPath, INDIR )
-    swigPath = os.path.join( gennPath, SWIGDIR )
+    generateStlContainersInterface( swigPath )
+    generateCustomModelDeclImpls( swigPath )
+    generateSharedLibraryModelInterface( swigPath )
+    
+    
 
 
     # open header files with models and instantiate SwigModuleGenerators
@@ -447,7 +446,7 @@ def generateConfigs( gennPath ):
                            WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET):
                 pygennSmg.addCppInclude( '"' + header + 'Custom.h"' )
 
-        pygennSmg.addSwigImport( '"swig/StlContainers.i"' )
+        pygennSmg.addSwigImport( '"StlContainers.i"' )
 
         # do initialization when module is loaded
         with SwigInitScope( pygennSmg ):
@@ -505,22 +504,22 @@ def generateConfigs( gennPath ):
         for mg, header in zip(mgs, (neuronModels_h, postsynModels_h,
                                    wUpdateModels_h, currSrcModels_h, initVarSnippet_h)):
             _, headerFilename = os.path.split( header.name )
-            pygennSmg.addSwigImport( '"swig/' + mg.name + '.i"' )
+            pygennSmg.addSwigImport( '"' + mg.name + '.i"' )
             mg.addAutoGenWarning()
             mg.addSwigModuleHeadline( directors = True )
             with SwigAsIsScope( mg ):
                 mg.addCppInclude( '"' + headerFilename + '"' )
                 mg.addCppInclude( '"' + headerFilename.split('.')[0] + 'Custom.h"' )
-                mg.addCppInclude( '"../swig/customParamValues.h"' )
+                mg.addCppInclude( '"customParamValues.h"' )
                 if mg.name != 'InitVarSnippet':
                     mg.addCppInclude( '"initVarSnippetCustom.h"' )
-                    mg.addCppInclude( '"../swig/customVarValues.h"' )
+                    mg.addCppInclude( '"customVarValues.h"' )
 
             if mg.name == 'InitVarSnippet':
                 mg.addSwigImport( '"Snippet.i"' )
             else:
                 mg.addSwigIgnore( 'LegacyWrapper' )
-                mg.addSwigImport( '"NewModels.i"' )
+                mg.addSwigImport( '"swig/NewModels.i"' )
             mg.addSwigFeatureDirector( mg.name + '::Base' )
             mg.addSwigInclude( '"include/' + headerFilename + '"' )
             mg.addSwigFeatureDirector( mg.name + '::Custom' )
@@ -531,7 +530,7 @@ def generateConfigs( gennPath ):
             # parse models files and collect models declared there
             for line in header.readlines():
                 line = line.lstrip()
-                if line.startswith( 'DECLARE_' ):
+                if line.startswith( 'DECLARE_' ) and line.endswith(';'):
                     if mg.name == 'InitVarSnippet':
                         nspace_model_name, num_params = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     else:
@@ -617,29 +616,29 @@ def generateConfigs( gennPath ):
 if __name__ == '__main__':
 
     parser = ArgumentParser( description='Generate SWIG interfaces' )
-    parser.add_argument(
-            'genn_path', metavar='DIR', type=str, help='Path to GeNN')
+    parser.add_argument('genn_path', type=str, help='Path to GeNN')
 
     gennPath = parser.parse_args().genn_path
-
+    includePath = os.path.join( gennPath, 'lib', 'include' )
+    
     # check that all required files can be found
-    if not os.path.isfile( os.path.join( gennPath, INDIR, NEURONMODELS + '.h' ) ):
+    if not os.path.isfile( os.path.join( includePath, NEURONMODELS + '.h' ) ):
         print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, NEURONMODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join( gennPath, INDIR, POSTSYNMODELS + '.h' ) ):
+    if not os.path.isfile( os.path.join( includePath, POSTSYNMODELS + '.h' ) ):
         print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, POSTSYNMODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join(gennPath, INDIR, WUPDATEMODELS + '.h' ) ):
+    if not os.path.isfile( os.path.join(includePath, WUPDATEMODELS + '.h' ) ):
         print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, WUPDATEMODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join(gennPath, INDIR, CURRSOURCEMODELS + '.h' ) ):
+    if not os.path.isfile( os.path.join(includePath, CURRSOURCEMODELS + '.h' ) ):
         print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, CURRSOURCEMODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join(gennPath, INDIR, NNMODEL + '.h' ) ):
+    if not os.path.isfile( os.path.join(includePath, NNMODEL + '.h' ) ):
         print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, NNMODEL + '.h' ) ) )
         exit(1)
 
