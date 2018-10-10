@@ -4,8 +4,8 @@ and defines class Variable
 """
 
 import genn_wrapper
-from NewModels import VarInit, VarInitVector
-from StlContainers import DoubleVector
+from genn_wrapper.NewModels import VarInit, VarInitVector
+from genn_wrapper.StlContainers import DoubleVector
 
 def prepareModel( model, paramSpace, varSpace, modelFamily ):
     """Prepare a model by checking its validity and extracting information about variables and parameters
