@@ -75,7 +75,8 @@ extension_kwargs = {
     "swig_opts": swig_opts,
     "include_dirs": include_dirs,
     "libraries": libraries,
-    "library_dirs" : library_dirs,
+    "library_dirs": library_dirs,
+    "runtime_library_dirs": library_dirs,
     "extra_compile_args" : ["-std=c++11"]}
 
 # Before building extension, generate auto-generated parts of genn_wrapper
