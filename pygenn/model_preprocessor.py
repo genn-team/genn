@@ -3,7 +3,7 @@ This module provides functions for model validation and parameter type conversio
 and defines class Variable
 """
 
-import pygenn as pg
+import genn_wrapper
 from NewModels import VarInit, VarInitVector
 from StlContainers import DoubleVector
 
@@ -115,9 +115,9 @@ class Variable(object):
         initVarSnippet -- type as string or instance of a class derived from InitVarSnippet.Custom
         paramSpace     -- dict mapping parameter names to their values for InitVarSnippet
         """
-        ivsInst, ivsType = isModelValid( initVarSnippet, pg.InitVarSnippet )
+        ivsInst, ivsType = isModelValid( initVarSnippet, genn_wrapper.InitVarSnippet )
         params = parameterSpaceToParamValues( ivsInst, paramSpace )
-        initFct = getattr( pg, 'initVar_' + ivsType )
+        initFct = getattr( genn_wrapper, 'initVar_' + ivsType )
         self.initVal = initFct( params )
 
     def setValues( self, values, initVar=None ):
@@ -133,11 +133,11 @@ class Variable(object):
         if initVar is not None:
             self.setInitVar( initVar, values )
         elif values is None:
-            self.initVal = pg.uninitialisedVar()
+            self.initVal = genn_wrapper.uninitialisedVar()
         else:
             try:
                 iter( values )
-                self.initVal = pg.uninitialisedVar()
+                self.initVal = genn_wrapper.uninitialisedVar()
                 self.values = list( values )
                 self.initRequired = True
             except TypeError:

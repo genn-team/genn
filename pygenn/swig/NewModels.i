@@ -11,12 +11,18 @@
   
 --------------------------------------------------------------------------*/
 
-%module(directors="1") NewModels // for inheritance in python
+%module(directors="1",package="pygenn") NewModels // for inheritance in python
 %{
+
+// GeNN includes
 #include "newModels.h"
-#include "include/customParamValues.h"
-#include "include/customVarValues.h"
-#include "include/initVarSnippetCustom.h"
+
+// PyGenn includes
+#include "customParamValues.h"
+#include "customVarValues.h"
+
+// Generated includes
+#include "initVarSnippetCustom.h"
 %}
 %ignore LegacyWrapper;
 
@@ -27,12 +33,12 @@
 
 %feature("director") NewModels::Base; // for inheritance in python
 %nodefaultctor NewModels::VarInit;
-%include "include/newModels.h"
+%include "newModels.h"
 
 %nodefaultctor CustomValues::VarValues;
-%include "include/customVarValues.h"
+%include "customVarValues.h"
 %nodefaultctor CustomValues::ParamValues;
-%include "include/customParamValues.h"
+%include "customParamValues.h"
 
 %template(CustomVarValues) CustomValues::VarValues::VarValues<double>;
 %template(CustomVarValues) CustomValues::VarValues::VarValues<NewModels::VarInit>;

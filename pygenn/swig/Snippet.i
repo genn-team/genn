@@ -11,15 +11,15 @@
   
 --------------------------------------------------------------------------*/
 
-%module(directors="1") Snippet // for inheritance in python
+%module(directors="1",package="pygenn") Snippet // for inheritance in python
 %{
 #include "snippet.h"
 %}
 
-%import "generated/StlContainers.i"
+%import "StlContainers.i"
 
 %feature("director") Snippet::Base; // for inheritance in python
-%include "include/snippet.h"
+%include "snippet.h"
 
 // helper class for callbacks
 %feature("director") DerivedParamFunc;

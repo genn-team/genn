@@ -4,7 +4,7 @@ header and source files.
 
 Generated interface files are:
 
-    -- pygenn.i - interface of the main module
+    -- _pygenn.i - interface of the main module
     -- newNeuronModels.i -- interface of the NeuronModels module
     -- newPostsynapticModels.i -- interface of the PostsynapticModels module
     -- newWeightUpdateModels.i -- interface of the WeightUpdateModels module
@@ -47,7 +47,7 @@ WUPDATEMODELS = 'newWeightUpdateModels'
 CURRSOURCEMODELS = 'currentSourceModels'
 INITVARSNIPPET = 'initVarSnippet'
 NNMODEL = 'modelSpec'
-MAIN_MODULE = 'pygenn'
+MAIN_MODULE = 'genn_wrapper'
 
 # Scope classes should be used with 'with' statement. They write code in the
 # beginning and in the end of the with-block.
@@ -125,8 +125,8 @@ class SwigModuleGenerator( object ):
         '''Adds a line naming a module and enabling directors feature for inheritance in python (disabled by default)'''
         directorsCode = ''
         if directors:
-            directorsCode = '(directors="1")'
-        self.write( '%module{} {} {}\n'.format( directorsCode, self.name, comment ) )
+            directorsCode = ',directors="1"'
+        self.write( '%module(package="pygenn"{}) {} {}\n'.format( directorsCode, self.name, comment ) )
 
     def addSwigFeatureDirector( self, cClassName, comment='' ):
         '''Adds a line enabling director feature for a C/C++ class'''
@@ -519,9 +519,9 @@ def generateConfigs( gennPath ):
                 mg.addSwigImport( '"Snippet.i"' )
             else:
                 mg.addSwigIgnore( 'LegacyWrapper' )
-                mg.addSwigImport( '"swig/NewModels.i"' )
+                mg.addSwigImport( '"NewModels.i"' )
             mg.addSwigFeatureDirector( mg.name + '::Base' )
-            mg.addSwigInclude( '"include/' + headerFilename + '"' )
+            mg.addSwigInclude( '"' + headerFilename + '"' )
             mg.addSwigFeatureDirector( mg.name + '::Custom' )
             mg.addSwigInclude( '"' + headerFilename.split('.')[0] + 'Custom.h"' )
 
@@ -552,9 +552,9 @@ def generateConfigs( gennPath ):
                             writeValueMakerFunc( model_name, 'VarValues', num_vars, mg )
 
         # wrap NeuronGroup, SynapseGroup and CurrentSource
-        pygennSmg.addSwigInclude( '"include/neuronGroup.h"' )
-        pygennSmg.addSwigInclude( '"include/synapseGroup.h"' )
-        pygennSmg.addSwigInclude( '"include/currentSource.h"' )
+        pygennSmg.addSwigInclude( '"neuronGroup.h"' )
+        pygennSmg.addSwigInclude( '"synapseGroup.h"' )
+        pygennSmg.addSwigInclude( '"currentSource.h"' )
 
         with SwigAsIsScope( pygennSmg ):
             for mg in mgs:
@@ -566,7 +566,7 @@ def generateConfigs( gennPath ):
         pygennSmg.addSwigIgnore( 'GeNNReady' )
         pygennSmg.addSwigIgnore( 'SynapseConnType' )
         pygennSmg.addSwigIgnore( 'SynapseGType' )
-        pygennSmg.addSwigInclude( '"include/' + NNMODEL + '.h"' )
+        pygennSmg.addSwigInclude( '"' + NNMODEL + '.h"' )
 
         # the next three for-loop create template specializations to add
         # various populations to NNmodel
@@ -598,18 +598,18 @@ def generateConfigs( gennPath ):
         pygennSmg.write( '// already covered in the GeNNPreferences.i interface\n' )
         pygennSmg.addSwigIgnore( 'GENN_PREFERENCES' )
         pygennSmg.addSwigIgnore( 'deviceProp' )
-        pygennSmg.addSwigInclude( '"include/global.h"' )
+        pygennSmg.addSwigInclude( '"global.h"' )
 
         pygennSmg.write( '\n// wrap variableMode.h.\n' )
         pygennSmg.addSwigIgnore( 'operator&' )
-        pygennSmg.addSwigInclude( '"include/variableMode.h"' )
+        pygennSmg.addSwigInclude( '"variableMode.h"' )
 
         pygennSmg.write( '\n// wrap synapseMatrixType.h\n' )
-        pygennSmg.addSwigInclude( '"include/synapseMatrixType.h"' )
+        pygennSmg.addSwigInclude( '"synapseMatrixType.h"' )
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( 'void setDefaultVarMode( const VarMode &varMode ) {\n' )
             pygennSmg.write( '  GENN_PREFERENCES::defaultVarMode = varMode;\n}' )
-        pygennSmg.addSwigImport( '"swig/GeNNPreferences.i"' )
+        pygennSmg.addSwigImport( '"GeNNPreferences.i"' )
 
 
 # if the module is called directly i.e. as $ python generate_swig_interfaces.py

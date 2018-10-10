@@ -4,7 +4,7 @@ convesions for GeNN Groups
 """
 
 from six import iteritems
-import pygenn as pg
+import genn_wrapper
 import model_preprocessor
 from model_preprocessor import Variable
 
@@ -98,7 +98,7 @@ class NeuronGroup( Group ):
         ( self.neuron, self.type, self.paramNames, self.params, self.varNames,
             self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
                                                            varSpace,
-                                                           pg.NeuronModels )
+                                                           genn_wrapper.NeuronModels )
         if self.type == 'SpikeSourceArray':
             self.isSpikeSourceArray = True
 
@@ -117,7 +117,7 @@ class NeuronGroup( Group ):
 
         for varName, var in iteritems( self.vars ):
             if var.initRequired:
-                self.pop.setVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+                self.pop.setVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 
     def addExtraGlobalParam( self, paramName, paramValues ):
         """Add extra global parameter
@@ -171,7 +171,7 @@ class SynapseGroup( Group ):
         ( self.wUpdate, self.wuType, self.wuParamNames, self.wuParams, self.wuVarNames,
             varDict ) = model_preprocessor.prepareModel( model, paramSpace,
                                                          varSpace,
-                                                         pg.WeightUpdateModels )
+                                                         genn_wrapper.WeightUpdateModels )
         self.vars.update( varDict )
 
     def setPostsyn( self, model, paramSpace, varSpace ):
@@ -185,7 +185,7 @@ class SynapseGroup( Group ):
         ( self.postsyn, self.psType, self.psParamNames, self.psParams, self.psVarNames,
             varDict ) = model_preprocessor.prepareModel( model, paramSpace,
                                                          varSpace,
-                                                         pg.PostsynapticModels )
+                                                         genn_wrapper.PostsynapticModels )
         self.vars.update( varDict )
 
     @property
@@ -195,7 +195,7 @@ class SynapseGroup( Group ):
 
     @matrixType.setter
     def matrixType( self, matrixType ):
-        self._matrixType = getattr( pg, 'SynapseMatrixType_' + matrixType )
+        self._matrixType = getattr( genn_wrapper, 'SynapseMatrixType_' + matrixType )
         if matrixType.startswith( 'SPARSE' ):
             self.sparse = True
             self.ind = None
@@ -240,7 +240,7 @@ class SynapseGroup( Group ):
 
         if not self.globalG:
             self.vars['g'].setValues( g )
-            self.pop.setWUVarMode( 'g', pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+            self.pop.setWUVarMode( 'g', genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 
         self.connectionsSet = True
         
@@ -282,9 +282,9 @@ class SynapseGroup( Group ):
         for varName, var in iteritems( self.vars ):
             if var.initRequired:
                 if varName in self.wuVarNames:
-                    self.pop.setWUVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+                    self.pop.setWUVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
                 if varName in self.psVarNames:
-                    self.pop.setPSVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+                    self.pop.setPSVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
     
     def addExtraGlobalParam( self, paramName, paramValues ):
         """Add extra global parameter
@@ -330,7 +330,7 @@ class CurrentSource( Group ):
         ( self.currentSourceModel, self.type, self.paramNames, self.params, self.varNames,
             self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
                                                            varSpace,
-                                                           pg.CurrentSourceModels )
+                                                           genn_wrapper.CurrentSourceModels )
 
     def addTo( self, nnModel, pop ):
         """Inject this CurrentSource into population and add add it to the GeNN NNmodel
@@ -348,7 +348,7 @@ class CurrentSource( Group ):
 
         for varName, var in iteritems( self.vars ):
             if var.initRequired:
-                self.pop.setVarMode( varName, pg.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+                self.pop.setVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
 
     def addExtraGlobalParam( self, paramName, paramValues ):
         """Add extra global parameter

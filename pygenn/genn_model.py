@@ -45,7 +45,7 @@ from subprocess import check_call # to call make
 import numpy as np
 from six import iteritems
 # pygenn imports
-import pygenn as pg
+import genn_wrapper
 import SharedLibraryModel as slm
 from genn_groups import NeuronGroup, SynapseGroup, CurrentSource
 
@@ -87,12 +87,12 @@ class GeNNModel( object ):
         
         self._built = False
         self._cpuOnly = cpuOnly
-        self._localhost = pg.initMPI_pygenn()
+        self._localhost = genn_wrapper.initMPI_pygenn()
         
-        pg.setDefaultVarMode( pg.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
-        pg.GeNNPreferences.cvar.debugCode = enableDebug
-        self._model = pg.NNmodel()
-        self._model.setPrecision( getattr(pg, gennFloatType ) )
+        genn_wrapper.setDefaultVarMode( genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_DEVICE )
+        genn_wrapper.GeNNPreferences.cvar.debugCode = enableDebug
+        self._model = genn_wrapper.NNmodel()
+        self._model.setPrecision( getattr(genn_wrapper, gennFloatType ) )
         self.modelName = modelName
         self.neuronPopulations = {}
         self.synapsePopulations = {}
@@ -294,7 +294,7 @@ class GeNNModel( object ):
                 popData.pop.setMaxConnections( popData.maxConn )
 
         self._model.finalize()
-        pg.generate_model_runner_pygenn(self._model, self._pathToModel, self._localhost)
+        genn_wrapper.generate_model_runner_pygenn(self._model, self._pathToModel, self._localhost)
 
         check_call( ['make', '-C', path.join( pathToModel, self.modelName + '_CODE' ) ] )
         
@@ -600,12 +600,12 @@ def createCustomNeuronClass(
         body['getSupportCode'] = lambda self: supportCode
     
     if extraGlobalParams is not None:
-        body['getxtraGlobalParams'] = lambda self: pg.StlContainers.StringPairVector(
-                [pg.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
+        body['getxtraGlobalParams'] = lambda self: genn_wrapper.StlContainers.StringPairVector(
+                [genn_wrapper.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
  
     if additionalInputVars:
-        body['getAdditionalInputVars'] = lambda self: pg.StlContainers.StringStringDoublePairPairVector(
-                [pg.StlContainers.StringStringDoublePairPair( aiv[0], pg.StlContainers.StringDoublePair( aiv[1], aiv[2] ) ) \
+        body['getAdditionalInputVars'] = lambda self: genn_wrapper.StlContainers.StringStringDoublePairPairVector(
+                [genn_wrapper.StlContainers.StringStringDoublePairPair( aiv[0], genn_wrapper.StlContainers.StringDoublePair( aiv[1], aiv[2] ) ) \
                         for aiv in additionalInputVars] )
 
     if isPoisson is not None:
@@ -616,7 +616,7 @@ def createCustomNeuronClass(
 
     return createCustomModelClass(
             className,
-            pg.NeuronModels.Custom,
+            genn_wrapper.NeuronModels.Custom,
             paramNames,
             varNameTypes,
             derivedParams,
@@ -672,7 +672,7 @@ def createCustomPostsynapticClass(
 
     return createCustomModelClass(
             className,
-            pg.PostsynapticModels.Custom,
+            genn_wrapper.PostsynapticModels.Custom,
             paramNames,
             varNameTypes,
             derivedParams,
@@ -756,8 +756,8 @@ def createCustomWeightUpdateClass(
         body['getSynapseDynamicsSuppportCode'] = lambda self: synapseDynamicsSuppportCode
 
     if extraGlobalParams is not None:
-        body['getExtraGlobalParams'] = lambda self: pg.StlContainers.StringPairVector(
-                [pg.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
+        body['getExtraGlobalParams'] = lambda self: genn_wrapper.StlContainers.StringPairVector(
+                [genn_wrapper.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
 
     if isPreSpikeTimeRequired is not None:
         body['isPreSpikeTimeRequired'] = lambda self: isPreSpikeTimeRequired
@@ -770,7 +770,7 @@ def createCustomWeightUpdateClass(
     
     return createCustomModelClass(
             className,
-            pg.WeightUpdateModels.Custom,
+            genn_wrapper.WeightUpdateModels.Custom,
             paramNames,
             varNameTypes,
             derivedParams,
@@ -815,15 +815,15 @@ def createCustomCurrentSourceClass(
         body['getInjectionCode'] = lambda self: injectionCode
 
     if extraGlobalParams is not None:
-        body['getExtraGlobalParams'] = lambda self: pg.StlContainers.StringPairVector(
-                [pg.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
+        body['getExtraGlobalParams'] = lambda self: genn_wrapper.StlContainers.StringPairVector(
+                [genn_wrapper.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
 
     if custom_body is not None:
         body.update( custom_body )
 
     return createCustomModelClass(
             className,
-            pg.CurrentSourceModels.Custom,
+            genn_wrapper.CurrentSourceModels.Custom,
             paramNames,
             varNameTypes,
             derivedParams,
@@ -864,15 +864,15 @@ def createCustomModelClass(
     }
     
     if paramNames is not None:
-        body['getParamNames'] = lambda self: pg.StlContainers.StringVector( paramNames )
+        body['getParamNames'] = lambda self: genn_wrapper.StlContainers.StringVector( paramNames )
 
     if varNameTypes is not None:
-        body['getVars'] = lambda self: pg.StlContainers.StringPairVector( [pg.StlContainers.StringPair( vn[0], vn[1] ) for vn in varNameTypes] )
+        body['getVars'] = lambda self: genn_wrapper.StlContainers.StringPairVector( [genn_wrapper.StlContainers.StringPair( vn[0], vn[1] ) for vn in varNameTypes] )
 
     if derivedParams is not None:
         
-        body['getDerivedParams'] = lambda self: pg.StlContainers.StringDPFPairVector(
-                [pg.StlContainers.StringDPFPair( dp[0], pg.Snippet.makeDPF( dp[1] ) )
+        body['getDerivedParams'] = lambda self: genn_wrapper.StlContainers.StringDPFPairVector(
+                [genn_wrapper.StlContainers.StringDPFPair( dp[0], genn_wrapper.Snippet.makeDPF( dp[1] ) )
                     for dp in derivedParams] )
 
     if custom_body is not None:
@@ -891,12 +891,12 @@ def createDPFClass( dpfunc ):
     """
 
     def ctor( self ):
-        pg.Snippet.DerivedParamFunc.__init__( self )
+        genn_wrapper.Snippet.DerivedParamFunc.__init__( self )
 
     def call( self, pars, dt ):
         return dpfunc( pars, dt )
 
-    return type( '', ( pg.Snippet.DerivedParamFunc, ), {'__init__' : ctor, '__call__' : call} )
+    return type( '', ( genn_wrapper.Snippet.DerivedParamFunc, ), {'__init__' : ctor, '__call__' : call} )
 
 
 def createCustomInitVarSnippetClass(
@@ -941,7 +941,7 @@ def createCustomInitVarSnippetClass(
 
     return createCustomModelClass(
             className,
-            pg.InitVarSnippet.Custom,
+            genn_wrapper.InitVarSnippet.Custom,
             paramNames,
             None,
             derivedParams,

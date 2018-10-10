@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-%module GeNNPreferences
+%module(package="pygenn") GeNNPreferences
 %{
 #include "global.h"
 %}
@@ -28,7 +28,7 @@
 %ignore theDevice;
 %ignore deviceCount;
 %ignore hostCount;
-%include "include/global.h"
+%include "global.h"
 
 %define %unignore %rename("%s") %enddef
 // unignore variables so that they still can be wrapped
