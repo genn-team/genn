@@ -5,6 +5,8 @@ import os
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
+from generate_swig_interfaces import generateConfigs
+
 '''
 class MakeExtension(Extension):
     def __init__(self, name):
@@ -52,22 +54,22 @@ cuda_path = os.path.join(os.environ["CUDA_PATH"])
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
 
-pygenn_path = os.path.join(genn_path, "pygenn")
-pygenn_include = os.path.join(pygenn_path, "include")
-pygenn_swig = os.path.join(pygenn_path, "swig")
-pygenn_generated = os.path.join(pygenn_path, "generated")
+genn_wrapper_path = os.path.join(genn_path, "pygenn", "genn_wrapper")
+genn_wrapper_include = os.path.join(genn_wrapper_path, "include")
+genn_wrapper_swig = os.path.join(genn_wrapper_path, "swig")
+genn_wrapper_generated = os.path.join(genn_wrapper_path, "generated")
 genn_include = os.path.join(genn_path, "lib", "include")
 
-swig_opts = ["-c++", "-outdir", pygenn_path, "-I" + pygenn_include, "-I" + pygenn_generated, 
-             "-I" + pygenn_swig, "-I" + genn_include]
+swig_opts = ["-c++", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
+             "-I" + genn_wrapper_generated, "-I" + genn_wrapper_swig, "-I" + genn_include]
 
-include_dirs = [genn_include, pygenn_include, pygenn_generated,
+include_dirs = [genn_include, genn_wrapper_include, genn_wrapper_generated,
                 os.path.join(cuda_path, "include"),
                 os.path.join(numpy_path, "core", "include")]
 
 libraries =["cuda", "cudart", "genn_DYNAMIC"]
 
-library_dirs = [os.path.join(cuda_path, "lib64"), pygenn_path]
+library_dirs = [os.path.join(cuda_path, "lib64"), genn_wrapper_path]
 
 extension_kwargs = {
     "swig_opts": swig_opts,
@@ -76,16 +78,19 @@ extension_kwargs = {
     "library_dirs" : library_dirs,
     "extra_compile_args" : ["-std=c++11"]}
 
+# Before building extension, generate auto-generated parts of genn_wrapper
+generateConfigs(genn_path)
+
 genn_wrapper = Extension('_genn_wrapper', [
-    "pygenn/generated/genn_wrapper.i",
+    "pygenn/genn_wrapper/generated/genn_wrapper.i",
     "lib/src/generateALL.cc", "lib/src/generateCPU.cc", 
     "lib/src/generateInit.cc", "lib/src/generateKernels.cc", 
     "lib/src/generateMPI.cc", "lib/src/generateRunner.cc",
-    "pygenn/generated/currentSourceModelsCustom.cc",
-    "pygenn/generated/initVarSnippetCustom.cc",
-    "pygenn/generated/newNeuronModelsCustom.cc",
-    "pygenn/generated/newPostsynapticModelsCustom.cc",
-    "pygenn/generated/newWeightUpdateModelsCustom.cc"], 
+    "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc",
+    "pygenn/genn_wrapper/generated/initVarSnippetCustom.cc",
+    "pygenn/genn_wrapper/generated/newNeuronModelsCustom.cc",
+    "pygenn/genn_wrapper/generated/newPostsynapticModelsCustom.cc",
+    "pygenn/genn_wrapper/generated/newWeightUpdateModelsCustom.cc"],
     define_macros=[("GENERATOR_MAIN_HANDLED", None), ("NVCC", "\"" + os.path.join(cuda_path, "bin", "nvcc") + "\"")],
     **extension_kwargs)
 
@@ -95,15 +100,15 @@ setup(name = "pygenn",
       url="https://github.com/genn-team/genn",
       author="University of Sussex",
       description="Python interface to the GeNN simulator",
-      ext_package="pygenn",
+      ext_package="pygenn.genn_wrapper",
       ext_modules=[genn_wrapper,
-                   Extension('_Snippet', ["pygenn/swig/Snippet.i"], **extension_kwargs),
-                   Extension('_NewModels', ["pygenn/swig/NewModels.i"], **extension_kwargs),
-                   Extension('_GeNNPreferences', ["pygenn/swig/GeNNPreferences.i"], **extension_kwargs),
-                   Extension('_StlContainers', ["pygenn/generated/StlContainers.i"], **extension_kwargs),
-                   Extension('_SharedLibraryModel', ["pygenn/generated/SharedLibraryModel.i"], **extension_kwargs),
-                   Extension('_InitVarSnippet', ["pygenn/generated/InitVarSnippet.i", "pygenn/generated/initVarSnippetCustom.cc"], **extension_kwargs),
-                   Extension('_NeuronModels', ["pygenn/generated/NeuronModels.i", "pygenn/generated/newNeuronModelsCustom.cc"], **extension_kwargs),
-                   Extension('_PostsynapticModels', ["pygenn/generated/PostsynapticModels.i", "pygenn/generated/newPostsynapticModelsCustom.cc"], **extension_kwargs),
-                   Extension('_WeightUpdateModels', ["pygenn/generated/WeightUpdateModels.i", "pygenn/generated/newWeightUpdateModelsCustom.cc"], **extension_kwargs),
-                   Extension('_CurrentSourceModels', ["pygenn/generated/CurrentSourceModels.i", "pygenn/generated/currentSourceModelsCustom.cc"], **extension_kwargs)])
+                   Extension('_Snippet', ["pygenn/genn_wrapper/swig/Snippet.i"], **extension_kwargs),
+                   Extension('_NewModels', ["pygenn/genn_wrapper/swig/NewModels.i"], **extension_kwargs),
+                   Extension('_GeNNPreferences', ["pygenn/genn_wrapper/swig/GeNNPreferences.i"], **extension_kwargs),
+                   Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),
+                   Extension('_SharedLibraryModel', ["pygenn/genn_wrapper/generated/SharedLibraryModel.i"], **extension_kwargs),
+                   Extension('_InitVarSnippet', ["pygenn/genn_wrapper/generated/InitVarSnippet.i", "pygenn/genn_wrapper/generated/initVarSnippetCustom.cc"], **extension_kwargs),
+                   Extension('_NeuronModels', ["pygenn/genn_wrapper/generated/NeuronModels.i", "pygenn/genn_wrapper/generated/newNeuronModelsCustom.cc"], **extension_kwargs),
+                   Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/newPostsynapticModelsCustom.cc"], **extension_kwargs),
+                   Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/newWeightUpdateModelsCustom.cc"], **extension_kwargs),
+                   Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **extension_kwargs)])
