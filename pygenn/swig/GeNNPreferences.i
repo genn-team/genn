@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-%module(package="pygenn") GeNNPreferences
+%module GeNNPreferences
 %{
 #include "global.h"
 %}

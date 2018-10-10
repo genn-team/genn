@@ -125,8 +125,8 @@ class SwigModuleGenerator( object ):
         '''Adds a line naming a module and enabling directors feature for inheritance in python (disabled by default)'''
         directorsCode = ''
         if directors:
-            directorsCode = ',directors="1"'
-        self.write( '%module(package="pygenn"{}) {} {}\n'.format( directorsCode, self.name, comment ) )
+            directorsCode = '(directors="1")'
+        self.write( '%module{} {} {}\n'.format( directorsCode, self.name, comment ) )
 
     def addSwigFeatureDirector( self, cClassName, comment='' ):
         '''Adds a line enabling director feature for a C/C++ class'''

@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-%module(directors="1",package="pygenn") Snippet // for inheritance in python
+%module(directors="1") Snippet // for inheritance in python
 %{
 #include "snippet.h"
 %}

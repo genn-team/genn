@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-%module(directors="1",package="pygenn") NewModels // for inheritance in python
+%module(directors="1") NewModels // for inheritance in python
 %{
 
 // GeNN includes
