@@ -69,6 +69,13 @@ libraries =["cuda", "cudart", "genn_DYNAMIC"]
 
 library_dirs = [os.path.join(cuda_path, "lib64"), pygenn_path]
 
+extension_kwargs = {
+    "swig_opts": swig_opts,
+    "include_dirs": include_dirs,
+    "libraries": libraries,
+    "library_dirs" : library_dirs,
+    "extra_compile_args" : ["-std=c++11"]}
+
 genn_wrapper = Extension('_genn_wrapper', [
     "pygenn/generated/genn_wrapper.i",
     "lib/src/generateALL.cc", "lib/src/generateCPU.cc", 
@@ -79,9 +86,8 @@ genn_wrapper = Extension('_genn_wrapper', [
     "pygenn/generated/newNeuronModelsCustom.cc",
     "pygenn/generated/newPostsynapticModelsCustom.cc",
     "pygenn/generated/newWeightUpdateModelsCustom.cc"], 
-    swig_opts=swig_opts, include_dirs=include_dirs, 
     define_macros=[("GENERATOR_MAIN_HANDLED", None), ("NVCC", "\"" + os.path.join(cuda_path, "bin", "nvcc") + "\"")],
-    libraries=libraries, library_dirs=library_dirs)
+    **extension_kwargs)
 
 setup(name = "pygenn",
       version = "0.1",
@@ -91,13 +97,13 @@ setup(name = "pygenn",
       description="Python interface to the GeNN simulator",
       ext_package="pygenn",
       ext_modules=[genn_wrapper,
-                   Extension('_Snippet', ["pygenn/swig/Snippet.i"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_NewModels', ["pygenn/swig/NewModels.i"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_GeNNPreferences', ["pygenn/swig/GeNNPreferences.i"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_StlContainers', ["pygenn/generated/StlContainers.i"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_SharedLibraryModel', ["pygenn/generated/SharedLibraryModel.i"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_InitVarSnippet', ["pygenn/generated/InitVarSnippet.i", "pygenn/generated/initVarSnippetCustom.cc"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_NeuronModels', ["pygenn/generated/NeuronModels.i", "pygenn/generated/newNeuronModelsCustom.cc"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_PostsynapticModels', ["pygenn/generated/PostsynapticModels.i", "pygenn/generated/newPostsynapticModelsCustom.cc"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_WeightUpdateModels', ["pygenn/generated/WeightUpdateModels.i", "pygenn/generated/newWeightUpdateModelsCustom.cc"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs),
-                   Extension('_CurrentSourceModels', ["pygenn/generated/CurrentSourceModels.i", "pygenn/generated/currentSourceModelsCustom.cc"], swig_opts=swig_opts, include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs)])
+                   Extension('_Snippet', ["pygenn/swig/Snippet.i"], **extension_kwargs),
+                   Extension('_NewModels', ["pygenn/swig/NewModels.i"], **extension_kwargs),
+                   Extension('_GeNNPreferences', ["pygenn/swig/GeNNPreferences.i"], **extension_kwargs),
+                   Extension('_StlContainers', ["pygenn/generated/StlContainers.i"], **extension_kwargs),
+                   Extension('_SharedLibraryModel', ["pygenn/generated/SharedLibraryModel.i"], **extension_kwargs),
+                   Extension('_InitVarSnippet', ["pygenn/generated/InitVarSnippet.i", "pygenn/generated/initVarSnippetCustom.cc"], **extension_kwargs),
+                   Extension('_NeuronModels', ["pygenn/generated/NeuronModels.i", "pygenn/generated/newNeuronModelsCustom.cc"], **extension_kwargs),
+                   Extension('_PostsynapticModels', ["pygenn/generated/PostsynapticModels.i", "pygenn/generated/newPostsynapticModelsCustom.cc"], **extension_kwargs),
+                   Extension('_WeightUpdateModels', ["pygenn/generated/WeightUpdateModels.i", "pygenn/generated/newWeightUpdateModelsCustom.cc"], **extension_kwargs),
+                   Extension('_CurrentSourceModels', ["pygenn/generated/CurrentSourceModels.i", "pygenn/generated/currentSourceModelsCustom.cc"], **extension_kwargs)])
