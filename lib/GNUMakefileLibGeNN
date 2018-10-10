@@ -30,8 +30,8 @@ ifdef COVERAGE
     LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_COVERAGE
 endif
 
-ifdef RELOCATABLE
-    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_RELOCATABLE
+ifdef DYNAMIC
+    LIBGENN_PREFIX      :=$(LIBGENN_PREFIX)_DYNAMIC
 endif
 
 # Source, Include, Object and Library directories
@@ -39,7 +39,12 @@ SRC_PATH                 :=$(GENN_PATH)/lib/src
 INC_PATH                 :=$(GENN_PATH)/lib/include
 LIBGENN_PATH             :=$(GENN_PATH)/lib/lib
 LIBGENN_OBJ_PATH         :=$(GENN_PATH)/lib/obj$(LIBGENN_PREFIX)
-LIBGENN                  :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).a
+
+ifdef DYNAMIC
+    LIBGENN              :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).so
+else
+    LIBGENN              :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).a
+endif
 
 # objects to build into libgenn
 LIBGENN_OBJ              :=global.o modelSpec.o neuronGroup.o synapseGroup.o currentSource.o neuronModels.o synapseModels.o postSynapseModels.o initVarSnippet.o utils.o codeStream.o codeGenUtils.o sparseUtils.o hr_time.o newNeuronModels.o newPostsynapticModels.o newWeightUpdateModels.o currentSourceModels.o standardSubstitutions.o standardGeneratedSections.o
@@ -81,10 +86,11 @@ ifdef COVERAGE
     CXXFLAGS             +=-O0 --coverage
 endif
 
-ifdef RELOCATABLE
+ifdef DYNAMIC
     CXXFLAGS             +=-fPIC
 endif
 
+# C++ archiver settings
 ARFLAGS                  :=-rcs
 
 # Global include and link flags
@@ -112,8 +118,13 @@ ifdef MPI_ENABLE
     LINK_FLAGS           +=$(shell mpiCC -showme:link)
 endif
 
+ifdef DYNAMIC
+$(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
+	$(CXX) -shared $(CXXFLAGSs) -o $@ $(LIBGENN_OBJ)
+else
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
 	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
+endif
 
 $(LIBGENN_OBJ_PATH)/%.o: $(SRC_PATH)/%.cc
 	$(CXX) $(CXXFLAGS) -MMD -MP -c -o $@ $< $(INCLUDE_FLAGS)
