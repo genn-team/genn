@@ -530,6 +530,7 @@ def generateConfigs( gennPath ):
             # parse models files and collect models declared there
             for line in header.readlines():
                 line = line.lstrip()
+                line = line.rstrip()
                 if line.startswith( 'DECLARE_' ) and line.endswith(';'):
                     if mg.name == 'InitVarSnippet':
                         nspace_model_name, num_params = line.split( '(' )[1].split( ')' )[0].split( ',' )
