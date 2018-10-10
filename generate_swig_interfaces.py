@@ -397,7 +397,7 @@ def generateCustomModelDeclImpls( swigPath ):
 
 
 def generateConfigs( gennPath ):
-    swigPath = os.path.join( gennPath, 'pygenn', 'generated' )
+    swigPath = os.path.join( gennPath, 'pygenn', 'genn_wrapper', 'generated' )
     includePath = os.path.join( gennPath, 'lib', 'include' )
     
     '''Generates SWIG interfaces'''
