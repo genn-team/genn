@@ -18,6 +18,8 @@
 #define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)                       \
     DECLARE_SNIPPET(TYPE, NUM_PARAMS)                                   \
     typedef NewModels::VarInitContainerBase<NUM_VARS> VarValues;        \
+    typedef NewModels::VarInitContainerBase<0> PreVarValues;            \
+    typedef NewModels::VarInitContainerBase<0> PostVarValues;
 
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
@@ -142,7 +144,15 @@ public:
     //! Find the index of a named variable
     size_t getVarIndex(const std::string &varName) const
     {
-        auto vars = getVars();
+        return getVarIndex(varName, getVars());
+    }
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected static helpers
+    //------------------------------------------------------------------------
+    static size_t getVarIndex(const std::string &varName, const StringPairVec &vars)
+    {
         auto varIter = std::find_if(vars.begin(), vars.end(),
             [varName](const StringPairVec::value_type &v){ return (v.first == varName); });
         assert(varIter != vars.end());

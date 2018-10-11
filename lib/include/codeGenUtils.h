@@ -274,6 +274,27 @@ void checkUnreplacedVariables(const string &code, const string &codeName);
 //--------------------------------------------------------------------------
 uint32_t hashString(const std::string &string);
 
+
+void preNeuronSubstitutionsInSynapticCode(
+    string &wCode, //!< the code string to work on
+    const SynapseGroup *sg,
+    const string &offset,
+    const string &axonalDelayOffset,
+    const string &postIdx,
+    const string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix = "");   //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
+void postNeuronSubstitutionsInSynapticCode(
+    string &wCode, //!< the code string to work on
+    const SynapseGroup *sg,
+    const string &offset,
+    const string &backPropDelayOffset,
+    const string &preIdx,
+    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.

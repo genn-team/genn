@@ -121,6 +121,8 @@ void weightUpdateSim(
     std::string &wCode,
     const SynapseGroup &sg,
     const VarNameIterCtx &wuVars,
+    const VarNameIterCtx &wuPreVars,
+    const VarNameIterCtx &wuPostVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
@@ -134,6 +136,8 @@ void weightUpdateDynamics(
     std::string &SDcode,
     const SynapseGroup *sg,
     const VarNameIterCtx &wuVars,
+    const VarNameIterCtx &wuPreVars,
+    const VarNameIterCtx &wuPostVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
@@ -146,6 +150,8 @@ void weightUpdateDynamics(
 void weightUpdatePostLearn(
     std::string &code,
     const SynapseGroup *sg,
+    const VarNameIterCtx &wuPreVars,
+    const VarNameIterCtx &wuPostVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
@@ -158,6 +164,23 @@ void weightUpdatePostLearn(
     const string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
     const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
+void weightUpdatePreSpike(
+    std::string &code,
+    const SynapseGroup *sg,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &devPrefix,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype);
+
+
+void weightUpdatePostSpike(
+    std::string &code,
+    const SynapseGroup *sg,
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype);
 
 std::string initNeuronVariable(
     const NewModels::VarInit &varInit,
@@ -175,7 +198,7 @@ std::string initWeightUpdateVariable(
 	const std::string &postIdx,
     const std::string &ftype,
     const std::string &rng);
-	
+
 std::string initSparseConnectivity(
     const SynapseGroup &sg,
     const std::string &addSynapseFunctionTemplate,

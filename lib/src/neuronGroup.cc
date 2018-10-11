@@ -291,13 +291,21 @@ bool NeuronGroup::isDeviceVarInitRequired() const
         return true;
     }
 
-    // Return true if any of the incoming synapse groups have state variables or input variables which should be initialised on device
+    // Return true if any of the INCOMING synapse groups have postsynaptic state variables or input variables which should be initialised on device
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
-    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroup *sg)
-                       {
-                           return sg->isPSDeviceVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE) || (sg->getDendriticDelayVarMode() & VarInit::DEVICE);
-                       });
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](const SynapseGroup *sg)
+                   {
+                       return sg->isPSDeviceVarInitRequired() || sg->isWUDevicePostVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE) || (sg->getDendriticDelayVarMode() & VarInit::DEVICE);
+                   }))
+    {
+        return true;
+    }
+
+    // Return true if any of the OUTGOING synapse groups have presynaptic state variables which should be initialised on device
+    // **NOTE** these are included here as they are initialised in neuron initialisation threads
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](const SynapseGroup *sg){ return sg->isWUDevicePreVarInitRequired(); });
 }
 
 bool NeuronGroup::isDeviceInitRequired() const

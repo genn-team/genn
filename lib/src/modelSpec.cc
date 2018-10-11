@@ -693,6 +693,9 @@ SynapseGroup *NNmodel::addSynapsePopulation(
     std::vector<NewModels::VarInit> wuVarInitialisers;
     createVarInitialiserFromLegacyVars(synini, wuVarInitialisers);
 
+    std::vector<NewModels::VarInit> wuPreVarInitialisers;
+    std::vector<NewModels::VarInit> wuPostVarInitialisers;
+
 #ifdef MPI_ENABLE
     // Get host ID of target neuron group
     const int hostID = trgNeuronGrp->getClusterHostID();
@@ -713,7 +716,7 @@ SynapseGroup *NNmodel::addSynapsePopulation(
         std::piecewise_construct,
         std::forward_as_tuple(name),
         std::forward_as_tuple(name, mtype, delaySteps,
-                              new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers,
+                              new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers, wuPreVarInitialisers, wuPostVarInitialisers,
                               new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
                               srcNeuronGrp, trgNeuronGrp,
                               uninitialisedConnectivity()));

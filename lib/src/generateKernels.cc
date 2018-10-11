@@ -107,6 +107,8 @@ void generatePreParallelisedSparseCode(
     DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
+    VarNameIterCtx wuPreVars(wu->getPreVars());
+    VarNameIterCtx wuPostVars(wu->getPostVars());
 
     os << "if (" << localID << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -206,7 +208,7 @@ void generatePreParallelisedSparseCode(
             }
 
             StandardSubstitutions::weightUpdateSim(wCode, sg,
-                                                   wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                                   wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                    "preInd", "ipost", "dd_", cudaFunctions, ftype, dt);
             // end code substitutions -------------------------------------------------------------------------
 
@@ -240,6 +242,8 @@ void generatePostParallelisedCode(
     DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
+    VarNameIterCtx wuPreVars(wu->getPreVars());
+    VarNameIterCtx wuPostVars(wu->getPostVars());
 
     os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << std::endl;
     os << "for (r = 0; r < numSpikeSubsets" << postfix << "; r++)";
@@ -371,7 +375,7 @@ void generatePostParallelisedCode(
                     }
                 }
 
-                StandardSubstitutions::weightUpdateSim(wCode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                StandardSubstitutions::weightUpdateSim(wCode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                        "shSpk" + postfix + "[j]", "ipost", "dd_",
                                                        cudaFunctions, ftype, dt);
                 // end Code substitutions -------------------------------------------------------------------------
@@ -709,17 +713,9 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                             os << rCode << std::endl;
                         }
                     }
-                    // store spike time back into global memory
-                    // **NOTE** if neuron does spike this happens later in kernel
-                    if(n->second.isSpikeTimeRequired()) {
-                        os << "else";
-                        CodeStream::Scope b(os);
-                        os << "dd_sT" << n->first << "[";
-                        if (n->second.isDelayRequired()) {
-                            os << "writeDelayOffset + ";
-                        }
-                        os << localID << "] = lsT;" << std::endl;
-                    }
+
+                    // Insert code to copy spike triggered variables back to global memory if necessary
+                    StandardGeneratedSections::neuronCopySpikeTriggeredVars(os, n->second, "dd_", localID);
                 }
 
                 // store the defined parts of the neuron state into the global state variables dd_V etc
@@ -795,14 +791,23 @@ void genNeuronKernel(const NNmodel &model, //!< Model description
                 }
 
                 if (!nm->getThresholdConditionCode().empty()) {
-                    string queueOffsetTrueSpk = n->second.isTrueSpikeRequired() ? queueOffset : "";
-
                     os << "if (threadIdx.x < spkCount)";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_glbSpk" << n->first << "[" << queueOffsetTrueSpk << "posSpk + threadIdx.x] = shSpk[threadIdx.x];" << std::endl;
+                        os << "const unsigned int n = shSpk[threadIdx.x];" << std::endl;
+
+                        // Insert code to update any weight update model presynaptic variables associated with outgoing connections
+                        StandardGeneratedSections::weightUpdatePreSpike(os, n->second, "dd_", "n",
+                                                                        cudaFunctions, model.getPrecision());
+
+                        // Insert code to update any weight update model postsynaptic variables associated with incoming connections
+                        StandardGeneratedSections::weightUpdatePostSpike(os, n->second, "dd_", "n",
+                                                                        cudaFunctions, model.getPrecision());
+
+                        string queueOffsetTrueSpk = n->second.isTrueSpikeRequired() ? queueOffset : "";
+                        os << "dd_glbSpk" << n->first << "[" << queueOffsetTrueSpk << "posSpk + threadIdx.x] = n;" << std::endl;
                         if (n->second.isSpikeTimeRequired()) {
-                            os << "dd_sT" << n->first << "[" << queueOffset << "shSpk[threadIdx.x]] = t;" << std::endl;
+                            os << "dd_sT" << n->first << "[" << queueOffset << "n] = t;" << std::endl;
                         }
                     }   // end if (threadIdx.x < spkCount)
                 }
@@ -920,6 +925,8 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                     DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
                     ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
                     VarNameIterCtx wuVars(wu->getVars());
+                    VarNameIterCtx wuPreVars(wu->getPreVars());
+                    VarNameIterCtx wuPostVars(wu->getPostVars());
 
                     os << "// synapse group " << s->first << std::endl;
                     if (s == model.getSynapseDynamicsGroups().cbegin()) {
@@ -998,7 +1005,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                 }
 
-                                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             preIdx, postIdx, "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
                             }
@@ -1031,7 +1038,7 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     substitute(SDcode, "$(inSyn)", "dd_inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
                                 }
 
-                                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             localID +"/" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()),
                                                                             postIdx, "dd_", cudaFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
@@ -1394,6 +1401,8 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
                                 ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
                                 VarNameIterCtx wuVars(wu->getVars());
+                                VarNameIterCtx wuPreVars(wu->getPreVars());
+                                VarNameIterCtx wuPostVars(wu->getPostVars());
 
                                 string code = wu->getLearnPostCode();
                                 substitute(code, "$(t)", "t");
@@ -1413,9 +1422,9 @@ void genSynapseKernel(const NNmodel &model, //!< Model description
                                     name_substitutions(code, "dd_", wuVars.nameBegin, wuVars.nameEnd, s->first + "[" + localID + " * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + " + shSpk[j]]");
                                     preIndex = localID;
                                 }
-                                StandardSubstitutions::weightUpdatePostLearn(code, sg, wuDerivedParams, wuExtraGlobalParams,
-                                                                            preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision(), model.getDT(),
-                                                                            getROCacheReadPrefix(), getROCacheReadSuffix());
+                                StandardSubstitutions::weightUpdatePostLearn(code, sg, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                             preIndex, "shSpk[j]", "dd_", cudaFunctions, model.getPrecision(), model.getDT(),
+                                                                             getROCacheReadPrefix(), getROCacheReadSuffix());
                                 // end Code substitutions -------------------------------------------------------------------------
                                 os << code << std::endl;
                                 if (sparse) {

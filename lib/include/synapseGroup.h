@@ -20,7 +20,7 @@ class SynapseGroup
 {
 public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers,
+                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser);
@@ -148,6 +148,8 @@ public:
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
     const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::vector<NewModels::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
+    const std::vector<NewModels::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
+    const std::vector<NewModels::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
     const std::vector<double> getWUConstInitVals() const;
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
@@ -166,11 +168,23 @@ public:
     bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
     bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
 
-    //! Get variable mode used by weight update model state variable
+    //! Get variable mode used by weight update model per-synapse state variable
     VarMode getWUVarMode(const std::string &var) const;
 
-    //! Get variable mode used by weight update model state variable
+    //! Get variable mode used by weight update model per-synapse state variable
     VarMode getWUVarMode(size_t index) const{ return m_WUVarMode[index]; }
+
+    //! Get variable mode used by weight update model presynaptic state variable
+    VarMode getWUPreVarMode(const std::string &var) const;
+
+    //! Get variable mode used by weight update model presynaptic state variable
+    VarMode getWUPreVarMode(size_t index) const{ return m_WUPreVarMode[index]; }
+
+    //! Get variable mode used by weight update model postsynaptic state variable
+    VarMode getWUPostVarMode(const std::string &var) const;
+
+    //! Get variable mode used by weight update model postsynaptic state variable
+    VarMode getWUPostVarMode(size_t index) const{ return m_WUPostVarMode[index]; }
 
     //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(const std::string &var) const;
@@ -208,6 +222,12 @@ public:
 
     //! Is device var init code required for any variables in this synapse group's weight update model?
     bool isWUDeviceVarInitRequired() const;
+
+    //! Is device var init code required for any presynaptic variables in this synapse group's weight update model
+    bool isWUDevicePreVarInitRequired() const;
+
+    //! Is device var init code required for any postsynaptic variables in this synapse group's weight update model
+    bool isWUDevicePostVarInitRequired() const;
 
     //! Is device sparse connectivity initialisation code required for this synapse group?
     bool isDeviceSparseConnectivityInitRequired() const;
@@ -294,9 +314,15 @@ private:
     //!< Derived parameters for weight update model
     std::vector<double> m_WUDerivedParams;
 
-    //!< Initialisers for weight update model variables
+    //!< Initialisers for weight update model per-synapse variables
     std::vector<NewModels::VarInit> m_WUVarInitialisers;
 
+    //!< Initialisers for weight update model per-presynaptic neuron variables
+    std::vector<NewModels::VarInit> m_WUPreVarInitialisers;
+
+    //!< Initialisers for weight update model post-presynaptic neuron variables
+    std::vector<NewModels::VarInit> m_WUPostVarInitialisers;
+    
     //!< Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
 
@@ -309,8 +335,14 @@ private:
     //!< Initialisers for post synapse model variables
     std::vector<NewModels::VarInit> m_PSVarInitialisers;
 
-    //!< Whether indidividual state variables of weight update model should use zero-copied memory
+    //!< Whether individual per-synapse state variables of weight update model should use zero-copied memory
     std::vector<VarMode> m_WUVarMode;
+
+    //!< Whether individual presynaptic state variables of weight update model should use zero-copied memory
+    std::vector<VarMode> m_WUPreVarMode;
+
+    //!< Whether individual postsynaptic state variables of weight update model should use zero-copied memory
+    std::vector<VarMode> m_WUPostVarMode;
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
     std::vector<VarMode> m_PSVarMode;
