@@ -553,7 +553,6 @@ def generateConfigs( gennPath ):
                     if is_snippet:
                         nspace_model_name, num_params = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     elif is_new_wum_declaration:
-                        print "NEW WUM"
                         nspace_model_name, num_params, num_vars, num_pre_vars, num_post_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     else:
                         nspace_model_name, num_params, num_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
