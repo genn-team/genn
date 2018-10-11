@@ -416,14 +416,15 @@ def generateConfigs( gennPath ):
     swigPath = os.path.join( gennPath, 'pygenn', 'genn_wrapper', 'generated' )
     includePath = os.path.join( gennPath, 'lib', 'include' )
     
-    '''Generates SWIG interfaces'''
+    # Create output path if it doesn't exist
+    if not os.path.exists(swigPath):
+        os.makedirs(swigPath)
+
+    # Generates SWIG interfaces
     generateStlContainersInterface( swigPath )
     generateCustomModelDeclImpls( swigPath )
     generateSharedLibraryModelInterface( swigPath )
     
-    
-
-
     # open header files with models and instantiate SwigModuleGenerators
     with open( os.path.join( includePath, NEURONMODELS + ".h" ), 'r' ) as neuronModels_h, \
             open( os.path.join( includePath, POSTSYNMODELS + ".h" ), 'r' ) as postsynModels_h, \
