@@ -590,6 +590,8 @@ def generateConfigs( gennPath ):
         pygennSmg.addSwigIgnore( 'GeNNReady' )
         pygennSmg.addSwigIgnore( 'SynapseConnType' )
         pygennSmg.addSwigIgnore( 'SynapseGType' )
+        pygennSmg.addSwigIgnore( 'initConnectivity()' )
+        pygennSmg.addSwigIgnore( 'initVar()' )
         pygennSmg.addSwigInclude( '"' + NNMODEL + '.h"' )
 
         # the next three for-loop create template specializations to add
