@@ -22,19 +22,14 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
     }
 }
 
-void NeuronGroup::updateVarQueues(const string &code)
+void NeuronGroup::updatePreVarQueues(const string &code)
 {
-    // Loop through variables
-    const auto vars = getNeuronModel()->getVars();
-    for(size_t i = 0; i < vars.size(); i++) {
-        const std::string &varName = vars[i].first;
+    updateVarQueues(code, "_pre");
+}
 
-        // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(varName + "_pre") != string::npos) {
-            m_AnyVarQueuesRequired = true;
-            m_VarQueueRequired[i] = true;
-        }
-    }
+void NeuronGroup::updatePostVarQueues(const string &code)
+{
+    updateVarQueues(code, "_post");
 }
 
 void NeuronGroup::setVarMode(const std::string &varName, VarMode mode)
@@ -86,6 +81,74 @@ void NeuronGroup::calcSizes(unsigned int blockSize,  unsigned int &idStart, unsi
     // Store cummulative sums of point after this neuron group
     m_IDRange.second = idStart;
     m_PaddedIDRange.second = paddedIDStart;
+}
+
+void NeuronGroup::mergeIncomingPSM()
+{
+    // Create a copy of this neuron groups incoming synapse populations
+    std::vector<SynapseGroup*> inSyn = getInSyn();
+
+    // Loop through un-merged incoming synapse populations
+    for(unsigned int i = 0; !inSyn.empty(); i++) {
+        // Remove last element from vector
+        SynapseGroup *a = inSyn.back();
+        inSyn.pop_back();
+
+        // Add A to vector of merged incoming synape populations - initially only merged with itself
+        m_MergedInSyn.emplace_back(a, std::vector<SynapseGroup*>{a});
+
+        // Continue if merging of postsynaptic models is disabled
+        if(!GENN_PREFERENCES::mergePostsynapticModels) {
+            continue;
+        }
+
+        // Continue if postsynaptic model has any variables
+        // **NOTE** many models with variables would work fine, but nothing stops 
+        // initialisers being used to configure PS models to behave totally different
+        if(!a->getPSVarInitialisers().empty()) {
+            continue;
+        }
+        
+        // Create a name for mmerged
+        const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
+
+        // Cache useful bits from A
+        const auto &aParamsBegin = a->getPSParams().cbegin();
+        const auto &aParamsEnd = a->getPSParams().cend();
+        const auto &aDerivedParamsBegin = a->getPSDerivedParams().cbegin();
+        const auto &aDerivedParamsEnd = a->getPSDerivedParams().cend();
+        const auto aModelTypeHash = typeid(a->getPSModel()).hash_code();
+
+
+        // Loop through remainder of incoming synapse populations
+        for(auto b = inSyn.begin(); b != inSyn.end();) {
+            // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
+            if(typeid((*b)->getPSModel()).hash_code() == aModelTypeHash
+                && a->getInSynVarMode() == (*b)->getInSynVarMode()
+                && a->getMaxDendriticDelayTimesteps() == (*b)->getMaxDendriticDelayTimesteps()
+                && std::equal(aParamsBegin, aParamsEnd, (*b)->getPSParams().cbegin())
+                && std::equal(aDerivedParamsBegin, aDerivedParamsEnd, (*b)->getPSDerivedParams().cbegin()))
+            {
+                // Add to list of merged synapses
+                m_MergedInSyn.back().second.push_back(*b);
+
+                // Set b's merge target to our unique name
+                (*b)->setPSModelMergeTarget(mergedPSMName);
+
+                // Remove from temporary vector
+                b = inSyn.erase(b);
+            }
+            // Otherwise, advance to next synapse group
+            else {
+                ++b;
+            }
+        }
+
+        // If synapse group A was successfully merged with anything, set it's merge target to the unique name
+        if(m_MergedInSyn.back().second.size() > 1) {
+            a->setPSModelMergeTarget(mergedPSMName);
+        }
+    }
 }
 
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
@@ -228,13 +291,26 @@ bool NeuronGroup::isDeviceVarInitRequired() const
         return true;
     }
 
-    // Return true if any of the incoming synapse groups have state variables or input variables which should be initialised on device
+    // Return true if any of the INCOMING synapse groups have postsynaptic state variables or input variables which should be initialised on device
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
-    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroup *sg)
-                       {
-                           return sg->isPSDeviceVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE) || (sg->getDendriticDelayVarMode() & VarInit::DEVICE);
-                       });
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](const SynapseGroup *sg)
+                   {
+                       return sg->isPSDeviceVarInitRequired() || sg->isWUDevicePostVarInitRequired() || (sg->getInSynVarMode() & VarInit::DEVICE) || (sg->getDendriticDelayVarMode() & VarInit::DEVICE);
+                   }))
+    {
+        return true;
+    }
+
+    // Return true if any of the OUTGOING synapse groups have presynaptic state variables which should be initialised on device
+    // **NOTE** these are included here as they are initialised in neuron initialisation threads
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](const SynapseGroup *sg){ return sg->isWUDevicePreVarInitRequired(); });
+}
+
+bool NeuronGroup::isDeviceInitRequired() const
+{
+    return (isSimRNGRequired() || isDeviceVarInitRequired());
 }
 
 bool NeuronGroup::canRunOnCPU() const
@@ -270,14 +346,35 @@ bool NeuronGroup::hasOutputToHost(int targetHostID) const
 
 }
 
-std::string NeuronGroup::getQueueOffset(const std::string &devPrefix) const
+std::string NeuronGroup::getCurrentQueueOffset(const std::string &devPrefix) const
 {
-    return isDelayRequired()
-        ? "(" + devPrefix + "spkQuePtr" + getName() + " * " + to_string(getNumNeurons()) + ") + "
-        : "";
+    assert(isDelayRequired());
+
+    return "(" + devPrefix + "spkQuePtr" + getName() + " * " + std::to_string(getNumNeurons()) + ")";
+}
+
+std::string NeuronGroup::getPrevQueueOffset(const std::string &devPrefix) const
+{
+    assert(isDelayRequired());
+
+    return "(((" + devPrefix + "spkQuePtr" + getName() + " + " + std::to_string(getNumDelaySlots() - 1) + ") % " + std::to_string(getNumDelaySlots()) + ") * " + std::to_string(getNumNeurons()) + ")";
 }
 
 void NeuronGroup::injectCurrent(CurrentSource *src)
 {
     m_CurrentSources.push_back(src);
+}
+
+void NeuronGroup::updateVarQueues(const string &code, const std::string &suffix)
+{
+    // Loop through variables
+    const auto vars = getNeuronModel()->getVars();
+    for(size_t i = 0; i < vars.size(); i++) {
+        const std::string &varName = vars[i].first;
+
+        // If the code contains a reference to this variable, set corresponding flag
+        if (code.find(varName + suffix) != string::npos) {
+            m_VarQueueRequired[i] = true;
+        }
+    }
 }

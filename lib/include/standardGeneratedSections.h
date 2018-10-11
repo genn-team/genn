@@ -27,7 +27,8 @@ void neuronLocalVarInit(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const std::string &devPrefix,
-    const std::string &localID);
+    const std::string &localID,
+    const std::string &ttype);
 
 void neuronLocalVarWrite(
     CodeStream &os,
@@ -42,7 +43,7 @@ void neuronSpikeEventTest(
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::string &localID,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
 
@@ -51,7 +52,29 @@ void neuronCurrentInjection(
     const NeuronGroup &ng,
     const std::string &devPrefix,
     const std::string &localID,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng);
+
+void neuronCopySpikeTriggeredVars(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID);
+
+void weightUpdatePreSpike(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype);
+
+void weightUpdatePostSpike(
+    CodeStream &os,
+    const NeuronGroup &ng,
+    const std::string &devPrefix,
+    const std::string &localID,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype);
 }   // namespace StandardGeneratedSections

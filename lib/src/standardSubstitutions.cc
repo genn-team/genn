@@ -5,6 +5,34 @@
 #include "modelSpec.h"
 
 //----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+void initVariable(
+    std::string &code,
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+
+    // Substitute the name of the variable we're initialising
+    substitute(code, "$(value)", varName);
+
+    functionSubstitutions(code, ftype, functions);
+    substitute(code, "$(rng)", rng);
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, "initVar");
+}
+}
+
+//----------------------------------------------------------------------------
 // StandardSubstitutions
 //----------------------------------------------------------------------------
 void StandardSubstitutions::postSynapseApplyInput(
@@ -14,7 +42,7 @@ void StandardSubstitutions::postSynapseApplyInput(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -55,7 +83,7 @@ void StandardSubstitutions::postSynapseDecay(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -85,7 +113,7 @@ void StandardSubstitutions::neuronThresholdCondition(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -109,7 +137,7 @@ void StandardSubstitutions::neuronSim(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -132,7 +160,7 @@ void StandardSubstitutions::neuronSpikeEventCondition(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -153,7 +181,7 @@ void StandardSubstitutions::neuronReset(
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
     const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
@@ -179,12 +207,16 @@ void StandardSubstitutions::weightUpdateThresholdCondition(
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
-    const std::string &ftype){
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype,
+    double dt)
+{
     value_substitutions(eCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
-    neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix);
+    neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix, dt);
+    substitute(eCode, "$(id_pre)", preIdx);
+    substitute(eCode, "$(id_post)", postIdx);
 
     functionSubstitutions(eCode, ftype, functions);
     eCode= ensureFtype(eCode, ftype);
@@ -195,13 +227,16 @@ void StandardSubstitutions::weightUpdateSim(
     std::string &wCode,
     const SynapseGroup &sg,
     const VarNameIterCtx &wuVars,
+    const VarNameIterCtx &wuPreVars,
+    const VarNameIterCtx &wuPostVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype,
+    double dt)
 {
      if (sg.getMatrixType() & SynapseMatrixWeight::GLOBAL) {
          value_substitutions(wCode, wuVars.nameBegin, wuVars.nameEnd, sg.getWUConstInitVals());
@@ -210,8 +245,18 @@ void StandardSubstitutions::weightUpdateSim(
     value_substitutions(wCode, sg.getWUModel()->getParamNames(), sg.getWUParams());
     value_substitutions(wCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(wCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
+
+    // Substitute names of pre and postsynaptic weight update variables
+    const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? preIdx : "preReadDelayOffset + " + preIdx;
+    name_substitutions(wCode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg.getName() + "[" + delayedPreIdx + "]");
+
+    const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? postIdx : "postReadDelayOffset + " + postIdx;
+    name_substitutions(wCode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg.getName() + "[" + delayedPostIdx + "]");
+
     substitute(wCode, "$(addtoinSyn)", "addtoinSyn");
-    neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix);
+    neuron_substitutions_in_synaptic_code(wCode, &sg, preIdx, postIdx, devPrefix, dt);
+    substitute(wCode, "$(id_pre)", preIdx);
+    substitute(wCode, "$(id_post)", postIdx);
 
     functionSubstitutions(wCode, ftype, functions);
     wCode= ensureFtype(wCode, ftype);
@@ -222,13 +267,16 @@ void StandardSubstitutions::weightUpdateDynamics(
     std::string &SDcode,
     const SynapseGroup *sg,
     const VarNameIterCtx &wuVars,
+    const VarNameIterCtx &wuPreVars,
+    const VarNameIterCtx &wuPostVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype,
+    double dt)
 {
      if (sg->getMatrixType() & SynapseMatrixWeight::GLOBAL) {
          value_substitutions(SDcode, wuVars.nameBegin, wuVars.nameEnd, sg->getWUConstInitVals());
@@ -237,11 +285,20 @@ void StandardSubstitutions::weightUpdateDynamics(
     // substitute parameter values for parameters in synapseDynamics code
     value_substitutions(SDcode, sg->getWUModel()->getParamNames(), sg->getWUParams());
 
+    // Substitute names of pre and postsynaptic weight update variables
+    const std::string delayedPreIdx = (sg->getDelaySteps() == NO_DELAY) ? preIdx : "preReadDelayOffset + " + preIdx;
+    name_substitutions(SDcode, devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + delayedPreIdx + "]");
+
+    const std::string delayedPostIdx = (sg->getBackPropDelaySteps() == NO_DELAY) ? postIdx : "postReadDelayOffset + " + postIdx;
+    name_substitutions(SDcode, devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + delayedPostIdx + "]");
+
     // substitute values for derived parameters in synapseDynamics code
     value_substitutions(SDcode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(SDcode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
     substitute(SDcode, "$(addtoinSyn)", "addtoinSyn");
-    neuron_substitutions_in_synaptic_code(SDcode, sg, preIdx, postIdx, devPrefix);
+    neuron_substitutions_in_synaptic_code(SDcode, sg, preIdx, postIdx, devPrefix, dt);
+    substitute(SDcode, "$(id_pre)", preIdx);
+    substitute(SDcode, "$(id_post)", postIdx);
 
     functionSubstitutions(SDcode, ftype, functions);
     SDcode= ensureFtype(SDcode, ftype);
@@ -251,48 +308,182 @@ void StandardSubstitutions::weightUpdateDynamics(
 void StandardSubstitutions::weightUpdatePostLearn(
     std::string &code,
     const SynapseGroup *sg,
+    const VarNameIterCtx &wuPreVars,
+    const VarNameIterCtx &wuPostVars,
     const DerivedParamNameIterCtx &wuDerivedParams,
     const ExtraGlobalParamNameIterCtx &wuExtraGlobalParams,
     const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const string &devPrefix,
-    const std::vector<FunctionTemplate> functions,
-    const std::string &ftype)
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype,
+    double dt,
+    const string &preVarPrefix,    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix,    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const string &postVarPrefix,   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix)  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
     value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
+    substitute(code, "$(id_pre)", code);
+    substitute(code, "$(id_post)", code);
+
+    // Substitute names of pre and postsynaptic weight update variables
+    const std::string delayedPreIdx = (sg->getDelaySteps() == NO_DELAY) ? preIdx : "preReadDelayOffset + " + preIdx;
+    name_substitutions(code, preVarPrefix + devPrefix, wuPreVars.nameBegin, wuPreVars.nameEnd, sg->getName() + "[" + delayedPreIdx + "]" + preVarSuffix, "");
+
+    const std::string delayedPostIdx = (sg->getBackPropDelaySteps() == NO_DELAY) ? postIdx : "postReadDelayOffset + " + postIdx;
+    name_substitutions(code, postVarPrefix + devPrefix, wuPostVars.nameBegin, wuPostVars.nameEnd, sg->getName() + "[" + delayedPostIdx + "]" + postVarSuffix, "");
 
     // presynaptic neuron variables and parameters
-    neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix);
+    neuron_substitutions_in_synaptic_code(code, sg, preIdx, postIdx, devPrefix, dt,
+                                          preVarPrefix, preVarSuffix, postVarPrefix, postVarSuffix);
+
 
     functionSubstitutions(code, ftype, functions);
     code= ensureFtype(code, ftype);
     checkUnreplacedVariables(code, sg->getName() + " : simLearnPost");
 }
 
-std::string StandardSubstitutions::initVariable(
+void StandardSubstitutions::weightUpdatePreSpike(
+    std::string &code,
+    const SynapseGroup *sg,
+    const string &preIdx, //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &devPrefix,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype)
+{
+    // Create iteration context to iterate over the weight update model
+    // postsynaptic variables; derived and extra global parameters
+    DerivedParamNameIterCtx wuDerivedParams(sg->getWUModel()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
+    VarNameIterCtx wuPreVars(sg->getWUModel()->getPreVars());
+
+    // Perform standard substitutions
+    substitute(code, "$(t)", "t");
+
+    value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
+    value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
+    name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
+    name_substitutions(code, "l", wuPreVars.nameBegin, wuPreVars.nameEnd, "");
+
+    const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
+    preNeuronSubstitutionsInSynapticCode(code, sg, offset, "", preIdx, devPrefix);
+
+    functionSubstitutions(code, ftype, functions);
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, sg->getName() + " : simCodePreSpike");
+}
+
+void StandardSubstitutions::weightUpdatePostSpike(
+    std::string &code,
+    const SynapseGroup *sg,
+    const string &postIdx, //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype)
+{
+    // Create iteration context to iterate over the weight update model
+    // postsynaptic variables; derived and extra global parameters
+    DerivedParamNameIterCtx wuDerivedParams(sg->getWUModel()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
+    VarNameIterCtx wuPostVars(sg->getWUModel()->getPostVars());
+
+    // Perform standard substitutions
+    substitute(code, "$(t)", "t");
+
+    value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
+    value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
+    name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
+
+    name_substitutions(code, "l", wuPostVars.nameBegin, wuPostVars.nameEnd, "");
+
+    const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
+    postNeuronSubstitutionsInSynapticCode(code, sg, offset, "", postIdx, devPrefix);
+
+    functionSubstitutions(code, ftype, functions);
+    code = ensureFtype(code, ftype);
+    checkUnreplacedVariables(code, sg->getName() + " : simLearnPostSpike");
+}
+
+std::string StandardSubstitutions::initNeuronVariable(
     const NewModels::VarInit &varInit,
     const std::string &varName,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &idx,
     const std::string &ftype,
     const std::string &rng)
 {
     // Get user code string
     std::string code = varInit.getSnippet()->getCode();
 
+    // Substitute in neuron id
+    substitute(code, "$(id)", idx);
+
+    // Substitute in initalisation code
+    initVariable(code, varInit, varName, functions, ftype, rng);
+    return code;
+}
+
+std::string StandardSubstitutions::initWeightUpdateVariable(
+    const NewModels::VarInit &varInit,
+    const std::string &varName,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &preIdx,
+    const std::string &postIdx,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Get user code string
+    std::string code = varInit.getSnippet()->getCode();
+
+    // Substitute in pre and postsynaptic indices
+    substitute(code, "$(id_pre)", preIdx);
+    substitute(code, "$(id_post)", postIdx);
+
+    // Substitute in initalisation code
+    initVariable(code, varInit, varName, functions, ftype, rng);
+    return code;
+}
+
+std::string StandardSubstitutions::initSparseConnectivity(
+    const SynapseGroup &sg,
+    const std::string &addSynapseFunctionTemplate,
+    unsigned int numTrgNeurons,
+    const std::string &preIdx,
+    const std::vector<FunctionTemplate> &functions,
+    const std::string &ftype,
+    const std::string &rng)
+{
+    // Get connection initialiser
+    const auto &connectInit = sg.getConnectivityInitialiser();
+
+    // Get user code string
+    std::string code = connectInit.getSnippet()->getRowBuildCode();
+
+    // Substitute presynaptic index and number of postsynaptic neurons
+    substitute(code, "$(id_pre)", preIdx);
+    substitute(code, "$(num_post)", std::to_string(numTrgNeurons));
+
+    // Replace endRow() with break to stop loop
+    functionSubstitute(code, "endRow", 0, "break");
+
+    // Replace addSynapse(j) with template to increment count var
+    functionSubstitute(code, "addSynapse", 1, addSynapseFunctionTemplate);
+
     // Substitue derived and standard parameters into init code
-    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
-    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
-    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
+    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+    name_substitutions(code, "initSparseConn", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
 
-    // Substitute the name of the variable we're initialising
-    substitute(code, "$(value)", varName);
-
+    // Perform standard substitutions
     functionSubstitutions(code, ftype, functions);
     substitute(code, "$(rng)", rng);
     code = ensureFtype(code, ftype);
-    checkUnreplacedVariables(code, "initVar");
+    checkUnreplacedVariables(code, "initSparseConnectivity");
 
     return code;
 }
@@ -303,7 +494,7 @@ void StandardSubstitutions::currentSourceInjection(
     const VarNameIterCtx &csmVars,
     const DerivedParamNameIterCtx &csmDerivedParams,
     const ExtraGlobalParamNameIterCtx &csmExtraGlobalParams,
-    const std::vector<FunctionTemplate> functions,
+    const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
