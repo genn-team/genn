@@ -14,8 +14,10 @@ private:
     typedef std::vector<NewModels::VarInit> InitialiserArray;
 
 public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<VarInit, 4> can be initialized with <= 4 elements
+    VarValues()
+    {
+    }
+    
     template<typename T>
     VarValues( const std::vector<T> &initialisers ) :
       m_Initialisers(initialisers.begin(), initialisers.end()){}

@@ -5,6 +5,10 @@ namespace CustomValues
 class ParamValues
 {
 public:
+    ParamValues()
+    {
+    }
+    
     ParamValues( const std::vector<double> &vals) : m_Values( vals )
     {
     }
