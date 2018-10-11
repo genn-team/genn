@@ -519,6 +519,8 @@ def generateConfigs( gennPath ):
                                     wUpdateModels_h, currSrcModels_h,
                                     initVarSnippet_h, sparseInitSnippet_h)):
             _, headerFilename = os.path.split( header.name )
+            is_snippet = (mg.name == 'InitVarSnippet' or mg.name == 'InitSparseConnectivitySnippet')
+
             pygennSmg.addSwigImport( '"' + mg.name + '.i"' )
             mg.addAutoGenWarning()
             mg.addSwigModuleHeadline( directors = True )
@@ -526,11 +528,11 @@ def generateConfigs( gennPath ):
                 mg.addCppInclude( '"' + headerFilename + '"' )
                 mg.addCppInclude( '"' + headerFilename.split('.')[0] + 'Custom.h"' )
                 mg.addCppInclude( '"customParamValues.h"' )
-                if mg.name != 'InitVarSnippet':
+                if not is_snippet:
                     mg.addCppInclude( '"initVarSnippetCustom.h"' )
                     mg.addCppInclude( '"customVarValues.h"' )
 
-            if mg.name == 'InitVarSnippet' or mg.name == 'InitSparseConnectivitySnippet':
+            if is_snippet:
                 mg.addSwigImport( '"Snippet.i"' )
             else:
                 mg.addSwigIgnore( 'LegacyWrapper' )
@@ -547,10 +549,8 @@ def generateConfigs( gennPath ):
                 line = line.lstrip()
                 line = line.rstrip()
                 if line.startswith( 'DECLARE_' ) and line.endswith(';'):
-                    is_snippet_declaration = (mg.name == 'InitVarSnippet' or mg.name == 'InitSparseConnectivitySnippet')
                     is_new_wum_declaration = mg.name == 'WeightUpdateModels' and line.startswith('DECLARE_WEIGHT_UPDATE_MODEL')
-
-                    if is_snippet_declaration:
+                    if is_snippet:
                         nspace_model_name, num_params = line.split( '(' )[1].split( ')' )[0].split( ',' )
                     elif is_new_wum_declaration:
                         print "NEW WUM"
@@ -558,7 +558,7 @@ def generateConfigs( gennPath ):
                     else:
                         nspace_model_name, num_params, num_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
 
-                    if mg.name == 'NeuronModels' or is_snippet_declaration:
+                    if mg.name == 'NeuronModels' or is_snippet:
                         model_name = nspace_model_name.split( '::' )[1]
                     else:
                         model_name = nspace_model_name
@@ -568,7 +568,7 @@ def generateConfigs( gennPath ):
                     # add a helper function to create Param- and VarVarlues to each model
                     with SwigExtendScope( mg, mg.name + '::' + model_name ):
                         writeValueMakerFunc( model_name, 'ParamValues', int(num_params), mg )
-                        if not is_snippet_declaration:
+                        if not is_snippet:
                             writeValueMakerFunc( model_name, 'VarValues', int(num_vars), mg )
 
                         if is_new_wum_declaration:
