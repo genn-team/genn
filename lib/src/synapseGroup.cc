@@ -107,6 +107,16 @@ void SynapseGroup::setWUVarMode(const std::string &varName, VarMode mode)
     m_WUVarMode[getWUModel()->getVarIndex(varName)] = mode;
 }
 
+void SynapseGroup::setWUPreVarMode(const std::string &varName, VarMode mode)
+{
+    m_WUPreVarMode[getWUModel()->getPreVarIndex(varName)] = mode;
+}
+
+void SynapseGroup::setWUPostVarMode(const std::string &varName, VarMode mode)
+{
+    m_WUPostVarMode[getWUModel()->getPostVarIndex(varName)] = mode;
+}
+
 void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 {
     m_PSVarMode[getPSModel()->getVarIndex(varName)] = mode;
