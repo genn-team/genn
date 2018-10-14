@@ -69,6 +69,14 @@ public:
     /*! This is ignored for CPU simulations */
     void setWUVarMode(const std::string &varName, VarMode mode);
 
+    //! Set variable mode of weight update model presynaptic state variable
+    /*! This is ignored for CPU simulations */
+    void setWUPreVarMode(const std::string &varName, VarMode mode);
+    
+    //! Set variable mode of weight update model postsynaptic state variable
+    /*! This is ignored for CPU simulations */
+    void setWUPostVarMode(const std::string &varName, VarMode mode);
+    
     //! Set variable mode of postsynaptic model state variable
     /*! This is ignored for CPU simulations */
     void setPSVarMode(const std::string &varName, VarMode mode);
