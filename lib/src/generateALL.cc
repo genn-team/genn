@@ -348,7 +348,10 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 // Run NVCC
                 cout << "dry-run compile for device " << theDevice << endl;
                 cout << nvccCommand << endl;
-                system(nvccCommand.c_str());
+                if(system(nvccCommand.c_str()) != 0) {
+                    cerr << "generateALL: NVCC failed" << endl;
+                    exit(EXIT_FAILURE);
+                }
 
                 CHECK_CU_ERRORS(cuModuleLoad(&module, cubinPath.c_str()));
                 for (int i= 0; i < KernelMax; i++) {
