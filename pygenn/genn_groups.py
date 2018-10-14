@@ -98,7 +98,7 @@ class NeuronGroup( Group ):
         ( self.neuron, self.type, self.paramNames, self.params, self.varNames,
             self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
                                                            varSpace,
-                                                           genn_wrapper.NeuronModels )
+                                                           modelFamily=genn_wrapper.NeuronModels )
         if self.type == 'SpikeSourceArray':
             self.isSpikeSourceArray = True
 
@@ -146,6 +146,8 @@ class SynapseGroup( Group ):
         self.postsyn = None
         self.src = None
         self.trg = None
+        self.preVars = {}
+        self.postVars = {}
     
     @property
     def size( self ):
@@ -160,19 +162,43 @@ class SynapseGroup( Group ):
         if self.sparse:
             self._size = size
 
-    def setWUpdate( self, model, paramSpace, varSpace ):
+    def setPreVar( self, varName, values ):
+        """Set values for a presynaptic variable
+
+        Args:
+        varName -- string with the name of the presynaptic variable
+        values  -- iterable or a single value
+        """
+        self.preVars[varName].setValues( values )
+
+    def setPostVar( self, varName, values ):
+        """Set values for a postsynaptic variable
+
+        Args:
+        varName -- string with the name of the presynaptic variable
+        values  -- iterable or a single value
+        """
+        self.postVars[varName].setValues( values )
+        
+    def setWUpdate( self, model, paramSpace, varSpace, preVarSpace, postVarSpace ):
         """Set weight update model, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        paramSpace -- dict with model parameters
-        varSpace   -- dict with model variables
+        model           -- type as string of intance of the model
+        paramSpace      -- dict with model parameters
+        varSpace        -- dict with model variables
+        preVarSpace     -- dict with model presynaptic variables
+        postVarSpace    -- dict with model postsynaptic variables
         """
-        ( self.wUpdate, self.wuType, self.wuParamNames, self.wuParams, self.wuVarNames,
-            varDict ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                         varSpace,
-                                                         genn_wrapper.WeightUpdateModels )
+        ( self.wUpdate, self.wuType, self.wuParamNames, self.wuParams, 
+         self.wuVarNames, varDict, self.wuPreVarNames, preVarDict,
+         self.wuPostVarNames, postVarDict) =\
+             model_preprocessor.prepareModel( model, paramSpace,
+                                             varSpace, preVarSpace, postVarSpace,
+                                             modelFamily=genn_wrapper.WeightUpdateModels )
         self.vars.update( varDict )
+        self.preVars.update( preVarDict )
+        self.postVars.update( postVarDict )
 
     def setPostsyn( self, model, paramSpace, varSpace ):
         """Set postsynaptic model, its parameters and initial variables
@@ -185,7 +211,7 @@ class SynapseGroup( Group ):
         ( self.postsyn, self.psType, self.psParamNames, self.psParams, self.psVarNames,
             varDict ) = model_preprocessor.prepareModel( model, paramSpace,
                                                          varSpace,
-                                                         genn_wrapper.PostsynapticModels )
+                                                         modelFamily=genn_wrapper.PostsynapticModels )
         self.vars.update( varDict )
 
     @property
@@ -271,18 +297,26 @@ class SynapseGroup( Group ):
 
         wuVarIni = model_preprocessor.varSpaceToVarValues( self.wUpdate,
                 { vn : self.vars[vn] for vn in self.wuVarNames } )
+        wuPreVarIni = model_preprocessor.preVarSpaceToVarValues( self.wUpdate,
+                { vn : self.preVars[vn] for vn in self.wuPreVarNames } )
+        wuPostVarIni = model_preprocessor.varSpaceToPostVarValues( self.wUpdate,
+                { vn : self.postVars[vn] for vn in self.wuPostVarNames } )
         psVarIni = model_preprocessor.varSpaceToVarValues( self.postsyn,
                 { vn : self.vars[vn] for vn in self.psVarNames } )
 
         self.pop = addFct( self.name, self.matrixType, delaySteps,
                            self.src, self.trg,
-                           self.wUpdate, self.wuParams, wuVarIni,
+                           self.wUpdate, self.wuParams, wuVarIni, wuPreVarIni, wuPostVarIni,
                            self.postsyn, self.psParams, psVarIni )
 
         for varName, var in iteritems( self.vars ):
             if var.initRequired:
                 if varName in self.wuVarNames:
                     self.pop.setWUVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+                if varName in self.wuPreVarNames:
+                    self.pop.setWUPreVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+                if varName in self.wuPostVarNames:
+                    self.pop.setWUPostVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
                 if varName in self.psVarNames:
                     self.pop.setPSVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
     
@@ -330,7 +364,7 @@ class CurrentSource( Group ):
         ( self.currentSourceModel, self.type, self.paramNames, self.params, self.varNames,
             self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
                                                            varSpace,
-                                                           genn_wrapper.CurrentSourceModels )
+                                                           modelFamily=genn_wrapper.CurrentSourceModels )
 
     def addTo( self, nnModel, pop ):
         """Inject this CurrentSource into population and add add it to the GeNN NNmodel

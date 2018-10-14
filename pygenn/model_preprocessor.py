@@ -7,20 +7,23 @@ import genn_wrapper
 from genn_wrapper.NewModels import VarInit, VarInitVector
 from genn_wrapper.StlContainers import DoubleVector
 
-def prepareModel( model, paramSpace, varSpace, modelFamily ):
+def prepareModel( model, paramSpace, varSpace, preVarSpace=None, postVarSpace=None, modelFamily=None):
     """Prepare a model by checking its validity and extracting information about variables and parameters
 
     Args:
-    model -- string or instance of a class derived from modelFamily.Custom
-    paramSpace  -- dict with model parameters
-    varSpace    -- dict with model variables
-    modelFamily -- pygenn.NeuronModels or pygenn.WeightUpdateModels or pygenn.CurrentSourceModels
+    model           -- string or instance of a class derived from modelFamily.Custom
+    paramSpace      -- dict with model parameters
+    varSpace        -- dict with model variables
+    preVarSpace     -- optional dict with (weight update) model presynaptic variables
+    postVarSpace    -- optional dict with (weight update) model postsynaptic variables
+    modelFamily     -- genn_wrapper.NeuronModels or genn_wrapper.WeightUpdateModels or genn_wrapper.CurrentSourceModels
 
     Return: tuple consisting of
             0. model instance,
             1. model type,
             2. model parameter names,
             3. model parameters,
+            5. list of variable names
             4. dict mapping names of variables to instances of class Variable.
 
     """
@@ -30,7 +33,19 @@ def prepareModel( model, paramSpace, varSpace, modelFamily ):
     varNames = [vnt[0] for vnt in mInstance.getVars()]
     varDict = { vnt[0] : Variable( vnt[0], vnt[1], varSpace[vnt[0]] )
               for vnt in mInstance.getVars() }
-    return ( mInstance, mType, paramNames, params, varNames, varDict )
+    
+    if modelFamily == genn_wrapper.WeightUpdateModels:
+        preVarNames = [vnt[0] for vnt in mInstance.getPreVars()]
+        preVarDict = { vnt[0] : Variable( vnt[0], vnt[1], varSpace[vnt[0]] )
+                      for vnt in mInstance.getPreVars() }
+        postVarNames = [vnt[0] for vnt in mInstance.getPostVars()]
+        postVarDict = { vnt[0] : Variable( vnt[0], vnt[1], varSpace[vnt[0]] )
+                       for vnt in mInstance.getPostVars() }
+        return ( mInstance, mType, paramNames, params, varNames, varDict,
+                preVarNames, preVarDict, postVarNames, postVarDict)
+    else:
+        return ( mInstance, mType, paramNames, params, varNames, varDict )
+
 
 def isModelValid( model, modelFamily ):
     """Check whether the model is valid, i.e is native or derived from modelFamily.Custom
@@ -86,6 +101,34 @@ def varSpaceToVarValues( model, varSpace ):
     varVals = [varSpace[vnt[0]].initVal for vnt in model.getVars()]
 
     return model.makeVarValues( VarInitVector( varVals ) )
+
+def preVarSpaceToVarValues( model, varSpace ):
+    """Convert a varSpace dict to PreVarValues
+
+    Args:
+    model     -- instance of the weight update model
+    varSpace  -- dict with Variables
+
+    Return:
+    native model's VarValues
+    """
+    varVals = [varSpace[vnt[0]].initVal for vnt in model.getPreVars()]
+
+    return model.makePreVarValues( VarInitVector( varVals ) )
+
+def varSpaceToVarValues( model, varSpace ):
+    """Convert a varSpace dict to PostVarValues
+
+    Args:
+    model     -- instance of the weight update model
+    varSpace  -- dict with Variables
+
+    Return:
+    native model's VarValues
+    """
+    varVals = [varSpace[vnt[0]].initVal for vnt in model.getPostVars()]
+
+    return model.makePostVarValues( VarInitVector( varVals ) )
 
 
 class Variable(object):

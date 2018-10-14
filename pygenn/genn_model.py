@@ -683,6 +683,8 @@ def createCustomWeightUpdateClass(
         className,
         paramNames=None,
         varNameTypes=None,
+        preVarNameTypes=None,
+        postVarNameTypes=None,
         derivedParams=None,
         simCode=None,
         eventCode=None,
@@ -704,17 +706,19 @@ def createCustomWeightUpdateClass(
     sa createCustomInitVarSnippetClass
 
     Args:
-    className     -- name of the new class
+    className           -- name of the new class
 
     Keyword args:
-    paramNames    -- list of strings with param names of the model
-    varNameTypes  -- list of pairs of strings with varible names and types of the model
-    derivedParams -- list of pairs, where the first member is string with name of
-                        the derived parameter and the second MUST be an instance of the class
-                        which inherits from libgenn.Snippet.DerivedParamFunc
-    simCode       -- string with the simulation code
-    eventCode     -- string with the event code
-    learnPostCode -- string with the code to include in learnSynapsePost kernel/function
+    paramNames          -- list of strings with param names of the model
+    varNameTypes        -- list of pairs of strings with variable names and types of the model
+    preVarNameTypes     -- list of pairs of strings with presynaptic variable names and types of the model
+    postVarNameTypes    -- list of pairs of strings with postsynaptic variable names and types of the model
+    derivedParams       -- list of pairs, where the first member is string with name of
+                           the derived parameter and the second MUST be an instance of the class
+                           which inherits from libgenn.Snippet.DerivedParamFunc
+    simCode             -- string with the simulation code
+    eventCode           -- string with the event code
+    learnPostCode       -- string with the code to include in learnSynapsePost kernel/function
     synapseDynamicsCode -- string with the synapse dynamics code
     eventThresholdConditionCode -- string with the event threshold condition code
     simSupportCode -- string with simulation support code
