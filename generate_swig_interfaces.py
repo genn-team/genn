@@ -185,7 +185,7 @@ def writeValueMakerFunc( modelName, valueName, numValues, mg ):
     if numValues == 0:
         vals = ''
     paramType = 'double'
-    if valueName == 'VarValues':
+    if 'VarValues' in valueName:
         paramType = 'NewModels::VarInit'
 
     mg.write( 'static {0}::{1}::{2}* make{2}( const std::vector<{3}> & {4} )'.format(
