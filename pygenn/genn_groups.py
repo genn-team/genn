@@ -299,7 +299,7 @@ class SynapseGroup( Group ):
                 { vn : self.vars[vn] for vn in self.wuVarNames } )
         wuPreVarIni = model_preprocessor.preVarSpaceToVarValues( self.wUpdate,
                 { vn : self.preVars[vn] for vn in self.wuPreVarNames } )
-        wuPostVarIni = model_preprocessor.varSpaceToPostVarValues( self.wUpdate,
+        wuPostVarIni = model_preprocessor.postVarSpaceToVarValues( self.wUpdate,
                 { vn : self.postVars[vn] for vn in self.wuPostVarNames } )
         psVarIni = model_preprocessor.varSpaceToVarValues( self.postsyn,
                 { vn : self.vars[vn] for vn in self.psVarNames } )

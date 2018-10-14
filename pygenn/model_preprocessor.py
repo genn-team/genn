@@ -116,7 +116,7 @@ def preVarSpaceToVarValues( model, varSpace ):
 
     return model.makePreVarValues( VarInitVector( varVals ) )
 
-def varSpaceToVarValues( model, varSpace ):
+def postVarSpaceToVarValues( model, varSpace ):
     """Convert a varSpace dict to PostVarValues
 
     Args:

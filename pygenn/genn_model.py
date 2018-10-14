@@ -160,7 +160,7 @@ class GeNNModel( object ):
         
     def addSynapsePopulation( self, popName, matrixType, delaySteps,
                               source, target,
-                              wUpdateModel, wuParamSpace, wuVarSpace,
+                              wUpdateModel, wuParamSpace, wuVarSpace, wuPreVarSpace, wuPostVarSpace,
                               postsynModel, psParamSpace, psVarSpace ):
         """Add a synapse population to the GeNN model
 
@@ -192,7 +192,7 @@ class GeNNModel( object ):
         sGroup.setConnectedPopulations(
                 source, self.neuronPopulations[source].size,
                 target, self.neuronPopulations[target].size )
-        sGroup.setWUpdate( wUpdateModel, wuParamSpace, wuVarSpace )
+        sGroup.setWUpdate( wUpdateModel, wuParamSpace, wuVarSpace, wuPreVarSpace, wuPostVarSpace )
         sGroup.setPostsyn( postsynModel, psParamSpace, psVarSpace )
         sGroup.addTo( self._model, delaySteps )
 
@@ -691,6 +691,8 @@ def createCustomWeightUpdateClass(
         learnPostCode=None,
         synapseDynamicsCode=None,
         eventThresholdConditionCode=None,
+        preSpikeCode=None,
+        postSpikeCode=None,
         simSupportCode=None,
         learnPostSupportCode=None,
         synapseDynamicsSuppportCode=None,
@@ -721,6 +723,8 @@ def createCustomWeightUpdateClass(
     learnPostCode       -- string with the code to include in learnSynapsePost kernel/function
     synapseDynamicsCode -- string with the synapse dynamics code
     eventThresholdConditionCode -- string with the event threshold condition code
+    preSpikeCode                -- string with the code run once per spiking presynaptic neuron
+    postSpikeCode               -- string with the code run once per spiking postsynaptic neuron
     simSupportCode -- string with simulation support code
     learnPostSupportCode -- string with support code for learnSynapsePost kernel/function
     synapseDynamicsSuppportCode -- string with synapse dynamics support code
@@ -750,6 +754,12 @@ def createCustomWeightUpdateClass(
     if eventThresholdConditionCode is not None:
         body['getEventThresholdConditionCode'] = lambda self: eventThresholdConditionCode
 
+    if preSpikeCode is not None:
+        body['getPreSpikeCode'] = lambda self: preSpikeCode
+    
+    if postSpikeCode is not None:
+        body['getPostSpikeCode'] = lambda self: postSpikeCode
+    
     if simSupportCode is not None:
         body['getSimSupportCode'] = lambda self: simSupportCode
 
@@ -763,6 +773,14 @@ def createCustomWeightUpdateClass(
         body['getExtraGlobalParams'] = lambda self: genn_wrapper.StlContainers.StringPairVector(
                 [genn_wrapper.StlContainers.StringPair( egp[0], egp[1] ) for egp in extraGlobalParams] )
 
+    if preVarNameTypes is not None:
+        body['getPreVars'] = lambda self: genn_wrapper.StlContainers.StringPairVector( [genn_wrapper.StlContainers.StringPair( vn[0], vn[1] ) 
+                                                                                        for vn in preVarNameTypes] )
+    
+    if postVarNameTypes is not None:
+        body['getPostVars'] = lambda self: genn_wrapper.StlContainers.StringPairVector( [genn_wrapper.StlContainers.StringPair( vn[0], vn[1] ) 
+                                                                                        for vn in postVarNameTypes] )
+    
     if isPreSpikeTimeRequired is not None:
         body['isPreSpikeTimeRequired'] = lambda self: isPreSpikeTimeRequired
 
@@ -874,7 +892,6 @@ def createCustomModelClass(
         body['getVars'] = lambda self: genn_wrapper.StlContainers.StringPairVector( [genn_wrapper.StlContainers.StringPair( vn[0], vn[1] ) for vn in varNameTypes] )
 
     if derivedParams is not None:
-        
         body['getDerivedParams'] = lambda self: genn_wrapper.StlContainers.StringDPFPairVector(
                 [genn_wrapper.StlContainers.StringDPFPair( dp[0], genn_wrapper.Snippet.makeDPF( dp[1] ) )
                     for dp in derivedParams] )
