@@ -575,6 +575,25 @@ def generateConfigs( gennPath ):
                             writeValueMakerFunc( model_name, 'PreVarValues', int(num_pre_vars), mg )
                             writeValueMakerFunc( model_name, 'PostVarValues', int(num_post_vars), mg )
 
+        # Add wrapper around InitSparseConnectivitySnippet::Base::CalcMaxLengthFunc
+        iniSparseSmg.write('''
+            %feature("director") CalcMaxLengthFunc;
+            %rename(__call__) CalcMaxLengthFunc::operator();
+            %inline %{
+            struct CalcMaxLengthFunc {
+            virtual unsigned int operator()( unsigned int, unsigned int, const std::vector<double> & pars ) const = 0;
+            virtual ~CalcMaxLengthFunc() {}
+            };
+            %}
+
+            // helper function to convert CalcMaxLengthFunc to std::function
+            %inline %{
+            std::function<unsigned int( unsigned int, unsigned int, const std::vector<double> &, double )> makeCMLF( CalcMaxLengthFunc* cmlf )
+            {
+            return std::bind( &CalcMaxLengthFunc::operator(), cmlf, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 );
+            }
+            %}''')
+
         # wrap NeuronGroup, SynapseGroup and CurrentSource
         pygennSmg.addSwigInclude( '"neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"synapseGroup.h"' )
