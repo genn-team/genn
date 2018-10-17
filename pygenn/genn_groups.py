@@ -285,7 +285,7 @@ class SynapseGroup( Group ):
         self.src_size = src_size
         self.trg_size = trg_size
 
-    def addTo( self, nnModel, delaySteps ):
+    def addTo( self, nnModel, delaySteps, connectivityInitialiser ):
         """Add this SynapseGroup to the GeNN NNmodel
 
         Args:
@@ -307,7 +307,7 @@ class SynapseGroup( Group ):
         self.pop = addFct( self.name, self.matrixType, delaySteps,
                            self.src, self.trg,
                            self.wUpdate, self.wuParams, wuVarIni, wuPreVarIni, wuPostVarIni,
-                           self.postsyn, self.psParams, psVarIni )
+                           self.postsyn, self.psParams, psVarIni, connectivityInitialiser )
 
         for varName, var in iteritems( self.vars ):
             if var.initRequired:

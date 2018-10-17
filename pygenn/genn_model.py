@@ -47,7 +47,10 @@ from six import iteritems
 # pygenn imports
 import genn_wrapper
 import genn_wrapper.SharedLibraryModel as slm
+from genn_wrapper.NewModels import VarInit
+from genn_wrapper.InitSparseConnectivitySnippet import Init
 from genn_groups import NeuronGroup, SynapseGroup, CurrentSource
+from model_preprocessor import prepareSnippet
 
 class GeNNModel( object ):
 
@@ -161,7 +164,8 @@ class GeNNModel( object ):
     def addSynapsePopulation( self, popName, matrixType, delaySteps,
                               source, target,
                               wUpdateModel, wuParamSpace, wuVarSpace, wuPreVarSpace, wuPostVarSpace,
-                              postsynModel, psParamSpace, psVarSpace ):
+                              postsynModel, psParamSpace, psVarSpace,
+                              connectivityInitialiser=genn_wrapper.uninitialisedConnectivity()):
         """Add a synapse population to the GeNN model
 
         Args:
@@ -180,6 +184,7 @@ class GeNNModel( object ):
                             sa createCustomPostsynapticClass
         postsynParamValues   -- dict with param values for the PostsynapticModels class
         postsynInitVarValues -- dict with initial variable values for the PostsynapticModels class
+        connectivityInitialiser -- InitSparseConnectivitySnippet::Init for connectivity
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -194,7 +199,7 @@ class GeNNModel( object ):
                 target, self.neuronPopulations[target].size )
         sGroup.setWUpdate( wUpdateModel, wuParamSpace, wuVarSpace, wuPreVarSpace, wuPostVarSpace )
         sGroup.setPostsyn( postsynModel, psParamSpace, psVarSpace )
-        sGroup.addTo( self._model, delaySteps )
+        sGroup.addTo( self._model, delaySteps, connectivityInitialiser )
 
         self.synapsePopulations[popName] = sGroup
 
@@ -542,6 +547,39 @@ class GeNNModel( object ):
                         self._slm.freeExtraGlobalParam( groupName, egpName )
         # "normal" variables are freed when SharedLibraryModel is destoyed
 
+def initVar(initVarSnippet, paramSpace):
+    """This helper function creates a VarInit object
+    to easily initialise a variable using a snippet.
+
+    Args:
+    initVarSnippet --   type of the InitVarSnippet class as string or instance of class
+                        derived from InitVarSnippet::Custom class.
+    paramSpace --       dict with param values for the InitVarSnippet class
+    """
+    # Prepare snippet
+    (sInstance, sType, paramNames, params) =\
+        prepareSnippet(initVarSnippet, paramSpace,
+                       genn_wrapper.InitVarSnippet)
+
+    # Use add function to create suitable VarInit
+    return VarInit(sInstance, params)
+
+def initConnectivity(initSparseConnectivitySnippet, paramSpace):
+    """This helper function creates a InitSparseConnectivitySnippet::Init object
+    to easily initialise connectivity using a snippet.
+
+    Args:
+    initSparseConnectivitySnippet --    type of the InitSparseConnectivitySnippet class as string or instance of class
+                                        derived from InitSparseConnectivitySnippet::Custom class.
+    paramSpace --                       dict with param values for the InitSparseConnectivitySnippet class
+    """
+    # Prepare snippet
+    (sInstance, sType, paramNames, params) =\
+        prepareSnippet(initSparseConnectivitySnippet, paramSpace,
+                       genn_wrapper.InitSparseConnectivitySnippet)
+
+    # Use add function to create suitable VarInit
+    return Init(sInstance, params)
 
 def createCustomNeuronClass( 
         className,
@@ -920,6 +958,25 @@ def createDPFClass( dpfunc ):
     return type( '', ( genn_wrapper.Snippet.DerivedParamFunc, ), {'__init__' : ctor, '__call__' : call} )
 
 
+def createCMLFClass( cmlfFunc ):
+
+    """Helper function to create function class for calculating sizes of
+    matrices initialised with sparse connectivity initialisation snippet
+
+    Args:
+    cmlfFunc -- a function which computes the length and takes
+                three args "numPre" (unsigned int), "numPost" (unsigned int)
+                and "pars" (vector of double)
+    """
+
+    def ctor( self ):
+        genn_wrapper.InitSparseConnectivitySnippet.CalcMaxLengthFunc.__init__( self )
+
+    def call( self, numPre, numPost, pars ):
+        return cmlfFunc( numPre, numPost, pars, dt )
+
+    return type( '', ( genn_wrapper.InitSparseConnectivitySnippet.CalcMaxLengthFunc, ), {'__init__' : ctor, '__call__' : call} )
+
 def createCustomInitVarSnippetClass(
         className,
         paramNames=None,
@@ -928,8 +985,6 @@ def createCustomInitVarSnippetClass(
         custom_body=None ):
     """This helper function creates a custom InitVarSnippet class.
 
-    This part is common for all model classes and is nearly useless on its own
-    unless you specify custom_body.
     sa createCustomNeuronClass
     sa createCustomWeightUpdateClass
     sa createCustomPostsynapticClass
@@ -944,8 +999,6 @@ def createCustomInitVarSnippetClass(
                         the derived parameter and the second MUST be an instance of the class
                         which inherits from libgenn.Snippet.DerivedParamFunc
     varInitcode       -- string with the variable initialization code
-    extraGlobalParams -- list of pairs of strings with names and types of additional parameters
-
     custom_body       -- dictionary with additional attributes and methods of the new class
     """
 
@@ -956,6 +1009,76 @@ def createCustomInitVarSnippetClass(
 
     if getCode is not None:
         body['getCode'] = lambda self: varInitCode
+
+    if custom_body is not None:
+        body.update( custom_body )
+
+    return createCustomModelClass(
+            className,
+            genn_wrapper.InitVarSnippet.Custom,
+            paramNames,
+            None,
+            derivedParams,
+            body )
+
+def createCustomSparseConnectInitSnippetClass(
+        className,
+        paramNames=None,
+        derivedParams=None,
+        rowBuildCode=None,
+        rowBuildStateVars=None,
+        calcMaxRowLengthFunc=None,
+        calcMaxColLengthFunc=None,
+        extraGlobalParams=None,
+        custom_body=None ):
+    """This helper function creates a custom InitSparseConnectivitySnippet class.
+
+    sa createCustomNeuronClass
+    sa createCustomWeightUpdateClass
+    sa createCustomPostsynapticClass
+    sa createCustomCurrentSourceClass
+
+    Args:
+    className     -- name of the new class
+
+    Keyword args:
+    paramNames    -- list of strings with param names of the model
+    derivedParams -- list of pairs, where the first member is string with name of
+                        the derived parameter and the second MUST be an instance of the class
+                        which inherits from libgenn.Snippet.DerivedParamFunc
+    rowBuildCode      -- string with the row building initialization code
+    rowBuildStateVars -- list of tuples of state variables, their types and
+                         their initial values to use across row building loop
+    extraGlobalParams -- list of pairs of strings with names and types of additional parameters
+
+    custom_body       -- dictionary with additional attributes and methods of the new class
+    """
+
+    if not isinstance( custom_body, dict ) and custom_body is not None:
+        raise ValueError( "custom_body must be an instance of dict or None" )
+
+    body = {}
+
+    if rowBuildCode is not None:
+        body['getRowBuildCode'] = lambda self: rowBuildCode
+
+    if rowBuildStateVars is not None:
+        body['getRowBuildStateVars'] =\
+            lambda self: genn_wrapper.StlContainers.StringStringDoublePairPairVector(
+                [genn_wrapper.StlContainers.StringStringDoublePairPair( r[0], genn_wrapper.StlContainers.StringDoublePair(r[1], r[2]))
+                 for r in rowBuildStateVars] )
+
+    if calcMaxRowLengthFunc is not None:
+        body["getCalcMaxRowLengthFunc"] = lambda self: genn_wrapper.InitSparseConnectivitySnippet.makeCMLF(calcMaxRowLengthFunc)
+
+    if calcMaxColLengthFunc is not None:
+        body["getCalcMaxColLengthFunc"] = lambda self: genn_wrapper.InitSparseConnectivitySnippet.makeCMLF(calcMaxColLengthFunc)
+
+    if extraGlobalParams is not None:
+        body['getExtraGlobalParams'] =\
+            lambda self: genn_wrapper.StlContainers.StringPairVector(
+                [genn_wrapper.StlContainers.StringStringDoublePairPair( egp[0], egp[1] )
+                 for egp in extraGlobalParams] )
 
     if custom_body is not None:
         body.update( custom_body )

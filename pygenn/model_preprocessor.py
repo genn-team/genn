@@ -47,6 +47,27 @@ def prepareModel( model, paramSpace, varSpace, preVarSpace=None, postVarSpace=No
         return ( mInstance, mType, paramNames, params, varNames, varDict )
 
 
+def prepareSnippet(snippet, paramSpace, snippetFamily):
+    """Prepare a snippet by checking its validity and extracting information about parameters
+
+    Args:
+    snippet         -- string or instance of a class derived from snippetFamily.Custom
+    paramSpace      -- dict with model parameters
+    snippetFamily   -- genn_wrapper.InitVarSnippet or genn_wrapper.InitSparseConnectivitySnippet
+
+    Return: tuple consisting of
+            0. snippet instance,
+            1. snippet type,
+            2. snippet parameter names,
+            3. snippet parameters
+    """
+    sInstance, sType = isModelValid( snippet, snippetFamily )
+    paramNames = list( sInstance.getParamNames() )
+    params = parameterSpaceToDoubleVector( sInstance, paramSpace )
+
+    return (sInstance, sType, paramNames, params)
+
+
 def isModelValid( model, modelFamily ):
     """Check whether the model is valid, i.e is native or derived from modelFamily.Custom
     Args:
@@ -84,9 +105,21 @@ def parameterSpaceToParamValues( model, paramSpace ):
     Return:
     native model's ParamValues
     """
+    return model.makeParamValues(parameterSpaceToDoubleVector(model, paramSpace))
+
+def parameterSpaceToDoubleVector( model, paramSpace ):
+    """Convert a paramSpace dict to a std::vector<double>
+
+    Args:
+    model     -- instance of the model
+    paramSpace -- dict with parameters
+
+    Return:
+    native vector of parameters
+    """
     paramVals = [paramSpace[pn] for pn in model.getParamNames()]
 
-    return model.makeParamValues( DoubleVector( paramVals ) )
+    return DoubleVector(paramVals)
 
 def varSpaceToVarValues( model, varSpace ):
     """Convert a varSpace dict to VarValues
@@ -143,7 +176,7 @@ class Variable(object):
         variableType -- string type of the variable
 
         Keyword args:
-        values       -- iterable or sigle value.
+        values       -- iterable, single value or VarInit instance
         """
         self.name = variableName
         self.type = variableType
@@ -151,37 +184,30 @@ class Variable(object):
         self.needsAllocation = False
         self.setValues( values )
 
-    def setInitVar( self, initVarSnippet, paramSpace ):
-        """Set variable initialization using InitVarSnippet
-
-        Args:
-        initVarSnippet -- type as string or instance of a class derived from InitVarSnippet.Custom
-        paramSpace     -- dict mapping parameter names to their values for InitVarSnippet
-        """
-        ivsInst, ivsType = isModelValid( initVarSnippet, genn_wrapper.InitVarSnippet )
-        params = parameterSpaceToParamValues( ivsInst, paramSpace )
-        initFct = getattr( genn_wrapper, 'initVar_' + ivsType )
-        self.initVal = initFct( params )
-
-    def setValues( self, values, initVar=None ):
+    def setValues( self, values ):
         """Set Variable's values
 
         Args:
-        values -- iterable or single value or parameter space is initVar is specified
+        values -- iterable, single value or VarInit instance
 
-        Keyword args:
-        initVar -- type as string or instance of a class derived from InitVarSnippet.Custom
         """
+        # By default variable doesn't need initialising
         self.initRequired = False
-        if initVar is not None:
-            self.setInitVar( initVar, values )
+
+        # If an var initialiser is specified, set it directly
+        if isinstance(values, VarInit):
+            self.initVal = values
+        # If no values are specified - mark as uninitialised
         elif values is None:
             self.initVal = genn_wrapper.uninitialisedVar()
+        # Otherwise
         else:
+            # Try and iterate values - if they are iterable they must be loaded at simulate time
             try:
                 iter( values )
                 self.initVal = genn_wrapper.uninitialisedVar()
                 self.values = list( values )
                 self.initRequired = True
+            # Otherwise - they can be initialised on device as a scalar
             except TypeError:
                 self.initVal = VarInit( values )
