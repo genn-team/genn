@@ -15,6 +15,7 @@
 %{
 #include "global.h"
 %}
+%rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
 
 // ignore other global variables so that they are not wrapped as GeNNPreferences
 %ignore GENN_FLAGS;

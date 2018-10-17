@@ -161,6 +161,9 @@ class SwigModuleGenerator( object ):
         '''Adds a line instructing SWIG to unignore everything'''
         self.addSwigRename( '""', '"%s"', '// unignore all' )
 
+    def addSwigEnableUnderCaseConvert( self ):
+        self.addSwigRename('""', '"%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="assignExternalPointer[a-zA-Z]*"', '// Enable conversion to under_case')
+
     def addSwigTemplate( self, tSpec, newName ):
         '''Adds a template specification tSpec and renames it as newName'''
         self.write( '%template({}) {};\n'.format( newName, tSpec ) )
@@ -307,13 +310,14 @@ def generateSharedLibraryModelInterface( swigPath ):
         mg.write( generateNumpyApplyInArray1D( 'double*', '_g', 'nG' ) )
         mg.write( generateNumpyApplyInArray1D( 'float*', '_g', 'nG' ) )
 
+        mg.addSwigEnableUnderCaseConvert()
         mg.addSwigInclude( '"SharedLibraryModel.h"' )
         for dtShort, dataType in zip( [ "".join([dt_[0] for dt_ in dt.split()]) for dt in npDTypes],
                 npDTypes ):
             mg.addSwigTemplate( 'SharedLibraryModel::assignExternalPointerArray<{}>'.format( dataType ),
-                'assignExternalPointerArray_' + dtShort )
+                'assign_external_pointer_array_' + dtShort )
             mg.addSwigTemplate( 'SharedLibraryModel::assignExternalPointerSingle<{}>'.format( dataType ),
-                'assignExternalPointerSingle_' + dtShort )
+                'assign_external_pointer_single_' + dtShort )
 
         for dtShort, dataType in zip( ('f', 'd', 'ld'), ('float', 'double', 'long double') ):
             mg.addSwigTemplate( 'SharedLibraryModel<{}>'.format( dataType ),
@@ -595,6 +599,8 @@ def generateConfigs( gennPath ):
             %}''')
 
         # wrap NeuronGroup, SynapseGroup and CurrentSource
+        pygennSmg.addSwigEnableUnderCaseConvert()
+
         pygennSmg.addSwigInclude( '"neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"synapseGroup.h"' )
         pygennSmg.addSwigInclude( '"currentSource.h"' )
@@ -605,12 +611,14 @@ def generateConfigs( gennPath ):
 
         # wrap modelSpec.h
         # initGeNN is called in the initialization block so no need to wrap it
-        pygennSmg.addSwigIgnore( 'initGeNN' )
+        pygennSmg.addSwigIgnore( 'init_geNN' )
         pygennSmg.addSwigIgnore( 'GeNNReady' )
         pygennSmg.addSwigIgnore( 'SynapseConnType' )
         pygennSmg.addSwigIgnore( 'SynapseGType' )
-        pygennSmg.addSwigIgnore( 'initConnectivity()' )
-        pygennSmg.addSwigIgnore( 'initVar()' )
+        pygennSmg.addSwigIgnore( 'init_connectivity()' )
+        pygennSmg.addSwigIgnore( 'init_var()' )
+
+
         pygennSmg.addSwigInclude( '"' + NNMODEL + '.h"' )
 
         # the next three for-loop create template specializations to add
@@ -618,7 +626,7 @@ def generateConfigs( gennPath ):
         for n_model in mgs[0].models:
             pygennSmg.addSwigTemplate(
                 'NNmodel::addNeuronPopulation<{}::{}>'.format( mgs[0].name, n_model ),
-                'addNeuronPopulation_{}'.format( n_model ) )
+                'add_neuron_population_{}'.format( n_model ) )
 
         for ps_model in mgs[1].models:
             for wu_model in mgs[2].models:
@@ -626,25 +634,13 @@ def generateConfigs( gennPath ):
                 pygennSmg.addSwigTemplate(
                     'NNmodel::addSynapsePopulation<{}::{}, {}::{}>'.format(
                         mgs[2].name, wu_model, mgs[1].name, ps_model ),
-                    'addSynapsePopulation_{}_{}'.format( wu_model, ps_model ) )
+                    'add_synapse_population_{}_{}'.format( wu_model, ps_model ) )
 
         for cs_model in mgs[3].models:
             pygennSmg.addSwigTemplate(
                 'NNmodel::addCurrentSource<{}::{}>'.format( mgs[3].name, cs_model ),
-                'addCurrentSource_{}'.format( cs_model ) )
+                'add_current_source_{}'.format( cs_model ) )
 
-        # creates template specializations for initVar function
-        for ivsnippet in mgs[4].models:
-            pygennSmg.addSwigTemplate(
-                'initVar<{}::{}>'.format( mgs[4].name, ivsnippet ),
-                'initVar_{}'.format( ivsnippet ) )
-
-        # creates template specializations for initConnectivity function
-        for icsnippet in mgs[5].models:
-            pygennSmg.addSwigTemplate(
-                'initConnectivity<{}::{}>'.format( mgs[5].name, icsnippet ),
-                'initConnectivity_{}'.format( icsnippet ) )
-            
         pygennSmg.write( '\n// wrap variables from global.h. Note that GENN_PREFERENCES is\n' )
         pygennSmg.write( '// already covered in the GeNNPreferences.i interface\n' )
         pygennSmg.addSwigIgnore( 'GENN_PREFERENCES' )
