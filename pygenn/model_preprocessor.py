@@ -29,19 +29,19 @@ def prepare_model(model, param_space, var_space, pre_var_space=None, post_var_sp
 
     """
     m_instance, m_type = is_model_valid(model, model_family)
-    param_names = list(m_instance.getParamNames())
+    param_names = list(m_instance.get_param_names())
     params = param_space_to_vals(m_instance, param_space)
-    var_names = [vnt[0] for vnt in m_instance.getVars()]
+    var_names = [vnt[0] for vnt in m_instance.get_vars()]
     var_dict = {vnt[0] : Variable(vnt[0], vnt[1], var_space[vnt[0]])
-              for vnt in m_instance.getVars()}
+              for vnt in m_instance.get_vars()}
     
     if model_family == genn_wrapper.WeightUpdateModels:
-        pre_var_names = [vnt[0] for vnt in m_instance.getPreVars()]
+        pre_var_names = [vnt[0] for vnt in m_instance.get_pre_vars()]
         pre_var_dict = {vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
-                      for vnt in m_instance.getPreVars()}
-        post_var_names = [vnt[0] for vnt in m_instance.getPostVars()]
+                      for vnt in m_instance.get_pre_vars()}
+        post_var_names = [vnt[0] for vnt in m_instance.get_post_vars()]
         post_var_dict = {vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
-                       for vnt in m_instance.getPostVars()}
+                       for vnt in m_instance.get_post_vars()}
         return (m_instance, m_type, param_names, params, var_names, var_dict,
                 pre_var_names, pre_var_dict, post_var_names, post_var_dict)
     else:
@@ -63,7 +63,7 @@ def prepare_snippet(snippet, param_space, snippet_family):
             3. snippet parameters
     """
     s_instance, s_type = is_model_valid(snippet, snippet_family)
-    param_names = list(s_instance.getParamNames())
+    param_names = list(s_instance.get_param_names())
     params = param_space_to_val_vec(s_instance, param_space)
 
     return (s_instance, s_type, param_names, params)
@@ -93,7 +93,7 @@ def is_model_valid(model, model_family):
         if not hasattr(model_family, model_type):
             raise ValueError("model '{0}' is not supported".format(model_type))
         else:
-            model = getattr(model_family, model_type).getInstance()
+            model = getattr(model_family, model_type).get_instance()
     return model, model_type
 
 def param_space_to_vals(model, param_space):
@@ -106,7 +106,7 @@ def param_space_to_vals(model, param_space):
     Return:
     native model's ParamValues
     """
-    return model.makeParamValues(param_space_to_val_vec(model, param_space))
+    return model.make_param_values(param_space_to_val_vec(model, param_space))
 
 def param_space_to_val_vec(model, param_space):
     """Convert a param_space dict to a std::vector<double>
@@ -118,7 +118,7 @@ def param_space_to_val_vec(model, param_space):
     Return:
     native vector of parameters
     """
-    return DoubleVector([param_space[pn] for pn in model.getParamNames()])
+    return DoubleVector([param_space[pn] for pn in model.get_param_names()])
 
 def var_space_to_vals(model, var_space):
     """Convert a var_space dict to VarValues
@@ -130,8 +130,8 @@ def var_space_to_vals(model, var_space):
     Return:
     native model's VarValues
     """
-    return model.makeVarValues(
-        VarInitVector([var_space[vnt[0]].init_val for vnt in model.getVars()]))
+    return model.make_var_values(
+        VarInitVector([var_space[vnt[0]].init_val for vnt in model.get_vars()]))
 
 def pre_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PreVarValues
@@ -143,8 +143,8 @@ def pre_var_space_to_vals(model, var_space):
     Return:
     native model's VarValues
     """
-    return model.makePreVarValues(
-        VarInitVector([var_space[vnt[0]].init_val for vnt in model.getPreVars()]))
+    return model.make_pre_var_values(
+        VarInitVector([var_space[vnt[0]].init_val for vnt in model.get_pre_vars()]))
 
 def post_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PostVarValues
@@ -156,8 +156,8 @@ def post_var_space_to_vals(model, var_space):
     Return:
     native model's VarValues
     """
-    return model.makePostVarValues(
-        VarInitVector([var_space[vnt[0]].init_val for vnt in model.getPostVars()]))
+    return model.make_post_var_values(
+        VarInitVector([var_space[vnt[0]].init_val for vnt in model.get_post_vars()]))
 
 
 class Variable(object):
@@ -195,13 +195,13 @@ class Variable(object):
             self.init_val = values
         # If no values are specified - mark as uninitialised
         elif values is None:
-            self.init_val = genn_wrapper.uninitialisedVar()
+            self.init_val = genn_wrapper.uninitialised_var()
         # Otherwise
         else:
             # Try and iterate values - if they are iterable they must be loaded at simulate time
             try:
                 iter(values)
-                self.init_val = genn_wrapper.uninitialisedVar()
+                self.init_val = genn_wrapper.uninitialised_var()
                 self.values = list(values)
                 self.init_required = True
             # Otherwise - they can be initialised on device as a scalar

@@ -41,7 +41,7 @@ class Group(object):
         model       -- instance of the model
         auto_alloc   -- boolean whether the extra global parameter should be allocated. Defaults to true.
         """
-        pnt = list(model.getExtraGlobalParams())
+        pnt = list(model.get_extra_global_params())
         param_type = None
         for pn, pt in pnt:
             if pn == param_name:
@@ -82,11 +82,11 @@ class NeuronGroup(Group):
     @property
     def delay_slots(self):
         """Maximum delay steps needed for this group"""
-        return self.pop.getNumDelaySlots()
+        return self.pop.get_num_delay_slots()
 
     @property
     def size(self):
-        return self.pop.getNumNeurons()
+        return self.pop.get_num_neurons()
 
     def set_neuron(self, model, param_space, var_space):
         """Set neuron, its parameters and initial variables
@@ -109,14 +109,14 @@ class NeuronGroup(Group):
         nn_model    -- GeNN NNmodel
         num_neurons -- int number of neurons
         """
-        add_fct = getattr(nn_model, "addNeuronPopulation_" + self.type)
+        add_fct = getattr(nn_model, "add_neuron_population_" + self.type)
 
         var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
         self.pop = add_fct(self.name, num_neurons, self.neuron, self.params, var_ini)
 
         for var_name, var in iteritems(self.vars):
             if var.init_required:
-                self.pop.setVarMode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                self.pop.set_var_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
@@ -168,7 +168,7 @@ class SynapseGroup(Group):
         var_name -- string with the name of the presynaptic variable
         values  -- iterable or a single value
         """
-        self.preVars[var_name].set_values(values)
+        self.pre_vars[var_name].set_values(values)
 
     def set_post_var(self, var_name, values):
         """Set values for a postsynaptic variable
@@ -177,7 +177,7 @@ class SynapseGroup(Group):
         var_name -- string with the name of the presynaptic variable
         values  -- iterable or a single value
         """
-        self.postVars[var_name].set_values(values)
+        self.post_vars[var_name].set_values(values)
         
     def set_weight_update(self, model, param_space, var_space, pre_var_space, post_var_space):
         """Set weight update model, its parameters and initial variables
@@ -267,7 +267,7 @@ class SynapseGroup(Group):
 
         if not self.globalG:
             self.vars["g"].set_values(g)
-            self.pop.setWUVarMode("g", genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+            self.pop.set_wuvar_mode("g", genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
         self.connections_set = True
         
@@ -293,7 +293,7 @@ class SynapseGroup(Group):
         nn_model -- GeNN NNmodel
         """
         add_fct = getattr(nn_model,
-                         ("addSynapsePopulation_" + self.wu_type + "_" + self.ps_type))
+                         ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
 
         wu_var_ini = model_preprocessor.var_space_to_vals(self.w_update,
                 {vn : self.vars[vn] for vn in self.wu_var_names})
@@ -312,13 +312,13 @@ class SynapseGroup(Group):
         for var_name, var in iteritems(self.vars):
             if var.init_required:
                 if var_name in self.wu_var_names:
-                    self.pop.setWUVarMode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                    self.pop.set_wuvar_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
                 if var_name in self.wu_pre_var_names:
-                    self.pop.setWUPreVarMode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                    self.pop.set_wupre_var_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
                 if var_name in self.wu_post_var_names:
-                    self.pop.setWUPostVarMode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                    self.pop.set_wupost_var_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
                 if var_name in self.ps_var_names:
-                    self.pop.setPSVarMode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                    self.pop.set_psvar_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
     
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
@@ -373,7 +373,7 @@ class CurrentSource(Group):
         pop     -- instance of NeuronGroup into which this CurrentSource should be injected
         nn_model -- GeNN NNmodel
         """
-        add_fct = getattr(nn_model, "addCurrentSource_" + self.type)
+        add_fct = getattr(nn_model, "add_current_source_" + self.type)
         self.target_pop = pop
 
         var_ini = model_preprocessor.varSpaceToVarValues(self.current_source_model, self.vars)

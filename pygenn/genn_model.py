@@ -49,8 +49,8 @@ import genn_wrapper
 import genn_wrapper.SharedLibraryModel as slm
 from genn_wrapper.NewModels import VarInit
 from genn_wrapper.InitSparseConnectivitySnippet import Init
-from genn_wrapper.Snippet import makeDPF
-from genn_wrapper.InitSparseConnectivitySnippet import makeCMLF
+from genn_wrapper.Snippet import make_dpf
+from genn_wrapper.InitSparseConnectivitySnippet import make_cmlf
 from genn_wrapper.StlContainers import (StringPair, StringStringDoublePairPair,
                                         StringDPFPair, StringDoublePair,
                                         StringPairVector, StringVector,
@@ -99,10 +99,10 @@ class GeNNModel(object):
         self._cpu_only = cpu_only
         self._localhost = genn_wrapper.initMPI_pygenn()
         
-        genn_wrapper.setDefaultVarMode(genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_DEVICE)
+        genn_wrapper.set_default_var_mode(genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_DEVICE)
         genn_wrapper.GeNNPreferences.cvar.debugCode = enable_debug
         self._model = genn_wrapper.NNmodel()
-        self._model.setPrecision(getattr(genn_wrapper, genn_float_type))
+        self._model.set_precision(getattr(genn_wrapper, genn_float_type))
         self.model_name = model_name
         self.neuron_populations = {}
         self.synapse_populations = {}
@@ -112,14 +112,13 @@ class GeNNModel(object):
     @property
     def model_name(self):
         """Name of the model"""
-        return self._model_name
+        return self._model.get_name()
 
     @model_name.setter
     def model_name(self, model_name):
         if self._built:
             raise Exception("GeNN model already built")
-        self._model_name = model_name
-        self._model.setName(model_name)
+        self._model.set_name(model_name)
 
     @property
     def t(self):
@@ -140,7 +139,7 @@ class GeNNModel(object):
         if self._built:
             raise Exception("GeNN model already built")
         self._dT = dt
-        self._model.setDT(dt)
+        self._model.set_dt(dt)
     
     def add_neuron_population( self, pop_name, num_neurons, neuron,
                              param_space, var_space ):
@@ -172,7 +171,7 @@ class GeNNModel(object):
                              source, target,
                              w_update_model, wu_param_space, wu_var_space, wu_pre_var_space, wu_post_var_space,
                              postsyn_model, ps_param_space, ps_var_space,
-                             connectivity_initialiser=genn_wrapper.uninitialisedConnectivity()):
+                             connectivity_initialiser=genn_wrapper.uninitialised_connectivity()):
         """Add a synapse population to the GeNN model
 
         Args:
@@ -319,25 +318,25 @@ class GeNNModel(object):
         self._slm.open(self._path_to_model, self.model_name)
 
 
-        self._slm.allocateMem()
+        self._slm.allocate_mem()
         self._slm.initialize()
         
         if self._scalar == "float":
-            self._T = self._slm.assignExternalPointerSingle_f("t")
+            self._T = self._slm.assign_external_pointer_single_f("t")
         if self._scalar == "double":
-            self.T = self._slm.assignExternalPointerSingle_d("t")
+            self.T = self._slm.assign_external_pointer_single_d("t")
         if self._scalar == "long double":
-            self._T = self._slm.assignExternalPointerSingle_ld("t")
-        self._TS = self._slm.assignExternalPointerSingle_ull("iT")
+            self._T = self._slm.assign_external_pointer_single_ld("t")
+        self._TS = self._slm.assign_external_pointer_single_ull("iT")
 
         for pop_name, pop_data in iteritems(self.neuron_populations):
-            self._slm.initNeuronPopIO(pop_name)
+            self._slm.init_neuron_pop_io(pop_name)
             pop_data.spikes = self.assign_external_pointer_pop(
                 pop_name, "glbSpk", pop_data.size * pop_data.delay_slots, "unsigned int")
             pop_data.spike_count = self.assign_external_pointer_pop(
                 pop_name, "glbSpkCnt", pop_data.delay_slots, "unsigned int")
             if pop_data.delay_slots > 1:
-                pop_data.spike_que_ptr = self._slm.assignExternalPointerSingle_ui(
+                pop_data.spike_que_ptr = self._slm.assign_external_pointer_single_ui(
                       "spkQuePtr" + pop_name)
 
             for var_name, var_data in iteritems(pop_data.vars):
@@ -351,7 +350,7 @@ class GeNNModel(object):
                 # if auto allocation is not enabled, let the user care about
                 # allocation and initialization of the EGP
                 if egp_data.needs_allocation:
-                    self._slm.allocateExtraGlobalParam(pop_name, egp_name,
+                    self._slm.allocate_extra_global_param(pop_name, egp_name,
                                                        len(egp_data.values))
                     egp_data.view = self.assign_external_pointer_pop(
                         pop_name, egp_name,
@@ -360,12 +359,12 @@ class GeNNModel(object):
                         egp_data.view[:] = egp_data.values
 
         for pop_name, pop_data in iteritems(self.synapse_populations):
-            self._slm.initSynapsePopIO(pop_name)
+            self._slm.init_synapse_pop_io(pop_name)
             
             if pop_data.sparse:
-                if pop_data.connectionsSet:
-                    self._slm.allocateSparseProj(pop_name, len(pop_data.ind))
-                    self._slm.initializeSparseProj(pop_name, pop_data.ind,
+                if pop_data.connections_set:
+                    self._slm.allocate_sparse_proj(pop_name, len(pop_data.ind))
+                    self._slm.initialize_sparse_proj(pop_name, pop_data.ind,
                                                    pop_data.indInG)
 
                 else:
@@ -374,21 +373,21 @@ class GeNNModel(object):
 
             for var_name, var_data in iteritems(pop_data.vars):
                 size = pop_data.size
-                if var_name in [vnt[0] for vnt in pop_data.postsyn.getVars()]:
+                if var_name in [vnt[0] for vnt in pop_data.postsyn.get_vars()]:
                     size = self.neuron_populations[pop_data.trg].size
                 if var_name == "g" and pop_data.globalG:
                     continue
                 var_data.view = self.assign_external_pointer_pop(
                         pop_name, var_name, size, var_data.type )
                 if var_data.init_required:
-                    if var_name == "g" and pop_data.connectionsSet and not pop_data.sparse:
+                    if var_name == "g" and pop_data.connections_set and not pop_data.sparse:
                         var_data.view[:] = np.zeros((size,))
                         var_data.view[pop_data.gMask] = var_data.values
                     else:
                         var_data.view[:] = var_data.values
 
         for src_name, src_data in iteritems(self.current_sources):
-            self._slm.initCurrentSourceIO(src_name)
+            self._slm.init_current_source_io(src_name)
 
             for var_name, var_data in iteritems(src_data.vars):
                 var_data.view = self.assign_external_pointer_pop(
@@ -400,19 +399,19 @@ class GeNNModel(object):
                 # if auto allocation is not enabled, let the user care about
                 # allocation and initialization of the EGP
                 if egp_data.needsAllocation:
-                    self._slm.allocateExtraGlobalParam(src_name, egp_name,
+                    self._slm.allocate_extra_global_param(src_name, egp_name,
                                                        len(egp_data.values))
                     egp_data.view = self.assign_external_pointer_pop(
                         src_name, egp_name, len(egp_data.values), egp_data.type[:-1])
                     if egp_data.init_required:
                         egp_data.view[:] = egp_data.values
 
-        self._slm.initializeModel()
+        self._slm.initialize_model()
 
         if self._cpu_only:
-            self.step_time = self._slm.stepTimeCPU
+            self.step_time = self._slm.step_time_cpu
         else:
-            self.step_time = self._slm.stepTimeGPU
+            self.step_time = self._slm.step_time_gpu
 
 
     def assign_external_pointer_pop(self, pop_name, var_name, var_size, var_type):
@@ -453,48 +452,48 @@ class GeNNModel(object):
 
         if var_type == "scalar":
             if self._scalar == "float":
-                return self._slm.assignExternalPointerArray_f(var_name, var_size)
+                return self._slm.assign_external_pointer_array_f(var_name, var_size)
             elif self._scalar == "double":
-                return self._slm.assignExternalPointerArray_d(var_name, var_size)
+                return self._slm.assign_external_pointer_array_d(var_name, var_size)
             elif self._scalar == "long double":
-                return self._slm.assignExternalPointerArray_ld(var_name, var_size)
+                return self._slm.assign_external_pointer_array_ld(var_name, var_size)
 
         elif var_type == "char":
-            return self._slm.assignExternalPointerArray_c(var_name, var_size)
+            return self._slm.assign_external_pointer_array_c(var_name, var_size)
         elif var_type == "unsigned char":
-            return self._slm.assignExternalPointerArray_uc(var_name, var_size)
+            return self._slm.assign_external_pointer_array_uc(var_name, var_size)
         elif var_type == "short":
-            return self._slm.assignExternalPointerArray_s(var_name, var_size)
+            return self._slm.assign_external_pointer_array_s(var_name, var_size)
         elif var_type == "unsigned short":
-            return self._slm.assignExternalPointerArray_us(var_name, var_size)
+            return self._slm.assign_external_pointer_array_us(var_name, var_size)
         elif var_type == "int":
-            return self._slm.assignExternalPointerArray_i(var_name, var_size)
+            return self._slm.assign_external_pointer_array_i(var_name, var_size)
         elif var_type == "unsigned int":
-            return self._slm.assignExternalPointerArray_ui(var_name, var_size)
+            return self._slm.assign_external_pointer_array_ui(var_name, var_size)
         elif var_type == "long":
-            return self._slm.assignExternalPointerArray_l(var_name, var_size)
+            return self._slm.assign_external_pointer_array_l(var_name, var_size)
         elif var_type == "unsigned long":
-            return self._slm.assignExternalPointerArray_ul(var_name, var_size)
+            return self._slm.assign_external_pointer_array_ul(var_name, var_size)
         elif var_type == "long long":
-            return self._slm.assignExternalPointerArray_ll(var_name, var_size)
+            return self._slm.assign_external_pointer_array_ll(var_name, var_size)
         elif var_type == "unsigned long long":
-            return self._slm.assignExternalPointerArray_ull(var_name, var_size)
+            return self._slm.assign_external_pointer_array_ull(var_name, var_size)
         elif var_type == "float":
-            return self._slm.assignExternalPointerArray_f(var_name, var_size)
+            return self._slm.assign_external_pointer_array_f(var_name, var_size)
         elif var_type == "double":
-            return self._slm.assignExternalPointerArray_d(var_name, var_size)
+            return self._slm.assign_external_pointer_array_d(var_name, var_size)
         elif var_type == "long double":
-            return self._slm.assignExternalPointerArray_ld(var_name, var_size)
+            return self._slm.assign_external_pointer_array_ld(var_name, var_size)
         else:
             raise TypeError("unsupported var_type '{}'".format(var_type))
 
     def _stepTimeGPU(self):
         """Make one simulation step (for library built for CPU)"""
-        self._slm.stepTimeGPU()
+        self._slm.step_time_gpu()
     
     def _stepTimeCPU(self):
         """Make one simulation step (for library built for CPU)"""
-        self._slm.stepTimeCPU()
+        self._slm.step_time_cpu()
 
     def step_time(self):
         """Make one simulation step"""
@@ -505,42 +504,42 @@ class GeNNModel(object):
         if not self._built:
             raise Exception("GeNN model has to be built before running")
         if not self._cpu_only:
-            self._slm.pullStateFromDevice(pop_name)
+            self._slm.pull_state_from_device(pop_name)
     
     def pull_spikes_from_device(self, pop_name):
         """Pull spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
         if not self._cpu_only:
-            self._slm.pullSpikesFromDevice(pop_name)
+            self._slm.pull_spikes_from_device(pop_name)
 
     def pull_current_spikes_from_device(self, pop_name):
         """Pull spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
         if not self._cpu_only:
-            self._slm.pullCurrentSpikesFromDevice(pop_name)
+            self._slm.pull_current_spikes_from_device(pop_name)
 
     def push_state_to_device(self, pop_name):
         """Push state to the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
         if not self._cpu_only:
-            self._slm.pushStateToDevice(pop_name)
+            self._slm.push_state_to_device(pop_name)
 
     def push_spikes_to_device(self, pop_name):
         """Push spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
         if not self._cpu_only:
-            self._slm.pushSpikesToDevice(pop_name)
+            self._slm.push_spikes_to_device(pop_name)
 
     def push_current_spikes_from_device(self, pop_name):
         """Push spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
         if not self._cpu_only:
-            self._slm.pushCurrentSpikesToDevice(pop_name)
+            self._slm.push_current_spikes_to_device(pop_name)
 
     def end(self):
         """Free memory"""
@@ -551,7 +550,7 @@ class GeNNModel(object):
                     # if auto allocation is not enabled, let the user care about
                     # freeing of the EGP
                     if egp_data.needsAllocation:
-                        self._slm.freeExtraGlobalParam(group_name, egp_name)
+                        self._slm.free_extra_global_param(group_name, egp_name)
         # "normal" variables are freed when SharedLibraryModel is destoyed
 
 def init_var(init_var_snippet, param_space):
@@ -592,8 +591,7 @@ def create_custom_neuron_class(class_name, param_names=None, var_name_types=None
                             derived_params=None, sim_code=None,
                             threshold_condition_code=None, reset_code=None,
                             support_code=None, extra_global_params=None,
-                            additional_input_vars=None, is_poisson=None,
-                            custom_body=None):
+                            additional_input_vars=None, custom_body=None):
 
     """This helper function creates a custom NeuronModel class.
 
@@ -619,7 +617,6 @@ def create_custom_neuron_class(class_name, param_names=None, var_name_types=None
     extra_global_params -- list of pairs of strings with names and types of additional parameters
     additional_input_vars -- list of tuples with names and types as strings and
                             initial values of additional local input variables
-    is_poisson     -- boolean, is this neuron model the internal Poisson model?
 
     custom_body   -- dictionary with additional attributes and methods of the new class
     """
@@ -629,30 +626,27 @@ def create_custom_neuron_class(class_name, param_names=None, var_name_types=None
     body = {}
 
     if sim_code is not None:
-        body["getSimCode"] = lambda self: sim_code
+        body["get_sim_code"] = lambda self: sim_code
 
     if threshold_condition_code is not None:
-        body["getThresholdConditionCode"] = lambda self: threshold_condition_code
+        body["get_threshold_condition_code"] = lambda self: threshold_condition_code
 
     if reset_code is not None:
-        body["getResetCode"] = lambda self: reset_code
+        body["get_reset_code"] = lambda self: reset_code
 
     if support_code is not None:
-        body["getSupportCode"] = lambda self: support_code
+        body["get_support_code"] = lambda self: support_code
 
     if extra_global_params is not None:
-        body["getxtraGlobalParams"] =\
+        body["get_extra_global_params"] =\
             lambda self: StringPairVector([StringPair(egp[0], egp[1])
                                            for egp in extra_global_params])
  
     if additional_input_vars:
-        body["getAdditionalInputVars"] =\
+        body["get_additional_input_vars"] =\
             lambda self: StringStringDoublePairPairVector(
                 [StringStringDoublePairPair(aiv[0], StringDoublePair(aiv[1], aiv[2]))
                  for aiv in additional_input_vars])
-
-    if is_poisson is not None:
-        body["isPoisson"] = lambda self: is_poisson
 
     if custom_body is not None:
         body.update(custom_body)
@@ -694,13 +688,13 @@ def create_custom_postsynaptic_class(class_name, param_names=None, var_name_type
     body = {}
 
     if decay_code is not None:
-        body["getDecayCode"] = lambda self: decay_code
+        body["get_decay_code"] = lambda self: decay_code
 
     if apply_input_code is not None:
-        body["getApplyInputCode"] = lambda self: apply_input_code
+        body["get_apply_input_code"] = lambda self: apply_input_code
 
     if support_code is not None:
-        body["getSupportCode"] = lambda self: support_code
+        body["get_support_code"] = lambda self: support_code
 
     if custom_body is not None:
         body.update(custom_body)
@@ -767,52 +761,52 @@ def create_custom_weight_update_class(class_name, param_names=None, var_name_typ
     body = {}
 
     if sim_code is not None:
-        body["getSimCode"] = lambda self: sim_code
+        body["get_sim_code"] = lambda self: sim_code
 
     if event_code is not None:
-        body["getEventCode"] = lambda self: event_code
+        body["get_event_code"] = lambda self: event_code
 
     if learn_post_code is not None:
-        body["getLearnPostCode"] = lambda self: learn_post_code
+        body["get_learn_post_code"] = lambda self: learn_post_code
 
     if synapse_dynamics_code is not None:
-        body["getSynapseDynamicsCode"] = lambda self: synapse_dynamics_code
+        body["get_synapse_dynamics_code"] = lambda self: synapse_dynamics_code
 
     if event_threshold_condition_code is not None:
-        body["getEventThresholdConditionCode"] = lambda self: event_threshold_condition_code
+        body["get_event_threshold_condition_code"] = lambda self: event_threshold_condition_code
 
     if pre_spike_code is not None:
-        body["getPreSpikeCode"] = lambda self: pre_spike_code
+        body["get_pre_spike_code"] = lambda self: pre_spike_code
 
     if post_spike_code is not None:
-        body["getPostSpikeCode"] = lambda self: post_spike_code
+        body["get_post_spike_code"] = lambda self: post_spike_code
 
     if sim_support_code is not None:
-        body["getSimSupportCode"] = lambda self: sim_support_code
+        body["get_sim_support_code"] = lambda self: sim_support_code
 
     if learn_post_support_code is not None:
-        body["getLearnPostSupportCode"] = lambda self: learn_post_support_code
+        body["get_learn_post_support_code"] = lambda self: learn_post_support_code
 
     if synapse_dynamics_suppport_code is not None:
-        body["getSynapseDynamicsSuppportCode"] = lambda self: synapse_dynamics_suppport_code
+        body["get_synapse_dynamics_suppport_code"] = lambda self: synapse_dynamics_suppport_code
 
     if extra_global_params is not None:
-        body["getExtraGlobalParams"] = lambda self: StringPairVector([StringPair(egp[0], egp[1])
+        body["get_extra_global_params"] = lambda self: StringPairVector([StringPair(egp[0], egp[1])
                                                                       for egp in extra_global_params])
 
     if pre_var_name_types is not None:
-        body["getPreVars"] = lambda self: StringPairVector([StringPair(vn[0], vn[1])
+        body["get_pre_vars"] = lambda self: StringPairVector([StringPair(vn[0], vn[1])
                                                             for vn in pre_var_name_types] )
     
     if post_var_name_types is not None:
-        body["getPostVars"] = lambda self: StringPairVector([StringPair(vn[0], vn[1])
+        body["get_post_vars"] = lambda self: StringPairVector([StringPair(vn[0], vn[1])
                                                              for vn in post_var_name_types] )
     
     if is_pre_spike_time_required is not None:
-        body["isPreSpikeTimeRequired"] = lambda self: is_pre_spike_time_required
+        body["is_pre_spike_time_required"] = lambda self: is_pre_spike_time_required
 
     if is_post_spike_time_required is not None:
-        body["isPostSpikeTimeRequired"] = lambda self: is_post_spike_time_required
+        body["is_post_spike_time_required"] = lambda self: is_post_spike_time_required
     
     if custom_body is not None:
         body.update(custom_body)
@@ -852,10 +846,10 @@ def create_custom_current_source_class(class_name, param_names=None, var_name_ty
     body = {}
 
     if injection_code is not None:
-        body["getInjectionCode"] = lambda self: injection_code
+        body["get_injection_code"] = lambda self: injection_code
 
     if extra_global_params is not None:
-        body["getExtraGlobalParams"] =\
+        body["get_extra_global_params"] =\
             lambda self: StringPairVector([StringPair(egp[0], egp[1])
                                            for egp in extra_global_params])
 
@@ -896,16 +890,16 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     }
     
     if param_names is not None:
-        body["getParamNames"] = lambda self: StringVector(param_names)
+        body["get_param_names"] = lambda self: StringVector(param_names)
 
     if var_name_types is not None:
-        body["getVars"] =\
+        body["get_vars"] =\
             lambda self: StringPairVector([StringPair(vn[0], vn[1])
                                            for vn in var_name_types])
 
     if derived_params is not None:
-        body["getDerivedParams"] =\
-            lambda self: StringDPFPairVector([StringDPFPair(dp[0], makeDPF(dp[1]))
+        body["get_derived_params"] =\
+            lambda self: StringDPFPairVector([StringDPFPair(dp[0], make_dpf(dp[1]))
                                               for dp in derived_params])
 
     if custom_body is not None:
@@ -981,7 +975,7 @@ def create_custom_init_var_snippet_class(class_name, param_names=None, derived_p
     body = {}
 
     if get_code is not None:
-        body["getCode"] = lambda self: var_init_code
+        body["get_code"] = lambda self: var_init_code
 
     if custom_body is not None:
         body.update(custom_body)
@@ -1025,22 +1019,22 @@ def create_custom_sparse_connect_init_snippet_class(class_name, param_names=None
     body = {}
 
     if row_build_code is not None:
-        body["getRowBuildCode"] = lambda self: row_build_code
+        body["get_row_build_code"] = lambda self: row_build_code
 
     if row_build_state_vars is not None:
-        body["getRowBuildStateVars"] =\
+        body["get_row_build_state_vars"] =\
             lambda self: StringStringDoublePairPairVector(
                 [StringStringDoublePairPair(r[0], StringDoublePair(r[1], r[2]))
                  for r in row_build_state_vars] )
 
     if calc_max_row_length_func is not None:
-        body["getCalcMaxRowLengthFunc"] = lambda self: makeCMLF(calc_max_row_length_func)
+        body["get_calc_max_row_length_func"] = lambda self: make_cmlf(calc_max_row_length_func)
 
     if calc_max_col_length_func is not None:
-        body["getCalcMaxColLengthFunc"] = lambda self: makeCMLF(calc_max_col_length_func)
+        body["get_calc_max_col_length_func"] = lambda self: make_cmlf(calc_max_col_length_func)
 
     if extra_global_params is not None:
-        body["getExtraGlobalParams"] =\
+        body["get_extra_global_params"] =\
             lambda self: StringPairVector([StringStringDoublePairPair(egp[0], egp[1])
                                            for egp in extra_global_params])
 
