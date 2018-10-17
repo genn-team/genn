@@ -30,7 +30,7 @@ def prepare_model(model, param_space, var_space, pre_var_space=None, post_var_sp
     """
     m_instance, m_type = is_model_valid(model, model_family)
     param_names = list(m_instance.getParamNames())
-    params = parameter_space_to_param_values(m_instance, param_space)
+    params = param_space_to_vals(m_instance, param_space)
     var_names = [vnt[0] for vnt in m_instance.getVars()]
     var_dict = {vnt[0] : Variable(vnt[0], vnt[1], var_space[vnt[0]])
               for vnt in m_instance.getVars()}
@@ -64,7 +64,7 @@ def prepare_snippet(snippet, param_space, snippet_family):
     """
     s_instance, s_type = is_model_valid(snippet, snippet_family)
     param_names = list(s_instance.getParamNames())
-    params = parameter_space_to_double_vector(s_instance, param_space)
+    params = param_space_to_val_vec(s_instance, param_space)
 
     return (s_instance, s_type, param_names, params)
 
@@ -96,7 +96,7 @@ def is_model_valid(model, model_family):
             model = getattr(model_family, model_type).getInstance()
     return model, model_type
 
-def parameter_space_to_param_values(model, param_space):
+def param_space_to_vals(model, param_space):
     """Convert a param_space dict to ParamValues
 
     Args:
@@ -106,9 +106,9 @@ def parameter_space_to_param_values(model, param_space):
     Return:
     native model's ParamValues
     """
-    return model.makeParamValues(parameter_space_to_double_vector(model, param_space))
+    return model.makeParamValues(param_space_to_val_vec(model, param_space))
 
-def parameter_space_to_double_vector(model, param_space):
+def param_space_to_val_vec(model, param_space):
     """Convert a param_space dict to a std::vector<double>
 
     Args:
@@ -120,7 +120,7 @@ def parameter_space_to_double_vector(model, param_space):
     """
     return DoubleVector([param_space[pn] for pn in model.getParamNames()])
 
-def var_space_to_var_values(model, var_space):
+def var_space_to_vals(model, var_space):
     """Convert a var_space dict to VarValues
 
     Args:
@@ -133,7 +133,7 @@ def var_space_to_var_values(model, var_space):
     return model.makeVarValues(
         VarInitVector([var_space[vnt[0]].init_val for vnt in model.getVars()]))
 
-def pre_var_space_to_var_values(model, var_space):
+def pre_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PreVarValues
 
     Args:
@@ -146,7 +146,7 @@ def pre_var_space_to_var_values(model, var_space):
     return model.makePreVarValues(
         VarInitVector([var_space[vnt[0]].init_val for vnt in model.getPreVars()]))
 
-def post_var_space_to_var_values(model, var_space):
+def post_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PostVarValues
 
     Args:

@@ -111,7 +111,7 @@ class NeuronGroup(Group):
         """
         add_fct = getattr(nn_model, "addNeuronPopulation_" + self.type)
 
-        var_ini = model_preprocessor.var_space_to_var_values(self.neuron, self.vars)
+        var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
         self.pop = add_fct(self.name, num_neurons, self.neuron, self.params, var_ini)
 
         for var_name, var in iteritems(self.vars):
@@ -295,13 +295,13 @@ class SynapseGroup(Group):
         add_fct = getattr(nn_model,
                          ("addSynapsePopulation_" + self.wu_type + "_" + self.ps_type))
 
-        wu_var_ini = model_preprocessor.var_space_to_var_values(self.w_update,
+        wu_var_ini = model_preprocessor.var_space_to_vals(self.w_update,
                 {vn : self.vars[vn] for vn in self.wu_var_names})
-        wu_pre_var_ini = model_preprocessor.pre_var_space_to_var_values(self.w_update,
+        wu_pre_var_ini = model_preprocessor.pre_var_space_to_vals(self.w_update,
                 {vn : self.pre_vars[vn] for vn in self.wu_pre_var_names})
-        wu_post_var_ini = model_preprocessor.post_var_space_to_var_values(self.w_update,
+        wu_post_var_ini = model_preprocessor.post_var_space_to_vals(self.w_update,
                 {vn : self.post_vars[vn] for vn in self.wu_post_var_names})
-        ps_var_ini = model_preprocessor.var_space_to_var_values(self.postsyn,
+        ps_var_ini = model_preprocessor.var_space_to_vals(self.postsyn,
                 {vn : self.vars[vn] for vn in self.ps_var_names})
 
         self.pop = add_fct(self.name, self.matrix_type, delay_steps,
