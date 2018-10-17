@@ -323,7 +323,7 @@ class GeNNModel(object):
 
         for pop_name, pop_data in iteritems(self.synapse_populations):
             if pop_data.sparse:
-                pop_data.pop.set_max_connections(pop_data.maxConn)
+                pop_data.pop.set_max_connections(pop_data.max_conn)
 
         self._model.finalize()
         genn_wrapper.generate_model_runner_pygenn(
@@ -950,7 +950,7 @@ def create_dpf_class(dp_func):
                 {"__init__" : ctor, "__call__" : call})
 
 
-def create_cmlf_Class(cml_func):
+def create_cmlf_class(cml_func):
 
     """Helper function to create function class for calculating sizes of
     matrices initialised with sparse connectivity initialisation snippet
