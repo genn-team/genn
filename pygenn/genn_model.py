@@ -99,7 +99,7 @@ class GeNNModel(object):
         self._cpu_only = cpu_only
         self._localhost = genn_wrapper.initMPI_pygenn()
         
-        genn_wrapper.set_default_var_mode(genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_DEVICE)
+        self.default_var_mode = genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_DEVICE
         genn_wrapper.GeNNPreferences.cvar.debugCode = enable_debug
         self._model = genn_wrapper.NNmodel()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
@@ -107,7 +107,31 @@ class GeNNModel(object):
         self.neuron_populations = {}
         self.synapse_populations = {}
         self.current_sources = {}
-        self._dT = 0.1
+        self.dT = 0.1
+
+    @property
+    def default_var_mode(self):
+        """Default variable mode - defines how and where state variables are initialised"""
+        return genn_wrapper.GeNNPreferences.cvar.defaultVarMode
+
+    @default_var_mode.setter
+    def default_var_mode(self, mode):
+        if self._built:
+            raise Exception("GeNN model already built")
+
+        genn_wrapper.set_default_var_mode(mode)
+
+    @property
+    def default_sparse_connectivity_mode(self):
+        """Default sparse connectivity mode - how and where connectivity is initialised"""
+        return genn_wrapper.GeNNPreferences.cvar.defaultSparseConnectivityMode
+
+    @default_sparse_connectivity_mode.setter
+    def default_sparse_connectivity_mode(self, mode):
+        if self._built:
+            raise Exception("GeNN model already built")
+
+        genn_wrapper.set_default_sparse_connectivity_mode(mode)
 
     @property
     def model_name(self):
@@ -132,13 +156,12 @@ class GeNNModel(object):
     @property
     def dT(self):
         """Step size"""
-        return self._dT
+        return self._model.get_dt()
 
     @dT.setter 
     def dT(self, dt):
         if self._built:
             raise Exception("GeNN model already built")
-        self._dT = dt
         self._model.set_dt(dt)
     
     def add_neuron_population( self, pop_name, num_neurons, neuron,

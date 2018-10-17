@@ -656,6 +656,8 @@ def generateConfigs( gennPath ):
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( 'void setDefaultVarMode( const VarMode &varMode ) {\n' )
             pygennSmg.write( '  GENN_PREFERENCES::defaultVarMode = varMode;\n}' )
+            pygennSmg.write( 'void setDefaultSparseConnectivityMode( const VarMode &varMode ) {\n' )
+            pygennSmg.write( '  GENN_PREFERENCES::defaultSparseConnectivityMode = varMode;\n}' )
         pygennSmg.addSwigImport( '"GeNNPreferences.i"' )
 
 
