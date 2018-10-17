@@ -510,11 +510,11 @@ class GeNNModel(object):
         else:
             raise TypeError("unsupported var_type '{}'".format(var_type))
 
-    def _stepTimeGPU(self):
+    def _step_time_gpu(self):
         """Make one simulation step (for library built for CPU)"""
         self._slm.step_time_gpu()
     
-    def _stepTimeCPU(self):
+    def _step_time_cpu(self):
         """Make one simulation step (for library built for CPU)"""
         self._slm.step_time_cpu()
 
