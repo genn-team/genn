@@ -99,7 +99,7 @@ class NeuronGroup(Group):
             self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
                                                            varSpace,
                                                            modelFamily=genn_wrapper.NeuronModels )
-        if self.type == 'SpikeSourceArray':
+        if self.type == "SpikeSourceArray":
             self.isSpikeSourceArray = True
 
     def addTo(self, nnModel, numNeurons):
@@ -109,7 +109,7 @@ class NeuronGroup(Group):
         nnModel    -- GeNN NNmodel
         numNeurons -- int number of neurons
         """
-        addFct = getattr(nnModel, 'addNeuronPopulation_' + self.type)
+        addFct = getattr(nnModel, "addNeuronPopulation_" + self.type)
 
         varIni = model_preprocessor.varSpaceToVarValues(self.neuron, self.vars)
         self.pop = addFct( self.name, numNeurons, self.neuron,
@@ -221,15 +221,15 @@ class SynapseGroup(Group):
 
     @matrixType.setter
     def matrixType(self, matrixType):
-        self._matrixType = getattr(genn_wrapper, 'SynapseMatrixType_' + matrixType)
-        if matrixType.startswith('SPARSE'):
+        self._matrixType = getattr(genn_wrapper, "SynapseMatrixType_" + matrixType)
+        if matrixType.startswith("SPARSE"):
             self.sparse = True
             self.ind = None
             self.indInG = None
         else:
             self.sparse = False
 
-        if matrixType.endswith('GLOBALG'):
+        if matrixType.endswith("GLOBALG"):
             self.globalG = True
         else:
             self.globalG = False
@@ -265,8 +265,8 @@ class SynapseGroup(Group):
             self.size = self.trg_size * self.src_size
 
         if not self.globalG:
-            self.vars['g'].setValues(g)
-            self.pop.setWUVarMode('g', genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+            self.vars["g"].setValues(g)
+            self.pop.setWUVarMode("g", genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
         self.connectionsSet = True
         
@@ -292,8 +292,8 @@ class SynapseGroup(Group):
         nnModel -- GeNN NNmodel
         """
         addFct = getattr( nnModel,
-                          ( 'addSynapsePopulation_' + 
-                            self.wuType + '_' + self.psType ) )
+                          ( "addSynapsePopulation_" +
+                            self.wuType + "_" + self.psType ) )
 
         wuVarIni = model_preprocessor.varSpaceToVarValues( self.wUpdate,
                 { vn : self.vars[vn] for vn in self.wuVarNames } )
@@ -373,7 +373,7 @@ class CurrentSource(Group):
         pop     -- instance of NeuronGroup into which this CurrentSource should be injected
         nnModel -- GeNN NNmodel
         """
-        addFct = getattr(nnModel, 'addCurrentSource_' + self.type)
+        addFct = getattr(nnModel, "addCurrentSource_" + self.type)
         self.targetPop = pop
 
         varIni = model_preprocessor.varSpaceToVarValues(self.currentSourceModel, self.vars)

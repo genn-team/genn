@@ -84,13 +84,13 @@ def isModelValid(model, modelFamily):
         if not isinstance(model, modelFamily.Custom):
             modelType = type(model).__name__
             if not hasattr(modelFamily, modelType):
-                raise ValueError('model "{0}" is not supported'.format(modelType))
+                raise ValueError("model '{0}' is not supported".format(modelType))
         else:
-            modelType = 'Custom'
+            modelType = "Custom"
     else:
         modelType = model
         if not hasattr(modelFamily, modelType):
-            raise ValueError('model "{0}" is not supported'.format(modelType))
+            raise ValueError("model '{0}' is not supported".format(modelType))
         else:
             model = getattr(modelFamily, modelType).getInstance()
     return model, modelType
