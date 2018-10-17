@@ -75,8 +75,9 @@ class NeuronGroup(Group):
     @property
     def currentSpikes(self):
         """Current spikes from GeNN"""
-        return self.spikes[self.spikeQuePtr[0] * self.size :
-                self.spikeQuePtr[0] * self.size + self.spikeCount[self.spikeQuePtr[0]]]
+        offset = self.spikeQuePtr[0] * self.size
+        return self.spikes[
+             offset : offset + self.spikeCount[self.spikeQuePtr[0]]]
 
     @property
     def delaySlots(self):
@@ -95,10 +96,9 @@ class NeuronGroup(Group):
         paramSpace -- dict with model parameters
         varSpace   -- dict with model variables
         """
-        ( self.neuron, self.type, self.paramNames, self.params, self.varNames,
-            self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                           varSpace,
-                                                           modelFamily=genn_wrapper.NeuronModels )
+        (self.neuron, self.type, self.paramNames, self.params, self.varNames, self.vars) =\
+             model_preprocessor.prepareModel(model, paramSpace, varSpace,
+                                             modelFamily=genn_wrapper.NeuronModels)
         if self.type == "SpikeSourceArray":
             self.isSpikeSourceArray = True
 
@@ -112,8 +112,7 @@ class NeuronGroup(Group):
         addFct = getattr(nnModel, "addNeuronPopulation_" + self.type)
 
         varIni = model_preprocessor.varSpaceToVarValues(self.neuron, self.vars)
-        self.pop = addFct( self.name, numNeurons, self.neuron,
-                           self.params, varIni )
+        self.pop = addFct(self.name, numNeurons, self.neuron, self.params, varIni)
 
         for varName, var in iteritems(self.vars):
             if var.initRequired:
@@ -190,12 +189,12 @@ class SynapseGroup(Group):
         preVarSpace     -- dict with model presynaptic variables
         postVarSpace    -- dict with model postsynaptic variables
         """
-        ( self.wUpdate, self.wuType, self.wuParamNames, self.wuParams, 
+        (self.wUpdate, self.wuType, self.wuParamNames, self.wuParams,
          self.wuVarNames, varDict, self.wuPreVarNames, preVarDict,
          self.wuPostVarNames, postVarDict) =\
-             model_preprocessor.prepareModel( model, paramSpace,
-                                             varSpace, preVarSpace, postVarSpace,
-                                             modelFamily=genn_wrapper.WeightUpdateModels )
+             model_preprocessor.prepareModel(model, paramSpace, varSpace,
+                                             preVarSpace, postVarSpace,
+                                             modelFamily=genn_wrapper.WeightUpdateModels)
         self.vars.update(varDict)
         self.preVars.update(preVarDict)
         self.postVars.update(postVarDict)
@@ -208,10 +207,10 @@ class SynapseGroup(Group):
         paramSpace -- dict with model parameters
         varSpace   -- dict with model variables
         """
-        ( self.postsyn, self.psType, self.psParamNames, self.psParams, self.psVarNames,
-            varDict ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                         varSpace,
-                                                         modelFamily=genn_wrapper.PostsynapticModels )
+        (self.postsyn, self.psType, self.psParamNames,
+         self.psParams, self.psVarNames, varDict) =\
+             model_preprocessor.prepareModel(model, paramSpace, varSpace,
+                                             modelFamily=genn_wrapper.PostsynapticModels)
         self.vars.update(varDict)
 
     @property
@@ -259,9 +258,11 @@ class SynapseGroup(Group):
             while len(self.indInG) < self.src_size + 1:
                 self.indInG.append(len(conns))
             # compute max number of connections from taget neuron to source
-            self.maxConn = int(max([ self.indInG[i] - self.indInG[i-1] for i in range(len(self.indInG)) if i != 0 ]))
+            self.maxConn = int(max([ self.indInG[i] - self.indInG[i-1]
+                                    for i in range(len(self.indInG)) if i != 0 ]))
         else:
-            self.gMask = [ pre * self.trg_size + post for (pre, post) in conns ]
+            self.gMask = [pre * self.trg_size + post
+                          for (pre, post) in conns]
             self.size = self.trg_size * self.src_size
 
         if not self.globalG:
@@ -291,23 +292,22 @@ class SynapseGroup(Group):
         Args:
         nnModel -- GeNN NNmodel
         """
-        addFct = getattr( nnModel,
-                          ( "addSynapsePopulation_" +
-                            self.wuType + "_" + self.psType ) )
+        addFct = getattr(nnModel,
+                         ("addSynapsePopulation_" + self.wuType + "_" + self.psType))
 
-        wuVarIni = model_preprocessor.varSpaceToVarValues( self.wUpdate,
-                { vn : self.vars[vn] for vn in self.wuVarNames } )
-        wuPreVarIni = model_preprocessor.preVarSpaceToVarValues( self.wUpdate,
-                { vn : self.preVars[vn] for vn in self.wuPreVarNames } )
-        wuPostVarIni = model_preprocessor.postVarSpaceToVarValues( self.wUpdate,
-                { vn : self.postVars[vn] for vn in self.wuPostVarNames } )
-        psVarIni = model_preprocessor.varSpaceToVarValues( self.postsyn,
-                { vn : self.vars[vn] for vn in self.psVarNames } )
+        wuVarIni = model_preprocessor.varSpaceToVarValues(self.wUpdate,
+                {vn : self.vars[vn] for vn in self.wuVarNames})
+        wuPreVarIni = model_preprocessor.preVarSpaceToVarValues(self.wUpdate,
+                {vn : self.preVars[vn] for vn in self.wuPreVarNames})
+        wuPostVarIni = model_preprocessor.postVarSpaceToVarValues(self.wUpdate,
+                {vn : self.postVars[vn] for vn in self.wuPostVarNames})
+        psVarIni = model_preprocessor.varSpaceToVarValues(self.postsyn,
+                {vn : self.vars[vn] for vn in self.psVarNames})
 
-        self.pop = addFct( self.name, self.matrixType, delaySteps,
-                           self.src, self.trg,
-                           self.wUpdate, self.wuParams, wuVarIni, wuPreVarIni, wuPostVarIni,
-                           self.postsyn, self.psParams, psVarIni, connectivityInitialiser )
+        self.pop = addFct(self.name, self.matrixType, delaySteps,
+                          self.src, self.trg,
+                          self.wUpdate, self.wuParams, wuVarIni, wuPreVarIni, wuPostVarIni,
+                          self.postsyn, self.psParams, psVarIni, connectivityInitialiser)
 
         for varName, var in iteritems(self.vars):
             if var.initRequired:
@@ -361,10 +361,10 @@ class CurrentSource(Group):
         paramSpace -- dict with model parameters
         varSpace   -- dict with model variables
         """
-        ( self.currentSourceModel, self.type, self.paramNames, self.params, self.varNames,
-            self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                           varSpace,
-                                                           modelFamily=genn_wrapper.CurrentSourceModels )
+        (self.currentSourceModel, self.type, self.paramNames, self.params,
+         self.varNames, self.vars) =\
+             model_preprocessor.prepareModel(model, paramSpace, varSpace,
+                                             modelFamily=genn_wrapper.CurrentSourceModels)
 
     def addTo(self, nnModel, pop):
         """Inject this CurrentSource into population and add add it to the GeNN NNmodel
@@ -377,8 +377,8 @@ class CurrentSource(Group):
         self.targetPop = pop
 
         varIni = model_preprocessor.varSpaceToVarValues(self.currentSourceModel, self.vars)
-        self.pop = addFct( self.name, self.currentSourceModel, pop.name,
-                           self.params, varIni )
+        self.pop = addFct(self.name, self.currentSourceModel, pop.name,
+                          self.params, varIni )
 
         for varName, var in iteritems(self.vars):
             if var.initRequired:

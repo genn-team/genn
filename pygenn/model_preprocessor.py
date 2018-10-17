@@ -7,7 +7,8 @@ import genn_wrapper
 from genn_wrapper.NewModels import VarInit, VarInitVector
 from genn_wrapper.StlContainers import DoubleVector
 
-def prepareModel(model, paramSpace, varSpace, preVarSpace=None, postVarSpace=None, modelFamily=None):
+def prepareModel(model, paramSpace, varSpace, preVarSpace=None, postVarSpace=None,
+                 modelFamily=None):
     """Prepare a model by checking its validity and extracting information about variables and parameters
 
     Args:
@@ -36,12 +37,12 @@ def prepareModel(model, paramSpace, varSpace, preVarSpace=None, postVarSpace=Non
     
     if modelFamily == genn_wrapper.WeightUpdateModels:
         preVarNames = [vnt[0] for vnt in mInstance.getPreVars()]
-        preVarDict = { vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
-                      for vnt in mInstance.getPreVars() }
+        preVarDict = {vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
+                      for vnt in mInstance.getPreVars()}
         postVarNames = [vnt[0] for vnt in mInstance.getPostVars()]
-        postVarDict = { vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
-                       for vnt in mInstance.getPostVars() }
-        return ( mInstance, mType, paramNames, params, varNames, varDict,
+        postVarDict = {vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
+                       for vnt in mInstance.getPostVars()}
+        return (mInstance, mType, paramNames, params, varNames, varDict,
                 preVarNames, preVarDict, postVarNames, postVarDict)
     else:
         return (mInstance, mType, paramNames, params, varNames, varDict)
@@ -117,9 +118,7 @@ def parameterSpaceToDoubleVector(model, paramSpace):
     Return:
     native vector of parameters
     """
-    paramVals = [paramSpace[pn] for pn in model.getParamNames()]
-
-    return DoubleVector(paramVals)
+    return DoubleVector([paramSpace[pn] for pn in model.getParamNames()])
 
 def varSpaceToVarValues(model, varSpace):
     """Convert a varSpace dict to VarValues
@@ -131,9 +130,8 @@ def varSpaceToVarValues(model, varSpace):
     Return:
     native model's VarValues
     """
-    varVals = [varSpace[vnt[0]].initVal for vnt in model.getVars()]
-
-    return model.makeVarValues(VarInitVector(varVals))
+    return model.makeVarValues(
+        VarInitVector([varSpace[vnt[0]].initVal for vnt in model.getVars()]))
 
 def preVarSpaceToVarValues(model, varSpace):
     """Convert a varSpace dict to PreVarValues
@@ -145,9 +143,8 @@ def preVarSpaceToVarValues(model, varSpace):
     Return:
     native model's VarValues
     """
-    varVals = [varSpace[vnt[0]].initVal for vnt in model.getPreVars()]
-
-    return model.makePreVarValues(VarInitVector(varVals))
+    return model.makePreVarValues(
+        VarInitVector([varSpace[vnt[0]].initVal for vnt in model.getPreVars()]))
 
 def postVarSpaceToVarValues(model, varSpace):
     """Convert a varSpace dict to PostVarValues
@@ -159,9 +156,8 @@ def postVarSpaceToVarValues(model, varSpace):
     Return:
     native model's VarValues
     """
-    varVals = [varSpace[vnt[0]].initVal for vnt in model.getPostVars()]
-
-    return model.makePostVarValues(VarInitVector(varVals))
+    return model.makePostVarValues(
+        VarInitVector([varSpace[vnt[0]].initVal for vnt in model.getPostVars()]))
 
 
 class Variable(object):

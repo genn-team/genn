@@ -49,6 +49,14 @@ import genn_wrapper
 import genn_wrapper.SharedLibraryModel as slm
 from genn_wrapper.NewModels import VarInit
 from genn_wrapper.InitSparseConnectivitySnippet import Init
+from genn_wrapper.Snippet import makeDPF
+from genn_wrapper.InitSparseConnectivitySnippet import makeCMLF
+from genn_wrapper.StlContainers import (StringPair, StringStringDoublePairPair,
+                                        StringDPFPair, StringDoublePair,
+                                        StringPairVector, StringVector,
+                                        StringDPFPairVector,
+                                        StringStringDoublePairPairVector)
+
 from genn_groups import NeuronGroup, SynapseGroup, CurrentSource
 from model_preprocessor import prepareSnippet
 
@@ -58,8 +66,8 @@ class GeNNModel(object):
     This class helps to define, build and run a GeNN model from python
     """
 
-    def __init__(self, precision=None, modelName="GeNNModel", enableDebug=False,
-                 cpuOnly=False):
+    def __init__(self, precision=None, modelName="GeNNModel",
+                 enableDebug=False, cpuOnly=False):
         """Init GeNNModel
         Keyword args:
         precision    -- string precision as string ("float" or "double" or "long double")
@@ -83,10 +91,9 @@ class GeNNModel(object):
             self._slm = slm.SharedLibraryModel_ld()
             self._npType = np.float128
         else:
-            raise ValueError( "Supported precisions are '{0}', "
-                              "but {1} was given".format(
-                                  "float, double and long double",
-                                  precision ) )
+            raise ValueError(
+                "Supported precisions are float, double and "\
+                "long double, but '{1}' was given".format(precision))
         
         self._built = False
         self._cpuOnly = cpuOnly
@@ -151,7 +158,7 @@ class GeNNModel(object):
         if self._built:
             raise Exception("GeNN model already built")
         if popName in self.neuronPopulations:
-            raise ValueError("neuron population '{0}' already exists".format(popName))
+            raise ValueError("Neuron population '{0}' already exists".format(popName))
        
         nGroup = NeuronGroup(popName)
         nGroup.setNeuron(neuron, paramSpace, varSpace)
@@ -161,11 +168,11 @@ class GeNNModel(object):
 
         return nGroup
         
-    def addSynapsePopulation( self, popName, matrixType, delaySteps,
-                              source, target,
-                              wUpdateModel, wuParamSpace, wuVarSpace, wuPreVarSpace, wuPostVarSpace,
-                              postsynModel, psParamSpace, psVarSpace,
-                              connectivityInitialiser=genn_wrapper.uninitialisedConnectivity()):
+    def addSynapsePopulation(self, popName, matrixType, delaySteps,
+                             source, target,
+                             wUpdateModel, wuParamSpace, wuVarSpace, wuPreVarSpace, wuPostVarSpace,
+                             postsynModel, psParamSpace, psVarSpace,
+                             connectivityInitialiser=genn_wrapper.uninitialisedConnectivity()):
         """Add a synapse population to the GeNN model
 
         Args:
@@ -195,9 +202,10 @@ class GeNNModel(object):
         sGroup = SynapseGroup(popName)
         sGroup.matrixType = matrixType
         sGroup.setConnectedPopulations(
-                source, self.neuronPopulations[source].size,
-                target, self.neuronPopulations[target].size )
-        sGroup.setWUpdate(wUpdateModel, wuParamSpace, wuVarSpace, wuPreVarSpace, wuPostVarSpace)
+            source, self.neuronPopulations[source].size,
+            target, self.neuronPopulations[target].size )
+        sGroup.setWUpdate(wUpdateModel, wuParamSpace,
+                          wuVarSpace, wuPreVarSpace, wuPostVarSpace)
         sGroup.setPostsyn(postsynModel, psParamSpace, psVarSpace)
         sGroup.addTo(self._model, delaySteps, connectivityInitialiser)
 
@@ -205,8 +213,8 @@ class GeNNModel(object):
 
         return sGroup
 
-    def addCurrentSource( self, csName, currentSourceModel, popName,
-                             paramSpace, varSpace ):
+    def addCurrentSource(self, csName, currentSourceModel, popName,
+                         paramSpace, varSpace):
         """Add a current source to the GeNN model
 
         Args:
@@ -284,7 +292,7 @@ class GeNNModel(object):
         self.pushSpikesToDevice(popName)
 
 
-    def build(self, pathToModel = "./"):
+    def build(self, pathToModel="./"):
 
         """Finalize and build a GeNN model
         
@@ -301,9 +309,10 @@ class GeNNModel(object):
                 popData.pop.setMaxConnections(popData.maxConn)
 
         self._model.finalize()
-        genn_wrapper.generate_model_runner_pygenn(self._model, self._pathToModel, self._localhost)
+        genn_wrapper.generate_model_runner_pygenn(
+            self._model, self._pathToModel, self._localhost)
 
-        check_call(["make", "-C", path.join(pathToModel, self.modelName + "_CODE") ])
+        check_call(["make", "-C", path.join(pathToModel, self.modelName + "_CODE")])
         
         self._built = True
 
@@ -328,17 +337,17 @@ class GeNNModel(object):
 
         for popName, popData in iteritems(self.neuronPopulations):
             self._slm.initNeuronPopIO(popName)
-            popData.spikes = self.assignExternalPointerPop( popName, "glbSpk",
-                    popData.size * popData.delaySlots, "unsigned int" )
-            popData.spikeCount = self.assignExternalPointerPop( popName, "glbSpkCnt",
-                    popData.delaySlots, "unsigned int" )
+            popData.spikes = self.assignExternalPointerPop(popName, "glbSpk",
+                    popData.size * popData.delaySlots, "unsigned int")
+            popData.spikeCount = self.assignExternalPointerPop(
+                popName, "glbSpkCnt", popData.delaySlots, "unsigned int")
             if popData.delaySlots > 1:
                 popData.spikeQuePtr = self._slm.assignExternalPointerSingle_ui(
-                      "spkQuePtr" + popName )
+                      "spkQuePtr" + popName)
 
             for varName, varData in iteritems(popData.vars):
                 varData.view = self.assignExternalPointerPop(
-                        popName, varName, popData.size, varData.type )
+                    popName, varName, popData.size, varData.type )
                 if varData.initRequired:
                     varData.view[:] = varData.values 
 
@@ -347,25 +356,26 @@ class GeNNModel(object):
                 # if auto allocation is not enabled, let the user care about
                 # allocation and initialization of the EGP
                 if egpData.needsAllocation:
-                    self._slm.allocateExtraGlobalParam( popName, egpName,
-                            len(egpData.values))
-                    egpData.view = self.assignExternalPointerPop( popName,
-                        egpName, len(egpData.values), egpData.type[:-1])
+                    self._slm.allocateExtraGlobalParam(popName, egpName,
+                                                       len(egpData.values))
+                    egpData.view = self.assignExternalPointerPop(
+                        popName, egpName,
+                        len(egpData.values), egpData.type[:-1])
                     if egpData.initRequired:
                         egpData.view[:] = egpData.values
 
         for popName, popData in iteritems(self.synapsePopulations):
-
             self._slm.initSynapsePopIO(popName)
             
             if popData.sparse:
                 if popData.connectionsSet:
                     self._slm.allocateSparseProj(popName, len(popData.ind))
-                    self._slm.initializeSparseProj( popName, popData.ind,
-                                                   popData.indInG )
+                    self._slm.initializeSparseProj(popName, popData.ind,
+                                                   popData.indInG)
 
                 else:
-                    raise Exception("For sparse projections, the connections must be set before loading a model")
+                    raise Exception("For sparse projections, the connections"\
+                                    "must be set before loading a model")
 
             for varName, varData in iteritems(popData.vars):
                 size = popData.size
@@ -387,7 +397,7 @@ class GeNNModel(object):
 
             for varName, varData in iteritems(srcData.vars):
                 varData.view = self.assignExternalPointerPop(
-                        srcName, varName, srcData.size, varData.type )
+                    srcName, varName, srcData.size, varData.type )
                 if varData.initRequired:
                     varData.view[:] = varData.values
 
@@ -395,10 +405,10 @@ class GeNNModel(object):
                 # if auto allocation is not enabled, let the user care about
                 # allocation and initialization of the EGP
                 if egpData.needsAllocation:
-                    self._slm.allocateExtraGlobalParam( srcName, egpName,
-                            len(egpData.values))
-                    egpData.view = self.assignExternalPointerPop( srcName,
-                        egpName, len(egpData.values), egpData.type[:-1])
+                    self._slm.allocateExtraGlobalParam(srcName, egpName,
+                                                       len(egpData.values))
+                    egpData.view = self.assignExternalPointerPop(
+                        srcName, egpName, len(egpData.values), egpData.type[:-1])
                     if egpData.initRequired:
                         egpData.view[:] = egpData.values
 
@@ -583,19 +593,12 @@ def initConnectivity(initSparseConnectivitySnippet, paramSpace):
     # Use add function to create suitable VarInit
     return Init(sInstance, params)
 
-def createCustomNeuronClass( 
-        className,
-        paramNames=None,
-        varNameTypes=None,
-        derivedParams=None,
-        simCode=None,
-        thresholdConditionCode=None,
-        resetCode=None,
-        supportCode=None,
-        extraGlobalParams=None,
-        additionalInputVars=None,
-        isPoisson=None,
-        custom_body=None ):
+def createCustomNeuronClass(className, paramNames=None, varNameTypes=None,
+                            derivedParams=None, simCode=None,
+                            thresholdConditionCode=None, resetCode=None,
+                            supportCode=None, extraGlobalParams=None,
+                            additionalInputVars=None, isPoisson=None,
+                            custom_body=None):
 
     """This helper function creates a custom NeuronModel class.
 
@@ -640,13 +643,15 @@ def createCustomNeuronClass(
         body["getSupportCode"] = lambda self: supportCode
     
     if extraGlobalParams is not None:
-        body["getxtraGlobalParams"] = lambda self: genn_wrapper.StlContainers.StringPairVector(
-                [genn_wrapper.StlContainers.StringPair(egp[0], egp[1]) for egp in extraGlobalParams])
+        body["getxtraGlobalParams"] =\
+            lambda self: StringPairVector([StringPair(egp[0], egp[1])
+                                           for egp in extraGlobalParams])
  
     if additionalInputVars:
-        body["getAdditionalInputVars"] = lambda self: genn_wrapper.StlContainers.StringStringDoublePairPairVector(
-                [genn_wrapper.StlContainers.StringStringDoublePairPair(aiv[0], genn_wrapper.StlContainers.StringDoublePair(aiv[1], aiv[2])) \
-                        for aiv in additionalInputVars] )
+        body["getAdditionalInputVars"] =\
+            lambda self: StringStringDoublePairPairVector(
+                [StringStringDoublePairPair(aiv[0], StringDoublePair(aiv[1], aiv[2]))
+                 for aiv in additionalInputVars])
 
     if isPoisson is not None:
         body["isPoisson"] = lambda self: isPoisson
@@ -654,23 +659,14 @@ def createCustomNeuronClass(
     if custom_body is not None:
         body.update(custom_body)
 
-    return createCustomModelClass(
-            className,
-            genn_wrapper.NeuronModels.Custom,
-            paramNames,
-            varNameTypes,
-            derivedParams,
-            body )
+    return createCustomModelClass(className, genn_wrapper.NeuronModels.Custom,
+                                  paramNames, varNameTypes, derivedParams,
+                                  body)
 
-def createCustomPostsynapticClass( 
-        className,
-        paramNames=None,
-        varNameTypes=None,
-        derivedParams=None,
-        decayCode=None,
-        applyInputCode=None,
-        supportCode=None,
-        custom_body=None ):
+def createCustomPostsynapticClass(className, paramNames=None, varNameTypes=None,
+                                  derivedParams=None, decayCode=None,
+                                  applyInputCode=None, supportCode=None,
+                                  custom_body=None):
     """This helper function creates a custom PostsynapticModel class.
 
     sa createCustomNeuronClass
@@ -719,27 +715,18 @@ def createCustomPostsynapticClass(
             body )
 
 
-def createCustomWeightUpdateClass( 
-        className,
-        paramNames=None,
-        varNameTypes=None,
-        preVarNameTypes=None,
-        postVarNameTypes=None,
-        derivedParams=None,
-        simCode=None,
-        eventCode=None,
-        learnPostCode=None,
-        synapseDynamicsCode=None,
-        eventThresholdConditionCode=None,
-        preSpikeCode=None,
-        postSpikeCode=None,
-        simSupportCode=None,
-        learnPostSupportCode=None,
-        synapseDynamicsSuppportCode=None,
-        extraGlobalParams=None,
-        isPreSpikeTimeRequired=None,
-        isPostSpikeTimeRequired=None,
-        custom_body=None ):
+def createCustomWeightUpdateClass(className, paramNames=None, varNameTypes=None,
+                                  preVarNameTypes=None, postVarNameTypes=None,
+                                  derivedParams=None, simCode=None,
+                                  eventCode=None, learnPostCode=None,
+                                  synapseDynamicsCode=None,
+                                  eventThresholdConditionCode=None,
+                                  preSpikeCode=None, postSpikeCode=None,
+                                  simSupportCode=None, learnPostSupportCode=None,
+                                  synapseDynamicsSuppportCode=None,
+                                  extraGlobalParams=None,
+                                  isPreSpikeTimeRequired=None,
+                                  isPostSpikeTimeRequired=None, custom_body=None):
     """This helper function creates a custom WeightUpdateModel class.
 
     sa createCustomNeuronClass
@@ -810,16 +797,16 @@ def createCustomWeightUpdateClass(
         body["getSynapseDynamicsSuppportCode"] = lambda self: synapseDynamicsSuppportCode
 
     if extraGlobalParams is not None:
-        body["getExtraGlobalParams"] = lambda self: genn_wrapper.StlContainers.StringPairVector(
-                [genn_wrapper.StlContainers.StringPair(egp[0], egp[1]) for egp in extraGlobalParams])
+        body["getExtraGlobalParams"] = lambda self: StringPairVector([StringPair(egp[0], egp[1])
+                                                                      for egp in extraGlobalParams])
 
     if preVarNameTypes is not None:
-        body["getPreVars"] = lambda self: genn_wrapper.StlContainers.StringPairVector([genn_wrapper.StlContainers.StringPair(vn[0], vn[1])
-                                                                                        for vn in preVarNameTypes] )
+        body["getPreVars"] = lambda self: StringPairVector([StringPair(vn[0], vn[1])
+                                                            for vn in preVarNameTypes] )
     
     if postVarNameTypes is not None:
-        body["getPostVars"] = lambda self: genn_wrapper.StlContainers.StringPairVector([genn_wrapper.StlContainers.StringPair(vn[0], vn[1])
-                                                                                        for vn in postVarNameTypes] )
+        body["getPostVars"] = lambda self: StringPairVector([StringPair(vn[0], vn[1])
+                                                             for vn in postVarNameTypes] )
     
     if isPreSpikeTimeRequired is not None:
         body["isPreSpikeTimeRequired"] = lambda self: isPreSpikeTimeRequired
@@ -830,23 +817,13 @@ def createCustomWeightUpdateClass(
     if custom_body is not None:
         body.update(custom_body)
     
-    return createCustomModelClass(
-            className,
-            genn_wrapper.WeightUpdateModels.Custom,
-            paramNames,
-            varNameTypes,
-            derivedParams,
-            body )
+    return createCustomModelClass(className, genn_wrapper.WeightUpdateModels.Custom,
+                                  paramNames, varNameTypes, derivedParams, body)
 
 
-def createCustomCurrentSourceClass(
-        className,
-        paramNames=None,
-        varNameTypes=None,
-        derivedParams=None,
-        injectionCode=None,
-        extraGlobalParams=None,
-        custom_body=None ):
+def createCustomCurrentSourceClass(className, paramNames=None, varNameTypes=None,
+                                   derivedParams=None, injectionCode=None,
+                                   extraGlobalParams=None, custom_body=None):
     """This helper function creates a custom NeuronModel class.
 
     sa createCustomNeuronClass
@@ -877,27 +854,18 @@ def createCustomCurrentSourceClass(
         body["getInjectionCode"] = lambda self: injectionCode
 
     if extraGlobalParams is not None:
-        body["getExtraGlobalParams"] = lambda self: genn_wrapper.StlContainers.StringPairVector(
-                [genn_wrapper.StlContainers.StringPair(egp[0], egp[1]) for egp in extraGlobalParams])
+        body["getExtraGlobalParams"] =\
+            lambda self: StringPairVector([StringPair(egp[0], egp[1])
+                                           for egp in extraGlobalParams])
 
     if custom_body is not None:
         body.update(custom_body)
 
-    return createCustomModelClass(
-            className,
-            genn_wrapper.CurrentSourceModels.Custom,
-            paramNames,
-            varNameTypes,
-            derivedParams,
-            body )
+    return createCustomModelClass(className, genn_wrapper.CurrentSourceModels.Custom,
+                                  paramNames, varNameTypes, derivedParams, body)
 
-def createCustomModelClass(
-        className,
-        base,
-        paramNames,
-        varNameTypes,
-        derivedParams,
-        custom_body ):
+def createCustomModelClass(className, base, paramNames, varNameTypes,
+                           derivedParams, custom_body):
     """This helper function completes a custom model class creation.
 
     This part is common for all model classes and is nearly useless on its own
@@ -926,15 +894,17 @@ def createCustomModelClass(
     }
     
     if paramNames is not None:
-        body["getParamNames"] = lambda self: genn_wrapper.StlContainers.StringVector(paramNames)
+        body["getParamNames"] = lambda self: StringVector(paramNames)
 
     if varNameTypes is not None:
-        body["getVars"] = lambda self: genn_wrapper.StlContainers.StringPairVector([genn_wrapper.StlContainers.StringPair(vn[0], vn[1]) for vn in varNameTypes])
+        body["getVars"] =\
+            lambda self: StringPairVector([StringPair(vn[0], vn[1])
+                                           for vn in varNameTypes])
 
     if derivedParams is not None:
-        body["getDerivedParams"] = lambda self: genn_wrapper.StlContainers.StringDPFPairVector(
-                [genn_wrapper.StlContainers.StringDPFPair(dp[0], genn_wrapper.Snippet.makeDPF(dp[1]))
-                    for dp in derivedParams] )
+        body["getDerivedParams"] =\
+            lambda self: StringDPFPairVector([StringDPFPair(dp[0], makeDPF(dp[1]))
+                                              for dp in derivedParams])
 
     if custom_body is not None:
         body.update(custom_body)
@@ -957,7 +927,8 @@ def createDPFClass(dpfunc):
     def call(self, pars, dt):
         return dpfunc(pars, dt)
 
-    return type("", (genn_wrapper.Snippet.DerivedParamFunc,), {"__init__" : ctor, "__call__" : call})
+    return type("", (genn_wrapper.Snippet.DerivedParamFunc,),
+                {"__init__" : ctor, "__call__" : call})
 
 
 def createCMLFClass(cmlfFunc):
@@ -977,14 +948,11 @@ def createCMLFClass(cmlfFunc):
     def call(self, numPre, numPost, pars):
         return cmlfFunc(numPre, numPost, pars, dt)
 
-    return type("", (genn_wrapper.InitSparseConnectivitySnippet.CalcMaxLengthFunc,), {"__init__" : ctor, "__call__" : call})
+    return type("", (genn_wrapper.InitSparseConnectivitySnippet.CalcMaxLengthFunc,),
+                {"__init__" : ctor, "__call__" : call})
 
-def createCustomInitVarSnippetClass(
-        className,
-        paramNames=None,
-        derivedParams=None,
-        varInitCode=None,
-        custom_body=None ):
+def createCustomInitVarSnippetClass(className, paramNames=None, derivedParams=None,
+                                    varInitCode=None, custom_body=None):
     """This helper function creates a custom InitVarSnippet class.
 
     sa createCustomNeuronClass
@@ -1015,24 +983,15 @@ def createCustomInitVarSnippetClass(
     if custom_body is not None:
         body.update(custom_body)
 
-    return createCustomModelClass(
-            className,
-            genn_wrapper.InitVarSnippet.Custom,
-            paramNames,
-            None,
-            derivedParams,
-            body )
+    return createCustomModelClass(className, genn_wrapper.InitVarSnippet.Custom,
+                                  paramNames, None, derivedParams, body)
 
-def createCustomSparseConnectInitSnippetClass(
-        className,
-        paramNames=None,
-        derivedParams=None,
-        rowBuildCode=None,
-        rowBuildStateVars=None,
-        calcMaxRowLengthFunc=None,
-        calcMaxColLengthFunc=None,
-        extraGlobalParams=None,
-        custom_body=None ):
+def createCustomSparseConnectInitSnippetClass(className, paramNames=None,
+                                              derivedParams=None, rowBuildCode=None,
+                                              rowBuildStateVars=None,
+                                              calcMaxRowLengthFunc=None,
+                                              calcMaxColLengthFunc=None,
+                                              extraGlobalParams=None, custom_body=None):
     """This helper function creates a custom InitSparseConnectivitySnippet class.
 
     sa createCustomNeuronClass
@@ -1066,29 +1025,23 @@ def createCustomSparseConnectInitSnippetClass(
 
     if rowBuildStateVars is not None:
         body["getRowBuildStateVars"] =\
-            lambda self: genn_wrapper.StlContainers.StringStringDoublePairPairVector(
-                [genn_wrapper.StlContainers.StringStringDoublePairPair(r[0], genn_wrapper.StlContainers.StringDoublePair(r[1], r[2]))
+            lambda self: StringStringDoublePairPairVector(
+                [StringStringDoublePairPair(r[0], StringDoublePair(r[1], r[2]))
                  for r in rowBuildStateVars] )
 
     if calcMaxRowLengthFunc is not None:
-        body["getCalcMaxRowLengthFunc"] = lambda self: genn_wrapper.InitSparseConnectivitySnippet.makeCMLF(calcMaxRowLengthFunc)
+        body["getCalcMaxRowLengthFunc"] = lambda self: makeCMLF(calcMaxRowLengthFunc)
 
     if calcMaxColLengthFunc is not None:
-        body["getCalcMaxColLengthFunc"] = lambda self: genn_wrapper.InitSparseConnectivitySnippet.makeCMLF(calcMaxColLengthFunc)
+        body["getCalcMaxColLengthFunc"] = lambda self: makeCMLF(calcMaxColLengthFunc)
 
     if extraGlobalParams is not None:
         body["getExtraGlobalParams"] =\
-            lambda self: genn_wrapper.StlContainers.StringPairVector(
-                [genn_wrapper.StlContainers.StringStringDoublePairPair(egp[0], egp[1])
-                 for egp in extraGlobalParams] )
+            lambda self: StringPairVector([StringStringDoublePairPair(egp[0], egp[1])
+                                           for egp in extraGlobalParams])
 
     if custom_body is not None:
         body.update(custom_body)
 
-    return createCustomModelClass(
-            className,
-            genn_wrapper.InitVarSnippet.Custom,
-            paramNames,
-            None,
-            derivedParams,
-            body )
+    return createCustomModelClass(className, genn_wrapper.InitVarSnippet.Custom,
+                                  paramNames, None, derivedParams, body)
