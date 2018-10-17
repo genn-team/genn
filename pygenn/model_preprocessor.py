@@ -7,7 +7,7 @@ import genn_wrapper
 from genn_wrapper.NewModels import VarInit, VarInitVector
 from genn_wrapper.StlContainers import DoubleVector
 
-def prepareModel( model, paramSpace, varSpace, preVarSpace=None, postVarSpace=None, modelFamily=None):
+def prepareModel(model, paramSpace, varSpace, preVarSpace=None, postVarSpace=None, modelFamily=None):
     """Prepare a model by checking its validity and extracting information about variables and parameters
 
     Args:
@@ -27,24 +27,24 @@ def prepareModel( model, paramSpace, varSpace, preVarSpace=None, postVarSpace=No
             4. dict mapping names of variables to instances of class Variable.
 
     """
-    mInstance, mType = isModelValid( model, modelFamily )
-    paramNames = list( mInstance.getParamNames() )
-    params = parameterSpaceToParamValues( mInstance, paramSpace )
+    mInstance, mType = isModelValid(model, modelFamily)
+    paramNames = list(mInstance.getParamNames())
+    params = parameterSpaceToParamValues(mInstance, paramSpace)
     varNames = [vnt[0] for vnt in mInstance.getVars()]
-    varDict = { vnt[0] : Variable( vnt[0], vnt[1], varSpace[vnt[0]] )
+    varDict = { vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
               for vnt in mInstance.getVars() }
     
     if modelFamily == genn_wrapper.WeightUpdateModels:
         preVarNames = [vnt[0] for vnt in mInstance.getPreVars()]
-        preVarDict = { vnt[0] : Variable( vnt[0], vnt[1], varSpace[vnt[0]] )
+        preVarDict = { vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
                       for vnt in mInstance.getPreVars() }
         postVarNames = [vnt[0] for vnt in mInstance.getPostVars()]
-        postVarDict = { vnt[0] : Variable( vnt[0], vnt[1], varSpace[vnt[0]] )
+        postVarDict = { vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
                        for vnt in mInstance.getPostVars() }
         return ( mInstance, mType, paramNames, params, varNames, varDict,
                 preVarNames, preVarDict, postVarNames, postVarDict)
     else:
-        return ( mInstance, mType, paramNames, params, varNames, varDict )
+        return (mInstance, mType, paramNames, params, varNames, varDict)
 
 
 def prepareSnippet(snippet, paramSpace, snippetFamily):
@@ -61,14 +61,14 @@ def prepareSnippet(snippet, paramSpace, snippetFamily):
             2. snippet parameter names,
             3. snippet parameters
     """
-    sInstance, sType = isModelValid( snippet, snippetFamily )
-    paramNames = list( sInstance.getParamNames() )
-    params = parameterSpaceToDoubleVector( sInstance, paramSpace )
+    sInstance, sType = isModelValid(snippet, snippetFamily)
+    paramNames = list(sInstance.getParamNames())
+    params = parameterSpaceToDoubleVector(sInstance, paramSpace)
 
     return (sInstance, sType, paramNames, params)
 
 
-def isModelValid( model, modelFamily ):
+def isModelValid(model, modelFamily):
     """Check whether the model is valid, i.e is native or derived from modelFamily.Custom
     Args:
     model -- string or instance of modelFamily.Custom
@@ -80,22 +80,22 @@ def isModelValid( model, modelFamily ):
     Raises ValueError if model is not valid (i.e. is not custom and is not natively available)
     """
 
-    if not isinstance( model, str ):
-        if not isinstance( model, modelFamily.Custom ):
-            modelType = type( model ).__name__
-            if not hasattr( modelFamily, modelType ):
-                raise ValueError( 'model "{0}" is not supported'.format( modelType ) )
+    if not isinstance(model, str):
+        if not isinstance(model, modelFamily.Custom):
+            modelType = type(model).__name__
+            if not hasattr(modelFamily, modelType):
+                raise ValueError('model "{0}" is not supported'.format(modelType))
         else:
             modelType = 'Custom'
     else:
         modelType = model
-        if not hasattr( modelFamily, modelType ):
-            raise ValueError( 'model "{0}" is not supported'.format( modelType ) )
+        if not hasattr(modelFamily, modelType):
+            raise ValueError('model "{0}" is not supported'.format(modelType))
         else:
-            model = getattr( modelFamily, modelType ).getInstance()
+            model = getattr(modelFamily, modelType).getInstance()
     return model, modelType
 
-def parameterSpaceToParamValues( model, paramSpace ):
+def parameterSpaceToParamValues(model, paramSpace):
     """Convert a paramSpace dict to ParamValues
 
     Args:
@@ -107,7 +107,7 @@ def parameterSpaceToParamValues( model, paramSpace ):
     """
     return model.makeParamValues(parameterSpaceToDoubleVector(model, paramSpace))
 
-def parameterSpaceToDoubleVector( model, paramSpace ):
+def parameterSpaceToDoubleVector(model, paramSpace):
     """Convert a paramSpace dict to a std::vector<double>
 
     Args:
@@ -121,7 +121,7 @@ def parameterSpaceToDoubleVector( model, paramSpace ):
 
     return DoubleVector(paramVals)
 
-def varSpaceToVarValues( model, varSpace ):
+def varSpaceToVarValues(model, varSpace):
     """Convert a varSpace dict to VarValues
 
     Args:
@@ -133,9 +133,9 @@ def varSpaceToVarValues( model, varSpace ):
     """
     varVals = [varSpace[vnt[0]].initVal for vnt in model.getVars()]
 
-    return model.makeVarValues( VarInitVector( varVals ) )
+    return model.makeVarValues(VarInitVector(varVals))
 
-def preVarSpaceToVarValues( model, varSpace ):
+def preVarSpaceToVarValues(model, varSpace):
     """Convert a varSpace dict to PreVarValues
 
     Args:
@@ -147,9 +147,9 @@ def preVarSpaceToVarValues( model, varSpace ):
     """
     varVals = [varSpace[vnt[0]].initVal for vnt in model.getPreVars()]
 
-    return model.makePreVarValues( VarInitVector( varVals ) )
+    return model.makePreVarValues(VarInitVector(varVals))
 
-def postVarSpaceToVarValues( model, varSpace ):
+def postVarSpaceToVarValues(model, varSpace):
     """Convert a varSpace dict to PostVarValues
 
     Args:
@@ -161,7 +161,7 @@ def postVarSpaceToVarValues( model, varSpace ):
     """
     varVals = [varSpace[vnt[0]].initVal for vnt in model.getPostVars()]
 
-    return model.makePostVarValues( VarInitVector( varVals ) )
+    return model.makePostVarValues(VarInitVector(varVals))
 
 
 class Variable(object):
@@ -182,9 +182,9 @@ class Variable(object):
         self.type = variableType
         self.view = None
         self.needsAllocation = False
-        self.setValues( values )
+        self.setValues(values)
 
-    def setValues( self, values ):
+    def setValues(self, values):
         """Set Variable's values
 
         Args:
@@ -204,10 +204,10 @@ class Variable(object):
         else:
             # Try and iterate values - if they are iterable they must be loaded at simulate time
             try:
-                iter( values )
+                iter(values)
                 self.initVal = genn_wrapper.uninitialisedVar()
-                self.values = list( values )
+                self.values = list(values)
                 self.initRequired = True
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
-                self.initVal = VarInit( values )
+                self.initVal = VarInit(values)
