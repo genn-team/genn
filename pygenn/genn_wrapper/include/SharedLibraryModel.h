@@ -2,6 +2,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -269,8 +270,26 @@ public:
                               unsigned int* _indInG, int nPre)
     {
         auto C = static_cast<SparseProjection*>( getSymbol( "C" + popName ) );
-        std::copy( _indInG, _indInG + nPre, C->indInG );
-        std::copy( _ind, _ind + nConn, C->ind );
+        std::copy_n( _indInG, nPre, C->indInG );
+        std::copy_n( _ind, nConn, C->ind );
+    }
+
+    // when called from python with numpy array, integers are substituted on the fly
+    void initializeRaggedProj( const std::string &popName,
+                               unsigned int* _ind, int nConn,
+                               unsigned int* _rowLength, int nPre)
+    {
+        auto C = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
+        std::copy_n( _rowLength, nPre, C->rowLength );
+        std::copy_n( _ind, nConn, C->ind );
+    }
+
+    // when called from python with numpy array, integers are substituted on the fly
+    void initializeBitmaskProj( const std::string &popName,
+                               uint32_t* _bitMask, int nWords)
+    {
+        auto g = static_cast<uint32_t**>( getSymbol( "gp" + popName ) );
+        std::copy_n( _bitMask, nWords, *g );
     }
 
     void initializeModel()
