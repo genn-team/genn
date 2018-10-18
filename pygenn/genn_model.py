@@ -239,13 +239,19 @@ class GeNNModel(object):
             raise ValueError("synapse population '{0}' "
                              "already exists".format(pop_name))
 
+        if not isinstance(source, NeuronGroup):
+            raise ValueError("'source' myst be a NeuronGroup")
+
+        if not isinstance(target, NeuronGroup):
+            raise ValueError("'target' myst be a NeuronGroup")
+
         s_group = SynapseGroup(pop_name)
         s_group.matrix_type = matrix_type
         s_group.set_connected_populations(source, target)
         s_group.set_weight_update(w_update_model, wu_param_space, wu_var_space,
                                   wu_pre_var_space, wu_post_var_space)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
-        s_group.set_connectivity_initialiser(connectivity_initialiser)
+        s_group.connectivity_initialiser = connectivity_initialiser
         s_group.add_to(self._model, delay_steps)
 
         self.synapse_populations[pop_name] = s_group
@@ -344,10 +350,6 @@ class GeNNModel(object):
         if self._built:
             raise Exception("GeNN model already built")
         self._path_to_model = path_to_model
-
-        for pop_name, pop_data in iteritems(self.synapse_populations):
-            if pop_data.is_connectivity_init_required:
-                pop_data.pop.set_max_connections(pop_data.max_conn)
 
         self._model.finalize()
         genn_wrapper.generate_model_runner_pygenn(

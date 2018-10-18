@@ -159,7 +159,7 @@ class SynapseGroup(Group):
         self.trg = None
         self.pre_vars = {}
         self.post_vars = {}
-        self._connectivity_initialiser = None
+        self.connectivity_initialiser = None
 
     @property
     def size(self):
@@ -169,9 +169,12 @@ class SynapseGroup(Group):
         elif self.is_yale:
             return self._num_connections
         elif self.is_ragged:
-            return self.max_conn * self.src.size
+            return self.max_connections * self.src.size
         #elif self.is_ragged
 
+    @property
+    def max_connections(self):
+        return self.pop.get_max_connections()
 
     def set_pre_var(self, var_name, values):
         """Set values for a presynaptic variable
@@ -228,18 +231,9 @@ class SynapseGroup(Group):
 
         self.vars.update(var_dict)
 
-    def set_connectivity_initialiser(self, connectivity_initialiser):
-        self._connectivity_initialiser = connectivity_initialiser
-
-        calc = self._connectivity_initialiser.get_snippet().get_calc_max_row_length_func();
-
-        self.max_conn =  calc(self.src.size, self.trg.size, self._connectivity_initialiser.get_params())
-        print self.max_conn
-        #self.max_conn = self._connectivity_initialiser.get_calc_max_row_length_func
-
     @property
     def is_connectivity_init_required(self):
-        return self._connectivity_initialiser is None
+        return self.connectivity_initialiser is None
 
     @property
     def matrix_type(self):
@@ -290,7 +284,6 @@ class SynapseGroup(Group):
             self.indInG = []
             self.indInG.append(0)
             cur_pre = 0
-            self.max_conn = 0
             # convert connection tuples to indInG
             for i, (pre, _) in enumerate(conns):
                 while pre != cur_pre:
@@ -300,10 +293,11 @@ class SynapseGroup(Group):
             # connections, they should all point to the end of indInG
             while len(self.indInG) < self.src.size + 1:
                 self.indInG.append(len(conns))
+
             # compute max number of connections from taget neuron to source
-            self.max_conn = int(max(
-                [self.indInG[i] - self.indInG[i - 1]
-                 for i in range(len(self.indInG)) if i != 0]))
+            max_conn = int(max([self.indInG[i] - self.indInG[i - 1]
+                                for i in range(len(self.indInG)) if i != 0]))
+            self.pop.set_max_connections(max_conn)
         elif (self.is_dense) != 0:
             self.g_mask = [pre * self.trg.size + post
                            for (pre, post) in conns]
@@ -355,14 +349,13 @@ class SynapseGroup(Group):
 
         # Use unitialised connectivity initialiser if none has been set
         connect_init = (genn_wrapper.uninitialised_connectivity()
-                        if self._connectivity_initialiser is None
-                        else self._connectivity_initialiser)
-
-        self.pop = add_fct(self.name, self.matrix_type, delay_steps, self.src,
-                           self.trg, self.w_update, self.wu_params, wu_var_ini,
-                           wu_pre_var_ini, wu_post_var_ini, self.postsyn,
-                           self.ps_params, ps_var_ini,
-                           connect_init)
+                        if self.connectivity_initialiser is None
+                        else self.connectivity_initialiser)
+        self.pop = add_fct(self.name, self.matrix_type, delay_steps,
+                           self.src.name, self.trg.name, self.w_update,
+                           self.wu_params, wu_var_ini, wu_pre_var_ini,
+                           wu_post_var_ini, self.postsyn, self.ps_params,
+                           ps_var_ini, connect_init)
 
         for var_name, var in iteritems(self.vars):
             if var.init_required:
