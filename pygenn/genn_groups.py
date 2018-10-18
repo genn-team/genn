@@ -8,6 +8,12 @@ import genn_wrapper
 import model_preprocessor
 from model_preprocessor import Variable
 from genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
+from genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
+                          SynapseMatrixConnectivity_YALE,
+                          SynapseMatrixConnectivity_RAGGED,
+                          SynapseMatrixConnectivity_BITMASK,
+                          SynapseMatrixConnectivity_DENSE,
+                          SynapseMatrixWeight_GLOBAL)
 
 
 class Group(object):
@@ -145,7 +151,6 @@ class SynapseGroup(Group):
         Args:
         name    --  string name of the group
         """
-        self.sparse = False
         self.connections_set = False
         super(SynapseGroup, self).__init__(name)
         self.w_update = None
@@ -154,19 +159,19 @@ class SynapseGroup(Group):
         self.trg = None
         self.pre_vars = {}
         self.post_vars = {}
+        self._connectivity_initialiser = None
 
     @property
     def size(self):
         """Size of connection matrix"""
-        if not self.sparse:
-            return self.trg_size * self.src_size
-        else:
-            return self._size
+        if self.is_dense:
+            return self.trg.size * self.src.size
+        elif self.is_yale:
+            return self._num_connections
+        elif self.is_ragged:
+            return self.max_conn * self.src.size
+        #elif self.is_ragged
 
-    @size.setter
-    def size(self, size):
-        if self.sparse:
-            self._size = size
 
     def set_pre_var(self, var_name, values):
         """Set values for a presynaptic variable
@@ -223,6 +228,19 @@ class SynapseGroup(Group):
 
         self.vars.update(var_dict)
 
+    def set_connectivity_initialiser(self, connectivity_initialiser):
+        self._connectivity_initialiser = connectivity_initialiser
+
+        calc = self._connectivity_initialiser.get_snippet().get_calc_max_row_length_func();
+
+        self.max_conn =  calc(self.src.size, self.trg.size, self._connectivity_initialiser.get_params())
+        print self.max_conn
+        #self.max_conn = self._connectivity_initialiser.get_calc_max_row_length_func
+
+    @property
+    def is_connectivity_init_required(self):
+        return self._connectivity_initialiser is None
+
     @property
     def matrix_type(self):
         """Type of the projection matrix"""
@@ -232,17 +250,31 @@ class SynapseGroup(Group):
     def matrix_type(self, matrix_type):
         self._matrix_type = getattr(genn_wrapper,
                                     "SynapseMatrixType_" + matrix_type)
-        if matrix_type.startswith("SPARSE"):
-            self.sparse = True
-            self.ind = None
-            self.indInG = None
-        else:
-            self.sparse = False
 
-        if matrix_type.endswith("GLOBALG"):
-            self.globalG = True
-        else:
-            self.globalG = False
+    @property
+    def is_yale(self):
+        """Tests whether synaptic connectivity uses Yale format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_YALE) != 0
+
+    @property
+    def is_ragged(self):
+        """Tests whether synaptic connectivity uses Ragged format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_RAGGED) != 0
+
+    @property
+    def is_bitmask(self):
+        """Tests whether synaptic connectivity uses Bitmask format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_BITMASK) != 0
+
+    @property
+    def is_dense(self):
+        """Tests whether synaptic connectivity uses dense format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_DENSE) != 0
+
+    @property
+    def global_weights(self):
+        """Tests whether synaptic connectivity has global weights"""
+        return (self._matrix_type & SynapseMatrixWeight_GLOBAL) != 0
 
     def set_connections(self, conns, g):
         """Set connections between two groups of neurons
@@ -251,9 +283,9 @@ class SynapseGroup(Group):
         conns   --  connections as tuples (pre, post)
         g       --  strength of the connection
         """
-        if self.sparse:
+        if (self.is_yale) != 0:
             conns.sort()
-            self.size = len(conns)
+            self._num_connections = len(conns)
             self.ind = [post for (_, post) in conns]
             self.indInG = []
             self.indInG.append(0)
@@ -266,38 +298,36 @@ class SynapseGroup(Group):
                     cur_pre += 1
             # if there are any "hanging" presynaptic neurons without
             # connections, they should all point to the end of indInG
-            while len(self.indInG) < self.src_size + 1:
+            while len(self.indInG) < self.src.size + 1:
                 self.indInG.append(len(conns))
             # compute max number of connections from taget neuron to source
             self.max_conn = int(max(
                 [self.indInG[i] - self.indInG[i - 1]
                  for i in range(len(self.indInG)) if i != 0]))
-        else:
-            self.g_mask = [pre * self.trg_size + post
+        elif (self.is_dense) != 0:
+            self.g_mask = [pre * self.trg.size + post
                            for (pre, post) in conns]
-            self.size = self.trg_size * self.src_size
+        else:
+            raise Exception("Setting connections with type '{0}' is not "
+                            "currently supported".format(self._matrix_type))
 
-        if not self.globalG:
+        if not self.global_weights:
             self.vars["g"].set_values(g)
             self.pop.set_wuvar_mode("g", VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
         self.connections_set = True
 
-    def set_connected_populations(self, source, src_size, target, trg_size):
+    def set_connected_populations(self, source, target):
         """Set two groups of neurons connected by this SynapseGroup
 
         Args:
         source   -- string name of the presynaptic neuron group
-        src_size -- number of neurons in the presynaptic group
         target   -- string name of the postsynaptic neuron group
-        trg_size -- number of neurons in the presynaptic group
         """
         self.src = source
         self.trg = target
-        self.src_size = src_size
-        self.trg_size = trg_size
 
-    def add_to(self, nn_model, delay_steps, connectivity_initialiser):
+    def add_to(self, nn_model, delay_steps):
         """Add this SynapseGroup to the GeNN NNmodel
 
         Args:
@@ -323,11 +353,16 @@ class SynapseGroup(Group):
             self.postsyn, {vn: self.vars[vn]
                            for vn in self.ps_var_names})
 
+        # Use unitialised connectivity initialiser if none has been set
+        connect_init = (genn_wrapper.uninitialised_connectivity()
+                        if self._connectivity_initialiser is None
+                        else self._connectivity_initialiser)
+
         self.pop = add_fct(self.name, self.matrix_type, delay_steps, self.src,
                            self.trg, self.w_update, self.wu_params, wu_var_ini,
                            wu_pre_var_ini, wu_post_var_ini, self.postsyn,
                            self.ps_params, ps_var_ini,
-                           connectivity_initialiser)
+                           connect_init)
 
         for var_name, var in iteritems(self.vars):
             if var.init_required:

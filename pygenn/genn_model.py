@@ -209,9 +209,9 @@ class GeNNModel(object):
         pop_name                    --  name of the new population
         matrix_type                 --  type of the matrix as string
         delay_steps                 --  delay in number of steps
-        source                      --  name of the source population
-        target                      --  name of the target population
-        w_uptate_model              --  type of the WeightUpdateModels class
+        source                      --  source neuron group
+        target                      --  target neuron group
+        w_update_model              --  type of the WeightUpdateModels class
                                         as string or instance of weight update
                                         model class derived from
                                         WeightUpdateModels::Custom class.
@@ -239,20 +239,14 @@ class GeNNModel(object):
             raise ValueError("synapse population '{0}' "
                              "already exists".format(pop_name))
 
-        # If connectivity initialiser is none, mark it as uninitialised
-        if connectivity_initialiser is None:
-            connectivity_initialiser =\
-                genn_wrapper.uninitialised_connectivity()
-
         s_group = SynapseGroup(pop_name)
         s_group.matrix_type = matrix_type
-        s_group.set_connected_populations(
-            source, self.neuron_populations[source].size,
-            target, self.neuron_populations[target].size)
+        s_group.set_connected_populations(source, target)
         s_group.set_weight_update(w_update_model, wu_param_space, wu_var_space,
                                   wu_pre_var_space, wu_post_var_space)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
-        s_group.add_to(self._model, delay_steps, connectivity_initialiser)
+        s_group.set_connectivity_initialiser(connectivity_initialiser)
+        s_group.add_to(self._model, delay_steps)
 
         self.synapse_populations[pop_name] = s_group
 
@@ -352,7 +346,7 @@ class GeNNModel(object):
         self._path_to_model = path_to_model
 
         for pop_name, pop_data in iteritems(self.synapse_populations):
-            if pop_data.sparse:
+            if pop_data.is_connectivity_init_required:
                 pop_data.pop.set_max_connections(pop_data.max_conn)
 
         self._model.finalize()
@@ -416,25 +410,33 @@ class GeNNModel(object):
         for pop_name, pop_data in iteritems(self.synapse_populations):
             self._slm.init_synapse_pop_io(pop_name)
 
-            if pop_data.sparse:
+            # If synapse population has connectivity which
+            # requires initialising manually
+            if pop_data.is_connectivity_init_required:
+                # If data is available
                 if pop_data.connections_set:
-                    self._slm.allocate_sparse_proj(pop_name, len(pop_data.ind))
-                    self._slm.initialize_sparse_proj(pop_name, pop_data.ind,
-                                                     pop_data.indInG)
+                    if pop_data.is_yale:
+                        self._slm.allocate_yale_proj(pop_name, len(pop_data.ind))
+                        self._slm.initialize_yale_proj(pop_name, pop_data.ind,
+                                                         pop_data.indInG)
+                    else:
+                        raise Exception("Matrix format not supported")
                 else:
                     raise Exception("For sparse projections, the connections"
                                     "must be set before loading a model")
 
             for var_name, var_data in iteritems(pop_data.vars):
-                size = pop_data.size
                 if var_name in [vnt[0] for vnt in pop_data.postsyn.get_vars()]:
                     size = self.neuron_populations[pop_data.trg].size
-                if var_name == "g" and pop_data.globalG:
+                else:
+                    size = pop_data.size
+
+                if var_name == "g" and pop_data.global_weights:
                     continue
                 var_data.view = self.assign_external_pointer_pop(
                     pop_name, var_name, size, var_data.type)
                 if var_data.init_required:
-                    if (var_name == "g" and pop_data.connections_set and not pop_data.sparse):
+                    if (var_name == "g" and pop_data.connections_set and pop_data.is_dense):
                         var_data.view[:] = np.zeros((size,))
                         var_data.view[pop_data.gMask] = var_data.values
                     else:
