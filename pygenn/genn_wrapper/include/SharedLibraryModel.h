@@ -230,7 +230,7 @@ public:
         m_AllocateMem();
     }
 
-    void allocateSparseProj( const std::string &popName, unsigned int nConn )
+    void allocateYaleProj( const std::string &popName, unsigned int nConn )
     {
       typedef void(*UIntFct)(unsigned int);
       ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
@@ -265,9 +265,9 @@ public:
     }
 
     // when called from python with numpy array, integers are substituted on the fly
-    void initializeSparseProj( const std::string &popName,
-                              unsigned int* _ind, int nConn,
-                              unsigned int* _indInG, int nPre)
+    void initializeYaleProj( const std::string &popName,
+                             unsigned int* _ind, int nConn,
+                             unsigned int* _indInG, int nPre)
     {
         auto C = static_cast<SparseProjection*>( getSymbol( "C" + popName ) );
         std::copy_n( _indInG, nPre, C->indInG );
