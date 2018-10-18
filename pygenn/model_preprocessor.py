@@ -1,5 +1,5 @@
 """Model preprocessor
-This module provides functions for model validation and parameter type conversions
+This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
 
@@ -7,17 +7,24 @@ import genn_wrapper
 from genn_wrapper.NewModels import VarInit, VarInitVector
 from genn_wrapper.StlContainers import DoubleVector
 
-def prepare_model(model, param_space, var_space, pre_var_space=None, post_var_space=None,
-                 model_family=None):
-    """Prepare a model by checking its validity and extracting information about variables and parameters
+
+def prepare_model(model, param_space, var_space, pre_var_space=None,
+                  post_var_space=None, model_family=None):
+    """Prepare a model by checking its validity and extracting information
+    about variables and parameters
 
     Args:
-    model           -- string or instance of a class derived from model_family.Custom
-    param_space      -- dict with model parameters
-    var_space        -- dict with model variables
-    pre_var_space     -- optional dict with (weight update) model presynaptic variables
-    post_var_space    -- optional dict with (weight update) model postsynaptic variables
-    model_family     -- genn_wrapper.NeuronModels or genn_wrapper.WeightUpdateModels or genn_wrapper.CurrentSourceModels
+    model           --  string or instance of a class derived from
+                        model_family.Custom
+    param_space     --  dict with model parameters
+    var_space       --  dict with model variables
+    pre_var_space   --  optional dict with (weight update) model
+                        presynaptic variables
+    post_var_space  --  optional dict with (weight update) model
+                        postsynaptic variables
+    model_family    --  genn_wrapper.NeuronModels or
+                        genn_wrapper.WeightUpdateModels or
+                        genn_wrapper.CurrentSourceModels
 
     Return: tuple consisting of
             0. model instance,
@@ -32,16 +39,16 @@ def prepare_model(model, param_space, var_space, pre_var_space=None, post_var_sp
     param_names = list(m_instance.get_param_names())
     params = param_space_to_vals(m_instance, param_space)
     var_names = [vnt[0] for vnt in m_instance.get_vars()]
-    var_dict = {vnt[0] : Variable(vnt[0], vnt[1], var_space[vnt[0]])
-              for vnt in m_instance.get_vars()}
-    
+    var_dict = {vnt[0]: Variable(vnt[0], vnt[1], var_space[vnt[0]])
+                for vnt in m_instance.get_vars()}
+
     if model_family == genn_wrapper.WeightUpdateModels:
         pre_var_names = [vnt[0] for vnt in m_instance.get_pre_vars()]
-        pre_var_dict = {vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
-                      for vnt in m_instance.get_pre_vars()}
+        pre_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], varSpace[vnt[0]])
+                        for vnt in m_instance.get_pre_vars()}
         post_var_names = [vnt[0] for vnt in m_instance.get_post_vars()]
-        post_var_dict = {vnt[0] : Variable(vnt[0], vnt[1], varSpace[vnt[0]])
-                       for vnt in m_instance.get_post_vars()}
+        post_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], varSpace[vnt[0]])
+                         for vnt in m_instance.get_post_vars()}
         return (m_instance, m_type, param_names, params, var_names, var_dict,
                 pre_var_names, pre_var_dict, post_var_names, post_var_dict)
     else:
@@ -49,12 +56,15 @@ def prepare_model(model, param_space, var_space, pre_var_space=None, post_var_sp
 
 
 def prepare_snippet(snippet, param_space, snippet_family):
-    """Prepare a snippet by checking its validity and extracting information about parameters
+    """Prepare a snippet by checking its validity and extracting
+    information about parameters
 
     Args:
-    snippet         -- string or instance of a class derived from snippet_family.Custom
-    param_space      -- dict with model parameters
-    snippet_family   -- genn_wrapper.InitVarSnippet or genn_wrapper.InitSparseConnectivitySnippet
+    snippet         --  string or instance of a class derived from
+                        snippet_family.Custom
+    param_space     --  dict with model parameters
+    snippet_family  --  genn_wrapper.InitVarSnippet or
+                        genn_wrapper.InitSparseConnectivitySnippet
 
     Return: tuple consisting of
             0. snippet instance,
@@ -70,22 +80,27 @@ def prepare_snippet(snippet, param_space, snippet_family):
 
 
 def is_model_valid(model, model_family):
-    """Check whether the model is valid, i.e is native or derived from model_family.Custom
+    """Check whether the model is valid, i.e is native or derived
+    from model_family.Custom
+
     Args:
-    model -- string or instance of model_family.Custom
-    model_family -- model family (NeuronModels, WeightUpdateModels or PostsynapticModels) to which model should belong to
+    model           --  string or instance of model_family.Custom
+    model_family    --  model family (NeuronModels, WeightUpdateModels or
+                        PostsynapticModels) to which model should belong to
 
     Return:
     instance of the model and its type as string
 
-    Raises ValueError if model is not valid (i.e. is not custom and is not natively available)
+    Raises ValueError if model is not valid (i.e. is not custom and is
+    not natively available)
     """
 
     if not isinstance(model, str):
         if not isinstance(model, model_family.Custom):
             model_type = type(model).__name__
             if not hasattr(model_family, model_type):
-                raise ValueError("model '{0}' is not supported".format(model_type))
+                raise ValueError("model '{0}' is not "
+                                 "supported".format(model_type))
         else:
             model_type = "Custom"
     else:
@@ -96,17 +111,19 @@ def is_model_valid(model, model_family):
             model = getattr(model_family, model_type).get_instance()
     return model, model_type
 
+
 def param_space_to_vals(model, param_space):
     """Convert a param_space dict to ParamValues
 
     Args:
-    model     -- instance of the model
-    param_space -- dict with parameters
+    model       --  instance of the model
+    param_space --  dict with parameters
 
     Return:
     native model's ParamValues
     """
     return model.make_param_values(param_space_to_val_vec(model, param_space))
+
 
 def param_space_to_val_vec(model, param_space):
     """Convert a param_space dict to a std::vector<double>
@@ -120,44 +137,49 @@ def param_space_to_val_vec(model, param_space):
     """
     return DoubleVector([param_space[pn] for pn in model.get_param_names()])
 
+
 def var_space_to_vals(model, var_space):
     """Convert a var_space dict to VarValues
 
     Args:
-    model     -- instance of the model
-    var_space  -- dict with Variables
+    model       -- instance of the model
+    var_space   -- dict with Variables
 
     Return:
     native model's VarValues
     """
-    return model.make_var_values(
-        VarInitVector([var_space[vnt[0]].init_val for vnt in model.get_vars()]))
+    return model.make_var_values(VarInitVector([var_space[vnt[0]].init_val
+                                                for vnt in model.get_vars()]))
+
 
 def pre_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PreVarValues
 
     Args:
-    model     -- instance of the weight update model
-    var_space  -- dict with Variables
+    model       -- instance of the weight update model
+    var_space   -- dict with Variables
 
     Return:
     native model's VarValues
     """
     return model.make_pre_var_values(
-        VarInitVector([var_space[vnt[0]].init_val for vnt in model.get_pre_vars()]))
+        VarInitVector([var_space[vnt[0]].init_val
+                       for vnt in model.get_pre_vars()]))
+
 
 def post_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PostVarValues
 
     Args:
-    model     -- instance of the weight update model
-    var_space  -- dict with Variables
+    model       -- instance of the weight update model
+    var_space   -- dict with Variables
 
     Return:
     native model's VarValues
     """
     return model.make_post_var_values(
-        VarInitVector([var_space[vnt[0]].init_val for vnt in model.get_post_vars()]))
+        VarInitVector([var_space[vnt[0]].init_val
+                       for vnt in model.get_post_vars()]))
 
 
 class Variable(object):
@@ -168,11 +190,11 @@ class Variable(object):
         """Init Variable
 
         Args:
-        variable_name -- string name of the variable
-        variable_type -- string type of the variable
+        variable_name   --  string name of the variable
+        variable_type   --  string type of the variable
 
         Keyword args:
-        values       -- iterable, single value or VarInit instance
+        values          --  iterable, single value or VarInit instance
         """
         self.name = variable_name
         self.type = variable_type
@@ -198,7 +220,8 @@ class Variable(object):
             self.init_val = genn_wrapper.uninitialised_var()
         # Otherwise
         else:
-            # Try and iterate values - if they are iterable they must be loaded at simulate time
+            # Try and iterate values - if they are iterable
+            # they must be loaded at simulate time
             try:
                 iter(values)
                 self.init_val = genn_wrapper.uninitialised_var()

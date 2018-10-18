@@ -7,6 +7,7 @@ from six import iteritems
 import genn_wrapper
 import model_preprocessor
 from model_preprocessor import Variable
+from genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
 
 
 class Group(object):
@@ -17,7 +18,7 @@ class Group(object):
         """Init Group
 
         Args:
-        name -- string name of the Group
+        name    --  string name of the Group
         """
         self.name = name
         self.vars = {}
@@ -27,19 +28,21 @@ class Group(object):
         """Set values for a Variable
 
         Args:
-        var_name -- string with the name of the variable
-        values  -- iterable or a single value
+        var_name    --  string with the name of the variable
+        values      --  iterable or a single value
         """
         self.vars[var_name].set_values(values)
 
-    def _add_extra_global_param(self, param_name, param_values, model, auto_alloc=True):
+    def _add_extra_global_param(self, param_name, param_values,
+                                model, auto_alloc=True):
         """Add extra global parameter
 
         Args:
-        param_name   -- string with the name of the extra global parameter
-        param_values -- iterable or a single value
-        model       -- instance of the model
-        auto_alloc   -- boolean whether the extra global parameter should be allocated. Defaults to true.
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        model           --  instance of the model
+        auto_alloc      --  boolean whether the extra global parameter
+                            should be allocated. Defaults to true.
         """
         pnt = list(model.get_extra_global_params())
         param_type = None
@@ -62,7 +65,7 @@ class NeuronGroup(Group):
         """Init NeuronGroup
 
         Args:
-        name -- string name of the group
+        name    --  string name of the group
         """
         super(NeuronGroup, self).__init__(name)
         self.neuron = None
@@ -77,7 +80,7 @@ class NeuronGroup(Group):
         """Current spikes from GeNN"""
         offset = self.spike_que_ptr[0] * self.size
         return self.spikes[
-             offset : offset + self.spike_count[self.spike_que_ptr[0]]]
+            offset:offset + self.spike_count[self.spike_que_ptr[0]]]
 
     @property
     def delay_slots(self):
@@ -92,13 +95,15 @@ class NeuronGroup(Group):
         """Set neuron, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        param_space -- dict with model parameters
-        var_space   -- dict with model variables
+        model       --  type as string of intance of the model
+        param_space --  dict with model parameters
+        var_space   --  dict with model variables
         """
-        (self.neuron, self.type, self.param_names, self.params, self.var_names, self.vars) =\
-             model_preprocessor.prepare_model(model, param_space, var_space,
-                                             model_family=genn_wrapper.NeuronModels)
+        (self.neuron, self.type, self.param_names, self.params,
+         self.var_names, self.vars) = model_preprocessor.prepare_model(
+             model, param_space, var_space,
+             model_family=genn_wrapper.NeuronModels)
+
         if self.type == "SpikeSourceArray":
             self.is_spike_source_array = True
 
@@ -106,24 +111,26 @@ class NeuronGroup(Group):
         """Add this NeuronGroup to the GeNN NNmodel
 
         Args:
-        nn_model    -- GeNN NNmodel
-        num_neurons -- int number of neurons
+        nn_model    --  GeNN NNmodel
+        num_neurons --  int number of neurons
         """
         add_fct = getattr(nn_model, "add_neuron_population_" + self.type)
 
         var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
-        self.pop = add_fct(self.name, num_neurons, self.neuron, self.params, var_ini)
+        self.pop = add_fct(self.name, num_neurons, self.neuron,
+                           self.params, var_ini)
 
         for var_name, var in iteritems(self.vars):
             if var.init_required:
-                self.pop.set_var_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                self.pop.set_var_mode(var_name,
+                                      VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
 
         Args:
-        param_name   -- string with the name of the extra global parameter
-        param_values -- iterable or a single value
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
         """
         self._add_extra_global_param(param_name, param_values, self.neuron)
 
@@ -136,7 +143,7 @@ class SynapseGroup(Group):
         """Init SynapseGroup
 
         Args:
-        name -- string name of the group
+        name    --  string name of the group
         """
         self.sparse = False
         self.connections_set = False
@@ -147,7 +154,7 @@ class SynapseGroup(Group):
         self.trg = None
         self.pre_vars = {}
         self.post_vars = {}
-    
+
     @property
     def size(self):
         """Size of connection matrix"""
@@ -165,8 +172,8 @@ class SynapseGroup(Group):
         """Set values for a presynaptic variable
 
         Args:
-        var_name -- string with the name of the presynaptic variable
-        values  -- iterable or a single value
+        var_name    --  string with the name of the presynaptic variable
+        values      --  iterable or a single value
         """
         self.pre_vars[var_name].set_values(values)
 
@@ -174,27 +181,29 @@ class SynapseGroup(Group):
         """Set values for a postsynaptic variable
 
         Args:
-        var_name -- string with the name of the presynaptic variable
-        values  -- iterable or a single value
+        var_name    --  string with the name of the presynaptic variable
+        values      --  iterable or a single value
         """
         self.post_vars[var_name].set_values(values)
-        
-    def set_weight_update(self, model, param_space, var_space, pre_var_space, post_var_space):
+
+    def set_weight_update(self, model, param_space,
+                          var_space, pre_var_space, post_var_space):
         """Set weight update model, its parameters and initial variables
 
         Args:
-        model           -- type as string of intance of the model
-        param_space      -- dict with model parameters
-        var_space        -- dict with model variables
-        pre_var_space     -- dict with model presynaptic variables
-        post_var_space    -- dict with model postsynaptic variables
+        model           --  type as string of intance of the model
+        param_space     --  dict with model parameters
+        var_space       --  dict with model variables
+        pre_var_space   --  dict with model presynaptic variables
+        post_var_space  --  dict with model postsynaptic variables
         """
         (self.w_update, self.wu_type, self.wu_param_names, self.wu_params,
          self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
          self.wu_post_var_names, post_var_dict) =\
-             model_preprocessor.prepare_model(model, param_space, var_space,
-                                             pre_var_space, post_var_space,
-                                             model_family=genn_wrapper.WeightUpdateModels)
+             model_preprocessor.prepare_model(
+                 model, param_space, var_space, pre_var_space,
+                 post_var_space, model_family=genn_wrapper.WeightUpdateModels)
+
         self.vars.update(var_dict)
         self.pre_vars.update(pre_var_dict)
         self.post_vars.update(post_var_dict)
@@ -203,14 +212,15 @@ class SynapseGroup(Group):
         """Set postsynaptic model, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        param_space -- dict with model parameters
-        var_space   -- dict with model variables
+        model       --  type as string of intance of the model
+        param_space --  dict with model parameters
+        var_space   --  dict with model variables
         """
-        (self.postsyn, self.ps_type, self.ps_param_names,
-         self.ps_params, self.ps_var_names, var_dict) =\
-             model_preprocessor.prepare_model(model, param_space, var_space,
-                                             model_family=genn_wrapper.PostsynapticModels)
+        (self.postsyn, self.ps_type, self.ps_param_names, self.ps_params,
+         self.ps_var_names, var_dict) = model_preprocessor.prepare_model(
+             model, param_space, var_space,
+             model_family=genn_wrapper.PostsynapticModels)
+
         self.vars.update(var_dict)
 
     @property
@@ -220,7 +230,8 @@ class SynapseGroup(Group):
 
     @matrix_type.setter
     def matrix_type(self, matrix_type):
-        self._matrix_type = getattr(genn_wrapper, "SynapseMatrixType_" + matrix_type)
+        self._matrix_type = getattr(genn_wrapper,
+                                    "SynapseMatrixType_" + matrix_type)
         if matrix_type.startswith("SPARSE"):
             self.sparse = True
             self.ind = None
@@ -237,13 +248,13 @@ class SynapseGroup(Group):
         """Set connections between two groups of neurons
 
         Args:
-        conns -- connections as tuples (pre, post)
-        g     -- strength of the connection
+        conns   --  connections as tuples (pre, post)
+        g       --  strength of the connection
         """
         if self.sparse:
             conns.sort()
             self.size = len(conns)
-            self.ind = [ post for (_, post) in conns ]
+            self.ind = [post for (_, post) in conns]
             self.indInG = []
             self.indInG.append(0)
             cur_pre = 0
@@ -253,24 +264,24 @@ class SynapseGroup(Group):
                 while pre != cur_pre:
                     self.indInG.append(i)
                     cur_pre += 1
-            # if there are any "hanging" presynaptic neurons without connections,
-            # they should all point to the end of indInG
+            # if there are any "hanging" presynaptic neurons without
+            # connections, they should all point to the end of indInG
             while len(self.indInG) < self.src_size + 1:
                 self.indInG.append(len(conns))
             # compute max number of connections from taget neuron to source
-            self.max_conn = int(max([ self.indInG[i] - self.indInG[i-1]
-                                    for i in range(len(self.indInG)) if i != 0 ]))
+            self.max_conn = int(max(
+                [self.indInG[i] - self.indInG[i - 1]
+                 for i in range(len(self.indInG)) if i != 0]))
         else:
             self.g_mask = [pre * self.trg_size + post
-                          for (pre, post) in conns]
+                           for (pre, post) in conns]
             self.size = self.trg_size * self.src_size
 
         if not self.globalG:
             self.vars["g"].set_values(g)
-            self.pop.set_wuvar_mode("g", genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+            self.pop.set_wuvar_mode("g", VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
         self.connections_set = True
-        
 
     def set_connected_populations(self, source, src_size, target, trg_size):
         """Set two groups of neurons connected by this SynapseGroup
@@ -292,34 +303,47 @@ class SynapseGroup(Group):
         Args:
         nn_model -- GeNN NNmodel
         """
-        add_fct = getattr(nn_model,
-                         ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
+        add_fct = getattr(
+            nn_model,
+            ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
 
-        wu_var_ini = model_preprocessor.var_space_to_vals(self.w_update,
-                {vn : self.vars[vn] for vn in self.wu_var_names})
-        wu_pre_var_ini = model_preprocessor.pre_var_space_to_vals(self.w_update,
-                {vn : self.pre_vars[vn] for vn in self.wu_pre_var_names})
-        wu_post_var_ini = model_preprocessor.post_var_space_to_vals(self.w_update,
-                {vn : self.post_vars[vn] for vn in self.wu_post_var_names})
-        ps_var_ini = model_preprocessor.var_space_to_vals(self.postsyn,
-                {vn : self.vars[vn] for vn in self.ps_var_names})
+        wu_var_ini = model_preprocessor.var_space_to_vals(
+            self.w_update, {vn: self.vars[vn]
+                            for vn in self.wu_var_names})
 
-        self.pop = add_fct(self.name, self.matrix_type, delay_steps,
-                          self.src, self.trg,
-                          self.w_update, self.wu_params, wu_var_ini, wu_pre_var_ini, wu_post_var_ini,
-                          self.postsyn, self.ps_params, ps_var_ini, connectivity_initialiser)
+        wu_pre_var_ini = model_preprocessor.pre_var_space_to_vals(
+            self.w_update, {vn: self.pre_vars[vn]
+                            for vn in self.wu_pre_var_names})
+
+        wu_post_var_ini = model_preprocessor.post_var_space_to_vals(
+            self.w_update, {vn: self.post_vars[vn]
+                            for vn in self.wu_post_var_names})
+
+        ps_var_ini = model_preprocessor.var_space_to_vals(
+            self.postsyn, {vn: self.vars[vn]
+                           for vn in self.ps_var_names})
+
+        self.pop = add_fct(self.name, self.matrix_type, delay_steps, self.src,
+                           self.trg, self.w_update, self.wu_params, wu_var_ini,
+                           wu_pre_var_ini, wu_post_var_ini, self.postsyn,
+                           self.ps_params, ps_var_ini,
+                           connectivity_initialiser)
 
         for var_name, var in iteritems(self.vars):
             if var.init_required:
                 if var_name in self.wu_var_names:
-                    self.pop.set_wuvar_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                    self.pop.set_wuvar_mode(
+                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
                 if var_name in self.wu_pre_var_names:
-                    self.pop.set_wupre_var_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                    self.pop.set_wupre_var_mode(
+                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
                 if var_name in self.wu_post_var_names:
-                    self.pop.set_wupost_var_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                    self.pop.set_wupost_var_mode(
+                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
                 if var_name in self.ps_var_names:
-                    self.pop.set_psvar_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
-    
+                    self.pop.set_psvar_mode(
+                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
 
@@ -357,32 +381,36 @@ class CurrentSource(Group):
         """Set curront source model, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        param_space -- dict with model parameters
-        var_space   -- dict with model variables
+        model       --  type as string of intance of the model
+        param_space --  dict with model parameters
+        var_space   --  dict with model variables
         """
         (self.current_source_model, self.type, self.param_names, self.params,
-         self.var_names, self.vars) =\
-             model_preprocessor.prepare_model(model, param_space, var_space,
-                                             model_family=genn_wrapper.CurrentSourceModels)
+         self.var_names, self.vars) = model_preprocessor.prepare_model(
+             model, param_space, var_space,
+             model_family=genn_wrapper.CurrentSourceModels)
 
     def add_to(self, nn_model, pop):
-        """Inject this CurrentSource into population and add add it to the GeNN NNmodel
+        """Inject this CurrentSource into population and
+        add it to the GeNN NNmodel
 
         Args:
-        pop     -- instance of NeuronGroup into which this CurrentSource should be injected
-        nn_model -- GeNN NNmodel
+        pop         --  instance of NeuronGroup into which this CurrentSource
+                        should be injected
+        nn_model    --  GeNN NNmodel
         """
         add_fct = getattr(nn_model, "add_current_source_" + self.type)
         self.target_pop = pop
 
-        var_ini = model_preprocessor.varSpaceToVarValues(self.current_source_model, self.vars)
+        var_ini = model_preprocessor.varSpaceToVarValues(
+            self.current_source_model, self.vars)
         self.pop = add_fct(self.name, self.current_source_model, pop.name,
-                          self.params, var_ini )
+                           self.params, var_ini)
 
         for var_name, var in iteritems(self.vars):
             if var.init_required:
-                self.pop.set_var_mode(var_name, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                self.pop.set_var_mode(var_name,
+                                      VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
@@ -391,4 +419,5 @@ class CurrentSource(Group):
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values, self.current_source_model)
+        self._add_extra_global_param(param_name, param_values,
+                                     self.current_source_model)
