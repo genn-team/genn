@@ -98,7 +98,7 @@ class GeNNModel(object):
                 "long double, but '{1}' was given".format(precision))
 
         self._built = False
-        self._cpu_only = cpu_only
+        self.cpu_only = cpu_only
         self._localhost = genn_wrapper.initMPI_pygenn()
 
         self.default_var_mode =\
@@ -467,7 +467,7 @@ class GeNNModel(object):
 
         self._slm.initialize_model()
 
-        if self._cpu_only:
+        if self.cpu_only:
             self.step_time = self._slm.step_time_cpu
         else:
             self.step_time = self._slm.step_time_gpu
@@ -581,42 +581,42 @@ class GeNNModel(object):
         """Pull state from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
-        if not self._cpu_only:
+        if not self.cpu_only:
             self._slm.pull_state_from_device(pop_name)
 
     def pull_spikes_from_device(self, pop_name):
         """Pull spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
-        if not self._cpu_only:
+        if not self.cpu_only:
             self._slm.pull_spikes_from_device(pop_name)
 
     def pull_current_spikes_from_device(self, pop_name):
         """Pull spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
-        if not self._cpu_only:
+        if not self.cpu_only:
             self._slm.pull_current_spikes_from_device(pop_name)
 
     def push_state_to_device(self, pop_name):
         """Push state to the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
-        if not self._cpu_only:
+        if not self.cpu_only:
             self._slm.push_state_to_device(pop_name)
 
     def push_spikes_to_device(self, pop_name):
         """Push spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
-        if not self._cpu_only:
+        if not self.cpu_only:
             self._slm.push_spikes_to_device(pop_name)
 
     def push_current_spikes_from_device(self, pop_name):
         """Push spikes from the device for a given population"""
         if not self._built:
             raise Exception("GeNN model has to be built before running")
-        if not self._cpu_only:
+        if not self.cpu_only:
             self._slm.push_current_spikes_to_device(pop_name)
 
     def end(self):
