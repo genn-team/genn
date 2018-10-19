@@ -271,45 +271,67 @@ class SynapseGroup(Group):
         """Tests whether synaptic connectivity has global weights"""
         return (self._matrix_type & SynapseMatrixWeight_GLOBAL) != 0
 
-    def set_connections(self, pre_indices, post_indices):
-        """Set connections between two groups of neurons
+    def set_sparse_connections(self, pre_indices, post_indices):
+        """Set yale or ragged foramt connections between two groups of neurons
 
         Args:
         pre_indices     --  ndarray of presynaptic indices
         post_indices    --  ndarray of postsynaptic indices
         """
-        if (self.is_yale) != 0:
+        if self.is_yale or self.is_ragged:
             # Lexically sort indices
             order = np.lexsort((post_indices, pre_indices))
        
-            # Set ind to sorted postsynaptic indices
-            self.ind = post_indices[order]
-            
             # Count connections
             self._num_connections = len(post_indices)
            
             # Count the number of synapses in each row
-            self.indInG = np.bincount(pre_indices, minlength=self.src.size)
-            self.indInG = self.indInG.astype(np.uint32)
+            row_lengths = np.bincount(pre_indices, minlength=self.src.size)
+            row_lengths = row_lengths.astype(np.uint32)
             
             # Use maximum for max connections
-            max_conn = int(np.amax(self.indInG))
-            self.pop.set_max_connections(max_conn)
+            max_row_length = int(np.amax(row_lengths))
+            self.pop.set_max_connections(max_row_length)
             
-            # Calculate cumulative sium
-            self.indInG = np.cumsum(self.indInG, dtype=np.uint32)
-            self.indInG = np.insert(self.indInG, 0, 0)
+            # If format is yale
+            if self.is_yale:
+                # Set ind to sorted postsynaptic indices
+                self.ind = post_indices[order]
+                
+                # Calculate cumulative sium
+                self.indInG = np.cumsum(row_lengths, dtype=np.uint32)
+                self.indInG = np.insert(self.indInG, 0, 0)
 
-            # Check validity of data structure
-            assert len(self.indInG) == (self.src.size + 1)
-            assert self.indInG[-1] == self._num_connections
-            
-        elif self.is_dense:
-            self.g_mask = [pre * self.trg.size + post
-                           for (pre, post) in conns]
+                # Check validity of data structure
+                assert len(self.indInG) == (self.src.size + 1)
+                assert self.indInG[-1] == self._num_connections
+            # Otherwise if it's ragged
+            else:
+                # Cache the row lengths
+                self.row_lengths = row_lengths
+                
+                # Extract the post indices in order
+                sorted_ind = post_indices[order]
+                
+                # Create array to hold indices
+                self.ind = np.empty((self.src.size, max_row_length),
+                                    dtype=np.uint32)
+                
+                # Loop through rows
+                row_start_idx = 0
+                for i, l in enumerate(self.row_lengths):
+                    # Copy row from sorted indices into 
+                    # correct place in ragged matrix
+                    self.ind[i,:l] = sorted_ind[row_start_idx:row_start_idx + l]
+                    row_start_idx +=l
+                
+                # Reshape indices to 1D
+                self.ind = np.reshape(self.ind, (self.src.size * max_row_length))
+                
+                assert len(self.row_lengths) == self.src.size
         else:
-            raise Exception("Setting connections with type '{0}' is not "
-                            "currently supported".format(self._matrix_type))
+            raise Exception("set_sparse_connections only supports"
+                            "ragged and yale format sparse connectivity")
 
         self.connections_set = True
 

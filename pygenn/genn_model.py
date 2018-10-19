@@ -421,6 +421,9 @@ class GeNNModel(object):
                         self._slm.allocate_yale_proj(pop_name, len(pop_data.ind))
                         self._slm.initialize_yale_proj(pop_name, pop_data.ind,
                                                        pop_data.indInG)
+                    elif pop_data.is_ragged:
+                        self._slm.initialize_ragged_proj(pop_name, pop_data.ind,
+                                                         pop_data.row_lengths)
                     else:
                         raise Exception("Matrix format not supported")
                 else:
