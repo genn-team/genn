@@ -2,7 +2,7 @@
 This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
-
+import numpy as np
 import genn_wrapper
 from genn_wrapper.NewModels import VarInit, VarInitVector
 from genn_wrapper.StlContainers import DoubleVector
@@ -225,7 +225,7 @@ class Variable(object):
             try:
                 iter(values)
                 self.init_val = genn_wrapper.uninitialised_var()
-                self.values = list(values)
+                self.values = np.asarray(values, dtype=np.float32)
                 self.init_required = True
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
