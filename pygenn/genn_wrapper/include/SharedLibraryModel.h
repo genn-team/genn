@@ -232,8 +232,8 @@ public:
 
     void allocateYaleProj( const std::string &popName, unsigned int nConn )
     {
-      typedef void(*UIntFct)(unsigned int);
-      ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
+        typedef void(*UIntFct)(unsigned int);
+        ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
     }
 
     void allocateExtraGlobalParam( const std::string &popName,
