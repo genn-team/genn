@@ -4,6 +4,7 @@ convesions for GeNN Groups
 """
 
 from six import iteritems
+import numpy as np
 import genn_wrapper
 import model_preprocessor
 from model_preprocessor import Variable
@@ -270,44 +271,45 @@ class SynapseGroup(Group):
         """Tests whether synaptic connectivity has global weights"""
         return (self._matrix_type & SynapseMatrixWeight_GLOBAL) != 0
 
-    def set_connections(self, conns, g):
+    def set_connections(self, pre_indices, post_indices):
         """Set connections between two groups of neurons
 
         Args:
-        conns   --  connections as tuples (pre, post)
-        g       --  strength of the connection
+        pre_indices     --  ndarray of presynaptic indices
+        post_indices    --  ndarray of postsynaptic indices
         """
         if (self.is_yale) != 0:
-            conns.sort()
-            self._num_connections = len(conns)
-            self.ind = [post for (_, post) in conns]
-            self.indInG = []
-            self.indInG.append(0)
-            cur_pre = 0
-            # convert connection tuples to indInG
-            for i, (pre, _) in enumerate(conns):
-                while pre != cur_pre:
-                    self.indInG.append(i)
-                    cur_pre += 1
-            # if there are any "hanging" presynaptic neurons without
-            # connections, they should all point to the end of indInG
-            while len(self.indInG) < self.src.size + 1:
-                self.indInG.append(len(conns))
-
-            # compute max number of connections from taget neuron to source
-            max_conn = int(max([self.indInG[i] - self.indInG[i - 1]
-                                for i in range(len(self.indInG)) if i != 0]))
+            # Lexically sort indices
+            order = np.lexsort((post_indices, pre_indices))
+       
+            # Set ind to sorted postsynaptic indices
+            self.ind = post_indices[order]
+            
+            # Count connections
+            self._num_connections = len(post_indices)
+           
+            # Count the number of synapses in each row
+            self.indInG = np.bincount(pre_indices, minlength=self.src.size)
+            self.indInG = self.indInG.astype(np.uint32)
+            
+            # Use maximum for max connections
+            max_conn = int(np.amax(self.indInG))
             self.pop.set_max_connections(max_conn)
-        elif (self.is_dense) != 0:
+            
+            # Calculate cumulative sium
+            self.indInG = np.cumsum(self.indInG, dtype=np.uint32)
+            self.indInG = np.insert(self.indInG, 0, 0)
+
+            # Check validity of data structure
+            assert len(self.indInG) == (self.src.size + 1)
+            assert self.indInG[-1] == self._num_connections
+            
+        elif self.is_dense:
             self.g_mask = [pre * self.trg.size + post
                            for (pre, post) in conns]
         else:
             raise Exception("Setting connections with type '{0}' is not "
                             "currently supported".format(self._matrix_type))
-
-        if not self.global_weights:
-            self.vars["g"].set_values(g)
-            self.pop.set_wuvar_mode("g", VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
         self.connections_set = True
 
