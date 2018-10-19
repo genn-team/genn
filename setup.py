@@ -7,7 +7,8 @@ from setuptools.command.build_ext import build_ext
 
 from generate_swig_interfaces import generateConfigs
 
-cuda_path = os.path.join(os.environ["CUDA_PATH"])
+cpu_only = "CUDA_PATH" not in os.environ
+
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
 
@@ -21,12 +22,32 @@ swig_opts = ["-c++", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
              "-I" + genn_wrapper_generated, "-I" + genn_wrapper_swig, "-I" + genn_include]
 
 include_dirs = [genn_include, genn_wrapper_include, genn_wrapper_generated,
-                os.path.join(cuda_path, "include"),
                 os.path.join(numpy_path, "core", "include")]
 
-libraries =["cuda", "cudart", "genn_DYNAMIC"]
+library_dirs = [genn_wrapper_path]
 
-library_dirs = [os.path.join(cuda_path, "lib64"), genn_wrapper_path]
+genn_wrapper_macros=[("GENERATOR_MAIN_HANDLED", None)]
+extra_compile_args = ["-std=c++11"]
+
+# If CUDA was found
+if not cpu_only:
+    # Get CUDA path
+    cuda_path = os.path.join(os.environ["CUDA_PATH"])
+    
+    # Link against CUDA and CUDA version of GeNN
+    libraries =["cuda", "cudart", "genn_DYNAMIC"]
+    
+    # Add CUDA include and library path
+    include_dirs.append(os.path.join(cuda_path, "include"))
+    library_dirs.append(os.path.join(cuda_path, "lib64"))
+    
+    # Add macro to point GeNN to NVCC compiler
+    genn_wrapper_macros.append(("NVCC", "\"" + os.path.join(cuda_path, "bin", "nvcc") + "\""))
+else:
+    libraries = ["genn_CPU_ONLY_DYNAMIC"]
+    genn_wrapper_macros.append(("CPU_ONLY","1"))
+    swig_opts.append("-DCPU_ONLY")
+    extra_compile_args.append("-DCPU_ONLY")
 
 extension_kwargs = {
     "swig_opts": swig_opts,
@@ -34,7 +55,7 @@ extension_kwargs = {
     "libraries": libraries,
     "library_dirs": library_dirs,
     "runtime_library_dirs": library_dirs,
-    "extra_compile_args" : ["-std=c++11"]}
+    "extra_compile_args" : extra_compile_args}
 
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path)
@@ -50,7 +71,7 @@ genn_wrapper = Extension('_genn_wrapper', [
     "pygenn/genn_wrapper/generated/newNeuronModelsCustom.cc",
     "pygenn/genn_wrapper/generated/newPostsynapticModelsCustom.cc",
     "pygenn/genn_wrapper/generated/newWeightUpdateModelsCustom.cc"],
-    define_macros=[("GENERATOR_MAIN_HANDLED", None), ("NVCC", "\"" + os.path.join(cuda_path, "bin", "nvcc") + "\"")],
+    define_macros=genn_wrapper_macros,
     **extension_kwargs)
 
 setup(name = "pygenn",
