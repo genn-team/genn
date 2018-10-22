@@ -305,10 +305,6 @@ def generateSharedLibraryModelInterface( swigPath ):
 
         for dataType in [dt+'*' for dt in npDTypes]:
             mg.write( generateNumpyApplyArgoutviewArray1D( dataType, 'varPtr', 'n1' ) )
-        mg.write( generateNumpyApplyInArray1D( 'unsigned int*', '_ind', 'nConn' ) )
-        mg.write( generateNumpyApplyInArray1D( 'unsigned int*', '_indInG', 'nPre' ) )
-        mg.write( generateNumpyApplyInArray1D( 'unsigned int*', '_rowLength', 'nPre' ) )
-        mg.write( generateNumpyApplyInArray1D( 'uint32_t*', '_bitMask', 'nWords' ) )
         mg.write( generateNumpyApplyInArray1D( 'double*', '_g', 'nG' ) )
         mg.write( generateNumpyApplyInArray1D( 'float*', '_g', 'nG' ) )
 

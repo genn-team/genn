@@ -14,7 +14,8 @@ from genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                           SynapseMatrixConnectivity_RAGGED,
                           SynapseMatrixConnectivity_BITMASK,
                           SynapseMatrixConnectivity_DENSE,
-                          SynapseMatrixWeight_GLOBAL)
+                          SynapseMatrixWeight_INDIVIDUAL,
+                          SynapseMatrixWeight_INDIVIDUAL_PSM)
 
 
 class Group(object):
@@ -158,24 +159,42 @@ class SynapseGroup(Group):
         self.postsyn = None
         self.src = None
         self.trg = None
+        self.psm_vars = {}
         self.pre_vars = {}
         self.post_vars = {}
         self.connectivity_initialiser = None
 
     @property
-    def size(self):
-        """Size of connection matrix"""
+    def num_synapses(self):
+        """Number of synapses in group"""
+        if self.is_dense:
+            return self.trg.size * self.src.size
+        elif self.is_yale or self.is_ragged:
+            return self._num_synapses
+
+    @property
+    def weight_update_var_size(self):
+        """Size of each weight update variable"""
         if self.is_dense:
             return self.trg.size * self.src.size
         elif self.is_yale:
-            return self._num_connections
+            return self._num_synapses
         elif self.is_ragged:
-            return self.max_connections * self.src.size
-        #elif self.is_ragged
+            return self.max_row_length * self.src.size
 
     @property
-    def max_connections(self):
+    def max_row_length(self):
         return self.pop.get_max_connections()
+
+    def set_psm_var(self, var_name, values):
+        """Set values for a postsynaptic model variable
+
+        Args:
+        var_name    --  string with the name of the
+                        postsynaptic model variable
+        values      --  iterable or a single value
+        """
+        self.psm_vars[var_name].set_values(values)
 
     def set_pre_var(self, var_name, values):
         """Set values for a presynaptic variable
@@ -230,7 +249,7 @@ class SynapseGroup(Group):
              model, param_space, var_space,
              model_family=genn_wrapper.PostsynapticModels)
 
-        self.vars.update(var_dict)
+        self.psm_vars.update(var_dict)
 
     @property
     def is_connectivity_init_required(self):
@@ -267,9 +286,15 @@ class SynapseGroup(Group):
         return (self._matrix_type & SynapseMatrixConnectivity_DENSE) != 0
 
     @property
-    def global_weights(self):
-        """Tests whether synaptic connectivity has global weights"""
-        return (self._matrix_type & SynapseMatrixWeight_GLOBAL) != 0
+    def has_individual_weights(self):
+        """Tests whether synaptic connectivity has individual weights"""
+        return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL) != 0
+
+    @property
+    def has_individual_postsynaptic_vars(self):
+        """Tests whether synaptic connectivity has
+        individual postsynaptic model variables"""
+        return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
 
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set yale or ragged foramt connections between two groups of neurons
@@ -280,10 +305,10 @@ class SynapseGroup(Group):
         """
         if self.is_yale or self.is_ragged:
             # Lexically sort indices
-            order = np.lexsort((post_indices, pre_indices))
+            self.synapse_order = np.lexsort((post_indices, pre_indices))
        
-            # Count connections
-            self._num_connections = len(post_indices)
+            # Count synapses
+            self._num_synapses = len(post_indices)
            
             # Count the number of synapses in each row
             row_lengths = np.bincount(pre_indices, minlength=self.src.size)
@@ -293,41 +318,23 @@ class SynapseGroup(Group):
             max_row_length = int(np.amax(row_lengths))
             self.pop.set_max_connections(max_row_length)
             
+            # Set ind to sorted postsynaptic indices
+            self.ind = post_indices[self.synapse_order]
+
             # If format is yale
             if self.is_yale:
-                # Set ind to sorted postsynaptic indices
-                self.ind = post_indices[order]
-                
                 # Calculate cumulative sium
                 self.indInG = np.cumsum(row_lengths, dtype=np.uint32)
                 self.indInG = np.insert(self.indInG, 0, 0)
 
                 # Check validity of data structure
                 assert len(self.indInG) == (self.src.size + 1)
-                assert self.indInG[-1] == self._num_connections
+                assert self.indInG[-1] == self._num_synapses
             # Otherwise if it's ragged
             else:
                 # Cache the row lengths
                 self.row_lengths = row_lengths
-                
-                # Extract the post indices in order
-                sorted_ind = post_indices[order]
-                
-                # Create array to hold indices
-                self.ind = np.empty((self.src.size, max_row_length),
-                                    dtype=np.uint32)
-                
-                # Loop through rows
-                row_start_idx = 0
-                for i, l in enumerate(self.row_lengths):
-                    # Copy row from sorted indices into 
-                    # correct place in ragged matrix
-                    self.ind[i,:l] = sorted_ind[row_start_idx:row_start_idx + l]
-                    row_start_idx +=l
-                
-                # Reshape indices to 1D
-                self.ind = np.reshape(self.ind, (self.src.size * max_row_length))
-                
+
                 assert len(self.row_lengths) == self.src.size
         else:
             raise Exception("set_sparse_connections only supports"
@@ -368,7 +375,7 @@ class SynapseGroup(Group):
                             for vn in self.wu_post_var_names})
 
         ps_var_ini = model_preprocessor.var_space_to_vals(
-            self.postsyn, {vn: self.vars[vn]
+            self.postsyn, {vn: self.psm_vars[vn]
                            for vn in self.ps_var_names})
 
         # Use unitialised connectivity initialiser if none has been set
@@ -381,20 +388,34 @@ class SynapseGroup(Group):
                            wu_post_var_ini, self.postsyn, self.ps_params,
                            ps_var_ini, connect_init)
 
+        # Mark all weight update model state variables
+        # that require initialising on host
         for var_name, var in iteritems(self.vars):
             if var.init_required:
-                if var_name in self.wu_var_names:
-                    self.pop.set_wuvar_mode(
-                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
-                if var_name in self.wu_pre_var_names:
-                    self.pop.set_wupre_var_mode(
-                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
-                if var_name in self.wu_post_var_names:
-                    self.pop.set_wupost_var_mode(
-                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
-                if var_name in self.ps_var_names:
-                    self.pop.set_psvar_mode(
-                        var_name, VarMode_LOC_HOST_DEVICE_INIT_HOST)
+                self.pop.set_wuvar_mode(var_name,
+                                        VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
+
+        # Mark all weight update model presynaptic state
+        # variables that require initialising on host
+        for var_name, var in iteritems(self.pre_vars):
+            if var.init_required:
+                self.pop.set_wupre_var_mode(var_name,
+                                            VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
+        # Mark all weight update model postsynaptic state
+        # variables that require initialising on host
+        for var_name, var in iteritems(self.post_vars):
+            if var.init_required:
+                self.pop.wu_post_var_names(var_name,
+                                           VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
+        # Mark all postsynaptic model state variables
+        # that require initialising on host
+        for var_name, var in iteritems(self.psm_vars):
+            if var.init_required:
+                self.pop.set_psvar_mode(var_name,
+                                        VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter

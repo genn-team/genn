@@ -209,6 +209,38 @@ public:
       *n1 = 1;
     }
     
+    void assignExternalYaleInd(const std::string &popName, const int nConn,
+                               unsigned int **varPtr, int* n1)
+    {
+        auto sparsePop = static_cast<SparseProjection*>(getSymbol( "C" + popName));
+        *varPtr = sparsePop->ind;
+        *n1 = nConn;
+    }
+
+    void assignExternalYaleIndInG(const std::string &popName, const int nPre,
+                                  unsigned int **varPtr, int* n1)
+    {
+        auto sparsePop = static_cast<SparseProjection*>(getSymbol( "C" + popName));
+        *varPtr = sparsePop->indInG;
+        *n1 = nPre + 1;
+    }
+
+    void assignExternalRaggedInd(const std::string &popName, const int nPaddedConn,
+                                 unsigned int **varPtr, int* n1)
+    {
+        auto raggedPop = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
+        *varPtr = raggedPop->ind;
+        *n1 = nPaddedConn;
+    }
+
+    void assignExternalRaggedRowLength(const std::string &popName, const int nPre,
+                                       unsigned int **varPtr, int* n1)
+    {
+        auto raggedPop = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
+        *varPtr = raggedPop->rowLength;
+        *n1 = nPre;
+    }
+
     void *getSymbol(const std::string &symbolName, bool allowMissing = false)
     {
 #ifdef _WIN32
@@ -224,6 +256,7 @@ public:
 
         return symbol;
     }
+
 
     void allocateMem()
     {
@@ -262,34 +295,6 @@ public:
     void initialize()
     {
         m_Initialize();
-    }
-
-    // when called from python with numpy array, integers are substituted on the fly
-    void initializeYaleProj( const std::string &popName,
-                             unsigned int* _ind, int nConn,
-                             unsigned int* _indInG, int nPre)
-    {
-        auto C = static_cast<SparseProjection*>( getSymbol( "C" + popName ) );
-        std::copy_n( _indInG, nPre, C->indInG );
-        std::copy_n( _ind, nConn, C->ind );
-    }
-
-    // when called from python with numpy array, integers are substituted on the fly
-    void initializeRaggedProj( const std::string &popName,
-                               unsigned int* _ind, int nConn,
-                               unsigned int* _rowLength, int nPre)
-    {
-        auto C = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
-        std::copy_n( _rowLength, nPre, C->rowLength );
-        std::copy_n( _ind, nConn, C->ind );
-    }
-
-    // when called from python with numpy array, integers are substituted on the fly
-    void initializeBitmaskProj( const std::string &popName,
-                               uint32_t* _bitMask, int nWords)
-    {
-        auto g = static_cast<uint32_t**>( getSymbol( "gp" + popName ) );
-        std::copy_n( _bitMask, nWords, *g );
     }
 
     void initializeModel()

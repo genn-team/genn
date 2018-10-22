@@ -293,7 +293,7 @@ class GeNNModel(object):
         self.current_sources[cs_name] = c_source
 
         return c_source
-
+    '''
     def initialize_var_on_device(self, pop_name, var_name, mask, vals):
         """Set values for the given variable and population and
         push them to the device
@@ -338,7 +338,7 @@ class GeNNModel(object):
         self.neuronPopulations[pop_name].spikes[mask] = targets
         self.neuronPopulations[pop_name].spike_count[mask] = counts
         self.push_spikes_to_device(pop_name)
-
+    '''
     def build(self, path_to_model="./"):
         """Finalize and build a GeNN model
 
@@ -378,6 +378,7 @@ class GeNNModel(object):
             self._T = self._slm.assign_external_pointer_single_ld("t")
         self._TS = self._slm.assign_external_pointer_single_ull("iT")
 
+        # Loop through neuron populations
         for pop_name, pop_data in iteritems(self.neuron_populations):
             self._slm.init_neuron_pop_io(pop_name)
             pop_data.spikes = self.assign_external_pointer_pop(
@@ -391,11 +392,8 @@ class GeNNModel(object):
                     self._slm.assign_external_pointer_single_ui(
                         "spkQuePtr" + pop_name)
 
-            for var_name, var_data in iteritems(pop_data.vars):
-                var_data.view = self.assign_external_pointer_pop(
-                    pop_name, var_name, pop_data.size, var_data.type)
-                if var_data.init_required:
-                    var_data.view[:] = var_data.values
+            # Load neuron state variables
+            self._load_var(pop_name, pop_data, pop_data.size)
 
             for egp_name, egp_data in iteritems(pop_data.extra_global_params):
                 # if auto allocation is not enabled, let the user care about
@@ -409,6 +407,7 @@ class GeNNModel(object):
                     if egp_data.init_required:
                         egp_data.view[:] = egp_data.values
 
+        # Loop through synapse populations
         for pop_name, pop_data in iteritems(self.synapse_populations):
             self._slm.init_synapse_pop_io(pop_name)
 
@@ -418,43 +417,85 @@ class GeNNModel(object):
                 # If data is available
                 if pop_data.connections_set:
                     if pop_data.is_yale:
-                        self._slm.allocate_yale_proj(pop_name, len(pop_data.ind))
-                        self._slm.initialize_yale_proj(pop_name, pop_data.ind,
-                                                       pop_data.indInG)
+                        # Allocate memory for Yale data structure
+                        self._slm.allocate_yale_proj(pop_name,
+                                                     pop_data.num_synapses)
+
+                        # Get pointers to yale data structure members
+                        ind = self._slm.assign_external_yale_ind(
+                            pop_name, pop_data.num_synapses)
+                        indInG = self._slm.assign_external_yale_ind_in_g(
+                            pop_name, pop_data.src.size)
+
+                        # Copy connection data in
+                        ind[:] = pop_data.ind
+                        indInG[:] = pop_data.indInG
                     elif pop_data.is_ragged:
-                        self._slm.initialize_ragged_proj(pop_name, pop_data.ind,
-                                                         pop_data.row_lengths)
+                        # Get pointers to ragged data structure members
+                        ind = self._slm.assign_external_ragged_ind(
+                            pop_name, pop_data.max_row_length * pop_data.src.size)
+                        row_length = self._slm.assign_external_ragged_row_length(
+                            pop_name, pop_data.src.size)
+
+                        # Copy in row length
+                        row_length[:] = pop_data.row_lengths
+
+                        # Create array containing the index where each row starts in ind
+                        row_start_idx = np.arange(0, pop_data.src.size,
+                                                  pop_data.max_row_length)
+
+                        # Loop through ragged matrix rows
+                        syn = 0
+                        for i, r in zip(row_start_idx, pop_data.row_lengths):
+                            # Copy row from non-padded indices into correct location
+                            ind[i:i + r] = pop_data.ind[syn:syn + r]
+                            syn += r
                     else:
                         raise Exception("Matrix format not supported")
                 else:
                     raise Exception("For sparse projections, the connections"
                                     "must be set before loading a model")
 
-            for var_name, var_data in iteritems(pop_data.vars):
-                if var_name in [vnt[0] for vnt in pop_data.postsyn.get_vars()]:
-                    size = self.neuron_populations[pop_data.trg].size
-                else:
-                    size = pop_data.size
+            # If population has individual weights
+            if pop_data.has_individual_weights:
+                # Loop through weight update model state variables
+                for var_name, var_data in iteritems(pop_data.vars):
+                    size = pop_data.weight_update_var_size
 
-                if var_name == "g" and pop_data.global_weights:
-                    continue
-                var_data.view = self.assign_external_pointer_pop(
-                    pop_name, var_name, size, var_data.type)
-                if var_data.init_required:
-                    if (var_name == "g" and pop_data.connections_set and pop_data.is_dense):
-                        var_data.view[:] = np.zeros((size,))
-                        var_data.view[pop_data.gMask] = var_data.values
-                    else:
-                        var_data.view[:] = var_data.values
+                    # Get view
+                    var_data.view = self.assign_external_pointer_pop(
+                        pop_name, var_name, size, var_data.type)
 
+                    if var_data.init_required:
+                        if pop_data.is_dense or pop_data.is_yale:
+                            var_data.view[:] = var_data.values
+                        elif pop_data.is_ragged:
+                            # Loop through ragged matrix rows
+                            syn = 0
+                            for i, r in zip(row_start_idx, pop_data.row_lengths):
+                                # Copy row from non-padded indices into correct location
+                                var_data.view[i:i + r] = var_data.values[syn:syn + r]
+                                syn += r
+                        else:
+                            raise Exception("Matrix format not supported")
+
+
+            # Load weight update model presynaptic variables
+            self._load_var(pop_name, pop_data, pop_data.src.size, pop_data.pre_vars)
+
+            # Load weight update model postsynaptic variables
+            self._load_var(pop_name, pop_data, pop_data.trg.size, pop_data.post_vars)
+
+            # Load postsynaptic update model variables
+            if pop_data.has_individual_postsynaptic_vars:
+                self._load_var(pop_name, pop_data, pop_data.trg.size, pop_data.psm_vars)
+
+        # Loop through current sources
         for src_name, src_data in iteritems(self.current_sources):
             self._slm.init_current_source_io(src_name)
 
-            for var_name, var_data in iteritems(src_data.vars):
-                var_data.view = self.assign_external_pointer_pop(
-                    src_name, var_name, src_data.size, var_data.type)
-                if var_data.init_required:
-                    var_data.view[:] = var_data.values
+            # Load current source variables
+            self._load_var(src_name, src_data, src_data.size)
 
             for egp_name, egp_data in iteritems(src_data.extra_global_params):
                 # if auto allocation is not enabled, let the user care about
@@ -468,6 +509,7 @@ class GeNNModel(object):
                     if egp_data.init_required:
                         egp_data.view[:] = egp_data.values
 
+        # Now everything is set up call the sparse initialisation function
         self._slm.initialize_model()
 
         if self.cpu_only:
@@ -632,6 +674,21 @@ class GeNNModel(object):
                     if egp_dat.needsAllocation:
                         self._slm.free_extra_global_param(g_name, egp_name)
         # "normal" variables are freed when SharedLibraryModel is destoyed
+
+    def _load_var(self, pop_name, pop_data, size, var_dict=None):
+        # Default to standard variables
+        if var_dict is None:
+            var_dict = pop_data.vars
+
+        # Loop through variables
+        for var_name, var_data in iteritems(var_dict):
+            # Get view
+            var_data.view = self.assign_external_pointer_pop(
+                pop_name, var_name, size, var_data.type)
+
+            # If manual initialisation is required, copy over variables
+            if var_data.init_required:
+                var_data.view[:] = var_data.values
 
 
 def init_var(init_var_snippet, param_space):
