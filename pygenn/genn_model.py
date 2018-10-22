@@ -293,52 +293,7 @@ class GeNNModel(object):
         self.current_sources[cs_name] = c_source
 
         return c_source
-    '''
-    def initialize_var_on_device(self, pop_name, var_name, mask, vals):
-        """Set values for the given variable and population and
-        push them to the device
 
-        Note: shapes of mask and vals must be the same
-
-        Args:
-        pop_name    --  name of the population for which the values must be set
-        var_name    --  name of the variable for which the values must be set
-        mask        --  list with neurons ids
-        vals        --  list with variable values
-        """
-        if pop_name not in self.neuron_populations:
-            if pop_name not in self.synapse_populations:
-                raise ValueError(
-                    "Failed to initialize variable '{0}': population "
-                    "'{1}' does not exist".format(var_name, pop_name))
-            else:
-                var = self.synapse_populations[pop_name].vars[var_name]
-        else:
-            var = self.neuron_populations[pop_name].vars[var_name]
-
-        var.view[mask] = vals
-        self.push_state_to_device(pop_name)
-
-    def initialize_spikes_on_device(self, pop_name, mask, targets, counts):
-        """Set spike counts and targets for the given population and
-        push them to the device
-
-        Note: shapes of mask, targets and counts must be the same
-
-        Args:
-        pop_name    --  name of the population for which the spikes must be set
-        mask        --  list with source neurons ids
-        targets     --  list with target neuron ids
-        counts      --  list with number of spikes for source neurons
-        """
-        if pop_name not in self.neuron_populations:
-            raise ValueError(
-                "Failed to initialize variable '{0}': "
-                "population '{1}' does not exist".format(var_name, pop_name))
-        self.neuronPopulations[pop_name].spikes[mask] = targets
-        self.neuronPopulations[pop_name].spike_count[mask] = counts
-        self.push_spikes_to_device(pop_name)
-    '''
     def build(self, path_to_model="./"):
         """Finalize and build a GeNN model
 
