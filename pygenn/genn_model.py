@@ -386,7 +386,6 @@ class GeNNModel(object):
         for pop_data in itervalues(self.synapse_populations):
             pop_data.load(self._slm, self._scalar)
 
-
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
             src_data.load(self._slm, self._scalar)

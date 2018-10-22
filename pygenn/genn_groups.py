@@ -381,6 +381,25 @@ class SynapseGroup(Group):
 
         self.psm_vars.update(var_dict)
 
+    def get_var_values(self, var_name):
+        var_view = self.vars[var_name].view
+
+        if self.is_dense or self.is_yale:
+            return var_view
+        elif self.is_ragged:
+            # Create array containing the index where each row starts in ind
+            row_start_idx = np.arange(0, self.weight_update_var_size,
+                                      self.max_row_length)
+
+            # Build list of subviews representing each row
+            rows = [var_view[i:i + r]
+                    for i, r in zip(row_start_idx, self.row_lengths)]
+
+            # Stack all rows together into single array
+            return np.hstack(rows)
+        else:
+            raise Exception("Matrix format not supported")
+
     @property
     def is_connectivity_init_required(self):
         return self.connectivity_initialiser is None
@@ -559,9 +578,9 @@ class SynapseGroup(Group):
     def load(self, slm, scalar):
         slm.init_synapse_pop_io(self.name)
 
-        # If synapse population has connectivity which
+        # If synapse population has non-dense connectivity which
         # requires initialising manually
-        if self.is_connectivity_init_required:
+        if not self.is_dense and self.is_connectivity_init_required:
             # If data is available
             if self.connections_set:
                 if self.is_yale:
@@ -617,9 +636,15 @@ class SynapseGroup(Group):
 
                     # If variable requires initialisation
                     if var_data.init_required:
-                        # Copy variable into view
-                        # **NOTE** we sort to match GeNN order
-                        var_data.view[:] = var_data.values[self.synapse_order]
+                        # If connectivity is in Yale format, copy variables
+                        # into view, sorting to match GeNN order
+                        if self.is_yale:
+                            var_data.view[:] = var_data.values[self.synapse_order]
+                        # Otherwise, if connectivity is dense,
+                        # copy variables  directly into view
+                        # **NOTE** we assume order is row-major
+                        else:
+                            var_data.view[:] = var_data.values
 
             # Otherwise, if weights are in ragged format
             elif self.is_ragged:
