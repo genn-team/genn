@@ -286,7 +286,7 @@ class SynapseGroup(Group):
         return (self._matrix_type & SynapseMatrixConnectivity_DENSE) != 0
 
     @property
-    def has_individual_weights(self):
+    def has_individual_synapse_vars(self):
         """Tests whether synaptic connectivity has individual weights"""
         return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL) != 0
 

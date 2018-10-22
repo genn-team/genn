@@ -433,7 +433,7 @@ class GeNNModel(object):
                     elif pop_data.is_ragged:
                         # Get pointers to ragged data structure members
                         ind = self._slm.assign_external_ragged_ind(
-                            pop_name, pop_data.max_row_length * pop_data.src.size)
+                            pop_name, pop_data.weight_update_var_size)
                         row_length = self._slm.assign_external_ragged_row_length(
                             pop_name, pop_data.src.size)
 
@@ -441,7 +441,7 @@ class GeNNModel(object):
                         row_length[:] = pop_data.row_lengths
 
                         # Create array containing the index where each row starts in ind
-                        row_start_idx = np.arange(0, pop_data.src.size,
+                        row_start_idx = np.arange(0, pop_data.weight_update_var_size,
                                                   pop_data.max_row_length)
 
                         # Loop through ragged matrix rows
@@ -456,28 +456,51 @@ class GeNNModel(object):
                     raise Exception("For sparse projections, the connections"
                                     "must be set before loading a model")
 
-            # If population has individual weights
-            if pop_data.has_individual_weights:
-                # Loop through weight update model state variables
-                for var_name, var_data in iteritems(pop_data.vars):
-                    size = pop_data.weight_update_var_size
+            # If population has individual synapse variables
+            if pop_data.has_individual_synapse_vars:
+                # If weights are in dense or yale format
+                if pop_data.is_dense or pop_data.is_yale:
+                    # Loop through weight update model state variables
+                    for var_name, var_data in iteritems(pop_data.vars):
+                        size = pop_data.weight_update_var_size
 
-                    # Get view
-                    var_data.view = self.assign_external_pointer_pop(
-                        pop_name, var_name, size, var_data.type)
+                        # Get view
+                        var_data.view = self.assign_external_pointer_pop(
+                            pop_name, var_name, size, var_data.type)
 
-                    if var_data.init_required:
-                        if pop_data.is_dense or pop_data.is_yale:
-                            var_data.view[:] = var_data.values
-                        elif pop_data.is_ragged:
+                        # If variable requires initialisation
+                        if var_data.init_required:
+                            # Copy variable into view
+                            # **NOTE** we sort to match GeNN order
+                            var_data.view[:] = var_data.values[pop_data.synapse_order]
+
+                # Otherwise, if weights are in ragged format
+                elif pop_data.is_ragged:
+                    # Create array containing the index where each row starts in ind
+                    row_start_idx = np.arange(0, pop_data.weight_update_var_size,
+                                              pop_data.max_row_length)
+
+                    # Loop through weight update model state variables
+                    for var_name, var_data in iteritems(pop_data.vars):
+                        size = pop_data.weight_update_var_size
+
+                        # Get view
+                        var_data.view = self.assign_external_pointer_pop(
+                            pop_name, var_name, size, var_data.type)
+
+                        # If variable requires initialisation
+                        if var_data.init_required:
+                            # Sort variable to match GeNN order
+                            sorted_var = var_data.values[pop_data.synapse_order]
+
                             # Loop through ragged matrix rows
                             syn = 0
                             for i, r in zip(row_start_idx, pop_data.row_lengths):
                                 # Copy row from non-padded indices into correct location
-                                var_data.view[i:i + r] = var_data.values[syn:syn + r]
+                                var_data.view[i:i + r] = sorted_var[syn:syn + r]
                                 syn += r
-                        else:
-                            raise Exception("Matrix format not supported")
+                else:
+                    raise Exception("Matrix format not supported")
 
 
             # Load weight update model presynaptic variables
