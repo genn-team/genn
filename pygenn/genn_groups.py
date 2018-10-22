@@ -64,6 +64,115 @@ class Group(object):
 
         self.extra_global_params[param_name] = egp
 
+    def _assign_external_pointer(self, slm, scalar, var_name, var_size, var_type):
+        """Assign a variable to an external numpy array
+
+        Args:
+        slm         --  SharedLibraryModel instance for acccessing variables
+        scalar      --  string containing type to use inplace of scalar
+        var_name    --  string a fully qualified name of the variable to assign
+        var_size    --  int the size of the variable
+        var_type    --  string type of the variable. The supported types are
+                        char, unsigned char, short, unsigned short, int,
+                        unsigned int, long, unsigned long, long long,
+                        unsigned long long, float, double, long double
+                        and scalar.
+
+        Returns numpy array of type var_type
+
+        Raises ValueError if variable type is not supported
+        """
+
+        internal_var_name = var_name + self.name
+        if var_type == "scalar":
+            if scalar == "float":
+                return slm.assign_external_pointer_array_f(
+                    internal_var_name, var_size)
+            elif scalar == "double":
+                return slm.assign_external_pointer_array_d(
+                    internal_var_name, var_size)
+            elif scalar == "long double":
+                return slm.assign_external_pointer_array_ld(
+                    internal_var_name, var_size)
+        elif var_type == "char":
+            return slm.assign_external_pointer_array_c(
+                internal_var_name, var_size)
+        elif var_type == "unsigned char":
+            return slm.assign_external_pointer_array_uc(
+                internal_var_name, var_size)
+        elif var_type == "short":
+            return slm.assign_external_pointer_array_s(
+                internal_var_name, var_size)
+        elif var_type == "unsigned short":
+            return slm.assign_external_pointer_array_us(
+                internal_var_name, var_size)
+        elif var_type == "int":
+            return slm.assign_external_pointer_array_i(
+                internal_var_name, var_size)
+        elif var_type == "unsigned int":
+            return slm.assign_external_pointer_array_ui(
+                internal_var_name, var_size)
+        elif var_type == "long":
+            return slm.assign_external_pointer_array_l(
+                internal_var_name, var_size)
+        elif var_type == "unsigned long":
+            return slm.assign_external_pointer_array_ul(
+                internal_var_name, var_size)
+        elif var_type == "long long":
+            return slm.assign_external_pointer_array_ll(
+                internal_var_name, var_size)
+        elif var_type == "unsigned long long":
+            return slm.assign_external_pointer_array_ull(
+                internal_var_name, var_size)
+        elif var_type == "float":
+            return slm.assign_external_pointer_array_f(
+                internal_var_name, var_size)
+        elif var_type == "double":
+            return slm.assign_external_pointer_array_d(
+                internal_var_name, var_size)
+        elif var_type == "long double":
+            return slm.assign_external_pointer_array_ld(
+                internal_var_name, var_size)
+        else:
+            raise TypeError("unsupported var_type '{}'".format(var_type))
+
+    def _load_vars(self, slm, scalar, size=None, var_dict=None):
+        # If no size is specified, use standard size
+        if size is None:
+            size = self.size
+
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+
+        # Loop through variables
+        for var_name, var_data in iteritems(var_dict):
+            # Get view
+            var_data.view = self._assign_external_pointer(slm, scalar,
+                                                          var_name, size,
+                                                          var_data.type)
+
+            # If manual initialisation is required, copy over variables
+            if var_data.init_required:
+                var_data.view[:] = var_data.values
+
+    def _load_egp(self, slm, scalar, egp_dict=None):
+        # If no EGP dictionary is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Loop through extra global params
+        for egp_name, egp_data in iteritems(egp_dict):
+            # if auto allocation is not enabled, let the user care about
+            # allocation and initialization of the EGP
+            if egp_data.needsAllocation:
+                slm.allocate_extra_global_param(self.name, egp_name,
+                                                len(egp_data.values))
+                egp_data.view = self._assign_external_pointer(
+                    slm, scalar, egp_name, len(egp_data.values),
+                    egp_data.type[:-1])
+                if egp_data.init_required:
+                    egp_data.view[:] = egp_data.values
 
 class NeuronGroup(Group):
 
@@ -142,6 +251,27 @@ class NeuronGroup(Group):
         """
         self._add_extra_global_param(param_name, param_values, self.neuron)
 
+    def load(self, slm, scalar):
+        """Loads neuron group
+
+        Args:
+        slm --  SharedLibraryModel instance for acccessing variables
+        """
+
+        slm.init_neuron_pop_io(self.name)
+        self.spikes = self._assign_external_pointer(
+            slm, scalar, "glbSpk", self.size * self.delay_slots, "unsigned int")
+        self.spike_count = self._assign_external_pointer(
+            slm, scalar, "glbSpkCnt", self.delay_slots, "unsigned int")
+        if self.delay_slots > 1:
+            self.spike_que_ptr = slm.assign_external_pointer_single_ui(
+                "spkQuePtr" + self.name)
+
+        # Load neuron state variables
+        self._load_vars(slm, scalar)
+
+        # Load neuron extra global params
+        self._load_egp(slm, scalar)
 
 class SynapseGroup(Group):
 
@@ -426,6 +556,110 @@ class SynapseGroup(Group):
         """
         self._add_extra_global_param(param_name, param_values, self.w_update)
 
+    def load(self, slm, scalar):
+        slm.init_synapse_pop_io(self.name)
+
+        # If synapse population has connectivity which
+        # requires initialising manually
+        if self.is_connectivity_init_required:
+            # If data is available
+            if self.connections_set:
+                if self.is_yale:
+                    # Allocate memory for Yale data structure
+                    slm.allocate_yale_proj(self.name, self.num_synapses)
+
+                    # Get pointers to yale data structure members
+                    ind = slm.assign_external_yale_ind(self.name,
+                                                       self.num_synapses)
+                    indInG = slm.assign_external_yale_ind_in_g(self.name,
+                                                               self.src.size)
+
+                    # Copy connection data in
+                    ind[:] = self.ind
+                    indInG[:] = self.indInG
+                elif self.is_ragged:
+                    # Get pointers to ragged data structure members
+                    ind = slm.assign_external_ragged_ind(
+                        self.name, self.weight_update_var_size)
+                    row_length = slm.assign_external_ragged_row_length(
+                        self.name, self.src.size)
+
+                    # Copy in row length
+                    row_length[:] = self.row_lengths
+
+                    # Create array containing the index where each row starts in ind
+                    row_start_idx = np.arange(0, self.weight_update_var_size,
+                                              self.max_row_length)
+
+                    # Loop through ragged matrix rows
+                    syn = 0
+                    for i, r in zip(row_start_idx, self.row_lengths):
+                        # Copy row from non-padded indices into correct location
+                        ind[i:i + r] = self.ind[syn:syn + r]
+                        syn += r
+                else:
+                    raise Exception("Matrix format not supported")
+            else:
+                raise Exception("For sparse projections, the connections"
+                                "must be set before loading a model")
+
+        # If population has individual synapse variables
+        if self.has_individual_synapse_vars:
+            # If weights are in dense or yale format
+            if self.is_dense or self.is_yale:
+                # Loop through weight update model state variables
+                for var_name, var_data in iteritems(self.vars):
+                    size = self.weight_update_var_size
+
+                    # Get view
+                    var_data.view = self._assign_external_pointer(
+                        slm, scalar, var_name, size, var_data.type)
+
+                    # If variable requires initialisation
+                    if var_data.init_required:
+                        # Copy variable into view
+                        # **NOTE** we sort to match GeNN order
+                        var_data.view[:] = var_data.values[self.synapse_order]
+
+            # Otherwise, if weights are in ragged format
+            elif self.is_ragged:
+                # Create array containing the index where each row starts in ind
+                row_start_idx = np.arange(0, self.weight_update_var_size,
+                                          self.max_row_length)
+
+                # Loop through weight update model state variables
+                for var_name, var_data in iteritems(self.vars):
+                    size = self.weight_update_var_size
+
+                    # Get view
+                    var_data.view = self._assign_external_pointer(
+                        slm, scalar, var_name, size, var_data.type)
+
+                    # If variable requires initialisation
+                    if var_data.init_required:
+                        # Sort variable to match GeNN order
+                        sorted_var = var_data.values[self.synapse_order]
+
+                        # Loop through ragged matrix rows
+                        syn = 0
+                        for i, r in zip(row_start_idx, self.row_lengths):
+                            # Copy row from non-padded indices into correct location
+                            var_data.view[i:i + r] = sorted_var[syn:syn + r]
+                            syn += r
+            else:
+                raise Exception("Matrix format not supported")
+
+
+        # Load weight update model presynaptic variables
+        self._load_vars(slm, scalar, self.src.size, self.pre_vars)
+
+        # Load weight update model postsynaptic variables
+        self._load_vars(slm, scalar, self.trg.size, self.post_vars)
+
+        # Load postsynaptic update model variables
+        if self.has_individual_postsynaptic_vars:
+            self._load_vars(slm, scalar, self.trg.size, self.psm_vars)
+
 
 class CurrentSource(Group):
 
@@ -494,3 +728,12 @@ class CurrentSource(Group):
         """
         self._add_extra_global_param(param_name, param_values,
                                      self.current_source_model)
+
+    def load(self, slm, scalar):
+        slm.init_current_source_io(self.name)
+
+        # Load current source variables
+        self._load_vars(slm, scalar)
+
+        # Load current source extra global parameters
+        self._load_egp(slm, scalar)

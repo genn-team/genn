@@ -43,7 +43,7 @@ from os import path
 from subprocess import check_call   # to call make
 # 3rd party imports
 import numpy as np
-from six import iteritems
+from six import iteritems, itervalues
 # pygenn imports
 import genn_wrapper
 import genn_wrapper.SharedLibraryModel as slm
@@ -78,10 +78,10 @@ class GeNNModel(object):
         cpu_only        --  boolean whether GeNN should run only on CPU.
                             Disabled by default.
         """
+        precision = "float" if precision is not None else precision
         self._scalar = precision
-        if precision is None or precision == "float":
+        if precision == "float":
             genn_float_type = "GENN_FLOAT"
-            self._scalar = "float"
             self._slm = slm.SharedLibraryModel_f()
             self._np_type = np.float32
         elif precision == "double":
@@ -379,158 +379,17 @@ class GeNNModel(object):
         self._TS = self._slm.assign_external_pointer_single_ull("iT")
 
         # Loop through neuron populations
-        for pop_name, pop_data in iteritems(self.neuron_populations):
-            self._slm.init_neuron_pop_io(pop_name)
-            pop_data.spikes = self.assign_external_pointer_pop(
-                pop_name, "glbSpk", pop_data.size * pop_data.delay_slots,
-                "unsigned int")
-            pop_data.spike_count = self.assign_external_pointer_pop(
-                pop_name, "glbSpkCnt", pop_data.delay_slots,
-                "unsigned int")
-            if pop_data.delay_slots > 1:
-                pop_data.spike_que_ptr =\
-                    self._slm.assign_external_pointer_single_ui(
-                        "spkQuePtr" + pop_name)
-
-            # Load neuron state variables
-            self._load_var(pop_name, pop_data, pop_data.size)
-
-            for egp_name, egp_data in iteritems(pop_data.extra_global_params):
-                # if auto allocation is not enabled, let the user care about
-                # allocation and initialization of the EGP
-                if egp_data.needs_allocation:
-                    self._slm.allocate_extra_global_param(pop_name, egp_name,
-                                                          len(egp_data.values))
-                    egp_data.view = self.assign_external_pointer_pop(
-                        pop_name, egp_name,
-                        len(egp_data.values), egp_data.type[:-1])
-                    if egp_data.init_required:
-                        egp_data.view[:] = egp_data.values
+        for pop_data in itervalues(self.neuron_populations):
+            pop_data.load(self._slm, self._scalar)
 
         # Loop through synapse populations
-        for pop_name, pop_data in iteritems(self.synapse_populations):
-            self._slm.init_synapse_pop_io(pop_name)
+        for pop_data in itervalues(self.synapse_populations):
+            pop_data.load(self._slm, self._scalar)
 
-            # If synapse population has connectivity which
-            # requires initialising manually
-            if pop_data.is_connectivity_init_required:
-                # If data is available
-                if pop_data.connections_set:
-                    if pop_data.is_yale:
-                        # Allocate memory for Yale data structure
-                        self._slm.allocate_yale_proj(pop_name,
-                                                     pop_data.num_synapses)
-
-                        # Get pointers to yale data structure members
-                        ind = self._slm.assign_external_yale_ind(
-                            pop_name, pop_data.num_synapses)
-                        indInG = self._slm.assign_external_yale_ind_in_g(
-                            pop_name, pop_data.src.size)
-
-                        # Copy connection data in
-                        ind[:] = pop_data.ind
-                        indInG[:] = pop_data.indInG
-                    elif pop_data.is_ragged:
-                        # Get pointers to ragged data structure members
-                        ind = self._slm.assign_external_ragged_ind(
-                            pop_name, pop_data.weight_update_var_size)
-                        row_length = self._slm.assign_external_ragged_row_length(
-                            pop_name, pop_data.src.size)
-
-                        # Copy in row length
-                        row_length[:] = pop_data.row_lengths
-
-                        # Create array containing the index where each row starts in ind
-                        row_start_idx = np.arange(0, pop_data.weight_update_var_size,
-                                                  pop_data.max_row_length)
-
-                        # Loop through ragged matrix rows
-                        syn = 0
-                        for i, r in zip(row_start_idx, pop_data.row_lengths):
-                            # Copy row from non-padded indices into correct location
-                            ind[i:i + r] = pop_data.ind[syn:syn + r]
-                            syn += r
-                    else:
-                        raise Exception("Matrix format not supported")
-                else:
-                    raise Exception("For sparse projections, the connections"
-                                    "must be set before loading a model")
-
-            # If population has individual synapse variables
-            if pop_data.has_individual_synapse_vars:
-                # If weights are in dense or yale format
-                if pop_data.is_dense or pop_data.is_yale:
-                    # Loop through weight update model state variables
-                    for var_name, var_data in iteritems(pop_data.vars):
-                        size = pop_data.weight_update_var_size
-
-                        # Get view
-                        var_data.view = self.assign_external_pointer_pop(
-                            pop_name, var_name, size, var_data.type)
-
-                        # If variable requires initialisation
-                        if var_data.init_required:
-                            # Copy variable into view
-                            # **NOTE** we sort to match GeNN order
-                            var_data.view[:] = var_data.values[pop_data.synapse_order]
-
-                # Otherwise, if weights are in ragged format
-                elif pop_data.is_ragged:
-                    # Create array containing the index where each row starts in ind
-                    row_start_idx = np.arange(0, pop_data.weight_update_var_size,
-                                              pop_data.max_row_length)
-
-                    # Loop through weight update model state variables
-                    for var_name, var_data in iteritems(pop_data.vars):
-                        size = pop_data.weight_update_var_size
-
-                        # Get view
-                        var_data.view = self.assign_external_pointer_pop(
-                            pop_name, var_name, size, var_data.type)
-
-                        # If variable requires initialisation
-                        if var_data.init_required:
-                            # Sort variable to match GeNN order
-                            sorted_var = var_data.values[pop_data.synapse_order]
-
-                            # Loop through ragged matrix rows
-                            syn = 0
-                            for i, r in zip(row_start_idx, pop_data.row_lengths):
-                                # Copy row from non-padded indices into correct location
-                                var_data.view[i:i + r] = sorted_var[syn:syn + r]
-                                syn += r
-                else:
-                    raise Exception("Matrix format not supported")
-
-
-            # Load weight update model presynaptic variables
-            self._load_var(pop_name, pop_data, pop_data.src.size, pop_data.pre_vars)
-
-            # Load weight update model postsynaptic variables
-            self._load_var(pop_name, pop_data, pop_data.trg.size, pop_data.post_vars)
-
-            # Load postsynaptic update model variables
-            if pop_data.has_individual_postsynaptic_vars:
-                self._load_var(pop_name, pop_data, pop_data.trg.size, pop_data.psm_vars)
 
         # Loop through current sources
-        for src_name, src_data in iteritems(self.current_sources):
-            self._slm.init_current_source_io(src_name)
-
-            # Load current source variables
-            self._load_var(src_name, src_data, src_data.size)
-
-            for egp_name, egp_data in iteritems(src_data.extra_global_params):
-                # if auto allocation is not enabled, let the user care about
-                # allocation and initialization of the EGP
-                if egp_data.needsAllocation:
-                    self._slm.allocate_extra_global_param(src_name, egp_name,
-                                                          len(egp_data.values))
-                    egp_data.view = self.assign_external_pointer_pop(
-                        src_name, egp_name,
-                        len(egp_data.values), egp_data.type[:-1])
-                    if egp_data.init_required:
-                        egp_data.view[:] = egp_data.values
+        for src_data in itervalues(self.current_sources):
+            src_data.load(self._slm, self._scalar)
 
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_model()
@@ -539,99 +398,6 @@ class GeNNModel(object):
             self.step_time = self._slm.step_time_cpu
         else:
             self.step_time = self._slm.step_time_gpu
-
-    def assign_external_pointer_pop(self, pop_name, var_name,
-                                    var_size, var_type):
-        """Assign a population variable to an external numpy array
-
-        Args:
-        pop_name    --  string population name
-        var_name    --  string a name of the variable to assign,
-                        without population name
-        var_size    --  int the size of the variable
-        var_type    --  string type of the variable. The supported types are
-                        char, unsigned char, short, unsigned short, int,
-                        unsigned int, long, unsigned long, long long,
-                        unsigned long long, float, double, long double
-                        and scalar.
-
-        Returns numpy array of type var_type
-
-        Raises ValueError if variable type is not supported
-        """
-
-        return self.assign_external_pointer_array(var_name + pop_name,
-                                                  var_size, var_type)
-
-    def assign_external_pointer_array(self, var_name, var_size, var_type):
-        """Assign a variable to an external numpy array
-
-        Args:
-        var_name    --  string a fully qualified name of the variable to assign
-        var_size    --  int the size of the variable
-        var_type    --  string type of the variable. The supported types are
-                        char, unsigned char, short, unsigned short, int,
-                        unsigned int, long, unsigned long, long long,
-                        unsigned long long, float, double, long double
-                        and scalar.
-
-        Returns numpy array of type var_type
-
-        Raises ValueError if variable type is not supported
-        """
-
-        if var_type == "scalar":
-            if self._scalar == "float":
-                return self._slm.assign_external_pointer_array_f(var_name,
-                                                                 var_size)
-            elif self._scalar == "double":
-                return self._slm.assign_external_pointer_array_d(var_name,
-                                                                 var_size)
-            elif self._scalar == "long double":
-                return self._slm.assign_external_pointer_array_ld(var_name,
-                                                                  var_size)
-
-        elif var_type == "char":
-            return self._slm.assign_external_pointer_array_c(var_name,
-                                                             var_size)
-        elif var_type == "unsigned char":
-            return self._slm.assign_external_pointer_array_uc(var_name,
-                                                              var_size)
-        elif var_type == "short":
-            return self._slm.assign_external_pointer_array_s(var_name,
-                                                             var_size)
-        elif var_type == "unsigned short":
-            return self._slm.assign_external_pointer_array_us(var_name,
-                                                              var_size)
-        elif var_type == "int":
-            return self._slm.assign_external_pointer_array_i(var_name,
-                                                             var_size)
-        elif var_type == "unsigned int":
-            return self._slm.assign_external_pointer_array_ui(var_name,
-                                                              var_size)
-        elif var_type == "long":
-            return self._slm.assign_external_pointer_array_l(var_name,
-                                                             var_size)
-        elif var_type == "unsigned long":
-            return self._slm.assign_external_pointer_array_ul(var_name,
-                                                              var_size)
-        elif var_type == "long long":
-            return self._slm.assign_external_pointer_array_ll(var_name,
-                                                              var_size)
-        elif var_type == "unsigned long long":
-            return self._slm.assign_external_pointer_array_ull(var_name,
-                                                               var_size)
-        elif var_type == "float":
-            return self._slm.assign_external_pointer_array_f(var_name,
-                                                             var_size)
-        elif var_type == "double":
-            return self._slm.assign_external_pointer_array_d(var_name,
-                                                             var_size)
-        elif var_type == "long double":
-            return self._slm.assign_external_pointer_array_ld(var_name,
-                                                              var_size)
-        else:
-            raise TypeError("unsupported var_type '{}'".format(var_type))
 
     def _step_time_gpu(self):
         """Make one simulation step (for library built for CPU)"""
@@ -697,21 +463,6 @@ class GeNNModel(object):
                     if egp_dat.needsAllocation:
                         self._slm.free_extra_global_param(g_name, egp_name)
         # "normal" variables are freed when SharedLibraryModel is destoyed
-
-    def _load_var(self, pop_name, pop_data, size, var_dict=None):
-        # Default to standard variables
-        if var_dict is None:
-            var_dict = pop_data.vars
-
-        # Loop through variables
-        for var_name, var_data in iteritems(var_dict):
-            # Get view
-            var_data.view = self.assign_external_pointer_pop(
-                pop_name, var_name, size, var_data.type)
-
-            # If manual initialisation is required, copy over variables
-            if var_data.init_required:
-                var_data.view[:] = var_data.values
 
 
 def init_var(init_var_snippet, param_space):
