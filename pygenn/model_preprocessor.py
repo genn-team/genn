@@ -44,10 +44,10 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
 
     if model_family == genn_wrapper.WeightUpdateModels:
         pre_var_names = [vnt[0] for vnt in m_instance.get_pre_vars()]
-        pre_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], varSpace[vnt[0]])
+        pre_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], pre_var_space[vnt[0]])
                         for vnt in m_instance.get_pre_vars()}
         post_var_names = [vnt[0] for vnt in m_instance.get_post_vars()]
-        post_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], varSpace[vnt[0]])
+        post_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], post_var_space[vnt[0]])
                          for vnt in m_instance.get_post_vars()}
         return (m_instance, m_type, param_names, params, var_names, var_dict,
                 pre_var_names, pre_var_dict, post_var_names, post_var_dict)
