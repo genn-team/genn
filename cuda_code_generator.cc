@@ -267,6 +267,8 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
                                                           wumThreshHandler, wumSimHandler);
                     }
                     else {
+                        genPresynapticUpdateKernelPostSpan(os, model, sg, subs, false,
+                                                           wumThreshHandler, wumSimHandler);
                     }
                 }
 
@@ -278,6 +280,8 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
                                                           wumThreshHandler, wumSimHandler);
                     }
                     else {
+                        genPresynapticUpdateKernelPostSpan(os, model, sg, subs, true,
+                                                           wumThreshHandler, wumSimHandler);
                     }
                 }
                 
@@ -460,6 +464,134 @@ void CodeGenerator::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmo
 
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << CodeStream::CB(130);
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::genPresynapticUpdateKernelPostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &baseSubs, bool trueSpike,
+                                                       std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
+                                                       std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const
+{
+     // Get suffix based on type of events
+    const std::string eventSuffix = trueSpike ? "" : "evnt";
+    const auto *wu = sg.getWUModel();
+    os << "for (unsigned int r = 0; r < numSpikeSubsets" << eventSuffix << "; r++)";
+    {
+        CodeStream::Scope b(os);
+        os << "const unsigned int lmax = (r == numSpikeSubsets" << eventSuffix << " - 1) ? ((lscnt" << eventSuffix << " - 1) % " << m_PresynapticUpdateBlockSize << ") + 1 : " << m_PresynapticUpdateBlockSize << ";" << std::endl;
+        
+        os << "__syncthreads();" << std::endl;
+        os << "if (threadIdx.x < lmax)";
+        {
+            CodeStream::Scope b(os);
+            os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "(r * " << m_PresynapticUpdateBlockSize << ") + threadIdx.x];" << std::endl;
+            os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
+            if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                os << "shRowLength" << eventSuffix << "[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
+            }
+        }
+        os << "__syncthreads();" << std::endl;
+
+        os << "// loop through all incoming spikes" << std::endl;
+        os << "for (unsigned int j = 0; j < lmax; j++)";
+        {
+            CodeStream::Scope b(os);
+            os << "// only work on existing neurons" << std::endl;
+            os << "if (" << baseSubs.getVarSubstitution("id") << " < " << sg.getMaxConnections() << ")";
+            {
+                CodeStream::Scope b(os);
+                if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    const size_t maxSynapses = (size_t)sg.getTrgNeuronGroup()->getNumNeurons() * (size_t)sg.getSrcNeuronGroup()->getNumNeurons();
+                    if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                        os << "const uint64_t gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << baseSubs.getVarSubstitution("id") << ");" << std::endl;
+                    }
+                    else {
+                        os << "const unsigned int gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << baseSubs.getVarSubstitution("id") << ");" << std::endl;
+                    }
+                }
+
+                if (!wu->getSimSupportCode().empty()) {
+                    os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
+                }
+                if (!trueSpike && sg.isEventThresholdReTestRequired()) {
+                    os << "if(";
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                        // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
+                        os << "(B(dd_gp" << sg.getName() << "[gid / 32], gid & 31)) && ";
+                    }
+
+                    Substitutions subs(&baseSubs);
+                    subs.addVarSubstitution("id_pre", "preInd");
+                    subs.addVarSubstitution("id_post", "ipost");
+                   
+                    // Generate weight update threshold condition
+                    wumThreshHandler(os, *this, model, sg, subs);
+
+                    // end code substitutions ----
+                    os << ")";
+                    os << CodeStream::OB(130);
+                }
+                else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
+                }
+
+
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                        os << "unsigned int synAddress = dd_indInG" << sg.getName() << "[shSpk" << eventSuffix << "[j]];" << std::endl;
+                        os << "const unsigned int npost = dd_indInG" << sg.getName() << "[shSpk" << eventSuffix << "[j] + 1] - synAddress;" << std::endl;
+                    }
+                    else {
+                        os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << to_string(sg.getMaxConnections()) << ";" << std::endl;
+                        os << "const unsigned int npost = shRowLength" << eventSuffix << "[j];" << std::endl;
+                    }
+
+                    os << "if (" << baseSubs.getVarSubstitution("id") << " < npost)" << CodeStream::OB(140);
+                    os << "synAddress += " << baseSubs.getVarSubstitution("id") << ";" << std::endl;
+                    os << "const unsigned int ipost = dd_ind" << sg.getName() << "[synAddress];" << std::endl;
+                }
+                else { // DENSE
+                    os << "ipost = " << baseSubs.getVarSubstitution("id") << ";" << std::endl;
+                }
+
+                Substitutions subs(&baseSubs);
+                subs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
+                subs.addVarSubstitution("id_post", "ipost");
+                subs.addVarSubstitution("syn_address", "synAddress");
+
+                // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                if(sg.isDendriticDelayRequired()) {
+                    subs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                }
+                // Otherwise
+                else {
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                        // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
+                        if (shouldAccumulateInSharedMemory(sg)) {
+                            subs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
+                        }
+                        else {
+                            subs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
+                        }
+                    }
+                    else {
+                        subs.addFuncSubstitution("addToInSyn", 1, "linSyn += $(0)");
+                    }
+                }
+
+                wumSimHandler(os, *this, model, sg, subs);
+
+                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    os << CodeStream::CB(140); // end if (id < npost)
+                }
+
+                if (!trueSpike && sg.isEventThresholdReTestRequired()) {
+                    os << CodeStream::CB(130); // end if (eCode)
+                }
+                else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    os << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
+                }
+            }
         }
     }
 }

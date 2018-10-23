@@ -385,7 +385,7 @@ int main()
                                                                                                            "Neurons", "Neurons",
                                                                                                            {}, wumVar,
                                                                                                            {}, {});
-    syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
+    //syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
     model.finalize();
     
     CodeStream output(std::cout);
