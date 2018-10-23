@@ -41,6 +41,7 @@ Example:
 # python imports
 from os import path
 from subprocess import check_call   # to call make
+from textwrap import dedent
 # 3rd party imports
 import numpy as np
 from six import iteritems, itervalues
@@ -506,17 +507,17 @@ def create_custom_neuron_class(class_name, param_names=None,
     body = {}
 
     if sim_code is not None:
-        body["get_sim_code"] = lambda self: sim_code
+        body["get_sim_code"] = lambda self: dedent(sim_code)
 
     if threshold_condition_code is not None:
         body["get_threshold_condition_code"] =\
-            lambda self: threshold_condition_code
+            lambda self: dedent(threshold_condition_code)
 
     if reset_code is not None:
-        body["get_reset_code"] = lambda self: reset_code
+        body["get_reset_code"] = lambda self: dedent(reset_code)
 
     if support_code is not None:
-        body["get_support_code"] = lambda self: support_code
+        body["get_support_code"] = lambda self: dedent(support_code)
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
@@ -573,13 +574,13 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
     body = {}
 
     if decay_code is not None:
-        body["get_decay_code"] = lambda self: decay_code
+        body["get_decay_code"] = lambda self: dedent(decay_code)
 
     if apply_input_code is not None:
-        body["get_apply_input_code"] = lambda self: apply_input_code
+        body["get_apply_input_code"] = lambda self: dedent(apply_input_code)
 
     if support_code is not None:
-        body["get_support_code"] = lambda self: support_code
+        body["get_support_code"] = lambda self: dedent(support_code)
 
     if custom_body is not None:
         body.update(custom_body)
@@ -665,37 +666,37 @@ def create_custom_weight_update_class(class_name, param_names=None,
     body = {}
 
     if sim_code is not None:
-        body["get_sim_code"] = lambda self: sim_code
+        body["get_sim_code"] = lambda self: dedent(sim_code)
 
     if event_code is not None:
-        body["get_event_code"] = lambda self: event_code
+        body["get_event_code"] = lambda self: dedent(event_code)
 
     if learn_post_code is not None:
-        body["get_learn_post_code"] = lambda self: learn_post_code
+        body["get_learn_post_code"] = lambda self: dedent(learn_post_code)
 
     if synapse_dynamics_code is not None:
-        body["get_synapse_dynamics_code"] = lambda self: synapse_dynamics_code
+        body["get_synapse_dynamics_code"] = lambda self: dedent(synapse_dynamics_code)
 
     if event_threshold_condition_code is not None:
         body["get_event_threshold_condition_code"] =\
-            lambda self: event_threshold_condition_code
+            lambda self: dedent(event_threshold_condition_code)
 
     if pre_spike_code is not None:
-        body["get_pre_spike_code"] = lambda self: pre_spike_code
+        body["get_pre_spike_code"] = lambda self: dedent(pre_spike_code)
 
     if post_spike_code is not None:
-        body["get_post_spike_code"] = lambda self: post_spike_code
+        body["get_post_spike_code"] = lambda self: dedent(post_spike_code)
 
     if sim_support_code is not None:
-        body["get_sim_support_code"] = lambda self: sim_support_code
+        body["get_sim_support_code"] = lambda self: dedent(sim_support_code)
 
     if learn_post_support_code is not None:
         body["get_learn_post_support_code"] =\
-            lambda self: learn_post_support_code
+            lambda self: dedent(learn_post_support_code)
 
     if synapse_dynamics_suppport_code is not None:
         body["get_synapse_dynamics_suppport_code"] =\
-            lambda self: synapse_dynamics_suppport_code
+            lambda self: dedent(synapse_dynamics_suppport_code)
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
@@ -766,7 +767,7 @@ def create_custom_current_source_class(class_name, param_names=None,
     body = {}
 
     if injection_code is not None:
-        body["get_injection_code"] = lambda self: injection_code
+        body["get_injection_code"] = lambda self: dedent(injection_code)
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
@@ -902,7 +903,7 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
     body = {}
 
     if get_code is not None:
-        body["get_code"] = lambda self: var_init_code
+        body["get_code"] = lambda self: dedent(var_init_code)
 
     if custom_body is not None:
         body.update(custom_body)
@@ -964,7 +965,7 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     body = {}
 
     if row_build_code is not None:
-        body["get_row_build_code"] = lambda self: row_build_code
+        body["get_row_build_code"] = lambda self: dedent(row_build_code)
 
     if row_build_state_vars is not None:
         body["get_row_build_state_vars"] =\
