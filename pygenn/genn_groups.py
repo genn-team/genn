@@ -165,7 +165,7 @@ class Group(object):
         for egp_name, egp_data in iteritems(egp_dict):
             # if auto allocation is not enabled, let the user care about
             # allocation and initialization of the EGP
-            if egp_data.needsAllocation:
+            if egp_data.needs_allocation:
                 slm.allocate_extra_global_param(self.name, egp_name,
                                                 len(egp_data.values))
                 egp_data.view = self._assign_external_pointer(
