@@ -734,7 +734,7 @@ class CurrentSource(Group):
         add_fct = getattr(nn_model, "add_current_source_" + self.type)
         self.target_pop = pop
 
-        var_ini = model_preprocessor.varSpaceToVarValues(
+        var_ini = model_preprocessor.var_space_to_vals(
             self.current_source_model, self.vars)
         self.pop = add_fct(self.name, self.current_source_model, pop.name,
                            self.params, var_ini)
