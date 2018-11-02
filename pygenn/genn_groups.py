@@ -385,7 +385,7 @@ class SynapseGroup(Group):
         var_view = self.vars[var_name].view
 
         if self.is_dense or self.is_yale:
-            return var_view
+            return np.copy(var_view)
         elif self.is_ragged:
             # Create array containing the index where each row starts in ind
             row_start_idx = np.arange(0, self.weight_update_var_size,
