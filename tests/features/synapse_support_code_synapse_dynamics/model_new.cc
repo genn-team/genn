@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file model_new.cc
+/*! \file synapse_support_code_synapse_dynamics/model_new.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.

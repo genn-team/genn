@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file model.cc
+/*! \file neuron_support_code_sim/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.

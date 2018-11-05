@@ -1,3 +1,12 @@
+//--------------------------------------------------------------------------
+/*! \file decode_matrix_den_delay_individualg_sparse_pre/test.cc
+
+\brief Main test code that is part of the feature testing
+suite of minimal models with known analytic outcomes that are used for continuous integration testing.
+*/
+//--------------------------------------------------------------------------
+
+
 // Google test includes
 #include "gtest/gtest.h"
 

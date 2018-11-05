@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file model.cc
+/*! \file pre_vars_in_sim_code/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file model_new.cc
+/*! \file decode_matrix_den_delay_individualg_sparse_pre/model_new.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
