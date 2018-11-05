@@ -157,7 +157,7 @@ When using a sparse connectivity initialisation snippet, these values are set au
 If the synapse matrix uses one of the "GLOBALG" types then the global
 value of the synapse parameters are taken from the initial value provided
 in `weightVarInitialisers` therefore these must be constant rather than sampled from a distribution etc.
-\n
+
 
 
 -----
@@ -294,6 +294,8 @@ networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1,
                                                   LeakyIntegrator::VarValues(0.0)); // V
 \endcode
 
+
+-----
 \link sectDefiningNetwork Previous\endlink | \link UserManual Top\endlink | \link sectSynapseModels Next\endlink
 */
 
@@ -356,6 +358,8 @@ SET_NEEDS_POST_SPIKE_TIME(true);
 
 All code snippets, aside from those defined with ``SET_PRE_SPIKE_CODE()`` and ``SET_POST_SPIKE_CODE()``, can be used to manipulate any synapse variable and so learning rules can combine both time-drive and event-driven processes.
 
+
+-----
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
 */
 

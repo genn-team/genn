@@ -310,6 +310,8 @@ If you plot column one (time) against the subsequent 10 columns (voltage of the 
 
 However so far, the neurons are not connected and do not receive input. As the NeuronModels::TraubMiles model is silent in such conditions, the membrane voltages of the 10 neurons will simply drift from the -60mV they were initialised at to their resting potential.
 
+
+-----
 \link sectSynapseModels Previous\endlink | \link Tutorial1 Top\endlink | \link Tutorial2 Next\endlink
 
 */

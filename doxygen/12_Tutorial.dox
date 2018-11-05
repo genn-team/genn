@@ -337,6 +337,8 @@ Finally if we build, make and run this model; and plot the first 200 ms of the t
 \image html tenHHRingexample2.png
 \image latex tenHHRingexample2.png width=10cm
 
+
+-----
 \link Tutorial1 Previous\endlink | \link Tutorial2 Top\endlink | \link UserGuide Next\endlink
 
 */
