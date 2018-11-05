@@ -53,6 +53,7 @@ tries to lead the user to more expert use later on. With that we jump
 right in.
 \n
 
+
 -----
 \link ReleaseNotes Previous\endlink | \link UserManual Top\endlink | \link sectDefiningNetwork Next\endlink
 */
@@ -157,6 +158,7 @@ If the synapse matrix uses one of the "GLOBALG" types then the global
 value of the synapse parameters are taken from the initial value provided
 in `weightVarInitialisers` therefore these must be constant rather than sampled from a distribution etc.
 \n
+
 
 -----
 \link UserManual Previous\endlink | \link sectDefiningNetwork Top\endlink | \link sectNeuronModels Next\endlink
@@ -380,6 +382,7 @@ where \$(E) is a postsynaptic model parameter specifying reversal potential and 
 As discussed in \ref predefinedVars, \$(Isyn) is the built in variable used to sum neuron input.
 However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
 
+
 -----
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectCurrentSourceModels Next\endlink
 */
@@ -414,6 +417,8 @@ public:
     SET_PARAM_NAMES({"magnitude"});
 };
 \endcode
+
+
 -----
 \link sect_postsyn Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
 */
@@ -476,6 +481,7 @@ Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight a
 - SynapseMatrixType::DENSE_INDIVIDUALG
 - SynapseMatrixType::BITMASK_GLOBALG
 - SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM
+
 
 -----
 \link sectCurrentSourceModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
@@ -571,6 +577,7 @@ These modes can be set as a global default using ``GENN_PREFERENCES::defaultVarM
 - SynapseGroup::setPSVarMode
 - SynapseGroup::setInSynVarMode
 
+
 -----
 \link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectSparseConnectivityInitialisation Next\endlink
 */
@@ -625,6 +632,7 @@ Synapses are added to the row using the \$(addSynapse, target) function and iter
 \section sect_sparse_connect_init_modes Sparse connectivity initialisation modes
 Once you have defined <b>how</b> sparse connectivity is going to be initialised, you need to configure <b>where</b> it will be initialised and allocated. 
 This is controlled using the same ``VarMode`` options described in section \ref sect_var_init_modes and can either be set using the global default specifiued with ``GENN_PREFERENCES::defaultSparseConnectivityMode`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityVarMode``.
+
 
 -----
 \link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
