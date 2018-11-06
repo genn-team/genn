@@ -24,9 +24,11 @@
 - \subpage sectDefiningNetwork
 - \subpage sectNeuronModels
 - \subpage sectSynapseModels
-- \subpage subsect34
 - \subpage sect_postsyn
+- \subpage sectCurrentSourceModels
+- \subpage subsect34
 - \subpage sectVariableInitialisation
+- \subpage sectSparseConnectivityInitialisation
 
 \section sIntro Introduction
 
@@ -50,6 +52,7 @@ This manual gives an overview of how to use GeNN for a novice user and
 tries to lead the user to more expert use later on. With that we jump
 right in.
 \n
+
 
 -----
 \link ReleaseNotes Previous\endlink | \link UserManual Top\endlink | \link sectDefiningNetwork Next\endlink
@@ -106,7 +109,9 @@ predefined models and their parameters and initial values are detailed
 
 Synapse populations are added with the function
 \code{.cc}
-model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues);
+model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, 
+                                                                 weightParamValues, weightVarValues, weightPreVarInitialisers, weightPostVarInitialisers,
+                                                                 postsynapticParamValues, postsynapticVarValues, connectivityInitialiser);
 \endcode
 where the arguments are
 \arg `WeightUpdateModel`:   Template parameter specifying the type of weight update model.
@@ -129,13 +134,21 @@ where the arguments are
                                                             the population) for the weight update model. 
 \arg `WeightUpdateModel::VarValues weightVarInitialisers`:    Initial values or initialisation snippets for the weight
                                                         update model's state variables
+\arg `WeightUpdateModel::PreVarValues weightPreVarInitialisers`:    Initial values or initialisation snippets for the weight
+                                                        update model's presynaptic state variables
+\arg `WeightUpdateModel::PostVarValues weightPostVarInitialisers`:    Initial values or initialisation snippets for the weight
+                                                        update model's postsynaptic state variables
 \arg `PostsynapticModel::ParamValues postsynapticParamValues`:  The parameter values (common to all 
                                                                 postsynaptic neurons) for the postsynaptic model. 
 \arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
                                                             postsynaptic model's state variables
+\arg `InitSparseConnectivitySnippet::Init connectivityInitialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
 The NNmodel::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
 - SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::RAGGED and SynapseMatrixConnectivity::YALE connectivity (see \ref subsect34).
+\note
+When using a sparse connectivity initialisation snippet, these values are set automatically.
+
 - SynapseGroup::setMaxDendriticDelayTimesteps() sets the maximum dendritic delay (in terms of the simulation
      time step `DT`) allowed for synapses in this population. No values larger than this should be passed to the delay parameter of the `addToDenDelay` function in user code (see \ref sect34).
 - SynapseGroup::setSpanType() sets how incoming spike processing is parallelised for this synapse group. The default SynapseGroup::SpanType::POSTSYNAPTIC is nearly always the best option, but SynapseGroup::SpanType::PRESYNAPTIC may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.
@@ -144,7 +157,8 @@ The NNmodel::addSynapsePopulation() function returns a pointer to the newly crea
 If the synapse matrix uses one of the "GLOBALG" types then the global
 value of the synapse parameters are taken from the initial value provided
 in `weightVarInitialisers` therefore these must be constant rather than sampled from a distribution etc.
-\n
+
+
 
 -----
 \link UserManual Previous\endlink | \link sectDefiningNetwork Top\endlink | \link sectNeuronModels Next\endlink
@@ -175,19 +189,19 @@ For convenience the methods this class should implement can be implemented using
   specialisations of NewModels::ValueBase used to wrap the neuron model parameters and values.
 - SET_SIM_CODE(SIM_CODE): where SIM_CODE contains the code for executing 
   the integration of the model for one time stepWithin this code string, variables need to be
-  referred to by $(NAME), where NAME is the name of the variable as
+  referred to by \$(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
   primitives `DT` for the
   time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id).
 - SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) defines the condition for true spike detection.
 - SET_PARAM_NAMES() defines the names of the model parameters. 
-    If defined as `NAME` here, they can then be referenced as `$(NAME)` in the code string. 
+    If defined as `NAME` here, they can then be referenced as \$(NAME) in the code string. 
     The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. 
     Parameters are assumed to be always of type double.
 - SET_VARS() defines the names and type strings (e.g. "float", "double", etc) 
     of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model with NNmodel::setPrecision.
     The variables defined here as `NAME` can then be used in the
-    syntax `$(NAME)` in the code string. 
+    syntax \$(NAME) in the code string. 
 
 For example, using these macros, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
 
@@ -276,10 +290,12 @@ Many neuron models have probabilistic terms, for example a source of noise or a 
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
 \code
 networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1, 
-                                                  LeakyIntegrator::ParamValues(20.0 /*tau*/),
-                                                  LeakyIntegrator::VarValues(0.0/*V*/));
+                                                  LeakyIntegrator::ParamValues(20.0), // tau
+                                                  LeakyIntegrator::VarValues(0.0)); // V
 \endcode
 
+
+-----
 \link sectDefiningNetwork Previous\endlink | \link UserManual Top\endlink | \link sectSynapseModels Next\endlink
 */
 
@@ -300,24 +316,27 @@ For more details about these built-in synapse models, see \cite Nowotny2010.
 Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class.
 Weight update models should all be derived from WeightUpdateModel::Base and, for convenience, the methods a new weight update model should implement can be implemented using macros:
 
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() and SET_EXTRA_GLOBAL_PARAMS() perform the same roles as they do in the neuron
+- SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() and SET_EXTRA_GLOBAL_PARAMS() perform the same roles as they do in the neuron
   models discussed in \ref sect_own.
+- DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a weight update model with pre and postsynaptic as well as per-synapse state variables.
+- SET_PRE_VARS() and SET_POST_VARS() define state variables associated with pre or postsynaptic neurons rather than synapses. These are typically used to efficiently implement <i>trace</i> variables for use in STDP learning rules \cite Morrison2008. Like other state variables, variables defined here as `NAME` can be accessed in weight update model code strings using the \$(NAME) syntax. 
 - SET_SIM_CODE(SIM_CODE): defines the simulation code that is used when a true spike is detected. The update is performed only in timesteps after a neuron in the presynaptic population has fulfilled its threshold detection condition.
-Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be assigned to the \$(addtoinsyn) variable. 
+Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be applied using the the \$(addToInSyn, weight) function. 
 For example
 \code
 SET_SIM_CODE(
-    "\$(addtoinsyn) = $(inc);\n"
-    "\$(updatelinsyn)");
+    "$(addToInSyn, $(inc));\n"
 \endcode
-where "inc" is a parameter of the weight update model that defines a constant increment of the synaptic input of a post-synaptic neuron for each pre-synaptic spike. Once \$(addtoinsyn) has been assigned, the \$(updatelinsyn) keyword should be used to indicate that the summation of synaptic inputs can now occur. This can then be followed by updates on the internal synapse variables that may have contributed to addtoinSyn. For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
-To apply input to the post-synaptic neuron with a dendritic (i.e. between the synapse and the postsynaptic neuron) delay you can instead use the \$(addToDenDelay, weight, delay) function.
+where "inc" is the increment of the synaptic input to a post-synaptic neuron for each pre-synaptic spike. The simulation code also typically contains updates to the internal synapse variables that may have contributed to $(inc). For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
+To apply input to the post-synaptic neuron with a dendritic (i.e. between the synapse and the postsynaptic neuron) delay you can instead use the \$(addToInSynDelay, weight, delay) function.
 For example
 \code
 SET_SIM_CODE(
-    "\$(addToDenDelay, $(inc), $(delay));");
+    "$(addToInSynDelay, $(inc), $(delay));");
 \endcode
-where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
+where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
+\note
+When using dendritic delays, the <b>maximum</b> dendritic delay for a synapse populations must be specified using the `SynapseGroup::setMaxDendriticDelayTimesteps()` function.
 
 - SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
 \code
@@ -330,14 +349,86 @@ Whenever this expression evaluates to true, the event code set using the SET_EVE
 - SET_LEARN_POST_CODE(LEARN_POST_CODE) defines the code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is typically used in STDP-like models e.g. WeightUpdateModels::PiecewiseSTDP.
 
 - SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
+- SET_PRE_SPIKE_CODE() and SET_POST_SPIKE_CODE() define code that is called whenever there is a pre or postsynaptic spike. Typically these code strings are used to update any pre or postsynaptic state variables.
 - SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) and SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) define whether the weight update needs to know the times of the spikes emitted from the pre and postsynaptic populations. For example an STDP rule would be likely to require:
 \code
 SET_NEEDS_PRE_SPIKE_TIME(true);
 SET_NEEDS_POST_SPIKE_TIME(true);
 \endcode
 
-All code snippets can be used to manipulate any synapse variable and so implement both synaptic dynamics and learning processes.
+All code snippets, aside from those defined with ``SET_PRE_SPIKE_CODE()`` and ``SET_POST_SPIKE_CODE()``, can be used to manipulate any synapse variable and so learning rules can combine both time-drive and event-driven processes.
 
+
+-----
+\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
+*/
+
+//----------------------------------------------------------------------------
+/*! 
+
+\page sect_postsyn Postsynaptic integration methods
+
+There are currently 2 built-in postsynaptic integration methods:
+- PostsynapticModels::ExpCond
+- PostsynapticModels::DeltaCurr
+
+\section sect_new_postsynaptic Defining a new postsynaptic model
+The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
+
+In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:
+- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- SET_DECAY_CODE(DECAY_CODE) defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
+- SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
+\code
+SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
+\endcode
+where \$(E) is a postsynaptic model parameter specifying reversal potential and \$(V) is the variable containing the postsynaptic neuron's membrane potential.
+As discussed in \ref predefinedVars, \$(Isyn) is the built in variable used to sum neuron input.
+However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
+
+
+-----
+\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectCurrentSourceModels Next\endlink
+*/
+
+//----------------------------------------------------------------------------
+/*! 
+\page sectCurrentSourceModels Current source models
+There is a number of predefined models which can be used with the NNmodel::addCurrentSource function:
+- CurrentSourceModels::DC
+- CurrentSourceModels::GaussianNoise
+
+\section sect_own_current_source Defining your own current source model 
+
+In order to define a new current source type for use in a GeNN application,
+it is necessary to define a new class derived from CurrentSourceModels::Base. 
+For convenience the methods this class should implement can be implemented using macros:
+
+- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- SET_INJECTION_CODE(INJECTION_CODE): where INJECTION_CODE contains the code for injecting current into the neuron every simulation timestep.
+  The \$(injectCurrent, $(amp)) function is used to inject current.
+
+For example, using these macros, we can define a uniformly distributed noisy current source:
+
+\code
+class UniformNoise : public CurrentSourceModels::Base
+{
+public:
+    DECLARE_MODEL(UniformNoise, 1, 0);
+    
+    SET_SIM_CODE("$(injectCurrent, $(gennrand_uniform) * $(magnitude));");
+    
+    SET_PARAM_NAMES({"magnitude"});
+};
+\endcode
+
+
+-----
+\link sect_postsyn Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
+*/
+
+//----------------------------------------------------------------------------
+/*! 
 \page subsect34 Synaptic matrix types
 
 Synaptic matrix types are made up of two components: SynapseMatrixConnectivity and SynapseMatrixWeight.
@@ -395,29 +486,12 @@ Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight a
 - SynapseMatrixType::BITMASK_GLOBALG
 - SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM
 
-\page sect_postsyn Postsynaptic integration methods
-
-There are currently 2 built-in postsynaptic integration methods:
-- PostsynapticModels::ExpCond
-- PostsynapticModels::DeltaCurr
-
-\section sect_new_postsynaptic Defining a new postsynaptic model
-The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
-
-In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
-- SET_DECAY_CODE(DECAY_CODE) defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
-- SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
-\code
-SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
-\endcode
-where \$(E) is a postsynaptic model parameter specifying reversal potential and \$(V) is the variable containing the postsynaptic neuron's membrane potential.
-As discussed in \ref predefinedVars, \$(Isyn) is the built in variable used to sum neuron input.
-However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
 
 -----
-\link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
-
+\link sectCurrentSourceModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
+*/
+//----------------------------------------------------------------------------
+/*! 
 \page sectVariableInitialisation Variable initialisation
 
 Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
@@ -481,6 +555,8 @@ public:
 };
 IMPLEMENT_SNIPPET(NormalPositive);
 \endcode
+Within the snippet of code specified using the `SET_CODE()` macro, when initialisising neuron and postaynaptic model state variables , the \$(id) variable can be used to access the id of the neuron being initialised.
+Similarly, when initialising weight update model state variables, the \$(id_pre) and \$(id_post) variables can used to access the ids of the pre and postsynaptic neurons connected by the synapse being initialised.
 
 \section sect_var_init_modes Variable initialisation modes
 Once you have defined <b>how</b> your variables are going to be initialised you need to configure <b>where</b> they will be initialised and allocated. 
@@ -505,7 +581,63 @@ These modes can be set as a global default using ``GENN_PREFERENCES::defaultVarM
 - SynapseGroup::setPSVarMode
 - SynapseGroup::setInSynVarMode
 
------
-\link sect_new_postsynaptic Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
-*/
 
+-----
+\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectSparseConnectivityInitialisation Next\endlink
+*/
+//----------------------------------------------------------------------------
+/*! 
+\page sectSparseConnectivityInitialisation Sparse connectivity initialisation
+
+Sparse synaptic connectivity implemented using SynapseMatrixConnectivity::RAGGED and SynapseMatrixConnectivity::BITMASK can be automatically initialised. 
+
+This can be done using one of a number of predefined _sparse connectivity initialisation snippets_:
+- InitSparseConnectivitySnippet::OneToOne
+- InitSparseConnectivitySnippet::FixedProbability
+- InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
+
+For example, to initialise synaptic connectivity with a 10% connection probability (allowing connections between neurons with the same id):
+\code
+InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProb(0.1);
+    
+model.addSynapsePopulation<...>(
+        ...
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
+\endcode
+
+\section sect_new_sparse_connect Defining a new sparse connectivity snippet
+Similarly to variable initialisation snippets, sparse connectivity initialisation snippets can be created by simply defining a class in the model description.
+
+For example, the following sparse connectivity initialisation snippet could be used to initialise a 'ring' of connectivity where each neuron is connected to a number of subsequent neurons specified using the ``numNeighbours`` parameter:
+\code
+class Ring : public InitSparseConnectivitySnippet::Base
+{
+public:
+    DECLARE_SNIPPET(Ring, 1);
+
+    SET_ROW_BUILD_STATE_VARS({{"offset", {"unsigned int", 1}}}});
+    SET_ROW_BUILD_CODE(
+        "const unsigned int target = ($(id_pre) + offset) % $(num_post);\n"
+        "$(addSynapse, target);\n"
+        "offset++;\n"
+        "if(offset > (unsigned int)$(numNeighbours)) {\n"
+        "   $(endRow);\n"
+        "}\n");
+
+    SET_PARAM_NAMES({"numNeighbours"});
+};
+IMPLEMENT_SNIPPET(Ring);
+\endcode
+Each <i>row</i> of sparse connectivity is initialised independantly by running the snippet of code specified using the `SET_ROW_BUILD_CODE()` macro within a loop.
+The \$(num_post) variable can be used to access the number of neurons in the postsynaptic population and the \$(id_pre) variable can be used to access the index of the presynaptic neuron associated with the row being generated.
+The `SET_ROW_BUILD_STATE_VARS()` macro can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row.
+Synapses are added to the row using the \$(addSynapse, target) function and iteration is stopped using the \$(endRow) function.
+
+\section sect_sparse_connect_init_modes Sparse connectivity initialisation modes
+Once you have defined <b>how</b> sparse connectivity is going to be initialised, you need to configure <b>where</b> it will be initialised and allocated. 
+This is controlled using the same ``VarMode`` options described in section \ref sect_var_init_modes and can either be set using the global default specifiued with ``GENN_PREFERENCES::defaultSparseConnectivityMode`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityVarMode``.
+
+
+-----
+\link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+*/

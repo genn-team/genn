@@ -1,3 +1,12 @@
+//--------------------------------------------------------------------------
+/*! \file post_vars_in_synapse_dynamics_ragged/test.cc
+
+\brief Main test code that is part of the feature testing
+suite of minimal models with known analytic outcomes that are used for continuous integration testing.
+*/
+//--------------------------------------------------------------------------
+
+
 #include <functional>
 #include <numeric>
 
