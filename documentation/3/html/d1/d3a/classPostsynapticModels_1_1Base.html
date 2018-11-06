@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -139,10 +139,13 @@ Inheritance diagram for PostsynapticModels::Base:</div>
  <div class="center">
   <img src="../../d1/d3a/classPostsynapticModels_1_1Base.png" usemap="#PostsynapticModels::Base_map" alt=""/>
   <map id="PostsynapticModels::Base_map" name="PostsynapticModels::Base_map">
-<area href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models. " alt="NewModels::Base" shape="rect" coords="97,56,282,80"/>
-<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="97,0,282,24"/>
-<area href="../../de/da9/classPostsynapticModels_1_1DeltaCurr.html" title="Simple delta current synapse. " alt="PostsynapticModels::DeltaCurr" shape="rect" coords="0,168,185,192"/>
-<area href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html" title="Exponential decay with synaptic input treated as a conductance value. " alt="PostsynapticModels::ExpCond" shape="rect" coords="195,168,380,192"/>
+<area href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab..." alt="NewModels::Base" shape="rect" coords="292,56,477,80"/>
+<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="292,0,477,24"/>
+<area href="../../d5/d94/classPostsynapticModels_1_1Custom.html" alt="PostsynapticModels::Custom" shape="rect" coords="0,168,185,192"/>
+<area href="../../de/da9/classPostsynapticModels_1_1DeltaCurr.html" title="Simple delta current synapse. " alt="PostsynapticModels::DeltaCurr" shape="rect" coords="195,168,380,192"/>
+<area href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html" title="Exponential decay with synaptic input treated as a conductance value. " alt="PostsynapticModels::ExpCond" shape="rect" coords="390,168,575,192"/>
+<area href="../../d2/d81/classSwigDirector__Base.html" alt="SwigDirector_Base" shape="rect" coords="585,168,770,192"/>
+<area href="../../d7/d48/classSwigDirector__Custom.html" alt="SwigDirector_Custom" shape="rect" coords="0,224,185,248"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -155,7 +158,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab2ffae04b5142df1c166bc1c7cd2aa83"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html#ab2ffae04b5142df1c166bc1c7cd2aa83">getSupportCode</a> () const </td></tr>
 <tr class="separator:ab2ffae04b5142df1c166bc1c7cd2aa83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
-<tr class="memitem:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aec08b75d9cf8545d4aea141de0ca7aed">getVars</a> () const </td></tr>
+<tr class="memitem:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aec08b75d9cf8545d4aea141de0ca7aed">getVars</a> () const </td></tr>
 <tr class="memdesc:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets names and types (as strings) of model variables.  <a href="#aec08b75d9cf8545d4aea141de0ca7aed">More...</a><br /></td></tr>
 <tr class="separator:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf7bc31d93be84a00a299d2ca050ffc2 inherit pub_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#abf7bc31d93be84a00a299d2ca050ffc2">getVarIndex</a> (const std::string &amp;varName) const </td></tr>
@@ -170,18 +173,20 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
-<tr class="memitem:aa0bed13d4a1a5a967c05806b2a76e573 inherit pub_types_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a></td></tr>
-<tr class="separator:aa0bed13d4a1a5a967c05806b2a76e573 inherit pub_types_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1e165b6fa7ea993b5a16f905f0eb16c inherit pub_types_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#ae1e165b6fa7ea993b5a16f905f0eb16c">NameTypeValVec</a></td></tr>
-<tr class="separator:ae1e165b6fa7ea993b5a16f905f0eb16c inherit pub_types_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; double(const std::vector&lt; double &gt; &amp;, double)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a></td></tr>
 <tr class="separator:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
 <tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a></td></tr>
+<tr class="separator:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9df1fa166ff4beae7fe49997a201784d">NameTypeValVec</a></td></tr>
+<tr class="separator:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a></td></tr>
 <tr class="separator:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_static_methods_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_static_methods_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Static Protected Member Functions inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
+<tr class="memitem:af38b089d771c4028bd12e94ef2be3fb8 inherit pro_static_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#af38b089d771c4028bd12e94ef2be3fb8">getVarIndex</a> (const std::string &amp;varName, const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> &amp;vars)</td></tr>
+<tr class="separator:af38b089d771c4028bd12e94ef2be3fb8 inherit pro_static_methods_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">Base</a> class for all postsynaptic models. </p>
@@ -207,7 +212,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented in <a class="el" href="../../de/da9/classPostsynapticModels_1_1DeltaCurr.html#ae00805a11cea3a9f7cdf94f63dd99a00">PostsynapticModels::DeltaCurr</a>, and <a class="el" href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html#a11f489b74bc05b06f0fdf6747f216446">PostsynapticModels::ExpCond</a>.</p>
+<p>Reimplemented in <a class="el" href="../../de/da9/classPostsynapticModels_1_1DeltaCurr.html#ae00805a11cea3a9f7cdf94f63dd99a00">PostsynapticModels::DeltaCurr</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#ac8a16c32ab17f27183c37be33046fe69">SwigDirector_Custom</a>, <a class="el" href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html#a11f489b74bc05b06f0fdf6747f216446">PostsynapticModels::ExpCond</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#ab1d47ddd6eeafa4aeea1a2fd6cadd8d6">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -232,7 +237,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Reimplemented in <a class="el" href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html#ae0732e14a8ff088b4d15d47a52f74063">PostsynapticModels::ExpCond</a>.</p>
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a2d69675c1931248f568e3cdfcec8a172">SwigDirector_Custom</a>, <a class="el" href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html#ae0732e14a8ff088b4d15d47a52f74063">PostsynapticModels::ExpCond</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#aeca9a03041de365b722c0e7d0171374c">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -257,6 +262,8 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a7e0cb7a58118d43a2c86630586b9d7b3">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#ae8ca8523dc801485c9a832dec3c3cc8b">SwigDirector_Custom</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a3e27802a8c6fc26c5fdfb6a0f0c715ff">SwigDirector_Base</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a90cb98cfe301724fc83326f7aca15635">SwigDirector_Base</a>.</p>
+
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
@@ -268,7 +275,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../db/dcb/namespacePostsynapticModels.html">PostsynapticModels</a></li><li class="navelem"><a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:04 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:46 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

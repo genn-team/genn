@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -145,7 +145,7 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d95/classNewModels_1_1VarInitContainerBase_3_010_01_4.html">NewModels::VarInitContainerBase&lt; 0 &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models. ">Base</a> class for all models.  <a href="../../d9/db4/classNewModels_1_1Base.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab...">Base</a> class for all models - in addition to the parameters snippets have, models can have state variables.  <a href="../../d9/db4/classNewModels_1_1Base.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html">NewModels::LegacyWrapper&lt; ModelBase, LegacyModelType, ModelArray &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper around old-style models stored in global arrays and referenced by index.  <a href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html#details">More...</a><br /></td></tr>
@@ -160,7 +160,7 @@ Namespaces</h2></td></tr>
 Macros</h2></td></tr>
 <tr class="memitem:ae0c817e85c196f39cf62d608883cda13"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/ded/newModels_8h.html#ae0c817e85c196f39cf62d608883cda13">DECLARE_MODEL</a>(TYPE,  NUM_PARAMS,  NUM_VARS)</td></tr>
 <tr class="separator:ae0c817e85c196f39cf62d608883cda13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f3d066ed16dd93ee24912f38826520b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/ded/newModels_8h.html#a0f3d066ed16dd93ee24912f38826520b">IMPLEMENT_MODEL</a>(TYPE)&#160;&#160;&#160;<a class="el" href="../../d1/dfe/initVarSnippet_8cc.html#aa57c95d20fa803d69ebbae1b630c044e">IMPLEMENT_SNIPPET</a>(TYPE)</td></tr>
+<tr class="memitem:a0f3d066ed16dd93ee24912f38826520b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/ded/newModels_8h.html#a0f3d066ed16dd93ee24912f38826520b">IMPLEMENT_MODEL</a>(TYPE)&#160;&#160;&#160;<a class="el" href="../../d5/d88/initVarSnippetCustom_8cc.html#ac529153c0a2b5588397fa1950853d6fe">IMPLEMENT_SNIPPET</a>(TYPE)</td></tr>
 <tr class="separator:a0f3d066ed16dd93ee24912f38826520b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3025b9fc844fccdf8cc2b51ef4a6e0aa"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/ded/newModels_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa">SET_VARS</a>(...)&#160;&#160;&#160;virtual StringPairVec getVars() const{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:a3025b9fc844fccdf8cc2b51ef4a6e0aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -195,8 +195,9 @@ Macros</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a>(TYPE, NUM_PARAMS)                                   \</div><div class="line">    typedef <a class="code" href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase&lt;NUM_VARS&gt;</a> VarValues;        \</div><div class="ttc" id="snippet_8h_html_ac5727a6720d28f034afadde948ed6e9a"><div class="ttname"><a href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a></div><div class="ttdeci">#define DECLARE_SNIPPET(TYPE, NUM_PARAMS)</div><div class="ttdef"><b>Definition:</b> snippet.h:11</div></div>
-<div class="ttc" id="classNewModels_1_1VarInitContainerBase_html"><div class="ttname"><a href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase</a></div><div class="ttdef"><b>Definition:</b> newModels.h:82</div></div>
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a>(TYPE, NUM_PARAMS)                                   \</div><div class="line">    typedef <a class="code" href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase&lt;NUM_VARS&gt;</a> VarValues;        \</div><div class="line">    typedef <a class="code" href="../../da/d95/classNewModels_1_1VarInitContainerBase_3_010_01_4.html">NewModels::VarInitContainerBase&lt;0&gt;</a> PreVarValues;            \</div><div class="line">    typedef <a class="code" href="../../da/d95/classNewModels_1_1VarInitContainerBase_3_010_01_4.html">NewModels::VarInitContainerBase&lt;0&gt;</a> PostVarValues;</div><div class="ttc" id="snippet_8h_html_ac5727a6720d28f034afadde948ed6e9a"><div class="ttname"><a href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a></div><div class="ttdeci">#define DECLARE_SNIPPET(TYPE, NUM_PARAMS)</div><div class="ttdef"><b>Definition:</b> snippet.h:11</div></div>
+<div class="ttc" id="classNewModels_1_1VarInitContainerBase_html"><div class="ttname"><a href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase</a></div><div class="ttdef"><b>Definition:</b> newModels.h:56</div></div>
+<div class="ttc" id="classNewModels_1_1VarInitContainerBase_3_010_01_4_html"><div class="ttname"><a href="../../da/d95/classNewModels_1_1VarInitContainerBase_3_010_01_4.html">NewModels::VarInitContainerBase&lt; 0 &gt;</a></div><div class="ttdef"><b>Definition:</b> newModels.h:103</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -209,7 +210,7 @@ Macros</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">TYPE</td><td>)</td>
-          <td>&#160;&#160;&#160;<a class="el" href="../../d1/dfe/initVarSnippet_8cc.html#aa57c95d20fa803d69ebbae1b630c044e">IMPLEMENT_SNIPPET</a>(TYPE)</td>
+          <td>&#160;&#160;&#160;<a class="el" href="../../d5/d88/initVarSnippetCustom_8cc.html#ac529153c0a2b5588397fa1950853d6fe">IMPLEMENT_SNIPPET</a>(TYPE)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -238,7 +239,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d4/ded/newModels_8h.html">newModels.h</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:41 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

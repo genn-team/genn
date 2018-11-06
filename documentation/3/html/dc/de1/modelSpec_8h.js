@@ -25,8 +25,17 @@ var modelSpec_8h =
       [ "GLOBALG", "dc/de1/modelSpec_8h.html#afa025c957fa0683d6555d7a3f651901ba9ebbb508620f77790dfe4b1a4d731e56", null ],
       [ "INDIVIDUALID", "dc/de1/modelSpec_8h.html#afa025c957fa0683d6555d7a3f651901ba3d20262ff90c61f8811cfa1ea0f67847", null ]
     ] ],
+    [ "TimePrecision", "dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8f", [
+      [ "DEFAULT", "dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fa5b39c8b553c821e7cddc6da64b5bd2ee", null ],
+      [ "FLOAT", "dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fae738c26bf4ce1037fa81b039a915cbf6", null ],
+      [ "DOUBLE", "dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fafd3e4ece78a7d422280d5ed379482229", null ]
+    ] ],
+    [ "initConnectivity", "dc/de1/modelSpec_8h.html#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2", null ],
+    [ "initConnectivity", "dc/de1/modelSpec_8h.html#aaf0972f2313fc4e5f9395458b67306a0", null ],
     [ "initGeNN", "dc/de1/modelSpec_8h.html#a62ce532f6f7e535adfb9fe151a1c0c6b", null ],
-    [ "initVar", "dc/de1/modelSpec_8h.html#ae06d1e97897f6f566d58ded3be6d2476", null ],
+    [ "initVar", "dc/de1/modelSpec_8h.html#aed8c4d317d8bd593efa2c349d0432642", null ],
+    [ "initVar", "dc/de1/modelSpec_8h.html#a5077392e9cc9dd9073bb07b3ee5e5ae6", null ],
+    [ "uninitialisedConnectivity", "dc/de1/modelSpec_8h.html#a367c112babcc14b58db730731b798073", null ],
     [ "uninitialisedVar", "dc/de1/modelSpec_8h.html#a4916e3559295d02263b13092e3d4e2e1", null ],
     [ "GeNNReady", "dc/de1/modelSpec_8h.html#a048755827fecbf17e9ff6e801462d132", null ]
 ];

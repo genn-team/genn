@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['valuebase',['ValueBase',['../da/d76/classSnippet_1_1ValueBase.html',1,'Snippet']]],
-  ['valuebase_3c_200_20_3e',['ValueBase&lt; 0 &gt;',['../dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html',1,'Snippet']]],
-  ['varinit',['VarInit',['../d7/db2/classNewModels_1_1VarInit.html',1,'NewModels']]],
-  ['varinitcontainerbase',['VarInitContainerBase',['../d6/d53/classNewModels_1_1VarInitContainerBase.html',1,'NewModels']]],
-  ['varinitcontainerbase_3c_200_20_3e',['VarInitContainerBase&lt; 0 &gt;',['../da/d95/classNewModels_1_1VarInitContainerBase_3_010_01_4.html',1,'NewModels']]]
+  ['uniform',['Uniform',['../dd/da0/classInitVarSnippet_1_1Uniform.html',1,'InitVarSnippet']]],
+  ['uninitialised',['Uninitialised',['../d9/db6/classInitVarSnippet_1_1Uninitialised.html',1,'InitVarSnippet']]],
+  ['uninitialised',['Uninitialised',['../d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html',1,'InitSparseConnectivitySnippet']]],
+  ['unknownexceptionhandler',['UnknownExceptionHandler',['../d7/d50/classSwig_1_1UnknownExceptionHandler.html',1,'Swig']]]
 ];

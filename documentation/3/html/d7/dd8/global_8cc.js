@@ -8,6 +8,7 @@ var global_8cc =
     [ "initSparseBlkSz", "d7/dd8/global_8cc.html#a93d447447577337bf16b8487c2199ec7", null ],
     [ "learnBlkSz", "d7/dd8/global_8cc.html#a8f4f479cbd48532e51855884de8dc966", null ],
     [ "neuronBlkSz", "d7/dd8/global_8cc.html#acb18c9ab82ed35f7b0b4df1b200ba0de", null ],
+    [ "preSynapseResetBlkSize", "d7/dd8/global_8cc.html#a49edc5e74e8faa5972f14e0a7331f040", null ],
     [ "synapseBlkSz", "d7/dd8/global_8cc.html#a00bbdcbc294b8766339124722a470784", null ],
     [ "synDynBlkSz", "d7/dd8/global_8cc.html#a8c2aa50f902d9a25ce30f2d22d819a6a", null ],
     [ "theDevice", "d7/dd8/global_8cc.html#a23b3c32d04af422162d050484a76d11e", null ]

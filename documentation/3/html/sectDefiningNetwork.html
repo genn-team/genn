@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -135,29 +135,38 @@ Defining neuron populations</h1>
 <p>The user may add as many neuron populations as the model necessitates. They must all have unique names. The possible values for the arguments, predefined models and their parameters and initial values are detailed <a class="el" href="sectNeuronModels.html">Neuron models</a> below.</p>
 <h1><a class="anchor" id="subsect12"></a>
 Defining synapse populations</h1>
-<p>Synapse populations are added with the function </p><div class="fragment"><div class="line">model.<a class="code" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c">addSynapsePopulation</a>&lt;WeightUpdateModel, PostsynapticModel&gt;(name, mType, delay, preName, postName, weightParamValues, weightVarValues, postsynapticParamValues, postsynapticVarValues);</div></div><!-- fragment --><p> where the arguments are </p><ul>
+<p>Synapse populations are added with the function </p><div class="fragment"><div class="line">model.<a class="code" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c">addSynapsePopulation</a>&lt;WeightUpdateModel, PostsynapticModel&gt;(name, mType, delay, preName, postName, </div><div class="line">                                                                 weightParamValues, weightVarValues, weightPreVarInitialisers, weightPostVarInitialisers,</div><div class="line">                                                                 postsynapticParamValues, postsynapticVarValues, connectivityInitialiser);</div></div><!-- fragment --><p> where the arguments are </p><ul>
 <li><code>WeightUpdateModel</code>: Template parameter specifying the type of weight update model. These should be derived off <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a> and can either be one of the standard models or user-defined (see <a class="el" href="sectSynapseModels.html">Weight update models</a>). </li>
 <li><code>PostsynapticModel</code>: Template parameter specifying the type of postsynaptic integration model. These should be derived off <a class="el" href="d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a> and can either be one of the standard models or user-defined (see <a class="el" href="sect_postsyn.html">Postsynaptic integration methods</a>). </li>
 <li><code>const string &amp;name</code>: The name of the synapse population </li>
-<li><code>unsigned int mType</code>: How the synaptic matrix is stored. the options currently are "SPARSE_GLOBALG", "SPARSE_INDIVIDUALG", "DENSE_GLOBALG", "DENSE_INDIVIDUALG" or "BITMASK_GLOBALG" (see <a class="el" href="subsect34.html">Synaptic matrix types</a>). </li>
-<li><code>unsigned int delay</code>: Synaptic delay (in multiples of the simulation time step <code>DT</code>). </li>
+<li><code>unsigned int mType</code>: How the synaptic matrix is stored. See <a class="el" href="subsect34.html">Synaptic matrix types</a> for available options. </li>
+<li><code>unsigned int delay</code>: Homogeneous (axonal) delay for synapse population (in terms of the simulation time step <code>DT</code>). </li>
 <li><code>const string preName</code>: Name of the (existing!) pre-synaptic neuron population. </li>
 <li><code>const string postName</code>: Name of the (existing!) post-synaptic neuron population. </li>
 <li><code>WeightUpdateModel::ParamValues weightParamValues</code>: The parameter values (common to all synapses of the population) for the weight update model. </li>
 <li><code>WeightUpdateModel::VarValues weightVarInitialisers</code>: Initial values or initialisation snippets for the weight update model's state variables </li>
+<li><code>WeightUpdateModel::PreVarValues weightPreVarInitialisers</code>: Initial values or initialisation snippets for the weight update model's presynaptic state variables </li>
+<li><code>WeightUpdateModel::PostVarValues weightPostVarInitialisers</code>: Initial values or initialisation snippets for the weight update model's postsynaptic state variables </li>
 <li><code>PostsynapticModel::ParamValues postsynapticParamValues</code>: The parameter values (common to all postsynaptic neurons) for the postsynaptic model. </li>
-<li><code>PostsynapticModel::VarValues postsynapticVarInitialisers</code>: Initial values or initialisation snippets for variables for the postsynaptic model's state variables</li>
+<li><code>PostsynapticModel::VarValues postsynapticVarInitialisers</code>: Initial values or initialisation snippets for variables for the postsynaptic model's state variables </li>
+<li><code><a class="el" href="dc/ddd/namespaceInitSparseConnectivitySnippet.html#a32be0dc4aea7fc31f0769a76b2f769a2">InitSparseConnectivitySnippet::Init</a> connectivityInitialiser</code>: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see <a class="el" href="sectSparseConnectivityInitialisation.html">Sparse connectivity initialisation</a>).</li>
 </ul>
-<dl class="section note"><dt>Note</dt><dd>If the synapse matrix uses one of the "GLOBALG" types then the global value of the synapse parameters are taken from the initial value provided in <code>weightVarInitialisers</code> therefore these must be constant rather than sampled from a distribution etc. <br />
+<p>The <a class="el" href="dc/de5/classNNmodel.html#aae817535d08ab6b35ef1e2348b03a37c" title="This function has been depreciated as of GeNN 2.2. ">NNmodel::addSynapsePopulation()</a> function returns a pointer to the newly created <a class="el" href="dc/dfa/classSynapseGroup.html">SynapseGroup</a> object which can be further configured, namely with:</p><ul>
+<li><a class="el" href="dc/dfa/classSynapseGroup.html#aab6b2fb0ad30189bc11ee3dd7d48dbb2" title="Sets the maximum number of target neurons any source neurons can connect to. ">SynapseGroup::setMaxConnections()</a> and <a class="el" href="dc/dfa/classSynapseGroup.html#a93b12c08d634f1a2300f1b91ef34ea24" title="Sets the maximum number of source neurons any target neuron can connect to. ">SynapseGroup::setMaxSourceConnections()</a> to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using <a class="el" href="dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da2f2130a7d4faf0a2f30162cefd2315f1">SynapseMatrixConnectivity::RAGGED</a> and <a class="el" href="dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da72cf449160f1923552b008a5a088735c">SynapseMatrixConnectivity::YALE</a> connectivity (see <a class="el" href="subsect34.html">Synaptic matrix types</a>). <dl class="section note"><dt>Note</dt><dd>When using a sparse connectivity initialisation snippet, these values are set automatically.</dd></dl>
+</li>
+<li><a class="el" href="dc/dfa/classSynapseGroup.html#a220307d4043e8bf1bed07552829f2a17" title="Sets the maximum dendritic delay for synapses in this synapse group. ">SynapseGroup::setMaxDendriticDelayTimesteps()</a> sets the maximum dendritic delay (in terms of the simulation time step <code>DT</code>) allowed for synapses in this population. No values larger than this should be passed to the delay parameter of the <code>addToDenDelay</code> function in user code (see <a class="el" href="sectSynapseModels.html#sect34">Defining a new weight update model</a>).</li>
+<li><a class="el" href="dc/dfa/classSynapseGroup.html#a97cfec638d856e6e07628bc19490690c" title="Set how CUDA implementation is parallelised. ">SynapseGroup::setSpanType()</a> sets how incoming spike processing is parallelised for this synapse group. The default <a class="el" href="dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2a39711e1ac5d5263471a6184f362dc02f">SynapseGroup::SpanType::POSTSYNAPTIC</a> is nearly always the best option, but <a class="el" href="dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2ac583511247567bdc79915d057babba12">SynapseGroup::SpanType::PRESYNAPTIC</a> may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>If the synapse matrix uses one of the "GLOBALG" types then the global value of the synapse parameters are taken from the initial value provided in <code>weightVarInitialisers</code> therefore these must be constant rather than sampled from a distribution etc.</dd></dl>
 <hr/>
- <a class="el" href="UserManual.html">Previous</a> | <a class="el" href="sectDefiningNetwork.html">Top</a> | <a class="el" href="sectNeuronModels.html">Next</a> </dd></dl>
+<p> <a class="el" href="UserManual.html">Previous</a> | <a class="el" href="sectDefiningNetwork.html">Top</a> | <a class="el" href="sectNeuronModels.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:41 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

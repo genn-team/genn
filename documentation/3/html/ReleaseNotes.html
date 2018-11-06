@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -117,7 +117,44 @@ $(document).ready(function(){initNavTree('ReleaseNotes.html','');});
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v3.1.0 </h1>
+<div class="textblock"><h1>Release Notes for GeNN v3.2.0 </h1>
+<p>This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for networks with more sophisticated models of synaptic plasticity and delay as well as including several other small features, optimisations and bug fixes for certain system configurations. This release supports GCC &gt;= 4.9.1 on Linux, Visual Studio &gt;= 2013 on Windows and recent versions of Clang on Mac OS X.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>Sparse synaptic connectivity can now be initialised using small <em>snippets</em> of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models. See <a class="el" href="sectSparseConnectivityInitialisation.html">Sparse connectivity initialisation</a> for more details.</li>
+<li>New 'ragged matrix' data structure for representing sparse synaptic connections &ndash; supports initialisation using new sparse synaptic connecivity initialisation system and enables future optimisations. See <a class="el" href="subsect34.html">Synaptic matrix types</a> for more details.</li>
+<li>Added support for pre and postsynaptic state variables for weight update models to allow more efficient implementatation of trace based STDP rules. See <a class="el" href="sectSynapseModels.html#sect34">Defining a new weight update model</a> for more details.</li>
+<li>Added support for devices with Compute Capability 7.0 (Volta) to block-size optimizer.</li>
+<li>Added support for a new class of 'current source' model which allows non-synaptic input to be efficiently injected into neurons. See <a class="el" href="sectCurrentSourceModels.html">Current source models</a> for more details.</li>
+<li>Added support for heterogeneous dendritic delays. See <a class="el" href="sectSynapseModels.html#sect34">Defining a new weight update model</a> for more details.</li>
+<li>Added support for (homogeneous) synaptic back propagation delays using <code><a class="el" href="dc/dfa/classSynapseGroup.html#ac080d0115f8d3aa274e9f95898b1a443" title="Sets the number of delay steps used to delay postsynaptic spikes travelling back along dendrites to s...">SynapseGroup::setBackPropDelaySteps</a></code>.</li>
+<li>For long simulations, using single precision to represent simulation time does not work well. Added <code><a class="el" href="dc/de5/classNNmodel.html#a573df1b486794128c5b2b7a1c8d83e57" title="Set numerical precision for time. ">NNmodel::setTimePrecision</a></code> to allow data type used to represent time to be set independently.</li>
+</ol>
+<h2>Optimisations </h2>
+<ol type="1">
+<li><code><a class="el" href="d8/d27/namespaceGENN__PREFERENCES.html#a9b5c1333a1c9a5251759d9f4a2173eff" title="Should compatible postsynaptic models and dendritic delay buffers be merged? This can significantly r...">GENN_PREFERENCES::mergePostsynapticModels</a></code> flag can be used to enable the merging together of postsynaptic models from a neuron population's incoming synapse populations - improves performance and saves memory.</li>
+<li>On devices with compute capability &gt; 3.5 GeNN now uses the read only cache to improve performance of postsynaptic learning kernel.</li>
+</ol>
+<h2>Bug fixes: </h2>
+<ol type="1">
+<li>Fixed bug enabling support for CUDA 9.1 and 9.2 on Windows.</li>
+<li>Fixed bug in SynDelay example where membrane voltage went to NaN.</li>
+<li>Fixed bug in code generation of <code>SCALAR_MIN</code> and <code>SCALAR_MAX</code> values.</li>
+<li>Fixed bug in substitution of trancendental functions with single-precision variants.</li>
+<li>Fixed various issues involving using spike times with delayed synapse projections.</li>
+</ol>
+<h1>Release Notes for GeNN v3.1.1 </h1>
+<p>This release fixes several small bugs found in GeNN 3.1.0 and implements some small features:</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>Added new synapse matrix types <code>SPARSE_GLOBALG_INDIVIDUAL_PSM</code>, <code>DENSE_GLOBALG_INDIVIDUAL_PSM</code> and <code>BITMASK_GLOBALG_INDIVIDUAL_PSM</code> to handle case where synapses with no individual state have a postsynaptic model with state variables e.g. an alpha synapse. See <a class="el" href="subsect34.html">Synaptic matrix types</a> for more details.</li>
+</ol>
+<h2>Bug fixes </h2>
+<ol type="1">
+<li>Correctly handle aliases which refer to other aliases in SpineML models.</li>
+<li>Fixed issues with presynaptically parallelised synapse populations where the postsynaptic population is small enough for input to be accumulated in shared memory.</li>
+</ol>
+<h1>Release Notes for GeNN v3.1.0 </h1>
 <p>This release builds on the changes made in 3.0.0 to further streamline the process of building models with GeNN and includes several bug fixes for certain system configurations.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
@@ -290,7 +327,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:41 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -136,12 +136,15 @@ Inheritance diagram for InitVarSnippet::Base:</div>
  <div class="center">
   <img src="../../d3/d9e/classInitVarSnippet_1_1Base.png" usemap="#InitVarSnippet::Base_map" alt=""/>
   <map id="InitVarSnippet::Base_map" name="InitVarSnippet::Base_map">
-<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="348,0,512,24"/>
+<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="522,0,686,24"/>
 <area href="../../dd/dcb/classInitVarSnippet_1_1Constant.html" title="Initialises variable to a constant value. " alt="InitVarSnippet::Constant" shape="rect" coords="0,112,164,136"/>
-<area href="../../d8/d70/classInitVarSnippet_1_1Exponential.html" title="Initialises variable by sampling from the exponential distribution. " alt="InitVarSnippet::Exponential" shape="rect" coords="174,112,338,136"/>
-<area href="../../d5/dc1/classInitVarSnippet_1_1Normal.html" title="Initialises variable by sampling from the normal distribution. " alt="InitVarSnippet::Normal" shape="rect" coords="348,112,512,136"/>
-<area href="../../dd/da0/classInitVarSnippet_1_1Uniform.html" title="Initialises variable by sampling from the uniform distribution. " alt="InitVarSnippet::Uniform" shape="rect" coords="522,112,686,136"/>
-<area href="../../d9/db6/classInitVarSnippet_1_1Uninitialised.html" title="Used to mark variables as uninitialised - no initialisation code will be run. " alt="InitVarSnippet::Uninitialised" shape="rect" coords="696,112,860,136"/>
+<area href="../../db/d57/classInitVarSnippet_1_1Custom.html" alt="InitVarSnippet::Custom" shape="rect" coords="174,112,338,136"/>
+<area href="../../d8/d70/classInitVarSnippet_1_1Exponential.html" title="Initialises variable by sampling from the exponential distribution. " alt="InitVarSnippet::Exponential" shape="rect" coords="348,112,512,136"/>
+<area href="../../d5/dc1/classInitVarSnippet_1_1Normal.html" title="Initialises variable by sampling from the normal distribution. " alt="InitVarSnippet::Normal" shape="rect" coords="522,112,686,136"/>
+<area href="../../dd/da0/classInitVarSnippet_1_1Uniform.html" title="Initialises variable by sampling from the uniform distribution. " alt="InitVarSnippet::Uniform" shape="rect" coords="696,112,860,136"/>
+<area href="../../d9/db6/classInitVarSnippet_1_1Uninitialised.html" title="Used to mark variables as uninitialised - no initialisation code will be run. " alt="InitVarSnippet::Uninitialised" shape="rect" coords="870,112,1034,136"/>
+<area href="../../d2/d81/classSwigDirector__Base.html" alt="SwigDirector_Base" shape="rect" coords="1044,112,1208,136"/>
+<area href="../../d7/d48/classSwigDirector__Custom.html" alt="SwigDirector_Custom" shape="rect" coords="174,168,338,192"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -163,6 +166,10 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
 <tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a></td></tr>
+<tr class="separator:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9df1fa166ff4beae7fe49997a201784d">NameTypeValVec</a></td></tr>
+<tr class="separator:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a></td></tr>
 <tr class="separator:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -188,6 +195,8 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a827f3318489a4e547f12947f15342c94">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a2c9c80591115dca09cba083fb469afc7">SwigDirector_Base</a>.</p>
+
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
@@ -199,7 +208,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d2/dfc/namespaceInitVarSnippet.html">InitVarSnippet</a></li><li class="navelem"><a class="el" href="../../d3/d9e/classInitVarSnippet_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:03 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:44 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

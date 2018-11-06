@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -125,12 +125,12 @@ $(document).ready(function(){initNavTree('d8/d69/sparseUtils_8h.html','../../');
 <div class="title">sparseUtils.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="../../d6/d2e/sparseProjection_8h_source.html">sparseProjection.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;string&gt;</code><br />
+<code>#include &lt;cmath&gt;</code><br />
 <code>#include &lt;cstdlib&gt;</code><br />
 <code>#include &lt;cstdio&gt;</code><br />
-<code>#include &lt;string&gt;</code><br />
-<code>#include &lt;cmath&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/d49/global_8h_source.html">global.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d6/d2e/sparseProjection_8h_source.html">sparseProjection.h</a>&quot;</code><br />
 </div>
 <p><a href="../../d8/d69/sparseUtils_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -156,20 +156,39 @@ Functions</h2></td></tr>
 <tr class="memdesc:a1f53af19bf08ccbd7f4ac2dd20db836b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utility to generate the SPARSE connectivity structure from a simple all-to-all array.  <a href="#a1f53af19bf08ccbd7f4ac2dd20db836b">More...</a><br /></td></tr>
 <tr class="separator:a1f53af19bf08ccbd7f4ac2dd20db836b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2da33d6e888cd734b7f7dafd46eca51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#af2da33d6e888cd734b7f7dafd46eca51">createPosttoPreArray</a> (unsigned int preN, unsigned int postN, <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> *C)</td></tr>
-<tr class="memdesc:af2da33d6e888cd734b7f7dafd46eca51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utility to generate the SPARSE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)  <a href="#af2da33d6e888cd734b7f7dafd46eca51">More...</a><br /></td></tr>
+<tr class="memdesc:af2da33d6e888cd734b7f7dafd46eca51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utility to generate the YALE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)  <a href="#af2da33d6e888cd734b7f7dafd46eca51">More...</a><br /></td></tr>
 <tr class="separator:af2da33d6e888cd734b7f7dafd46eca51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20cc9dae760f0a79b9c1b2fd14da59f4"><td class="memTemplParams" colspan="2">template&lt;typename PostIndexType &gt; </td></tr>
+<tr class="memitem:a20cc9dae760f0a79b9c1b2fd14da59f4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a20cc9dae760f0a79b9c1b2fd14da59f4">createPosttoPreArray</a> (unsigned int preN, unsigned int postN, <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; *C)</td></tr>
+<tr class="memdesc:a20cc9dae760f0a79b9c1b2fd14da59f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utility to generate the RAGGED array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc)  <a href="#a20cc9dae760f0a79b9c1b2fd14da59f4">More...</a><br /></td></tr>
+<tr class="separator:a20cc9dae760f0a79b9c1b2fd14da59f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b4b0997e7467326f919f401e90e6fc2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a8b4b0997e7467326f919f401e90e6fc2">createPreIndices</a> (unsigned int preN, unsigned int postN, <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> *C)</td></tr>
 <tr class="memdesc:a8b4b0997e7467326f919f401e90e6fc2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to create the mapping from the normal index array "ind" to the "reverse" array revInd, i.e. the inverse mapping of remap. This is needed if SynapseDynamics accesses pre-synaptic variables.  <a href="#a8b4b0997e7467326f919f401e90e6fc2">More...</a><br /></td></tr>
 <tr class="separator:a8b4b0997e7467326f919f401e90e6fc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac6983379c60e8521db9dad41893707a7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#ac6983379c60e8521db9dad41893707a7">initializeSparseArray</a> (<a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> C, unsigned int *dInd, unsigned int *dIndInG, unsigned int preN)</td></tr>
-<tr class="memdesc:ac6983379c60e8521db9dad41893707a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing conductance array indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#ac6983379c60e8521db9dad41893707a7">More...</a><br /></td></tr>
-<tr class="separator:ac6983379c60e8521db9dad41893707a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e87413cab0e8bb07172f2813fd118ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a1e87413cab0e8bb07172f2813fd118ce">initializeSparseArrayRev</a> (<a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> C, unsigned int *dRevInd, unsigned int *dRevIndInG, unsigned int *dRemap, unsigned int postN)</td></tr>
-<tr class="memdesc:a1e87413cab0e8bb07172f2813fd118ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing reversed conductance array indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#a1e87413cab0e8bb07172f2813fd118ce">More...</a><br /></td></tr>
-<tr class="separator:a1e87413cab0e8bb07172f2813fd118ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add100049e847c4992aa97000d1a11be3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#add100049e847c4992aa97000d1a11be3">initializeSparseArrayPreInd</a> (<a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> C, unsigned int *dPreInd)</td></tr>
-<tr class="memdesc:add100049e847c4992aa97000d1a11be3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing reversed conductance arrays presynaptic indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#add100049e847c4992aa97000d1a11be3">More...</a><br /></td></tr>
-<tr class="separator:add100049e847c4992aa97000d1a11be3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f34b24153f419278d54be23b2c47eef"><td class="memTemplParams" colspan="2">template&lt;typename PostIndexType &gt; </td></tr>
+<tr class="memitem:a0f34b24153f419278d54be23b2c47eef"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a0f34b24153f419278d54be23b2c47eef">createPreIndices</a> (unsigned int preN, unsigned int, <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; *C)</td></tr>
+<tr class="separator:a0f34b24153f419278d54be23b2c47eef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35f42fb7636983eea64df0d810656075"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a35f42fb7636983eea64df0d810656075">initializeSparseArray</a> (const <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> &amp;C, unsigned int *dInd, unsigned int *dIndInG, unsigned int preN)</td></tr>
+<tr class="memdesc:a35f42fb7636983eea64df0d810656075"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing conductance array indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#a35f42fb7636983eea64df0d810656075">More...</a><br /></td></tr>
+<tr class="separator:a35f42fb7636983eea64df0d810656075"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae80e495afd085452379d8746623f7911"><td class="memTemplParams" colspan="2">template&lt;typename PostIndexType &gt; </td></tr>
+<tr class="memitem:ae80e495afd085452379d8746623f7911"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#ae80e495afd085452379d8746623f7911">initializeRaggedArray</a> (const <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; &amp;C, PostIndexType *dInd, unsigned int *dRowLength, unsigned int preN)</td></tr>
+<tr class="memdesc:ae80e495afd085452379d8746623f7911"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing conductance array indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#ae80e495afd085452379d8746623f7911">More...</a><br /></td></tr>
+<tr class="separator:ae80e495afd085452379d8746623f7911"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6359c65db9ebfd936c2524768d6ee6e8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a6359c65db9ebfd936c2524768d6ee6e8">initializeSparseArrayRev</a> (const <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> &amp;C, unsigned int *dRevInd, unsigned int *dRevIndInG, unsigned int *dRemap, unsigned int postN)</td></tr>
+<tr class="memdesc:a6359c65db9ebfd936c2524768d6ee6e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing reversed conductance array indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#a6359c65db9ebfd936c2524768d6ee6e8">More...</a><br /></td></tr>
+<tr class="separator:a6359c65db9ebfd936c2524768d6ee6e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50b4f88006be0c418eb20995986c72d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a50b4f88006be0c418eb20995986c72d0">initializeSparseArrayPreInd</a> (const <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> &amp;C, unsigned int *dPreInd)</td></tr>
+<tr class="memdesc:a50b4f88006be0c418eb20995986c72d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing reversed conductance arrays presynaptic indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#a50b4f88006be0c418eb20995986c72d0">More...</a><br /></td></tr>
+<tr class="separator:a50b4f88006be0c418eb20995986c72d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1344104c0d8a607efbb3bdfae4e93dd7"><td class="memTemplParams" colspan="2">template&lt;typename PostIndexType &gt; </td></tr>
+<tr class="memitem:a1344104c0d8a607efbb3bdfae4e93dd7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a1344104c0d8a607efbb3bdfae4e93dd7">initializeRaggedArrayRev</a> (const <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; &amp;C, unsigned int *dColLength, unsigned int *dRemap, unsigned int postN)</td></tr>
+<tr class="memdesc:a1344104c0d8a607efbb3bdfae4e93dd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing reversed conductance array indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#a1344104c0d8a607efbb3bdfae4e93dd7">More...</a><br /></td></tr>
+<tr class="separator:a1344104c0d8a607efbb3bdfae4e93dd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c2a3dfc616da73ca418bd4199dfd8b9"><td class="memTemplParams" colspan="2">template&lt;typename PostIndexType &gt; </td></tr>
+<tr class="memitem:a6c2a3dfc616da73ca418bd4199dfd8b9"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d8/d69/sparseUtils_8h.html#a6c2a3dfc616da73ca418bd4199dfd8b9">initializeRaggedArraySynRemap</a> (const <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; &amp;C, unsigned int *dSynRemap)</td></tr>
+<tr class="memdesc:a6c2a3dfc616da73ca418bd4199dfd8b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for initializing reversed conductance arrays presynaptic indices for sparse matrices on the GPU (by copying the values from the host)  <a href="#a6c2a3dfc616da73ca418bd4199dfd8b9">More...</a><br /></td></tr>
+<tr class="separator:a6c2a3dfc616da73ca418bd4199dfd8b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="aaeb24f1dd8647de72e3fe9ba4477c613"></a>
@@ -238,7 +257,44 @@ template&lt;class DATATYPE &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>Utility to generate the SPARSE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc) </p>
+<p>Utility to generate the YALE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc) </p>
+<p>Utility to generate the YALE array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc) </p>
+
+</div>
+</div>
+<a class="anchor" id="a20cc9dae760f0a79b9c1b2fd14da59f4"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename PostIndexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void createPosttoPreArray </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>preN</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>postN</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; *&#160;</td>
+          <td class="paramname"><em>C</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Utility to generate the RAGGED array structure with post-to-pre arrangement from the original pre-to-post arrangement where postsynaptic feedback is necessary (learning etc) </p>
 
 </div>
 </div>
@@ -273,6 +329,40 @@ template&lt;class DATATYPE &gt; </div>
 </div><div class="memdoc">
 
 <p>Function to create the mapping from the normal index array "ind" to the "reverse" array revInd, i.e. the inverse mapping of remap. This is needed if SynapseDynamics accesses pre-synaptic variables. </p>
+
+</div>
+</div>
+<a class="anchor" id="a0f34b24153f419278d54be23b2c47eef"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename PostIndexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void createPreIndices </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>preN</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; *&#160;</td>
+          <td class="paramname"><em>C</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -412,14 +502,128 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="ac6983379c60e8521db9dad41893707a7"></a>
+<a class="anchor" id="ae80e495afd085452379d8746623f7911"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename PostIndexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void initializeRaggedArray </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; &amp;&#160;</td>
+          <td class="paramname"><em>C</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">PostIndexType *&#160;</td>
+          <td class="paramname"><em>dInd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int *&#160;</td>
+          <td class="paramname"><em>dRowLength</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>preN</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function for initializing conductance array indices for sparse matrices on the GPU (by copying the values from the host) </p>
+
+</div>
+</div>
+<a class="anchor" id="a1344104c0d8a607efbb3bdfae4e93dd7"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename PostIndexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void initializeRaggedArrayRev </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; &amp;&#160;</td>
+          <td class="paramname"><em>C</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int *&#160;</td>
+          <td class="paramname"><em>dColLength</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int *&#160;</td>
+          <td class="paramname"><em>dRemap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>postN</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function for initializing reversed conductance array indices for sparse matrices on the GPU (by copying the values from the host) </p>
+
+</div>
+</div>
+<a class="anchor" id="a6c2a3dfc616da73ca418bd4199dfd8b9"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename PostIndexType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void initializeRaggedArraySynRemap </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d2/d75/structRaggedProjection.html">RaggedProjection</a>&lt; PostIndexType &gt; &amp;&#160;</td>
+          <td class="paramname"><em>C</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int *&#160;</td>
+          <td class="paramname"><em>dSynRemap</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function for initializing reversed conductance arrays presynaptic indices for sparse matrices on the GPU (by copying the values from the host) </p>
+
+</div>
+</div>
+<a class="anchor" id="a35f42fb7636983eea64df0d810656075"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void initializeSparseArray </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> &amp;&#160;</td>
           <td class="paramname"><em>C</em>, </td>
         </tr>
         <tr>
@@ -452,14 +656,14 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="add100049e847c4992aa97000d1a11be3"></a>
+<a class="anchor" id="a50b4f88006be0c418eb20995986c72d0"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void initializeSparseArrayPreInd </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> &amp;&#160;</td>
           <td class="paramname"><em>C</em>, </td>
         </tr>
         <tr>
@@ -480,14 +684,14 @@ template&lt;class DATATYPE &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a1e87413cab0e8bb07172f2813fd118ce"></a>
+<a class="anchor" id="a6359c65db9ebfd936c2524768d6ee6e8"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void initializeSparseArrayRev </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../d9/d91/structSparseProjection.html">SparseProjection</a> &amp;&#160;</td>
           <td class="paramname"><em>C</em>, </td>
         </tr>
         <tr>
@@ -580,7 +784,7 @@ template&lt;class DATATYPE &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d8/d69/sparseUtils_8h.html">sparseUtils.h</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:41 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

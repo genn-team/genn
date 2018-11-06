@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -122,15 +122,15 @@ $(document).ready(function(){initNavTree('d9/db4/classNewModels_1_1Base.html','.
 
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-static-methods">Static Protected Member Functions</a> &#124;
 <a href="../../dd/d28/classNewModels_1_1Base-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">NewModels::Base Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models. ">Base</a> class for all models.  
+<p><a class="el" href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab...">Base</a> class for all models - in addition to the parameters snippets have, models can have state variables.  
  <a href="../../d9/db4/classNewModels_1_1Base.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="../../d4/ded/newModels_8h_source.html">newModels.h</a>&gt;</code></p>
@@ -140,47 +140,21 @@ Inheritance diagram for NewModels::Base:</div>
  <div class="center">
   <img src="../../d9/db4/classNewModels_1_1Base.png" usemap="#NewModels::Base_map" alt=""/>
   <map id="NewModels::Base_map" name="NewModels::Base_map">
-<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="1202,0,1673,24"/>
-<area href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html" alt="NewModels::LegacyWrapper&lt; Base, neuronModel, nModels &gt;" shape="rect" coords="0,112,471,136"/>
-<area href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html" alt="NewModels::LegacyWrapper&lt; Base, postSynModel, postSynModels &gt;" shape="rect" coords="481,112,952,136"/>
-<area href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html" alt="NewModels::LegacyWrapper&lt; Base, weightUpdateModel, weightUpdateModels &gt;" shape="rect" coords="962,112,1433,136"/>
-<area href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. " alt="NeuronModels::Base" shape="rect" coords="1443,112,1914,136"/>
-<area href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. " alt="PostsynapticModels::Base" shape="rect" coords="2405,112,2876,136"/>
-<area href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. " alt="WeightUpdateModels::Base" shape="rect" coords="3367,112,3838,136"/>
-<area href="../../df/d83/classNeuronModels_1_1LegacyWrapper.html" title="Wrapper around legacy weight update models stored in nModels array of neuronModel objects..." alt="NeuronModels::LegacyWrapper" shape="rect" coords="0,168,471,192"/>
-<area href="../../d3/d2c/classPostsynapticModels_1_1LegacyWrapper.html" alt="PostsynapticModels::LegacyWrapper" shape="rect" coords="481,168,952,192"/>
-<area href="../../d7/d90/classWeightUpdateModels_1_1LegacyWrapper.html" title="Wrapper around legacy weight update models stored in weightUpdateModels array of weightUpdateModel ob..." alt="WeightUpdateModels::LegacyWrapper" shape="rect" coords="962,168,1433,192"/>
-<area href="../../d7/d0a/classNeuronModels_1_1Izhikevich.html" title="Izhikevich neuron with fixed parameters . " alt="NeuronModels::Izhikevich" shape="rect" coords="1924,168,2395,192"/>
-<area href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. " alt="NeuronModels::Poisson" shape="rect" coords="1924,224,2395,248"/>
-<area href="../../dc/dc0/classNeuronModels_1_1PoissonNew.html" title="Poisson neurons. " alt="NeuronModels::PoissonNew" shape="rect" coords="1924,280,2395,304"/>
-<area href="../../db/d23/classNeuronModels_1_1RulkovMap.html" title="Rulkov Map neuron. " alt="NeuronModels::RulkovMap" shape="rect" coords="1924,336,2395,360"/>
-<area href="../../d5/d1f/classNeuronModels_1_1SpikeSource.html" title="Empty neuron which allows setting spikes from external sources. " alt="NeuronModels::SpikeSource" shape="rect" coords="1924,392,2395,416"/>
-<area href="../../d2/dc3/classNeuronModels_1_1TraubMiles.html" title="Hodgkin-Huxley neurons with Traub &amp; Miles algorithm. " alt="NeuronModels::TraubMiles" shape="rect" coords="1924,448,2395,472"/>
-<area href="../../de/da9/classPostsynapticModels_1_1DeltaCurr.html" title="Simple delta current synapse. " alt="PostsynapticModels::DeltaCurr" shape="rect" coords="2886,168,3357,192"/>
-<area href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html" title="Exponential decay with synaptic input treated as a conductance value. " alt="PostsynapticModels::ExpCond" shape="rect" coords="2886,224,3357,248"/>
-<area href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html" title="This is a simple STDP rule including a time delay for the finite transmission speed of the synapse..." alt="WeightUpdateModels::PiecewiseSTDP" shape="rect" coords="3848,168,4319,192"/>
-<area href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html" title="Graded-potential, static synapse. " alt="WeightUpdateModels::StaticGraded" shape="rect" coords="3848,224,4319,248"/>
-<area href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html" title="Pulse-coupled, static synapse. " alt="WeightUpdateModels::StaticPulse" shape="rect" coords="3848,280,4319,304"/>
+<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="0,0,471,24"/>
+<area href="../../d0/de0/classCurrentSourceModels_1_1Base.html" title="Base class for all current source models. " alt="CurrentSourceModels::Base" shape="rect" coords="481,112,952,136"/>
+<area href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html" alt="NewModels::LegacyWrapper&lt; Base, neuronModel, nModels &gt;" shape="rect" coords="481,168,952,192"/>
+<area href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html" alt="NewModels::LegacyWrapper&lt; Base, postSynModel, postSynModels &gt;" shape="rect" coords="481,224,952,248"/>
+<area href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html" alt="NewModels::LegacyWrapper&lt; Base, weightUpdateModel, weightUpdateModels &gt;" shape="rect" coords="481,280,952,304"/>
+<area href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. " alt="NeuronModels::Base" shape="rect" coords="481,336,952,360"/>
+<area href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. " alt="PostsynapticModels::Base" shape="rect" coords="481,392,952,416"/>
+<area href="../../d2/d81/classSwigDirector__Base.html" alt="SwigDirector_Base" shape="rect" coords="481,448,952,472"/>
+<area href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. " alt="WeightUpdateModels::Base" shape="rect" coords="481,504,952,528"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:aa0bed13d4a1a5a967c05806b2a76e573"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a></td></tr>
-<tr class="separator:aa0bed13d4a1a5a967c05806b2a76e573"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1e165b6fa7ea993b5a16f905f0eb16c"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#ae1e165b6fa7ea993b5a16f905f0eb16c">NameTypeValVec</a></td></tr>
-<tr class="separator:ae1e165b6fa7ea993b5a16f905f0eb16c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
-<tr class="memitem:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; double(const std::vector&lt; double &gt; &amp;, double)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a></td></tr>
-<tr class="separator:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
-<tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a></td></tr>
-<tr class="separator:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aec08b75d9cf8545d4aea141de0ca7aed"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aec08b75d9cf8545d4aea141de0ca7aed">getVars</a> () const </td></tr>
+<tr class="memitem:aec08b75d9cf8545d4aea141de0ca7aed"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aec08b75d9cf8545d4aea141de0ca7aed">getVars</a> () const </td></tr>
 <tr class="memdesc:aec08b75d9cf8545d4aea141de0ca7aed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets names and types (as strings) of model variables.  <a href="#aec08b75d9cf8545d4aea141de0ca7aed">More...</a><br /></td></tr>
 <tr class="separator:aec08b75d9cf8545d4aea141de0ca7aed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf7bc31d93be84a00a299d2ca050ffc2"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#abf7bc31d93be84a00a299d2ca050ffc2">getVarIndex</a> (const std::string &amp;varName) const </td></tr>
@@ -192,35 +166,29 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a0c8374854fbdc457bf0f75e458748580 inherit pub_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab01de002618efa59541c927ffdd463f5 inherit pub_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#ab01de002618efa59541c927ffdd463f5">getDerivedParams</a> () const </td></tr>
 <tr class="separator:ab01de002618efa59541c927ffdd463f5 inherit pub_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-static-methods"></a>
+Static Protected Member Functions</h2></td></tr>
+<tr class="memitem:af38b089d771c4028bd12e94ef2be3fb8"><td class="memItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#af38b089d771c4028bd12e94ef2be3fb8">getVarIndex</a> (const std::string &amp;varName, const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> &amp;vars)</td></tr>
+<tr class="separator:af38b089d771c4028bd12e94ef2be3fb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
+<tr class="memitem:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; double(const std::vector&lt; double &gt; &amp;, double)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a></td></tr>
+<tr class="separator:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
+<tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a></td></tr>
+<tr class="separator:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9df1fa166ff4beae7fe49997a201784d">NameTypeValVec</a></td></tr>
+<tr class="separator:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a></td></tr>
+<tr class="separator:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models. ">Base</a> class for all models. </p>
-</div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a class="anchor" id="ae1e165b6fa7ea993b5a16f905f0eb16c"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef std::vector&lt;std::pair&lt;std::string, std::pair&lt;std::string, double&gt; &gt; &gt; <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#ae1e165b6fa7ea993b5a16f905f0eb16c">NewModels::Base::NameTypeValVec</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="aa0bed13d4a1a5a967c05806b2a76e573"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef std::vector&lt;std::pair&lt;std::string, std::string&gt; &gt; <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">NewModels::Base::StringPairVec</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
+<div class="textblock"><p><a class="el" href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab...">Base</a> class for all models - in addition to the parameters snippets have, models can have state variables. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="abf7bc31d93be84a00a299d2ca050ffc2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -247,6 +215,40 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="af38b089d771c4028bd12e94ef2be3fb8"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static size_t NewModels::Base::getVarIndex </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> &amp;&#160;</td>
+          <td class="paramname"><em>vars</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="aec08b75d9cf8545d4aea141de0ca7aed"></a>
 <div class="memitem">
 <div class="memproto">
@@ -255,7 +257,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a> NewModels::Base::getVars </td>
+          <td class="memname">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> NewModels::Base::getVars </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -270,7 +272,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Gets names and types (as strings) of model variables. </p>
 
-<p>Reimplemented in <a class="el" href="../../d2/dc3/classNeuronModels_1_1TraubMiles.html#a5857a6dd0b4a4936acc3c722db3b1d99">NeuronModels::TraubMiles</a>, <a class="el" href="../../dc/dc0/classNeuronModels_1_1PoissonNew.html#a12f8e24fa565fb5826646bfb0101a513">NeuronModels::PoissonNew</a>, <a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html#aacb627b81b16c93c9a439c0e00e8c97f">NeuronModels::Poisson</a>, <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#adbba9e445557f8c5c4aa151359e75fb7">WeightUpdateModels::PiecewiseSTDP</a>, <a class="el" href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html#a7398f41e2d2910b608a460c192116c87">NewModels::LegacyWrapper&lt; Base, neuronModel, nModels &gt;</a>, <a class="el" href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html#a7398f41e2d2910b608a460c192116c87">NewModels::LegacyWrapper&lt; Base, weightUpdateModel, weightUpdateModels &gt;</a>, <a class="el" href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html#a7398f41e2d2910b608a460c192116c87">NewModels::LegacyWrapper&lt; Base, postSynModel, postSynModels &gt;</a>, <a class="el" href="../../dc/d87/classNeuronModels_1_1IzhikevichVariable.html#a8360b9f14eb9d7716c7546d70da16ef1">NeuronModels::IzhikevichVariable</a>, <a class="el" href="../../d7/d0a/classNeuronModels_1_1Izhikevich.html#a5f220991059503fe80e188ff54cabd7b">NeuronModels::Izhikevich</a>, <a class="el" href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html#ae2ad195fdb6fa1c1cbd499c0796b722d">WeightUpdateModels::StaticGraded</a>, <a class="el" href="../../db/d23/classNeuronModels_1_1RulkovMap.html#ae18d61861fed878a216b413e54a1f029">NeuronModels::RulkovMap</a>, and <a class="el" href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html#aee55227f441d04f0e6b187c014524811">WeightUpdateModels::StaticPulse</a>.</p>
+<p>Reimplemented in <a class="el" href="../../d2/dc3/classNeuronModels_1_1TraubMiles.html#a5857a6dd0b4a4936acc3c722db3b1d99">NeuronModels::TraubMiles</a>, <a class="el" href="../../dc/dc0/classNeuronModels_1_1PoissonNew.html#a12f8e24fa565fb5826646bfb0101a513">NeuronModels::PoissonNew</a>, <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#adbba9e445557f8c5c4aa151359e75fb7">WeightUpdateModels::PiecewiseSTDP</a>, <a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html#aacb627b81b16c93c9a439c0e00e8c97f">NeuronModels::Poisson</a>, <a class="el" href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html#ae2ad195fdb6fa1c1cbd499c0796b722d">WeightUpdateModels::StaticGraded</a>, <a class="el" href="../../dc/d87/classNeuronModels_1_1IzhikevichVariable.html#a8360b9f14eb9d7716c7546d70da16ef1">NeuronModels::IzhikevichVariable</a>, <a class="el" href="../../d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html#a35783f47dd6d40ca5337c5f4a3168abc">WeightUpdateModels::StaticPulseDendriticDelay</a>, <a class="el" href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html#a7398f41e2d2910b608a460c192116c87">NewModels::LegacyWrapper&lt; Base, neuronModel, nModels &gt;</a>, <a class="el" href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html#a7398f41e2d2910b608a460c192116c87">NewModels::LegacyWrapper&lt; Base, weightUpdateModel, weightUpdateModels &gt;</a>, <a class="el" href="../../d7/d5c/classNewModels_1_1LegacyWrapper.html#a7398f41e2d2910b608a460c192116c87">NewModels::LegacyWrapper&lt; Base, postSynModel, postSynModels &gt;</a>, <a class="el" href="../../d7/d0a/classNeuronModels_1_1Izhikevich.html#a5f220991059503fe80e188ff54cabd7b">NeuronModels::Izhikevich</a>, <a class="el" href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html#aee55227f441d04f0e6b187c014524811">WeightUpdateModels::StaticPulse</a>, <a class="el" href="../../db/d23/classNeuronModels_1_1RulkovMap.html#ae18d61861fed878a216b413e54a1f029">NeuronModels::RulkovMap</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#aa1273b54af21f7c600104bac44c85f58">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#aa1273b54af21f7c600104bac44c85f58">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#aa1273b54af21f7c600104bac44c85f58">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#aa94aeb4f24683d6e2efc35e8abbc9cf1">SwigDirector_Custom</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a956fcad5be350e1aa88a3e3a18222374">SwigDirector_Base</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a001903b9c841b95f9e588005250c9cd6">SwigDirector_Base</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a001903b9c841b95f9e588005250c9cd6">SwigDirector_Base</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a001903b9c841b95f9e588005250c9cd6">SwigDirector_Base</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a001903b9c841b95f9e588005250c9cd6">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -283,7 +285,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d2/d9d/namespaceNewModels.html">NewModels</a></li><li class="navelem"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:04 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:46 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

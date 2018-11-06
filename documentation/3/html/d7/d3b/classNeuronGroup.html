@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -142,9 +142,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5e4a7f08a6b572f6a7c7b2b24e7bf7ce"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce">checkNumDelaySlots</a> (unsigned int requiredDelay)</td></tr>
 <tr class="memdesc:a5e4a7f08a6b572f6a7c7b2b24e7bf7ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks delay slots currently provided by the neuron group against a required delay and extends if required.  <a href="#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce">More...</a><br /></td></tr>
 <tr class="separator:a5e4a7f08a6b572f6a7c7b2b24e7bf7ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a59966c1058ce93cc197418311ad20c72"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a59966c1058ce93cc197418311ad20c72">updateVarQueues</a> (const std::string &amp;code)</td></tr>
-<tr class="memdesc:a59966c1058ce93cc197418311ad20c72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update which variables require queues based on piece of code.  <a href="#a59966c1058ce93cc197418311ad20c72">More...</a><br /></td></tr>
-<tr class="separator:a59966c1058ce93cc197418311ad20c72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a683c0e850d3bcbcd82d44255c477e85a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a683c0e850d3bcbcd82d44255c477e85a">updatePreVarQueues</a> (const std::string &amp;code)</td></tr>
+<tr class="memdesc:a683c0e850d3bcbcd82d44255c477e85a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update which presynaptic variables require queues based on piece of code.  <a href="#a683c0e850d3bcbcd82d44255c477e85a">More...</a><br /></td></tr>
+<tr class="separator:a683c0e850d3bcbcd82d44255c477e85a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44eef41cae88db270b6debaa63a6d1e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a44eef41cae88db270b6debaa63a6d1e2">updatePostVarQueues</a> (const std::string &amp;code)</td></tr>
+<tr class="memdesc:a44eef41cae88db270b6debaa63a6d1e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update which postsynaptic variables require queues based on piece of code.  <a href="#a44eef41cae88db270b6debaa63a6d1e2">More...</a><br /></td></tr>
+<tr class="separator:a44eef41cae88db270b6debaa63a6d1e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab5e1fa881473ff18f4c138f4625a84a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ab5e1fa881473ff18f4c138f4625a84a1">setSpikeTimeRequired</a> (bool req)</td></tr>
 <tr class="separator:ab5e1fa881473ff18f4c138f4625a84a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab0c6db05139abc0b2a302e3b59c4cbee"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ab0c6db05139abc0b2a302e3b59c4cbee">setTrueSpikeRequired</a> (bool req)</td></tr>
@@ -185,6 +188,12 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:affd4e9d0657fe474a7dfe54a8189d634"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a088945c23743787a072a170279b53af5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a088945c23743787a072a170279b53af5">calcSizes</a> (unsigned int blockSize, unsigned int &amp;idStart, unsigned int &amp;paddedIDStart)</td></tr>
 <tr class="separator:a088945c23743787a072a170279b53af5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae83e9ac5a428dd58cda59ec8119b4f8e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ae83e9ac5a428dd58cda59ec8119b4f8e">mergeIncomingPSM</a> ()</td></tr>
+<tr class="memdesc:ae83e9ac5a428dd58cda59ec8119b4f8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Merge incoming postsynaptic models.  <a href="#ae83e9ac5a428dd58cda59ec8119b4f8e">More...</a><br /></td></tr>
+<tr class="separator:ae83e9ac5a428dd58cda59ec8119b4f8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f72346d493b309f33dcdf250209bf5b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a9f72346d493b309f33dcdf250209bf5b">injectCurrent</a> (<a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> *source)</td></tr>
+<tr class="memdesc:a9f72346d493b309f33dcdf250209bf5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">add input current source  <a href="#a9f72346d493b309f33dcdf250209bf5b">More...</a><br /></td></tr>
+<tr class="separator:a9f72346d493b309f33dcdf250209bf5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78241745e3b1b183676b02ecf4707bae"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a78241745e3b1b183676b02ecf4707bae">getName</a> () const </td></tr>
 <tr class="separator:a78241745e3b1b183676b02ecf4707bae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe4b16b1d80aeedfd008113b391173c3"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#abe4b16b1d80aeedfd008113b391173c3">getNumNeurons</a> () const </td></tr>
@@ -206,9 +215,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae06a3a7f94e79234ae964a61ecae32e8"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ae06a3a7f94e79234ae964a61ecae32e8">getInSyn</a> () const </td></tr>
 <tr class="memdesc:ae06a3a7f94e79234ae964a61ecae32e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all synapse groups which provide input to this neuron group.  <a href="#ae06a3a7f94e79234ae964a61ecae32e8">More...</a><br /></td></tr>
 <tr class="separator:ae06a3a7f94e79234ae964a61ecae32e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afcd336669956e99bd16e096f762ff311"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::pair&lt; <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *, std::vector&lt; <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> * &gt; &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#afcd336669956e99bd16e096f762ff311">getMergedInSyn</a> () const </td></tr>
+<tr class="separator:afcd336669956e99bd16e096f762ff311"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad24716a2af4f41d7b002e451e4793f29"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad24716a2af4f41d7b002e451e4793f29">getOutSyn</a> () const </td></tr>
 <tr class="memdesc:ad24716a2af4f41d7b002e451e4793f29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all synapse groups emanating from this neuron group.  <a href="#ad24716a2af4f41d7b002e451e4793f29">More...</a><br /></td></tr>
 <tr class="separator:ad24716a2af4f41d7b002e451e4793f29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7097fd92461c5ab9810bd083f4f268d2"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a7097fd92461c5ab9810bd083f4f268d2">getCurrentSources</a> () const </td></tr>
+<tr class="memdesc:a7097fd92461c5ab9810bd083f4f268d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all current sources which provide input to this neuron group.  <a href="#a7097fd92461c5ab9810bd083f4f268d2">More...</a><br /></td></tr>
+<tr class="separator:a7097fd92461c5ab9810bd083f4f268d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a404eda44aa75eea5658de671fe7e3d9c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a404eda44aa75eea5658de671fe7e3d9c">getClusterHostID</a> () const </td></tr>
 <tr class="separator:a404eda44aa75eea5658de671fe7e3d9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0c76cf34b4b3141e2be0e34f95a5d19"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad0c76cf34b4b3141e2be0e34f95a5d19">getClusterDeviceID</a> () const </td></tr>
@@ -219,14 +233,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a171555a1b0120e2fcb48eda0e7fc40a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0da89b8b6e296af2542300c99f23e4ec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a0da89b8b6e296af2542300c99f23e4ec">isSpikeEventRequired</a> () const </td></tr>
 <tr class="separator:a0da89b8b6e296af2542300c99f23e4ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94a597ec4076ae2d7c5d58b6796d236b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a94a597ec4076ae2d7c5d58b6796d236b">isQueueRequired</a> () const </td></tr>
-<tr class="separator:a94a597ec4076ae2d7c5d58b6796d236b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4cc4c28342e1f8f0e542743d8acd419a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a4cc4c28342e1f8f0e542743d8acd419a">isVarQueueRequired</a> (const std::string &amp;var) const </td></tr>
 <tr class="separator:a4cc4c28342e1f8f0e542743d8acd419a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24a2f7843cdd748363cec3e8ebeb0fa5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a24a2f7843cdd748363cec3e8ebeb0fa5">isVarQueueRequired</a> (size_t index) const </td></tr>
 <tr class="separator:a24a2f7843cdd748363cec3e8ebeb0fa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3e526b6156869c32b1294b731bb8613c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a3e526b6156869c32b1294b731bb8613c">isVarQueueRequired</a> () const </td></tr>
-<tr class="separator:a3e526b6156869c32b1294b731bb8613c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1cf4ca71a484bd288b208989557f4a1d"><td class="memItemLeft" align="right" valign="top">const std::set&lt; std::pair&lt; std::string, std::string &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a1cf4ca71a484bd288b208989557f4a1d">getSpikeEventCondition</a> () const </td></tr>
 <tr class="separator:a1cf4ca71a484bd288b208989557f4a1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92ba9779dc04654005751f6adf557452"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a92ba9779dc04654005751f6adf557452">getNumDelaySlots</a> () const </td></tr>
@@ -259,30 +269,37 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a45edc159473ff4292a1a82ac67158135"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get variable mode used by neuron model state variable.  <a href="#a45edc159473ff4292a1a82ac67158135">More...</a><br /></td></tr>
 <tr class="separator:a45edc159473ff4292a1a82ac67158135"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad06b55a0f51c5cc25bc0fc92b2115c5d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad06b55a0f51c5cc25bc0fc92b2115c5d">isParamRequiredBySpikeEventCondition</a> (const std::string &amp;pnamefull) const </td></tr>
-<tr class="memdesc:ad06b55a0f51c5cc25bc0fc92b2115c5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do any of the spike event conditions tested by this neuron require specified parameter.  <a href="#ad06b55a0f51c5cc25bc0fc92b2115c5d">More...</a><br /></td></tr>
+<tr class="memdesc:ad06b55a0f51c5cc25bc0fc92b2115c5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Do any of the spike event conditions tested by this neuron require specified parameter?  <a href="#ad06b55a0f51c5cc25bc0fc92b2115c5d">More...</a><br /></td></tr>
 <tr class="separator:ad06b55a0f51c5cc25bc0fc92b2115c5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9f12603e7de577a4b75bfd91f0e8146e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a9f12603e7de577a4b75bfd91f0e8146e">addExtraGlobalParams</a> (std::map&lt; std::string, std::string &gt; &amp;kernelParameters) const </td></tr>
 <tr class="separator:a9f12603e7de577a4b75bfd91f0e8146e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab17e37d0688f1fb768d5d1eed9d3046f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ab17e37d0688f1fb768d5d1eed9d3046f">isInitCodeRequired</a> () const </td></tr>
-<tr class="memdesc:ab17e37d0688f1fb768d5d1eed9d3046f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require any initialisation code to be run.  <a href="#ab17e37d0688f1fb768d5d1eed9d3046f">More...</a><br /></td></tr>
+<tr class="memdesc:ab17e37d0688f1fb768d5d1eed9d3046f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require any initialisation code to be run?  <a href="#ab17e37d0688f1fb768d5d1eed9d3046f">More...</a><br /></td></tr>
 <tr class="separator:ab17e37d0688f1fb768d5d1eed9d3046f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a701fc33e307d9a4315d05fbb855c0fc3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a701fc33e307d9a4315d05fbb855c0fc3">isSimRNGRequired</a> () const </td></tr>
-<tr class="memdesc:a701fc33e307d9a4315d05fbb855c0fc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require an RNG to simulate.  <a href="#a701fc33e307d9a4315d05fbb855c0fc3">More...</a><br /></td></tr>
+<tr class="memdesc:a701fc33e307d9a4315d05fbb855c0fc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require an RNG to simulate?  <a href="#a701fc33e307d9a4315d05fbb855c0fc3">More...</a><br /></td></tr>
 <tr class="separator:a701fc33e307d9a4315d05fbb855c0fc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a0a36e444f790e9419cc7b45027bdd8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a9a0a36e444f790e9419cc7b45027bdd8">isInitRNGRequired</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffd">VarInit</a> varInitMode) const </td></tr>
-<tr class="memdesc:a9a0a36e444f790e9419cc7b45027bdd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require an RNG for it's init code.  <a href="#a9a0a36e444f790e9419cc7b45027bdd8">More...</a><br /></td></tr>
+<tr class="memdesc:a9a0a36e444f790e9419cc7b45027bdd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require an RNG for it's init code?  <a href="#a9a0a36e444f790e9419cc7b45027bdd8">More...</a><br /></td></tr>
 <tr class="separator:a9a0a36e444f790e9419cc7b45027bdd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0207280cfdb47d71bc9764bb0e6a68a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad0207280cfdb47d71bc9764bb0e6a68a">isDeviceVarInitRequired</a> () const </td></tr>
-<tr class="memdesc:ad0207280cfdb47d71bc9764bb0e6a68a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is device var init code required for any variables in this neuron group.  <a href="#ad0207280cfdb47d71bc9764bb0e6a68a">More...</a><br /></td></tr>
+<tr class="memdesc:ad0207280cfdb47d71bc9764bb0e6a68a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is device var init code required for any variables in this neuron group?  <a href="#ad0207280cfdb47d71bc9764bb0e6a68a">More...</a><br /></td></tr>
 <tr class="separator:ad0207280cfdb47d71bc9764bb0e6a68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b48efd506bc2c05e4dbd6c9f3851f6d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a2b48efd506bc2c05e4dbd6c9f3851f6d">isDeviceInitRequired</a> () const </td></tr>
+<tr class="memdesc:a2b48efd506bc2c05e4dbd6c9f3851f6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is any form of device initialisation required?  <a href="#a2b48efd506bc2c05e4dbd6c9f3851f6d">More...</a><br /></td></tr>
+<tr class="separator:a2b48efd506bc2c05e4dbd6c9f3851f6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1cd4d83db92836d196f484851b768fb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ae1cd4d83db92836d196f484851b768fb">canRunOnCPU</a> () const </td></tr>
 <tr class="memdesc:ae1cd4d83db92836d196f484851b768fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this neuron group run on the CPU?  <a href="#ae1cd4d83db92836d196f484851b768fb">More...</a><br /></td></tr>
 <tr class="separator:ae1cd4d83db92836d196f484851b768fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a052e3e16e639d9116f9916b45346a459"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a052e3e16e639d9116f9916b45346a459">hasOutputToHost</a> (int targetHostID) const </td></tr>
-<tr class="memdesc:a052e3e16e639d9116f9916b45346a459"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group have outgoing connections specified host id.  <a href="#a052e3e16e639d9116f9916b45346a459">More...</a><br /></td></tr>
+<tr class="memdesc:a052e3e16e639d9116f9916b45346a459"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group have outgoing connections specified host id?  <a href="#a052e3e16e639d9116f9916b45346a459">More...</a><br /></td></tr>
 <tr class="separator:a052e3e16e639d9116f9916b45346a459"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a3e9f2c543fdcbf4c6d68bdb40bd742"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a2a3e9f2c543fdcbf4c6d68bdb40bd742">getQueueOffset</a> (const std::string &amp;devPrefix) const </td></tr>
-<tr class="separator:a2a3e9f2c543fdcbf4c6d68bdb40bd742"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9961f5b5b9ce6015fa8bb2aa7d04435"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ab9961f5b5b9ce6015fa8bb2aa7d04435">getCurrentQueueOffset</a> (const std::string &amp;devPrefix) const </td></tr>
+<tr class="memdesc:ab9961f5b5b9ce6015fa8bb2aa7d04435"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the expression to calculate the queue offset for accessing state of variables this timestep.  <a href="#ab9961f5b5b9ce6015fa8bb2aa7d04435">More...</a><br /></td></tr>
+<tr class="separator:ab9961f5b5b9ce6015fa8bb2aa7d04435"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb02a47a478960a46ece53b9a71b788c"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#adb02a47a478960a46ece53b9a71b788c">getPrevQueueOffset</a> (const std::string &amp;devPrefix) const </td></tr>
+<tr class="memdesc:adb02a47a478960a46ece53b9a71b788c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the expression to calculate the queue offset for accessing state of variables in previous timestep.  <a href="#adb02a47a478960a46ece53b9a71b788c">More...</a><br /></td></tr>
+<tr class="separator:adb02a47a478960a46ece53b9a71b788c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="afcefd1a762b4ff856416e28828eeb1ea"></a>
@@ -601,6 +618,49 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ab9961f5b5b9ce6015fa8bb2aa7d04435"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string NeuronGroup::getCurrentQueueOffset </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>devPrefix</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the expression to calculate the queue offset for accessing state of variables this timestep. </p>
+
+</div>
+</div>
+<a class="anchor" id="a7097fd92461c5ab9810bd083f4f268d2"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a>*&gt;&amp; NeuronGroup::getCurrentSources </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gets pointers to all current sources which provide input to this neuron group. </p>
+
+</div>
+</div>
 <a class="anchor" id="ab24bb1fe23a16dff329f63c541561851"></a>
 <div class="memitem">
 <div class="memproto">
@@ -669,6 +729,29 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets pointers to all synapse groups which provide input to this neuron group. </p>
+
+</div>
+</div>
+<a class="anchor" id="afcd336669956e99bd16e096f762ff311"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;std::pair&lt;<a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a>*, std::vector&lt;<a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a>*&gt; &gt; &gt;&amp; NeuronGroup::getMergedInSyn </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -839,12 +922,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a2a3e9f2c543fdcbf4c6d68bdb40bd742"></a>
+<a class="anchor" id="adb02a47a478960a46ece53b9a71b788c"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::string NeuronGroup::getQueueOffset </td>
+          <td class="memname">std::string NeuronGroup::getPrevQueueOffset </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>devPrefix</em></td><td>)</td>
@@ -852,6 +935,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Get the expression to calculate the queue offset for accessing state of variables in previous timestep. </p>
 
 </div>
 </div>
@@ -1034,7 +1119,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Does this neuron group have outgoing connections specified host id. </p>
+<p>Does this neuron group have outgoing connections specified host id? </p>
 
 </div>
 </div>
@@ -1051,6 +1136,24 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9f72346d493b309f33dcdf250209bf5b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::injectCurrent </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> *&#160;</td>
+          <td class="paramname"><em>source</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>add input current source </p>
 
 </div>
 </div>
@@ -1077,6 +1180,23 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a2b48efd506bc2c05e4dbd6c9f3851f6d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeuronGroup::isDeviceInitRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Is any form of device initialisation required? </p>
+
+</div>
+</div>
 <a class="anchor" id="ad0207280cfdb47d71bc9764bb0e6a68a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1090,7 +1210,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Is device var init code required for any variables in this neuron group. </p>
+<p>Is device var init code required for any variables in this neuron group? </p>
 
 </div>
 </div>
@@ -1107,7 +1227,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Does this neuron group require any initialisation code to be run. </p>
+<p>Does this neuron group require any initialisation code to be run? </p>
 
 </div>
 </div>
@@ -1125,7 +1245,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Does this neuron group require an RNG for it's init code. </p>
+<p>Does this neuron group require an RNG for it's init code? </p>
 
 </div>
 </div>
@@ -1143,30 +1263,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Do any of the spike event conditions tested by this neuron require specified parameter. </p>
-
-</div>
-</div>
-<a class="anchor" id="a94a597ec4076ae2d7c5d58b6796d236b"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool NeuronGroup::isQueueRequired </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<p>Do any of the spike event conditions tested by this neuron require specified parameter? </p>
 
 </div>
 </div>
@@ -1183,7 +1280,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Does this neuron group require an RNG to simulate. </p>
+<p>Does this neuron group require an RNG to simulate? </p>
 
 </div>
 </div>
@@ -1365,29 +1462,6 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a3e526b6156869c32b1294b731bb8613c"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool NeuronGroup::isVarQueueRequired </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a6fae674c1ccbc5c1bbc4e9eb2ec41453"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1424,6 +1498,23 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ae83e9ac5a428dd58cda59ec8119b4f8e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::mergeIncomingPSM </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Merge incoming postsynaptic models. </p>
 
 </div>
 </div>
@@ -1727,12 +1818,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a59966c1058ce93cc197418311ad20c72"></a>
+<a class="anchor" id="a44eef41cae88db270b6debaa63a6d1e2"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void NeuronGroup::updateVarQueues </td>
+          <td class="memname">void NeuronGroup::updatePostVarQueues </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>code</em></td><td>)</td>
@@ -1741,7 +1832,25 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Update which variables require queues based on piece of code. </p>
+<p>Update which postsynaptic variables require queues based on piece of code. </p>
+
+</div>
+</div>
+<a class="anchor" id="a683c0e850d3bcbcd82d44255c477e85a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::updatePreVarQueues </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>code</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Update which presynaptic variables require queues based on piece of code. </p>
 
 </div>
 </div>
@@ -1755,7 +1864,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

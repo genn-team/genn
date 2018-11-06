@@ -1,5 +1,28 @@
 var searchData=
 [
-  ['varnames',['varNames',['../d3/dc9/classneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0',1,'neuronModel::varNames()'],['../d2/d1a/classpostSynModel.html#a3ade04dd55a74c018cb3c3c16a0c4a47',1,'postSynModel::varNames()'],['../dd/db7/classweightUpdateModel.html#a130dc4796aef818562cd9ab112a6dc98',1,'weightUpdateModel::varNames()']]],
-  ['vartypes',['varTypes',['../d3/dc9/classneuronModel.html#a86788cb29131da0a26ce79693a076352',1,'neuronModel::varTypes()'],['../d2/d1a/classpostSynModel.html#a5afb775c8211cb7591bb3c50526267fc',1,'postSynModel::varTypes()'],['../dd/db7/classweightUpdateModel.html#a77fdb9d1287b883d227f1b50fef9889c',1,'weightUpdateModel::varTypes()']]]
+  ['set_5fattr',['set_attr',['../d4/ddc/structswig__globalvar.html#a494e3d5a5f1fb694b7738fdd1ffdd657',1,'swig_globalvar']]],
+  ['showptxinfo',['showPtxInfo',['../d8/d27/namespaceGENN__PREFERENCES.html#a4751653b0c4b7c43c163776650f23116',1,'GENN_PREFERENCES']]],
+  ['simcode',['simCode',['../d3/dc9/classneuronModel.html#a9e6536fd15b69fa24b708e41f97df899',1,'neuronModel::simCode()'],['../dd/db7/classweightUpdateModel.html#a6f665453175451356bbf14b9f60baed3',1,'weightUpdateModel::simCode()'],['../db/d66/extra__neurons_8h.html#a3254414e4ce6eb53dce0a59ae76872e6',1,'simCode():&#160;extra_neurons.h']]],
+  ['simcode_5fsupportcode',['simCode_supportCode',['../dd/db7/classweightUpdateModel.html#af698a58749d3f6e18f01ca3c0e165b36',1,'weightUpdateModel']]],
+  ['simcodeevnt',['simCodeEvnt',['../dd/db7/classweightUpdateModel.html#a758cc3211ae12407583f625418dd5a89',1,'weightUpdateModel']]],
+  ['simlearnpost',['simLearnPost',['../dd/db7/classweightUpdateModel.html#a9ebdfd1b336b3c40403546deb05cbfc9',1,'weightUpdateModel']]],
+  ['simlearnpost_5fsupportcode',['simLearnPost_supportCode',['../dd/db7/classweightUpdateModel.html#a457fbb8ae21cc4077cc1e08618c4cbb4',1,'weightUpdateModel']]],
+  ['singleprecisiontemplate',['singlePrecisionTemplate',['../d4/da7/structFunctionTemplate.html#a97495fa841cf60519876657520c16eed',1,'FunctionTemplate']]],
+  ['size',['size',['../d8/d1b/structswig__module__info.html#aaf8907cf8509ee0464af8c9dfd909042',1,'swig_module_info::size()'],['../db/d08/structSwigPyPacked.html#aed2bfb8fb3c9f804c386215db63921cb',1,'SwigPyPacked::size()']]],
+  ['slots',['slots',['../d0/d3c/structPyHeapTypeObject.html#a15212a8f85d939b3f4b133ecda1b62e5',1,'PyHeapTypeObject']]],
+  ['spikesource',['SPIKESOURCE',['../d3/dc0/neuronModels_8h.html#abf09d4629cbcf04536f38976708bd16e',1,'SPIKESOURCE():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#abf09d4629cbcf04536f38976708bd16e',1,'SPIKESOURCE():&#160;neuronModels.cc']]],
+  ['start',['start',['../d1/df5/structstopWatch.html#aec7dc4d315b26843c8d5455afb531441',1,'stopWatch']]],
+  ['stop',['stop',['../d1/df5/structstopWatch.html#ab6353f18737a93dda37f42faee1a808c',1,'stopWatch']]],
+  ['str',['str',['../dd/dee/structswig__type__info.html#aaafd19f362ddc521d6a846ce41044471',1,'swig_type_info']]],
+  ['supportcode',['supportCode',['../d3/dc9/classneuronModel.html#a98b59827f668ecfee9dec5c82b629a5b',1,'neuronModel::supportCode()'],['../d2/d1a/classpostSynModel.html#a66efe45d6824aaea989355be70b21253',1,'postSynModel::supportCode()']]],
+  ['swig_5fmsg',['swig_msg',['../d2/d7f/classSwig_1_1DirectorException.html#a2dd2ffcdc1496f281126d308fc3f7508',1,'Swig::DirectorException']]],
+  ['synapseblksz',['synapseBlkSz',['../d2/d49/global_8h.html#a00bbdcbc294b8766339124722a470784',1,'synapseBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a00bbdcbc294b8766339124722a470784',1,'synapseBlkSz():&#160;global.cc']]],
+  ['synapseblocksize',['synapseBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#a46f28153f078f519794ba872417fa4e1',1,'GENN_PREFERENCES']]],
+  ['synapsedynamics',['synapseDynamics',['../dd/db7/classweightUpdateModel.html#a8f5c92fc0ca6c1ddf861891bfd751de2',1,'weightUpdateModel']]],
+  ['synapsedynamics_5fsupportcode',['synapseDynamics_supportCode',['../dd/db7/classweightUpdateModel.html#a456e18c995ff42277e23005f75c83728',1,'weightUpdateModel']]],
+  ['synapsedynamicsblocksize',['synapseDynamicsBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#ade2fa83150fa1af5c46b057c90c97aaa',1,'GENN_PREFERENCES']]],
+  ['syndynblksz',['synDynBlkSz',['../d2/d49/global_8h.html#a8c2aa50f902d9a25ce30f2d22d819a6a',1,'synDynBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a8c2aa50f902d9a25ce30f2d22d819a6a',1,'synDynBlkSz():&#160;global.cc']]],
+  ['synremap',['synRemap',['../d2/d75/structRaggedProjection.html#a46fe619a1046b2250c42d1a7c2b62ef0',1,'RaggedProjection']]],
+  ['synremapsize',['synRemapSize',['../d2/d75/structRaggedProjection.html#acffdc832964261e212ef20ef02a4372d',1,'RaggedProjection']]],
+  ['syntypeno',['SYNTYPENO',['../d2/d5b/synapseModels_8h.html#a13f831318c3562ba369c52100931ffab',1,'synapseModels.h']]]
 ];

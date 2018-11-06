@@ -1,0 +1,6 @@
+var structswig_1_1traits_3_01std_1_1vector_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1pair_3_01stdf7972532145e420ceb7c6fde418f5ba =
+[
+    [ "category", "de/d0a/structswig_1_1traits_3_01std_1_1vector_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1pair_3_01stdf7972532145e420ceb7c6fde418f5ba.html#aa5c0808109fff0c70e59d366576349db", null ],
+    [ "category", "de/d0a/structswig_1_1traits_3_01std_1_1vector_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1pair_3_01stdf7972532145e420ceb7c6fde418f5ba.html#aa5c0808109fff0c70e59d366576349db", null ],
+    [ "category", "de/d0a/structswig_1_1traits_3_01std_1_1vector_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1pair_3_01stdf7972532145e420ceb7c6fde418f5ba.html#aa5c0808109fff0c70e59d366576349db", null ]
+];

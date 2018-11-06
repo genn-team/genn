@@ -1,6 +1,7 @@
 var namespaceNeuronModels =
 [
     [ "Base", "d7/dad/classNeuronModels_1_1Base.html", "d7/dad/classNeuronModels_1_1Base" ],
+    [ "Custom", "d5/d92/classNeuronModels_1_1Custom.html", "d5/d92/classNeuronModels_1_1Custom" ],
     [ "Izhikevich", "d7/d0a/classNeuronModels_1_1Izhikevich.html", "d7/d0a/classNeuronModels_1_1Izhikevich" ],
     [ "IzhikevichVariable", "dc/d87/classNeuronModels_1_1IzhikevichVariable.html", "dc/d87/classNeuronModels_1_1IzhikevichVariable" ],
     [ "LegacyWrapper", "df/d83/classNeuronModels_1_1LegacyWrapper.html", "df/d83/classNeuronModels_1_1LegacyWrapper" ],

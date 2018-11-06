@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -174,16 +174,23 @@ Variables</h2></td></tr>
 <tr class="memitem:a708fe713881a49526d8787d9fc00a2b6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a708fe713881a49526d8787d9fc00a2b6">GENN_PREFERENCES::autoInitSparseVars</a> = false</td></tr>
 <tr class="memdesc:a708fe713881a49526d8787d9fc00a2b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here.  <a href="../../d8/d27/namespaceGENN__PREFERENCES.html#a708fe713881a49526d8787d9fc00a2b6">More...</a><br /></td></tr>
 <tr class="separator:a708fe713881a49526d8787d9fc00a2b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b5c1333a1c9a5251759d9f4a2173eff"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a9b5c1333a1c9a5251759d9f4a2173eff">GENN_PREFERENCES::mergePostsynapticModels</a> = false</td></tr>
+<tr class="memdesc:a9b5c1333a1c9a5251759d9f4a2173eff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should compatible postsynaptic models and dendritic delay buffers be merged? This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved.  <a href="../../d8/d27/namespaceGENN__PREFERENCES.html#a9b5c1333a1c9a5251759d9f4a2173eff">More...</a><br /></td></tr>
+<tr class="separator:a9b5c1333a1c9a5251759d9f4a2173eff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f2baab3bda8720e90ef46685f2a6559"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a1f2baab3bda8720e90ef46685f2a6559">GENN_PREFERENCES::defaultVarMode</a> = <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716da261805b94ce3201a8d520e6e516eb960">VarMode::LOC_HOST_DEVICE_INIT_HOST</a></td></tr>
 <tr class="memdesc:a1f2baab3bda8720e90ef46685f2a6559"><td class="mdescLeft">&#160;</td><td class="mdescRight">What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.  <a href="../../d8/d27/namespaceGENN__PREFERENCES.html#a1f2baab3bda8720e90ef46685f2a6559">More...</a><br /></td></tr>
 <tr class="separator:a1f2baab3bda8720e90ef46685f2a6559"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6004bcc029e0b19b732c839d635d4672"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716d">VarMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a6004bcc029e0b19b732c839d635d4672">GENN_PREFERENCES::defaultSparseConnectivityMode</a> = <a class="el" href="../../d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716da261805b94ce3201a8d520e6e516eb960">VarMode::LOC_HOST_DEVICE_INIT_HOST</a></td></tr>
+<tr class="separator:a6004bcc029e0b19b732c839d635d4672"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2">GENN_PREFERENCES::asGoodAsZero</a> = 1e-19</td></tr>
-<tr class="memdesc:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix.  <a href="../../d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2">More...</a><br /></td></tr>
+<tr class="memdesc:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST.  <a href="../../d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2">More...</a><br /></td></tr>
 <tr class="separator:a735be1f8a3fa1bb1eb74cf981d0525a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ae9bcfe428d00fd1f709cd7facf22b4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a1ae9bcfe428d00fd1f709cd7facf22b4">GENN_PREFERENCES::defaultDevice</a> = 0</td></tr>
 <tr class="separator:a1ae9bcfe428d00fd1f709cd7facf22b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5047767a6c85b26ce9125d00c0a9261"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#ae5047767a6c85b26ce9125d00c0a9261">GENN_PREFERENCES::preSynapseResetBlockSize</a> = 32</td></tr>
+<tr class="memdesc:ae5047767a6c85b26ce9125d00c0a9261"><td class="mdescLeft">&#160;</td><td class="mdescRight">default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)  <a href="../../d8/d27/namespaceGENN__PREFERENCES.html#ae5047767a6c85b26ce9125d00c0a9261">More...</a><br /></td></tr>
+<tr class="separator:ae5047767a6c85b26ce9125d00c0a9261"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ead15e70419d90b29f5a0da7417c92d"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a9ead15e70419d90b29f5a0da7417c92d">GENN_PREFERENCES::neuronBlockSize</a> = 32</td></tr>
-<tr class="memdesc:a9ead15e70419d90b29f5a0da7417c92d"><td class="mdescLeft">&#160;</td><td class="mdescRight">default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)  <a href="../../d8/d27/namespaceGENN__PREFERENCES.html#a9ead15e70419d90b29f5a0da7417c92d">More...</a><br /></td></tr>
 <tr class="separator:a9ead15e70419d90b29f5a0da7417c92d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46f28153f078f519794ba872417fa4e1"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d27/namespaceGENN__PREFERENCES.html#a46f28153f078f519794ba872417fa4e1">GENN_PREFERENCES::synapseBlockSize</a> = 32</td></tr>
 <tr class="separator:a46f28153f078f519794ba872417fa4e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -210,6 +217,9 @@ Variables</h2></td></tr>
 <tr class="memitem:acb18c9ab82ed35f7b0b4df1b200ba0de"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#acb18c9ab82ed35f7b0b4df1b200ba0de">neuronBlkSz</a></td></tr>
 <tr class="memdesc:acb18c9ab82ed35f7b0b4df1b200ba0de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the neuron kernel.  <a href="#acb18c9ab82ed35f7b0b4df1b200ba0de">More...</a><br /></td></tr>
 <tr class="separator:acb18c9ab82ed35f7b0b4df1b200ba0de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49edc5e74e8faa5972f14e0a7331f040"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a49edc5e74e8faa5972f14e0a7331f040">preSynapseResetBlkSize</a></td></tr>
+<tr class="memdesc:a49edc5e74e8faa5972f14e0a7331f040"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the reset kernel run before the synapse kernel.  <a href="#a49edc5e74e8faa5972f14e0a7331f040">More...</a><br /></td></tr>
+<tr class="separator:a49edc5e74e8faa5972f14e0a7331f040"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00bbdcbc294b8766339124722a470784"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d49/global_8h.html#a00bbdcbc294b8766339124722a470784">synapseBlkSz</a></td></tr>
 <tr class="memdesc:a00bbdcbc294b8766339124722a470784"><td class="mdescLeft">&#160;</td><td class="mdescRight">Global variable containing the GPU block size for the synapse kernel.  <a href="#a00bbdcbc294b8766339124722a470784">More...</a><br /></td></tr>
 <tr class="separator:a00bbdcbc294b8766339124722a470784"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -336,6 +346,20 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a49edc5e74e8faa5972f14e0a7331f040"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int preSynapseResetBlkSize</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Global variable containing the GPU block size for the reset kernel run before the synapse kernel. </p>
+
+</div>
+</div>
 <a class="anchor" id="a00bbdcbc294b8766339124722a470784"></a>
 <div class="memitem">
 <div class="memproto">
@@ -384,7 +408,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d2/d49/global_8h.html">global.h</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:40 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

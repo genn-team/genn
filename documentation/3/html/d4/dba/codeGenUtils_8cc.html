@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -120,7 +120,6 @@ $(document).ready(function(){initNavTree('d4/dba/codeGenUtils_8cc.html','../../'
 
 <div class="header">
   <div class="summary">
-<a href="#define-members">Macros</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
@@ -134,11 +133,6 @@ $(document).ready(function(){initNavTree('d4/dba/codeGenUtils_8cc.html','../../'
 <code>#include &quot;<a class="el" href="../../d5/db9/standardSubstitutions_8h_source.html">standardSubstitutions.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
 </div><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:a73d70dfbe5f30c9a4428effabba968e6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a73d70dfbe5f30c9a4428effabba968e6">REGEX_OPERATIONAL</a></td></tr>
-<tr class="separator:a73d70dfbe5f30c9a4428effabba968e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
 <tr class="memitem:a36f6ba9b5dd081f9a244f9a4edb3e460"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a36f6ba9b5dd081f9a244f9a4edb3e460">MathsFunc</a> </td></tr>
@@ -149,6 +143,12 @@ Functions</h2></td></tr>
 <tr class="memitem:aca2e31c8941d9fadf42ab5229555f5da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#aca2e31c8941d9fadf42ab5229555f5da">substitute</a> (string &amp;s, const string &amp;trg, const string &amp;rep)</td></tr>
 <tr class="memdesc:aca2e31c8941d9fadf42ab5229555f5da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for substituting strings in the neuron code strings or other templates.  <a href="#aca2e31c8941d9fadf42ab5229555f5da">More...</a><br /></td></tr>
 <tr class="separator:aca2e31c8941d9fadf42ab5229555f5da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab640e396488c0e00e671e27019a8598d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#ab640e396488c0e00e671e27019a8598d">regexVarSubstitute</a> (string &amp;s, const string &amp;trg, const string &amp;rep)</td></tr>
+<tr class="memdesc:ab640e396488c0e00e671e27019a8598d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for substituting variable names in the neuron code strings or other templates using regular expressions.  <a href="#ab640e396488c0e00e671e27019a8598d">More...</a><br /></td></tr>
+<tr class="separator:ab640e396488c0e00e671e27019a8598d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00e1c5489ccd097e925e23125ea834b4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a00e1c5489ccd097e925e23125ea834b4">regexFuncSubstitute</a> (string &amp;s, const string &amp;trg, const string &amp;rep)</td></tr>
+<tr class="memdesc:a00e1c5489ccd097e925e23125ea834b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tool for substituting function names in the neuron code strings or other templates using regular expressions.  <a href="#a00e1c5489ccd097e925e23125ea834b4">More...</a><br /></td></tr>
+<tr class="separator:a00e1c5489ccd097e925e23125ea834b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad67ee4ca2abda90738d77cbe98df0bcd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#ad67ee4ca2abda90738d77cbe98df0bcd">isRNGRequired</a> (const std::string &amp;code)</td></tr>
 <tr class="memdesc:ad67ee4ca2abda90738d77cbe98df0bcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does the code string contain any functions requiring random number generator.  <a href="#ad67ee4ca2abda90738d77cbe98df0bcd">More...</a><br /></td></tr>
 <tr class="separator:ad67ee4ca2abda90738d77cbe98df0bcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -170,23 +170,16 @@ Functions</h2></td></tr>
 <tr class="memitem:a71534a5653f888ddf9e849ee5f044e0d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a71534a5653f888ddf9e849ee5f044e0d">hashString</a> (const std::string &amp;string)</td></tr>
 <tr class="memdesc:a71534a5653f888ddf9e849ee5f044e0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash.  <a href="#a71534a5653f888ddf9e849ee5f044e0d">More...</a><br /></td></tr>
 <tr class="separator:a71534a5653f888ddf9e849ee5f044e0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1ac7da7500e771969cd05517aa18288"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#ae1ac7da7500e771969cd05517aa18288">neuron_substitutions_in_synaptic_code</a> (string &amp;wCode, const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const string &amp;preIdx, const string &amp;postIdx, const string &amp;devPrefix)</td></tr>
-<tr class="memdesc:ae1ac7da7500e771969cd05517aa18288"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="#ae1ac7da7500e771969cd05517aa18288">More...</a><br /></td></tr>
-<tr class="separator:ae1ac7da7500e771969cd05517aa18288"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a849e5afdf587f1fc82a94c4f5a112d4a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a849e5afdf587f1fc82a94c4f5a112d4a">preNeuronSubstitutionsInSynapticCode</a> (string &amp;wCode, const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const string &amp;offset, const string &amp;axonalDelayOffset, const string &amp;preIdx, const string &amp;devPrefix, const string &amp;preVarPrefix, const string &amp;preVarSuffix)</td></tr>
+<tr class="memdesc:a849e5afdf587f1fc82a94c4f5a112d4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="#a849e5afdf587f1fc82a94c4f5a112d4a">More...</a><br /></td></tr>
+<tr class="separator:a849e5afdf587f1fc82a94c4f5a112d4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a359767737cd9ef38b0350d43bf80e077"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a359767737cd9ef38b0350d43bf80e077">postNeuronSubstitutionsInSynapticCode</a> (string &amp;wCode, const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const string &amp;offset, const string &amp;backPropDelayOffset, const string &amp;postIdx, const string &amp;devPrefix, const string &amp;postVarPrefix, const string &amp;postVarSuffix)</td></tr>
+<tr class="memdesc:a359767737cd9ef38b0350d43bf80e077"><td class="mdescLeft">&#160;</td><td class="mdescRight">suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX)  <a href="#a359767737cd9ef38b0350d43bf80e077">More...</a><br /></td></tr>
+<tr class="separator:a359767737cd9ef38b0350d43bf80e077"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e199cdafc2401d4433366b23885a895"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html#a2e199cdafc2401d4433366b23885a895">neuron_substitutions_in_synaptic_code</a> (string &amp;wCode, const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const string &amp;preIdx, const string &amp;postIdx, const string &amp;devPrefix, double dt, const string &amp;preVarPrefix, const string &amp;preVarSuffix, const string &amp;postVarPrefix, const string &amp;postVarSuffix)</td></tr>
+<tr class="memdesc:a2e199cdafc2401d4433366b23885a895"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="#a2e199cdafc2401d4433366b23885a895">More...</a><br /></td></tr>
+<tr class="separator:a2e199cdafc2401d4433366b23885a895"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Macro Definition Documentation</h2>
-<a class="anchor" id="a73d70dfbe5f30c9a4428effabba968e6"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define REGEX_OPERATIONAL</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a class="anchor" id="a36f6ba9b5dd081f9a244f9a4edb3e460"></a>
 <div class="memitem">
@@ -409,7 +402,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ae1ac7da7500e771969cd05517aa18288"></a>
+<a class="anchor" id="a2e199cdafc2401d4433366b23885a895"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -441,7 +434,37 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const string &amp;&#160;</td>
-          <td class="paramname"><em>devPrefix</em>&#160;</td>
+          <td class="paramname"><em>devPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>dt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>preVarPrefix</em> = <code>&quot;&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>preVarSuffix</em> = <code>&quot;&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>postVarPrefix</em> = <code>&quot;&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>postVarSuffix</em> = <code>&quot;&quot;</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -452,15 +475,237 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code. </p>
+<p>suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX) </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">wCode</td><td>the code string to work on </td></tr>
+    <tr><td class="paramname">sg</td><td>the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted </td></tr>
     <tr><td class="paramname">preIdx</td><td>index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span) </td></tr>
     <tr><td class="paramname">postIdx</td><td>index of the post-synaptic neuron to be accessed for _post variables; differs for different Span) </td></tr>
     <tr><td class="paramname">devPrefix</td><td>device prefix, "dd_" for GPU, nothing for CPU </td></tr>
+    <tr><td class="paramname">dt</td><td>simulation timestep (ms) </td></tr>
+    <tr><td class="paramname">preVarPrefix</td><td>prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
+    <tr><td class="paramname">preVarSuffix</td><td>suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
+    <tr><td class="paramname">postVarPrefix</td><td>prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
+    <tr><td class="paramname">postVarSuffix</td><td>suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="a359767737cd9ef38b0350d43bf80e077"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void postNeuronSubstitutionsInSynapticCode </td>
+          <td>(</td>
+          <td class="paramtype">string &amp;&#160;</td>
+          <td class="paramname"><em>wCode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>offset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>backPropDelayOffset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>postIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>devPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>postVarPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>postVarSuffix</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">wCode</td><td>the code string to work on </td></tr>
+    <tr><td class="paramname">devPrefix</td><td>device prefix, "dd_" for GPU, nothing for CPU </td></tr>
+    <tr><td class="paramname">postVarPrefix</td><td>prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
+    <tr><td class="paramname">postVarSuffix</td><td>suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a849e5afdf587f1fc82a94c4f5a112d4a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void preNeuronSubstitutionsInSynapticCode </td>
+          <td>(</td>
+          <td class="paramtype">string &amp;&#160;</td>
+          <td class="paramname"><em>wCode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>offset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>axonalDelayOffset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>preIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>devPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>preVarPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>preVarSuffix</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code. </p>
+<p>suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">wCode</td><td>the code string to work on </td></tr>
+    <tr><td class="paramname">devPrefix</td><td>device prefix, "dd_" for GPU, nothing for CPU </td></tr>
+    <tr><td class="paramname">preVarPrefix</td><td>prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
+    <tr><td class="paramname">preVarSuffix</td><td>suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a00e1c5489ccd097e925e23125ea834b4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool regexFuncSubstitute </td>
+          <td>(</td>
+          <td class="paramtype">string &amp;&#160;</td>
+          <td class="paramname"><em>s</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>trg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>rep</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Tool for substituting function names in the neuron code strings or other templates using regular expressions. </p>
+
+</div>
+</div>
+<a class="anchor" id="ab640e396488c0e00e671e27019a8598d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool regexVarSubstitute </td>
+          <td>(</td>
+          <td class="paramtype">string &amp;&#160;</td>
+          <td class="paramname"><em>s</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>trg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const string &amp;&#160;</td>
+          <td class="paramname"><em>rep</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Tool for substituting variable names in the neuron code strings or other templates using regular expressions. </p>
 
 </div>
 </div>
@@ -504,7 +749,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_a065c5f60305fee3569f887679366939.html">src</a></li><li class="navelem"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html">codeGenUtils.cc</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:40 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

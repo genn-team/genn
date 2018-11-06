@@ -1,6 +1,8 @@
 var classNeuronModels_1_1Poisson =
 [
     [ "ParamValues", "de/d1d/classNeuronModels_1_1Poisson.html#af5af1f4ac77c218dd5f9503636629ca7", null ],
+    [ "PostVarValues", "de/d1d/classNeuronModels_1_1Poisson.html#a9376ea026436e85bb542c7a2838b501b", null ],
+    [ "PreVarValues", "de/d1d/classNeuronModels_1_1Poisson.html#aa940bef481a96461afd25cd288782e85", null ],
     [ "VarValues", "de/d1d/classNeuronModels_1_1Poisson.html#a29422ad2625a7fdc307e21ee3419544e", null ],
     [ "getExtraGlobalParams", "de/d1d/classNeuronModels_1_1Poisson.html#a2ae7b3804d38b31f14d45a720518270a", null ],
     [ "getParamNames", "de/d1d/classNeuronModels_1_1Poisson.html#a57ed4e7af000c5512d87db63087929f9", null ],

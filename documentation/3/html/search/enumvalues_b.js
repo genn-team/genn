@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['target',['Target',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#af183b028ead473c3b08e4961edd6e66bac41a31890959544c6523af684561abe5',1,'SpineMLSimulator::NetworkClient']]]
+  ['yale',['YALE',['../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da72cf449160f1923552b008a5a088735c',1,'synapseMatrixType.h']]]
 ];

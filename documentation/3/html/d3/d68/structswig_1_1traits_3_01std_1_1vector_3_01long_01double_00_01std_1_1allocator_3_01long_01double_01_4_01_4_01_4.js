@@ -1,0 +1,4 @@
+var structswig_1_1traits_3_01std_1_1vector_3_01long_01double_00_01std_1_1allocator_3_01long_01double_01_4_01_4_01_4 =
+[
+    [ "category", "d3/d68/structswig_1_1traits_3_01std_1_1vector_3_01long_01double_00_01std_1_1allocator_3_01long_01double_01_4_01_4_01_4.html#a0af15b60137cf4ecda20dafe132640b3", null ]
+];

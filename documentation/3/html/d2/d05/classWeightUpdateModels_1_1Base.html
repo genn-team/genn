@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -139,11 +139,15 @@ Inheritance diagram for WeightUpdateModels::Base:</div>
  <div class="center">
   <img src="../../d2/d05/classWeightUpdateModels_1_1Base.png" usemap="#WeightUpdateModels::Base_map" alt=""/>
   <map id="WeightUpdateModels::Base_map" name="WeightUpdateModels::Base_map">
-<area href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models. " alt="NewModels::Base" shape="rect" coords="235,56,460,80"/>
-<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="235,0,460,24"/>
-<area href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html" title="This is a simple STDP rule including a time delay for the finite transmission speed of the synapse..." alt="WeightUpdateModels::PiecewiseSTDP" shape="rect" coords="0,168,225,192"/>
-<area href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html" title="Graded-potential, static synapse. " alt="WeightUpdateModels::StaticGraded" shape="rect" coords="235,168,460,192"/>
-<area href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html" title="Pulse-coupled, static synapse. " alt="WeightUpdateModels::StaticPulse" shape="rect" coords="470,168,695,192"/>
+<area href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab..." alt="NewModels::Base" shape="rect" coords="730,56,1012,80"/>
+<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="730,0,1012,24"/>
+<area href="../../d2/d81/classSwigDirector__Base.html" alt="SwigDirector_Base" shape="rect" coords="0,168,282,192"/>
+<area href="../../d1/d65/classWeightUpdateModels_1_1Custom.html" alt="WeightUpdateModels::Custom" shape="rect" coords="292,168,574,192"/>
+<area href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html" title="This is a simple STDP rule including a time delay for the finite transmission speed of the synapse..." alt="WeightUpdateModels::PiecewiseSTDP" shape="rect" coords="584,168,866,192"/>
+<area href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html" title="Graded-potential, static synapse. " alt="WeightUpdateModels::StaticGraded" shape="rect" coords="876,168,1158,192"/>
+<area href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html" title="Pulse-coupled, static synapse. " alt="WeightUpdateModels::StaticPulse" shape="rect" coords="1168,168,1450,192"/>
+<area href="../../d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html" title="Pulse-coupled, static synapse with heterogenous dendritic delays. " alt="WeightUpdateModels::StaticPulseDendriticDelay" shape="rect" coords="1460,168,1742,192"/>
+<area href="../../d7/d48/classSwigDirector__Custom.html" alt="SwigDirector_Custom" shape="rect" coords="292,224,574,248"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -173,7 +177,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7aae3190642d0bbe7f3f6fa01021783f"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a7aae3190642d0bbe7f3f6fa01021783f">getSynapseDynamicsSuppportCode</a> () const </td></tr>
 <tr class="memdesc:a7aae3190642d0bbe7f3f6fa01021783f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets support code to be made available within the synapse dynamics kernel/function.  <a href="#a7aae3190642d0bbe7f3f6fa01021783f">More...</a><br /></td></tr>
 <tr class="separator:a7aae3190642d0bbe7f3f6fa01021783f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae8add5e75cfbdf06402222494f42539"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#aae8add5e75cfbdf06402222494f42539">getExtraGlobalParams</a> () const </td></tr>
+<tr class="memitem:a79e16d6c154e21a8ca7e56599cbe553b"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a79e16d6c154e21a8ca7e56599cbe553b">getPreSpikeCode</a> () const </td></tr>
+<tr class="separator:a79e16d6c154e21a8ca7e56599cbe553b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb81b1a933f13ba2af62c088387e186f"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#abb81b1a933f13ba2af62c088387e186f">getPostSpikeCode</a> () const </td></tr>
+<tr class="separator:abb81b1a933f13ba2af62c088387e186f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a376bd4eca5cc2b97aa99f5b24751216b"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a376bd4eca5cc2b97aa99f5b24751216b">getPreVars</a> () const </td></tr>
+<tr class="separator:a376bd4eca5cc2b97aa99f5b24751216b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa966db6960a65aecd703a4a182fedc0d"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#aa966db6960a65aecd703a4a182fedc0d">getPostVars</a> () const </td></tr>
+<tr class="separator:aa966db6960a65aecd703a4a182fedc0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae8add5e75cfbdf06402222494f42539"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#aae8add5e75cfbdf06402222494f42539">getExtraGlobalParams</a> () const </td></tr>
 <tr class="separator:aae8add5e75cfbdf06402222494f42539"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86fb753d87f35b53d789f96c6189a911"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a86fb753d87f35b53d789f96c6189a911">isPreSpikeTimeRequired</a> () const </td></tr>
 <tr class="memdesc:a86fb753d87f35b53d789f96c6189a911"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether presynaptic spike times are needed or not.  <a href="#a86fb753d87f35b53d789f96c6189a911">More...</a><br /></td></tr>
@@ -181,8 +193,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad93200ea885e60a88c108db10349edea"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#ad93200ea885e60a88c108db10349edea">isPostSpikeTimeRequired</a> () const </td></tr>
 <tr class="memdesc:ad93200ea885e60a88c108db10349edea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether postsynaptic spike times are needed or not.  <a href="#ad93200ea885e60a88c108db10349edea">More...</a><br /></td></tr>
 <tr class="separator:ad93200ea885e60a88c108db10349edea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8b3e37eeb3f0034ebba50ec01c2840e"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#ac8b3e37eeb3f0034ebba50ec01c2840e">getPreVarIndex</a> (const std::string &amp;varName) const </td></tr>
+<tr class="memdesc:ac8b3e37eeb3f0034ebba50ec01c2840e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the index of a named presynaptic variable.  <a href="#ac8b3e37eeb3f0034ebba50ec01c2840e">More...</a><br /></td></tr>
+<tr class="separator:ac8b3e37eeb3f0034ebba50ec01c2840e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5812718ff39cc394f1c6242e3d3f0987"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a5812718ff39cc394f1c6242e3d3f0987">getPostVarIndex</a> (const std::string &amp;varName) const </td></tr>
+<tr class="memdesc:a5812718ff39cc394f1c6242e3d3f0987"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the index of a named postsynaptic variable.  <a href="#a5812718ff39cc394f1c6242e3d3f0987">More...</a><br /></td></tr>
+<tr class="separator:a5812718ff39cc394f1c6242e3d3f0987"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
-<tr class="memitem:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aec08b75d9cf8545d4aea141de0ca7aed">getVars</a> () const </td></tr>
+<tr class="memitem:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aec08b75d9cf8545d4aea141de0ca7aed">getVars</a> () const </td></tr>
 <tr class="memdesc:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets names and types (as strings) of model variables.  <a href="#aec08b75d9cf8545d4aea141de0ca7aed">More...</a><br /></td></tr>
 <tr class="separator:aec08b75d9cf8545d4aea141de0ca7aed inherit pub_methods_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf7bc31d93be84a00a299d2ca050ffc2 inherit pub_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#abf7bc31d93be84a00a299d2ca050ffc2">getVarIndex</a> (const std::string &amp;varName) const </td></tr>
@@ -197,18 +215,20 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
-<tr class="memitem:aa0bed13d4a1a5a967c05806b2a76e573 inherit pub_types_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a></td></tr>
-<tr class="separator:aa0bed13d4a1a5a967c05806b2a76e573 inherit pub_types_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1e165b6fa7ea993b5a16f905f0eb16c inherit pub_types_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#ae1e165b6fa7ea993b5a16f905f0eb16c">NameTypeValVec</a></td></tr>
-<tr class="separator:ae1e165b6fa7ea993b5a16f905f0eb16c inherit pub_types_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; double(const std::vector&lt; double &gt; &amp;, double)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a></td></tr>
 <tr class="separator:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
 <tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a></td></tr>
+<tr class="separator:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9df1fa166ff4beae7fe49997a201784d">NameTypeValVec</a></td></tr>
+<tr class="separator:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a></td></tr>
 <tr class="separator:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_static_methods_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_static_methods_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Static Protected Member Functions inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
+<tr class="memitem:af38b089d771c4028bd12e94ef2be3fb8 inherit pro_static_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#af38b089d771c4028bd12e94ef2be3fb8">getVarIndex</a> (const std::string &amp;varName, const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> &amp;vars)</td></tr>
+<tr class="separator:af38b089d771c4028bd12e94ef2be3fb8 inherit pro_static_methods_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">Base</a> class for all weight update models. </p>
@@ -236,7 +256,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Gets code run when events (all the instances where event threshold condition is met) are received. </p>
 
-<p>Reimplemented in <a class="el" href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html#a8ff2433c2e27bfca8dd9fd1a8527756b">WeightUpdateModels::StaticGraded</a>.</p>
+<p>Reimplemented in <a class="el" href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html#a8ff2433c2e27bfca8dd9fd1a8527756b">WeightUpdateModels::StaticGraded</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a3ec473f70de12f73865d08ed8e3a245e">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a3074d0f571e023cb131448452729579f">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -263,7 +283,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Gets codes to test for events. </p>
 
-<p>Reimplemented in <a class="el" href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html#acdaa538fe5d724ca07612f0b589e5bdd">WeightUpdateModels::StaticGraded</a>.</p>
+<p>Reimplemented in <a class="el" href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html#acdaa538fe5d724ca07612f0b589e5bdd">WeightUpdateModels::StaticGraded</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#adf22c351a8834f6b343428438a7326ff">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a5059d18dac1bc6f1a448bc9e573df73f">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -275,7 +295,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a> WeightUpdateModels::Base::getExtraGlobalParams </td>
+          <td class="memname">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> WeightUpdateModels::Base::getExtraGlobalParams </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -288,6 +308,8 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p>Gets names and types (as strings) of additional per-population parameters for the weight update model. </p>
+
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a1c13fdece5cbaea9bda2b43fb58c3491">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#af3e1b0531831b454b85bbd4c8fd73beb">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a1c13fdece5cbaea9bda2b43fb58c3491">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a8b5e1becc60d8e4d980831a42b0e3ac7">SwigDirector_Custom</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#aed8be7ecbb61a97b5ddc82afacfae5f4">SwigDirector_Base</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a009c3d06246e7cf944a503f4e029212c">SwigDirector_Base</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#aed8be7ecbb61a97b5ddc82afacfae5f4">SwigDirector_Base</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a04a9f04c2846504d0815abe024476cc6">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -315,7 +337,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Gets code to include in the learnSynapsesPost kernel/function. </p>
 <p>For examples when modelling STDP, this is where the effect of postsynaptic spikes which occur <em>after</em> presynaptic spikes are applied. </p>
 
-<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a24654b023d3c59245a28c9c255b162ea">WeightUpdateModels::PiecewiseSTDP</a>.</p>
+<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a24654b023d3c59245a28c9c255b162ea">WeightUpdateModels::PiecewiseSTDP</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a2b2336d666a90bba52f311364a6fb6e4">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#ab4eda962a7b63f226609cbbce9b23cbb">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -343,6 +365,166 @@ Additional Inherited Members</h2></td></tr>
 <p>Gets support code to be made available within learnSynapsesPost kernel/function. </p>
 <p>Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions. </p>
 
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#af501d95fc47c76b253b648a45dae5c46">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a321d2723a636ffc6fea2a0ae27391cae">SwigDirector_Base</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="abb81b1a933f13ba2af62c088387e186f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::string WeightUpdateModels::Base::getPostSpikeCode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Gets code to be run once per spiking postsynaptic neuron before learn post code is run on synapses</p>
+<p>This is typically for the code to update postsynaptic variables. Presynaptic and synapse variables are not accesible from within this code </p>
+
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#aa21a071833d79666f87adc60037d4be3">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a57ab539a742a7894d4533261145cc7c2">SwigDirector_Base</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a5812718ff39cc394f1c6242e3d3f0987"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t WeightUpdateModels::Base::getPostVarIndex </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Find the index of a named postsynaptic variable. </p>
+
+</div>
+</div>
+<a class="anchor" id="aa966db6960a65aecd703a4a182fedc0d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> WeightUpdateModels::Base::getPostVars </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Gets names and types (as strings) of state variables that are common across all synapses going to the same postsynaptic neuron </p>
+
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a8ab67d87401e4b5ba3156538462f22a3">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a531b300ea9399a8783a0aaf112c49110">SwigDirector_Base</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a79e16d6c154e21a8ca7e56599cbe553b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::string WeightUpdateModels::Base::getPreSpikeCode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Gets code to be run once per spiking presynaptic neuron before sim code is run on synapses</p>
+<p>This is typically for the code to update presynaptic variables. Postsynaptic and synapse variables are not accesible from within this code </p>
+
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a9d92913331b0adc999fca1893a762082">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a304bdbdcec34e3ba10e437487d606ca4">SwigDirector_Base</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ac8b3e37eeb3f0034ebba50ec01c2840e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t WeightUpdateModels::Base::getPreVarIndex </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Find the index of a named presynaptic variable. </p>
+
+</div>
+</div>
+<a class="anchor" id="a376bd4eca5cc2b97aa99f5b24751216b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> WeightUpdateModels::Base::getPreVars </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Gets names and types (as strings) of state variables that are common across all synapses coming from the same presynaptic neuron </p>
+
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#acaa88817e8a79aff65a4e76c4e72c2a2">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#af8da856ea5665decf197a41da4844112">SwigDirector_Base</a>.</p>
+
 </div>
 </div>
 <a class="anchor" id="aff2152fb55b5b0148491ca4eed9291eb"></a>
@@ -368,7 +550,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Gets simulation code run when 'true' spikes are received. </p>
 
-<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a050333bea6f43212b2f02259eb4abb9c">WeightUpdateModels::PiecewiseSTDP</a>, and <a class="el" href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html#a499504ae8bd316574e648bf695c509f2">WeightUpdateModels::StaticPulse</a>.</p>
+<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a050333bea6f43212b2f02259eb4abb9c">WeightUpdateModels::PiecewiseSTDP</a>, <a class="el" href="../../d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html#a20a9f0d7226aab606526825c2ce215c8">WeightUpdateModels::StaticPulseDendriticDelay</a>, <a class="el" href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html#a499504ae8bd316574e648bf695c509f2">WeightUpdateModels::StaticPulse</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#ac255c30c23939a2bf3d3d88756547892">SwigDirector_Custom</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a12371da9f70aedfce2c54f991ab5fe94">SwigDirector_Custom</a>, <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a21a952d0bc6de5f6ac8c8950903f197a">SwigDirector_Base</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a8a9cff8957aec02cf5991991cd9d9484">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -396,6 +578,8 @@ Additional Inherited Members</h2></td></tr>
 <p>Gets support code to be made available within the synapse kernel/function. </p>
 <p>This is intended to contain user defined device functions that are used in the weight update code. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions; note that this support code is available to sim, event threshold and event code </p>
 
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a658c3ced7d1b9dd4ed842e03b558fc6f">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#ae6622a8d838655606886b8d866ced7c8">SwigDirector_Base</a>.</p>
+
 </div>
 </div>
 <a class="anchor" id="a307cb4e18479682b74972257c5d28dc5"></a>
@@ -420,6 +604,8 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets code for synapse dynamics which are independent of spike detection. </p>
+
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#ac2a8e21ed09c679ba1068936244c9cfc">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#aa887ef1f022ff63c95040674b9aa1e33">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -447,6 +633,8 @@ Additional Inherited Members</h2></td></tr>
 <p>Gets support code to be made available within the synapse dynamics kernel/function. </p>
 <p>Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions. </p>
 
+<p>Reimplemented in <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a468d72366e1dbe76b341ccec7e31432c">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a5038071418be03cdde1c66859c2dab27">SwigDirector_Base</a>.</p>
+
 </div>
 </div>
 <a class="anchor" id="ad93200ea885e60a88c108db10349edea"></a>
@@ -472,7 +660,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Whether postsynaptic spike times are needed or not. </p>
 
-<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#aa60508d822d397d2a79d52bd846b16d8">WeightUpdateModels::PiecewiseSTDP</a>.</p>
+<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#aa60508d822d397d2a79d52bd846b16d8">WeightUpdateModels::PiecewiseSTDP</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a46ed96dfac2f42950f9e069e6eb9bbb4">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#a3cdfdaa83cea4c93b2b08dbedbe2488a">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -499,7 +687,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Whether presynaptic spike times are needed or not. </p>
 
-<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a0c71cdd39fcc52f0dfcaa9ce8ee5ac43">WeightUpdateModels::PiecewiseSTDP</a>.</p>
+<p>Reimplemented in <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a0c71cdd39fcc52f0dfcaa9ce8ee5ac43">WeightUpdateModels::PiecewiseSTDP</a>, <a class="el" href="../../d7/d48/classSwigDirector__Custom.html#a001aeea78935311ef8524674aaf609ae">SwigDirector_Custom</a>, and <a class="el" href="../../d2/d81/classSwigDirector__Base.html#af4acacda8e36bdaba1c6d897f6a896c9">SwigDirector_Base</a>.</p>
 
 </div>
 </div>
@@ -512,7 +700,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a></li><li class="navelem"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:05 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:50 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

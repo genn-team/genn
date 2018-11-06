@@ -13,9 +13,16 @@ var codeGenUtils_8h =
     [ "isRNGRequired", "de/d99/codeGenUtils_8h.html#ad67ee4ca2abda90738d77cbe98df0bcd", null ],
     [ "name_substitutions", "de/d99/codeGenUtils_8h.html#a4859009add81ed0f979f2a522fd093bf", null ],
     [ "name_substitutions", "de/d99/codeGenUtils_8h.html#a1bb74bba3ea3e0e15fd6ec68dc8a04e7", null ],
+    [ "neuron_substitutions_in_synaptic_code", "de/d99/codeGenUtils_8h.html#a7dd00a7b93b04fb59aa0a12037a1de60", null ],
+    [ "postNeuronSubstitutionsInSynapticCode", "de/d99/codeGenUtils_8h.html#ad769005368796caa846a9e1633ab20da", null ],
+    [ "preNeuronSubstitutionsInSynapticCode", "de/d99/codeGenUtils_8h.html#a4de0b2947f1c5fb68afcfcae31a52d16", null ],
+    [ "regexFuncSubstitute", "de/d99/codeGenUtils_8h.html#a00e1c5489ccd097e925e23125ea834b4", null ],
+    [ "regexVarSubstitute", "de/d99/codeGenUtils_8h.html#ab640e396488c0e00e671e27019a8598d", null ],
     [ "substitute", "de/d99/codeGenUtils_8h.html#aca2e31c8941d9fadf42ab5229555f5da", null ],
     [ "value_substitutions", "de/d99/codeGenUtils_8h.html#aff9a16e581980a601799155fd2b8bada", null ],
     [ "value_substitutions", "de/d99/codeGenUtils_8h.html#a9aa4f8a220215fcc9e05013ff6560ad4", null ],
+    [ "writePreciseString", "de/d99/codeGenUtils_8h.html#a234ea7994feb6a5ee54e202fb542d27a", null ],
+    [ "writePreciseString", "de/d99/codeGenUtils_8h.html#aaca88cf8e26d9755f9fcc12dfc039bc6", null ],
     [ "cpuFunctions", "de/d99/codeGenUtils_8h.html#a799c4c46dd8f022378502c6afa27e28b", null ],
     [ "cudaFunctions", "de/d99/codeGenUtils_8h.html#a3316bc1340b03185e4596399878705e0", null ]
 ];

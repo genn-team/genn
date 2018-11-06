@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -143,6 +143,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html">WeightUpdateModels::StaticPulse</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pulse-coupled, static synapse.  <a href="../../d9/d74/classWeightUpdateModels_1_1StaticPulse.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html">WeightUpdateModels::StaticPulseDendriticDelay</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pulse-coupled, static synapse with heterogenous dendritic delays.  <a href="../../d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html">WeightUpdateModels::StaticGraded</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Graded-potential, static synapse.  <a href="../../d6/d64/classWeightUpdateModels_1_1StaticGraded.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -157,6 +160,8 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:a611a9113f742a9d07d3def4298a0ea68"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#a611a9113f742a9d07d3def4298a0ea68">DECLARE_WEIGHT_UPDATE_MODEL</a>(TYPE,  NUM_PARAMS,  NUM_VARS,  NUM_PRE_VARS,  NUM_POST_VARS)</td></tr>
+<tr class="separator:a611a9113f742a9d07d3def4298a0ea68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d014c818d8ee68f3a16838dcd4f030f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#a8d014c818d8ee68f3a16838dcd4f030f">SET_SIM_CODE</a>(SIM_CODE)&#160;&#160;&#160;virtual std::string getSimCode() const{ return SIM_CODE; }</td></tr>
 <tr class="separator:a8d014c818d8ee68f3a16838dcd4f030f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8159c6f595e865d6bf609f045c07361e"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#a8159c6f595e865d6bf609f045c07361e">SET_EVENT_CODE</a>(EVENT_CODE)&#160;&#160;&#160;virtual std::string getEventCode() const{ return EVENT_CODE; }</td></tr>
@@ -173,6 +178,14 @@ Macros</h2></td></tr>
 <tr class="separator:a5acb21708695409f1ebdd950017b6052"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6ae07196480eed9c142da2e6ba48fac"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#ad6ae07196480eed9c142da2e6ba48fac">SET_SYNAPSE_DYNAMICS_SUPPORT_CODE</a>(SYNAPSE_DYNAMICS_SUPPORT_CODE)&#160;&#160;&#160;virtual std::string getSynapseDynamicsSuppportCode() const{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }</td></tr>
 <tr class="separator:ad6ae07196480eed9c142da2e6ba48fac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aede2f97f853841236f081c8d7b9d156f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#aede2f97f853841236f081c8d7b9d156f">SET_PRE_SPIKE_CODE</a>(PRE_SPIKE_CODE)&#160;&#160;&#160;virtual std::string getPreSpikeCode() const{ return PRE_SPIKE_CODE; }</td></tr>
+<tr class="separator:aede2f97f853841236f081c8d7b9d156f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef99e5858038673e6b268f4af07864c2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#aef99e5858038673e6b268f4af07864c2">SET_POST_SPIKE_CODE</a>(POST_SPIKE_CODE)&#160;&#160;&#160;virtual std::string getPostSpikeCode() const{ return POST_SPIKE_CODE; }</td></tr>
+<tr class="separator:aef99e5858038673e6b268f4af07864c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a2bc6f56fa2bfb7008e915710720cfd"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#a9a2bc6f56fa2bfb7008e915710720cfd">SET_PRE_VARS</a>(...)&#160;&#160;&#160;virtual StringPairVec getPreVars() const{ return __VA_ARGS__; }</td></tr>
+<tr class="separator:a9a2bc6f56fa2bfb7008e915710720cfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a906e656a5980ea57c9f1b7c3185e876b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#a906e656a5980ea57c9f1b7c3185e876b">SET_POST_VARS</a>(...)&#160;&#160;&#160;virtual StringPairVec getPostVars() const{ return __VA_ARGS__; }</td></tr>
+<tr class="separator:a906e656a5980ea57c9f1b7c3185e876b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa33e3634a531794ddac1ad49bde09071"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>(...)&#160;&#160;&#160;virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:aa33e3634a531794ddac1ad49bde09071"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad06378df00a5d9ffe4068ba2c01b09ab"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html#ad06378df00a5d9ffe4068ba2c01b09ab">SET_NEEDS_PRE_SPIKE_TIME</a>(PRE_SPIKE_TIME_REQUIRED)&#160;&#160;&#160;virtual bool isPreSpikeTimeRequired() const{ return PRE_SPIKE_TIME_REQUIRED; }</td></tr>
@@ -181,6 +194,52 @@ Macros</h2></td></tr>
 <tr class="separator:a4f3e008922887cba8cfafc0fb0e53965"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
+<a class="anchor" id="a611a9113f742a9d07d3def4298a0ea68"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DECLARE_WEIGHT_UPDATE_MODEL</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">TYPE, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_PARAMS, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_VARS, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_PRE_VARS, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NUM_POST_VARS&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line"><a class="code" href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a>(TYPE, NUM_PARAMS)                                                           \</div><div class="line">    typedef <a class="code" href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase&lt;NUM_VARS&gt;</a> VarValues;                                \</div><div class="line">    typedef <a class="code" href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase&lt;NUM_PRE_VARS&gt;</a> PreVarValues;                         \</div><div class="line">    typedef <a class="code" href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase&lt;NUM_POST_VARS&gt;</a> PostVarValues;</div><div class="ttc" id="snippet_8h_html_ac5727a6720d28f034afadde948ed6e9a"><div class="ttname"><a href="../../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a">DECLARE_SNIPPET</a></div><div class="ttdeci">#define DECLARE_SNIPPET(TYPE, NUM_PARAMS)</div><div class="ttdef"><b>Definition:</b> snippet.h:11</div></div>
+<div class="ttc" id="classNewModels_1_1VarInitContainerBase_html"><div class="ttname"><a href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase</a></div><div class="ttdef"><b>Definition:</b> newModels.h:56</div></div>
+</div><!-- fragment -->
+</div>
+</div>
 <a class="anchor" id="a8159c6f595e865d6bf609f045c07361e"></a>
 <div class="memitem">
 <div class="memproto">
@@ -293,6 +352,70 @@ Macros</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aef99e5858038673e6b268f4af07864c2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_POST_SPIKE_CODE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">POST_SPIKE_CODE</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual std::string getPostSpikeCode() const{ return POST_SPIKE_CODE; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a906e656a5980ea57c9f1b7c3185e876b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_POST_VARS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;virtual StringPairVec getPostVars() const{ return __VA_ARGS__; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aede2f97f853841236f081c8d7b9d156f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_PRE_SPIKE_CODE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">PRE_SPIKE_CODE</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual std::string getPreSpikeCode() const{ return PRE_SPIKE_CODE; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9a2bc6f56fa2bfb7008e915710720cfd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_PRE_VARS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;virtual StringPairVec getPreVars() const{ return __VA_ARGS__; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a8d014c818d8ee68f3a16838dcd4f030f"></a>
 <div class="memitem">
 <div class="memproto">
@@ -363,7 +486,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../d4/d0f/newWeightUpdateModels_8h.html">newWeightUpdateModels.h</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:41 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

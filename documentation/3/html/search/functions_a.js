@@ -1,17 +1,8 @@
 var searchData=
 [
-  ['name_5fsubstitutions',['name_substitutions',['../de/d99/codeGenUtils_8h.html#a4859009add81ed0f979f2a522fd093bf',1,'name_substitutions(string &amp;code, const string &amp;prefix, NameIter namesBegin, NameIter namesEnd, const string &amp;postfix=&quot;&quot;, const string &amp;ext=&quot;&quot;):&#160;codeGenUtils.h'],['../de/d99/codeGenUtils_8h.html#a1bb74bba3ea3e0e15fd6ec68dc8a04e7',1,'name_substitutions(string &amp;code, const string &amp;prefix, const vector&lt; string &gt; &amp;names, const string &amp;postfix=&quot;&quot;, const string &amp;ext=&quot;&quot;):&#160;codeGenUtils.h']]],
-  ['nameiterctx',['NameIterCtx',['../d0/d76/structNameIterCtx.html#aa9e8714176bd5a5c8b364edf57e21385',1,'NameIterCtx']]],
-  ['neuron_5fsubstitutions_5fin_5fsynaptic_5fcode',['neuron_substitutions_in_synaptic_code',['../d4/dba/codeGenUtils_8cc.html#ae1ac7da7500e771969cd05517aa18288',1,'codeGenUtils.cc']]],
-  ['neurongroup',['NeuronGroup',['../d7/d3b/classNeuronGroup.html#afcefd1a762b4ff856416e28828eeb1ea',1,'NeuronGroup::NeuronGroup(const std::string &amp;name, int numNeurons, const NeuronModels::Base *neuronModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; NewModels::VarInit &gt; &amp;varInitialisers, int hostID, int deviceID)'],['../d7/d3b/classNeuronGroup.html#aa2b21c7c696a54bb3824c6843a0d5bb1',1,'NeuronGroup::NeuronGroup(const NeuronGroup &amp;)=delete'],['../d7/d3b/classNeuronGroup.html#acf9b709abcfb87f8bdc2375796aa8b78',1,'NeuronGroup::NeuronGroup()=delete']]],
-  ['neuronlocalvarinit',['neuronLocalVarInit',['../da/d95/namespaceStandardGeneratedSections.html#a563eff899681ec10b0af839171da37e1',1,'StandardGeneratedSections']]],
-  ['neuronlocalvarwrite',['neuronLocalVarWrite',['../da/d95/namespaceStandardGeneratedSections.html#a2dab24c70953d8b5058066cfea36d456',1,'StandardGeneratedSections']]],
-  ['neuronmodel',['neuronModel',['../d3/dc9/classneuronModel.html#a31ec1cd7525147db71d75cb81b8c4558',1,'neuronModel']]],
-  ['neuronoutputinit',['neuronOutputInit',['../da/d95/namespaceStandardGeneratedSections.html#ae0736c0d388704293edcbecb8c09d1c7',1,'StandardGeneratedSections']]],
-  ['neuronreset',['neuronReset',['../dd/d2d/namespaceStandardSubstitutions.html#a40eb48e57d3cdbf779a737dbf05d3fd6',1,'StandardSubstitutions']]],
-  ['neuronsim',['neuronSim',['../dd/d2d/namespaceStandardSubstitutions.html#a686b8a82f2814c752a38f17a1d0ce4ae',1,'StandardSubstitutions']]],
-  ['neuronspikeeventcondition',['neuronSpikeEventCondition',['../dd/d2d/namespaceStandardSubstitutions.html#ad159e73fa99d2597323047b95bff00cd',1,'StandardSubstitutions']]],
-  ['neuronspikeeventtest',['neuronSpikeEventTest',['../da/d95/namespaceStandardGeneratedSections.html#abca352e4f26dc6ad5cd8c775354fa485',1,'StandardGeneratedSections']]],
-  ['neuronthresholdcondition',['neuronThresholdCondition',['../dd/d2d/namespaceStandardSubstitutions.html#abe14b64b6a8734a7d715ec4a140b9514',1,'StandardSubstitutions']]],
-  ['nnmodel',['NNmodel',['../dc/de5/classNNmodel.html#a91216d74536a5871c507af7f40cd2d64',1,'NNmodel']]]
+  ['learning_5fswigconstant',['LEARNING_swigconstant',['../da/d86/genn__wrapper__wrap_8cpp.html#a5929d129c838b30f9f23973be81e1025',1,'genn_wrapper_wrap.cpp']]],
+  ['legacywrapper',['LegacyWrapper',['../d7/d5c/classNewModels_1_1LegacyWrapper.html#ae8f5b8a860604adc7703bc2489048fe2',1,'NewModels::LegacyWrapper::LegacyWrapper()'],['../df/d83/classNeuronModels_1_1LegacyWrapper.html#a768c0ef931c46624e5c87f48d1bfd1e8',1,'NeuronModels::LegacyWrapper::LegacyWrapper()'],['../d3/d2c/classPostsynapticModels_1_1LegacyWrapper.html#a527f85f3c9057b9b2191f7e006a02ac4',1,'PostsynapticModels::LegacyWrapper::LegacyWrapper()'],['../d7/d90/classWeightUpdateModels_1_1LegacyWrapper.html#a412ff3a3d5804abc10881ab5a71c484e',1,'WeightUpdateModels::LegacyWrapper::LegacyWrapper()']]],
+  ['longdoublevector_5fswigregister',['LongDoubleVector_swigregister',['../d9/d13/StlContainers__wrap_8cpp.html#a751e4c3163d6ec6e6bfa36390c1818f9',1,'StlContainers_wrap.cpp']]],
+  ['longlongvector_5fswigregister',['LongLongVector_swigregister',['../d9/d13/StlContainers__wrap_8cpp.html#a8e4c488dcdd8f198c9a157cbf94539c0',1,'StlContainers_wrap.cpp']]],
+  ['longvector_5fswigregister',['LongVector_swigregister',['../d9/d13/StlContainers__wrap_8cpp.html#aa06a0299901fd7405c6c12a25c28c042',1,'StlContainers_wrap.cpp']]]
 ];

@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -134,6 +134,7 @@ $(document).ready(function(){initNavTree('dc/de1/modelSpec_8h.html','../../');})
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="../../dd/d44/neuronGroup_8h_source.html">neuronGroup.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../de/db0/synapseGroup_8h_source.html">synapseGroup.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../da/db7/currentSource_8h_source.html">currentSource.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d5/d60/utils_8h_source.html">utils.h</a>&quot;</code><br />
 <code>#include &lt;map&gt;</code><br />
 <code>#include &lt;set&gt;</code><br />
@@ -192,17 +193,33 @@ Enumerations</h2></td></tr>
 <tr class="memitem:aa039815ec6b74d0fe4cb016415781c08"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08">FloatType</a> { , <a class="el" href="../../dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08ae401c6285be90f3a255c38f422b1a60c">GENN_LONG_DOUBLE</a>
  }</td></tr>
 <tr class="separator:aa039815ec6b74d0fe4cb016415781c08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71ece086a364ee04c7ffc3f626218b8f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8f">TimePrecision</a> { <a class="el" href="../../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fa5b39c8b553c821e7cddc6da64b5bd2ee">TimePrecision::DEFAULT</a>, 
+<a class="el" href="../../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fae738c26bf4ce1037fa81b039a915cbf6">TimePrecision::FLOAT</a>, 
+<a class="el" href="../../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fafd3e4ece78a7d422280d5ed379482229">TimePrecision::DOUBLE</a>
+ }</td></tr>
+<tr class="separator:a71ece086a364ee04c7ffc3f626218b8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a62ce532f6f7e535adfb9fe151a1c0c6b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a62ce532f6f7e535adfb9fe151a1c0c6b">initGeNN</a> ()</td></tr>
 <tr class="memdesc:a62ce532f6f7e535adfb9fe151a1c0c6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Method for GeNN initialisation (by preparing standard models)  <a href="#a62ce532f6f7e535adfb9fe151a1c0c6b">More...</a><br /></td></tr>
 <tr class="separator:a62ce532f6f7e535adfb9fe151a1c0c6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae06d1e97897f6f566d58ded3be6d2476"><td class="memTemplParams" colspan="2">template&lt;typename Snippet &gt; </td></tr>
-<tr class="memitem:ae06d1e97897f6f566d58ded3be6d2476"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#ae06d1e97897f6f566d58ded3be6d2476">initVar</a> (const typename Snippet::ParamValues &amp;params)</td></tr>
-<tr class="separator:ae06d1e97897f6f566d58ded3be6d2476"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed8c4d317d8bd593efa2c349d0432642"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
+<tr class="memitem:aed8c4d317d8bd593efa2c349d0432642"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aed8c4d317d8bd593efa2c349d0432642">initVar</a> (const typename S::ParamValues &amp;params)</td></tr>
+<tr class="separator:aed8c4d317d8bd593efa2c349d0432642"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5077392e9cc9dd9073bb07b3ee5e5ae6"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
+<tr class="memitem:a5077392e9cc9dd9073bb07b3ee5e5ae6"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_same&lt; typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt; 0 &gt; &gt;::value, <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a5077392e9cc9dd9073bb07b3ee5e5ae6">initVar</a> ()</td></tr>
+<tr class="separator:a5077392e9cc9dd9073bb07b3ee5e5ae6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4916e3559295d02263b13092e3d4e2e1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a4916e3559295d02263b13092e3d4e2e1">uninitialisedVar</a> ()</td></tr>
 <tr class="separator:a4916e3559295d02263b13092e3d4e2e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa65f6eb60b9d3e3f3c2d4b14d0ebcae2"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
+<tr class="memitem:aa65f6eb60b9d3e3f3c2d4b14d0ebcae2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html#a32be0dc4aea7fc31f0769a76b2f769a2">InitSparseConnectivitySnippet::Init</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2">initConnectivity</a> (const typename S::ParamValues &amp;params)</td></tr>
+<tr class="separator:aa65f6eb60b9d3e3f3c2d4b14d0ebcae2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf0972f2313fc4e5f9395458b67306a0"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
+<tr class="memitem:aaf0972f2313fc4e5f9395458b67306a0"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_same&lt; typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt; 0 &gt; &gt;::value, <a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html#a32be0dc4aea7fc31f0769a76b2f769a2">InitSparseConnectivitySnippet::Init</a> &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aaf0972f2313fc4e5f9395458b67306a0">initConnectivity</a> ()</td></tr>
+<tr class="separator:aaf0972f2313fc4e5f9395458b67306a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a367c112babcc14b58db730731b798073"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html#a32be0dc4aea7fc31f0769a76b2f769a2">InitSparseConnectivitySnippet::Init</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a367c112babcc14b58db730731b798073">uninitialisedConnectivity</a> ()</td></tr>
+<tr class="separator:a367c112babcc14b58db730731b798073"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -279,6 +296,7 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Macro attaching the label "GPU" to flag 1. </p>
+<p>Floating point precision to use for models </p>
 
 </div>
 </div>
@@ -395,7 +413,89 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a71ece086a364ee04c7ffc3f626218b8f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="../../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8f">TimePrecision</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a class="anchor" id="a71ece086a364ee04c7ffc3f626218b8fa5b39c8b553c821e7cddc6da64b5bd2ee"></a>DEFAULT&#160;</td><td class="fielddoc">
+<p>Time uses default model precision. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="a71ece086a364ee04c7ffc3f626218b8fae738c26bf4ce1037fa81b039a915cbf6"></a>FLOAT&#160;</td><td class="fielddoc">
+<p>Time uses single precision - not suitable for long simulations. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="a71ece086a364ee04c7ffc3f626218b8fafd3e4ece78a7d422280d5ed379482229"></a>DOUBLE&#160;</td><td class="fielddoc">
+<p>Time uses double precision - may reduce performance. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="aa65f6eb60b9d3e3f3c2d4b14d0ebcae2"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename S &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html#a32be0dc4aea7fc31f0769a76b2f769a2">InitSparseConnectivitySnippet::Init</a> initConnectivity </td>
+          <td>(</td>
+          <td class="paramtype">const typename S::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>params</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aaf0972f2313fc4e5f9395458b67306a0"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename S &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::enable_if&lt;std::is_same&lt;typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt;0&gt; &gt;::value, <a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html#a32be0dc4aea7fc31f0769a76b2f769a2">InitSparseConnectivitySnippet::Init</a>&gt;::type initConnectivity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a62ce532f6f7e535adfb9fe151a1c0c6b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -413,11 +513,11 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ae06d1e97897f6f566d58ded3be6d2476"></a>
+<a class="anchor" id="aed8c4d317d8bd593efa2c349d0432642"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename Snippet &gt; </div>
+template&lt;typename S &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -425,8 +525,56 @@ template&lt;typename Snippet &gt; </div>
         <tr>
           <td class="memname"><a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a> initVar </td>
           <td>(</td>
-          <td class="paramtype">const typename Snippet::ParamValues &amp;&#160;</td>
+          <td class="paramtype">const typename S::ParamValues &amp;&#160;</td>
           <td class="paramname"><em>params</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a5077392e9cc9dd9073bb07b3ee5e5ae6"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename S &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::enable_if&lt;std::is_same&lt;typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt;0&gt; &gt;::value, <a class="el" href="../../d7/db2/classNewModels_1_1VarInit.html">NewModels::VarInit</a>&gt;::type initVar </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a367c112babcc14b58db730731b798073"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html#a32be0dc4aea7fc31f0769a76b2f769a2">InitSparseConnectivitySnippet::Init</a> uninitialisedConnectivity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -481,7 +629,7 @@ template&lt;typename Snippet &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_97aefd0d527b934f1d99a682da8fe6a9.html">lib</a></li><li class="navelem"><a class="el" href="../../dir_5a30104352ef4255dc24354b02eb2d20.html">include</a></li><li class="navelem"><a class="el" href="../../dc/de1/modelSpec_8h.html">modelSpec.h</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:02 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:40 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['weightupdatemodels',['weightUpdateModels',['../d2/d5b/synapseModels_8h.html#a065de3cb4b7c83d51aff0549db676c0a',1,'weightUpdateModels():&#160;synapseModels.cc'],['../d9/d5b/synapseModels_8cc.html#a065de3cb4b7c83d51aff0549db676c0a',1,'weightUpdateModels():&#160;synapseModels.cc']]],
-  ['winningclass',['winningClass',['../d1/dc3/classSchmuker2014__classifier.html#ac387eaa87f68ae34b4c546f5c1bb20b5',1,'Schmuker2014_classifier']]]
+  ['usercxxflagsgnu',['userCxxFlagsGNU',['../d8/d27/namespaceGENN__PREFERENCES.html#abe37f0a788639c95373894742585a4c1',1,'GENN_PREFERENCES']]],
+  ['usercxxflagswin',['userCxxFlagsWIN',['../d8/d27/namespaceGENN__PREFERENCES.html#ab9bae2537b17e65a4690a57e02eab698',1,'GENN_PREFERENCES']]],
+  ['usernvccflags',['userNvccFlags',['../d8/d27/namespaceGENN__PREFERENCES.html#a06e6b119589f2254336090ab858ff72b',1,'GENN_PREFERENCES']]]
 ];

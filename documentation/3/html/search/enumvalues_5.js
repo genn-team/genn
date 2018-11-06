@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['individual',['INDIVIDUAL',['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323',1,'synapseMatrixType.h']]],
-  ['individual_5fpsm',['INDIVIDUAL_PSM',['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa',1,'synapseMatrixType.h']]],
-  ['individualg',['INDIVIDUALG',['../dc/de1/modelSpec_8h.html#afa025c957fa0683d6555d7a3f651901ba882f3ab967f3bb1899eeb64532555e51',1,'modelSpec.h']]],
-  ['individualid',['INDIVIDUALID',['../dc/de1/modelSpec_8h.html#afa025c957fa0683d6555d7a3f651901ba3d20262ff90c61f8811cfa1ea0f67847',1,'modelSpec.h']]]
+  ['host',['HOST',['../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ab9361011891280a44d85b967739cc6a5',1,'HOST():&#160;variableMode.h'],['../d6/d8f/variableMode_8h.html#aa7ccb7c73652058a320136c533e79ffdab9361011891280a44d85b967739cc6a5',1,'HOST():&#160;variableMode.h']]]
 ];

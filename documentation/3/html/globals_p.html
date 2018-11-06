@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -158,22 +158,54 @@ $(document).ready(function(){initNavTree('globals_p.html','');});
 <div class="textblock">Here is a list of all file members with links to the files they belong to:</div>
 
 <h3><a class="anchor" id="index_p"></a>- p -</h3><ul>
+<li>ParamValues_swigregister()
+: <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#afbf66059d2038a31809f8e01b77d7894">NewModels_wrap.cpp</a>
+</li>
+<li>PiecewiseSTDP_swigregister()
+: <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#aa26a37fa5ede3d6701de847c80d9fef6">WeightUpdateModels_wrap.cpp</a>
+</li>
+<li>Poisson_swigregister()
+: <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a34b8cd6ac0999ed366a1e07a86b32e0f">NeuronModels_wrap.cpp</a>
+</li>
 <li>POISSONNEURON
 : <a class="el" href="d3/dc0/neuronModels_8h.html#abcccd1c2fd5b8f068528f69a680749ae">neuronModels.h</a>
 , <a class="el" href="dc/dbc/neuronModels_8cc.html#abcccd1c2fd5b8f068528f69a680749ae">neuronModels.cc</a>
 </li>
+<li>PoissonNew_swigregister()
+: <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#aabd832e202930aa5bf9de23018fe7ed9">NeuronModels_wrap.cpp</a>
+</li>
+<li>postNeuronSubstitutionsInSynapticCode()
+: <a class="el" href="d4/dba/codeGenUtils_8cc.html#a359767737cd9ef38b0350d43bf80e077">codeGenUtils.cc</a>
+, <a class="el" href="de/d99/codeGenUtils_8h.html#ad769005368796caa846a9e1633ab20da">codeGenUtils.h</a>
+</li>
 <li>POSTSYNAPSEMODELS_CC
 : <a class="el" href="d5/d21/postSynapseModels_8cc.html#a8fa1f3381340663dac98bb482161bcfc">postSynapseModels.cc</a>
+</li>
+<li>PostsynapticModels_DeltaCurr_makeParamValues()
+: <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a5756c24967719a9e6ba3d2389ebadfba">PostsynapticModels_wrap.cpp</a>
+</li>
+<li>PostsynapticModels_DeltaCurr_makeVarValues()
+: <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a8a41310fc477b8b10de7ed2e757b396a">PostsynapticModels_wrap.cpp</a>
+</li>
+<li>PostsynapticModels_ExpCond_makeParamValues()
+: <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#aeeb39340f9ceee44e76aa9b4d0a9bfe4">PostsynapticModels_wrap.cpp</a>
+</li>
+<li>PostsynapticModels_ExpCond_makeVarValues()
+: <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a00bf3441616cbf252d79d1a36d8c1632">PostsynapticModels_wrap.cpp</a>
 </li>
 <li>postSynDecay
 : <a class="el" href="d5/d73/extra__postsynapses_8h.html#ab7e785048a3be2eda059e4153e1239f2">extra_postsynapses.h</a>
 </li>
 <li>postSynModels
-: <a class="el" href="d4/d8a/postSynapseModels_8h.html#a14d8cf3b78f877bec80867485607cafe">postSynapseModels.h</a>
-, <a class="el" href="d5/d21/postSynapseModels_8cc.html#a14d8cf3b78f877bec80867485607cafe">postSynapseModels.cc</a>
+: <a class="el" href="d5/d21/postSynapseModels_8cc.html#a14d8cf3b78f877bec80867485607cafe">postSynapseModels.cc</a>
+, <a class="el" href="d4/d8a/postSynapseModels_8h.html#a14d8cf3b78f877bec80867485607cafe">postSynapseModels.h</a>
 </li>
 <li>postSyntoCurrent
 : <a class="el" href="d5/d73/extra__postsynapses_8h.html#a1a161f880e02ee3568b396acef0d90b2">extra_postsynapses.h</a>
+</li>
+<li>preNeuronSubstitutionsInSynapticCode()
+: <a class="el" href="de/d99/codeGenUtils_8h.html#a4de0b2947f1c5fb68afcfcae31a52d16">codeGenUtils.h</a>
+, <a class="el" href="d4/dba/codeGenUtils_8cc.html#a849e5afdf587f1fc82a94c4f5a112d4a">codeGenUtils.cc</a>
 </li>
 <li>preparePostSynModels()
 : <a class="el" href="d4/d8a/postSynapseModels_8h.html#a25ccc49bc4c814f8ae964b17f437efd8">postSynapseModels.h</a>
@@ -187,12 +219,266 @@ $(document).ready(function(){initNavTree('globals_p.html','');});
 : <a class="el" href="d2/d5b/synapseModels_8h.html#a7665ad5333ff39de5f63bbe88f1f7de9">synapseModels.h</a>
 , <a class="el" href="d9/d5b/synapseModels_8cc.html#a7665ad5333ff39de5f63bbe88f1f7de9">synapseModels.cc</a>
 </li>
+<li>preSynapseResetBlkSize
+: <a class="el" href="d2/d49/global_8h.html#a49edc5e74e8faa5972f14e0a7331f040">global.h</a>
+, <a class="el" href="d7/dd8/global_8cc.html#a49edc5e74e8faa5972f14e0a7331f040">global.cc</a>
+</li>
 <li>push_back()
-: <a class="el" href="db/d66/extra__neurons_8h.html#a80a2f6e8d3569148bd83be995d9d61dc">extra_neurons.h</a>
-, <a class="el" href="d5/d73/extra__postsynapses_8h.html#a22f982e455829fffddfef9866b3e1626">extra_postsynapses.h</a>
-, <a class="el" href="db/d66/extra__neurons_8h.html#a82af87e5f620695f48445a42d6d20cfc">extra_neurons.h</a>
-, <a class="el" href="d5/d73/extra__postsynapses_8h.html#a8d557a2d913a9dbc6b5665bece23d63d">extra_postsynapses.h</a>
-, <a class="el" href="db/d66/extra__neurons_8h.html#a895e6db8b0e1f95c10fde68a5427c2a6">extra_neurons.h</a>
+: <a class="el" href="db/d66/extra__neurons_8h.html#a3e6cc1617c3d677c7ac65abbe2800875">extra_neurons.h</a>
+, <a class="el" href="d5/d73/extra__postsynapses_8h.html#ad48a4d613304ba0c963667f2d11a1ea2">extra_postsynapses.h</a>
+, <a class="el" href="db/d66/extra__neurons_8h.html#adc32f26ca72ab1491384cd860968c3e9">extra_neurons.h</a>
+</li>
+<li>Py_NotImplemented
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">StlContainers_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#ae5603e8c5fd8ec50c4936e1012a58cb4">Snippet_wrap.cpp</a>
+</li>
+<li>Py_ssize_t
+: <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">StlContainers_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">Snippet_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a47424a8953c340f500027db7e6c00173">InitVarSnippet_wrap.cpp</a>
+</li>
+<li>PY_SSIZE_T_MAX
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">StlContainers_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#aa5b5990f814eb53730c24c7f911f9132">Snippet_wrap.cpp</a>
+</li>
+<li>PY_SSIZE_T_MIN
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">StlContainers_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a9fbcf3e88f34de99fb3bd045cffd6ce4">Snippet_wrap.cpp</a>
+</li>
+<li>Py_TYPE
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">StlContainers_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#afd489119bf6e3552bdaa6bc365e35e59">Snippet_wrap.cpp</a>
+</li>
+<li>Py_VISIT
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">StlContainers_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a8a5af783da2cdbcfdc7c354f635df8be">Snippet_wrap.cpp</a>
+</li>
+<li>PyDescr_NAME
+: <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">Snippet_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">StlContainers_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a7b007021fc924eb74eccb0bb05d99ad1">SharedLibraryModel_wrap.cpp</a>
+</li>
+<li>PyDescr_TYPE
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">Snippet_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">StlContainers_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a0d2bc679367576eb4071b8c3bfe13edc">InitVarSnippet_wrap.cpp</a>
+</li>
+<li>PyExc_StopIteration
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">Snippet_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a0cba46b26eb93c57b8b96696ba92adb4">StlContainers_wrap.cpp</a>
+</li>
+<li>PyInt_FromSize_t
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">StlContainers_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a2a72c6061f4d23c35a8340448dd0cd2b">Snippet_wrap.cpp</a>
+</li>
+<li>PyModule_AddObject()
+: <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">Snippet_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">StlContainers_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">NewModels_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">NeuronModels_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a6a7f8a8dbdf7d7609e23b646bb88c64f">SharedLibraryModel_wrap.cpp</a>
+</li>
+<li>PyObject_Del
+: <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">WeightUpdateModels_wrap.cpp</a>
+</li>
+<li>PyObject_DEL
+: <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">StlContainers_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">InitSparseConnectivitySnippet_wrap.cpp</a>
+</li>
+<li>PyObject_Del
+: <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">InitSparseConnectivitySnippet_wrap.cpp</a>
+</li>
+<li>PyObject_DEL
+: <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">NewModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">Snippet_wrap.cpp</a>
+</li>
+<li>PyObject_Del
+: <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">StlContainers_wrap.cpp</a>
+</li>
+<li>PyObject_DEL
+: <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">GeNNPreferences_wrap.cpp</a>
+</li>
+<li>PyObject_Del
+: <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">NewModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">Snippet_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">InitVarSnippet_wrap.cpp</a>
+</li>
+<li>PyObject_DEL
+: <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a3e72f1bb4b2af8f115a750f832d421b4">InitVarSnippet_wrap.cpp</a>
+</li>
+<li>PyObject_Del
+: <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a5777895532ba038acdbde39ef6f78a82">PostsynapticModels_wrap.cpp</a>
+</li>
+<li>PyObject_GenericGetAttr
+: <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">Snippet_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">NewModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">StlContainers_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">NeuronModels_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#a2d659e3ecdc8d792ec516753e6fd37a2">InitVarSnippet_wrap.cpp</a>
+</li>
+<li>PyOS_snprintf
+: <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">StlContainers_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">NewModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">Snippet_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#aaf424b640ab3bb23906652e73030992b">InitVarSnippet_wrap.cpp</a>
+</li>
+<li>PySequence_Size
+: <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">Snippet_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">WeightUpdateModels_wrap.cpp</a>
+, <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">NewModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">StlContainers_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#ae0178153199e3020e8d586e0e50fc796">PostsynapticModels_wrap.cpp</a>
+</li>
+<li>PyString_AsStringAndSize
+: <a class="el" href="d7/d66/GeNNPreferences__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">GeNNPreferences_wrap.cpp</a>
+, <a class="el" href="d6/d32/InitVarSnippet__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">InitVarSnippet_wrap.cpp</a>
+, <a class="el" href="da/d86/genn__wrapper__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">genn_wrapper_wrap.cpp</a>
+, <a class="el" href="d1/dd2/PostsynapticModels__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">PostsynapticModels_wrap.cpp</a>
+, <a class="el" href="df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">InitSparseConnectivitySnippet_wrap.cpp</a>
+, <a class="el" href="db/d87/CurrentSourceModels__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">CurrentSourceModels_wrap.cpp</a>
+, <a class="el" href="d4/d66/NeuronModels__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">NeuronModels_wrap.cpp</a>
+, <a class="el" href="d4/d72/NewModels__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">NewModels_wrap.cpp</a>
+, <a class="el" href="d4/d55/SharedLibraryModel__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">SharedLibraryModel_wrap.cpp</a>
+, <a class="el" href="d9/d13/StlContainers__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">StlContainers_wrap.cpp</a>
+, <a class="el" href="d3/d99/Snippet__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">Snippet_wrap.cpp</a>
+, <a class="el" href="de/d01/WeightUpdateModels__wrap_8cpp.html#afdc43df5cb9472c0f13c86d8e01aea31">WeightUpdateModels_wrap.cpp</a>
 </li>
 </ul>
 </div><!-- contents -->
@@ -200,7 +486,7 @@ $(document).ready(function(){initNavTree('globals_p.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:05 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

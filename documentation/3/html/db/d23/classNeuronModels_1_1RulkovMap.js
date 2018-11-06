@@ -1,6 +1,8 @@
 var classNeuronModels_1_1RulkovMap =
 [
     [ "ParamValues", "db/d23/classNeuronModels_1_1RulkovMap.html#ab78959f43ae5b4e46c9a0be793f4bacc", null ],
+    [ "PostVarValues", "db/d23/classNeuronModels_1_1RulkovMap.html#afa4032a9bdab56633a83a36d7d76d1a9", null ],
+    [ "PreVarValues", "db/d23/classNeuronModels_1_1RulkovMap.html#ab63ac4035cb11fab677dfaf9ab44f45d", null ],
     [ "VarValues", "db/d23/classNeuronModels_1_1RulkovMap.html#a9a1f2c3864a620d569e8d30fa94cbc4c", null ],
     [ "getDerivedParams", "db/d23/classNeuronModels_1_1RulkovMap.html#ab0fe1182db96e793ea33e96212951f52", null ],
     [ "getParamNames", "db/d23/classNeuronModels_1_1RulkovMap.html#aa9132abecc61486eca78d19444a9c555", null ],

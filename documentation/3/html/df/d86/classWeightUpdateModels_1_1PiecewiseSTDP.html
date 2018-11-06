@@ -45,7 +45,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">3.1.1</span>
+   &#160;<span id="projectnumber">3.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -122,9 +122,7 @@ $(document).ready(function(){initNavTree('df/d86/classWeightUpdateModels_1_1Piec
 
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="../../d6/d92/classWeightUpdateModels_1_1PiecewiseSTDP-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">WeightUpdateModels::PiecewiseSTDP Class Reference</div>  </div>
@@ -142,36 +140,19 @@ Inheritance diagram for WeightUpdateModels::PiecewiseSTDP:</div>
   <img src="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.png" usemap="#WeightUpdateModels::PiecewiseSTDP_map" alt=""/>
   <map id="WeightUpdateModels::PiecewiseSTDP_map" name="WeightUpdateModels::PiecewiseSTDP_map">
 <area href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. " alt="WeightUpdateModels::Base" shape="rect" coords="0,112,225,136"/>
-<area href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models. " alt="NewModels::Base" shape="rect" coords="0,56,225,80"/>
+<area href="../../d9/db4/classNewModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab..." alt="NewModels::Base" shape="rect" coords="0,56,225,80"/>
 <area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="0,0,225,24"/>
 </map>
  </div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a45ac05a82b0dd248b13e4aa1ebaabe82"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt; 10 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a45ac05a82b0dd248b13e4aa1ebaabe82">ParamValues</a></td></tr>
-<tr class="separator:a45ac05a82b0dd248b13e4aa1ebaabe82"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c958653ed0ddc0ae5f82de620b49596"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase</a>&lt; 2 &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a4c958653ed0ddc0ae5f82de620b49596">VarValues</a></td></tr>
-<tr class="separator:a4c958653ed0ddc0ae5f82de620b49596"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
-<tr class="memitem:aa0bed13d4a1a5a967c05806b2a76e573 inherit pub_types_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a></td></tr>
-<tr class="separator:aa0bed13d4a1a5a967c05806b2a76e573 inherit pub_types_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1e165b6fa7ea993b5a16f905f0eb16c inherit pub_types_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#ae1e165b6fa7ea993b5a16f905f0eb16c">NameTypeValVec</a></td></tr>
-<tr class="separator:ae1e165b6fa7ea993b5a16f905f0eb16c inherit pub_types_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
-<tr class="memitem:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; double(const std::vector&lt; double &gt; &amp;, double)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a></td></tr>
-<tr class="separator:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
-<tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a></td></tr>
-<tr class="separator:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a9ef28608d86ff2be8e68e9a97134ce05"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a9ef28608d86ff2be8e68e9a97134ce05">DECLARE_WEIGHT_UPDATE_MODEL</a> (<a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html">PiecewiseSTDP</a>, 10, 2, 0, 0)</td></tr>
+<tr class="separator:a9ef28608d86ff2be8e68e9a97134ce05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a881b5adc9ef7d50316494fdd817892"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a0a881b5adc9ef7d50316494fdd817892">getParamNames</a> () const </td></tr>
 <tr class="memdesc:a0a881b5adc9ef7d50316494fdd817892"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets names of of (independent) model parameters.  <a href="#a0a881b5adc9ef7d50316494fdd817892">More...</a><br /></td></tr>
 <tr class="separator:a0a881b5adc9ef7d50316494fdd817892"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adbba9e445557f8c5c4aa151359e75fb7"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#adbba9e445557f8c5c4aa151359e75fb7">getVars</a> () const </td></tr>
+<tr class="memitem:adbba9e445557f8c5c4aa151359e75fb7"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#adbba9e445557f8c5c4aa151359e75fb7">getVars</a> () const </td></tr>
 <tr class="memdesc:adbba9e445557f8c5c4aa151359e75fb7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets names and types (as strings) of model variables.  <a href="#adbba9e445557f8c5c4aa151359e75fb7">More...</a><br /></td></tr>
 <tr class="separator:adbba9e445557f8c5c4aa151359e75fb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a050333bea6f43212b2f02259eb4abb9c"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a050333bea6f43212b2f02259eb4abb9c">getSimCode</a> () const </td></tr>
@@ -207,17 +188,43 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7aae3190642d0bbe7f3f6fa01021783f inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a7aae3190642d0bbe7f3f6fa01021783f">getSynapseDynamicsSuppportCode</a> () const </td></tr>
 <tr class="memdesc:a7aae3190642d0bbe7f3f6fa01021783f inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets support code to be made available within the synapse dynamics kernel/function.  <a href="#a7aae3190642d0bbe7f3f6fa01021783f">More...</a><br /></td></tr>
 <tr class="separator:a7aae3190642d0bbe7f3f6fa01021783f inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae8add5e75cfbdf06402222494f42539 inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#aae8add5e75cfbdf06402222494f42539">getExtraGlobalParams</a> () const </td></tr>
+<tr class="memitem:a79e16d6c154e21a8ca7e56599cbe553b inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a79e16d6c154e21a8ca7e56599cbe553b">getPreSpikeCode</a> () const </td></tr>
+<tr class="separator:a79e16d6c154e21a8ca7e56599cbe553b inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb81b1a933f13ba2af62c088387e186f inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#abb81b1a933f13ba2af62c088387e186f">getPostSpikeCode</a> () const </td></tr>
+<tr class="separator:abb81b1a933f13ba2af62c088387e186f inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a376bd4eca5cc2b97aa99f5b24751216b inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a376bd4eca5cc2b97aa99f5b24751216b">getPreVars</a> () const </td></tr>
+<tr class="separator:a376bd4eca5cc2b97aa99f5b24751216b inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa966db6960a65aecd703a4a182fedc0d inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#aa966db6960a65aecd703a4a182fedc0d">getPostVars</a> () const </td></tr>
+<tr class="separator:aa966db6960a65aecd703a4a182fedc0d inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae8add5e75cfbdf06402222494f42539 inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#aae8add5e75cfbdf06402222494f42539">getExtraGlobalParams</a> () const </td></tr>
 <tr class="separator:aae8add5e75cfbdf06402222494f42539 inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8b3e37eeb3f0034ebba50ec01c2840e inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#ac8b3e37eeb3f0034ebba50ec01c2840e">getPreVarIndex</a> (const std::string &amp;varName) const </td></tr>
+<tr class="memdesc:ac8b3e37eeb3f0034ebba50ec01c2840e inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the index of a named presynaptic variable.  <a href="#ac8b3e37eeb3f0034ebba50ec01c2840e">More...</a><br /></td></tr>
+<tr class="separator:ac8b3e37eeb3f0034ebba50ec01c2840e inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5812718ff39cc394f1c6242e3d3f0987 inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html#a5812718ff39cc394f1c6242e3d3f0987">getPostVarIndex</a> (const std::string &amp;varName) const </td></tr>
+<tr class="memdesc:a5812718ff39cc394f1c6242e3d3f0987 inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the index of a named postsynaptic variable.  <a href="#a5812718ff39cc394f1c6242e3d3f0987">More...</a><br /></td></tr>
+<tr class="separator:a5812718ff39cc394f1c6242e3d3f0987 inherit pub_methods_classWeightUpdateModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
 <tr class="memitem:abf7bc31d93be84a00a299d2ca050ffc2 inherit pub_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#abf7bc31d93be84a00a299d2ca050ffc2">getVarIndex</a> (const std::string &amp;varName) const </td></tr>
 <tr class="memdesc:abf7bc31d93be84a00a299d2ca050ffc2 inherit pub_methods_classNewModels_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the index of a named variable.  <a href="#abf7bc31d93be84a00a299d2ca050ffc2">More...</a><br /></td></tr>
 <tr class="separator:abf7bc31d93be84a00a299d2ca050ffc2 inherit pub_methods_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a75d7af5703359fd8aea4eaab0621a025"><td class="memItemLeft" align="right" valign="top">static const <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html">PiecewiseSTDP</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a75d7af5703359fd8aea4eaab0621a025">getInstance</a> ()</td></tr>
-<tr class="separator:a75d7af5703359fd8aea4eaab0621a025"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
+<tr class="memitem:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; double(const std::vector&lt; double &gt; &amp;, double)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a></td></tr>
+<tr class="separator:a8504aab1cf48f97c400c580b11433adb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
+<tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a></td></tr>
+<tr class="separator:a9fd30353f0adca3bdf05b408275d05cc inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, std::pair&lt; std::string, double &gt; &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9df1fa166ff4beae7fe49997a201784d">NameTypeValVec</a></td></tr>
+<tr class="separator:a9df1fa166ff4beae7fe49997a201784d inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a8504aab1cf48f97c400c580b11433adb">DerivedParamFunc</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a4aff594e45bf2729c27f81b2444bb4d8">DerivedParamVec</a></td></tr>
+<tr class="separator:a4aff594e45bf2729c27f81b2444bb4d8 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_static_methods_classNewModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_static_methods_classNewModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Static Protected Member Functions inherited from <a class="el" href="../../d9/db4/classNewModels_1_1Base.html">NewModels::Base</a></td></tr>
+<tr class="memitem:af38b089d771c4028bd12e94ef2be3fb8 inherit pro_static_methods_classNewModels_1_1Base"><td class="memItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/db4/classNewModels_1_1Base.html#af38b089d771c4028bd12e94ef2be3fb8">getVarIndex</a> (const std::string &amp;varName, const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> &amp;vars)</td></tr>
+<tr class="separator:af38b089d771c4028bd12e94ef2be3fb8 inherit pro_static_methods_classNewModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is a simple STDP rule including a time delay for the finite transmission speed of the synapse. </p>
@@ -247,32 +254,51 @@ It is the raw synaptic conductance <code>gRaw</code> that is subject to the STDP
 <li><code>tauShift:</code> Shift of learning curve</li>
 <li><code>gSyn0:</code> Value of syn conductance g decays to </li>
 </ul>
-</div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a class="anchor" id="a45ac05a82b0dd248b13e4aa1ebaabe82"></a>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a9ef28608d86ff2be8e68e9a97134ce05"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt; 10 &gt; <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a45ac05a82b0dd248b13e4aa1ebaabe82">WeightUpdateModels::PiecewiseSTDP::ParamValues</a></td>
+          <td class="memname">WeightUpdateModels::PiecewiseSTDP::DECLARE_WEIGHT_UPDATE_MODEL </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html">PiecewiseSTDP</a>&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">10&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">2&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">0&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">0&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a class="anchor" id="a4c958653ed0ddc0ae5f82de620b49596"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef <a class="el" href="../../d6/d53/classNewModels_1_1VarInitContainerBase.html">NewModels::VarInitContainerBase</a>&lt; 2 &gt; <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a4c958653ed0ddc0ae5f82de620b49596">WeightUpdateModels::PiecewiseSTDP::VarValues</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="af7b0f08fe1dca0aa7420b719625eeeee"></a>
 <div class="memitem">
 <div class="memproto">
@@ -296,29 +322,6 @@ It is the raw synaptic conductance <code>gRaw</code> that is subject to the STDP
 <p>Gets names of derived model parameters and the function objects to call to Calculate their value from a vector of model parameter values </p>
 
 <p>Reimplemented from <a class="el" href="../../db/d97/classSnippet_1_1Base.html#ab01de002618efa59541c927ffdd463f5">Snippet::Base</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a75d7af5703359fd8aea4eaab0621a025"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static const <a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html">PiecewiseSTDP</a>* WeightUpdateModels::PiecewiseSTDP::getInstance </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -412,7 +415,7 @@ It is the raw synaptic conductance <code>gRaw</code> that is subject to the STDP
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="../../d9/db4/classNewModels_1_1Base.html#aa0bed13d4a1a5a967c05806b2a76e573">StringPairVec</a> WeightUpdateModels::PiecewiseSTDP::getVars </td>
+          <td class="memname">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9fd30353f0adca3bdf05b408275d05cc">StringPairVec</a> WeightUpdateModels::PiecewiseSTDP::getVars </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -494,7 +497,7 @@ It is the raw synaptic conductance <code>gRaw</code> that is subject to the STDP
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a></li><li class="navelem"><a class="el" href="../../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html">PiecewiseSTDP</a></li>
-    <li class="footer">Generated on Thu Apr 19 2018 16:29:05 for GeNN by
+    <li class="footer">Generated on Tue Nov 6 2018 10:53:51 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

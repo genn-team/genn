@@ -3,6 +3,7 @@ var snippet_8h =
     [ "ValueBase", "da/d76/classSnippet_1_1ValueBase.html", "da/d76/classSnippet_1_1ValueBase" ],
     [ "ValueBase< 0 >", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4" ],
     [ "Base", "db/d97/classSnippet_1_1Base.html", "db/d97/classSnippet_1_1Base" ],
+    [ "Init", "d8/df6/classSnippet_1_1Init.html", "d8/df6/classSnippet_1_1Init" ],
     [ "DECLARE_SNIPPET", "de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a", null ],
     [ "IMPLEMENT_SNIPPET", "de/d6c/snippet_8h.html#af3c47debe5fc34060e716d7db25462ab", null ],
     [ "SET_DERIVED_PARAMS", "de/d6c/snippet_8h.html#aa592bfe3ce05ffc19a8f21d8482add6b", null ],
