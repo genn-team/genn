@@ -3,6 +3,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <string>
 #include <vector>
