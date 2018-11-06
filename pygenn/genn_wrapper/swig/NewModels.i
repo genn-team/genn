@@ -24,6 +24,9 @@
 // Generated includes
 #include "initVarSnippetCustom.h"
 %}
+
+%rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
+
 %ignore LegacyWrapper;
 
 %include <std_vector.i>

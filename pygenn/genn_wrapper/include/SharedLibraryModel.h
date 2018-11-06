@@ -2,6 +2,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -208,6 +209,38 @@ public:
       *n1 = 1;
     }
     
+    void assignExternalYaleInd(const std::string &popName, const int nConn,
+                               unsigned int **varPtr, int* n1)
+    {
+        auto sparsePop = static_cast<SparseProjection*>(getSymbol( "C" + popName));
+        *varPtr = sparsePop->ind;
+        *n1 = nConn;
+    }
+
+    void assignExternalYaleIndInG(const std::string &popName, const int nPre,
+                                  unsigned int **varPtr, int* n1)
+    {
+        auto sparsePop = static_cast<SparseProjection*>(getSymbol( "C" + popName));
+        *varPtr = sparsePop->indInG;
+        *n1 = nPre + 1;
+    }
+
+    void assignExternalRaggedInd(const std::string &popName, const int nPaddedConn,
+                                 unsigned int **varPtr, int* n1)
+    {
+        auto raggedPop = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
+        *varPtr = raggedPop->ind;
+        *n1 = nPaddedConn;
+    }
+
+    void assignExternalRaggedRowLength(const std::string &popName, const int nPre,
+                                       unsigned int **varPtr, int* n1)
+    {
+        auto raggedPop = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
+        *varPtr = raggedPop->rowLength;
+        *n1 = nPre;
+    }
+
     void *getSymbol(const std::string &symbolName, bool allowMissing = false)
     {
 #ifdef _WIN32
@@ -224,15 +257,16 @@ public:
         return symbol;
     }
 
+
     void allocateMem()
     {
         m_AllocateMem();
     }
 
-    void allocateSparseProj( const std::string &popName, unsigned int nConn )
+    void allocateYaleProj( const std::string &popName, unsigned int nConn )
     {
-      typedef void(*UIntFct)(unsigned int);
-      ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
+        typedef void(*UIntFct)(unsigned int);
+        ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
     }
 
     void allocateExtraGlobalParam( const std::string &popName,
@@ -261,16 +295,6 @@ public:
     void initialize()
     {
         m_Initialize();
-    }
-
-    // when called from python with numpy array, integers are substituted on the fly
-    void initializeSparseProj( const std::string &popName,
-                              unsigned int* _ind, int nConn,
-                              unsigned int* _indInG, int nPre)
-    {
-        auto C = static_cast<SparseProjection*>( getSymbol( "C" + popName ) );
-        std::copy( _indInG, _indInG + nPre, C->indInG );
-        std::copy( _ind, _ind + nConn, C->ind );
     }
 
     void initializeModel()

@@ -4,357 +4,761 @@ convesions for GeNN Groups
 """
 
 from six import iteritems
+import numpy as np
 import genn_wrapper
 import model_preprocessor
 from model_preprocessor import Variable
+from genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
+from genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
+                          SynapseMatrixConnectivity_YALE,
+                          SynapseMatrixConnectivity_RAGGED,
+                          SynapseMatrixConnectivity_BITMASK,
+                          SynapseMatrixConnectivity_DENSE,
+                          SynapseMatrixWeight_INDIVIDUAL,
+                          SynapseMatrixWeight_INDIVIDUAL_PSM)
 
 
-class Group( object ):
+class Group(object):
 
     """Parent class of NeuronGroup, SynapseGroup and CurrentSource"""
 
-    def __init__( self, name ):
+    def __init__(self, name):
         """Init Group
 
         Args:
-        name -- string name of the Group
+        name    --  string name of the Group
         """
         self.name = name
         self.vars = {}
-        self.extraGlobalParams = {}
+        self.extra_global_params = {}
 
-    def setVar( self, varName, values ):
+    def set_var(self, var_name, values):
         """Set values for a Variable
 
         Args:
-        varName -- string with the name of the variable
-        values  -- iterable or a single value
+        var_name    --  string with the name of the variable
+        values      --  iterable or a single value
         """
-        self.vars[varName].setValues( values )
+        self.vars[var_name].set_values(values)
 
-    def _addExtraGlobalParam( self, paramName, paramValues, model, autoAlloc=True ):
+    def _add_extra_global_param(self, param_name, param_values,
+                                model, auto_alloc=True):
         """Add extra global parameter
 
         Args:
-        paramName   -- string with the name of the extra global parameter
-        paramValues -- iterable or a single value
-        model       -- instance of the model
-        autoAlloc   -- boolean whether the extra global parameter should be allocated. Defaults to true.
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        model           --  instance of the model
+        auto_alloc      --  boolean whether the extra global parameter
+                            should be allocated. Defaults to true.
         """
-        pnt = list( model.getExtraGlobalParams() )
-        paramType = None
+        pnt = list(model.get_extra_global_params())
+        param_type = None
         for pn, pt in pnt:
-            if pn == paramName:
-                paramType = pt
+            if pn == param_name:
+                param_type = pt
                 break
 
-        egp = Variable( paramName, paramType, paramValues )
-        egp.needsAllocation = autoAlloc
+        egp = Variable(param_name, param_type, param_values)
+        egp.needs_allocation = auto_alloc
 
-        self.extraGlobalParams[paramName] = egp
+        self.extra_global_params[param_name] = egp
 
+    def _assign_external_pointer(self, slm, scalar, var_name, var_size, var_type):
+        """Assign a variable to an external numpy array
 
-class NeuronGroup( Group ):
+        Args:
+        slm         --  SharedLibraryModel instance for acccessing variables
+        scalar      --  string containing type to use inplace of scalar
+        var_name    --  string a fully qualified name of the variable to assign
+        var_size    --  int the size of the variable
+        var_type    --  string type of the variable. The supported types are
+                        char, unsigned char, short, unsigned short, int,
+                        unsigned int, long, unsigned long, long long,
+                        unsigned long long, float, double, long double
+                        and scalar.
+
+        Returns numpy array of type var_type
+
+        Raises ValueError if variable type is not supported
+        """
+
+        internal_var_name = var_name + self.name
+        if var_type == "scalar":
+            if scalar == "float":
+                return slm.assign_external_pointer_array_f(
+                    internal_var_name, var_size)
+            elif scalar == "double":
+                return slm.assign_external_pointer_array_d(
+                    internal_var_name, var_size)
+            elif scalar == "long double":
+                return slm.assign_external_pointer_array_ld(
+                    internal_var_name, var_size)
+        elif var_type == "char":
+            return slm.assign_external_pointer_array_c(
+                internal_var_name, var_size)
+        elif var_type == "unsigned char":
+            return slm.assign_external_pointer_array_uc(
+                internal_var_name, var_size)
+        elif var_type == "short":
+            return slm.assign_external_pointer_array_s(
+                internal_var_name, var_size)
+        elif var_type == "unsigned short":
+            return slm.assign_external_pointer_array_us(
+                internal_var_name, var_size)
+        elif var_type == "int":
+            return slm.assign_external_pointer_array_i(
+                internal_var_name, var_size)
+        elif var_type == "unsigned int":
+            return slm.assign_external_pointer_array_ui(
+                internal_var_name, var_size)
+        elif var_type == "long":
+            return slm.assign_external_pointer_array_l(
+                internal_var_name, var_size)
+        elif var_type == "unsigned long":
+            return slm.assign_external_pointer_array_ul(
+                internal_var_name, var_size)
+        elif var_type == "long long":
+            return slm.assign_external_pointer_array_ll(
+                internal_var_name, var_size)
+        elif var_type == "unsigned long long":
+            return slm.assign_external_pointer_array_ull(
+                internal_var_name, var_size)
+        elif var_type == "float":
+            return slm.assign_external_pointer_array_f(
+                internal_var_name, var_size)
+        elif var_type == "double":
+            return slm.assign_external_pointer_array_d(
+                internal_var_name, var_size)
+        elif var_type == "long double":
+            return slm.assign_external_pointer_array_ld(
+                internal_var_name, var_size)
+        else:
+            raise TypeError("unsupported var_type '{}'".format(var_type))
+
+    def _load_vars(self, slm, scalar, size=None, var_dict=None):
+        # If no size is specified, use standard size
+        if size is None:
+            size = self.size
+
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+
+        # Loop through variables
+        for var_name, var_data in iteritems(var_dict):
+            # Get view
+            var_data.view = self._assign_external_pointer(slm, scalar,
+                                                          var_name, size,
+                                                          var_data.type)
+
+            # If manual initialisation is required, copy over variables
+            if var_data.init_required:
+                var_data.view[:] = var_data.values
+
+    def _load_egp(self, slm, scalar, egp_dict=None):
+        # If no EGP dictionary is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Loop through extra global params
+        for egp_name, egp_data in iteritems(egp_dict):
+            # if auto allocation is not enabled, let the user care about
+            # allocation and initialization of the EGP
+            if egp_data.needs_allocation:
+                slm.allocate_extra_global_param(self.name, egp_name,
+                                                len(egp_data.values))
+                egp_data.view = self._assign_external_pointer(
+                    slm, scalar, egp_name, len(egp_data.values),
+                    egp_data.type[:-1])
+                if egp_data.init_required:
+                    egp_data.view[:] = egp_data.values
+
+class NeuronGroup(Group):
 
     """Class representing a group of neurons"""
 
-    def __init__( self, name ):
+    def __init__(self, name):
         """Init NeuronGroup
 
         Args:
-        name -- string name of the group
+        name    --  string name of the group
         """
-        super( NeuronGroup, self ).__init__( name )
+        super(NeuronGroup, self).__init__(name)
         self.neuron = None
         self.spikes = None
-        self.spikeCount = None
-        self.spikeQuePtr = [0]
-        self.isSpikeSourceArray = False
-        self._maxDelaySteps = 0
+        self.spike_count = None
+        self.spike_que_ptr = [0]
+        self.is_spike_source_array = False
+        self._max_delay_steps = 0
 
     @property
-    def currentSpikes( self ):
+    def current_spikes(self):
         """Current spikes from GeNN"""
-        return self.spikes[self.spikeQuePtr[0] * self.size :
-                self.spikeQuePtr[0] * self.size + self.spikeCount[self.spikeQuePtr[0]]]
+        offset = self.spike_que_ptr[0] * self.size
+        return self.spikes[
+            offset:offset + self.spike_count[self.spike_que_ptr[0]]]
 
     @property
-    def delaySlots( self ):
+    def delay_slots(self):
         """Maximum delay steps needed for this group"""
-        return self.pop.getNumDelaySlots()
+        return self.pop.get_num_delay_slots()
 
     @property
-    def size( self ):
-        return self.pop.getNumNeurons()
+    def size(self):
+        return self.pop.get_num_neurons()
 
-    def setNeuron( self, model, paramSpace, varSpace ):
+    def set_neuron(self, model, param_space, var_space):
         """Set neuron, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        paramSpace -- dict with model parameters
-        varSpace   -- dict with model variables
+        model       --  type as string of intance of the model
+        param_space --  dict with model parameters
+        var_space   --  dict with model variables
         """
-        ( self.neuron, self.type, self.paramNames, self.params, self.varNames,
-            self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                           varSpace,
-                                                           genn_wrapper.NeuronModels )
-        if self.type == 'SpikeSourceArray':
-            self.isSpikeSourceArray = True
+        (self.neuron, self.type, self.param_names, self.params,
+         self.var_names, self.vars) = model_preprocessor.prepare_model(
+             model, param_space, var_space,
+             model_family=genn_wrapper.NeuronModels)
 
-    def addTo( self, nnModel, numNeurons ):
+        if self.type == "SpikeSourceArray":
+            self.is_spike_source_array = True
+
+    def add_to(self, nn_model, num_neurons):
         """Add this NeuronGroup to the GeNN NNmodel
 
         Args:
-        nnModel    -- GeNN NNmodel
-        numNeurons -- int number of neurons
+        nn_model    --  GeNN NNmodel
+        num_neurons --  int number of neurons
         """
-        addFct = getattr( nnModel, 'addNeuronPopulation_' + self.type )
+        add_fct = getattr(nn_model, "add_neuron_population_" + self.type)
 
-        varIni = model_preprocessor.varSpaceToVarValues( self.neuron, self.vars )
-        self.pop = addFct( self.name, numNeurons, self.neuron,
-                           self.params, varIni )
+        var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
+        self.pop = add_fct(self.name, num_neurons, self.neuron,
+                           self.params, var_ini)
 
-        for varName, var in iteritems( self.vars ):
-            if var.initRequired:
-                self.pop.setVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+        for var_name, var in iteritems(self.vars):
+            if var.init_required:
+                self.pop.set_var_mode(var_name,
+                                      VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
-    def addExtraGlobalParam( self, paramName, paramValues ):
+    def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
 
         Args:
-        paramName   -- string with the name of the extra global parameter
-        paramValues -- iterable or a single value
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
         """
-        self._addExtraGlobalParam( paramName, paramValues, self.neuron )
+        self._add_extra_global_param(param_name, param_values, self.neuron)
 
+    def load(self, slm, scalar):
+        """Loads neuron group
 
-class SynapseGroup( Group ):
+        Args:
+        slm --  SharedLibraryModel instance for acccessing variables
+        """
+
+        slm.init_neuron_pop_io(self.name)
+        self.spikes = self._assign_external_pointer(
+            slm, scalar, "glbSpk", self.size * self.delay_slots, "unsigned int")
+        self.spike_count = self._assign_external_pointer(
+            slm, scalar, "glbSpkCnt", self.delay_slots, "unsigned int")
+        if self.delay_slots > 1:
+            self.spike_que_ptr = slm.assign_external_pointer_single_ui(
+                "spkQuePtr" + self.name)
+
+        # Load neuron state variables
+        self._load_vars(slm, scalar)
+
+        # Load neuron extra global params
+        self._load_egp(slm, scalar)
+
+class SynapseGroup(Group):
 
     """Class representing synaptic connection between two groups of neurons"""
 
-    def __init__( self, name ):
+    def __init__(self, name):
         """Init SynapseGroup
 
         Args:
-        name -- string name of the group
+        name    --  string name of the group
         """
-        self.sparse = False
-        self.connectionsSet = False
-        super( SynapseGroup, self ).__init__( name )
-        self.wUpdate = None
+        self.connections_set = False
+        super(SynapseGroup, self).__init__(name)
+        self.w_update = None
         self.postsyn = None
         self.src = None
         self.trg = None
-    
+        self.psm_vars = {}
+        self.pre_vars = {}
+        self.post_vars = {}
+        self.connectivity_initialiser = None
+
     @property
-    def size( self ):
-        """Size of connection matrix"""
-        if not self.sparse:
-            return self.trg_size * self.src_size
-        else:
-            return self._size
+    def num_synapses(self):
+        """Number of synapses in group"""
+        if self.is_dense:
+            return self.trg.size * self.src.size
+        elif self.is_yale or self.is_ragged:
+            return self._num_synapses
 
-    @size.setter
-    def size( self, size ):
-        if self.sparse:
-            self._size = size
+    @property
+    def weight_update_var_size(self):
+        """Size of each weight update variable"""
+        if self.is_dense:
+            return self.trg.size * self.src.size
+        elif self.is_yale:
+            return self._num_synapses
+        elif self.is_ragged:
+            return self.max_row_length * self.src.size
 
-    def setWUpdate( self, model, paramSpace, varSpace ):
+    @property
+    def max_row_length(self):
+        return self.pop.get_max_connections()
+
+    def set_psm_var(self, var_name, values):
+        """Set values for a postsynaptic model variable
+
+        Args:
+        var_name    --  string with the name of the
+                        postsynaptic model variable
+        values      --  iterable or a single value
+        """
+        self.psm_vars[var_name].set_values(values)
+
+    def set_pre_var(self, var_name, values):
+        """Set values for a presynaptic variable
+
+        Args:
+        var_name    --  string with the name of the presynaptic variable
+        values      --  iterable or a single value
+        """
+        self.pre_vars[var_name].set_values(values)
+
+    def set_post_var(self, var_name, values):
+        """Set values for a postsynaptic variable
+
+        Args:
+        var_name    --  string with the name of the presynaptic variable
+        values      --  iterable or a single value
+        """
+        self.post_vars[var_name].set_values(values)
+
+    def set_weight_update(self, model, param_space,
+                          var_space, pre_var_space, post_var_space):
         """Set weight update model, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        paramSpace -- dict with model parameters
-        varSpace   -- dict with model variables
+        model           --  type as string of intance of the model
+        param_space     --  dict with model parameters
+        var_space       --  dict with model variables
+        pre_var_space   --  dict with model presynaptic variables
+        post_var_space  --  dict with model postsynaptic variables
         """
-        ( self.wUpdate, self.wuType, self.wuParamNames, self.wuParams, self.wuVarNames,
-            varDict ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                         varSpace,
-                                                         genn_wrapper.WeightUpdateModels )
-        self.vars.update( varDict )
+        (self.w_update, self.wu_type, self.wu_param_names, self.wu_params,
+         self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
+         self.wu_post_var_names, post_var_dict) =\
+             model_preprocessor.prepare_model(
+                 model, param_space, var_space, pre_var_space,
+                 post_var_space, model_family=genn_wrapper.WeightUpdateModels)
 
-    def setPostsyn( self, model, paramSpace, varSpace ):
+        self.vars.update(var_dict)
+        self.pre_vars.update(pre_var_dict)
+        self.post_vars.update(post_var_dict)
+
+    def set_post_syn(self, model, param_space, var_space):
         """Set postsynaptic model, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        paramSpace -- dict with model parameters
-        varSpace   -- dict with model variables
+        model       --  type as string of intance of the model
+        param_space --  dict with model parameters
+        var_space   --  dict with model variables
         """
-        ( self.postsyn, self.psType, self.psParamNames, self.psParams, self.psVarNames,
-            varDict ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                         varSpace,
-                                                         genn_wrapper.PostsynapticModels )
-        self.vars.update( varDict )
+        (self.postsyn, self.ps_type, self.ps_param_names, self.ps_params,
+         self.ps_var_names, var_dict) = model_preprocessor.prepare_model(
+             model, param_space, var_space,
+             model_family=genn_wrapper.PostsynapticModels)
+
+        self.psm_vars.update(var_dict)
+
+    def get_var_values(self, var_name):
+        var_view = self.vars[var_name].view
+
+        if self.is_dense or self.is_yale:
+            return np.copy(var_view)
+        elif self.is_ragged:
+            # Create array containing the index where each row starts in ind
+            row_start_idx = np.arange(0, self.weight_update_var_size,
+                                      self.max_row_length)
+
+            # Build list of subviews representing each row
+            rows = [var_view[i:i + r]
+                    for i, r in zip(row_start_idx, self.row_lengths)]
+
+            # Stack all rows together into single array
+            return np.hstack(rows)
+        else:
+            raise Exception("Matrix format not supported")
 
     @property
-    def matrixType( self ):
+    def is_connectivity_init_required(self):
+        return self.connectivity_initialiser is None
+
+    @property
+    def matrix_type(self):
         """Type of the projection matrix"""
-        return self._matrixType
+        return self._matrix_type
 
-    @matrixType.setter
-    def matrixType( self, matrixType ):
-        self._matrixType = getattr( genn_wrapper, 'SynapseMatrixType_' + matrixType )
-        if matrixType.startswith( 'SPARSE' ):
-            self.sparse = True
-            self.ind = None
-            self.indInG = None
-        else:
-            self.sparse = False
+    @matrix_type.setter
+    def matrix_type(self, matrix_type):
+        self._matrix_type = getattr(genn_wrapper,
+                                    "SynapseMatrixType_" + matrix_type)
 
-        if matrixType.endswith( 'GLOBALG' ):
-            self.globalG = True
-        else:
-            self.globalG = False
+    @property
+    def is_yale(self):
+        """Tests whether synaptic connectivity uses Yale format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_YALE) != 0
 
-    def setConnections( self, conns, g ):
-        """Set connections between two groups of neurons
+    @property
+    def is_ragged(self):
+        """Tests whether synaptic connectivity uses Ragged format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_RAGGED) != 0
+
+    @property
+    def is_bitmask(self):
+        """Tests whether synaptic connectivity uses Bitmask format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_BITMASK) != 0
+
+    @property
+    def is_dense(self):
+        """Tests whether synaptic connectivity uses dense format"""
+        return (self._matrix_type & SynapseMatrixConnectivity_DENSE) != 0
+
+    @property
+    def has_individual_synapse_vars(self):
+        """Tests whether synaptic connectivity has individual weights"""
+        return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL) != 0
+
+    @property
+    def has_individual_postsynaptic_vars(self):
+        """Tests whether synaptic connectivity has
+        individual postsynaptic model variables"""
+        return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
+
+    def set_sparse_connections(self, pre_indices, post_indices):
+        """Set yale or ragged foramt connections between two groups of neurons
 
         Args:
-        conns -- connections as tuples (pre, post)
-        g     -- strength of the connection
+        pre_indices     --  ndarray of presynaptic indices
+        post_indices    --  ndarray of postsynaptic indices
         """
-        if self.sparse:
-            conns.sort()
-            self.size = len( conns )
-            self.ind = [ post for (_, post) in conns ]
-            self.indInG = []
-            self.indInG.append( 0 )
-            curPre = 0
-            self.maxConn = 0
-            # convert connection tuples to indInG
-            for i, (pre, _) in enumerate( conns ):
-                while pre != curPre:
-                    self.indInG.append( i )
-                    curPre += 1
-            # if there are any "hanging" presynaptic neurons without connections,
-            # they should all point to the end of indInG
-            while len(self.indInG) < self.src_size + 1:
-                self.indInG.append( len(conns) )
-            # compute max number of connections from taget neuron to source
-            self.maxConn = int(max( [ self.indInG[i] - self.indInG[i-1] for i in range( len( self.indInG ) ) if i != 0 ] ) )
+        if self.is_yale or self.is_ragged:
+            # Lexically sort indices
+            self.synapse_order = np.lexsort((post_indices, pre_indices))
+       
+            # Count synapses
+            self._num_synapses = len(post_indices)
+           
+            # Count the number of synapses in each row
+            row_lengths = np.bincount(pre_indices, minlength=self.src.size)
+            row_lengths = row_lengths.astype(np.uint32)
+            
+            # Use maximum for max connections
+            max_row_length = int(np.amax(row_lengths))
+            self.pop.set_max_connections(max_row_length)
+            
+            # Set ind to sorted postsynaptic indices
+            self.ind = post_indices[self.synapse_order]
+
+            # If format is yale
+            if self.is_yale:
+                # Calculate cumulative sium
+                self.indInG = np.cumsum(row_lengths, dtype=np.uint32)
+                self.indInG = np.insert(self.indInG, 0, 0)
+
+                # Check validity of data structure
+                assert len(self.indInG) == (self.src.size + 1)
+                assert self.indInG[-1] == self._num_synapses
+            # Otherwise if it's ragged
+            else:
+                # Cache the row lengths
+                self.row_lengths = row_lengths
+
+                assert len(self.row_lengths) == self.src.size
         else:
-            self.gMask = [ pre * self.trg_size + post for (pre, post) in conns ]
-            self.size = self.trg_size * self.src_size
+            raise Exception("set_sparse_connections only supports"
+                            "ragged and yale format sparse connectivity")
 
-        if not self.globalG:
-            self.vars['g'].setValues( g )
-            self.pop.setWUVarMode( 'g', genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+        self.connections_set = True
 
-        self.connectionsSet = True
-        
-
-    def setConnectedPopulations( self, source, src_size, target, trg_size ):
+    def set_connected_populations(self, source, target):
         """Set two groups of neurons connected by this SynapseGroup
 
         Args:
         source   -- string name of the presynaptic neuron group
-        src_size -- number of neurons in the presynaptic group
         target   -- string name of the postsynaptic neuron group
-        trg_size -- number of neurons in the presynaptic group
         """
         self.src = source
         self.trg = target
-        self.src_size = src_size
-        self.trg_size = trg_size
 
-    def addTo( self, nnModel, delaySteps ):
+    def add_to(self, nn_model, delay_steps):
         """Add this SynapseGroup to the GeNN NNmodel
 
         Args:
-        nnModel -- GeNN NNmodel
+        nn_model -- GeNN NNmodel
         """
-        addFct = getattr( nnModel,
-                          ( 'addSynapsePopulation_' + 
-                            self.wuType + '_' + self.psType ) )
+        add_fct = getattr(
+            nn_model,
+            ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
 
-        wuVarIni = model_preprocessor.varSpaceToVarValues( self.wUpdate,
-                { vn : self.vars[vn] for vn in self.wuVarNames } )
-        psVarIni = model_preprocessor.varSpaceToVarValues( self.postsyn,
-                { vn : self.vars[vn] for vn in self.psVarNames } )
+        wu_var_ini = model_preprocessor.var_space_to_vals(
+            self.w_update, {vn: self.vars[vn]
+                            for vn in self.wu_var_names})
 
-        self.pop = addFct( self.name, self.matrixType, delaySteps,
-                           self.src, self.trg,
-                           self.wUpdate, self.wuParams, wuVarIni,
-                           self.postsyn, self.psParams, psVarIni )
+        wu_pre_var_ini = model_preprocessor.pre_var_space_to_vals(
+            self.w_update, {vn: self.pre_vars[vn]
+                            for vn in self.wu_pre_var_names})
 
-        for varName, var in iteritems( self.vars ):
-            if var.initRequired:
-                if varName in self.wuVarNames:
-                    self.pop.setWUVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
-                if varName in self.psVarNames:
-                    self.pop.setPSVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
-    
-    def addExtraGlobalParam( self, paramName, paramValues ):
+        wu_post_var_ini = model_preprocessor.post_var_space_to_vals(
+            self.w_update, {vn: self.post_vars[vn]
+                            for vn in self.wu_post_var_names})
+
+        ps_var_ini = model_preprocessor.var_space_to_vals(
+            self.postsyn, {vn: self.psm_vars[vn]
+                           for vn in self.ps_var_names})
+
+        # Use unitialised connectivity initialiser if none has been set
+        connect_init = (genn_wrapper.uninitialised_connectivity()
+                        if self.connectivity_initialiser is None
+                        else self.connectivity_initialiser)
+        self.pop = add_fct(self.name, self.matrix_type, delay_steps,
+                           self.src.name, self.trg.name, self.w_update,
+                           self.wu_params, wu_var_ini, wu_pre_var_ini,
+                           wu_post_var_ini, self.postsyn, self.ps_params,
+                           ps_var_ini, connect_init)
+
+        # Mark all weight update model state variables
+        # that require initialising on host
+        for var_name, var in iteritems(self.vars):
+            if var.init_required:
+                self.pop.set_wuvar_mode(var_name,
+                                        VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
+
+        # Mark all weight update model presynaptic state
+        # variables that require initialising on host
+        for var_name, var in iteritems(self.pre_vars):
+            if var.init_required:
+                self.pop.set_wupre_var_mode(var_name,
+                                            VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
+        # Mark all weight update model postsynaptic state
+        # variables that require initialising on host
+        for var_name, var in iteritems(self.post_vars):
+            if var.init_required:
+                self.pop.wu_post_var_names(var_name,
+                                           VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
+        # Mark all postsynaptic model state variables
+        # that require initialising on host
+        for var_name, var in iteritems(self.psm_vars):
+            if var.init_required:
+                self.pop.set_psvar_mode(var_name,
+                                        VarMode_LOC_HOST_DEVICE_INIT_HOST)
+
+    def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
 
         Args:
-        paramName   -- string with the name of the extra global parameter
-        paramValues -- iterable or a single value
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
         """
-        self._addExtraGlobalParam( paramName, paramValues, self.wUpdate )
+        self._add_extra_global_param(param_name, param_values, self.w_update)
+
+    def load(self, slm, scalar):
+        slm.init_synapse_pop_io(self.name)
+
+        # If synapse population has non-dense connectivity which
+        # requires initialising manually
+        if not self.is_dense and self.is_connectivity_init_required:
+            # If data is available
+            if self.connections_set:
+                if self.is_yale:
+                    # Allocate memory for Yale data structure
+                    slm.allocate_yale_proj(self.name, self.num_synapses)
+
+                    # Get pointers to yale data structure members
+                    ind = slm.assign_external_yale_ind(self.name,
+                                                       self.num_synapses)
+                    indInG = slm.assign_external_yale_ind_in_g(self.name,
+                                                               self.src.size)
+
+                    # Copy connection data in
+                    ind[:] = self.ind
+                    indInG[:] = self.indInG
+                elif self.is_ragged:
+                    # Get pointers to ragged data structure members
+                    ind = slm.assign_external_ragged_ind(
+                        self.name, self.weight_update_var_size)
+                    row_length = slm.assign_external_ragged_row_length(
+                        self.name, self.src.size)
+
+                    # Copy in row length
+                    row_length[:] = self.row_lengths
+
+                    # Create array containing the index where each row starts in ind
+                    row_start_idx = np.arange(0, self.weight_update_var_size,
+                                              self.max_row_length)
+
+                    # Loop through ragged matrix rows
+                    syn = 0
+                    for i, r in zip(row_start_idx, self.row_lengths):
+                        # Copy row from non-padded indices into correct location
+                        ind[i:i + r] = self.ind[syn:syn + r]
+                        syn += r
+                else:
+                    raise Exception("Matrix format not supported")
+            else:
+                raise Exception("For sparse projections, the connections"
+                                "must be set before loading a model")
+
+        # If population has individual synapse variables
+        if self.has_individual_synapse_vars:
+            # If weights are in dense or yale format
+            if self.is_dense or self.is_yale:
+                # Loop through weight update model state variables
+                for var_name, var_data in iteritems(self.vars):
+                    size = self.weight_update_var_size
+
+                    # Get view
+                    var_data.view = self._assign_external_pointer(
+                        slm, scalar, var_name, size, var_data.type)
+
+                    # If variable requires initialisation
+                    if var_data.init_required:
+                        # If connectivity is in Yale format, copy variables
+                        # into view, sorting to match GeNN order
+                        if self.is_yale:
+                            var_data.view[:] = var_data.values[self.synapse_order]
+                        # Otherwise, if connectivity is dense,
+                        # copy variables  directly into view
+                        # **NOTE** we assume order is row-major
+                        else:
+                            var_data.view[:] = var_data.values
+
+            # Otherwise, if weights are in ragged format
+            elif self.is_ragged:
+                # Create array containing the index where each row starts in ind
+                row_start_idx = np.arange(0, self.weight_update_var_size,
+                                          self.max_row_length)
+
+                # Loop through weight update model state variables
+                for var_name, var_data in iteritems(self.vars):
+                    size = self.weight_update_var_size
+
+                    # Get view
+                    var_data.view = self._assign_external_pointer(
+                        slm, scalar, var_name, size, var_data.type)
+
+                    # If variable requires initialisation
+                    if var_data.init_required:
+                        # Sort variable to match GeNN order
+                        sorted_var = var_data.values[self.synapse_order]
+
+                        # Loop through ragged matrix rows
+                        syn = 0
+                        for i, r in zip(row_start_idx, self.row_lengths):
+                            # Copy row from non-padded indices into correct location
+                            var_data.view[i:i + r] = sorted_var[syn:syn + r]
+                            syn += r
+            else:
+                raise Exception("Matrix format not supported")
 
 
-class CurrentSource( Group ):
+        # Load weight update model presynaptic variables
+        self._load_vars(slm, scalar, self.src.size, self.pre_vars)
+
+        # Load weight update model postsynaptic variables
+        self._load_vars(slm, scalar, self.trg.size, self.post_vars)
+
+        # Load postsynaptic update model variables
+        if self.has_individual_postsynaptic_vars:
+            self._load_vars(slm, scalar, self.trg.size, self.psm_vars)
+
+
+class CurrentSource(Group):
 
     """Class representing a current injection into a group of neurons"""
 
-    def __init__( self, name ):
+    def __init__(self, name):
         """Init CurrentSource
 
         Args:
         name -- string name of the current source
         """
-        super( CurrentSource, self ).__init__( name )
-        self.currentSourceModel = None
-        self.targetPop = None
+        super(CurrentSource, self).__init__(name)
+        self.current_source_model = None
+        self.target_pop = None
 
     @property
-    def size( self ):
+    def size(self):
         """Number of neuron in the injected population"""
-        return self.targetPop.size
+        return self.target_pop.size
 
     @size.setter
-    def size( self, _ ):
+    def size(self, _):
         pass
 
-    def setCurrentSourceModel( self, model, paramSpace, varSpace ):
+    def set_current_source_model(self, model, param_space, var_space):
         """Set curront source model, its parameters and initial variables
 
         Args:
-        model      -- type as string of intance of the model
-        paramSpace -- dict with model parameters
-        varSpace   -- dict with model variables
+        model       --  type as string of intance of the model
+        param_space --  dict with model parameters
+        var_space   --  dict with model variables
         """
-        ( self.currentSourceModel, self.type, self.paramNames, self.params, self.varNames,
-            self.vars ) = model_preprocessor.prepareModel( model, paramSpace,
-                                                           varSpace,
-                                                           genn_wrapper.CurrentSourceModels )
+        (self.current_source_model, self.type, self.param_names, self.params,
+         self.var_names, self.vars) = model_preprocessor.prepare_model(
+             model, param_space, var_space,
+             model_family=genn_wrapper.CurrentSourceModels)
 
-    def addTo( self, nnModel, pop ):
-        """Inject this CurrentSource into population and add add it to the GeNN NNmodel
+    def add_to(self, nn_model, pop):
+        """Inject this CurrentSource into population and
+        add it to the GeNN NNmodel
 
         Args:
-        pop     -- instance of NeuronGroup into which this CurrentSource should be injected
-        nnModel -- GeNN NNmodel
+        pop         --  instance of NeuronGroup into which this CurrentSource
+                        should be injected
+        nn_model    --  GeNN NNmodel
         """
-        addFct = getattr( nnModel, 'addCurrentSource_' + self.type )
-        self.targetPop = pop
+        add_fct = getattr(nn_model, "add_current_source_" + self.type)
+        self.target_pop = pop
 
-        varIni = model_preprocessor.varSpaceToVarValues( self.currentSourceModel, self.vars )
-        self.pop = addFct( self.name, self.currentSourceModel, pop.name,
-                           self.params, varIni )
+        var_ini = model_preprocessor.var_space_to_vals(
+            self.current_source_model, self.vars)
+        self.pop = add_fct(self.name, self.current_source_model, pop.name,
+                           self.params, var_ini)
 
-        for varName, var in iteritems( self.vars ):
-            if var.initRequired:
-                self.pop.setVarMode( varName, genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_HOST )
+        for var_name, var in iteritems(self.vars):
+            if var.init_required:
+                self.pop.set_var_mode(var_name,
+                                      VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
-    def addExtraGlobalParam( self, paramName, paramValues ):
+    def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
 
         Args:
-        paramName   -- string with the name of the extra global parameter
-        paramValues -- iterable or a single value
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
         """
-        self._addExtraGlobalParam( paramName, paramValues, self.currentSourceModel )
+        self._add_extra_global_param(param_name, param_values,
+                                     self.current_source_model)
+
+    def load(self, slm, scalar):
+        slm.init_current_source_io(self.name)
+
+        # Load current source variables
+        self._load_vars(slm, scalar)
+
+        # Load current source extra global parameters
+        self._load_egp(slm, scalar)

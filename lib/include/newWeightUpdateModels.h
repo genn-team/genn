@@ -7,6 +7,12 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
+#define DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS)    \
+    DECLARE_SNIPPET(TYPE, NUM_PARAMS)                                                           \
+    typedef NewModels::VarInitContainerBase<NUM_VARS> VarValues;                                \
+    typedef NewModels::VarInitContainerBase<NUM_PRE_VARS> PreVarValues;                         \
+    typedef NewModels::VarInitContainerBase<NUM_POST_VARS> PostVarValues;
+
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const{ return SIM_CODE; }
 #define SET_EVENT_CODE(EVENT_CODE) virtual std::string getEventCode() const{ return EVENT_CODE; }
 #define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const{ return LEARN_POST_CODE; }
@@ -16,6 +22,11 @@
 #define SET_SIM_SUPPORT_CODE(SIM_SUPPORT_CODE) virtual std::string getSimSupportCode() const{ return SIM_SUPPORT_CODE; }
 #define SET_LEARN_POST_SUPPORT_CODE(LEARN_POST_SUPPORT_CODE) virtual std::string getLearnPostSupportCode() const{ return LEARN_POST_SUPPORT_CODE; }
 #define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string getSynapseDynamicsSuppportCode() const{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
+#define SET_PRE_SPIKE_CODE(PRE_SPIKE_CODE) virtual std::string getPreSpikeCode() const{ return PRE_SPIKE_CODE; }
+#define SET_POST_SPIKE_CODE(POST_SPIKE_CODE) virtual std::string getPostSpikeCode() const{ return POST_SPIKE_CODE; }
+
+#define SET_PRE_VARS(...) virtual StringPairVec getPreVars() const{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual StringPairVec getPostVars() const{ return __VA_ARGS__; }
 
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
 
@@ -71,6 +82,26 @@ public:
         to be available for both GPU and CPU versions. */
     virtual std::string getSynapseDynamicsSuppportCode() const{ return ""; }
 
+    //! Gets code to be run once per spiking presynaptic
+    //! neuron before sim code is run on synapses
+    /*! This is typically for the code to update presynaptic variables. Postsynaptic
+        and synapse variables are not accesible from within this code */
+    virtual std::string getPreSpikeCode() const{ return ""; }
+
+    //! Gets code to be run once per spiking postsynaptic
+    //! neuron before learn post code is run on synapses
+    /*! This is typically for the code to update postsynaptic variables. Presynaptic
+        and synapse variables are not accesible from within this code */
+    virtual std::string getPostSpikeCode() const{ return ""; }
+
+    //! Gets names and types (as strings) of state variables that are common
+    //! across all synapses coming from the same presynaptic neuron
+    virtual StringPairVec getPreVars() const{ return {}; }
+
+    //! Gets names and types (as strings) of state variables that are common
+    //! across all synapses going to the same postsynaptic neuron
+    virtual StringPairVec getPostVars() const{ return {}; }
+
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
     virtual StringPairVec getExtraGlobalParams() const{ return {}; }
@@ -80,6 +111,22 @@ public:
 
     //! Whether postsynaptic spike times are needed or not
     virtual bool isPostSpikeTimeRequired() const{ return false; }
+
+    //------------------------------------------------------------------------
+    // Public methods
+    //------------------------------------------------------------------------
+    //! Find the index of a named presynaptic variable
+    size_t getPreVarIndex(const std::string &varName) const
+    {
+        return getVarIndex(varName, getPreVars());
+    }
+
+    //! Find the index of a named postsynaptic variable
+    size_t getPostVarIndex(const std::string &varName) const
+    {
+        return getVarIndex(varName, getPostVars());
+    }
+
 };
 
 //----------------------------------------------------------------------------
@@ -148,7 +195,7 @@ public:
 class StaticPulse : public Base
 {
 public:
-    DECLARE_MODEL(StaticPulse, 0, 1);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0);
 
     SET_VARS({{"g", "scalar"}});
 
@@ -210,7 +257,7 @@ public:
 class StaticGraded : public Base
 {
 public:
-    DECLARE_MODEL(StaticGraded, 2, 1);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 2, 1, 0, 0);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar"}});
@@ -280,7 +327,7 @@ public:
 class PiecewiseSTDP : public Base
 {
 public:
-    DECLARE_MODEL(PiecewiseSTDP, 10, 2);
+    DECLARE_WEIGHT_UPDATE_MODEL(PiecewiseSTDP, 10, 2, 0, 0);
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
         "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});

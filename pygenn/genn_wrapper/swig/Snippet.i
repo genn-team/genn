@@ -16,6 +16,8 @@
 #include "snippet.h"
 %}
 
+%rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
+
 %import "StlContainers.i"
 
 %feature("director") Snippet::Base; // for inheritance in python
