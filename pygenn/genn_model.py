@@ -155,9 +155,18 @@ class GeNNModel(object):
         """Simulation time in ms"""
         return self._T[0]
 
+    @t.setter
+    def t(self, t):
+        self._T[0] = t
+
+    @property
     def timestep(self):
         """Simulation time step"""
         return self._TS[0]
+
+    @timestep.setter
+    def timestep(self, timestep):
+        self._TS[0] = timestep
 
     @property
     def dT(self):
