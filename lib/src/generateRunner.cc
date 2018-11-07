@@ -3132,7 +3132,12 @@ void genMakefile(const NNmodel &model, //!< Model description
         os << "\t$(NVCC) -M $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc 1> librunner.d" << endl;
         // **HACK** for reasons known only to itself, NVCC won't create dependencies for targets
         // called anything other than runner.o. Therefore we use sed to fix up the first line of the dependency file
+        // **HACK** Mac OS X sed required the suffix to explicitly be set
+#ifdef __APPLE__
         os << "\tsed -i \"\" \"1s/runner.o/librunner.so/\" librunner.d" << endl;
+#else
+        os << "\tsed -i \"1s/runner.o/librunner.so/\" librunner.d" << endl;
+#endif
         os << endl;
         os << "librunner.so: runner.cc librunner.d" << endl;
         os << "\t$(NVCC) --shared $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
