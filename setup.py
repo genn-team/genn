@@ -26,7 +26,7 @@ swig_opts = ["-c++", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
 include_dirs = [genn_include, genn_wrapper_include, genn_wrapper_generated,
                 os.path.join(numpy_path, "core", "include")]
 
-library_dirs = [genn_wrapper_path]
+library_dirs = []
 
 genn_wrapper_macros=[("GENERATOR_MAIN_HANDLED", None)]
 extra_compile_args = ["-std=c++11"]
@@ -67,7 +67,7 @@ extension_kwargs = {
     "swig_opts": swig_opts,
     "include_dirs": include_dirs,
     "libraries": libraries,
-    "library_dirs": library_dirs,
+    "library_dirs": library_dirs + [genn_wrapper_path],
     "runtime_library_dirs": library_dirs,
     "extra_compile_args" : extra_compile_args}
 
