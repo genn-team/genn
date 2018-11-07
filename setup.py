@@ -2,12 +2,14 @@
 import numpy as np
 import os
 
+from platform import system
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
 from generate_swig_interfaces import generateConfigs
 
 cpu_only = "CUDA_PATH" not in os.environ
+mac_os_x = system() == "Darwin"
 
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
@@ -39,8 +41,11 @@ if not cpu_only:
     
     # Add CUDA include and library path
     include_dirs.append(os.path.join(cuda_path, "include"))
-    library_dirs.append(os.path.join(cuda_path, "lib64"))
-    
+    if mac_os_x:
+        library_dirs.append(os.path.join(cuda_path, "lib"))
+    else:
+        library_dirs.append(os.path.join(cuda_path, "lib64"))
+
     # Add macro to point GeNN to NVCC compiler
     genn_wrapper_macros.append(("NVCC", "\"" + os.path.join(cuda_path, "bin", "nvcc") + "\""))
 else:
