@@ -2,6 +2,10 @@
 This module provides classes which automatize model checks and parameter
 convesions for GeNN Groups
 """
+try:
+    xrange
+except NameError:  # Python 3
+    xrange = range
 
 from six import iteritems
 import numpy as np
@@ -156,6 +160,21 @@ class Group(object):
             if var_data.init_required:
                 var_data.view[:] = var_data.values
 
+    def _reinitialise_vars(self, slm, scalar, size=None, var_dict=None):
+        # If no size is specified, use standard size
+        if size is None:
+            size = self.size
+
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+
+        # Loop through variables
+        for var_name, var_data in iteritems(var_dict):
+            # If manual initialisation is required, copy over variables
+            if var_data.init_required:
+                var_data.view[:] = var_data.values
+
     def _load_egp(self, slm, scalar, egp_dict=None):
         # If no EGP dictionary is specified, use standard one
         if egp_dict is None:
@@ -255,7 +274,8 @@ class NeuronGroup(Group):
         """Loads neuron group
 
         Args:
-        slm --  SharedLibraryModel instance for acccessing variables
+        slm --      SharedLibraryModel instance for acccessing variables
+        scalar --   String specifying "scalar" type
         """
 
         slm.init_neuron_pop_io(self.name)
@@ -272,6 +292,17 @@ class NeuronGroup(Group):
 
         # Load neuron extra global params
         self._load_egp(slm, scalar)
+
+    def reinitialise(self, slm, scalar):
+        """Reinitialise neuron group
+
+        Args:
+        slm --      SharedLibraryModel instance for acccessing variables
+        scalar --   String specifying "scalar" type
+        """
+
+        # Reinitialise neuron state variables
+        self._reinitialise_vars(slm, scalar)
 
 class SynapseGroup(Group):
 
@@ -387,9 +418,9 @@ class SynapseGroup(Group):
         if self.is_dense or self.is_yale:
             return np.copy(var_view)
         elif self.is_ragged:
-            # Create array containing the index where each row starts in ind
-            row_start_idx = np.arange(0, self.weight_update_var_size,
-                                      self.max_row_length)
+            # Create range containing the index where each row starts in ind
+            row_start_idx = xrange(0, self.weight_update_var_size,
+                                   self.max_row_length)
 
             # Build list of subviews representing each row
             rows = [var_view[i:i + r]
@@ -455,18 +486,18 @@ class SynapseGroup(Group):
         if self.is_yale or self.is_ragged:
             # Lexically sort indices
             self.synapse_order = np.lexsort((post_indices, pre_indices))
-       
+
             # Count synapses
             self._num_synapses = len(post_indices)
-           
+
             # Count the number of synapses in each row
             row_lengths = np.bincount(pre_indices, minlength=self.src.size)
             row_lengths = row_lengths.astype(np.uint32)
-            
+
             # Use maximum for max connections
             max_row_length = int(np.amax(row_lengths))
             self.pop.set_max_connections(max_row_length)
-            
+
             # Set ind to sorted postsynaptic indices
             self.ind = post_indices[self.synapse_order]
 
@@ -606,9 +637,9 @@ class SynapseGroup(Group):
                     # Copy in row length
                     row_length[:] = self.row_lengths
 
-                    # Create array containing the index where each row starts in ind
-                    row_start_idx = np.arange(0, self.weight_update_var_size,
-                                              self.max_row_length)
+                    # Create (x)range containing the index where each row starts in ind
+                    row_start_idx = xrange(0, self.weight_update_var_size,
+                                           self.max_row_length)
 
                     # Loop through ragged matrix rows
                     syn = 0
@@ -624,56 +655,16 @@ class SynapseGroup(Group):
 
         # If population has individual synapse variables
         if self.has_individual_synapse_vars:
-            # If weights are in dense or yale format
-            if self.is_dense or self.is_yale:
-                # Loop through weight update model state variables
-                for var_name, var_data in iteritems(self.vars):
-                    size = self.weight_update_var_size
+            # Loop through weight update model state variables
+            for var_name, var_data in iteritems(self.vars):
+                # Get view
+                var_data.view = self._assign_external_pointer(
+                    slm, scalar, var_name,
+                    self.weight_update_var_size,
+                    var_data.type)
 
-                    # Get view
-                    var_data.view = self._assign_external_pointer(
-                        slm, scalar, var_name, size, var_data.type)
-
-                    # If variable requires initialisation
-                    if var_data.init_required:
-                        # If connectivity is in Yale format, copy variables
-                        # into view, sorting to match GeNN order
-                        if self.is_yale:
-                            var_data.view[:] = var_data.values[self.synapse_order]
-                        # Otherwise, if connectivity is dense,
-                        # copy variables  directly into view
-                        # **NOTE** we assume order is row-major
-                        else:
-                            var_data.view[:] = var_data.values
-
-            # Otherwise, if weights are in ragged format
-            elif self.is_ragged:
-                # Create array containing the index where each row starts in ind
-                row_start_idx = np.arange(0, self.weight_update_var_size,
-                                          self.max_row_length)
-
-                # Loop through weight update model state variables
-                for var_name, var_data in iteritems(self.vars):
-                    size = self.weight_update_var_size
-
-                    # Get view
-                    var_data.view = self._assign_external_pointer(
-                        slm, scalar, var_name, size, var_data.type)
-
-                    # If variable requires initialisation
-                    if var_data.init_required:
-                        # Sort variable to match GeNN order
-                        sorted_var = var_data.values[self.synapse_order]
-
-                        # Loop through ragged matrix rows
-                        syn = 0
-                        for i, r in zip(row_start_idx, self.row_lengths):
-                            # Copy row from non-padded indices into correct location
-                            var_data.view[i:i + r] = sorted_var[syn:syn + r]
-                            syn += r
-            else:
-                raise Exception("Matrix format not supported")
-
+                # Initialise variable if necessary
+                self._init_wum_var(var_data)
 
         # Load weight update model presynaptic variables
         self._load_vars(slm, scalar, self.src.size, self.pre_vars)
@@ -685,6 +676,59 @@ class SynapseGroup(Group):
         if self.has_individual_postsynaptic_vars:
             self._load_vars(slm, scalar, self.trg.size, self.psm_vars)
 
+    def reinitialise(self, slm, scalar):
+        """Reinitialise synapse group
+
+        Args:
+        slm --      SharedLibraryModel instance for acccessing variables
+        scalar --   String specifying "scalar" type
+        """
+        # If population has individual synapse variables
+        if self.has_individual_synapse_vars:
+            # Loop through weight update model state variables
+            # and initialise if necessary
+            for var_name, var_data in iteritems(self.vars):
+                self._init_wum_var(var_data)
+
+        # Reinitialise weight update model presynaptic variables
+        self._reinitialise_vars(slm, scalar, self.src.size, self.pre_vars)
+
+        # Reinitialise weight update model postsynaptic variables
+        self._reinitialise_vars(slm, scalar, self.trg.size, self.post_vars)
+
+        # Reinitialise postsynaptic update model variables
+        if self.has_individual_postsynaptic_vars:
+            self._reinitialise_vars(slm, scalar, self.trg.size, self.psm_vars)
+
+    def _init_wum_var(self, var_data):
+        # If initialisation is required
+        if var_data.init_required:
+            # If connectivity is in Yale format, copy variables
+            # into view, sorting to match GeNN order
+            if self.is_yale:
+                var_data.view[:] = var_data.values[self.synapse_order]
+            # Otherwise, if connectivity is dense,
+            # copy variables  directly into view
+            # **NOTE** we assume order is row-major
+            elif self.is_dense:
+                var_data.view[:] = var_data.values
+            elif self.is_ragged:
+                # Sort variable to match GeNN order
+                sorted_var = var_data.values[self.synapse_order]
+
+                # Create (x)range containing the index
+                # where each row starts in ind
+                row_start_idx = xrange(0, self.weight_update_var_size,
+                                       self.max_row_length)
+
+                # Loop through ragged matrix rows
+                syn = 0
+                for i, r in zip(row_start_idx, self.row_lengths):
+                    # Copy row from non-padded indices into correct location
+                    var_data.view[i:i + r] = sorted_var[syn:syn + r]
+                    syn += r
+            else:
+                raise Exception("Matrix format not supported")
 
 class CurrentSource(Group):
 
@@ -762,3 +806,14 @@ class CurrentSource(Group):
 
         # Load current source extra global parameters
         self._load_egp(slm, scalar)
+
+    def reinitialise(self, slm, scalar):
+        """Reinitialise current source
+
+        Args:
+        slm --      SharedLibraryModel instance for acccessing variables
+        scalar --   String specifying "scalar" type
+        """
+
+        # Reinitialise current source state variables
+        self._reinitialise_vars(slm, scalar)
