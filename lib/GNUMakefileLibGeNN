@@ -128,7 +128,7 @@ $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
 	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGSs) -o $@ $(LIBGENN_OBJ)
 else
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
-        $(CXX) -shared $(CXXFLAGSs) -o $@ $(LIBGENN_OBJ)
+	$(CXX) -shared $(CXXFLAGSs) -o $@ $(LIBGENN_OBJ)
 endif
 else
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
