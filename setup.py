@@ -10,6 +10,7 @@ from generate_swig_interfaces import generateConfigs
 
 cpu_only = "CUDA_PATH" not in os.environ
 mac_os_x = system() == "Darwin"
+linux = system() == "Linux"
 
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
@@ -27,7 +28,6 @@ include_dirs = [genn_include, genn_wrapper_include, genn_wrapper_generated,
                 os.path.join(numpy_path, "core", "include")]
 
 library_dirs = []
-
 genn_wrapper_macros=[("GENERATOR_MAIN_HANDLED", None)]
 extra_compile_args = ["-std=c++11"]
 
@@ -61,7 +61,8 @@ else:
     swig_opts.append("-DCPU_ONLY")
     extra_compile_args.append("-DCPU_ONLY")
 
-    # Make sure LibGeNN gets packages                                                                                                   package_data = ["genn_wrapper/*genn_CPU_ONLY_DYNAMIC.*"]
+    # Make sure LibGeNN gets packages
+    package_data = ["genn_wrapper/*genn_CPU_ONLY_DYNAMIC.*"]
 
 extension_kwargs = {
     "swig_opts": swig_opts,
@@ -74,9 +75,13 @@ extension_kwargs = {
 # **HACK** on Mac OSX, "runtime_library_dirs" 
 # doesn't actually work so add rpath manually instead
 if mac_os_x:
-    extension_kwargs["extra_link_args"] = ["-Wl,-rpath," + l for l in library_dirs]
+    extension_kwargs["extra_link_args"] = ["-Wl,-rpath," + l
+                                           for l in library_dirs]
+# Conversely, on Linux, we want to add extension directory i.e. $ORIGIN to runtime
+#directories so ligGeNN can be found wherever package is installed
+elif linux:
+    extension_kwargs["runtime_library_dirs"].append("$ORIGIN")
 
-print library_dirs
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path)
 
