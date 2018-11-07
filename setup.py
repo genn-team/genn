@@ -48,11 +48,20 @@ if not cpu_only:
 
     # Add macro to point GeNN to NVCC compiler
     genn_wrapper_macros.append(("NVCC", "\"" + os.path.join(cuda_path, "bin", "nvcc") + "\""))
+
+    # Make sure LibGeNN gets packages
+    package_data = ["genn_wrapper/*genn_DYNAMIC.*"]
+# Otherwise
 else:
+    # Link against CPU-only version of GeNN
     libraries = ["genn_CPU_ONLY_DYNAMIC"]
+
+    # Set CPU_ONLY macro everywhere
     genn_wrapper_macros.append(("CPU_ONLY","1"))
     swig_opts.append("-DCPU_ONLY")
     extra_compile_args.append("-DCPU_ONLY")
+
+    # Make sure LibGeNN gets packages                                                                                                   package_data = ["genn_wrapper/*genn_CPU_ONLY_DYNAMIC.*"]
 
 extension_kwargs = {
     "swig_opts": swig_opts,
@@ -62,6 +71,12 @@ extension_kwargs = {
     "runtime_library_dirs": library_dirs,
     "extra_compile_args" : extra_compile_args}
 
+# **HACK** on Mac OSX, "runtime_library_dirs" 
+# doesn't actually work so add rpath manually instead
+if mac_os_x:
+    extension_kwargs["extra_link_args"] = ["-Wl,-rpath," + l for l in library_dirs]
+
+print library_dirs
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path)
 
@@ -82,6 +97,8 @@ genn_wrapper = Extension('_genn_wrapper', [
 setup(name = "pygenn",
       version = "0.1",
       packages = find_packages(),
+      package_data={"pygenn": package_data},
+
       url="https://github.com/genn-team/genn",
       author="University of Sussex",
       description="Python interface to the GeNN simulator",
