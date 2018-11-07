@@ -41,7 +41,11 @@ LIBGENN_PATH             :=$(GENN_PATH)/lib/lib
 LIBGENN_OBJ_PATH         :=$(GENN_PATH)/lib/obj$(LIBGENN_PREFIX)
 
 ifdef DYNAMIC
-    LIBGENN              :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).so
+    ifeq ($(DARWIN),DARWIN)
+        LIBGENN          :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).dylib
+    else
+        LIBGENN          :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).so
+    endif
 else
     LIBGENN              :=$(LIBGENN_PATH)/libgenn$(LIBGENN_PREFIX).a
 endif
@@ -119,8 +123,13 @@ ifdef MPI_ENABLE
 endif
 
 ifdef DYNAMIC
+ifeq ($(DARWIN),DARWIN)
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
-	$(CXX) -shared $(CXXFLAGSs) -o $@ $(LIBGENN_OBJ)
+	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGSs) -o $@ $(LIBGENN_OBJ)
+else
+$(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
+        $(CXX) -shared $(CXXFLAGSs) -o $@ $(LIBGENN_OBJ)
+endif
 else
 $(LIBGENN): $(LIBGENN_OBJ_PATH) $(LIBGENN_OBJ) $(LIBGENN_PATH)
 	$(AR) $(ARFLAGS) $@ $(LIBGENN_OBJ)
