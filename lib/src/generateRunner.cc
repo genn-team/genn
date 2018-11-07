@@ -133,7 +133,7 @@ void allocate_device_variable(CodeStream &os, const string &type, const string &
 }
 
 //--------------------------------------------------------------------------
-//! \brief This function generates host and device allocation with standard names (name, d_name, dd_name) and estimates size based on size known at generate-time
+//! \brief This function generates host and device allocation with standard names (name, d_name, dd_name) and estimates size base on size known at generate-time
 //--------------------------------------------------------------------------
 unsigned int allocate_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
 {
@@ -3132,13 +3132,13 @@ void genMakefile(const NNmodel &model, //!< Model description
         os << "\t$(NVCC) -M $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc 1> librunner.d" << endl;
         // **HACK** for reasons known only to itself, NVCC won't create dependencies for targets
         // called anything other than runner.o. Therefore we use sed to fix up the first line of the dependency file
-        os << "\tsed -i \"1s/runner.o/librunner.so/\" librunner.d" << endl;
+        os << "\tsed -i \"\" \"1s/runner.o/librunner.so/\" librunner.d" << endl;
         os << endl;
         os << "librunner.so: runner.cc librunner.d" << endl;
         os << "\t$(NVCC) --shared $(NVCCFLAGS) $(INCLUDEFLAGS) runner.cc $(GENN_PATH)/lib/src/sparseUtils.cc -o librunner.so" << endl;
         os << endl;
         os << "clean:" << endl;
-        os << "\trm -f librunner.so runner.d" << endl;
+        os << "\trm -f librunner.so librunner.d" << endl;
     }
     else {
         os << "all: runner.o" << endl;
