@@ -9,11 +9,11 @@ except NameError:  # Python 3
 
 from six import iteritems
 import numpy as np
-import genn_wrapper
-import model_preprocessor
-from model_preprocessor import Variable
-from genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
-from genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
+from . import genn_wrapper
+from . import model_preprocessor
+from .model_preprocessor import Variable
+from .genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
+from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                           SynapseMatrixConnectivity_YALE,
                           SynapseMatrixConnectivity_RAGGED,
                           SynapseMatrixConnectivity_BITMASK,

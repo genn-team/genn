@@ -1,1 +1,1 @@
-from genn_wrapper import *
+from .genn_wrapper import *

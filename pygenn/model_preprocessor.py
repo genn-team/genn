@@ -3,9 +3,9 @@ This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
 import numpy as np
-import genn_wrapper
-from genn_wrapper.NewModels import VarInit, VarInitVector
-from genn_wrapper.StlContainers import DoubleVector
+from . import genn_wrapper
+from .genn_wrapper.NewModels import VarInit, VarInitVector
+from .genn_wrapper.StlContainers import DoubleVector
 
 
 def prepare_model(model, param_space, var_space, pre_var_space=None,

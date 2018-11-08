@@ -46,20 +46,20 @@ from textwrap import dedent
 import numpy as np
 from six import iteritems, itervalues
 # pygenn imports
-import genn_wrapper
-import genn_wrapper.SharedLibraryModel as slm
-from genn_wrapper.NewModels import VarInit
-from genn_wrapper.InitSparseConnectivitySnippet import Init
-from genn_wrapper.Snippet import make_dpf
-from genn_wrapper.InitSparseConnectivitySnippet import make_cmlf
-from genn_wrapper.StlContainers import (StringPair, StringStringDoublePairPair,
+from . import genn_wrapper
+from .genn_wrapper import SharedLibraryModel as slm
+from .genn_wrapper.NewModels import VarInit
+from .genn_wrapper.InitSparseConnectivitySnippet import Init
+from .genn_wrapper.Snippet import make_dpf
+from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf
+from .genn_wrapper.StlContainers import (StringPair, StringStringDoublePairPair,
                                         StringDPFPair, StringDoublePair,
                                         StringPairVector, StringVector,
                                         StringDPFPairVector,
                                         StringStringDoublePairPairVector)
-from genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_DEVICE
-from genn_groups import NeuronGroup, SynapseGroup, CurrentSource
-from model_preprocessor import prepare_snippet
+from .genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_DEVICE
+from .genn_groups import NeuronGroup, SynapseGroup, CurrentSource
+from .model_preprocessor import prepare_snippet
 
 
 class GeNNModel(object):
