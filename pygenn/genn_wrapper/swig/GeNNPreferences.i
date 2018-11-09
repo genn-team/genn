@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-%module GeNNPreferences
+%module(package="genn_wrapper") GeNNPreferences
 %{
 #include "global.h"
 %}

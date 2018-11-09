@@ -11,7 +11,7 @@
   
 --------------------------------------------------------------------------*/
 
-%module(directors="1") Snippet // for inheritance in python
+%module(package="genn_wrapper",directors="1") Snippet // for inheritance in python
 %{
 #include "snippet.h"
 %}

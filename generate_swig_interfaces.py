@@ -124,10 +124,12 @@ class SwigModuleGenerator( object ):
 
     def addSwigModuleHeadline( self, directors=False, comment='' ):
         '''Adds a line naming a module and enabling directors feature for inheritance in python (disabled by default)'''
-        directorsCode = ''
+        optionsCode = ''
         if directors:
-            directorsCode = '(directors="1")'
-        self.write( '%module{} {} {}\n'.format( directorsCode, self.name, comment ) )
+            optionsCode = '(package="%s", directors="1")' % MAIN_MODULE
+        else:
+            optionsCode = '(package="%s")' % MAIN_MODULE
+        self.write( '%module{} {} {}\n'.format( optionsCode, self.name, comment ) )
 
     def addSwigFeatureDirector( self, cClassName, comment='' ):
         '''Adds a line enabling director feature for a C/C++ class'''

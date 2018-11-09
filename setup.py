@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 import os
+import sys
 
 from platform import system
 from setuptools import setup, find_packages, Extension
@@ -21,11 +22,16 @@ genn_wrapper_swig = os.path.join(genn_wrapper_path, "swig")
 genn_wrapper_generated = os.path.join(genn_wrapper_path, "generated")
 genn_include = os.path.join(genn_path, "lib", "include")
 
-swig_opts = ["-c++", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
+swig_opts = ["-c++", "-relativeimport", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
              "-I" + genn_wrapper_generated, "-I" + genn_wrapper_swig, "-I" + genn_include]
 
 include_dirs = [genn_include, genn_wrapper_include, genn_wrapper_generated,
                 os.path.join(numpy_path, "core", "include")]
+
+# If we are building for Python 3, add SWIG option (otherwise imports get broken)
+# **YUCK** why doesn't setuptools do this automatically!?
+if sys.version_info > (3, 0):
+    swig_opts.append("-py3")
 
 library_dirs = []
 genn_wrapper_macros=[("GENERATOR_MAIN_HANDLED", None)]
