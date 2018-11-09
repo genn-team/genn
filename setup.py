@@ -9,7 +9,14 @@ from setuptools.command.build_ext import build_ext
 
 from generate_swig_interfaces import generateConfigs
 
-cpu_only = "CUDA_PATH" not in os.environ
+# Get CUDA path, either default or from environment variable
+cuda_path = (os.environ["CUDA_PATH"]
+             if "CUDA_PATH" in os.environ
+             else "/usr/local/cuda")
+
+# Use CPU ONLY mode if CUDA path doesn't exist
+cpu_only = not os.path.exists(cuda_path)
+
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
 
@@ -39,9 +46,6 @@ extra_compile_args = ["-std=c++11"]
 
 # If CUDA was found
 if not cpu_only:
-    # Get CUDA path
-    cuda_path = os.path.join(os.environ["CUDA_PATH"])
-    
     # Link against CUDA and CUDA version of GeNN
     libraries =["cuda", "cudart", "genn_DYNAMIC"]
     
@@ -125,4 +129,9 @@ setup(name = "pygenn",
                    Extension('_NeuronModels', ["pygenn/genn_wrapper/generated/NeuronModels.i", "pygenn/genn_wrapper/generated/newNeuronModelsCustom.cc"], **extension_kwargs),
                    Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/newPostsynapticModelsCustom.cc"], **extension_kwargs),
                    Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/newWeightUpdateModelsCustom.cc"], **extension_kwargs),
-                   Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **extension_kwargs)])
+                   Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **extension_kwargs)],
+
+    # Requirements
+    install_requires=["numpy>1.6", "six"],
+    zip_safe=False,  # Partly for performance reasons
+)
