@@ -1,7 +1,9 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <ostream>
 #include <string>
+#include <streambuf>
 #include <vector>
 
 // GeNN includes
@@ -16,6 +18,57 @@
 #include "code_generator.h"
 #include "cuda_code_generator.h"
 #include "substitution_stack.h"
+
+// A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
+class TeeBuf: public std::streambuf
+{
+public:
+    // Construct a streambuf which tees output to both input
+    // streambufs.
+    TeeBuf(std::streambuf *streamBuf1, std::streambuf *streamBuf2)
+        : m_StreamBuf1(streamBuf1), m_StreamBuf2(streamBuf2)
+    {
+    }
+
+private:
+    // std::streambuf virtuals
+    virtual int overflow(int c) override
+    {
+        if (c == EOF) {
+            return !EOF;
+        }
+        else {
+            int const r1 = m_StreamBuf1->sputc(c);
+            int const r2 = m_StreamBuf2->sputc(c);
+
+            return (r1 == EOF || r2 == EOF) ? EOF : c;
+        }
+    }
+    
+    // Sync both teed buffers.
+    virtual int sync()
+    {
+        int const r1 = m_StreamBuf1->pubsync();
+        int const r2 = m_StreamBuf2->pubsync();
+        return (r1 == 0 && r2 == 0) ? 0 : -1;
+    }   
+private:
+
+    // Members
+    std::streambuf *m_StreamBuf1;
+    std::streambuf *m_StreamBuf2;
+};
+
+class TeeStream : public std::ostream
+{
+public:
+    TeeStream(std::ostream &os1, std::ostream &os2)
+        : std::ostream(&m_TeeBuf), m_TeeBuf(os1.rdbuf(), os2.rdbuf())
+    {
+    }
+private:
+    TeeBuf m_TeeBuf;
+};
 
 // **TODO** move into NeuronModels::Base
 void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng, 
@@ -115,7 +168,6 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
             if (!ng.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != std::string::npos)) {
                 os << model.getPrecision() << " Isyn = 0;" << std::endl;
             }
-
             
             subs.addVarSubstitution("Isyn", "Isyn");
             subs.addVarSubstitution("sT", "lsT");
@@ -288,12 +340,12 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
 
             // store the defined parts of the neuron state into the global state variables dd_V etc
             for(const auto &v : nm->getVars()) {
-                if (ng.isVarQueueRequired(v.first)) {
-                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << ng.getQueueOffset(codeGenerator.getVarPrefix()) << subs.getVarSubstitution("id") << "] = l" << v.first << ";" << std::endl;
+                os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[";
+
+                if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
+                    os << "readDelayOffset + ";
                 }
-                else {
-                    os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[" << subs.getVarSubstitution("id") << "] = l" << v.first << ";" << std::endl;
-                }
+                os << subs.getVarSubstitution("id") << "] = l" << v.first << ";" << std::endl;
             }
 
             for (const auto &m : ng.getMergedInSyn()) {
@@ -365,6 +417,251 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
     );
 }
 
+/*void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
+{
+    codeGenerator.genInitKernel(os, model,
+        [](CodeStream &os, const CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng, const Substitutions &baseSubs)
+        {
+        },
+        [](CodeStream &os, const CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg, const Substitutions &baseSubs)
+        {
+        });
+}*/
+
+void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &model, const CodeGenerator::Base &codeGenerator, int localHostID)
+{
+    // Create a teestream to allow simultaneous writing to both streams
+    TeeStream definitionsAndRunner(&definitions, &runner);
+
+    // Begin extern C block around variable declarations
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        runner << "extern \"C\" {" << std::endl;
+    }
+
+    // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
+#ifdef _WIN32
+    const std::string varExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
+#else
+    const std::string varExportPrefix = "extern";
+#endif
+
+    //---------------------------------
+    // REMOTE NEURON GROUPS
+    definitionsAndRunner << "// ------------------------------------------------------------------------" << std::endl;
+    definitionsAndRunner << "// remote neuron groups" << std::endl;
+    definitionsAndRunner << std::endl;
+
+    // Loop through remote neuron groups
+    for(const auto &n : model.getRemoteNeuronGroups()) {
+        // Write macro so whether a neuron group is remote or not can be determined at compile time
+        // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
+        definitions << "#define " << n.first << "_REMOTE" << std::endl;
+
+        // If this neuron group has outputs to local host
+        if(n.second.hasOutputToHost(localHostID)) {
+            // Check that, whatever variable mode is set for these variables,
+            // they are instantiated on host so they can be copied using MPI
+            if(!(n.second.getSpikeVarMode() & VarLocation::HOST)) {
+                gennError("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
+            }
+
+            codeGenerator.genVariable(definitions, runner, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+            codeGenerator.genVariable(definitions, runner, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
+        }
+    }
+    definitionsAndRunner << std::endl;
+
+    //---------------------------------
+    // LOCAL NEURON VARIABLES
+    definitionsAndRunner << "// ------------------------------------------------------------------------" << std::endl;
+    definitionsAndRunner << "// local neuron groups" << std::endl;
+    definitionsAndRunner << std::endl;
+
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        codeGenerator.genVariable(definitions, runner, "unsigned int *", "glbSpkCnt"+n.first, n.second.getSpikeVarMode());
+        codeGenerator.genVariable(definitions, runner, "unsigned int *", "glbSpk"+n.first, n.second.getSpikeVarMode());
+        
+        if (n.second.isSpikeEventRequired()) {
+            codeGenerator.genVariable(definitions, runner, "unsigned int *", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventVarMode());
+            codeGenerator.genVariable(definitions, runner, "unsigned int *", "glbSpkEvnt"+n.first, n.second.getSpikeEventVarMode());
+        }
+        if (n.second.isDelayRequired()) {
+            //**FIXME**
+            definitions << varExportPrefix << " unsigned int spkQuePtr" << n.first << ";" << std::endl;
+            runner << "unsigned int spkQuePtr" << n.first << ";" << std::endl;
+#ifndef CPU_ONLY
+            runner << "__device__ volatile unsigned int dd_spkQuePtr" << n.first << ";" << std::endl;
+#endif
+        }
+        if (n.second.isSpikeTimeRequired()) {
+            codeGenerator.genVariable(definitions, runner, model.getTimePrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode());
+        }
+#ifndef CPU_ONLY
+        //**FIXME**
+        if(n.second.isSimRNGRequired()) {
+            definitions << "extern curandState *d_rng" << n.first << ";" << std::endl;
+            runner << "curandState *d_rng" << n.first << ";" << std::endl;
+            runner << "__device__ curandState *dd_rng" << n.first << ";" << std::endl;
+        }
+#endif
+        auto neuronModel = n.second.getNeuronModel();
+        for(auto const &v : neuronModel->getVars()) {
+            codeGenerator.genVariable(definitions, runner, v.second +" *", v.first + n.first, n.second.getVarMode(v.first));
+        }
+        for(auto const &v : neuronModel->getExtraGlobalParams()) {
+            definitions << "extern " << v.second << " " << v.first + n.first << ";" << std::endl;
+            runner << v.second << " " <<  v.first << n.first << ";" << std::endl;
+        }
+        os << "// current source variables" << std::endl;
+        for (auto const *cs : n.second.getCurrentSources()) {
+            auto csModel = cs->getCurrentSourceModel();
+            for(auto const &v : csModel->getVars()) {
+                codeGenerator.genVariable(definitions, runner, v.second + " *", v.first + cs->getName(), cs->getVarMode(v.first));
+            }
+            for(auto const &v : csModel->getExtraGlobalParams()) {
+                definitions << "extern " << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
+                os << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
+            }
+        }
+    }
+    definitionsAndRunner << std::endl;
+
+    //----------------------------------
+    // POSTSYNAPTIC VARIABLES
+    definitionsAndRunner << "// ------------------------------------------------------------------------" << std::endl;
+    definitionsAndRunner << "// postsynaptic variables" << std::endl;
+    definitionsAndRunner << std::endl;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        // Loop through incoming synaptic populations
+        for(const auto &m : n.second.getMergedInSyn()) {
+            const auto *sg = m.first;
+
+            codeGenerator.genVariable(definitions, runner, model.getPrecision() + " *", "inSyn" + sg->getPSModelTargetName(), sg->getInSynVarMode());
+
+            if (sg->isDendriticDelayRequired()) {
+                codeGenerator.genVariable(definitions, runner, model.getPrecision() + " *", "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayVarMode());
+                
+                //**FIXME**
+                runner << varExportPrefix << " unsigned int denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
+                os << "unsigned int denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
+#ifndef CPU_ONLY
+                os << "__device__ volatile unsigned int dd_denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
+#endif
+            }
+
+            if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                for(const auto &v : sg->getPSModel()->getVars()) {
+                    codeGenerator.genVariable(definitions, runner, v.second + " *", v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first));
+                }
+            }
+        }
+    }
+    definitionsAndRunner << std::endl;
+
+    //----------------------------------
+    // SYNAPSE VARIABLE
+    definitionsAndRunner << "// ------------------------------------------------------------------------" << std::endl;
+    definitionsAndRunner << "// synapse variables" << std::endl;
+    definitionsAndRunner << std::endl;
+    for(const auto &s : model.getLocalSynapseGroups()) {
+        const auto *wu = s.second.getWUModel();
+
+        if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            codeGenerator.genVariable(definitions, runner, "uint32_t *", "gp" + s.first, s.second.getSparseConnectivityVarMode());
+        }
+        else if (s.second.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+            // **FIXME**
+            definitions << varExportPrefix << " SparseProjection C" << s.first << ";" << std::endl;
+            runner << "SparseProjection C" << s.first << ";" << std::endl;
+
+#ifndef CPU_ONLY
+            runner << "unsigned int *d_indInG" << s.first << ";" << std::endl;
+            runner << "__device__ unsigned int *dd_indInG" << s.first << ";" << std::endl;
+            runner << "unsigned int *d_ind" << s.first << ";" << std::endl;
+            runner << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
+            if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                runner << "unsigned int *d_preInd" << s.first << ";" << std::endl;
+                runner << "__device__ unsigned int *dd_preInd" << s.first << ";" << std::endl;
+            }
+            if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                // TODO: make conditional on post-spike driven learning actually taking place
+                // **FIXME**
+                runner << "unsigned int *d_revIndInG" << s.first << ";" << std::endl;
+                runner << "__device__ unsigned int *dd_revIndInG" << s.first << ";" << std::endl;
+                runner << "unsigned int *d_revInd" << s.first << ";" << std::endl;
+                runner << "__device__ unsigned int *dd_revInd" << s.first << ";" << std::endl;
+                runner << "unsigned int *d_remap" << s.first << ";" << std::endl;
+                runner << "__device__ unsigned int *dd_remap" << s.first << ";" << std::endl;
+            }
+#endif
+        }
+        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            // **TODO** other index types
+#ifndef CPU_ONLY
+            if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST)
+#endif
+            {
+                // **FIXME**
+                definitions << varExportPrefix << " RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
+                runner << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << "," << s.second.getMaxSourceConnections() << ");" << std::endl;
+            }
+#ifndef CPU_ONLY
+            if(s.second.getSparseConnectivityVarMode() & VarLocation::DEVICE) {
+                // **FIXME**
+                runner << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
+                runner << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
+                runner << "unsigned int *d_ind" << s.first << ";" << std::endl;
+                runner << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
+
+                if (model.isSynapseGroupDynamicsRequired(s.first)) {
+                    // **FIXME**
+                    runner << "unsigned int *d_synRemap" << s.first << ";" << std::endl;
+                    runner << "__device__ unsigned int *dd_synRemap" << s.first << ";" << std::endl;
+                }
+                if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                    // **FIXME**
+                    runner << "unsigned int *d_colLength" << s.first << ";" << std::endl;
+                    runner << "__device__ unsigned int *dd_colLength" << s.first << ";" << std::endl;
+                    runner << "unsigned int *d_remap" << s.first << ";" << std::endl;
+                    runner << "__device__ unsigned int *dd_remap" << s.first << ";" << std::endl;
+                }
+            }
+#endif  // CPU_ONLY
+        }
+
+
+        // If weight update variables should be individual
+        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+            for(const auto &v : wu->getVars()) {
+                codeGenerator.genVariable(definitions, runner, v.second + " *", v.first + s.first, s.second.getWUVarMode(v.first));
+            }
+        }
+
+        for(const auto &v : wu->getPreVars()) {
+            codeGenerator.genVariable(definitions, runner, v.second + " *", v.first + s.first, s.second.getWUPreVarMode(v.first));
+        }
+
+        for(const auto &v : wu->getPostVars()) {
+            codeGenerator.genVariable(definitions, runner, v.second + " *", v.first + s.first, s.second.getWUPostVarMode(v.first));
+        }
+
+        for(const auto &v : wu->getExtraGlobalParams()) {
+            definitions << "extern " << p.second << " " << p.first + s.first << ";" << std::endl;
+            runner << v.second << " " <<  v.first << s.first << ";" << std::endl;
+        }
+
+        for(auto const &p : s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
+            definitions << "extern " << p.second << " initSparseConn" << p.first + s.first << ";" << std::endl;
+            runner << p.second << " initSparseConn" << p.first + s.first << ";" << std::endl;
+        }
+    }
+    definitionsAndRunner << std::endl;
+    // End extern C block around variable declarations
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        runner << "}\t// extern \"C\"" << std::endl;
+    }
+}
+
 int main()
 {
     initGeNN();
@@ -390,11 +687,12 @@ int main()
     
     CodeStream output(std::cout);
     
-    CUDA::CodeGenerator codeGenerator(128, 128);
+    CUDA::CodeGenerator codeGenerator(128, 128, 0);
 
-    
+  
     generateNeuronUpdateKernel(output, model, codeGenerator);
     generatePresynapticUpdateKernel(output, model, codeGenerator);
+    //genInitKernel(output, model, codeGenerator);
 
     return EXIT_SUCCESS;
 }

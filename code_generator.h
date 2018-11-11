@@ -32,6 +32,13 @@ public:
                                             std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
                                             std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const = 0;
 
+    virtual void genInitKernel(CodeStream &os, const NNmodel &model,
+                               std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &, const Substitutions&)> ngHandler,
+                               std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const SynapseGroup &, const Substitutions&)> sgHandler) const = 0;
+
+    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
+    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
+
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     
     virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
@@ -39,6 +46,15 @@ public:
     virtual std::string getVarPrefix() const{ return ""; }
 
     virtual const std::vector<FunctionTemplate> &getFunctions() const = 0;
+
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    void genVariable(CodeStream &definitions, CodeStream &runner, const std::string &type, const std::string &name, VarMode mode) const
+    {
+        genVariableDefinition(definitions, type, name, mode);
+        genVariableImplementation(runner, type, name, mode);
+    }
 };
     
 };
