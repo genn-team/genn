@@ -132,6 +132,6 @@ setup(name = "pygenn",
                    Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **extension_kwargs)],
 
     # Requirements
-    install_requires=["numpy>1.6", "six"],
+    install_requires=["numpy>1.6, < 1.15", "six"],
     zip_safe=False,  # Partly for performance reasons
 )
