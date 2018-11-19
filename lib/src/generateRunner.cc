@@ -2918,11 +2918,15 @@ void genMSBuild(const NNmodel &model,   //!< Model description
 #else
     os << "  <Import Project=\"$(GENN_PATH)\\userproject\\include\\genn.props\"/>" << endl;
     os << endl;
-    const string computeCapability = to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
-	os << "  <!-- Set CUDA code generation options based on selected device -->" << endl;
+    // **YUCK** the CUDA Visual Studio plugin build system demands that you specify both a virtual an actual architecture 
+    // (which NVCC itself doesn't require). While, in general, actual architectures are usable as virtual architectures, 
+    // there is no compute_21 so we need to replace that with compute_20
+    const string architecture = to_string(deviceProp[theDevice].major) + to_string(deviceProp[theDevice].minor);
+    const string virtualArchitecture = (architecture == "21") ? "20" : architecture;
+    os << "  <!-- Set CUDA code generation options based on selected device -->" << endl;
     os << "  <ItemDefinitionGroup>" << endl;
     os << "    <CudaCompile>" << endl;
-    os << "      <CodeGeneration>compute_" << computeCapability <<",sm_" << computeCapability << "</CodeGeneration>" << endl;
+    os << "      <CodeGeneration>compute_" << virtualArchitecture <<",sm_" << architecture << "</CodeGeneration>" << endl;
     os << "    </CudaCompile>" << endl;
     os << "  </ItemDefinitionGroup>" << endl;
     os << "  <!-- Compile runner using CUDA compiler -->" << endl;
