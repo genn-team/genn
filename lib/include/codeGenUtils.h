@@ -124,7 +124,7 @@ const std::vector<FunctionTemplate> cpuFunctions = {
     {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
     {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
-    {"gennrand_gamma", 2, "std::gamma_distribution<double>($(0), $(1))($(rng))", "std::gamma_distribution<float>($(0), $(1))($(rng))"
+    {"gennrand_gamma", 2, "std::gamma_distribution<double>($(0), $(1))($(rng))", "std::gamma_distribution<float>($(0), $(1))($(rng))"}
 };
 
 //--------------------------------------------------------------------------
