@@ -2214,7 +2214,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "while (true)";
         {
             CodeStream::Scope b(os);
-            os << "do" << std::endl;
+            os << "do";
             {
                 CodeStream::Scope b(os);
                 os << "x = curand_normal(rng);" << std::endl;
@@ -2223,12 +2223,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "while (v <= 0.0f);" << std::endl;
             os << std::endl;
             os << "v = v*v*v;" << std::endl;
-            os << "do" << std::endl;
+            os << "do";
             {
                 CodeStream::Scope b(os);
                 os << "u = curand_uniform(rng);" << std::endl;
             }
-            os << "while (u == 1.0f)" << std::endl;
+            os << "while (u == 1.0f);" << std::endl;
             os << std::endl;
             os << "if (u < 1.0f - 0.0331f*x*x*x*x) break;" << std::endl;
             os << "if (logf(u) < 0.5f*x*x + d*(1.0f - v + logf(v))) break;" << std::endl;
@@ -2267,7 +2267,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
         os << "while (true)";
         {
             CodeStream::Scope b(os);
-            os << "do" << std::endl;
+            os << "do";
             {
                 CodeStream::Scope b(os);
                 os << "x = curand_normal_double(rng);" << std::endl;
@@ -2276,12 +2276,12 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "while (v <= 0.0);" << std::endl;
             os << std::endl;
             os << "v = v*v*v;" << std::endl;
-            os << "do" << std::endl;
+            os << "do";
             {
                 CodeStream::Scope b(os);
                 os << "u = curand_uniform_double(rng);" << std::endl;
             }
-            os << "while (u == 1.0)" << std::endl;
+            os << "while (u == 1.0);" << std::endl;
             os << std::endl;
             os << "if (u < 1.0 - 0.0331*x*x*x*x) break;" << std::endl;
             os << "if (log(u) < 0.5*x*x + d*(1.0 - v + log(v))) break;" << std::endl;
