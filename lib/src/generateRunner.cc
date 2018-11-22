@@ -2206,6 +2206,113 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     }
     os << std::endl;
 
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistFloatInternal(RNG *rng, float c, float d)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "float x, v, u;" << std::endl;
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "do" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "x = curand_normal(rng);" << std::endl;
+                os << "v = 1.0f + c*x;" << std::endl;
+            }
+            os << "while (v <= 0.0f);" << std::endl;
+            os << std::endl;
+            os << "v = v*v*v;" << std::endl;
+            os << "do" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "u = curand_uniform(rng);" << std::endl;
+            }
+            os << "while (u == 1.0f)" << std::endl;
+            os << std::endl;
+            os << "if (u < 1.0f - 0.0331f*x*x*x*x) break;" << std::endl;
+            os << "if (logf(u) < 0.5f*x*x + d*(1.0f - v + logf(v))) break;" << std::endl;
+        }
+        os << std::endl;
+        os << "return b*d*v;" << std::endl;
+    }
+    os << std::endl;
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistFloat(RNG *rng, float c, float d)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "if (a > 1)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const float u = curand_uniform (rng);" << std::endl;
+            os << "const float d = (1.0f + a) - 1.0f / 3.0f;" << std::endl;
+            os << "const float c = (1.0f / 3.0f) / sqrtf(d);" << std::endl;
+            os << "return gammaDistFloatInternal (rng, c, d) * powf(u, 1.0f / a);" << std::endl;
+        }
+        os << "else" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const float d = a - 1.0f / 3.0f;" << std::endl;
+            os << "const float c = (1.0f / 3.0f) / sqrtf(d);" << std::endl;
+            os << "return gammaDistFloatInternal(rng, c, d);" << std::endl;
+        }
+    }
+    os << std::endl;
+
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistDoubleInternal(RNG *rng, double c, double d)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "double x, v, u;" << std::endl;
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "do" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "x = curand_normal_double(rng);" << std::endl;
+                os << "v = 1.0 + c*x;" << std::endl;
+            }
+            os << "while (v <= 0.0);" << std::endl;
+            os << std::endl;
+            os << "v = v*v*v;" << std::endl;
+            os << "do" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "u = curand_uniform_double(rng);" << std::endl;
+            }
+            os << "while (u == 1.0)" << std::endl;
+            os << std::endl;
+            os << "if (u < 1.0 - 0.0331*x*x*x*x) break;" << std::endl;
+            os << "if (log(u) < 0.5*x*x + d*(1.0 - v + log(v))) break;" << std::endl;
+        }
+        os << std::endl;
+        os << "return b*d*v;" << std::endl;
+    }
+    os << std::endl;
+    
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistDouble(RNG *rng, double c, double d)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "if (a > 1.0)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const double u = curand_uniform (rng);" << std::endl;
+            os << "const double d = (1.0 + a) - 1.0 / 3.0;" << std::endl;
+            os << "const double c = (1.0 / 3.0) / sqrt(d);" << std::endl;
+            os << "return gammaDistDoubleInternal (rng, c, d) * pow(u, 1.0 / a);" << std::endl;
+        }
+        os << "else" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const float d = a - 1.0 / 3.0;" << std::endl;
+            os << "const float c = (1.0 / 3.0) / sqrt(d);" << std::endl;
+            os << "return gammaDistDoubleInternal(rng, c, d);" << std::endl;
+        }
+    }
+    os << std::endl;
+    
     os << "#include \"neuronKrnl.cc\"" << std::endl;
     if (!model.getLocalSynapseGroups().empty()) {
         os << "#include \"synapseKrnl.cc\"" << std::endl;
