@@ -90,7 +90,7 @@ double gammaContinuedFraction(double a, double x)
             const double g = b1 * fac;
 
             // Have we converged
-            if(fabs((g - gold) / g) > epsilon) {
+            if(fabs((g - gold) / g) < epsilon) {
                 return exp(-x + a * log(x) - gln) * g;
             }
 
