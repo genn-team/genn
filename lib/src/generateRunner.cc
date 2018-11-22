@@ -2206,6 +2206,8 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     }
     os << std::endl;
 
+    // Generate gamma-distributed variates using Marsaglia and Tsang's method
+    // G. Marsaglia and W. Tsang. A simple method for generating gamma variables. ACM Transactions on Mathematical Software, 26(3):363-372, 2000.
     os << "template<typename RNG>" << std::endl;
     os << "__device__ float gammaDistFloatInternal(RNG *rng, float c, float d)" << std::endl;
     {
@@ -2238,7 +2240,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     }
     os << std::endl;
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ float gammaDistFloat(RNG *rng, float a, float b)" << std::endl;
+    os << "__device__ float gammaDistFloat(RNG *rng, float a)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "if (a > 1)" << std::endl;
@@ -2247,14 +2249,14 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "const float u = curand_uniform (rng);" << std::endl;
             os << "const float d = (1.0f + a) - 1.0f / 3.0f;" << std::endl;
             os << "const float c = (1.0f / 3.0f) / sqrtf(d);" << std::endl;
-            os << "return b * gammaDistFloatInternal (rng, c, d) * powf(u, 1.0f / a);" << std::endl;
+            os << "return gammaDistFloatInternal (rng, c, d) * powf(u, 1.0f / a);" << std::endl;
         }
         os << "else" << std::endl;
         {
             CodeStream::Scope b(os);
             os << "const float d = a - 1.0f / 3.0f;" << std::endl;
             os << "const float c = (1.0f / 3.0f) / sqrtf(d);" << std::endl;
-            os << "return b * gammaDistFloatInternal(rng, c, d);" << std::endl;
+            os << "return gammaDistFloatInternal(rng, c, d);" << std::endl;
         }
     }
     os << std::endl;
@@ -2292,7 +2294,7 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
     os << std::endl;
     
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ float gammaDistDouble(RNG *rng, double a, double b)" << std::endl;
+    os << "__device__ float gammaDistDouble(RNG *rng, double a)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "if (a > 1.0)" << std::endl;
@@ -2301,14 +2303,14 @@ void genRunnerGPU(const NNmodel &model, //!< Model description
             os << "const double u = curand_uniform (rng);" << std::endl;
             os << "const double d = (1.0 + a) - 1.0 / 3.0;" << std::endl;
             os << "const double c = (1.0 / 3.0) / sqrt(d);" << std::endl;
-            os << "return b * gammaDistDoubleInternal (rng, c, d) * pow(u, 1.0 / a);" << std::endl;
+            os << "return gammaDistDoubleInternal (rng, c, d) * pow(u, 1.0 / a);" << std::endl;
         }
         os << "else" << std::endl;
         {
             CodeStream::Scope b(os);
             os << "const float d = a - 1.0 / 3.0;" << std::endl;
             os << "const float c = (1.0 / 3.0) / sqrt(d);" << std::endl;
-            os << "return b * gammaDistDoubleInternal(rng, c, d);" << std::endl;
+            os << "return gammaDistDoubleInternal(rng, c, d);" << std::endl;
         }
     }
     os << std::endl;
