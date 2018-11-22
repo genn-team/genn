@@ -6,9 +6,9 @@
 class Neuron : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(Neuron, 0, 4);
+    DECLARE_MODEL(Neuron, 0, 5);
 
-    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}});
+    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
 };
 IMPLEMENT_MODEL(Neuron);
 
@@ -18,9 +18,9 @@ IMPLEMENT_MODEL(Neuron);
 class CurrentSrc : public CurrentSourceModels::Base
 {
 public:
-    DECLARE_MODEL(CurrentSrc, 0, 4);
+    DECLARE_MODEL(CurrentSrc, 0, 5);
 
-    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}});
+    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
 };
 IMPLEMENT_MODEL(CurrentSrc);
 
@@ -30,9 +30,9 @@ IMPLEMENT_MODEL(CurrentSrc);
 class PostsynapticModel : public PostsynapticModels::Base
 {
 public:
-    DECLARE_MODEL(PostsynapticModel, 0, 4);
+    DECLARE_MODEL(PostsynapticModel, 0, 5);
 
-    SET_VARS({{"pconstant", "scalar"}, {"puniform", "scalar"}, {"pnormal", "scalar"}, {"pexponential", "scalar"}});
+    SET_VARS({{"pconstant", "scalar"}, {"puniform", "scalar"}, {"pnormal", "scalar"}, {"pexponential", "scalar"}, {"pgamma", "scalar"}});
 };
 IMPLEMENT_MODEL(PostsynapticModel);
 
@@ -42,9 +42,9 @@ IMPLEMENT_MODEL(PostsynapticModel);
 class WeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_MODEL(WeightUpdateModel, 0, 4);
+    DECLARE_MODEL(WeightUpdateModel, 0, 5);
 
-    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}});
+    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
@@ -70,33 +70,41 @@ void modelDefinition(NNmodel &model)
     InitVarSnippet::Exponential::ParamValues exponentialParams(
         1.0);       // 0 - lambda
 
+    InitVarSnippet::Gamma::ParamValues gammaParams(
+        4.0,        // 0 - a
+        1.0);       // 1 - b
+    
     // Neuron parameters
     Neuron::VarValues neuronInit(
         13.0,
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
-        initVar<InitVarSnippet::Exponential>(exponentialParams));
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams));
 
     // Current source parameters
     CurrentSrc::VarValues currentSourceInit(
         13.0,
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
-        initVar<InitVarSnippet::Exponential>(exponentialParams));
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams));
 
     // PostsynapticModel parameters
     PostsynapticModel::VarValues postsynapticInit(
         13.0,
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
-        initVar<InitVarSnippet::Exponential>(exponentialParams));
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams));
 
     // WeightUpdateModel parameters
     WeightUpdateModel::VarValues weightUpdateInit(
         13.0,
         initVar<InitVarSnippet::Uniform>(uniformParams),
         initVar<InitVarSnippet::Normal>(normalParams),
-        initVar<InitVarSnippet::Exponential>(exponentialParams));
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams));
 
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 1, {}, {});
@@ -108,12 +116,14 @@ void modelDefinition(NNmodel &model)
     popGPU->setVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     popGPU->setVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     popGPU->setVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    popGPU->setVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
 
     auto *currSourceGPU = model.addCurrentSource<CurrentSrc>("CurrSourceGPU", "PopGPU", {}, neuronInit);
     currSourceGPU->setVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     currSourceGPU->setVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     currSourceGPU->setVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     currSourceGPU->setVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    currSourceGPU->setVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
 #endif
 
     // Dense synapse populations
@@ -132,10 +142,12 @@ void modelDefinition(NNmodel &model)
     denseGPU->setPSVarMode("puniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     denseGPU->setPSVarMode("pnormal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     denseGPU->setPSVarMode("pexponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    denseGPU->setPSVarMode("pgamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     denseGPU->setWUVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     denseGPU->setWUVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     denseGPU->setWUVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     denseGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    denseGPU->setWUVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
 #endif
 
     // Sparse synapse populations
@@ -154,10 +166,12 @@ void modelDefinition(NNmodel &model)
     sparseGPU->setPSVarMode("puniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     sparseGPU->setPSVarMode("pnormal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     sparseGPU->setPSVarMode("pexponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    sparseGPU->setPSVarMode("pgamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     sparseGPU->setWUVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     sparseGPU->setWUVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     sparseGPU->setWUVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     sparseGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    sparseGPU->setWUVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
 #endif  // CPU_ONLY
 
     // Ragged synapse populations
@@ -176,10 +190,12 @@ void modelDefinition(NNmodel &model)
     raggedGPU->setPSVarMode("puniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     raggedGPU->setPSVarMode("pnormal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     raggedGPU->setPSVarMode("pexponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setPSVarMode("pgamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     raggedGPU->setWUVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     raggedGPU->setWUVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     raggedGPU->setWUVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
     raggedGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
+    raggedGPU->setWUVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
 #endif  // CPU_ONLY
 
     model.setPrecision(GENN_FLOAT);
