@@ -175,6 +175,7 @@ On Windows models can also be debugged and developed by opening the vcxproj file
 \note
 When opening the models in the `userproject` directory in Visual Studio, right-click on the project in the solution explorer, select 'Properties'. Then, making sure the desired configuration is selected, navigate to 'Debugging' under 'Configuration Properties', set the 'Working Directory' to '..' and the 'Command Arguments' to match those passed to genn-buildmodel e.g. 'outdir 1' to use an output directory called outdir and to run the model on the GPU.
 
+
 -----
 \link Tutorial2 Previous\endlink | \link UserGuide Top\endlink | \link Credits Next\endlink
 */

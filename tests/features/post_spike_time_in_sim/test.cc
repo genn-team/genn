@@ -1,3 +1,12 @@
+//--------------------------------------------------------------------------
+/*! \file post_spike_time_in_sim/test.cc
+
+\brief Main test code that is part of the feature testing
+suite of minimal models with known analytic outcomes that are used for continuous integration testing.
+*/
+//--------------------------------------------------------------------------
+
+
 // Google test includes
 #include "gtest/gtest.h"
 
