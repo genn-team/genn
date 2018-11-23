@@ -18,6 +18,11 @@ suite of minimal models with known analytic outcomes that are used for continuou
 #include "../../utils/simulation_test.h"
 #include "../../utils/stats.h"
 
+double gammaCDF4(double x)
+{
+    return Stats::gammaCDF(4.0, x);
+}
+
 // Macro to generate full set of tests for a particular model
 #define PROB_TEST(PREFIX, SUFFIX, N) \
     { \
@@ -28,6 +33,8 @@ suite of minimal models with known analytic outcomes that are used for continuou
         EXPECT_GT(PREFIX##normal##SUFFIX##Prob, p); \
         const double PREFIX##exponential##SUFFIX##Prob = getProb(PREFIX##exponential##SUFFIX, N, Stats::exponentialCDF); \
         EXPECT_GT(PREFIX##exponential##SUFFIX##Prob, p); \
+        const double PREFIX##gamma##SUFFIX##Prob = getProb(PREFIX##gamma##SUFFIX, N, gammaCDF4); \
+        EXPECT_GT(PREFIX##gamma##SUFFIX##Prob, p); \
     } \
 
 //----------------------------------------------------------------------------

@@ -90,7 +90,7 @@ double gammaContinuedFraction(double a, double x)
             const double g = b1 * fac;
 
             // Have we converged
-            if(fabs((g - gold) / g) > epsilon) {
+            if(fabs((g - gold) / g) < epsilon) {
                 return exp(-x + a * log(x) - gln) * g;
             }
 
@@ -102,9 +102,28 @@ double gammaContinuedFraction(double a, double x)
 }
 
 //----------------------------------------------------------------------------
+// Stats::gammaP
+//----------------------------------------------------------------------------
+//!< Returns the (lower) incomplete gamma function P(a,x)
+//!< (Numerical Recipes in C p172)
+double gammaP(double a, double x)
+{
+    if(x < 0.0 || a <= 0.0) {
+        throw std::runtime_error("Invalid arguments");
+    }
+
+    if(x < (a + 1.0)) {
+        return gammaSeries(a, x);
+    }
+    else {
+        return 1.0 - gammaContinuedFraction(a, x);
+    }
+}
+
+//----------------------------------------------------------------------------
 // Stats::gammaQ
 //----------------------------------------------------------------------------
-//!< Returns the incomplete gamme function Q(a,x) = 1 - P(a,x)
+//!< Returns the (upper) incomplete gamma function Q(a,x) = 1 - P(a,x)
 //!< (Numerical Recipes in C p173)
 double gammaQ(double a, double x)
 {
@@ -212,6 +231,16 @@ double normalCDF(double x)
 double exponentialCDF(double x)
 {
     return (1.0 - exp(-x));
+}
+
+//----------------------------------------------------------------------------
+// Stats::gammaCDF
+//----------------------------------------------------------------------------
+//!< Cumulative distribution function for
+//!< gamma distribution for use in tests
+double gammaCDF(double a, double x)
+{
+    return gammaP(a, x);
 }
 
 //----------------------------------------------------------------------------

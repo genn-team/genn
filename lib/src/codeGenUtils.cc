@@ -104,7 +104,8 @@ GenericFunction randomFuncs[] = {
     {"gennrand_uniform", 0},
     {"gennrand_normal", 0},
     {"gennrand_exponential", 0},
-    {"gennrand_log_normal", 2}
+    {"gennrand_log_normal", 2},
+    {"gennrand_gamma", 1}
 };
 
 //--------------------------------------------------------------------------
