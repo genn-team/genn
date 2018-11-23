@@ -501,11 +501,21 @@ def generateConfigs( gennPath ):
             #endif
                 return localHostID;
             }
+
+            bool is_cpu_only()
+            {
+            #ifdef CPU_ONLY
+                return true;
+            #else
+                return false;
+            #endif
+            }
+
             void generate_model_runner_pygenn( NNmodel & model, const std::string &path, int localHostID ) {
 
                 if (!model.isFinalized()) {
                 gennError("Model was not finalized in modelDefinition(). Please call model.finalize().");
-                    }
+                }
 
                 #ifndef CPU_ONLY
                     chooseDevice(model, path, localHostID);
