@@ -81,7 +81,5 @@ public:
     DECLARE_MODEL(DeltaCurr, 0, 0);
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
-
-    SET_PARAM_NAMES({"tau", "E"});
 };
 }

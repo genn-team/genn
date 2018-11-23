@@ -55,9 +55,16 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Typedefines
+// Init
 //----------------------------------------------------------------------------
-typedef Snippet::Init<Base> Init;
+class Init : public Snippet::Init<Base>
+{
+public:
+    Init(const Base *snippet, const std::vector<double> &params)
+        : Snippet::Init<Base>(snippet, params)
+    {
+    }
+};
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Uninitialised
