@@ -62,6 +62,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClCompile Include="cpu_code_generator.cc" />
     <ClCompile Include="cuda_code_generator.cc" />
     <ClCompile Include="main.cc" />
   </ItemGroup>
@@ -73,6 +74,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cpu_code_generator.h" />
     <ClInclude Include="substitution_stack.h" />
   </ItemGroup>
   <!-- Import builtin C++ targets -->

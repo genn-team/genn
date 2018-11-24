@@ -38,6 +38,7 @@ public:
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0; 
 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     
@@ -50,10 +51,12 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    void genVariable(CodeStream &definitions, CodeStream &runner, const std::string &type, const std::string &name, VarMode mode) const
+    void genVariable(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
+                     const std::string &type, const std::string &name, VarMode mode, size_t count) const
     {
         genVariableDefinition(definitions, type, name, mode);
         genVariableImplementation(runner, type, name, mode);
+        genVariableAllocation(allocations, type, name, mode, count);
     }
 };
     

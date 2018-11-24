@@ -37,6 +37,8 @@ std::string getFloatAtomicAdd(const std::string &ftype)
         return "atomicAdd";
     //}
 }
+
+
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -91,11 +93,11 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
         
 
         // Parallelise over neuron groups
-        genParallelNeuronGroup(os, model.getLocalNeuronGroups(), baseSubs,
-            [&model, handler](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NeuronGroup &ng, const Substitutions &subs)
+        genParallelNeuronGroup(os, baseSubs, model.getLocalNeuronGroups(), 
+            [&model, handler](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NeuronGroup &ng, const Substitutions &baseSubs)
             {
-
                 // Get name of rng to use for this neuron
+                Substitutions subs(&baseSubs);
                 subs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + subs.getVarSubstitution("id") + "]");
                 
                 // Call handler to generate generic neuron code
@@ -199,7 +201,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         }
         
         // Parallelise over synapse groups
-        genParallelSynapseGroup(os, model, baseSubs,
+        genParallelSynapseGroup(os, baseSubs, model, 
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
             [wumThreshHandler, wumSimHandler, this](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg, const Substitutions &subs)
             {
@@ -541,11 +543,31 @@ void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string 
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &subs,
+void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const
+{
+    if(mode & VarLocation::HOST) {
+        const char *flags = (mode & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+        os << "cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << ");" << std::endl;
+    }
+
+    // If variable is present on device at all
+    if(mode & VarLocation::DEVICE) {
+        // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+        if(mode & VarLocation::ZERO_COPY) {
+            os << "deviceZeroCopy(" << name << ", &d_" << name << ", dd_" << name << ");" << std::endl;
+        }
+        else {
+            os << "deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << count << " * sizeof(" << type << "));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &baseSubs,
                                            const std::map<std::string, NeuronGroup> &ngs, std::function<bool(const NeuronGroup &)> filter,
                                            std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NeuronGroup&, const Substitutions &)> handler) const
 {
     // Populate neuron update groups
+    Substitutions subs(&baseSubs);
     size_t idStart = 0;
     for (const auto &ng : ngs) {
         // If this neuron group should be processed
@@ -557,11 +579,12 @@ void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &
             // If this is the first  group
             if (idStart == 0) {
                 os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
-                os << "const unsigned int lid = id;" << std::endl;
+                subs.addVarSubstitution("id", "id");
             }
             else {
                 os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
                 os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+                subs.addVarSubstitution("id", "lid");
             }
 
             handler(os, *this, ng.second, subs);
@@ -572,11 +595,13 @@ void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const NNmodel &model,
-                                            std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc, std::function<bool(const SynapseGroup &)> filter,
-                                            std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const SynapseGroup&)> handler) const
+void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const Substitutions &baseSubs, const NNmodel &model,
+                                            std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc, 
+                                            std::function<bool(const SynapseGroup &)> filter,
+                                            std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const SynapseGroup&, const Substitutions &)> handler) const
 {
     // Populate neuron update groups
+    Substitutions subs(&baseSubs);
     size_t idStart = 0;
     for (const auto &sg : model.getLocalSynapseGroups()) {
         // If this synapse group should be processed
@@ -588,14 +613,15 @@ void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const NNmodel &model
             // If this is the first  group
             if (idStart == 0) {
                 os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
-                os << "const unsigned int lid = id;" << std::endl;
+                subs.addVarSubstitution("id", "id");
             }
             else {
                 os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
                 os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+                subs.addVarSubstitution("id", "lid");
             }
 
-            handler(os, *this, model, sg.second);
+            handler(os, *this, model, sg.second, subs);
 
             idStart += paddedSize;
             os << CodeStream::CB(1) << std::endl;

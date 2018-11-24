@@ -9,15 +9,15 @@
 #include "code_generator.h"
 
 //--------------------------------------------------------------------------
-// CUDA::CodeGenerator
+// CPU::CodeGenerator
 //--------------------------------------------------------------------------
-namespace CUDA
+namespace CPU
 {
 class CodeGenerator : public ::CodeGenerator::Base
 {
 public:
-    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID) 
-    :   m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize), m_LocalHostID(localHostID)
+    CodeGenerator(int localHostID) 
+    :   m_LocalHostID(localHostID)
     {
     }
 
@@ -49,57 +49,42 @@ public:
         genEmitSpike(os, subs, "Evnt");
     }
 
-    virtual std::string getVarPrefix() const override{ return "dd_"; }
+    virtual std::string getVarPrefix() const override{ return ""; }
 
-    virtual const std::vector<FunctionTemplate> &getFunctions() const override{ return cudaFunctions; }
+    virtual const std::vector<FunctionTemplate> &getFunctions() const override{ return cpuFunctions; }
 
 private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genParallelNeuronGroup(CodeStream &os, const Substitutions &baseSubs,
-                                const std::map<std::string, NeuronGroup> &ngs, std::function<bool(const NeuronGroup &)> filter,
-                                std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NeuronGroup&, const Substitutions &)> handler) const;
+    /*void genParallelNeuronGroup(CodeStream &os, const std::map<std::string, NeuronGroup> &ngs, const Substitutions &subs, 
+                                std::function<bool(const NeuronGroup &)> filter,
+                                std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NeuronGroup&, const Substitutions &)> handler) const;
 
-    void genParallelNeuronGroup(CodeStream &os, const Substitutions &baseSubs,
-                                const std::map<std::string, NeuronGroup> &ngs,
+    void genParallelNeuronGroup(CodeStream &os, const std::map<std::string, NeuronGroup> &ngs, const Substitutions &subs, 
                                 std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NeuronGroup&, const Substitutions &)> handler) const
     {
-        genParallelNeuronGroup(os, baseSubs, ngs, [](const NeuronGroup&){ return true; }, handler);
+        genParallelNeuronGroup(os, ngs, subs, [](const NeuronGroup&){ return true; }, handler);
     }
 
-    void genParallelSynapseGroup(CodeStream &os, const Substitutions &baseSubs, const NNmodel &model, 
+    void genParallelSynapseGroup(CodeStream &os, const NNmodel &model, const Substitutions &subs, 
                                  std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
                                  std::function<bool(const SynapseGroup &)> filter,
                                  std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions &)> handler) const;
 
-    void genParallelSynapseGroup(CodeStream &os, const Substitutions &baseSubs, const NNmodel &model, 
+    void genParallelSynapseGroup(CodeStream &os, const NNmodel &model, const Substitutions &subs, 
                                  std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
                                  std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions &)> handler) const
     {
-        genParallelSynapseGroup(os, baseSubs,  model, getPaddedSizeFunc, [](const SynapseGroup&){ return true; }, handler);
-    }
+        genParallelSynapseGroup(os, model, subs, getPaddedSizeFunc, [](const SynapseGroup&){ return true; }, handler);
+    }*/
                                  
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
 
-    void genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &subs, bool trueSpike,
-                                           std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
-                                           std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const;
-    void genPresynapticUpdateKernelPostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &subs, bool trueSpike,
-                                            std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
-                                            std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const;
-
-    size_t getPresynapticUpdateKernelSize(const SynapseGroup &sg) const;
-    
-    bool shouldAccumulateInLinSyn(const SynapseGroup &sg) const;
-    
-    bool shouldAccumulateInSharedMemory(const SynapseGroup &sg) const;
-    
+  
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    const size_t m_NeuronUpdateBlockSize;
-    const size_t m_PresynapticUpdateBlockSize;
     const int m_LocalHostID;
 };
-}   // CodeGenerator
+}   // CPU
