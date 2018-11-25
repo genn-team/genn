@@ -304,12 +304,12 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
     }
 }
 //--------------------------------------------------------------------------
-/*void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
+void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                                   std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &, const Substitutions&)> ngHandler,
                                   std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const SynapseGroup &, const Substitutions&)> sgHandler) const
 {
     // init kernel header
-    os << "extern \"C\" __global__ void initializeDevice(";
+    /*os << "extern \"C\" __global__ void initializeDevice(";
     const auto &params = model.getInitKernelParameters();
     for(auto p = params.cbegin(); p != params.cend(); p++) {
         os << p->second << " " << p->first;
@@ -510,8 +510,8 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
             });
 
         // 3) genParallelSynapseGroup for local synapse groups **TODO** if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired())
-    }
-}*/
+    }*/
+}
 //--------------------------------------------------------------------------
 void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {

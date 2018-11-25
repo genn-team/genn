@@ -26,12 +26,9 @@ class TeeBuf: public std::streambuf
 {
     typedef std::vector<std::streambuf*> StreamBufVec;
 public:
-    // Construct a streambuf which tees output to both input
-    // streambufs.
-    // **TODO** canw e do this with a variadic constructor instead?
+    // Construct a streambuf which tees output to multiple streambufs
     template<typename... T>
-    TeeBuf(T&&... streamBufs)
-        : m_StreamBufs(StreamBufVec{{std::forward<const std::streambuf*>(streamBufs)...}})
+    TeeBuf(T&&... streamBufs) : m_StreamBufs(StreamBufVec{{std::forward<T>(streamBufs)...}})
     {
     }
 
