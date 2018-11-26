@@ -17,6 +17,7 @@ class Substitutions
 public:
     Substitutions(const Substitutions *parent = nullptr) : m_Parent(parent)
     {
+        assert(m_Parent != this);
     }
 
     void addVarSubstitution(const std::string &source, const std::string &destionation) 
