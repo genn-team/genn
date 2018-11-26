@@ -27,7 +27,7 @@ public:
     // Declared virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream &output, const Base&, const NNmodel&, const NeuronGroup&, const Substitutions&)> handler) const = 0;
+                                       std::function<void(CodeStream &output, const Base&, const NNmodel&, const NeuronGroup&, Substitutions&)> handler) const = 0;
     virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
                                             std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
                                             std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const = 0;

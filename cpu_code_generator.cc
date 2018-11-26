@@ -14,7 +14,7 @@
 namespace CPU
 {
 void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                          std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const NeuronGroup &ng, const Substitutions&)> handler) const
+                                          std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const NeuronGroup &ng, Substitutions&)> handler) const
 {
     USE(os);
     USE(model);
