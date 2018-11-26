@@ -24,11 +24,10 @@
 // A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
 class TeeBuf: public std::streambuf
 {
-    typedef std::vector<std::streambuf*> StreamBufVec;
 public:
     // Construct a streambuf which tees output to multiple streambufs
     template<typename... T>
-    TeeBuf(T&&... streamBufs) : m_StreamBufs(StreamBufVec{{std::forward<T>(streamBufs)...}})
+    TeeBuf(T&&... streamBufs) : m_StreamBufs({{streamBufs.rdbuf()...}})
     {
     }
 
@@ -64,9 +63,8 @@ private:
         return anyNonZero ? -1 : 0;
     }   
 private:
-
     // Members
-    StreamBufVec m_StreamBufs;
+    const std::vector<std::streambuf*> m_StreamBufs;
 };
 
 class TeeStream : public std::ostream
@@ -448,7 +446,7 @@ void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &
     CodeStream runnerAlloc(runnerAllocStream);
 
     // Create a teestream to allow simultaneous writing to both streams
-    TeeStream allStreams(&definitions, &runnerVarDecl, &runnerAlloc);
+    TeeStream allStreams(definitions, runnerVarDecl, runnerAlloc);
 
     // Begin extern C block around variable declarations
     if(GENN_PREFERENCES::buildSharedLibrary) {
