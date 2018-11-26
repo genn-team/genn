@@ -41,7 +41,7 @@ NUGENN_SOURCES      :=$(addprefix $(NUGENN_PATH)/,$(NUGENN_SOURCES))
 all: $(NUGENN)
 
 $(NUGENN): $(LIBGENN) always_compile
-	$(CXX) $(CXXFLAGS) $(NUGENN_SOURCES) -DGENERATOR_MAIN_HANDLED $(INCLUDE_FLAGS) $(LINK_FLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $(NUGENN_SOURCES) -DGENERATOR_MAIN_HANDLED $(INCLUDE_FLAGS) $(LINK_FLAGS)
 
 clean: clean_generate_nugenn clean_libgenn
 
