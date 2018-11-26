@@ -46,7 +46,7 @@ private:
                     anyEOF = true;
                 }
             }
-            return anyEOF ? EOF : -1;
+            return anyEOF ? EOF : c;
         }
     }
     
@@ -758,5 +758,13 @@ int main()
     generatePresynapticUpdateKernel(output, model, codeGenerator);
     //genInitKernel(output, model, codeGenerator);
 
+    std::stringstream definitions;
+    std::stringstream runner;
+    CodeStream definitionsStream(definitions);
+    CodeStream runnerStream(runner);
+    genDefinitions(definitionsStream, runnerStream, model, codeGenerator, 0);
+    
+    std::cout << definitions.str() << std::endl;
+    std::cout << runner.str() << std::endl;
     return EXIT_SUCCESS;
 }
