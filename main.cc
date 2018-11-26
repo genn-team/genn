@@ -695,6 +695,38 @@ void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &
     if(GENN_PREFERENCES::buildSharedLibrary) {
         runnerVarDecl << "}\t// extern \"C\"" << std::endl;
     }
+    
+    // Write variable declarations to runner
+    runner << runnerVarDeclStream.str();
+    
+    // ---------------------------------------------------------------------
+    // Function for setting the CUDA device and the host's global variables.
+    // Also estimates memory usage on device ...
+    runner << "void allocateMem()";
+    {
+        CodeStream::Scope b(runner);
+#ifndef CPU_ONLY
+        runner << "CHECK_CUDA_ERRORS(cudaSetDevice(" << theDevice << "));" << std::endl;
+
+        // If the model requires zero-copy
+        if(model.zeroCopyInUse()) {
+            // If device doesn't support mapping host memory error
+            if(!deviceProp[theDevice].canMapHostMemory) {
+                gennError("Device does not support mapping CPU host memory!");
+            }
+
+            // set appropriate device flags
+            runner << "CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
+        }
+
+        // If RNG is required, allocate memory for global philox RNG
+        if(model.isDeviceRNGRequired()) {
+            //allocate_device_variable(os, "curandStatePhilox4_32_10_t", "rng", VarMode::LOC_DEVICE_INIT_DEVICE, 1);
+        }
+#endif
+        runner << runnerAllocStream.str();
+        
+    }
 }
 
 int main()

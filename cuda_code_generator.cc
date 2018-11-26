@@ -27,6 +27,7 @@ size_t padSize(size_t size, size_t blockSize)
 
 std::string getFloatAtomicAdd(const std::string &ftype)
 {
+    USE(ftype);
     /*int version;
     cudaRuntimeGetVersion(&version);
     if (((deviceProp[theDevice].major < 2) && (ftype == "float"))
@@ -308,6 +309,10 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                                   std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &, const Substitutions&)> ngHandler,
                                   std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const SynapseGroup &, const Substitutions&)> sgHandler) const
 {
+    USE(os);
+    USE(model);
+    USE(ngHandler);
+    USE(sgHandler);
     // init kernel header
     /*os << "extern \"C\" __global__ void initializeDevice(";
     const auto &params = model.getInitKernelParameters();

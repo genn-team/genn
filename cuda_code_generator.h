@@ -44,7 +44,7 @@ public:
         genEmitSpike(os, subs, "");
     }
     
-    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const override
+    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &, const NeuronGroup &, const Substitutions &subs) const override
     {
         genEmitSpike(os, subs, "Evnt");
     }
