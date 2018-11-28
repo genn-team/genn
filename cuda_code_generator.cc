@@ -24,22 +24,6 @@ size_t padSize(size_t size, size_t blockSize)
 {
     return ((size + blockSize - 1) / blockSize) * blockSize;
 }
-
-std::string getFloatAtomicAdd(const std::string &ftype)
-{
-    USE(ftype);
-    /*int version;
-    cudaRuntimeGetVersion(&version);
-    if (((deviceProp[theDevice].major < 2) && (ftype == "float"))
-        || (((deviceProp[theDevice].major < 6) || (version < 8000)) && (ftype == "double"))) {
-        return "atomicAddSW";
-    }
-    else {*/
-        return "atomicAdd";
-    //}
-}
-
-
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -47,6 +31,31 @@ std::string getFloatAtomicAdd(const std::string &ftype)
 //--------------------------------------------------------------------------
 namespace CUDA
 {
+CodeGenerator::CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID) 
+:   m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize), 
+    m_LocalHostID(localHostID), m_ChosenDevice(-1)
+{
+    // Get number of CUDA devices and reserve memory
+    int numDevices;
+    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&numDevices));
+    
+    // If any devices were found
+    if(numDevices > 0) {
+        m_Devices.reserve(numDevices);
+        
+        std::cout << numDevices << " CUDA device found" << std::endl;
+        for (int i = 0; i < numDevices; i++) {
+            CHECK_CUDA_ERRORS(cudaSetDevice(i));
+            
+            // Get device properties and add to devices
+            m_Devices.push_back(cudaDeviceProp());
+            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&m_Devices.back(), i));
+        }
+        
+        m_ChosenDevice = 0;
+    }
+}
+//--------------------------------------------------------------------------
 void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, 
                                           std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &ng, Substitutions &)> handler) const
 {
@@ -894,7 +903,7 @@ bool CodeGenerator::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
 {
     // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
-    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC/* && deviceProp[theDevice].major < 5*/) {
+    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC && getChosenCUDADevice().major < 5) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
@@ -903,4 +912,19 @@ bool CodeGenerator::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
         return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getTrgNeuronGroup()->getNumNeurons() <= m_PresynapticUpdateBlockSize);
     }
 }
+//--------------------------------------------------------------------------
+std::string CodeGenerator::getFloatAtomicAdd(const std::string &ftype) const
+{
+    USE(ftype);
+    int version;
+    cudaRuntimeGetVersion(&version);
+    if (((getChosenCUDADevice().major < 2) && (ftype == "float"))
+        || (((getChosenCUDADevice().major < 6) || (version < 8000)) && (ftype == "double"))) {
+        return "atomicAddSW";
+    }
+    else {
+        return "atomicAdd";
+    }
+}
+
 }   // namespace CUDA

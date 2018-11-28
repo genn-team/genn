@@ -5,6 +5,10 @@
 #include <map>
 #include <string>
 
+// CUDA includes
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 // NuGeNN includes
 #include "code_generator.h"
 
@@ -16,10 +20,7 @@ namespace CUDA
 class CodeGenerator : public ::CodeGenerator::Base
 {
 public:
-    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID) 
-    :   m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize), m_LocalHostID(localHostID)
-    {
-    }
+    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Base virtuals
@@ -95,11 +96,18 @@ private:
     
     bool shouldAccumulateInSharedMemory(const SynapseGroup &sg) const;
     
+    std::string getFloatAtomicAdd(const std::string &ftype) const;
+    
+    const cudaDeviceProp &getChosenCUDADevice() const{ return m_Devices[m_ChosenDevice]; }
+    
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const size_t m_NeuronUpdateBlockSize;
     const size_t m_PresynapticUpdateBlockSize;
     const int m_LocalHostID;
+    
+    std::vector<cudaDeviceProp> m_Devices;
+    int m_ChosenDevice;
 };
 }   // CodeGenerator
