@@ -31,8 +31,9 @@ size_t padSize(size_t size, size_t blockSize)
 //--------------------------------------------------------------------------
 namespace CUDA
 {
-CodeGenerator::CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID) 
-:   m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize), 
+CodeGenerator::CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID,
+                             const ::CodeGenerator::Base &hostCodeGenerator)
+:   m_HostCodeGenerator(hostCodeGenerator), m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize), 
     m_LocalHostID(localHostID), m_ChosenDevice(-1)
 {
     // Get number of CUDA devices and reserve memory
@@ -536,8 +537,7 @@ void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &typ
 #endif
 
     if(mode & VarLocation::HOST) {
-        // **TODO** this should be a call to CPUCodeGenerator::genVariableDefinition
-        os << varExportPrefix << " " << type << " " << name << ";" << std::endl;
+        m_HostCodeGenerator.genVariableDefinition(os, type, name, mode);
     }
     if(mode & VarLocation::DEVICE) {
         os << varExportPrefix << " " << type << " d_" << name << ";" << std::endl;
@@ -547,8 +547,7 @@ void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &typ
 void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
     if(mode & VarLocation::HOST) {
-         // **TODO** this should be a call to CPUCodeGenerator::genVariableImplementation
-        os << type << " " << name << ";" << std::endl;
+        m_HostCodeGenerator.genVariableImplementation(os, type, name, mode);
     }
     if(mode & VarLocation::DEVICE) {
         os << type << " d_" << name << ";" << std::endl;
@@ -559,6 +558,7 @@ void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string 
 void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const
 {
     if(mode & VarLocation::HOST) {
+        // **NOTE** because we want out memory to be pinned for faster copying to GPU, DON'T use host code generator
         const char *flags = (mode & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
         os << "cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << ");" << std::endl;
     }
@@ -573,6 +573,52 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
             os << "deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << count << " * sizeof(" << type << "));" << std::endl;
         }
     }
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::genRaggedMatrix(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
+                     const SynapseGroup &sg) const
+{
+//     const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
+//     // **TODO** other index types
+//     if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST)
+//     {
+//         // **FIXME**
+//         definitions << varExportPrefix << " RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
+//         runnerVarDecl << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << "," << s.second.getMaxSourceConnections() << ");" << std::endl;
+// 
+//             // Allocate row lengths
+//         /*allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
+//                             s.second.getSrcNeuronGroup()->getNumNeurons());
+//         allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
+//                                 s.second.getSrcNeuronGroup()->getNumNeurons());*/
+//         
+//         // Allocate row lengths
+//         /*allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
+//                             s.second.getSrcNeuronGroup()->getNumNeurons());
+//         allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
+//                                 s.second.getSrcNeuronGroup()->getNumNeurons());*/
+// 
+//     }
+//     if(s.second.getSparseConnectivityVarMode() & VarLocation::DEVICE) {
+//         // **FIXME**
+//         runnerVarDecl << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
+//         runnerVarDecl << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
+//         runnerVarDecl << "unsigned int *d_ind" << s.first << ";" << std::endl;
+//         runnerVarDecl << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
+// 
+//         if (model.isSynapseGroupDynamicsRequired(s.first)) {
+//             // **FIXME**
+//             runnerVarDecl << "unsigned int *d_synRemap" << s.first << ";" << std::endl;
+//             runnerVarDecl << "__device__ unsigned int *dd_synRemap" << s.first << ";" << std::endl;
+//         }
+//         if (model.isSynapseGroupPostLearningRequired(s.first)) {
+//             // **FIXME**
+//             runnerVarDecl << "unsigned int *d_colLength" << s.first << ";" << std::endl;
+//             runnerVarDecl << "__device__ unsigned int *dd_colLength" << s.first << ";" << std::endl;
+//             runnerVarDecl << "unsigned int *d_remap" << s.first << ";" << std::endl;
+//             runnerVarDecl << "__device__ unsigned int *dd_remap" << s.first << ";" << std::endl;
+//         }
+//     }
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,

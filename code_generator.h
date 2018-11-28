@@ -40,6 +40,9 @@ public:
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0; 
 
+    virtual void genRaggedMatrix(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
+                                 const SynapseGroup &sg) const = 0;
+                                 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     
     virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;

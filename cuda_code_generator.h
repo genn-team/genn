@@ -20,7 +20,8 @@ namespace CUDA
 class CodeGenerator : public ::CodeGenerator::Base
 {
 public:
-    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID);
+    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID,
+                  const ::CodeGenerator::Base &hostCodeGenerator);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Base virtuals
@@ -40,6 +41,9 @@ public:
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
 
+    virtual void genRaggedMatrix(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
+                                 const SynapseGroup &sg) const override;
+                                 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
     {
         genEmitSpike(os, subs, "");
@@ -103,6 +107,8 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
+    const ::CodeGenerator::Base &m_HostCodeGenerator;
+    
     const size_t m_NeuronUpdateBlockSize;
     const size_t m_PresynapticUpdateBlockSize;
     const int m_LocalHostID;

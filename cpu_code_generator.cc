@@ -9,9 +9,9 @@
 #include "substitution_stack.h"
 
 //--------------------------------------------------------------------------
-// CPU::CodeGenerator
+// SingleThreadedCPU::CodeGenerator
 //--------------------------------------------------------------------------
-namespace CPU
+namespace SingleThreadedCPU
 {
 void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
                                           std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const NeuronGroup &ng, Substitutions&)> handler) const
@@ -65,6 +65,11 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
     os << name << " = new " << type << "[" << count << "];" << std::endl;
 }
 
+void CodeGenerator::genRaggedMatrix(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
+                                    const SynapseGroup &sg) const
+{
+}
+
 void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     USE(os);
@@ -72,4 +77,4 @@ void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, cons
     USE(suffix);
     assert(false);
 }
-}   // CPU
+}   // SingleThreadedCPU

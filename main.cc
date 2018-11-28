@@ -19,6 +19,7 @@
 // NuGeNN includes
 #include "code_generator.h"
 #include "cuda_code_generator.h"
+#include "cpu_code_generator.h"
 #include "substitution_stack.h"
 
 // A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
@@ -616,6 +617,12 @@ void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &
                                     s.second.getSrcNeuronGroup()->getNumNeurons());
                 allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
                                         s.second.getSrcNeuronGroup()->getNumNeurons());*/
+                
+                // Allocate row lengths
+                /*allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
+                                    s.second.getSrcNeuronGroup()->getNumNeurons());
+                allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
+                                        s.second.getSrcNeuronGroup()->getNumNeurons());*/
 
             }
 #ifndef CPU_ONLY
@@ -751,9 +758,9 @@ int main()
     
     CodeStream output(std::cout);
     
-    CUDA::CodeGenerator codeGenerator(128, 128, 0);
-
-  
+    SingleThreadedCPU::CodeGenerator cpuCodeGenerator(0);
+    CUDA::CodeGenerator codeGenerator(128, 128, 0, cpuCodeGenerator);
+    
     generateNeuronUpdateKernel(output, model, codeGenerator);
     generatePresynapticUpdateKernel(output, model, codeGenerator);
     //genInitKernel(output, model, codeGenerator);
