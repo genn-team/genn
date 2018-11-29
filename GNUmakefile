@@ -32,7 +32,7 @@ else
     NUGENN                   =$(NUGENN_PATH)/nugenn_CPU_ONLY
 endif
 
-NUGENN_SOURCES      := cpu_code_generator.cc  cuda_code_generator.cc  main.cc
+NUGENN_SOURCES      := single_threaded_cpu_code_generator.cc  cuda_code_generator.cc  main.cc
 NUGENN_SOURCES      :=$(addprefix $(NUGENN_PATH)/,$(NUGENN_SOURCES))
 
 # Target rules

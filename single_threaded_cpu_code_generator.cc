@@ -1,4 +1,4 @@
-#include "cpu_code_generator.h"
+#include "single_threaded_cpu_code_generator.h"
 
 // GeNN includes
 #include "codeStream.h"

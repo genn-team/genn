@@ -19,7 +19,7 @@
 // NuGeNN includes
 #include "code_generator.h"
 #include "cuda_code_generator.h"
-#include "cpu_code_generator.h"
+#include "single_threaded_cpu_code_generator.h"
 #include "substitution_stack.h"
 
 // A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
