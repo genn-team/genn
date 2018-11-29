@@ -11,6 +11,9 @@
 // GeNN includes
 #include "codeGenUtils.h"
 
+//--------------------------------------------------------------------------
+// Substitutions
+//--------------------------------------------------------------------------
 class Substitutions
 {
 public:
@@ -19,6 +22,9 @@ public:
         assert(m_Parent != this);
     }
 
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
     void addVarSubstitution(const std::string &source, const std::string &destionation) 
     {
         m_VarSubstitutions.emplace(source, destionation);
@@ -64,6 +70,9 @@ public:
     }
 
 private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
     std::map<std::string, std::string> m_VarSubstitutions;
     std::map<std::string, std::pair<unsigned int, std::string>> m_FuncSubstitutions;
     const Substitutions *m_Parent;
