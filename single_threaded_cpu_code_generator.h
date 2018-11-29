@@ -24,16 +24,14 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Base virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream&, const NNmodel&, const NeuronGroup &ng, Substitutions&)> handler) const override;
+    virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const override;
 
     virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
-                                            std::function<void(CodeStream &, const NNmodel&, const SynapseGroup &, const Substitutions&)> wumThreshHandler,
-                                            std::function<void(CodeStream&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const override;
+                                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const override;
 
     virtual void genInitKernel(CodeStream &os, const NNmodel &model,
-                               std::function<void(CodeStream &, const NNmodel&, const NeuronGroup &, const Substitutions&)> ngHandler,
-                               std::function<void(CodeStream &, const NNmodel&, const SynapseGroup &, const Substitutions&)> sgHandler) const override;
+                               NeuronGroupHandler ngHandler,
+                               SynapseGroupHandler sgHandler) const override;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;

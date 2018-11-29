@@ -146,7 +146,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
 {
     // Neuron update kernel
     codeGenerator.genNeuronUpdateKernel(os, model,
-        [&codeGenerator](CodeStream &os, const NNmodel &model, const NeuronGroup &ng, Substitutions &popSubs)
+        [&codeGenerator, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
         {
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
@@ -396,7 +396,7 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
 {
     // Presynaptic update kernel
     codeGenerator.genPresynapticUpdateKernel(os, model,
-        [&codeGenerator](CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &baseSubs)
+        [&codeGenerator, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             // code substitutions ----
             const WeightUpdateModels::Base *wu = sg.getWUModel();
@@ -410,7 +410,7 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
             checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
             os << code;
         },
-        [&codeGenerator](CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &baseSubs)
+        [&codeGenerator, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             const WeightUpdateModels::Base *wu = sg.getWUModel();
             std::string code = wu->getSimCode(); //**TODO** pass through truespikeness

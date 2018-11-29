@@ -14,6 +14,7 @@ class CodeStream;
 class NeuronGroup;
 class NNmodel;
 class Substitutions;
+class SynapseGroup;
 
 //--------------------------------------------------------------------------
 // CodeGenerator::Base
@@ -24,17 +25,19 @@ class Base
 {
 public:
     //--------------------------------------------------------------------------
+    // Typedefines
+    //--------------------------------------------------------------------------
+    typedef std::function<void(CodeStream &, const NeuronGroup &, Substitutions&)> NeuronGroupHandler;
+    typedef std::function<void(CodeStream &, const SynapseGroup &, Substitutions&)> SynapseGroupHandler;
+    
+    //--------------------------------------------------------------------------
     // Declared virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                       std::function<void(CodeStream &output, const NNmodel&, const NeuronGroup&, Substitutions&)> handler) const = 0;
+    virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const = 0;
     virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
-                                            std::function<void(CodeStream&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumThreshHandler,
-                                            std::function<void(CodeStream&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const = 0;
+                                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const = 0;
 
-    virtual void genInitKernel(CodeStream &os, const NNmodel &model,
-                               std::function<void(CodeStream &, const NNmodel&, const NeuronGroup &, const Substitutions&)> ngHandler,
-                               std::function<void(CodeStream &, const NNmodel&, const SynapseGroup &, const Substitutions&)> sgHandler) const = 0;
+    virtual void genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler, SynapseGroupHandler sgHandler) const = 0;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
