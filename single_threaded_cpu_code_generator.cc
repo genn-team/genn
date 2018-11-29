@@ -14,7 +14,7 @@
 namespace SingleThreadedCPU
 {
 void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
-                                          std::function<void(CodeStream&, const ::CodeGenerator::Base&, const NNmodel&, const NeuronGroup &ng, Substitutions&)> handler) const
+                                          std::function<void(CodeStream&, const NNmodel&, const NeuronGroup &ng, Substitutions&)> handler) const
 {
     USE(os);
     USE(model);
@@ -23,8 +23,8 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
 }
 
 void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
-                                               std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const SynapseGroup &, const Substitutions&)> wumThreshHandler,
-                                               std::function<void(CodeStream&, const::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const
+                                               std::function<void(CodeStream &, const NNmodel&, const SynapseGroup &, const Substitutions&)> wumThreshHandler,
+                                               std::function<void(CodeStream&, const NNmodel&, const SynapseGroup&, const Substitutions&)> wumSimHandler) const
 {
     USE(os);
     USE(model);
@@ -34,8 +34,8 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
 }
 
 void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
-                                  std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const NeuronGroup &, const Substitutions&)> ngHandler,
-                                  std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel&, const SynapseGroup &, const Substitutions&)> sgHandler) const
+                                  std::function<void(CodeStream &, const NNmodel&, const NeuronGroup &, const Substitutions&)> ngHandler,
+                                  std::function<void(CodeStream &, const NNmodel&, const SynapseGroup &, const Substitutions&)> sgHandler) const
 {
     USE(os);
     USE(model);
