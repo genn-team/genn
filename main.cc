@@ -598,55 +598,43 @@ void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-            codeGenerator.genVariable(definitions, runnerVarDecl, runnerAlloc, "uint32_t *", "gp" + s.first, s.second.getSparseConnectivityVarMode(),
-                                      gpSize);
+            codeGenerator.genVariable(definitions, runnerVarDecl, runnerAlloc, 
+                                      "uint32_t *", "gp" + s.first, s.second.getSparseConnectivityVarMode(), gpSize);
         }
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            const VarMode varMode = s.second.getSparseConnectivityVarMode();
             const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
-            // **TODO** other index types
-#ifndef CPU_ONLY
-            if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST)
-#endif
-            {
-                // **FIXME**
-                definitions << varExportPrefix << " RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
-                runnerVarDecl << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << "," << s.second.getMaxSourceConnections() << ");" << std::endl;
-
-                 // Allocate row lengths
-                /*allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
-                                    s.second.getSrcNeuronGroup()->getNumNeurons());
-                allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
-                                        s.second.getSrcNeuronGroup()->getNumNeurons());*/
+            
+            // Row lengths
+            codeGenerator.genVariable(definitions, runnerVarDecl, runnerAlloc, 
+                                      "unsigned int", "rowLength" + s.first, varMode, s.second.getSrcNeuronGroup()->getNumNeurons());
+            
+            // Target indices
+            codeGenerator.genVariable(definitions, runnerVarDecl, runnerAlloc, 
+                                      "unsigned int", "ind" + s.first, varMode, size);
+            
+            // **TODO** remap is not always required
+            if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+                // Allocate synRemap
+                // **THINK** this is over-allocating
+                codeGenerator.genVariable(definitions, runnerVarDecl, runnerAlloc, 
+                                      "unsigned int", "synRemap" + s.first, varMode, size + 1);
+            }
+            
+            // **TODO** remap is not always required
+            if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+                const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
                 
-                // Allocate row lengths
-                /*allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
-                                    s.second.getSrcNeuronGroup()->getNumNeurons());
-                allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
-                                        s.second.getSrcNeuronGroup()->getNumNeurons());*/
-
+                // Allocate column lengths
+                codeGenerator.genVariable(definitions, runnerVarDecl, runnerAlloc, 
+                                          "unsigned int", "colLength" + s.first, varMode, s.second.getTrgNeuronGroup()->getNumNeurons());
+                
+                // Allocate remap
+                codeGenerator.genVariable(definitions, runnerVarDecl, runnerAlloc, 
+                                          "unsigned int", "remap" + s.first, varMode, postSize);
+                
             }
-#ifndef CPU_ONLY
-            if(s.second.getSparseConnectivityVarMode() & VarLocation::DEVICE) {
-                // **FIXME**
-                runnerVarDecl << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
-                runnerVarDecl << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
-                runnerVarDecl << "unsigned int *d_ind" << s.first << ";" << std::endl;
-                runnerVarDecl << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
-
-                if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                    // **FIXME**
-                    runnerVarDecl << "unsigned int *d_synRemap" << s.first << ";" << std::endl;
-                    runnerVarDecl << "__device__ unsigned int *dd_synRemap" << s.first << ";" << std::endl;
-                }
-                if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                    // **FIXME**
-                    runnerVarDecl << "unsigned int *d_colLength" << s.first << ";" << std::endl;
-                    runnerVarDecl << "__device__ unsigned int *dd_colLength" << s.first << ";" << std::endl;
-                    runnerVarDecl << "unsigned int *d_remap" << s.first << ";" << std::endl;
-                    runnerVarDecl << "__device__ unsigned int *dd_remap" << s.first << ";" << std::endl;
-                }
-            }
-#endif  // CPU_ONLY
+            
             // If weight update variables should be individual
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : wu->getVars()) {

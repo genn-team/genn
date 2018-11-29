@@ -46,14 +46,7 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
 
 void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode) const
 {
-    // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
-#ifdef _WIN32
-    const std::string varExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
-#else
-    const std::string varExportPrefix = "extern";
-#endif
-    
-    os << varExportPrefix << " " << type << " " << name << ";" << std::endl;
+    os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
 }
 void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode) const
 {
@@ -63,11 +56,6 @@ void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string 
 void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode, size_t count) const
 {
     os << name << " = new " << type << "[" << count << "];" << std::endl;
-}
-
-void CodeGenerator::genRaggedMatrix(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
-                                    const SynapseGroup &sg) const
-{
 }
 
 void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const

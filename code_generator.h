@@ -40,9 +40,6 @@ public:
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0; 
 
-    virtual void genRaggedMatrix(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
-                                 const SynapseGroup &sg) const = 0;
-                                 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     
     virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
@@ -60,6 +57,17 @@ public:
         genVariableDefinition(definitions, type, name, mode);
         genVariableImplementation(runner, type, name, mode);
         genVariableAllocation(allocations, type, name, mode, count);
+    }
+
+protected:
+    std::string getVarExportPrefix() const
+    {
+        // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
+#ifdef _WIN32
+        return GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
+#else
+        return "extern";
+#endif
     }
 };
     

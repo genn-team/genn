@@ -529,18 +529,11 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
 //--------------------------------------------------------------------------
 void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
-    // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
-#ifdef _WIN32
-    const std::string varExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
-#else
-    const std::string varExportPrefix = "extern";
-#endif
-
     if(mode & VarLocation::HOST) {
         m_HostCodeGenerator.genVariableDefinition(os, type, name, mode);
     }
     if(mode & VarLocation::DEVICE) {
-        os << varExportPrefix << " " << type << " d_" << name << ";" << std::endl;
+        os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -573,52 +566,6 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
             os << "deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << count << " * sizeof(" << type << "));" << std::endl;
         }
     }
-}
-//--------------------------------------------------------------------------
-void CodeGenerator::genRaggedMatrix(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
-                     const SynapseGroup &sg) const
-{
-//     const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
-//     // **TODO** other index types
-//     if(s.second.getSparseConnectivityVarMode() & VarLocation::HOST)
-//     {
-//         // **FIXME**
-//         definitions << varExportPrefix << " RaggedProjection<unsigned int> C" << s.first << ";" << std::endl;
-//         runnerVarDecl << "RaggedProjection<unsigned int> C" << s.first << "(" << s.second.getMaxConnections() << "," << s.second.getMaxSourceConnections() << ");" << std::endl;
-// 
-//             // Allocate row lengths
-//         /*allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
-//                             s.second.getSrcNeuronGroup()->getNumNeurons());
-//         allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
-//                                 s.second.getSrcNeuronGroup()->getNumNeurons());*/
-//         
-//         // Allocate row lengths
-//         /*allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
-//                             s.second.getSrcNeuronGroup()->getNumNeurons());
-//         allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
-//                                 s.second.getSrcNeuronGroup()->getNumNeurons());*/
-// 
-//     }
-//     if(s.second.getSparseConnectivityVarMode() & VarLocation::DEVICE) {
-//         // **FIXME**
-//         runnerVarDecl << "unsigned int *d_rowLength" << s.first << ";" << std::endl;
-//         runnerVarDecl << "__device__ unsigned int *dd_rowLength" << s.first << ";" << std::endl;
-//         runnerVarDecl << "unsigned int *d_ind" << s.first << ";" << std::endl;
-//         runnerVarDecl << "__device__ unsigned int *dd_ind" << s.first << ";" << std::endl;
-// 
-//         if (model.isSynapseGroupDynamicsRequired(s.first)) {
-//             // **FIXME**
-//             runnerVarDecl << "unsigned int *d_synRemap" << s.first << ";" << std::endl;
-//             runnerVarDecl << "__device__ unsigned int *dd_synRemap" << s.first << ";" << std::endl;
-//         }
-//         if (model.isSynapseGroupPostLearningRequired(s.first)) {
-//             // **FIXME**
-//             runnerVarDecl << "unsigned int *d_colLength" << s.first << ";" << std::endl;
-//             runnerVarDecl << "__device__ unsigned int *dd_colLength" << s.first << ";" << std::endl;
-//             runnerVarDecl << "unsigned int *d_remap" << s.first << ";" << std::endl;
-//             runnerVarDecl << "__device__ unsigned int *dd_remap" << s.first << ";" << std::endl;
-//         }
-//     }
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,
