@@ -22,6 +22,9 @@
 #include "single_threaded_cpu_code_generator.h"
 #include "substitution_stack.h"
 
+//--------------------------------------------------------------------------
+// TeeBuf
+//--------------------------------------------------------------------------
 // A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
 class TeeBuf: public std::streambuf
 {
@@ -33,8 +36,9 @@ public:
     }
 
 private:
-    
+    //--------------------------------------------------------------------------
     // std::streambuf virtuals
+    //--------------------------------------------------------------------------
     virtual int overflow(int c) override
     {
         if (c == EOF) {
@@ -64,10 +68,15 @@ private:
         return anyNonZero ? -1 : 0;
     }   
 private:
+    //--------------------------------------------------------------------------
     // Members
+    //--------------------------------------------------------------------------
     const std::vector<std::streambuf*> m_StreamBufs;
 };
 
+//--------------------------------------------------------------------------
+// TeeStream
+//--------------------------------------------------------------------------
 class TeeStream : public std::ostream
 {
 public:
@@ -76,7 +85,11 @@ public:
         : std::ostream(&m_TeeBuf), m_TeeBuf(std::forward<T>(streamBufs)...)
     {
     }
+    
 private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
     TeeBuf m_TeeBuf;
 };
 
