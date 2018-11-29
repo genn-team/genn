@@ -105,13 +105,13 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
 
         // Parallelise over neuron groups
         genParallelNeuronGroup(os, kernelSubs, model.getLocalNeuronGroups(), 
-            [&model, handler](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NeuronGroup &ng, Substitutions &popSubs)
+            [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 // Get name of rng to use for this neuron
                 popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs.getVarSubstitution("id") + "]");
                 
                 // Call handler to generate generic neuron code
-                handler(os, codeGenerator, model, ng, popSubs);
+                handler(os, *this, model, ng, popSubs);
 
                 os << "__syncthreads();" << std::endl;
 
@@ -213,7 +213,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         // Parallelise over synapse groups
         genParallelSynapseGroup(os, kernelSubs, model, 
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
-            [wumThreshHandler, wumSimHandler, this](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs)
+            [wumThreshHandler, wumSimHandler, this](CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs)
             {
                 if (sg.getSrcNeuronGroup()->isDelayRequired()) {
                     os << "const unsigned int delaySlot = (dd_spkQuePtr" <<sg.getSrcNeuronGroup()->getName();
@@ -356,7 +356,7 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
         // Parallelise over remote neuron groups
         genParallelNeuronGroup(os, model.getRemoteNeuronGroups(),  baseSubs,
             [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
-            [this, &model](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NeuronGroup &ng, const Substitutions &subs)
+            [this, &model](CodeStream &os, const NeuronGroup &ng, const Substitutions &subs)
             {
                 os << "if(" << subs.getVarSubstitution("id") << " == 0)";
                 {
@@ -410,7 +410,7 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
         // Parallelise over remote neuron groups
         genParallelNeuronGroup(os, model.getLocalNeuronGroups(), baseSubs,
             [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
-            [this, &model](CodeStream &os, const ::CodeGenerator::Base &codeGenerator, const NeuronGroup &ng, const Substitutions &subs)
+            [this, &model](CodeStream &os, const NeuronGroup &ng, const Substitutions &subs)
             {
                 // Determine which built in variables should be initialised on device
                 const bool shouldInitSpikeVar = (ng.getSpikeVarMode() & VarInit::DEVICE);
@@ -570,7 +570,7 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
 //--------------------------------------------------------------------------
 void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,
                                            const std::map<std::string, NeuronGroup> &ngs, std::function<bool(const NeuronGroup &)> filter,
-                                           std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NeuronGroup&, Substitutions &)> handler) const
+                                           std::function<void(CodeStream &, const NeuronGroup&, Substitutions &)> handler) const
 {
     // Populate neuron update groups
     Substitutions popSubs(&kernelSubs);
@@ -593,7 +593,7 @@ void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &
                 popSubs.addVarSubstitution("id", "lid");
             }
 
-            handler(os, *this, ng.second, popSubs);
+            handler(os, ng.second, popSubs);
 
             idStart += paddedSize;
             os << CodeStream::CB(1) << std::endl;
@@ -604,7 +604,7 @@ void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &
 void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model,
                                             std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc, 
                                             std::function<bool(const SynapseGroup &)> filter,
-                                            std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NNmodel &, const SynapseGroup&, Substitutions &)> handler) const
+                                            std::function<void(CodeStream &, const NNmodel &, const SynapseGroup&, Substitutions &)> handler) const
 {
     // Populate neuron update groups
     Substitutions popSubs(&kernelSubs);
@@ -627,7 +627,7 @@ void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const Substitutions 
                 popSubs.addVarSubstitution("id", "lid");
             }
 
-            handler(os, *this, model, sg.second, popSubs);
+            handler(os, model, sg.second, popSubs);
 
             idStart += paddedSize;
             os << CodeStream::CB(1) << std::endl;

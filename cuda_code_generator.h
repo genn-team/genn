@@ -61,11 +61,11 @@ private:
     //--------------------------------------------------------------------------
     void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,
                                 const std::map<std::string, NeuronGroup> &ngs, std::function<bool(const NeuronGroup &)> filter,
-                                std::function<void(CodeStream &, const ::CodeGenerator::Base &, const NeuronGroup&, Substitutions &)> handler) const;
+                                std::function<void(CodeStream &, const NeuronGroup&, Substitutions &)> handler) const;
 
     void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,
                                 const std::map<std::string, NeuronGroup> &ngs,
-                                std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NeuronGroup&, Substitutions &)> handler) const
+                                std::function<void(CodeStream &, const NeuronGroup&, Substitutions &)> handler) const
     {
         genParallelNeuronGroup(os, kernelSubs, ngs, [](const NeuronGroup&){ return true; }, handler);
     }
@@ -73,11 +73,11 @@ private:
     void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, 
                                  std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
                                  std::function<bool(const SynapseGroup &)> filter,
-                                 std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, Substitutions &)> handler) const;
+                                 std::function<void(CodeStream &, const NNmodel&, const SynapseGroup&, Substitutions &)> handler) const;
 
     void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, 
                                  std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
-                                 std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, Substitutions &)> handler) const
+                                 std::function<void(CodeStream &, const NNmodel&, const SynapseGroup&, Substitutions &)> handler) const
     {
         genParallelSynapseGroup(os, kernelSubs,  model, getPaddedSizeFunc, [](const SynapseGroup&){ return true; }, handler);
     }
