@@ -54,11 +54,11 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    void genVariable(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
-                     const std::string &type, const std::string &name, VarMode mode, size_t count) const
+    void genArray(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
+                  const std::string &type, const std::string &name, VarMode mode, size_t count) const
     {
-        genVariableDefinition(definitions, type, name, mode);
-        genVariableImplementation(runner, type, name, mode);
+        genVariableDefinition(definitions, type + "*", name, mode);
+        genVariableImplementation(runner, type + "*", name, mode);
         genVariableAllocation(allocations, type, name, mode, count);
     }
 
