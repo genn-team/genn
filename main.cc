@@ -375,6 +375,41 @@ void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Ba
         [](CodeStream &os, const NeuronGroup &ng, const Substitutions &baseSubs)
         {
             
+            /***GENERIC**
+            for (size_t k= 0, l= vars.size(); k < l; k++) { 
+                const auto &varInit = getVarInitialiser(k);
+                const VarMode varMode = getVarMode(k);
+            
+                // If this variable should be initialised on the host and has any initialisation code
+                if(varInit.getSnippet()->getCode().empty()) {
+                    CodeStream::Scope b(os);*/
+
+                    
+                    /* **BACKEND-SPECIFIC**
+                    if(shouldInitOnHost(varMode)) {
+                        os << "for (int i = 0; i < " << count << "; i++)";
+                    */
+                        // **GENERIC**
+                        // If variable requires a queue
+                        /*if (isVarQueueRequired(k)) {
+                            // Generate initial value into temporary variable
+                            os << vars[k].second << " initVal;" << std::endl;
+                            os << StandardSubstitutions::initNeuronVariable(varInit, "initVal", cpuFunctions, "i",
+                                                                            ftype, "rng") << std::endl;
+                            // Copy this into all delay slots
+                            os << "for (int d = 0; d < " << numDelaySlots << "; d++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << vars[k].first << popName << "[(d * " << count << ") + i] = initVal;" << std::endl;
+                            }
+                        }
+                        else {
+                            os << StandardSubstitutions::initNeuronVariable(varInit, vars[k].first + popName + "[i]",
+                                                                            cpuFunctions, "i", ftype, "rng") << std::endl;
+                        }
+                    }
+                }
+            }*/
         },
         [](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
