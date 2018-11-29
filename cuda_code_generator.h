@@ -20,7 +20,7 @@ namespace CUDA
 class CodeGenerator : public ::CodeGenerator::Base
 {
 public:
-    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID,
+    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
                   const ::CodeGenerator::Base &hostCodeGenerator);
 
     //--------------------------------------------------------------------------
@@ -57,27 +57,24 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,
-                                const std::map<std::string, NeuronGroup> &ngs, std::function<bool(const NeuronGroup &)> filter,
-                                NeuronGroupHandler handler) const;
+    void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, NeuronGroup> &ngs, size_t &idStart, 
+                                std::function<bool(const NeuronGroup &)> filter, NeuronGroupHandler handler) const;
 
-    void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,
-                                const std::map<std::string, NeuronGroup> &ngs, 
+    void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, NeuronGroup> &ngs, size_t &idStart,
                                 NeuronGroupHandler handler) const
     {
-        genParallelNeuronGroup(os, kernelSubs, ngs, [](const NeuronGroup&){ return true; }, handler);
+        genParallelNeuronGroup(os, kernelSubs, ngs, idStart, [](const NeuronGroup&){ return true; }, handler);
     }
 
-    void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, 
+    void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, size_t &idStart, 
                                  std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
-                                 std::function<bool(const SynapseGroup &)> filter,
-                                 SynapseGroupHandler handler) const;
+                                 std::function<bool(const SynapseGroup &)> filter, SynapseGroupHandler handler) const;
 
-    void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, 
+    void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, size_t &idStart, 
                                  std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
                                  SynapseGroupHandler handler) const
     {
-        genParallelSynapseGroup(os, kernelSubs,  model, getPaddedSizeFunc, [](const SynapseGroup&){ return true; }, handler);
+        genParallelSynapseGroup(os, kernelSubs,  model, idStart, getPaddedSizeFunc, [](const SynapseGroup&){ return true; }, handler);
     }
                                  
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
@@ -104,6 +101,7 @@ private:
     
     const size_t m_NeuronUpdateBlockSize;
     const size_t m_PresynapticUpdateBlockSize;
+    const size_t m_InitBlockSize;
     const int m_LocalHostID;
     
     std::vector<cudaDeviceProp> m_Devices;

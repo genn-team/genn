@@ -2,9 +2,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
-#include <ostream>
 #include <string>
-#include <streambuf>
 #include <sstream>
 #include <vector>
 
@@ -21,77 +19,8 @@
 #include "cuda_code_generator.h"
 #include "single_threaded_cpu_code_generator.h"
 #include "substitution_stack.h"
+#include "tee_stream.h"
 
-//--------------------------------------------------------------------------
-// TeeBuf
-//--------------------------------------------------------------------------
-// A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
-class TeeBuf: public std::streambuf
-{
-public:
-    // Construct a streambuf which tees output to multiple streambufs
-    template<typename... T>
-    TeeBuf(T&&... streamBufs) : m_StreamBufs({{streamBufs.rdbuf()...}})
-    {
-    }
-
-private:
-    //--------------------------------------------------------------------------
-    // std::streambuf virtuals
-    //--------------------------------------------------------------------------
-    virtual int overflow(int c) override
-    {
-        if (c == EOF) {
-            return !EOF;
-        }
-        else {
-            bool anyEOF = false;
-            for(auto &s: m_StreamBufs) {
-                if(s->sputc(c) == EOF) {
-                    anyEOF = true;
-                }
-            }
-            return anyEOF ? EOF : c;
-        }
-    }
-    
-    // Sync all teed buffers.
-    virtual int sync()
-    {
-        bool anyNonZero = false;
-        for(auto &s: m_StreamBufs) {
-            if(s->pubsync() != 0) {
-                anyNonZero = true;
-            }
-        }
-
-        return anyNonZero ? -1 : 0;
-    }   
-private:
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    const std::vector<std::streambuf*> m_StreamBufs;
-};
-
-//--------------------------------------------------------------------------
-// TeeStream
-//--------------------------------------------------------------------------
-class TeeStream : public std::ostream
-{
-public:
-    template<typename... T>
-    TeeStream(T&&... streamBufs)
-        : std::ostream(&m_TeeBuf), m_TeeBuf(std::forward<T>(streamBufs)...)
-    {
-    }
-    
-private:
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    TeeBuf m_TeeBuf;
-};
 
 // **TODO** move into NeuronModels::Base
 void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng, 
@@ -439,16 +368,18 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
     );
 }
 
-/*void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
+void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
 {
+    
     codeGenerator.genInitKernel(os, model,
-        [](CodeStream &os, const CodeGenerator::Base &codeGenerator, const NNmodel &model, const NeuronGroup &ng, const Substitutions &baseSubs)
+        [](CodeStream &os, const NeuronGroup &ng, const Substitutions &baseSubs)
         {
+            
         },
-        [](CodeStream &os, const CodeGenerator::Base &codeGenerator, const NNmodel &model, const SynapseGroup &sg, const Substitutions &baseSubs)
+        [](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
         });
-}*/
+}
 
 void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &model, const CodeGenerator::Base &codeGenerator, int localHostID)
 {
@@ -736,6 +667,8 @@ void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &
 
 int main()
 {
+    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
+    GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
     initGeNN();
 
     NNmodel model;
@@ -760,11 +693,11 @@ int main()
     CodeStream output(std::cout);
     
     SingleThreadedCPU::CodeGenerator cpuCodeGenerator(0);
-    CUDA::CodeGenerator codeGenerator(128, 128, 0, cpuCodeGenerator);
+    CUDA::CodeGenerator codeGenerator(128, 128, 64, 0, cpuCodeGenerator);
     
     generateNeuronUpdateKernel(output, model, codeGenerator);
     generatePresynapticUpdateKernel(output, model, codeGenerator);
-    //genInitKernel(output, model, codeGenerator);
+    genInitKernel(output, model, codeGenerator);
 
     std::stringstream definitions;
     std::stringstream runner;

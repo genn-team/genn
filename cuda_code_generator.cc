@@ -14,6 +14,7 @@
 
 // NuGeNN includes
 #include "substitution_stack.h"
+#include "tee_stream.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -31,10 +32,10 @@ size_t padSize(size_t size, size_t blockSize)
 //--------------------------------------------------------------------------
 namespace CUDA
 {
-CodeGenerator::CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, int localHostID,
+CodeGenerator::CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
                              const ::CodeGenerator::Base &hostCodeGenerator)
 :   m_HostCodeGenerator(hostCodeGenerator), m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize), 
-    m_LocalHostID(localHostID), m_ChosenDevice(-1)
+    m_InitBlockSize(initBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
 {
     // Get number of CUDA devices and reserve memory
     int numDevices;
@@ -104,7 +105,8 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
         
 
         // Parallelise over neuron groups
-        genParallelNeuronGroup(os, kernelSubs, model.getLocalNeuronGroups(), 
+        size_t idStart = 0;
+        genParallelNeuronGroup(os, kernelSubs, model.getLocalNeuronGroups(), idStart, 
             [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 // Get name of rng to use for this neuron
@@ -210,7 +212,8 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         }
         
         // Parallelise over synapse groups
-        genParallelSynapseGroup(os, kernelSubs, model, 
+        size_t idStart = 0;
+        genParallelSynapseGroup(os, kernelSubs, model, idStart,
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
             [wumThreshHandler, wumSimHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
             {
@@ -312,156 +315,115 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         );
     }
 }
+
 //--------------------------------------------------------------------------
 void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                                   NeuronGroupHandler ngHandler, SynapseGroupHandler sgHandler) const
 {
-    USE(os);
-    USE(model);
-    USE(ngHandler);
-    USE(sgHandler);
-    // init kernel header
-    /*os << "extern \"C\" __global__ void initializeDevice(";
-    const auto &params = model.getInitKernelParameters();
-    for(auto p = params.cbegin(); p != params.cend(); p++) {
-        os << p->second << " " << p->first;
-        if (std::next(p) != params.cend()) {
-            os  << ", ";
+    // Create codestreams to generate different sections of runner
+    /*std::stringstream initHostStream;
+    std::stringstream initDeviceStream;
+    CodeStream initHost(initHostStream);
+    CodeStream initDevice(initDeviceStream);*/
+    CodeStream &initDevice = os;
+    
+    /*primitives
+     1) callbacks for per-population init and per-neuron init for both remote and local ngs
+     2) per-population 
+     
+     os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+    {
+        CodeStream::Scope b(os);
+        os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+    }
+    
+    os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+    
+    3) per-neuron
+    // Zero spikes
+    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+        {
+            CodeStream::Scope b(os);
+            os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
         }
     }
-    os << ")";
+    else {
+        os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
+    }
+     */
+    // init kernel header
+    initDevice << "extern \"C\" __global__ void initializeDevice(";
+    const auto &params = model.getInitKernelParameters();
+    for(auto p = params.cbegin(); p != params.cend(); p++) {
+        initDevice << p->second << " " << p->first;
+        if (std::next(p) != params.cend()) {
+            initDevice  << ", ";
+        }
+    }
+    initDevice << ")";
 
-    Substitutions baseSubs;
+    Substitutions kernelSubs;
 
     // initialization kernel code
-    unsigned int startThread = 0;
+    size_t idStart = 0;
     {
         // common variables for all cases
-        CodeStream::Scope b(os);
+        CodeStream::Scope b(initDevice);
 
-        os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
+        initDevice << "const unsigned int id = " << m_InitBlockSize << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // If RNG is required
         if(model.isDeviceRNGRequired()) {
-            os << "// Initialise global GPU RNG" << std::endl;
-            os << "if(id == 0)";
+            initDevice << "// Initialise global GPU RNG" << std::endl;
+            initDevice << "if(id == 0)";
             {
-                CodeStream::Scope b(os);
-                os << "curand_init(" << model.getSeed() << ", 0, 0, &dd_rng[0]);" << std::endl;
+                CodeStream::Scope b(initDevice);
+                initDevice << "curand_init(" << model.getSeed() << ", 0, 0, &dd_rng[0]);" << std::endl;
             }
         }
 
         // Parallelise over remote neuron groups
-        genParallelNeuronGroup(os, model.getRemoteNeuronGroups(),  baseSubs,
+        genParallelNeuronGroup(initDevice, kernelSubs, model.getRemoteNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
-            [this, &model](CodeStream &os, const NeuronGroup &ng, const Substitutions &subs)
+            [this, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
-                os << "if(" << subs.getVarSubstitution("id") << " == 0)";
+                os << "if(" << popSubs.getVarSubstitution("id") << " == 0)";
                 {
                     CodeStream::Scope b(os);
 
-                    // If delay is required, loop over delay bins
-                    if(ng.isDelayRequired()) {
-                        os << "for (int i = 0; i < " << ng.getNumDelaySlots() << "; i++)" << CodeStream::OB(14);
-                    }
-
-                    if(ng.isTrueSpikeRequired() && ng.isDelayRequired()) {
-                        os << "dd_glbSpkCnt" << ng.getName() << "[i] = 0;" << std::endl;
-                    }
-                    else {
-                        os << "dd_glbSpkCnt" << ng.getName() << "[0] = 0;" << std::endl;
-                    }
-
-                    // If delay was required, close loop brace
-                    if(ng.isDelayRequired()) {
-                        os << CodeStream::CB(14);
-                    }
+                    
                 }
 
 
                 os << "// only do this for existing neurons" << std::endl;
-                os << "if (" << subs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
+                os << "if (" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
 
-                    // If delay is required, loop over delay bins
-                    if(ng.isDelayRequired()) {
-                        os << "for (int i = 0; i < " << ng.getNumDelaySlots() << "; i++)" << CodeStream::OB(16);
-                    }
-
-                    // Zero spikes
-                    if(ng.isTrueSpikeRequired() && ng.isDelayRequired()) {
-                        os << "dd_glbSpk" << ng.getName() << "[(i * " + std::to_string(ng.getNumNeurons()) + ") + lid] = 0;" << std::endl;
-                    }
-                    else {
-                        os << "dd_glbSpk" << ng.getName() << "[lid] = 0;" << std::endl;
-                    }
-
-                    // If delay was required, close loop brace
-                    if(ng.isDelayRequired()) {
-                        os << CodeStream::CB(16) << std::endl;
-                    }
+                    
                 }
             });
 
    
         // Parallelise over remote neuron groups
-        genParallelNeuronGroup(os, model.getLocalNeuronGroups(), baseSubs,
+        genParallelNeuronGroup(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
-            [this, &model](CodeStream &os, const NeuronGroup &ng, const Substitutions &subs)
+            [this, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
-                // Determine which built in variables should be initialised on device
-                const bool shouldInitSpikeVar = (ng.getSpikeVarMode() & VarInit::DEVICE);
-                const bool shouldInitSpikeEventVar = ng.isSpikeEventRequired() && (ng.getSpikeEventVarMode() & VarInit::DEVICE);
-                const bool shouldInitSpikeTimeVar = ng.isSpikeTimeRequired() && (ng.getSpikeTimeVarMode() & VarInit::DEVICE);
-
-                // If per-population spike variables should be initialised on device
-                // **NOTE** could optimise here and use getNumDelaySlots threads if getNumDelaySlots < numthreads
-                if(shouldInitSpikeVar || shouldInitSpikeEventVar)
+                os << "if(" << popSubs.getVarSubstitution("id") << " == 0)";
                 {
-                    os << "if(" << subs.getVarSubstitution("id") << " == 0)";
-                    {
-                        CodeStream::Scope b(os);
-
-                        // If delay is required, loop over delay bins
-                        if(ng.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << ng.getNumDelaySlots() << "; i++)" << CodeStream::OB(22);
-                        }
-
-                        // Zero spike count
-                        if(shouldInitSpikeVar) {
-                            if(ng.isTrueSpikeRequired() && ng.isDelayRequired()) {
-                                os << "dd_glbSpkCnt" << ng.getName() << "[i] = 0;" << std::endl;
-                            }
-                            else {
-                                os << "dd_glbSpkCnt" << ng.getName() << "[0] = 0;" << std::endl;
-                            }
-                        }
-
-                        // Zero spike event count
-                        if(shouldInitSpikeEventVar) {
-                            if(ng.isDelayRequired()) {
-                                os << "dd_glbSpkCntEvnt" << ng.getName() << "[i] = 0;" << std::endl;
-                            }
-                            else {
-                                os << "dd_glbSpkCntEvnt" << ng.getName() << "[0] = 0;" << std::endl;
-                            }
-                        }
-
-                        // If delay was required, close loop brace
-                        if(ng.isDelayRequired()) {
-                            os << CodeStream::CB(22);
-                        }
-                    }
+                    CodeStream::Scope b(os);
                 }
+                
                 os << "// only do this for existing neurons" << std::endl;
-                os << "if (" << subs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
+                os << "if (" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
 
                     // If this neuron is going to require a simulation RNG, initialise one using GLOBALthread id for sequence
                     if(ng.isSimRNGRequired()) {
-                        os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << ng.getName() << "[" << subs.getVarSubstitution("id") << "]);" << std::endl;
+                        os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << ng.getName() << "[" << popSubs.getVarSubstitution("id") << "]);" << std::endl;
                     }
 
                     // If this neuron requires an RNG for initialisation,
@@ -470,59 +432,13 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
                     }
-
-                    // Build string to use for delayed variable index
-                    const std::string delayedIndex = "(i * " + std::to_string(ng.getNumNeurons()) + ") + lid";
-
-                    // If spike variables are initialised on device
-                    if(shouldInitSpikeVar || shouldInitSpikeEventVar || shouldInitSpikeTimeVar) {
-                        // If delay is required, loop over delay bins
-                        if(ng.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << ng.getNumDelaySlots() << "; i++)" << CodeStream::OB(31);
-                        }
-
-                        // Zero spikes
-                        if(shouldInitSpikeVar) {
-                            if(ng.isTrueSpikeRequired() && ng.isDelayRequired()) {
-                                os << "dd_glbSpk" << ng.getName() << "[" << delayedIndex << "] = 0;" << std::endl;
-                            }
-                            else {
-                                os << "dd_glbSpk" << ng.getName() << "[lid] = 0;" << std::endl;
-                            }
-                        }
-
-                        // Zero spike events
-                        if(shouldInitSpikeEventVar) {
-                            if(ng.isDelayRequired()) {
-                                os << "dd_glbSpkEvnt" << ng.getName() << "[" << delayedIndex << "] = 0;" << std::endl;
-                            }
-                            else {
-                                os << "dd_glbSpkCnt" << ng.getName() << "[lid] = 0;" << std::endl;
-                            }
-                        }
-
-                        // Reset spike times
-                        if(shouldInitSpikeTimeVar) {
-                            if(ng.isDelayRequired()) {
-                                os << "dd_sT" << ng.getName() << "[" << delayedIndex << "] = -SCALAR_MAX;" << std::endl;
-                            }
-                            else {
-                                os << "dd_sT" << ng.getName() << "[lid] = -SCALAR_MAX;" << std::endl;
-                            }
-                        }
-
-                        // If delay was required, close loop brace
-                        if(ng.isDelayRequired()) {
-                            os << CodeStream::CB(31) << std::endl;
-                        }
-                    }
-
-                    ngHandler(os, *this, model, ng, subs);
+                    
+                    
                 }
             });
 
         // 3) genParallelSynapseGroup for local synapse groups **TODO** if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired())
-    }*/
+    }
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
@@ -566,13 +482,11 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs,
-                                           const std::map<std::string, NeuronGroup> &ngs, std::function<bool(const NeuronGroup &)> filter,
-                                           NeuronGroupHandler handler) const
+void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, NeuronGroup> &ngs, size_t &idStart, 
+                                           std::function<bool(const NeuronGroup &)> filter, NeuronGroupHandler handler) const
 {
     // Populate neuron update groups
     Substitutions popSubs(&kernelSubs);
-    size_t idStart = 0;
     for (const auto &ng : ngs) {
         // If this neuron group should be processed
         if(filter(ng.second)) {
@@ -599,14 +513,13 @@ void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model,
+void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, size_t &idStart,
                                             std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc, 
                                             std::function<bool(const SynapseGroup &)> filter,
                                             SynapseGroupHandler handler) const
 {
     // Populate neuron update groups
     Substitutions popSubs(&kernelSubs);
-    size_t idStart = 0;
     for (const auto &sg : model.getLocalSynapseGroups()) {
         // If this synapse group should be processed
         if(filter(sg.second)) {
