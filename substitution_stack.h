@@ -11,7 +11,6 @@
 // GeNN includes
 #include "codeGenUtils.h"
 
-//**TODO** this is crap - replace by chain of std::maps
 class Substitutions
 {
 public:
