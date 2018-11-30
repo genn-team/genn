@@ -69,15 +69,16 @@ class GeNNModel(object):
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 enable_debug=False, cpu_only=False):
+                 enable_debug=False, cpu=None):
         """Init GeNNModel
         Keyword args:
         precision       --  string precision as string ("float", "double"
                             or "long double"). defaults to float.
         model_name      --  string name of the model. Defaults to "GeNNModel".
         enable_debug    --  boolean enable debug mode. Disabled by default.
-        cpu_only        --  boolean whether GeNN should run only on CPU.
-                            Disabled by default.
+        cpu             --  boolean whether GeNN should use CPU.
+                            Defaults to None to defer to whether
+                            module was built without GPU support.
         """
         precision = "float" if precision is not None else precision
         self._scalar = precision
@@ -100,9 +101,9 @@ class GeNNModel(object):
 
         self._built = False
         self._loaded = False
-        self.cpu_only = cpu_only
         self._localhost = genn_wrapper.initMPI_pygenn()
 
+        self.use_cpu = cpu
         self.default_var_mode =\
             genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_DEVICE
         genn_wrapper.GeNNPreferences.cvar.debugCode = enable_debug
@@ -113,6 +114,21 @@ class GeNNModel(object):
         self.synapse_populations = {}
         self.current_sources = {}
         self.dT = 0.1
+
+    @property
+    def use_cpu(self):
+        return self._use_cpu
+
+    @use_cpu.setter
+    def use_cpu(self, cpu):
+        if cpu is None:
+            self._use_cpu = genn_wrapper.is_cpu_only()
+        else:
+            if genn_wrapper.is_cpu_only() and cpu == False:
+                raise ValueError("PyGeNN is built in CPU only mode. "
+                                 "GeNNModels cannot be simulated on GPU.")
+            else:
+                self._use_cpu = cpu
 
     @property
     def default_var_mode(self):
@@ -362,7 +378,7 @@ class GeNNModel(object):
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_model()
 
-        if self.cpu_only:
+        if self.use_cpu:
             self.step_time = self._slm.step_time_cpu
         else:
             self.step_time = self._slm.step_time_gpu
@@ -416,7 +432,7 @@ class GeNNModel(object):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        if not self.cpu_only:
+        if not self.use_cpu:
             self._slm.pull_state_from_device(pop_name)
 
     def pull_spikes_from_device(self, pop_name):
@@ -424,7 +440,7 @@ class GeNNModel(object):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        if not self.cpu_only:
+        if not self.use_cpu:
             self._slm.pull_spikes_from_device(pop_name)
 
     def pull_current_spikes_from_device(self, pop_name):
@@ -432,7 +448,7 @@ class GeNNModel(object):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        if not self.cpu_only:
+        if not self.use_cpu:
             self._slm.pull_current_spikes_from_device(pop_name)
 
     def push_state_to_device(self, pop_name):
@@ -440,7 +456,7 @@ class GeNNModel(object):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        if not self.cpu_only:
+        if not self.use_cpu:
             self._slm.push_state_to_device(pop_name)
 
     def push_spikes_to_device(self, pop_name):
@@ -448,7 +464,7 @@ class GeNNModel(object):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        if not self.cpu_only:
+        if not self.use_cpu:
             self._slm.push_spikes_to_device(pop_name)
 
     def push_current_spikes_from_device(self, pop_name):
@@ -456,7 +472,7 @@ class GeNNModel(object):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        if not self.cpu_only:
+        if not self.use_cpu:
             self._slm.push_current_spikes_to_device(pop_name)
 
     def end(self):
