@@ -127,7 +127,7 @@ class CustomInstall(install):
 
 setup(name = "pygenn",
       version = "0.1",
-      cmdclass={"build": CustomBuild, "install": CustomInstall},
+      #cmdclass={"build": CustomBuild, "install": CustomInstall},
       packages = find_packages(),
       package_data={"pygenn": package_data},
 
@@ -147,6 +147,8 @@ setup(name = "pygenn",
                    Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/newPostsynapticModelsCustom.cc"], **extension_kwargs),
                    Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/newWeightUpdateModelsCustom.cc"], **extension_kwargs),
                    Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **extension_kwargs)],
+    py_modules=["genn_wrapper", "Snippet", "NewModels", "GeNNPreferences", "StlContainers", "SharedLibraryModel", "InitVarSnippet", "InitSparseConnectivitySnippet",
+                "NeuronModels", "PostsynapticModels", "WeightUpdateModels", "CurrentSourceModels"],
 
     # Requirements
     install_requires=["numpy>1.6, < 1.15", "six"],
