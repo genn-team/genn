@@ -6,8 +6,6 @@ import sys
 from platform import system
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
-from distutils.command.build import build
-from setuptools.command.install import install
 
 from generate_swig_interfaces import generateConfigs
 
