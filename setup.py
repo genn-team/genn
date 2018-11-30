@@ -15,7 +15,7 @@ cuda_path = (os.environ["CUDA_PATH"]
              else "/usr/local/cuda")
 
 # Use CPU ONLY mode if CUDA path doesn't exist
-cpu_only = True#not os.path.exists(cuda_path)
+cpu_only = not os.path.exists(cuda_path)
 
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
@@ -109,23 +109,8 @@ genn_wrapper = Extension('_genn_wrapper', [
     define_macros=genn_wrapper_macros,
     **extension_kwargs)
 
-
-
-# We do some trickery to assure SWIG is always run before installing the generated files.
-# http://stackoverflow.com/questions/12491328/python-distutils-not-include-the-swig-generated-module
-class CustomBuild(build):
-    def run(self):
-        self.run_command("build_ext")
-        build.run(self)
-
-class CustomInstall(install):
-    def run(self):
-        self.run_command("build_ext")
-        self.do_egg_install()
-
 setup(name = "pygenn",
       version = "0.1",
-      cmdclass={"build": CustomBuild, "install": CustomInstall},
       packages = find_packages(),
       package_data={"pygenn": package_data},
 
