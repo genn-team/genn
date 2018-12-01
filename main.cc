@@ -81,7 +81,14 @@ void applyWeightUpdateModelSubstitutions(std::string &code, const SynapseGroup &
 
     //**TODO** preIdx = id_pre and postIdx = id_post
     // neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix);
+}
 
+void applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit)
+{
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
 }
 
 void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
@@ -162,8 +169,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                 // Apply substitutions to current converter code
                 string psCode = psm->getApplyInputCode();
                 inSynSubs.apply(psCode);
-                functionSubstitutions(psCode, model.getPrecision(), codeGenerator.getFunctions());
-
+         
                 applyNeuronModelSubstitutions(psCode, ng, "l");
                 applyPostsynapticModelSubstitutions(psCode, *sg, "lps");
                 
@@ -190,8 +196,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
                 popSubs.apply(thCode);
-                functionSubstitutions(thCode, model.getPrecision(), codeGenerator.getFunctions());
-
+                
                 applyNeuronModelSubstitutions(thCode, ng, "l");
                 
                 thCode= ensureFtype(thCode, model.getPrecision());
@@ -205,8 +210,6 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
             os << "// calculate membrane potential" << std::endl;
             string sCode = nm->getSimCode();
             popSubs.apply(sCode);
-
-            functionSubstitutions(sCode, model.getPrecision(), codeGenerator.getFunctions());
 
             applyNeuronModelSubstitutions(sCode, ng, "l");
             
@@ -228,8 +231,6 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                     // code substitutions ----
                     popSubs.apply(eCode);
 
-                    functionSubstitutions(eCode, model.getPrecision(), codeGenerator.getFunctions());
-                    
                     applyNeuronModelSubstitutions(eCode, ng, "l", "", "_pre");
                    
                     eCode = ensureFtype(eCode, model.getPrecision());
@@ -276,8 +277,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
                     if (!nm->getResetCode().empty()) {
                         string rCode = nm->getResetCode();
                         popSubs.apply(rCode);
-                        functionSubstitutions(rCode, model.getPrecision(), codeGenerator.getFunctions());
-
+             
                         applyNeuronModelSubstitutions(rCode, ng, "l");
                         
                         rCode = ensureFtype(rCode, model.getPrecision());
@@ -308,8 +308,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
 
                 string pdCode = psm->getDecayCode();
                 inSynSubs.apply(pdCode);
-                functionSubstitutions(pdCode, model.getPrecision(), codeGenerator.getFunctions());
-
+     
                 applyNeuronModelSubstitutions(pdCode, ng, "l");
                 applyPostsynapticModelSubstitutions(pdCode, *sg, "lps");
                 
@@ -344,8 +343,7 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
             const WeightUpdateModels::Base *wu = sg.getWUModel();
             std::string code = wu->getEventThresholdConditionCode();
             baseSubs.apply(code);
-            functionSubstitutions(code, model.getPrecision(), codeGenerator.getFunctions());
-
+   
             applyWeightUpdateModelSubstitutions(code, sg, codeGenerator.getVarPrefix());
            
             code= ensureFtype(code, model.getPrecision());
@@ -357,8 +355,7 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
             const WeightUpdateModels::Base *wu = sg.getWUModel();
             std::string code = wu->getSimCode(); //**TODO** pass through truespikeness
             baseSubs.apply(code);
-            functionSubstitutions(code, model.getPrecision(), codeGenerator.getFunctions());
-
+    
             applyWeightUpdateModelSubstitutions(code, sg, codeGenerator.getVarPrefix());
 
             code= ensureFtype(code, model.getPrecision());
@@ -368,48 +365,140 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
     );
 }
 
+// ------------------------------------------------------------------------
+template<typename I, typename M, typename Q>
+void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Base &codeGenerator, const Substitutions &kernelSubs, const NewModels::Base::StringPairVec &vars,
+                          size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
+                          I getVarInitialiser, M getVarMode, Q isVarQueueRequired)
+{
+    for (size_t k = 0; k < vars.size(); k++) {
+        const auto &varInit = getVarInitialiser(k);
+        const VarMode varMode = getVarMode(k);
+
+        // If this variable has any initialisation code
+        if(!varInit.getSnippet()->getCode().empty()) {
+            CodeStream::Scope b(os);
+
+            // Generate target-specific code to initialise variable
+            codeGenerator.genVariableInit(os, varMode, count, kernelSubs, 
+                [&codeGenerator, &vars, &varInit, &popName, &ftype, k, count, isVarQueueRequired, numDelaySlots]
+                (CodeStream &os, Substitutions &varSubs)
+                {
+                    // If variable requires a queue
+                    if (isVarQueueRequired(k)) {
+                        // Generate initial value into temporary variable
+                        os << vars[k].second << " initVal;" << std::endl;
+                        varSubs.addVarSubstitution("value", "initVal");
+
+                        std::string code = varInit.getSnippet()->getCode();
+                        varSubs.apply(code);
+                        applyVarInitSnippetSubstitutions(code, varInit);
+                        code = ensureFtype(code, ftype);
+                        checkUnreplacedVariables(code, "initVar");
+                        os << code << std::endl;
+
+                        // Copy this into all delay slots
+                        os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << codeGenerator.getVarPrefix() << vars[k].first << popName << "[(d * " << count << ") + i] = initVal;" << std::endl;
+                        }
+                    }
+                    else {
+                        varSubs.addVarSubstitution("value", vars[k].first + popName + "[" + varSubs.getVarSubstitution("id") + "]");
+                                
+                        std::string code = varInit.getSnippet()->getCode();
+                        varSubs.apply(code);
+                        applyVarInitSnippetSubstitutions(code, varInit);
+                        code = ensureFtype(code, ftype);
+                        checkUnreplacedVariables(code, "initVar");
+                        os << code << std::endl;
+                    }
+                });
+        }
+    }
+}
+//------------------------------------------------------------------------
+template<typename I, typename M>
+void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Base &codeGenerator, const Substitutions &kernelSubs, const NewModels::Base::StringPairVec &vars, 
+                          size_t count, const std::string &popName, const std::string &ftype,
+                          I getVarInitialiser, M getVarMode)
+{
+    genInitNeuronVarCode(os, codeGenerator, kernelSubs, vars, count, 0, popName, ftype, getVarInitialiser, getVarMode,
+                         [](size_t){ return false; });
+}
+
 void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
 {
     
     codeGenerator.genInitKernel(os, model,
-        [](CodeStream &os, const NeuronGroup &ng, const Substitutions &baseSubs)
+        [&codeGenerator, &model](CodeStream &os, const NeuronGroup &ng, const Substitutions &kernelSubs)
         {
-            
-            /***GENERIC**
-            for (size_t k= 0, l= vars.size(); k < l; k++) { 
-                const auto &varInit = getVarInitialiser(k);
-                const VarMode varMode = getVarMode(k);
-            
-                // If this variable should be initialised on the host and has any initialisation code
-                if(varInit.getSnippet()->getCode().empty()) {
-                    CodeStream::Scope b(os);*/
+            // Initialise neuron variables
+            genInitNeuronVarCode(os, codeGenerator, kernelSubs, ng.getNeuronModel()->getVars(), ng.getNumNeurons(), ng.getNumDelaySlots(),
+                                 ng.getName(),  model.getPrecision(),
+                                 [&ng](size_t i){ return ng.getVarInitialisers()[i]; },
+                                 [&ng](size_t i){ return ng.getVarMode(i); },
+                                 [&ng](size_t i){ return ng.isVarQueueRequired(i); });
 
-                    
-                    /* **BACKEND-SPECIFIC**
-                    if(shouldInitOnHost(varMode)) {
-                        os << "for (int i = 0; i < " << count << "; i++)";
-                    */
-                        // **GENERIC**
-                        // If variable requires a queue
-                        /*if (isVarQueueRequired(k)) {
-                            // Generate initial value into temporary variable
-                            os << vars[k].second << " initVal;" << std::endl;
-                            os << StandardSubstitutions::initNeuronVariable(varInit, "initVal", cpuFunctions, "i",
-                                                                            ftype, "rng") << std::endl;
-                            // Copy this into all delay slots
-                            os << "for (int d = 0; d < " << numDelaySlots << "; d++)";
+            // Loop through incoming synaptic populations
+            for(const auto &m : ng.getMergedInSyn()) {
+                const auto *sg = m.first;
+
+                // If this synapse group's input variable should be initialised on device
+                // Generate target-specific code to initialise variable
+                codeGenerator.genVariableInit(os, sg->getInSynVarMode(), ng.getNumNeurons(), kernelSubs, 
+                    [&codeGenerator, &model, sg] (CodeStream &os, Substitutions &varSubs)
+                    {
+                        os << codeGenerator.getVarPrefix() << "inSyn" << sg->getPSModelTargetName() << "[" << varSubs.getVarSubstitution("id") << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    });
+
+                // If dendritic delays are required
+                if(sg->isDendriticDelayRequired()) {
+                    codeGenerator.genVariableInit(os, sg->getDendriticDelayVarMode(), ng.getNumNeurons(), kernelSubs, 
+                        [&codeGenerator, &model, sg](CodeStream &os, Substitutions &varSubs)
+                        {
+                            os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                os << vars[k].first << popName << "[(d * " << count << ") + i] = initVal;" << std::endl;
+                                const std::string denDelayIndex = "(d * " + std::to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + " + varSubs.getVarSubstitution("id");
+                                os << codeGenerator.getVarPrefix() << "denDelay" << sg->getPSModelTargetName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
-                        }
-                        else {
-                            os << StandardSubstitutions::initNeuronVariable(varInit, vars[k].first + popName + "[i]",
-                                                                            cpuFunctions, "i", ftype, "rng") << std::endl;
-                        }
-                    }
+                        });
                 }
-            }*/
+
+                // If postsynaptic model variables should be individual
+                if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                    genInitNeuronVarCode(os, codeGenerator, kernelSubs, sg->getPSModel()->getVars(), ng.getNumNeurons(), sg->getName(), model.getPrecision(),
+                                         [sg](size_t i){ return sg->getPSVarInitialisers()[i]; },
+                                         [sg](size_t i){ return sg->getPSVarMode(i); });
+                }
+            }
+                    
+            // Loop through incoming synaptic populations
+            for(const auto *s : ng.getInSyn()) {
+                genInitNeuronVarCode(os, codeGenerator, kernelSubs, s->getWUModel()->getPostVars(), ng.getNumNeurons(), s->getTrgNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
+                                     [&s](size_t i){ return s->getWUPostVarInitialisers()[i]; },
+                                     [&s](size_t i){ return s->getWUPostVarMode(i); },
+                                     [&s](size_t){ return (s->getBackPropDelaySteps() != NO_DELAY); });
+            }
+
+            // Loop through outgoing synaptic populations
+            for(const auto *s : ng.getOutSyn()) {
+                // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
+                genInitNeuronVarCode(os, codeGenerator, kernelSubs, s->getWUModel()->getPreVars(), ng.getNumNeurons(), s->getSrcNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
+                                     [&s](size_t i){ return s->getWUPreVarInitialisers()[i]; },
+                                     [&s](size_t i){ return s->getWUPreVarMode(i); },
+                                     [&s](size_t){ return (s->getDelaySteps() != NO_DELAY); });
+            }
+
+            // Loop through current sources
+            os << "// current source variables" << std::endl;
+            for (auto const *cs : ng.getCurrentSources()) {
+                genInitNeuronVarCode(os, codeGenerator, kernelSubs, cs->getCurrentSourceModel()->getVars(), ng.getNumNeurons(), cs->getName(), model.getPrecision(),
+                                     [cs](size_t i){ return cs->getVarInitialisers()[i]; },
+                                     [cs](size_t i){ return cs->getVarMode(i); });
+            }
         },
         [](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {

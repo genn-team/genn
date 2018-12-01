@@ -22,6 +22,15 @@ public:
         assert(m_Parent != this);
     }
 
+    Substitutions(const std::vector<FunctionTemplate> &functions) : m_Parent(nullptr)
+    {
+        // Loop through functions and add as substitutions
+        // **TODO** precision
+        for(const auto &f: functions) {
+            addFuncSubstitution(f.genericName, f.numArguments, f.singlePrecisionTemplate);
+        }
+    }
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------

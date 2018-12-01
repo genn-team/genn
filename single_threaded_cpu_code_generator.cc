@@ -3,6 +3,7 @@
 // GeNN includes
 #include "codeStream.h"
 #include "global.h"
+#include "modelSpec.h"
 #include "utils.h"
 
 // NuGeNN includes
@@ -53,6 +54,20 @@ void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string 
 void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode, size_t count) const
 {
     os << name << " = new " << type << "[" << count << "];" << std::endl;
+}
+
+void CodeGenerator::genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const
+{
+    // **TODO** loops like this should be generated like CUDA threads
+    os << "for (unsigned i = 0; i < " << count << "; i++)";
+    {
+        CodeStream::Scope b(os);
+
+        // If variable should be initialised on device
+        Substitutions varSubs(&kernelSubs);
+        varSubs.addVarSubstitution("id", "i");
+        handler(os, varSubs);
+    }
 }
 
 void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const

@@ -39,6 +39,8 @@ public:
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
 
+    virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const override;
+
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
     {
         genEmitSpike(os, subs, "");
@@ -50,8 +52,6 @@ public:
     }
 
     virtual std::string getVarPrefix() const override{ return "dd_"; }
-
-    virtual const std::vector<FunctionTemplate> &getFunctions() const override{ return cudaFunctions; }
 
 private:
     //--------------------------------------------------------------------------

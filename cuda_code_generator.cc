@@ -66,7 +66,7 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_NeuronUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
 
-        Substitutions kernelSubs;
+        Substitutions kernelSubs(cudaFunctions);
         kernelSubs.addVarSubstitution("t", "t");
 
         // If any neuron groups emit spike events
@@ -184,7 +184,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
     {
         CodeStream::Scope b(os);
         
-        Substitutions kernelSubs;
+        Substitutions kernelSubs(cudaFunctions);
         kernelSubs.addVarSubstitution("t", "t");
 
         os << "const unsigned int id = " << m_PresynapticUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -318,7 +318,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
 
 //--------------------------------------------------------------------------
 void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
-                                  NeuronGroupHandler ngHandler, SynapseGroupHandler sgHandler) const
+                                  NeuronGroupHandler localNGHandler, SynapseGroupHandler sgHandler) const
 {
     // Create codestreams to generate different sections of runner
     /*std::stringstream initHostStream;
@@ -363,7 +363,7 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
     }
     initDevice << ")";
 
-    Substitutions kernelSubs;
+    Substitutions kernelSubs(cudaFunctions);
 
     // initialization kernel code
     size_t idStart = 0;
@@ -406,10 +406,10 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
             });
 
    
-        // Parallelise over remote neuron groups
+        // Parallelise over local neuron groups
         genParallelNeuronGroup(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
-            [this, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+            [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 os << "if(" << popSubs.getVarSubstitution("id") << " == 0)";
                 {
@@ -431,9 +431,12 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                     if(ng.isInitRNGRequired(VarInit::DEVICE)) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+
+                        // Add substitution for RNG
+                        popSubs.addVarSubstitution("rng", "initRNG");
                     }
                     
-                    
+                    localNGHandler(os, ng, popSubs);
                 }
             });
 
@@ -479,6 +482,15 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
         else {
             os << "deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << count << " * sizeof(" << type << "));" << std::endl;
         }
+    }
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const
+{
+    // If variable should be initialised on device
+    if(mode & VarInit::DEVICE) {
+        Substitutions varSubs(&kernelSubs);
+        handler(os, varSubs);
     }
 }
 //--------------------------------------------------------------------------
