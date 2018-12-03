@@ -54,27 +54,56 @@ public:
     virtual std::string getVarPrefix() const override{ return "dd_"; }
 
 private:
+    template<typename T>
+    using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
+
+    template<typename T>
+    using FilterGroupFunc = std::function<bool(const T&)>;
+
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, NeuronGroup> &ngs, size_t &idStart, 
-                                std::function<bool(const NeuronGroup &)> filter, NeuronGroupHandler handler) const;
-
-    void genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, NeuronGroup> &ngs, size_t &idStart,
-                                NeuronGroupHandler handler) const
+    template<typename T>
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, T> &groups, size_t &idStart,
+                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
+                          FilterGroupFunc<T> filter, 
+                          GroupHandler<T> handler) const
     {
-        genParallelNeuronGroup(os, kernelSubs, ngs, idStart, [](const NeuronGroup&){ return true; }, handler);
+        // Populate neuron update groups
+        Substitutions popSubs(&kernelSubs);
+        for (const auto &g : groups) {
+            // If this synapse group should be processed
+            if(filter(g.second)) {
+                const size_t paddedSize = getPaddedSizeFunc(g.second);
+
+                os << "// Group " << g.first << std::endl;
+
+                // If this is the first  group
+                if (idStart == 0) {
+                    os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
+                    popSubs.addVarSubstitution("id", "id");
+                }
+                else {
+                    os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
+                    os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+                    popSubs.addVarSubstitution("id", "lid");
+                }
+
+                handler(os, g.second, popSubs);
+
+                idStart += paddedSize;
+                os << CodeStream::CB(1) << std::endl;
+            }
+        }
     }
 
-    void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, size_t &idStart, 
-                                 std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
-                                 std::function<bool(const SynapseGroup &)> filter, SynapseGroupHandler handler) const;
-
-    void genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, size_t &idStart, 
-                                 std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
-                                 SynapseGroupHandler handler) const
+    template<typename T>
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, T> &groups, size_t &idStart,
+                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
+                          GroupHandler<T> handler) const
     {
-        genParallelSynapseGroup(os, kernelSubs,  model, idStart, getPaddedSizeFunc, [](const SynapseGroup&){ return true; }, handler);
+        genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
+                            [](const T&){ return true; }, handler);
     }
                                  
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;

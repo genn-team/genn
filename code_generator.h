@@ -29,8 +29,12 @@ public:
     // Typedefines
     //--------------------------------------------------------------------------
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
-    typedef std::function<void(CodeStream &, const NeuronGroup &, Substitutions&)> NeuronGroupHandler;
-    typedef std::function<void(CodeStream &, const SynapseGroup &, Substitutions&)> SynapseGroupHandler;
+    
+    template<typename T>
+    using GroupHandler = std::function < void(CodeStream &, const T &, Substitutions&) > ;
+
+    typedef GroupHandler<NeuronGroup> NeuronGroupHandler;
+    typedef GroupHandler<SynapseGroup> SynapseGroupHandler;
     
     //--------------------------------------------------------------------------
     // Declared virtuals

@@ -106,7 +106,8 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
 
         // Parallelise over neuron groups
         size_t idStart = 0;
-        genParallelNeuronGroup(os, kernelSubs, model.getLocalNeuronGroups(), idStart, 
+        genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart, 
+            [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_NeuronUpdateBlockSize); },
             [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 // Get name of rng to use for this neuron
@@ -213,7 +214,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
         
         // Parallelise over synapse groups
         size_t idStart = 0;
-        genParallelSynapseGroup(os, kernelSubs, model, idStart,
+        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
             [wumThreshHandler, wumSimHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
             {
@@ -384,7 +385,8 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
         }
 
         // Parallelise over remote neuron groups
-        genParallelNeuronGroup(initDevice, kernelSubs, model.getRemoteNeuronGroups(), idStart,
+        genParallelGroup<NeuronGroup>(initDevice, kernelSubs, model.getRemoteNeuronGroups(), idStart,
+            [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_InitBlockSize); },
             [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
             [this, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
@@ -407,7 +409,8 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
 
    
         // Parallelise over local neuron groups
-        genParallelNeuronGroup(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
+        genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
+            [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_InitBlockSize); },
             [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
@@ -440,6 +443,14 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                 }
             });
 
+        // Initialise weight update variables for dense 
+        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart, 
+            [this](const SynapseGroup &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
+            [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUDeviceVarInitRequired(); },
+            [](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            {
+                
+            });
         // 3) genParallelSynapseGroup for local synapse groups **TODO** if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired())
     }
 }
@@ -494,70 +505,6 @@ void CodeGenerator::genVariableInit(CodeStream &os, VarMode mode, size_t count, 
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genParallelNeuronGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, NeuronGroup> &ngs, size_t &idStart, 
-                                           std::function<bool(const NeuronGroup &)> filter, NeuronGroupHandler handler) const
-{
-    // Populate neuron update groups
-    Substitutions popSubs(&kernelSubs);
-    for (const auto &ng : ngs) {
-        // If this neuron group should be processed
-        if(filter(ng.second)) {
-            const size_t paddedSize = padSize(ng.second.getNumNeurons(), m_NeuronUpdateBlockSize);
-
-            os << "// Neuron group " << ng.first << std::endl;
-
-            // If this is the first  group
-            if (idStart == 0) {
-                os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
-                popSubs.addVarSubstitution("id", "id");
-            }
-            else {
-                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
-                os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
-                popSubs.addVarSubstitution("id", "lid");
-            }
-
-            handler(os, ng.second, popSubs);
-
-            idStart += paddedSize;
-            os << CodeStream::CB(1) << std::endl;
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void CodeGenerator::genParallelSynapseGroup(CodeStream &os, const Substitutions &kernelSubs, const NNmodel &model, size_t &idStart,
-                                            std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc, 
-                                            std::function<bool(const SynapseGroup &)> filter,
-                                            SynapseGroupHandler handler) const
-{
-    // Populate neuron update groups
-    Substitutions popSubs(&kernelSubs);
-    for (const auto &sg : model.getLocalSynapseGroups()) {
-        // If this synapse group should be processed
-        if(filter(sg.second)) {
-            const size_t paddedSize = getPaddedSizeFunc(sg.second);
-
-            os << "// Synapse group " << sg.first << std::endl;
-
-            // If this is the first  group
-            if (idStart == 0) {
-                os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
-                popSubs.addVarSubstitution("id", "id");
-            }
-            else {
-                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
-                os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
-                popSubs.addVarSubstitution("id", "lid");
-            }
-
-            handler(os, sg.second, popSubs);
-
-            idStart += paddedSize;
-            os << CodeStream::CB(1) << std::endl;
-        }
-    }
-}
-//--------------------------------------------------------------------------
 void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
@@ -565,7 +512,8 @@ void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, cons
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+                                                      GroupHandler<SynapseGroup> wumThreshHandler, 
+                                                      GroupHandler<SynapseGroup> wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "evnt";
@@ -791,19 +739,17 @@ size_t CodeGenerator::getPresynapticUpdateKernelSize(const SynapseGroup &sg) con
 {
      if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-            // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
-            // **TODO** integer ceil trick
-            return ceil((double)sg.getSrcNeuronGroup()->getNumNeurons() / (double)m_PresynapticUpdateBlockSize) * (double)m_PresynapticUpdateBlockSize;
+            return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_PresynapticUpdateBlockSize);
         }
         else {
             // paddedSize is the lowest multiple of blockSize >= maxConn[i]
             // **TODO** integer ceil trick
-            return ceil((double)sg.getMaxConnections() / (double) m_PresynapticUpdateBlockSize) * (double) m_PresynapticUpdateBlockSize;
+            return padSize(sg.getMaxConnections(), m_PresynapticUpdateBlockSize);
         }
     }
     else {
         // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
-        return ceil((double)sg.getTrgNeuronGroup()->getNumNeurons() / (double) m_PresynapticUpdateBlockSize) * (double) m_PresynapticUpdateBlockSize;
+        return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_PresynapticUpdateBlockSize);
     }
 }
 //--------------------------------------------------------------------------
