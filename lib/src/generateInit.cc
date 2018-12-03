@@ -231,6 +231,20 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
 #ifndef CPU_ONLY
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
 {
+    // If global device RNG is required
+    if(model.isDeviceRNGRequired()) {
+        os << "extern \"C\" __global__ void initializeDeviceRNG(unsigned long long deviceRNGSeed)";
+        {
+            CodeStream::Scope b(os);
+            os << "if(threadIdx.x == 0)";
+            {
+                CodeStream::Scope b(os);
+                os << "curand_init(deviceRNGSeed, 0, 0, &dd_rng[0]);" << std::endl;
+            }
+        }
+        os << std::endl;
+    }
+
     // init kernel header
     os << "extern \"C\" __global__ void initializeDevice(";
     for(const auto &p : model.getInitKernelParameters()) {
@@ -245,15 +259,6 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        // If RNG is required
-        if(model.isDeviceRNGRequired()) {
-            os << "// Initialise global GPU RNG" << std::endl;
-            os << "if(id == 0)";
-            {
-                CodeStream::Scope b(os);
-                os << "curand_init(deviceRNGSeed, 0, 0, &dd_rng[0]);" << std::endl;
-            }
-        }
         // Loop through remote neuron groups
         for(const auto &n : model.getRemoteNeuronGroups()) {
             if(n.second.hasOutputToHost(localHostID) && n.second.getSpikeVarMode() & VarInit::DEVICE) {
@@ -1175,11 +1180,13 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "copyStateToDevice(true);" << std::endl << std::endl;
         }
 
-        // If any init threads were required, perform init kernel launch
+        // If any init threads were required
         if(numInitThreads > 0) {
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(initDeviceStart);" << std::endl;
             }
+            // initialise on-device RNG
+            os << "initializeDeviceRNG<<<1, 1>>>(deviceRNGSeed);" << std::endl;
 
             os << "// perform on-device init" << std::endl;
             os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
