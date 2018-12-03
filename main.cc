@@ -364,7 +364,6 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
         }
     );
 }
-
 // ------------------------------------------------------------------------
 template<typename I, typename M, typename Q>
 void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Base &codeGenerator, const Substitutions &kernelSubs, const NewModels::Base::StringPairVec &vars,
@@ -502,6 +501,8 @@ void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Ba
         },
         [](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
+            //**TODO** think about $(id_pre) and $(id_post); and looping over sg.getSrcNeuronGroup()->getNumNeurons()
+            // alternative to genVariableInit COULD solve both
         });
 }
 

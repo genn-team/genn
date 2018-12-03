@@ -375,6 +375,7 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
         initDevice << "const unsigned int id = " << m_InitBlockSize << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // If RNG is required
+        // **TODO** move into seperate kernel
         if(model.isDeviceRNGRequired()) {
             initDevice << "// Initialise global GPU RNG" << std::endl;
             initDevice << "if(id == 0)";
@@ -390,21 +391,18 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
             [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
             [this, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
-                os << "if(" << popSubs.getVarSubstitution("id") << " == 0)";
-                {
-                    CodeStream::Scope b(os);
-
-                    
+                //**TODO** second handler for group
+                /*// Zero spikes
+                if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                    os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
+                    }
                 }
-
-
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if (" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
-                {
-                    CodeStream::Scope b(os);
-
-                    
-                }
+                else {
+                    os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
+                }*/
             });
 
    
@@ -414,45 +412,58 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
             [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
-                os << "if(" << popSubs.getVarSubstitution("id") << " == 0)";
-                {
-                    CodeStream::Scope b(os);
+                //**TODO** second handler for group
+
+                // **TODO** spike variables
+
+                // If this neuron is going to require a simulation RNG, initialise one using GLOBALthread id for sequence
+                if(ng.isSimRNGRequired()) {
+                    os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << ng.getName() << "[" << popSubs.getVarSubstitution("id") << "]);" << std::endl;
                 }
-                
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if (" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
-                {
-                    CodeStream::Scope b(os);
 
-                    // If this neuron is going to require a simulation RNG, initialise one using GLOBALthread id for sequence
-                    if(ng.isSimRNGRequired()) {
-                        os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << ng.getName() << "[" << popSubs.getVarSubstitution("id") << "]);" << std::endl;
-                    }
+                // If this neuron requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(ng.isInitRNGRequired(VarInit::DEVICE)) {
+                    os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                    os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
-                    // If this neuron requires an RNG for initialisation,
-                    // make copy of global phillox RNG and skip ahead by thread id
-                    if(ng.isInitRNGRequired(VarInit::DEVICE)) {
-                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                        os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
-
-                        // Add substitution for RNG
-                        popSubs.addVarSubstitution("rng", "initRNG");
-                    }
+                    // Add substitution for RNG
+                    popSubs.addVarSubstitution("rng", "initRNG");
+                }
                     
-                    localNGHandler(os, ng, popSubs);
-                }
+                localNGHandler(os, ng, popSubs);
             });
 
-        // Initialise weight update variables for dense 
+        // Initialise weight update variables for synapse groups with dense connectivity 
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart, 
             [this](const SynapseGroup &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
             [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUDeviceVarInitRequired(); },
             [](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
+                // If this post synapse requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(sg.isWUInitRNGRequired(VarInit::DEVICE)) {
+                    os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                    os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+
+                    // Add substitution for RNG
+                    popSubs.addVarSubstitution("rng", "initRNG");
+                }
+
+                localSGHandler(os, sg, popSubs);
+            });
+
+        // Initialise sparse connectivity
+        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
+            [this](const SynapseGroup &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
+            [](const SynapseGroup &sg){ return sg.isDeviceSparseConnectivityInitRequired(); },
+            [](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            {
                 
             });
-        // 3) genParallelSynapseGroup for local synapse groups **TODO** if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired())
-    }
+   }
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
