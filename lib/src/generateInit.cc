@@ -229,7 +229,7 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
 }
 // ------------------------------------------------------------------------
 #ifndef CPU_ONLY
-void genInitializeDeviceRNGKernel(CodeStream &os, const NNmodel &model)
+void genInitializeDeviceRNGKernel(CodeStream &os)
 {
     // If global device RNG is required
     os << "extern \"C\" __global__ void initializeDeviceRNG(unsigned long long deviceRNGSeed)";
@@ -816,7 +816,7 @@ void genInit(const NNmodel &model,      //!< Model description
 #ifndef CPU_ONLY
     // If device RNG is required, generate kernel to initialise it
     if(model.isDeviceRNGRequired()) {
-        genInitializeDeviceRNGKernel(os, model);
+        genInitializeDeviceRNGKernel(os);
         os << std::endl;
     }
 
