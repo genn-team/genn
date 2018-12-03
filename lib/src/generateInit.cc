@@ -229,22 +229,22 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
 }
 // ------------------------------------------------------------------------
 #ifndef CPU_ONLY
-unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
+void genInitializeDeviceRNGKernel(CodeStream &os, const NNmodel &model)
 {
     // If global device RNG is required
-    if(model.isDeviceRNGRequired()) {
-        os << "extern \"C\" __global__ void initializeDeviceRNG(unsigned long long deviceRNGSeed)";
+    os << "extern \"C\" __global__ void initializeDeviceRNG(unsigned long long deviceRNGSeed)";
+    {
+        CodeStream::Scope b(os);
+        os << "if(threadIdx.x == 0)";
         {
             CodeStream::Scope b(os);
-            os << "if(threadIdx.x == 0)";
-            {
-                CodeStream::Scope b(os);
-                os << "curand_init(deviceRNGSeed, 0, 0, &dd_rng[0]);" << std::endl;
-            }
+            os << "curand_init(deviceRNGSeed, 0, 0, &dd_rng[0]);" << std::endl;
         }
-        os << std::endl;
     }
-
+}
+// ------------------------------------------------------------------------
+unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
+{
     // init kernel header
     os << "extern \"C\" __global__ void initializeDevice(";
     for(const auto &p : model.getInitKernelParameters()) {
@@ -814,6 +814,12 @@ void genInit(const NNmodel &model,      //!< Model description
     os << std::endl;
 
 #ifndef CPU_ONLY
+    // If device RNG is required, generate kernel to initialise it
+    if(model.isDeviceRNGRequired()) {
+        genInitializeDeviceRNGKernel(os, model);
+        os << std::endl;
+    }
+
     // If required, insert kernel to initialize neurons and dense matrices
     const unsigned int numInitThreads = model.isDeviceInitRequired(localHostID) ? genInitializeDeviceKernel(os, model, localHostID) : 0;
 
@@ -873,8 +879,9 @@ void genInit(const NNmodel &model,      //!< Model description
         }
 
 #ifndef CPU_ONLY
-        // If there are any device initialisation threads
-        if(numInitThreads > 0) {
+        // If there are any device initialisation threads or device RNG is required
+        // **NOTE** this is a somewhat over-broad check - init threads might well NOT require an RNG
+        if(numInitThreads > 0 || model.isDeviceRNGRequired()) {
             // If no seed is specified
             os << "unsigned long long deviceRNGSeed;" << std::endl;
             if (model.getSeed() == 0) {
@@ -1180,13 +1187,16 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "copyStateToDevice(true);" << std::endl << std::endl;
         }
 
+        // If on-device global RNG is required, laumch kernel to initialise it
+        if(model.isDeviceRNGRequired()) {
+            os << "initializeDeviceRNG<<<1, 1>>>(deviceRNGSeed);" << std::endl;
+        }
+
         // If any init threads were required
         if(numInitThreads > 0) {
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(initDeviceStart);" << std::endl;
             }
-            // initialise on-device RNG
-            os << "initializeDeviceRNG<<<1, 1>>>(deviceRNGSeed);" << std::endl;
 
             os << "// perform on-device init" << std::endl;
             os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
