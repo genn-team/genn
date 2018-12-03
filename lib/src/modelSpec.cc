@@ -222,11 +222,6 @@ std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::st
 
 bool NNmodel::isDeviceInitRequired(int localHostID) const
 {
-    // If device RNG is required, device init is required to initialise it
-    if(isDeviceRNGRequired()) {
-        return true;
-    }
-
     // If any local neuron groups require device initialisation, return true
     if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
         [](const NNmodel::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
