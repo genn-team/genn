@@ -146,7 +146,7 @@ bool NNmodel::isHostRNGRequired() const
 
 bool NNmodel::isDeviceRNGRequired() const
 {
-    // If any neuron groupsrequire device RNG for initialisation, return true
+    // If any neuron groups require device RNG for initialisation, return true
     if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
         [](const NeuronGroupValueType &n)
         {
