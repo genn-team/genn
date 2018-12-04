@@ -898,7 +898,7 @@ void genInit(const NNmodel &model,      //!< Model description
             }
             // Otherwise, use model seed
             else {
-                os << "deviceRNGSeed = model.getSeed();" << std::endl;
+                os << "deviceRNGSeed = " << model.getSeed() << ";" << std::endl;
             }
         }
 #endif
