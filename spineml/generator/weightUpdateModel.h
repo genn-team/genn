@@ -44,6 +44,8 @@ public:
     //------------------------------------------------------------------------
     typedef SpineMLGenerator::ParamValues ParamValues;
     typedef SpineMLGenerator::VarValues<WeightUpdateModel> VarValues;
+    typedef NewModels::VarInitContainerBase<0> PreVarValues;
+    typedef NewModels::VarInitContainerBase<0> PostVarValues;
 
     //------------------------------------------------------------------------
     // Public API

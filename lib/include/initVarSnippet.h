@@ -107,4 +107,21 @@ public:
 
     SET_PARAM_NAMES({"lambda"});
 };
+
+//----------------------------------------------------------------------------
+// InitVarSnippet::Gamma
+//----------------------------------------------------------------------------
+//! Initialises variable by sampling from the exponential distribution
+/*! This snippet takes 1 parameter:
+ *
+    - \c lambda - mean event rate (events per unit time/distance)*/
+class Gamma : public Base
+{
+public:
+    DECLARE_SNIPPET(InitVarSnippet::Gamma, 2);
+
+    SET_CODE("$(value) = $(b) * $(gennrand_gamma, $(a));");
+
+    SET_PARAM_NAMES({"a", "b"});
+};
 }   // namespace InitVarSnippet

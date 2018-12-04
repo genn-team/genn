@@ -5,6 +5,7 @@ IMPLEMENT_MODEL(NeuronModels::RulkovMap);
 IMPLEMENT_MODEL(NeuronModels::Izhikevich);
 IMPLEMENT_MODEL(NeuronModels::IzhikevichVariable);
 IMPLEMENT_MODEL(NeuronModels::SpikeSource);
+IMPLEMENT_MODEL(NeuronModels::SpikeSourceArray);
 IMPLEMENT_MODEL(NeuronModels::Poisson);
 IMPLEMENT_MODEL(NeuronModels::PoissonNew);
 IMPLEMENT_MODEL(NeuronModels::TraubMiles);

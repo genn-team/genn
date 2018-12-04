@@ -125,10 +125,10 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                   const string &path,   //!< path the generated code will be deposited
                   int localHostID)      //!< ID of local host
 {
-    enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost,
-        KernelCalcSynapseDynamics, KernelCalcNeurons, KernelInit, KernelInitSparse, KernelMax };
+    enum Kernel{ KernelCalcSynapses, KernelLearnSynapsesPost, KernelCalcSynapseDynamics,
+        KernelCalcNeurons, KernelInit, KernelInitSparse, KernelPreSynapseReset, KernelMax };
     const char *kernelName[KernelMax]= {"calcSynapses", "learnSynapsesPost", "calcSynapseDynamics", "calcNeurons",
-                                        "initializeDevice", "initializeSparseDevice"};
+                                        "initializeDevice", "initializeSparseDevice", "preSynapseReset"};
     size_t globalMem, mostGlobalMem = 0;
     int chosenDevice = 0;
 
@@ -164,11 +164,12 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
         // Loop through synapse groups
         for(const auto &s : model.getLocalSynapseGroups()) {
             const unsigned int maxConnections = s.second.getMaxConnections();
+            const unsigned int maxSourceConnections = s.second.getMaxSourceConnections();
             const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
             // **TODO** presynaptic parallelism?
-            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSize[KernelCalcSynapses].push_back(maxConnections);
             }
             else {
@@ -177,11 +178,16 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 
             // TODO: this needs updating where learning is detected properly!
             if (model.isSynapseGroupPostLearningRequired(s.first)) {
-                groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    groupSize[KernelLearnSynapsesPost].push_back(maxSourceConnections);
+                }
+                else {
+                    groupSize[KernelLearnSynapsesPost].push_back(numSrcNeurons);
+                }
             }
 
             if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && maxConnections > 0) {
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     groupSize[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
                 }
                 else {
@@ -191,20 +197,17 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
 
             // If synapse group has individual weights and needs device initialisation
             if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired()) {
-                // If matrix is dense
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                    groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    groupSize[KernelInitSparse].push_back(numSrcNeurons);
                 }
-                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    if(maxConnections > 0) {
-                        groupSize[KernelInitSparse].push_back(numSrcNeurons * maxConnections);
-                    }
-                    else {
-                        groupSize[KernelInitSparse].push_back(numSrcNeurons * numTrgNeurons);
-                    }
+                else {
+                    groupSize[KernelInit].push_back(numSrcNeurons * numTrgNeurons);
                 }
             }
         }
+
+        // Add
+        groupSize[KernelPreSynapseReset].push_back(model.getNumPreSynapseResetRequiredGroups());
 
 #ifdef BLOCKSZ_DEBUG
         for (int i= 0; i < KernelMax; i++) {
@@ -254,9 +257,16 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 break;
 
             case 6:
-            latest:
                 smemAllocGran = 256;
                 warpAllocGran = (deviceProp[theDevice].minor == 0) ? 2 : 4;
+                regAllocGran = 256;
+                maxBlocksPerSM = 32;
+                break;
+
+            case 7:
+            latest:
+                smemAllocGran = 256;
+                warpAllocGran = 4;
                 regAllocGran = 256;
                 maxBlocksPerSM = 32;
                 break;
@@ -324,11 +334,13 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
             bool KrnlExist[KernelMax];
             for (int rep= 0; rep < 2; rep++) {
                 // do two repititions with different candidate kernel size
+                preSynapseResetBlkSize = warpSize*(rep+1);
                 synapseBlkSz = warpSize*(rep+1);
                 learnBlkSz = warpSize*(rep+1);
                 synDynBlkSz= warpSize*(rep+1);
                 neuronBlkSz = warpSize*(rep+1);
                 initBlkSz = warpSize*(rep+1);
+                initSparseBlkSz = warpSize*(rep+1);
 
                 model.setPopulationSums();
                 generate_model_runner(model, path, localHostID);
@@ -336,7 +348,10 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
                 // Run NVCC
                 cout << "dry-run compile for device " << theDevice << endl;
                 cout << nvccCommand << endl;
-                system(nvccCommand.c_str());
+                if(system(nvccCommand.c_str()) != 0) {
+                    cerr << "generateALL: NVCC failed" << endl;
+                    exit(EXIT_FAILURE);
+                }
 
                 CHECK_CU_ERRORS(cuModuleLoad(&module, cubinPath.c_str()));
                 for (int i= 0; i < KernelMax; i++) {
@@ -558,6 +573,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
         else {
             chosenDevice= GENN_PREFERENCES::defaultDevice;
         }
+        preSynapseResetBlkSize = bestBlkSz[KernelPreSynapseReset][chosenDevice];
         synapseBlkSz = bestBlkSz[KernelCalcSynapses][chosenDevice];
         learnBlkSz = bestBlkSz[KernelLearnSynapsesPost][chosenDevice];
         synDynBlkSz= bestBlkSz[KernelCalcSynapseDynamics][chosenDevice];
@@ -569,6 +585,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
     // IF OPTIMISATION IS OFF: Simply choose the device with the most global memory.
     else {
         cout << "skipping block size optimisation..." << endl;
+        preSynapseResetBlkSize = GENN_PREFERENCES::preSynapseResetBlockSize;
         synapseBlkSz= GENN_PREFERENCES::synapseBlockSize;
         learnBlkSz= GENN_PREFERENCES::learningBlockSize;
         synDynBlkSz= GENN_PREFERENCES::synapseDynamicsBlockSize;
@@ -604,6 +621,7 @@ void chooseDevice(NNmodel &model,       //!< the nn model we are generating code
     sm_os << deviceProp[chosenDevice].major << deviceProp[chosenDevice].minor << endl;
     sm_os.close();
 
+    cout << "pre synapse reset block size: " << preSynapseResetBlkSize << endl;
     cout << "synapse block size: " << synapseBlkSz << endl;
     cout << "learn block size: " << learnBlkSz << endl;
     cout << "synapseDynamics block size: " << synDynBlkSz << endl;

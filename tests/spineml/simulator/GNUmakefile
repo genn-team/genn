@@ -19,9 +19,6 @@
 # its own goals, we need to manually specify the DEFAULT_GOAL
 .DEFAULT_GOAL := all
 
-# These unit tests
-CPU_ONLY = 1
-
 # Include makefile which builds libgenn
 include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 
@@ -40,8 +37,8 @@ GTEST_SOURCES     := $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.c
 
 TEST_SOURCES      := $(SPINEML_SOURCES) $(GTEST_SOURCES) $(TEST_PATH)/*.cc
 
-INCLUDE_FLAGS                 += -I $(SPINEML_PATH)/simulator -I $(SPINEML_PATH)/common
-LINK_FLAGS                    += -lpthreads
+INCLUDE_FLAGS                 += -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" -I $(SPINEML_PATH)/simulator -I $(SPINEML_PATH)/common
+LINK_FLAGS                    += -lpthread
 
 # Target rules
 .PHONY: all clean clean_test always_compile
@@ -59,19 +56,3 @@ clean_test:
 always_compile:
 
 -include $(patsubst %.o,%.d,$(LIBGENN_OBJ))
-
-CXX = g++
-CXXFLAGS = -std=c++11 -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" -I "$(GENN_PATH)/lib/include" -I "$(GENN_PATH)/spineml/simulator" -I "$(GENN_PATH)/spineml/common" -DCPU_ONLY
-LINK_FLAGS = -lpthread
-
-SOURCES = connectors.cc $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc $(GENN_PATH)/lib/src/codeGenUtils.cc
-OBJECTS =$(foreach obj,$(basename $(SOURCES)),$(obj).o)
-
-%.o: %.cc
-	$(CXX)  -c -o $@ $< $(CXXFLAGS)
-
-test: $(OBJECTS) 
-	$(CXX) -o $@ $^ $(CXXFLAGS) $(LINK_FLAGS)
-	
-clean:
-	rm -f *.o test

@@ -194,9 +194,9 @@ public:
         "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n"
         "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n"
         "$(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n"
-        "//if ($(V) > 30.0){   //keep this only for visualisation -- not really necessaary otherwise \n"
-        "//  $(V)=30.0; \n"
-        "//}\n");
+        "if ($(V) > 30.0){   //keep this to not confuse users with unrealistiv voltage values \n"
+        "  $(V)=30.0; \n"
+        "}\n");
 
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
 
@@ -243,6 +243,34 @@ public:
     DECLARE_MODEL(NeuronModels::SpikeSource, 0, 0);
 
     SET_THRESHOLD_CONDITION_CODE("0");
+};
+
+//----------------------------------------------------------------------------
+// NeuronModels::SpikeSourceArray
+//----------------------------------------------------------------------------
+//! Spike source array
+/*! A neuron which reads spike times from a global spikes array
+    It has 2 variables:
+
+    - \c startSpike - Index of the next spike in the global array
+    - \c endSpike   - Index of the spike next to the last in the globel array
+
+    and 1 global parameter:
+
+    - \c spikeTimes - Array with all spike times
+
+  */
+class SpikeSourceArray : public Base
+{
+public:
+    DECLARE_MODEL(NeuronModels::SpikeSourceArray, 0, 2);
+    SET_SIM_CODE("oldSpike = false;\n")
+    SET_THRESHOLD_CONDITION_CODE(
+        "$(startSpike) != $(endSpike) && "
+        "$(t) >= $(spikeTimes)[$(startSpike)]" );
+    SET_RESET_CODE( "$(startSpike)++;\n" );
+    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int"}} );
+    SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
 };
 
 //----------------------------------------------------------------------------
@@ -330,8 +358,8 @@ public:
     - \c rate - Mean firing rate (Hz)
 
     \note Internally this samples from the exponential distribution using
-    the C++ 11 \<random\> library on the CPU and Von Neumann's exponential
-    generator (Ripley p.230) implemented using cuRAND on the GPU. */
+    the C++ 11 \<random\> library on the CPU and by transforming the
+    uniform distribution, generated using cuRAND, with a natural log on the GPU. */
 class PoissonNew : public Base
 {
 public:

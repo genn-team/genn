@@ -1,0 +1,4 @@
+/**/*.pyc
+/documentation/
+/build/
+/pygenn.egg-info/

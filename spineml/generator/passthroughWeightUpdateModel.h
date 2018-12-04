@@ -28,11 +28,13 @@ public:
     //------------------------------------------------------------------------
     typedef Snippet::ValueBase<0> ParamValues;
     typedef NewModels::VarInitContainerBase<0> VarValues;
+    typedef NewModels::VarInitContainerBase<0> PreVarValues;
+    typedef NewModels::VarInitContainerBase<0> PostVarValues;
 
     //------------------------------------------------------------------------
     // WeightUpdateModels::Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getSimCode() const{ return m_SimCode; }
+    virtual std::string getSimCode() const override{ return m_SimCode; }
     virtual std::string getSynapseDynamicsCode() const override{ return m_SynapseDynamicsCode; }
 
 private:

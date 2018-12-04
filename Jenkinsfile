@@ -2,14 +2,17 @@
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
+    ["cuda9", "linux", "x86_64"] as Set,
     ["cuda8", "linux", "x86_64"] as Set,
     ["cuda7", "linux", "x86_64"] as Set, 
     ["cuda6", "linux", "x86_64"] as Set, 
-    ["cpu_only", "linux", "x86_64"] as Set, 
+    ["cpu_only", "linux", "x86_64"] as Set,
+    ["cuda9", "linux", "x86"] as Set,
     ["cuda8", "linux", "x86"] as Set,
     ["cuda7", "linux", "x86"] as Set, 
     ["cuda6", "linux", "x86"] as Set, 
     ["cpu_only", "linux", "x86"] as Set,
+    ["cuda9", "mac"] as Set,
     ["cuda8", "mac"] as Set,
     ["cuda7", "mac"] as Set, 
     ["cuda6", "mac"] as Set, 
@@ -102,7 +105,7 @@ for(b = 0; b < builderNodes.size; b++) {
                     
                     echo pwd()
                     echo env.PATH;
-    
+
                     // Deleting existing checked out version of GeNN
                     sh "rm -rf genn";
                     
@@ -137,13 +140,20 @@ for(b = 0; b < builderNodes.size; b++) {
                     // Run automatic tests
                     if (isUnix()) {
                         dir("genn/tests") {
-                            // Run tests
+                            // **YUCK** if dev_toolset is in node label - add flag to enable newer GCC using dev_toolset (CentOS)
+                            def runTestArguments = "";
+                            if("dev_toolset" in nodeLabel) {
+                                echo "Enabling devtoolset 6 version of GCC";
+                                runTestArguments += " -d";
+                            }
+                            
+                            // If node is a CPU_ONLY node add -c option 
                             if("cpu_only" in nodeLabel) {
-                                sh "./run_tests.sh -c";
+                                runTestArguments += " -c";
                             }
-                            else {
-                                sh "./run_tests.sh";
-                            }
+                            
+                            // Run tests
+                            sh "./run_tests.sh" + runTestArguments;
                             
                             // Parse test output for GCC warnings
                             // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
@@ -160,30 +170,17 @@ for(b = 0; b < builderNodes.size; b++) {
                 }
                 
                 buildStep("Gathering test results (" + env.NODE_NAME + ")") {
-                    dir("genn/tests") {
-                        // Process JUnit test output
-                        junit "**/test_results*.xml";
-                        
-                        // Rename output so name is unique 
-                        def uniqueMsg = "msg_" + env.NODE_NAME;
-                        sh "mv msg \"" + uniqueMsg + "\"";
-                        
-                        // Archive output
-                        archive uniqueMsg;
-                    }
-                }
-                
-                buildStep("Calculating code coverage (" + env.NODE_NAME + ")") {
-                    // Calculate coverage
-                    dir("genn/tests") {
-                        if (isUnix()) {
-                            // Run correct coverage calculation script
-                            if("cpu_only" in nodeLabel) {
-                                sh "./calc_coverage.sh -c";
-                            }
-                            else {
-                                sh "./calc_coverage.sh";
-                            }
+                    if (isUnix()) {
+                        dir("genn/tests") {
+                            // Process JUnit test output
+                            junit "**/test_results*.xml";
+                            
+                            // Rename output so name is unique 
+                            def uniqueMsg = "msg_" + env.NODE_NAME;
+                            sh "mv msg \"" + uniqueMsg + "\"";
+                            
+                            // Archive output
+                            archive uniqueMsg;
                             
                             // Stash coverage txt files so master can combine them all together again
                             stash name: nodeName + "_coverage", includes: "coverage.txt"
@@ -239,11 +236,11 @@ node {
 
                 // Remove standard library stuff from coverage report
                 // **NOTE** this doesn't seem to work reliably on Mac so doing globally on master
-                sh "lcov --remove combined_coverage.txt \"/usr*\" --output-file combined_coverage.txt"
+                sh "lcov --remove combined_coverage.txt \"/usr/*\" --output-file combined_coverage.txt"
 
                 // Remove coverage of tests themselves as this seems dumb
                 // **NOTE** this doesn't seem to work reliably on Mac so doing globally on master
-                sh "lcov --remove combined_coverage.txt \"tests*\" --output-file combined_coverage.txt"
+                sh "lcov --remove combined_coverage.txt \"*/tests/*\" --output-file combined_coverage.txt"
 
                 // Archive raw coverage report
                 archive "combined_coverage.txt"

@@ -18,6 +18,22 @@
       <Configuration>Debug_CPU_ONLY</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+	<ProjectConfiguration Include="Release_DYNAMIC|x64">
+      <Configuration>Release_DYNAMIC</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_CPU_ONLY_DYNAMIC|x64">
+      <Configuration>Release_CPU_ONLY_DYNAMIC</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_DYNAMIC|x64">
+      <Configuration>Debug_DYNAMIC</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_CPU_ONLY_DYNAMIC|x64">
+      <Configuration>Debug_CPU_ONLY_DYNAMIC</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8A4E2BFC-0242-40D2-A183-2A2E9483C4EC}</ProjectGuid>
@@ -31,13 +47,18 @@
   
   <!-- Configure global properties to build static library and to use default platform toolkit -->
   <PropertyGroup>
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+	<ConfigurationType Condition=" $(Configuration.Contains('DYNAMIC')) ">DynamicLibrary</ConfigurationType>
+    <ConfigurationType Condition=" !$(Configuration.Contains('DYNAMIC')) ">StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">genn_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Release' ">genn</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">genn_debug_CPU_ONLY</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug' ">genn_debug</TargetName>
-    <OutDir>lib\</OutDir>
+    <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY_DYNAMIC' ">genn_CPU_ONLY_DYNAMIC</TargetName>
+    <TargetName Condition=" '$(Configuration)' == 'Release_DYNAMIC' ">genn_DYNAMIC</TargetName>
+    <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY_DYNAMIC' ">genn_debug_CPU_ONLY_DYNAMIC</TargetName>
+    <TargetName Condition=" '$(Configuration)' == 'Debug_DYNAMIC' ">genn_debug_DYNAMIC</TargetName>
+	<OutDir>lib\</OutDir>
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
  
@@ -50,9 +71,9 @@
       <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
       <!-- Depending on configuration, set preprocessor options -->
-      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">DEBUG;CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug' ">DEBUG</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Release_CPU_ONLY')) ">CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug_CPU_ONLY')) ">DEBUG;CPU_ONLY=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug')) ">DEBUG</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <LIB>
@@ -62,6 +83,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemGroup>
+    <ClCompile Include="src\binomial.cc" />
     <ClCompile Include="src\global.cc" />
     <ClCompile Include="src\modelSpec.cc" />
     <ClCompile Include="src\neuronModels.cc" />
@@ -72,10 +94,13 @@
     <ClCompile Include="src\codeGenUtils.cc" />
     <ClCompile Include="src\sparseUtils.cc" />
     <ClCompile Include="src\hr_time.cc" />
+    <ClCompile Include="src\currentSourceModels.cc" />
     <ClCompile Include="src\newNeuronModels.cc" />
     <ClCompile Include="src\newWeightUpdateModels.cc" />
     <ClCompile Include="src\newPostsynapticModels.cc" />
+    <ClCompile Include="src\initSparseConnectivitySnippet.cc" />
     <ClCompile Include="src\initVarSnippet.cc" />
+    <ClCompile Include="src\currentSource.cc" />
     <ClCompile Include="src\neuronGroup.cc" />
     <ClCompile Include="src\synapseGroup.cc" />
     <ClCompile Include="src\standardSubstitutions.cc" />

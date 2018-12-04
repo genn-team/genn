@@ -22,7 +22,6 @@
 # Include makefile which builds libgenn
 include $(GENN_PATH)/lib/GNUMakefileLibGeNN
 
-
 # Source, Include, Object and Library directories
 GENERATEALL_PATH         :=$(CURDIR)
 

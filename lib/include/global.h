@@ -48,9 +48,12 @@ namespace GENN_PREFERENCES {
     extern bool showPtxInfo; //!< Request that PTX assembler information be displayed for each CUDA kernel during compilation
     extern bool buildSharedLibrary; //!< Should generated code and Makefile build into a shared library e.g. for use in SpineML simulator
     extern bool autoInitSparseVars; //!< Previously, variables associated with sparse synapse populations were not automatically initialised. If this flag is set this now occurs in the initMODEL_NAME function and copyStateToDevice is deferred until here
+    extern bool mergePostsynapticModels; //!< Should compatible postsynaptic models and dendritic delay buffers be merged? This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved
     extern VarMode defaultVarMode;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
+    extern VarMode defaultSparseConnectivityMode; //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
     extern double asGoodAsZero; //!< Global variable that is used when detecting close to zero values, for example when setting sparse connectivity from a dense matrix
     extern int defaultDevice; //! default GPU device; used to determine which GPU to use if chooseDevice is 0 (off)
+    extern unsigned int preSynapseResetBlockSize;
     extern unsigned int neuronBlockSize;
     extern unsigned int synapseBlockSize;
     extern unsigned int learningBlockSize;
@@ -63,12 +66,13 @@ namespace GENN_PREFERENCES {
     extern std::string userNvccFlags; //!< Allows users to set specific nvcc compiler options they may want to use for all GPU code (identical for windows and unix platforms)
 }
 
-extern unsigned int neuronBlkSz;    //!< Global variable containing the GPU block size for the neuron kernel
-extern unsigned int synapseBlkSz;   //!< Global variable containing the GPU block size for the synapse kernel
-extern unsigned int learnBlkSz;     //!< Global variable containing the GPU block size for the learn kernel
-extern unsigned int synDynBlkSz;    //!< Global variable containing the GPU block size for the synapse dynamics kernel
-extern unsigned int initBlkSz;      //!< Global variable containing the GPU block size for the initialization kernel
-extern unsigned int initSparseBlkSz;      //!< Global variable containing the GPU block size for the sparse initialization kernel
+extern unsigned int neuronBlkSz;            //!< Global variable containing the GPU block size for the neuron kernel
+extern unsigned int preSynapseResetBlkSize; //!< Global variable containing the GPU block size for the reset kernel run before the synapse kernel
+extern unsigned int synapseBlkSz;           //!< Global variable containing the GPU block size for the synapse kernel
+extern unsigned int learnBlkSz;             //!< Global variable containing the GPU block size for the learn kernel
+extern unsigned int synDynBlkSz;            //!< Global variable containing the GPU block size for the synapse dynamics kernel
+extern unsigned int initBlkSz;              //!< Global variable containing the GPU block size for the initialization kernel
+extern unsigned int initSparseBlkSz;        //!< Global variable containing the GPU block size for the sparse initialization kernel
 
 //extern vector<cudaDeviceProp> deviceProp; //!< Global vector containing the properties of all CUDA-enabled devices
 //extern vector<int> synapseBlkSz; //!< Global vector containing the optimum synapse kernel block size for each device

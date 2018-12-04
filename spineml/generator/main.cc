@@ -37,20 +37,6 @@
 using namespace SpineMLCommon;
 using namespace SpineMLGenerator;
 
-// SpineML generator requires the C++ regex library to be operational
-// We assume it is for:
-// 1) Non GCC compilers
-// 2) GCC 5.X.X and future
-// 3) Any future (4.10.X?) releases
-// 4) 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
-// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working)
-#if defined(__GNUC__) && \
-    __GNUC__ <= 4 && \
-    (__GNUC__ != 4 || (__GNUC_MINOR__ <= 9 && \
-                      (__GNUC_MINOR__ != 9 || __GNUC_PATCHLEVEL__ < 1)))
-    #error "GeNN SpineML generator requires at least GCC 4.9.1 for functional <regex> library"
-#endif
-
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
@@ -423,7 +409,7 @@ int main(int argc, char *argv[])
                 // Add synapse population to model
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
                 auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, mtype, delaySteps, srcPopName, popName,
-                                                             &passthroughWeightUpdateModel, {}, {},
+                                                             &passthroughWeightUpdateModel, {}, {}, {}, {},
                                                              &passthroughPostsynapticModel, {}, {});
 
                 // If matrix uses sparse connectivity set max connections
@@ -469,9 +455,6 @@ int main(int argc, char *argv[])
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
                                                                    neuronModel, trgNeuronModel);
 
-                    // Global weight value can be used if there are no state variables
-                    const bool globalG = weightUpdateModel.getVars().empty();
-
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");
                     if(!postSynapse) {
@@ -497,6 +480,10 @@ int main(int argc, char *argv[])
                     const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
                                                                    trgNeuronModel, &weightUpdateModel);
 
+                    // Global weight value can be used if there are no state variables
+                    // **TODO** seperate individualness for PSM and WUM should be used here
+                    const bool globalG = weightUpdateModel.getVars().empty() && postsynapticModel.getVars().empty();
+
                     // Determine the GeNN matrix type and number of delay steps
                     SynapseMatrixType mtype;
                     unsigned int delaySteps;
@@ -509,7 +496,7 @@ int main(int argc, char *argv[])
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
                     auto synapsePop = model.addSynapsePopulation(weightUpdateName, mtype, delaySteps, popName, trgPopName,
-                                                                 &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel),
+                                                                 &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel), {}, {},
                                                                  &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel));
 
                     // If matrix uses sparse connectivity set max connections
@@ -529,10 +516,12 @@ int main(int argc, char *argv[])
         filesystem::create_directory(runPath);
         runPath = runPath.make_absolute();
 
+        // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
+        const int localHostID = 0;
 #ifndef CPU_ONLY
-        chooseDevice(model, runPath.str());
+        chooseDevice(model, runPath.str(), localHostID);
 #endif // CPU_ONLY
-        generate_model_runner(model, runPath.str());
+        generate_model_runner(model, runPath.str(), localHostID);
 
         // Build path to generated model code
         auto modelPath = runPath / (networkName + "_CODE");

@@ -1,9 +1,11 @@
 # Ignore object files
+**/*.d
 **/*.o
 **/*.obj
 
 # Ignore test executables
 **/test
+**/test_wrapper
 **/test.exe
 
 # Ignore GCOV output
@@ -19,8 +21,12 @@
 # Ignore generator executables
 **/generateALL
 **/generateALL.exe
+**/generateALL_COVERAGE
+**/generateALL_COVERAGE.exe
 **/generateALL_CPU_ONLY
 **/generateALL_CPU_ONLY.exe
+**/generateALL_CPU_ONLY_COVERAGE
+**/generateALL_CPU_ONLY_COVERAGE.exe
 
 # Ignore CUDA junk
 **/sm_version.mk

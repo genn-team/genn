@@ -42,15 +42,46 @@ std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varI
 // SynapseGroup
 // ------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers,
+                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
-                           NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup)
-    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_MaxConnections(trgNeuronGroup->getNumNeurons()), m_MatrixType(matrixType),
+                           NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
+                           const InitSparseConnectivitySnippet::Init &connectivityInitialiser)
+    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
+    	m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),
         m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false), m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
-        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
+        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+        m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),  m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
+        m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
+        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_WUPreVarMode(wuPreVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
+        m_WUPostVarMode(wuPostVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
+        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityVarMode(GENN_PREFERENCES::defaultSparseConnectivityMode),
+        m_PSModelTargetName(name)
 {
+    // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+    auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
+    if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+        m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                m_ConnectivityInitialiser.getParams());
+    }
+    // Otherwise, default to the size of the target population
+    else {
+        m_MaxConnections = trgNeuronGroup->getNumNeurons();
+    }
+
+    // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+    auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
+    if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+        m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                      m_ConnectivityInitialiser.getParams());
+    }
+    // Otherwise, default to the size of the source population
+    else {
+        m_MaxSourceConnections = srcNeuronGroup->getNumNeurons();
+    }
+
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
 
@@ -76,6 +107,16 @@ void SynapseGroup::setWUVarMode(const std::string &varName, VarMode mode)
     m_WUVarMode[getWUModel()->getVarIndex(varName)] = mode;
 }
 
+void SynapseGroup::setWUPreVarMode(const std::string &varName, VarMode mode)
+{
+    m_WUPreVarMode[getWUModel()->getPreVarIndex(varName)] = mode;
+}
+
+void SynapseGroup::setWUPostVarMode(const std::string &varName, VarMode mode)
+{
+    m_WUPostVarMode[getWUModel()->getPostVarIndex(varName)] = mode;
+}
+
 void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 {
     m_PSVarMode[getPSModel()->getVarIndex(varName)] = mode;
@@ -83,12 +124,36 @@ void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
-     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
+            gennError("setMaxConnections: Synapse group already has max connections defined by connectivity initialisation snippet.");
+        }
+        
         m_MaxConnections = maxConnections;
     }
     else {
-        gennError("setMaxConn: Synapse group is densely connected. Maxconn variable is not needed in this case.");
+        gennError("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
+}
+
+void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
+{
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc()) {
+            gennError("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
+        }
+
+        m_MaxSourceConnections = maxConnections;
+    }
+    else {
+        gennError("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+    }
+}
+
+void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayTimesteps)
+{
+    // **TODO** constraints on this
+    m_MaxDendriticDelayTimesteps = maxDendriticDelayTimesteps;
 }
 
 void SynapseGroup::setSpanType(SpanType spanType)
@@ -99,6 +164,13 @@ void SynapseGroup::setSpanType(SpanType spanType)
     else {
         gennError("setSpanType: This function is not enabled for dense connectivity type.");
     }
+}
+
+void SynapseGroup::setBackPropDelaySteps(unsigned int timesteps)
+{
+    m_BackPropDelaySteps = timesteps;
+
+    m_TrgNeuronGroup->checkNumDelaySlots(m_BackPropDelaySteps);
 }
 
 void SynapseGroup::initDerivedParams(double dt)
@@ -129,6 +201,9 @@ void SynapseGroup::initDerivedParams(double dt)
     for(auto &v : m_PSVarInitialisers) {
         v.initDerivedParams(dt);
     }
+
+    // Initialise any derived connectivity initialiser parameters
+    m_ConnectivityInitialiser.initDerivedParams(dt);
 }
 
 void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart)
@@ -168,7 +243,12 @@ unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
 
 unsigned int SynapseGroup::getPaddedPostLearnKernelSize(unsigned int blockSize) const
 {
-    return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return ceil((double) getMaxSourceConnections() / (double) blockSize) * (double) blockSize;
+    }
+    else {
+        return ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
+    }
 }
 
 const std::vector<double> SynapseGroup::getWUConstInitVals() const
@@ -205,22 +285,33 @@ VarMode SynapseGroup::getWUVarMode(const std::string &var) const
     return m_WUVarMode[getWUModel()->getVarIndex(var)];
 }
 
+VarMode SynapseGroup::getWUPreVarMode(const std::string &var) const
+{
+    return m_WUPreVarMode[getWUModel()->getPreVarIndex(var)];
+}
+
+VarMode SynapseGroup::getWUPostVarMode(const std::string &var) const
+{
+    return m_WUPostVarMode[getWUModel()->getPostVarIndex(var)];
+}
+
 VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 {
     return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
-bool SynapseGroup::isPSAtomicAddRequired(unsigned int blockSize) const
+void SynapseGroup::addExtraGlobalConnectivityInitialiserParams(std::map<string, string> &kernelParameters) const
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::POSTSYNAPTIC && getTrgNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
-        }
-        if (getSpanType()  == SpanType::PRESYNAPTIC && getSrcNeuronGroup()->getNumNeurons() > blockSize) {
-            return true;
+    // Loop through list of global parameters
+    for(auto const &p : getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
+        std::string pnamefull = "initSparseConn" + p.first + getName();
+        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
+            // parameter wasn't registered yet - is it used?
+            if (getConnectivityInitialiser().getSnippet()->getRowBuildCode().find("$(" + p.first + ")") != string::npos) {
+                kernelParameters.emplace(pnamefull, p.second);
+            }
         }
     }
-    return false;
 }
 
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
@@ -229,10 +320,12 @@ void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string>
     for(auto const &p : getWUModel()->getExtraGlobalParams()) {
         // If it's not already in set
         std::string pnamefull = p.first + getName();
+        std::cout << pnamefull << std::endl;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
             if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+                std::cout << pnamefull << "," << p.second;
+                kernelParameters.emplace(pnamefull, p.second);
             }
         }
     }
@@ -284,17 +377,55 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> 
     addExtraGlobalSynapseDynamicsParams(getName(), "", getWUModel()->getExtraGlobalParams(), kernelParameters);
 }
 
-
-std::string SynapseGroup::getOffsetPre() const
+std::string SynapseGroup::getPresynapticAxonalDelaySlot(const std::string &devPrefix) const
 {
-    return getSrcNeuronGroup()->isDelayRequired()
-        ? "(delaySlot * " + to_string(getSrcNeuronGroup()->getNumNeurons()) + ") + "
-        : "";
+    assert(getSrcNeuronGroup()->isDelayRequired());
+
+    if(getDelaySteps() == 0) {
+        return devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName();
+    }
+    else {
+        return "((" + devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName() + " + " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots() - getDelaySteps()) + ") % " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots()) + ")";
+    }
 }
 
-std::string SynapseGroup::getOffsetPost(const std::string &devPrefix) const
+std::string SynapseGroup::getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const
 {
-    return getTrgNeuronGroup()->getQueueOffset(devPrefix);
+    assert(getTrgNeuronGroup()->isDelayRequired());
+
+    if(getBackPropDelaySteps() == 0) {
+        return devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName();
+    }
+    else {
+        return "((" + devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName() + " + " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots() - getBackPropDelaySteps()) + ") % " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots()) + ")";
+    }
+}
+
+std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset) const
+{
+    assert(isDendriticDelayRequired());
+
+    if(offset.empty()) {
+        return "(" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+    }
+    else {
+        return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+    }
+}
+
+bool SynapseGroup::isDendriticDelayRequired() const
+{
+    // If addToInSynDelay function is used in sim code, return true
+    if(getWUModel()->getSimCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
+    // If addToInSynDelay function is used in synapse dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
+    return false;
 }
 
 bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
@@ -306,14 +437,19 @@ bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
 bool SynapseGroup::isWUInitRNGRequired(VarInit varInitMode) const
 {
     // If initialising the weight update variables require an RNG, return true
-    return isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode);
+    if(isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode)) {
+        return true;
+    }
+
+    // Return true if the var init mode we're querying is the one used for sparse connectivity and the connectivity initialiser requires an RNG
+    return ((getSparseConnectivityVarMode() & varInitMode) && ::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 
 bool SynapseGroup::isPSDeviceVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables,
     // return true if any of the postsynapse variables are initialised on the device
-    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         return std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
                         [](const VarMode mode){ return (mode & VarInit::DEVICE); });
     }
@@ -335,11 +471,71 @@ bool SynapseGroup::isWUDeviceVarInitRequired() const
     }
 }
 
+bool SynapseGroup::isWUDevicePreVarInitRequired() const
+{
+    return std::any_of(m_WUPreVarMode.cbegin(), m_WUPreVarMode.cend(),
+                       [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+}
+
+bool SynapseGroup::isWUDevicePostVarInitRequired() const
+{
+    return std::any_of(m_WUPostVarMode.cbegin(), m_WUPostVarMode.cend(),
+                       [](const VarMode mode){ return (mode & VarInit::DEVICE); });
+}
+
+bool SynapseGroup::isDeviceSparseConnectivityInitRequired() const
+{
+    // Return true if sparse connectivity should be initialised on device and there is code to do so
+    return ((getSparseConnectivityVarMode() & VarInit::DEVICE) &&
+            !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty());
+}
+
+bool SynapseGroup::isDeviceInitRequired() const
+{
+    // If the synaptic matrix is dense and some synaptic variables are initialised on device, return true
+    if((getMatrixType() & SynapseMatrixConnectivity::DENSE) && isWUDeviceVarInitRequired()) {
+        return true;
+    }
+    // Otherwise return true if there is sparse connectivity to be initialised on device
+    else {
+        return isDeviceSparseConnectivityInitRequired();
+    }
+}
+
+bool SynapseGroup::isDeviceSparseInitRequired() const
+{
+    // If the synaptic connectivity is sparse and some synaptic variables should be initialised on device, return true
+    if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) && isWUDeviceVarInitRequired()) {
+        return true;
+    }
+
+    // If sparse connectivity is initialised on device and the synapse group required either synapse dynamics or postsynaptic learning, return true
+    if(isDeviceSparseConnectivityInitRequired() &&
+        (!getWUModel()->getSynapseDynamicsCode().empty() || !getWUModel()->getLearnPostCode().empty()))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 bool SynapseGroup::canRunOnCPU() const
 {
 #ifndef CPU_ONLY
     // Return false if insyn variable isn't present on the host
     if(!(getInSynVarMode() & VarLocation::HOST)) {
+        return false;
+    }
+    
+    // Return false if matrix type is either ragged or bitmask and sparse connectivity should be initialised on device
+    if(((getMatrixType() & SynapseMatrixConnectivity::RAGGED) || (getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+        && (getSparseConnectivityVarMode() & VarInit::DEVICE))
+    {
+        return false;
+    }
+
+    // Return false if den delay variable isn't present on the host
+    if(!(getDendriticDelayVarMode() & VarLocation::HOST)) {
         return false;
     }
 

@@ -1,3 +1,12 @@
+//--------------------------------------------------------------------------
+/*! \file var_init/test.cc
+
+\brief Main test code that is part of the feature testing
+suite of minimal models with known analytic outcomes that are used for continuous integration testing.
+*/
+//--------------------------------------------------------------------------
+
+
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -9,6 +18,11 @@
 #include "../../utils/simulation_test.h"
 #include "../../utils/stats.h"
 
+double gammaCDF4(double x)
+{
+    return Stats::gammaCDF(4.0, x);
+}
+
 // Macro to generate full set of tests for a particular model
 #define PROB_TEST(PREFIX, SUFFIX, N) \
     { \
@@ -19,6 +33,8 @@
         EXPECT_GT(PREFIX##normal##SUFFIX##Prob, p); \
         const double PREFIX##exponential##SUFFIX##Prob = getProb(PREFIX##exponential##SUFFIX, N, Stats::exponentialCDF); \
         EXPECT_GT(PREFIX##exponential##SUFFIX##Prob, p); \
+        const double PREFIX##gamma##SUFFIX##Prob = getProb(PREFIX##gamma##SUFFIX, N, gammaCDF4); \
+        EXPECT_GT(PREFIX##gamma##SUFFIX##Prob, p); \
     } \
 
 //----------------------------------------------------------------------------
@@ -32,22 +48,33 @@ public:
     //----------------------------------------------------------------------------
     virtual void Init()
     {
-        // Build sparse connector
+        // Build sparse connectors
         allocateSparse(10000);
         CSparse.indInG[0] = 0;
         for(unsigned int i = 0; i < 10000; i++) {
             CSparse.ind[i] = i;
         }
-        CSparse.indInG[10000] = 10000;
+        CSparse.indInG[1] = 10000;
 #ifndef CPU_ONLY
         allocateSparseGPU(10000);
         CSparseGPU.indInG[0] = 0;
         for(unsigned int i = 0; i < 10000; i++) {
             CSparseGPU.ind[i] = i;
         }
-        CSparseGPU.indInG[10000] = 10000;
+        CSparseGPU.indInG[1] = 10000;
 #endif
 
+        // Build ragged connectors
+        CRagged.rowLength[0] = 10000;
+        for(unsigned int i = 0; i < 10000; i++) {
+            CRagged.ind[i] = i;
+        }
+#ifndef CPU_ONLY
+        CRaggedGPU.rowLength[0] = 10000;
+        for(unsigned int i = 0; i < 10000; i++) {
+            CRaggedGPU.ind[i] = i;
+        }
+#endif
         // Call sparse initialisation function
         initvar_init_new();
     }
@@ -70,26 +97,31 @@ double getProb(scalar *data, unsigned int size, F cdf)
 
 TEST_P(SimTest, Vars)
 {
-    const double p = 0.05;
+    const double p = 0.025;
 
     // Test host-generated vars
     PROB_TEST(, Pop, 10000)
+    PROB_TEST(, CurrSource, 10000)
     PROB_TEST(p, Dense, 10000)
     PROB_TEST(, Dense, 10000)
     PROB_TEST(, Sparse, 10000)
+    PROB_TEST(, Ragged, 10000)
 
 #ifndef CPU_ONLY
     // Pull device-generated vars back to host
     pullPopGPUStateFromDevice();
+    pullCurrSourceGPUStateFromDevice();
     pullDenseGPUStateFromDevice();
     pullSparseGPUStateFromDevice();
+    pullRaggedGPUStateFromDevice();
 
     // Test device-generated vars
     PROB_TEST(, PopGPU, 10000)
+    PROB_TEST(, CurrSourceGPU, 10000)
     PROB_TEST(p, DenseGPU, 10000)
     PROB_TEST(, DenseGPU, 10000)
     PROB_TEST(, SparseGPU, 10000)
-
+    PROB_TEST(, RaggedGPU, 10000)
 #endif
 }
 

@@ -46,42 +46,52 @@ void generate_process_presynaptic_events_code_CPU(
     const string &sgName,
     const SynapseGroup &sg,
     const string &postfix, //!< whether to generate code for true spikes or spike type events
-    const string &ftype)
+    const string &ftype,
+    double dt)
 {
     bool evnt = postfix == "Evnt";
 
     if ((evnt && sg.isSpikeEventRequired()) || (!evnt && sg.isTrueSpikeRequired())) {
         const auto *wu = sg.getWUModel();
-        const bool sparse = sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE;
 
         // Detect spike events or spikes and do the update
         os << "// process presynaptic events: " << (evnt ? "Spike type events" : "True Spikes") << std::endl;
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-            os << "for (int i = 0; i < glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[delaySlot]; i++)";
+            os << "for (unsigned int i = 0; i < glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot]; i++)";
         }
         else {
-            os << "for (int i = 0; i < glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[0]; i++)";
+            os << "for (unsigned int i = 0; i < glbSpkCnt" << postfix << sg.getSrcNeuronGroup()->getName() << "[0]; i++)";
         }
         {
             CodeStream::Scope b(os);
 
-            os << "ipre = glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << sg.getOffsetPre() << "i];" << std::endl;
+            const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+            os << "const unsigned int ipre = glbSpk" << postfix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "i];" << std::endl;
 
-            if (sparse) { // SPARSE
-                os << "npost = C" << sgName << ".indInG[ipre + 1] - C" << sgName << ".indInG[ipre];" << std::endl;
-                os << "for (int j = 0; j < npost; j++)";
+            if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                    os << "const unsigned int npost = C" << sgName << ".indInG[ipre + 1] - C" << sgName << ".indInG[ipre];" << std::endl;
+                }
+                else {
+                    os << "const unsigned int npost = C" << sgName << ".rowLength[ipre];" << std::endl;
+                }
+                os << "for (unsigned int j = 0; j < npost; j++)";
             }
-            else { // DENSE
-                os << "for (ipost = 0; ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << "; ipost++)";
+            // Otherwise (DENSE or BITMASK)
+            else {
+                os << "for (unsigned int ipost = 0; ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << "; ipost++)";
             }
             {
                 CodeStream::Scope b(os);
-                if(sparse) {
-                    os << "ipost = C" << sgName << ".ind[C" << sgName << ".indInG[ipre] + j];" << std::endl;
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                    os << "const unsigned int ipost = C" << sgName << ".ind[C" << sgName << ".indInG[ipre] + j];" << std::endl;
                 }
-
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "unsigned int gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + ipost);" << std::endl;
+                else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    // **TODO** seperate stride from max connections
+                    os << "const unsigned int ipost = C" << sgName << ".ind[(ipre * " << sg.getMaxConnections() << ") + j];" << std::endl;
+                }
+                else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    os << "const uint64_t gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + ipost);" << std::endl;
                 }
 
                 if (!wu->getSimSupportCode().empty()) {
@@ -92,6 +102,8 @@ void generate_process_presynaptic_events_code_CPU(
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
                 ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
                 VarNameIterCtx wuVars(wu->getVars());
+                VarNameIterCtx wuPreVars(wu->getPreVars());
+                VarNameIterCtx wuPostVars(wu->getPostVars());
 
                 if (evnt) {
                     os << "if ";
@@ -104,9 +116,9 @@ void generate_process_presynaptic_events_code_CPU(
                     substitute(eCode, "$(id)", "n");
                     substitute(eCode, "$(t)", "t");
                     StandardSubstitutions::weightUpdateThresholdCondition(eCode, sg,
-                                                                        wuDerivedParams, wuExtraGlobalParams,
-                                                                        "ipre", "ipost", "",
-                                                                        cpuFunctions, ftype);
+                                                                          wuDerivedParams, wuExtraGlobalParams,
+                                                                          "ipre", "ipost", "",
+                                                                          cpuFunctions, ftype, dt);
 
                     // end code substitutions ----
                     os << "(" << eCode << ")";
@@ -120,29 +132,44 @@ void generate_process_presynaptic_events_code_CPU(
                     os << "if (B(gp" << sgName << "[gid / 32], gid & 31))" << CodeStream::OB(2041);
                 }
 
+
+
                 // Code substitutions ----------------------------------------------------------------------------------
                 string wCode = evnt ? wu->getEventCode() : wu->getSimCode();
-                substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+
+                if(sg.isDendriticDelayRequired()) {
+                    functionSubstitute(wCode, "addToInSynDelay", 2, "denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+                }
+                else {
+                    functionSubstitute(wCode, "addToInSyn", 1, "inSyn" + sg.getPSModelTargetName() + "[ipost] += $(0)");
+
+                    // **DEPRECATED**
+                    os << ftype << " addtoinSyn;" << std::endl;
+                    substitute(wCode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                    substitute(wCode, "$(inSyn)", "inSyn" + sg.getPSModelTargetName() + "[ipost]");
+                }
+
                 substitute(wCode, "$(t)", "t");
-                if (sparse) { // SPARSE
-                    if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
                                            sgName + "[C" + sgName + ".indInG[ipre] + j]");
                     }
-
-                }
-                else { // DENSE
-                    if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                        // **TODO** seperate stride from max connections
+                        name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
+                                           sgName + "[(ipre * " + to_string(sg.getMaxConnections()) + ") + j]");
+                    }
+                    else {
                         name_substitutions(wCode, "", wuVars.nameBegin, wuVars.nameEnd,
                                            sgName + "[ipre * " + to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + " + ipost]");
                     }
-
                 }
-                substitute(wCode, "$(inSyn)", "inSyn" + sgName + "[ipost]");
+
 
                 StandardSubstitutions::weightUpdateSim(wCode, sg,
-                                                    wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                    "ipre", "ipost", "", cpuFunctions, ftype);
+                                                       wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
+                                                       "ipre", "ipost", "", cpuFunctions, ftype, dt);
                 // end Code substitutions -------------------------------------------------------------------------
                 os << wCode << std::endl;
 
@@ -196,7 +223,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
     os << "#include \"support_code.h\"" << std::endl << std::endl;
 
     // function header
-    os << "void calcNeuronsCPU(" << model.getPrecision() << " t)";
+    os << "void calcNeuronsCPU(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
 
@@ -209,10 +236,13 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                 // increment spike queue pointer and reset spike count
                 StandardGeneratedSections::neuronOutputInit(os, n.second, "");
 
-                if (n.second.isVarQueueRequired() && n.second.isDelayRequired()) {
-                    os << "unsigned int delaySlot = (spkQuePtr" << n.first;
-                    os << " + " << (n.second.getNumDelaySlots() - 1);
-                    os << ") % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                // If axonal delays are required
+                if (n.second.isDelayRequired()) {
+                    // We should READ from delay slot before spkQuePtr
+                    os << "const unsigned int readDelayOffset = " << n.second.getPrevQueueOffset("") << ";" << std::endl;
+                    
+                    // And we should WRITE to delay slot pointed to be spkQuePtr
+                    os << "const unsigned int writeDelayOffset = " << n.second.getCurrentQueueOffset("") << ";" << std::endl;
                 }
                 os << std::endl;
 
@@ -229,20 +259,9 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     ExtraGlobalParamNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
 
                     // Generate code to copy neuron state into local variable
-                    StandardGeneratedSections::neuronLocalVarInit(os, n.second, nmVars, "", "n");
+                    StandardGeneratedSections::neuronLocalVarInit(os, n.second, nmVars, "", "n", model.getTimePrecision());
 
-                    if ((nm->getSimCode().find("$(sT)") != string::npos)
-                        || (nm->getThresholdConditionCode().find("$(sT)") != string::npos)
-                        || (nm->getResetCode().find("$(sT)") != string::npos)) { // load sT into local variable
-                        os << model.getPrecision() << " lsT= sT" <<  n.first << "[";
-                        if (n.second.isDelayRequired()) {
-                            os << "(delaySlot * " << n.second.getNumNeurons() << ") + ";
-                        }
-                        os << "n];" << std::endl;
-                    }
-                    os << std::endl;
-
-                    if (n.second.getInSyn().size() > 0 || (nm->getSimCode().find("Isyn") != string::npos)) {
+                    if (!n.second.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != string::npos)) {
                         os << model.getPrecision() << " Isyn = 0;" << std::endl;
                     }
 
@@ -251,20 +270,33 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                         os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
                     }
 
-                    for(const auto *sg : n.second.getInSyn()) {
+                    for(const auto &m : n.second.getMergedInSyn()) {
+                        const auto *sg = m.first;
                         const auto *psm = sg->getPSModel();
 
-                        if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                        // If dendritic delay is required
+                        if(sg->isDendriticDelayRequired()) {
+                            // Get reference to dendritic delay buffer input for this timestep
+                            os << model.getPrecision() << " &denDelayFront" << sg->getPSModelTargetName() << " = denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
+
+                            // Add delayed input from buffer into inSyn
+                            os << "inSyn" + sg->getPSModelTargetName() + "[n] += denDelayFront" << sg->getPSModelTargetName() << ";" << std::endl;
+
+                            // Zero delay buffer slot
+                            os << "denDelayFront" << sg->getPSModelTargetName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        }
+
+                        if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                             for(const auto &v : psm->getVars()) {
-                                os << v.second << " lps" << v.first << sg->getName();
-                                os << " = " <<  v.first << sg->getName() << "[n];" << std::endl;
+                                os << v.second << " lps" << v.first << sg->getPSModelTargetName();
+                                os << " = " <<  v.first << sg->getPSModelTargetName() << "[n];" << std::endl;
                             }
                         }
 
                         // Apply substitutions to current converter code
                         string psCode = psm->getApplyInputCode();
                         substitute(psCode, "$(id)", "n");
-                        substitute(psCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
+                        substitute(psCode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[n]");
                         StandardSubstitutions::postSynapseApplyInput(psCode, sg, n.second,
                             nmVars, nmDerivedParams, nmExtraGlobalParams, cpuFunctions, model.getPrecision(), "rng");
 
@@ -296,6 +328,10 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                         }
                     }
 
+                    // check for current sources and insert code if necessary
+                    StandardGeneratedSections::neuronCurrentInjection(os, n.second,
+                               "", "n", cpuFunctions, model.getPrecision(), "rng");
+
                     os << "// calculate membrane potential" << std::endl;
                     string sCode = nm->getSimCode();
                     substitute(sCode, "$(id)", "n");
@@ -307,9 +343,8 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                     }
                     os << sCode << std::endl;
 
-                    string queueOffset = n.second.getQueueOffset("");
-
                     // look for spike type events first.
+                    const string queueOffset = n.second.isDelayRequired() ? "writeDelayOffset + " : "";
                     if (n.second.isSpikeEventRequired()) {
                         // Generate spike event test
                         StandardGeneratedSections::neuronSpikeEventTest(os, n.second,
@@ -350,6 +385,17 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                             else { // NO DELAY
                                 os << "[0]++] = n;" << std::endl;
                             }
+
+
+                            // Insert code to update any weight update model presynaptic variables associated with outgoing connections
+                            StandardGeneratedSections::weightUpdatePreSpike(os, n.second, "", "n",
+                                                                            cpuFunctions, model.getPrecision());
+
+                            // Insert code to update any weight update model postsynaptic variables associated with incoming connections
+                            StandardGeneratedSections::weightUpdatePostSpike(os, n.second, "", "n",
+                                                                            cpuFunctions, model.getPrecision());
+
+                            // Reset spike time
                             if (n.second.isSpikeTimeRequired()) {
                                 os << "sT" << n.first << "[" << queueOffset << "n] = t;" << std::endl;
                             }
@@ -365,17 +411,21 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                                 os << rCode << std::endl;
                             }
                         }
+
+                        // Insert code to copy spike triggered variables back to global memory if necessary
+                        StandardGeneratedSections::neuronCopySpikeTriggeredVars(os, n.second, "", "n");
                     }
 
                     // store the defined parts of the neuron state into the global state variables V etc
                     StandardGeneratedSections::neuronLocalVarWrite(os, n.second, nmVars, "", "n");
 
-                    for(const auto *sg : n.second.getInSyn()) {
+                    for(const auto &m : n.second.getMergedInSyn()) {
+                        const auto *sg = m.first;
                         const auto *psm = sg->getPSModel();
 
                         string pdCode = psm->getDecayCode();
                         substitute(pdCode, "$(id)", "n");
-                        substitute(pdCode, "$(inSyn)", "inSyn" + sg->getName() + "[n]");
+                        substitute(pdCode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[n]");
                         StandardSubstitutions::postSynapseDecay(pdCode, sg, n.second,
                                                                 nmVars, nmDerivedParams, nmExtraGlobalParams,
                                                                 cpuFunctions, model.getPrecision(), "rng");
@@ -388,7 +438,7 @@ void genNeuronFunction(const NNmodel &model, //!< Model description
                             os << CodeStream::CB(29) << " // namespace bracket closed" << endl;
                         }
                         for (const auto &v : psm->getVars()) {
-                            os << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << std::endl;
+                            os << v.first << sg->getPSModelTargetName() << "[n]" << " = lps" << v.first << sg->getPSModelTargetName() << ";" << std::endl;
                         }
                     }
                 }
@@ -435,13 +485,11 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
     if (!model.getSynapseDynamicsGroups().empty()) {
         // synapse dynamics function
-        os << "void calcSynapseDynamicsCPU(" << model.getPrecision() << " t)";
+        os << "void calcSynapseDynamicsCPU(" << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
-
             os << model.getPrecision() << " addtoinSyn;" << std::endl;
             os << std::endl;
-
             os << "// execute internal synapse dynamics if any" << std::endl;
 
             for(const auto &s : model.getSynapseDynamicsGroups())
@@ -456,10 +504,14 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                     {
                         CodeStream::Scope b(os);
 
-                        if (sg->getSrcNeuronGroup()->isDelayRequired()) {
-                            os << "unsigned int delaySlot = (spkQuePtr" << sg->getSrcNeuronGroup()->getName();
-                            os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
-                            os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
+                        // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                        if(sg->getSrcNeuronGroup()->isDelayRequired()) {
+                            os << "const unsigned int preReadDelayOffset = " << sg->getPresynapticAxonalDelaySlot("") << " * " << sg->getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        }
+
+                        // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                        if(sg->getTrgNeuronGroup()->isDelayRequired()) {
+                            os << "const unsigned int postReadDelayOffset = " << sg->getPostsynapticBackPropDelaySlot("") << " * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                         }
 
                         if (!wu->getSynapseDynamicsSuppportCode().empty()) {
@@ -470,12 +522,13 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                         DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
                         ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
                         VarNameIterCtx wuVars(wu->getVars());
+                        VarNameIterCtx wuPreVars(wu->getPreVars());
+                        VarNameIterCtx wuPostVars(wu->getPostVars());
 
                         string SDcode= wu->getSynapseDynamicsCode();
                         substitute(SDcode, "$(t)", "t");
-                        substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
 
-                        if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                        if (sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
                             os << "for (int n= 0; n < C" << s.first << ".connN; n++)";
                             {
                                 CodeStream::Scope b(os);
@@ -485,15 +538,59 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                 }
 
                                 const std::string postIdx = "C" + s.first + ".ind[n]";
-                                substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[" + postIdx + "]");
+                                if(sg->isDendriticDelayRequired()) {
+                                    functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                }
+                                else {
+                                    functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "] += $(0)");
 
-                                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
+                                    // **DEPRECATED**
+                                    substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                                    substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
+                                }
+
+                                StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
                                                                             "C" + s.first + ".preInd[n]", postIdx, "",
-                                                                            cpuFunctions, model.getPrecision());
+                                                                            cpuFunctions, model.getPrecision(), model.getDT());
                                 os << SDcode << std::endl;
                             }
                         }
-                        else { // DENSE
+                        else if(sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                            os << "for (int i = 0; i < " <<  sg->getSrcNeuronGroup()->getNumNeurons() << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "for (int j = 0; j < C" << s.first << ".rowLength[i]; j++)";
+                                {
+                                    CodeStream::Scope b(os);
+
+                                    // Calculate index of synapse in arrays
+                                    os << "const int n = (i * " + std::to_string(sg->getMaxConnections()) + ") + j;" << std::endl;
+
+                                    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                                        // name substitute synapse var names in synapseDynamics code
+                                        // **TODO** seperate stride from max connections
+                                        name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd, s.first + "[n]");
+                                    }
+
+                                    const std::string postIdx = "C" + s.first + ".ind[n]";
+                                    if(sg->isDendriticDelayRequired()) {
+                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + postIdx + "] += $(0)");
+                                    }
+                                    else {
+                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "] += $(0)");
+
+                                        // **DEPRECATED**
+                                        substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[" + postIdx + "]");
+                                    }
+
+                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                                "i", postIdx, "", cpuFunctions, model.getPrecision(), model.getDT());
+                                    os << SDcode << std::endl;
+                                }
+                            }
+                        }
+                        else {
                             os << "for (int i = 0; i < " <<  sg->getSrcNeuronGroup()->getNumNeurons() << "; i++)";
                             {
                                 CodeStream::Scope b(os);
@@ -504,13 +601,22 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                                     // substitute initial values as constants for synapse var names in synapseDynamics code
                                     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                                         name_substitutions(SDcode, "", wuVars.nameBegin, wuVars.nameEnd,
-                                                        s.first + "[i*" + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + "+j]");
+                                                           s.first + "[(i * " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + j]");
                                     }
 
-                                    substitute(SDcode, "$(inSyn)", "inSyn" + s.first + "[j]");
+                                    if(sg->isDendriticDelayRequired()) {
+                                        functionSubstitute(SDcode, "addToInSynDelay", 2, "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
+                                    }
+                                    else {
+                                        functionSubstitute(SDcode, "addToInSyn", 1, "inSyn" + sg->getPSModelTargetName() + "[j] += $(0)");
 
-                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuDerivedParams, wuExtraGlobalParams,
-                                                                                "i","j", "", cpuFunctions, model.getPrecision());
+                                        // **DEPRECATED**
+                                        substitute(SDcode, "$(updatelinsyn)", "$(inSyn) += $(addtoinSyn)");
+                                        substitute(SDcode, "$(inSyn)", "inSyn" + sg->getPSModelTargetName() + "[j]");
+                                    }
+
+                                    StandardSubstitutions::weightUpdateDynamics(SDcode, sg, wuVars, wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                                "i","j", "", cpuFunctions, model.getPrecision(), model.getDT());
                                     os << SDcode << std::endl;
                                 }
                             }
@@ -522,39 +628,35 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
     }
 
     // synapse function header
-    os << "void calcSynapsesCPU(" << model.getPrecision() << " t)";
+    os << "void calcSynapsesCPU(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
-
-        os << "unsigned int ipost;" << std::endl;
-        os << "unsigned int ipre;" << std::endl;
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "unsigned int npost;" << std::endl;
-                break;
-            }
-        }
-        os << model.getPrecision() << " addtoinSyn;" << std::endl;
         os << std::endl;
 
         for(const auto &s : model.getLocalSynapseGroups()) {
             os << "// synapse group " << s.first << std::endl;
             {
                 CodeStream::Scope b(os);
-                if (s.second.getSrcNeuronGroup()->isDelayRequired()) {
-                    os << "unsigned int delaySlot = (spkQuePtr" << s.second.getSrcNeuronGroup()->getName();
-                    os << " + " << (s.second.getSrcNeuronGroup()->getNumDelaySlots() - s.second.getDelaySteps());
-                    os << ") % " << s.second.getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
+
+                // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                if(s.second.getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int preReadDelaySlot = " << s.second.getPresynapticAxonalDelaySlot("") << ";" << std::endl;
+                    os << "const unsigned int preReadDelayOffset = preReadDelaySlot * " << s.second.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                if(s.second.getTrgNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int postReadDelayOffset = " << s.second.getPostsynapticBackPropDelaySlot("") << " * " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                 }
 
                 // generate the code for processing spike-like events
                 if (s.second.isSpikeEventRequired()) {
-                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "Evnt", model.getPrecision());
+                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "Evnt", model.getPrecision(), model.getDT());
                 }
 
                 // generate the code for processing true spike events
                 if (s.second.isTrueSpikeRequired()) {
-                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "", model.getPrecision());
+                    generate_process_presynaptic_events_code_CPU(os, s.first, s.second, "", model.getPrecision(), model.getDT());
                 }
             }
             os << std::endl;
@@ -568,7 +670,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
 
     if (!model.getSynapsePostLearnGroups().empty()) {
 
-        os << "void learnSynapsesPostHost(" << model.getPrecision() << " t)";
+        os << "void learnSynapsesPostHost(" << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
 
@@ -598,6 +700,8 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
                 ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
                 VarNameIterCtx wuVars(wu->getVars());
+                VarNameIterCtx wuPreVars(wu->getPreVars());
+                VarNameIterCtx wuPostVars(wu->getPostVars());
 
                 // NOTE: WE DO NOT USE THE AXONAL DELAY FOR BACKWARDS PROPAGATION - WE CAN TALK ABOUT BACKWARDS DELAYS IF WE WANT THEM
 
@@ -605,10 +709,15 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                 {
                     CodeStream::Scope b(os);
 
-                    if (sg->getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "unsigned int delaySlot = (spkQuePtr" << sg->getSrcNeuronGroup()->getName();
-                        os << " + " << (sg->getSrcNeuronGroup()->getNumDelaySlots() - sg->getDelaySteps());
-                        os << ") % " << sg->getSrcNeuronGroup()->getNumDelaySlots() << ";" << std::endl;
+                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                    if(sg->getSrcNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int preReadDelayOffset = " << sg->getPresynapticAxonalDelaySlot("") << " * " << sg->getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                    if(sg->getTrgNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int postReadDelaySlot = " << sg->getPostsynapticBackPropDelaySlot("") << ";" << std::endl;
+                        os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << sg->getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
                     if (!wu->getLearnPostSupportCode().empty()) {
@@ -616,7 +725,7 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                     }
 
                     if (sg->getTrgNeuronGroup()->isDelayRequired() && sg->getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                        os << "for (ipost = 0; ipost < glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[spkQuePtr" << sg->getTrgNeuronGroup()->getName() << "]; ipost++)";
+                        os << "for (ipost = 0; ipost < glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[postReadDelaySlot]; ipost++)";
                     }
                     else {
                         os << "for (ipost = 0; ipost < glbSpkCnt" << sg->getTrgNeuronGroup()->getName() << "[0]; ipost++)";
@@ -624,38 +733,56 @@ void genSynapseFunction(const NNmodel &model, //!< Model description
                     {
                         CodeStream::Scope b(os);
 
-                        string offsetTrueSpkPost = sg->getTrgNeuronGroup()->isTrueSpikeRequired() ? sg->getOffsetPost("") : "";
+                        const string offsetTrueSpkPost = (sg->getTrgNeuronGroup()->isTrueSpikeRequired() && sg->getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
                         os << "lSpk = glbSpk" << sg->getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "ipost];" << std::endl;
 
-                        if (sparse) { // SPARSE
-                            // TODO: THIS NEEDS CHECKING AND FUNCTIONAL C.POST* ARRAYS
-                            os << "npre = C" << s.first << ".revIndInG[lSpk + 1] - C" << s.first << ".revIndInG[lSpk];" << std::endl;
+                        if (sparse) {
+                            if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                os << "npre = C" << s.first << ".revIndInG[lSpk + 1] - C" << s.first << ".revIndInG[lSpk];" << std::endl;
+                            }
+                            else {
+                                os << "npre = C" << s.first << ".colLength[lSpk];" << std::endl;
+                            }
                             os << "for (int l = 0; l < npre; l++)";
                         }
-                        else { // DENSE
+                        else {
                             os << "for (ipre = 0; ipre < " << sg->getSrcNeuronGroup()->getNumNeurons() << "; ipre++)";
                         }
                         {
                             CodeStream::Scope b(os);
                             if(sparse) {
-                                os << "ipre = C" << s.first << ".revIndInG[lSpk] + l;" << std::endl;
+                                if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                    os << "ipre = C" << s.first << ".revIndInG[lSpk] + l;" << std::endl;
+                                }
+                                else {
+                                    os << "ipre = (lSpk * " << sg->getMaxSourceConnections() << ") + l;" << std::endl;
+                                }
                             }
 
                             string code = wu->getLearnPostCode();
                             substitute(code, "$(t)", "t");
                             // Code substitutions ----------------------------------------------------------------------------------
-                            if (sparse) { // SPARSE
+                            std::string preIndex;
+                            if (sparse) {
                                 name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
-                                                s.first + "[C" + s.first + ".remap[ipre]]");
+                                                   s.first + "[C" + s.first + ".remap[ipre]]");
+                                if(sg->getMatrixType() & SynapseMatrixConnectivity::YALE) {
+                                    preIndex = "C" + s.first + ".revInd[ipre]";
+                                }
+                                else {
+                                    preIndex = "(C" + s.first + ".remap[ipre] / " + to_string(sg->getMaxConnections()) + ")";
+                                }
                             }
                             else { // DENSE
                                 name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
                                                 s.first + "[lSpk + " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + " * ipre]");
+                                
+                                preIndex = "ipre";
                             }
                             StandardSubstitutions::weightUpdatePostLearn(code, sg,
-                                                                        wuDerivedParams, wuExtraGlobalParams,
-                                                                        sparse ?  "C" + s.first + ".revInd[ipre]" : "ipre",
-                                                                        "lSpk", "", cpuFunctions, model.getPrecision());
+                                                                         wuPreVars, wuPostVars, wuDerivedParams, wuExtraGlobalParams,
+                                                                         preIndex, "lSpk", "", cpuFunctions, model.getPrecision(), model.getDT());
+
                             // end Code substitutions -------------------------------------------------------------------------
                             os << code << std::endl;
                         }

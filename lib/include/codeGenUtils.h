@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <iomanip>
 #include <limits>
 #include <string>
 #include <sstream>
@@ -110,8 +111,9 @@ inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
 const std::vector<FunctionTemplate> cudaFunctions = {
     {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
     {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))", "exponentialDistDouble($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
 };
 
 //--------------------------------------------------------------------------
@@ -122,6 +124,7 @@ const std::vector<FunctionTemplate> cpuFunctions = {
     {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
     {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
+    {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))", "std::gamma_distribution<float>($(0), 1.0f)($(rng))"}
 };
 
 //--------------------------------------------------------------------------
@@ -129,6 +132,15 @@ const std::vector<FunctionTemplate> cpuFunctions = {
 //--------------------------------------------------------------------------
 void substitute(string &s, const string &trg, const string &rep);
 
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexVarSubstitute(string &s, const string &trg, const string &rep);
+
+//--------------------------------------------------------------------------
+//! \brief Tool for substituting function names in the neuron code strings or other templates using regular expressions
+//--------------------------------------------------------------------------
+bool regexFuncSubstitute(string &s, const string &trg, const string &rep);
 
 //--------------------------------------------------------------------------
 //! \brief Does the code string contain any functions requiring random number generator
@@ -176,6 +188,43 @@ inline void name_substitutions(string &code, const string &prefix, const vector<
     name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
 }
 
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
+//--------------------------------------------------------------------------
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+void writePreciseString(std::ostream &os, T value)
+{
+    // Cache previous precision
+    const std::streamsize previousPrecision = os.precision();
+
+    // Set scientific formatting
+    os << std::scientific;
+
+    // Set precision to what is required to fully represent T
+    os << std::setprecision(std::numeric_limits<T>::max_digits10);
+
+    // Write value to stream
+    os << value;
+
+    // Reset to default formatting
+    // **YUCK** GCC 4.8.X doesn't seem to include std::defaultfloat
+    os.unsetf(std::ios_base::floatfield);
+    //os << std::defaultfloat;
+
+    // Restore previous precision
+    os << std::setprecision(previousPrecision);
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
+//--------------------------------------------------------------------------
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+std::string writePreciseString(T value)
+{
+    std::stringstream s;
+    writePreciseString(s, value);
+    return s.str();
+}
 
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of value substitutions for parameters in code snippets.
@@ -187,8 +236,7 @@ inline void value_substitutions(string &code, NameIter namesBegin, NameIter name
     auto v = values.cbegin();
     for (;n != namesEnd && v != values.cend(); n++, v++) {
         stringstream stream;
-        stream.precision(std::numeric_limits<double>::max_digits10);
-        stream << std::scientific << *v;
+        writePreciseString(stream, *v);
         substitute(code,
                    "$(" + *n + ext + ")",
                    "(" + stream.str() + ")");
@@ -228,14 +276,40 @@ void checkUnreplacedVariables(const string &code, const string &codeName);
 //--------------------------------------------------------------------------
 uint32_t hashString(const std::string &string);
 
+
+void preNeuronSubstitutionsInSynapticCode(
+    string &wCode, //!< the code string to work on
+    const SynapseGroup *sg,
+    const string &offset,
+    const string &axonalDelayOffset,
+    const string &postIdx,
+    const string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix = "");   //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
+void postNeuronSubstitutionsInSynapticCode(
+    string &wCode, //!< the code string to work on
+    const SynapseGroup *sg,
+    const string &offset,
+    const string &backPropDelayOffset,
+    const string &preIdx,
+    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
 void neuron_substitutions_in_synaptic_code(
-    string &wCode,              //!< the code string to work on
-    const SynapseGroup *sg,     //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const string &preIdx,       //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const string &postIdx,      //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix);   //!< device prefix, "dd_" for GPU, nothing for CPU
+    string &wCode,                      //!< the code string to work on
+    const SynapseGroup *sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,            //!< device prefix, "dd_" for GPU, nothing for CPU
+    double dt,                          //!< simulation timestep (ms)
+    const string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
