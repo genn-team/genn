@@ -118,7 +118,7 @@ inline void gennError(const string &error)
 //! \brief Tool for determining the size of variable types on the current architecture
 //--------------------------------------------------------------------------
 
-unsigned int theSize(const string &type);
+size_t theSize(const string &type);
 
 
 //--------------------------------------------------------------------------

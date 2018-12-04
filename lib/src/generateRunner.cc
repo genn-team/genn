@@ -100,9 +100,12 @@ void allocate_host_variable(CodeStream &os, const string &type, const string &na
 #endif
 }
 
-void allocate_host_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
+size_t allocate_host_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
 {
     allocate_host_variable(os, type, name, mode, to_string(size));
+
+    // Return size estimate
+    return size * theSize(type);
 }
 
 void allocate_device_variable(CodeStream &os, const string &type, const string &name, VarMode mode, const string &size)
@@ -127,22 +130,22 @@ void allocate_device_variable(CodeStream &os, const string &type, const string &
 #endif
 }
 
-void allocate_device_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
+size_t allocate_device_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
 {
     allocate_device_variable(os, type, name, mode, to_string(size));
+
+    // Return size estimate
+    return size * theSize(type);
 }
 
 //--------------------------------------------------------------------------
 //! \brief This function generates host and device allocation with standard names (name, d_name, dd_name) and estimates size base on size known at generate-time
 //--------------------------------------------------------------------------
-unsigned int allocate_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
+size_t allocate_variable(CodeStream &os, const string &type, const string &name, VarMode mode, size_t size)
 {
     // Allocate host and device variables
     allocate_host_variable(os, type, name, mode, size);
-    allocate_device_variable(os, type, name, mode, size);
-
-    // Return size estimate
-    return size * theSize(type);
+    return allocate_device_variable(os, type, name, mode, size);
 }
 
 void allocate_variable(CodeStream &os, const string &type, const string &name, VarMode mode, const string &size)
@@ -1166,7 +1169,7 @@ void genRunner(const NNmodel &model,    //!< Model description
 
 {
     // Counter used for tracking memory allocations
-    unsigned int mem = 0;
+    size_t mem = 0;
 
     //cout << "entering genRunner" << std::endl;
     string runnerName= model.getGeneratedCodePath(path, "runner.cc");
@@ -1660,8 +1663,8 @@ void genRunner(const NNmodel &model,    //!< Model description
 
 #ifndef CPU_ONLY
             if(n.second.isSimRNGRequired()) {
-                allocate_device_variable(os, "curandState", "rng" + n.first, VarMode::LOC_DEVICE_INIT_DEVICE,
-                                         n.second.getNumNeurons());
+                mem += allocate_device_variable(os, "curandState", "rng" + n.first, VarMode::LOC_DEVICE_INIT_DEVICE,
+                                                n.second.getNumNeurons());
             }
 #endif  // CPU_ONLY
 
@@ -1741,15 +1744,15 @@ void genRunner(const NNmodel &model,    //!< Model description
                 // Allocate row lengths
                 allocate_host_variable(os, "unsigned int", "C" + s.first + ".rowLength", s.second.getSparseConnectivityVarMode(),
                                     s.second.getSrcNeuronGroup()->getNumNeurons());
-                allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
-                                        s.second.getSrcNeuronGroup()->getNumNeurons());
+                mem += allocate_device_variable(os, "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityVarMode(),
+                                                s.second.getSrcNeuronGroup()->getNumNeurons());
 
                 // Allocate target indices
                 const std::string postIndexType = "unsigned int";
                 allocate_host_variable(os, postIndexType, "C" + s.first + ".ind", s.second.getSparseConnectivityVarMode(),
                                        size);
-                allocate_device_variable(os, postIndexType, "ind" + s.first, s.second.getSparseConnectivityVarMode(),
-                                         size);
+                mem += allocate_device_variable(os, postIndexType, "ind" + s.first, s.second.getSparseConnectivityVarMode(),
+                                                size);
 
                 if(model.isSynapseGroupPostLearningRequired(s.first)) {
                     const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
@@ -1757,14 +1760,14 @@ void genRunner(const NNmodel &model,    //!< Model description
                     // Allocate column lengths
                     allocate_host_variable(os,  "unsigned int", "C" + s.first + ".colLength", s.second.getSparseConnectivityVarMode(),
                                            s.second.getTrgNeuronGroup()->getNumNeurons());
-                    allocate_device_variable(os,  "unsigned int", "colLength" + s.first, s.second.getSparseConnectivityVarMode(),
-                                             s.second.getTrgNeuronGroup()->getNumNeurons());
+                    mem += allocate_device_variable(os,  "unsigned int", "colLength" + s.first, s.second.getSparseConnectivityVarMode(),
+                                                    s.second.getTrgNeuronGroup()->getNumNeurons());
                     
                     // Allocate remap
                     allocate_host_variable(os,  "unsigned int", "C" + s.first + ".remap", s.second.getSparseConnectivityVarMode(),
                                            postSize);
-                    allocate_device_variable(os,  "unsigned int", "remap" + s.first, s.second.getSparseConnectivityVarMode(),
-                                             postSize);
+                    mem += allocate_device_variable(os,  "unsigned int", "remap" + s.first, s.second.getSparseConnectivityVarMode(),
+                                                    postSize);
                 }
 
                 if(model.isSynapseGroupDynamicsRequired(s.first)) {
@@ -1772,8 +1775,8 @@ void genRunner(const NNmodel &model,    //!< Model description
                     // **THINK** this is over-allocating
                     allocate_host_variable(os,  "unsigned int", "C" + s.first + ".synRemap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
                                            size + 1);
-                    allocate_device_variable(os,  "unsigned int", "synRemap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
-                                             size + 1);
+                    mem += allocate_device_variable(os,  "unsigned int", "synRemap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                                                    size + 1);
                 }
                 
                 if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -2088,13 +2091,14 @@ void genRunner(const NNmodel &model,    //!< Model description
     // finish up
 
 #ifndef CPU_ONLY
-    cout << "Global memory required for core model: " << mem/1e6 << " MB. " << std::endl;
+    const size_t memMb = mem / (1024 * 1024);
+    cout << "Global memory required for core model: " << memMb << " MB. " << std::endl;
     cout << deviceProp[theDevice].totalGlobalMem << " for device " << theDevice << std::endl;
   
     if (0.5 * deviceProp[theDevice].totalGlobalMem < mem) {
-        cout << "memory required for core model (" << mem/1e6;
-        cout << "MB) is more than 50% of global memory on the chosen device";
-        cout << "(" << deviceProp[theDevice].totalGlobalMem/1e6 << "MB)." << std::endl;
+        cout << "memory required for core model (" << memMb;
+        cout << "MB) is more than 50% of global memory on the chosen device ";
+        cout << "(" << deviceProp[theDevice].totalGlobalMem / (1024 * 1024) << "MB)." << std::endl;
         cout << "Experience shows that this is UNLIKELY TO WORK ... " << std::endl;
     }
 #endif
