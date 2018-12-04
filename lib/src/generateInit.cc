@@ -229,18 +229,28 @@ void genHostInitSpikeCode(CodeStream &os, const NeuronGroup &ng, bool spikeEvent
 }
 // ------------------------------------------------------------------------
 #ifndef CPU_ONLY
+void genInitializeDeviceRNGKernel(CodeStream &os)
+{
+    // If global device RNG is required
+    os << "extern \"C\" __global__ void initializeDeviceRNG(unsigned long long deviceRNGSeed)";
+    {
+        CodeStream::Scope b(os);
+        os << "if(threadIdx.x == 0)";
+        {
+            CodeStream::Scope b(os);
+            os << "curand_init(deviceRNGSeed, 0, 0, &dd_rng[0]);" << std::endl;
+        }
+    }
+}
+// ------------------------------------------------------------------------
 unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int localHostID)
 {
     // init kernel header
     os << "extern \"C\" __global__ void initializeDevice(";
-    const auto &params = model.getInitKernelParameters();
-    for(auto p = params.cbegin(); p != params.cend(); p++) {
-        os << p->second << " " << p->first;
-        if (std::next(p) != params.cend()) {
-            os  << ", ";
-        }
+    for(const auto &p : model.getInitKernelParameters()) {
+        os << p.second << " " << p.first << ", ";
     }
-    os << ")";
+    os << "unsigned long long deviceRNGSeed)";
 
     // initialization kernel code
     unsigned int startThread = 0;
@@ -249,15 +259,6 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << initBlkSz << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        // If RNG is required
-        if(model.isDeviceRNGRequired()) {
-            os << "// Initialise global GPU RNG" << std::endl;
-            os << "if(id == 0)";
-            {
-                CodeStream::Scope b(os);
-                os << "curand_init(" << model.getSeed() << ", 0, 0, &dd_rng[0]);" << std::endl;
-            }
-        }
         // Loop through remote neuron groups
         for(const auto &n : model.getRemoteNeuronGroups()) {
             if(n.second.hasOutputToHost(localHostID) && n.second.getSpikeVarMode() & VarInit::DEVICE) {
@@ -358,7 +359,7 @@ unsigned int genInitializeDeviceKernel(CodeStream &os, const NNmodel &model, int
 
                     // If this neuron is going to require a simulation RNG, initialise one using thread id for sequence
                     if(n.second.isSimRNGRequired()) {
-                        os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
+                        os << "curand_init(deviceRNGSeed, id, 0, &dd_rng" << n.first << "[lid]);" << std::endl;
                     }
 
                     // If this neuron requires an RNG for initialisation,
@@ -813,6 +814,12 @@ void genInit(const NNmodel &model,      //!< Model description
     os << std::endl;
 
 #ifndef CPU_ONLY
+    // If device RNG is required, generate kernel to initialise it
+    if(model.isDeviceRNGRequired()) {
+        genInitializeDeviceRNGKernel(os);
+        os << std::endl;
+    }
+
     // If required, insert kernel to initialize neurons and dense matrices
     const unsigned int numInitThreads = model.isDeviceInitRequired(localHostID) ? genInitializeDeviceKernel(os, model, localHostID) : 0;
 
@@ -871,6 +878,30 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "srand((unsigned int) " << model.getSeed() << ");" << std::endl;
         }
 
+#ifndef CPU_ONLY
+        // If there are any device initialisation threads or device RNG is required
+        // **NOTE** this is a somewhat over-broad check - init threads might well NOT require an RNG
+        if(numInitThreads > 0 || model.isDeviceRNGRequired()) {
+            // If no seed is specified
+            os << "unsigned long long deviceRNGSeed;" << std::endl;
+            if (model.getSeed() == 0) {
+                CodeStream::Scope b(os);
+
+                // Use system randomness to generate one unsigned long long worth of seed words
+                os << "std::random_device seedSource;" << std::endl;
+                os << "uint32_t *deviceRNGSeedWord = reinterpret_cast<uint32_t*>(&deviceRNGSeed);" << std::endl;
+                os << "for(int i = 0; i < " << sizeof(unsigned long long) / sizeof(uint32_t) << "; i++)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "deviceRNGSeedWord[i] = seedSource();" << std::endl;
+                }
+            }
+            // Otherwise, use model seed
+            else {
+                os << "deviceRNGSeed = " << model.getSeed() << ";" << std::endl;
+            }
+        }
+#endif
         // If model requires a host RNG
         if(model.isHostRNGRequired()) {
             // If no seed is specified, use system randomness to generate seed sequence
@@ -1156,7 +1187,12 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "copyStateToDevice(true);" << std::endl << std::endl;
         }
 
-        // If any init threads were required, perform init kernel launch
+        // If on-device global RNG is required, laumch kernel to initialise it
+        if(model.isDeviceRNGRequired()) {
+            os << "initializeDeviceRNG<<<1, 1>>>(deviceRNGSeed);" << std::endl;
+        }
+
+        // If any init threads were required
         if(numInitThreads > 0) {
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(initDeviceStart);" << std::endl;
@@ -1166,14 +1202,10 @@ void genInit(const NNmodel &model,      //!< Model description
             os << "dim3 iThreads(" << initBlkSz << ", 1);" << std::endl;
             os << "dim3 iGrid(" << numInitThreads / initBlkSz << ", 1);" << std::endl;
             os << "initializeDevice <<<iGrid, iThreads>>>(";
-            const auto &params = model.getInitKernelParameters();
-            for(auto p = params.cbegin(); p != params.cend(); p++) {
-                os << p->first;
-                if (std::next(p) != params.cend()) {
-                    os  << ", ";
-                }
+            for(const auto &p : model.getInitKernelParameters()) {
+                os << p.first << ", ";
             }
-            os << ");" << std::endl;
+            os << "deviceRNGSeed);" << std::endl;
 
             if (model.isTimingEnabled()) {
                 os << "cudaEventRecord(initDeviceStop);" << std::endl;
