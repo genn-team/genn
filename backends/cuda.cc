@@ -107,7 +107,7 @@ void CUDA::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGro
 
         // Parallelise over neuron groups
         size_t idStart = 0;
-        genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart, 
+        genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_NeuronUpdateBlockSize); },
             [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
@@ -123,12 +123,16 @@ void CUDA::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGro
                     os << "if (threadIdx.x == 1)";
                     {
                         CodeStream::Scope b(os);
-                        os << "if (spkEvntCount > 0) posSpkEvnt = atomicAdd((unsigned int *) &dd_glbSpkCntEvnt" << ng.getName();
-                        if (ng.isDelayRequired()) {
-                            os << "[dd_spkQuePtr" << ng.getName() << "], spkEvntCount);" << std::endl;
-                        }
-                        else {
-                            os << "[0], spkEvntCount);" << std::endl;
+                        os << "if (shSpkEvntCount > 0)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "shPosSpkEvnt = atomicAdd((unsigned int *) &dd_glbSpkCntEvnt" << ng.getName();
+                            if (ng.isDelayRequired()) {
+                                os << "[dd_spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
+                            }
+                            else {
+                                os << "[0], shSpkEvntCount);" << std::endl;
+                            }
                         }
                     } // end if (threadIdx.x == 0)
                     os << "__syncthreads();" << std::endl;
@@ -138,12 +142,16 @@ void CUDA::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGro
                     os << "if (threadIdx.x == 0)";
                     {
                         CodeStream::Scope b(os);
-                        os << "if (spkCount > 0) posSpk = atomicAdd((unsigned int *) &dd_glbSpkCnt" << ng.getName();
-                        if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
-                            os << "[dd_spkQuePtr" << ng.getName() << "], spkCount);" << std::endl;
-                        }
-                        else {
-                            os << "[0], spkCount);" << std::endl;
+                        os << "if (shSpkCount > 0)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "shPosSpk = atomicAdd((unsigned int *) &dd_glbSpkCnt" << ng.getName();
+                            if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
+                                os << "[dd_spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
+                            }
+                            else {
+                                os << "[0], shSpkCount);" << std::endl;
+                            }
                         }
                     } // end if (threadIdx.x == 1)
                     os << "__syncthreads();" << std::endl;
@@ -151,24 +159,24 @@ void CUDA::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGro
 
                 const std::string queueOffset = ng.isDelayRequired() ? "writeDelayOffset + " : "";
                 if (ng.isSpikeEventRequired()) {
-                    os << "if (threadIdx.x < spkEvntCount)";
+                    os << "if (threadIdx.x < shSpkEvntCount)";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_glbSpkEvnt" << ng.getName() << "[" << queueOffset << "posSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << std::endl;
-                    }   // end if (threadIdx.x < spkEvntCount)
+                        os << "dd_glbSpkEvnt" << ng.getName() << "[" << queueOffset << "shPosSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << std::endl;
+                    }
                 }
 
                 if (!ng.getNeuronModel()->getThresholdConditionCode().empty()) {
                     const std::string queueOffsetTrueSpk = ng.isTrueSpikeRequired() ? queueOffset : "";
 
-                    os << "if (threadIdx.x < spkCount)";
+                    os << "if (threadIdx.x < shSpkCount)";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "posSpk + threadIdx.x] = shSpk[threadIdx.x];" << std::endl;
+                        os << "dd_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = shSpk[threadIdx.x];" << std::endl;
                         if (ng.isSpikeTimeRequired()) {
                             os << "dd_sT" << ng.getName() << "[" << queueOffset << "shSpk[threadIdx.x]] = t;" << std::endl;
                         }
-                    }   // end if (threadIdx.x < spkCount)
+                    }
                 }
             }
         );
