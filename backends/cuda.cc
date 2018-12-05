@@ -1,4 +1,4 @@
-#include "cudaBackend.h"
+#include "cuda.h"
 
 // Standard C++ includes
 #include <algorithm>

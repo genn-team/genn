@@ -17,9 +17,9 @@
 // NuGeNN includes
 #include "substitution_stack.h"
 #include "tee_stream.h"
-#include "backends/backend.h"
-#include "backends/cudaBackend.h"
-#include "backends/singleThreadedCPUBackend.h"
+#include "backends/base.h"
+#include "backends/cuda.h"
+#include "backends/singleThreadedCPU.h"
 
 using namespace CodeGenerator;
 

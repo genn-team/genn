@@ -6,7 +6,7 @@
 #include <string>
 
 // NuGeNN includes
-#include "backend.h"
+#include "base.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator::Backends::SingleThreadedCPU

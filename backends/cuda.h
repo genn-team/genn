@@ -13,7 +13,7 @@
 #include "codeStream.h"
 
 // NuGeNN includes
-#include "backend.h"
+#include "base.h"
 #include "../substitution_stack.h"
 
 //--------------------------------------------------------------------------
