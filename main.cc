@@ -28,30 +28,30 @@ using namespace CodeGenerator;
 
 
 
-void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const Backends::Base &codeGenerator)
+void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
     // Presynaptic update kernel
-    codeGenerator.genPresynapticUpdateKernel(os, model,
-        [&codeGenerator, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
+    backend.genPresynapticUpdateKernel(os, model,
+        [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             // code substitutions ----
             const WeightUpdateModels::Base *wu = sg.getWUModel();
             std::string code = wu->getEventThresholdConditionCode();
             baseSubs.apply(code);
    
-            applyWeightUpdateModelSubstitutions(code, sg, codeGenerator.getVarPrefix());
+            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix());
            
             code= ensureFtype(code, model.getPrecision());
             checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
             os << code;
         },
-        [&codeGenerator, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             const WeightUpdateModels::Base *wu = sg.getWUModel();
             std::string code = wu->getSimCode(); //**TODO** pass through truespikeness
             baseSubs.apply(code);
     
-            applyWeightUpdateModelSubstitutions(code, sg, codeGenerator.getVarPrefix());
+            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix());
 
             code= ensureFtype(code, model.getPrecision());
             checkUnreplacedVariables(code, sg.getName() + " : simCode");

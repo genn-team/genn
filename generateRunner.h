@@ -18,5 +18,5 @@ namespace Backends
 namespace CodeGenerator
 {
 void generateRunner(CodeStream &definitions, CodeStream &runner, const NNmodel &model,
-                    const Backends::Base &codeGenerator, int localHostID);
+                    const Backends::Base &backend, int localHostID);
 }

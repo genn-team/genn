@@ -17,5 +17,5 @@ namespace Backends
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &codeGenerator);
+void generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend);
 }

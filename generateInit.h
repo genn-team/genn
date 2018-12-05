@@ -17,5 +17,5 @@ namespace Backends
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateInit(CodeStream &os, const NNmodel &model, const Backends::Base &codeGenerator);
+void generateInit(CodeStream &os, const NNmodel &model, const Backends::Base &backend);
 }

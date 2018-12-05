@@ -15,11 +15,11 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &codeGenerator)
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
     // Neuron update kernel
-    codeGenerator.genNeuronUpdateKernel(os, model,
-        [&codeGenerator, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+    backend.genNeuronUpdateKernel(os, model,
+        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
         {
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
@@ -27,7 +27,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
             // **TODO** basic behaviour could exist in NewModels::Base, NeuronModels::Base could add queuing logic
             for(const auto &v : nm->getVars()) {
                 os << v.second << " l" << v.first << " = ";
-                os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[";
+                os << backend.getVarPrefix() << v.first << ng.getName() << "[";
                 if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
                     os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
                 }
@@ -39,7 +39,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 || (nm->getResetCode().find("$(sT)") != std::string::npos))
             {
                 // load sT into local variable
-                os << model.getPrecision() << " lsT= " << codeGenerator.getVarPrefix() << "sT" << ng.getName() << "[";
+                os << model.getPrecision() << " lsT= " << backend.getVarPrefix() << "sT" << ng.getName() << "[";
                 if (ng.isDelayRequired()) {
                     os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
                 }
@@ -64,12 +64,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn" << sg->getName() << " = " << codeGenerator.getVarPrefix() << "inSyn" << sg->getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                os << model.getPrecision() << " linSyn" << sg->getName() << " = " << backend.getVarPrefix() << "inSyn" << sg->getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
-                    os << model.getPrecision() << " &denDelay" << sg->getName() << " = " << codeGenerator.getVarPrefix() << "denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
+                    os << model.getPrecision() << " &denDelay" << sg->getName() << " = " << backend.getVarPrefix() << "denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn" + sg->getName() + " += denDelay" << sg->getName() << ";" << std::endl;
@@ -83,7 +83,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                     // **TODO** base behaviour from NewModels::Base
                     for (const auto &v : psm->getVars()) {
                         os << v.second << " lps" << v.first << sg->getName();
-                        os << " = " << codeGenerator.getVarPrefix() << v.first << sg->getName() << "[n];" << std::endl;
+                        os << " = " << backend.getVarPrefix() << v.first << sg->getName() << "[n];" << std::endl;
                     }
                 }
 
@@ -179,7 +179,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 os << "if (spikeLikeEvent)";
                 {
                     CodeStream::Scope b(os);
-                    codeGenerator.genEmitSpikeLikeEvent(os, model, ng, popSubs);
+                    backend.genEmitSpikeLikeEvent(os, model, ng, popSubs);
                 }
             }
 
@@ -195,7 +195,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 {
                     CodeStream::Scope b(os);
 
-                    codeGenerator.genEmitTrueSpike(os, model, ng, popSubs);
+                    backend.genEmitTrueSpike(os, model, ng, popSubs);
 
                     // add after-spike reset if provided
                     if (!nm->getResetCode().empty()) {
@@ -215,7 +215,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
             // store the defined parts of the neuron state into the global state variables dd_V etc
             for(const auto &v : nm->getVars()) {
-                os << codeGenerator.getVarPrefix() << v.first << ng.getName() << "[";
+                os << backend.getVarPrefix() << v.first << ng.getName() << "[";
 
                 if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
                     os << "readDelayOffset + ";
@@ -248,9 +248,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                     os << CodeStream::CB(29) << " // namespace bracket closed" << endl;
                 }
 
-                os << codeGenerator.getVarPrefix() << "inSyn"  << sg->getName() << "[" << inSynSubs.getVarSubstitution("id") << "] = linSyn" << sg->getName() << ";" << std::endl;
+                os << backend.getVarPrefix() << "inSyn"  << sg->getName() << "[" << inSynSubs.getVarSubstitution("id") << "] = linSyn" << sg->getName() << ";" << std::endl;
                 for (const auto &v : psm->getVars()) {
-                    os << codeGenerator.getVarPrefix() << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << std::endl;
+                    os << backend.getVarPrefix() << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << std::endl;
                 }
             }
         }
