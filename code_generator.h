@@ -48,6 +48,7 @@ public:
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0; 
+    virtual void genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const = 0;
 
     virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const = 0;
 
@@ -60,12 +61,13 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    void genArray(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, 
+    void genArray(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                   const std::string &type, const std::string &name, VarMode mode, size_t count) const
     {
         genVariableDefinition(definitions, type + "*", name, mode);
         genVariableImplementation(runner, type + "*", name, mode);
         genVariableAllocation(allocations, type, name, mode, count);
+        genVariableFree(free, name, mode);
     }
 
 protected:

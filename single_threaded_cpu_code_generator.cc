@@ -21,7 +21,7 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, 
     USE(handler);
     assert(false);
 }
-
+//--------------------------------------------------------------------------
 void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
                                                SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
@@ -31,7 +31,7 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
     USE(wumSimHandler);
     assert(false);
 }
-
+//--------------------------------------------------------------------------
 void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                                   NeuronGroupHandler ngHandler, SynapseGroupHandler sgHandler) const
 {
@@ -41,22 +41,28 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
     USE(sgHandler);
     assert(false);
 }
-
+//--------------------------------------------------------------------------
 void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode) const
 {
     os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
 }
+//--------------------------------------------------------------------------
 void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode) const
 {
     os << type << " " << name << ";" << std::endl;
 }
-
+//--------------------------------------------------------------------------
 void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode, size_t count) const
 {
     os << name << " = new " << type << "[" << count << "];" << std::endl;
 }
-
-void CodeGenerator::genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const
+//--------------------------------------------------------------------------
+void CodeGenerator::genVariableFree(CodeStream &os, const std::string &name, VarMode) const
+{
+    os << "delete[] " << name << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::genVariableInit(CodeStream &os, VarMode, size_t count, const Substitutions &kernelSubs, Handler handler) const
 {
     // **TODO** loops like this should be generated like CUDA threads
     os << "for (unsigned i = 0; i < " << count << "; i++)";
@@ -69,7 +75,7 @@ void CodeGenerator::genVariableInit(CodeStream &os, VarMode mode, size_t count, 
         handler(os, varSubs);
     }
 }
-
+//--------------------------------------------------------------------------
 void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     USE(os);

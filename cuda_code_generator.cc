@@ -452,7 +452,7 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
                     popSubs.addVarSubstitution("rng", "initRNG");
                 }
 
-                localSGHandler(os, sg, popSubs);
+                //localSGHandler(os, sg, popSubs);
             });
 
         // Initialise sparse connectivity
@@ -504,6 +504,19 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
         else {
             os << "deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << count << " * sizeof(" << type << "));" << std::endl;
         }
+    }
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const
+{
+    // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
+    if(mode & VarLocation::HOST) {
+        os << "CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << std::endl;
+    }
+
+    // If this variable wasn't allocated in zero-copy mode, free it
+    if(mode & VarLocation::DEVICE) {
+        os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
