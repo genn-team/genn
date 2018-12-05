@@ -18,9 +18,11 @@ class Substitutions;
 class SynapseGroup;
 
 //--------------------------------------------------------------------------
-// CodeGenerator::Base
+// CodeGenerator::Backends::Base
 //--------------------------------------------------------------------------
 namespace CodeGenerator
+{
+namespace Backends
 {
 class Base
 {
@@ -81,5 +83,5 @@ protected:
 #endif
     }
 };
-    
-};
+}   // namespace Backends
+}   // namespace CodeGenerator

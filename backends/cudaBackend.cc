@@ -1,4 +1,4 @@
-#include "cuda_code_generator.h"
+#include "cudaBackend.h"
 
 // Standard C++ includes
 #include <algorithm>
@@ -13,8 +13,8 @@
 #include "modelSpec.h"
 
 // NuGeNN includes
-#include "substitution_stack.h"
-#include "tee_stream.h"
+#include "../substitution_stack.h"
+#include "../tee_stream.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -28,13 +28,15 @@ size_t padSize(size_t size, size_t blockSize)
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// CUDA::CodeGenerator
+// CodeGenerator::Backends::CUDA
 //--------------------------------------------------------------------------
-namespace CUDA
+namespace CodeGenerator
 {
-CodeGenerator::CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
-                             const ::CodeGenerator::Base &hostCodeGenerator)
-:   m_HostCodeGenerator(hostCodeGenerator), m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize), 
+namespace Backends
+{
+CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
+           const Base &hostBackend)
+:   m_HostBackend(hostBackend), m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize),
     m_InitBlockSize(initBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
 {
     // Get number of CUDA devices and reserve memory
@@ -58,8 +60,7 @@ CodeGenerator::CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpd
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, 
-                                          NeuronGroupHandler handler) const
+void CUDA::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
     os << "extern \"C\" __global__ void calcNeurons(float time)" << std::endl;
     {
@@ -174,8 +175,8 @@ void CodeGenerator::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
-                                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void CUDA::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
+                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     os << "extern \"C\" __global__ void calcSynapses(";
     for (const auto &p : model.getSynapseKernelParameters()) {
@@ -318,8 +319,8 @@ void CodeGenerator::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &mo
 }
 
 //--------------------------------------------------------------------------
-void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
-                                  NeuronGroupHandler localNGHandler, SynapseGroupHandler sgHandler) const
+void CUDA::genInitKernel(CodeStream &os, const NNmodel &model,
+                         NeuronGroupHandler localNGHandler, SynapseGroupHandler sgHandler) const
 {
     // Create codestreams to generate different sections of runner
     /*std::stringstream initHostStream;
@@ -466,20 +467,20 @@ void CodeGenerator::genInitKernel(CodeStream &os, const NNmodel &model,
    }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
+void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
     if(mode & VarLocation::HOST) {
-        m_HostCodeGenerator.genVariableDefinition(os, type, name, mode);
+        m_HostBackend.genVariableDefinition(os, type, name, mode);
     }
     if(mode & VarLocation::DEVICE) {
         os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
+void CUDA::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
     if(mode & VarLocation::HOST) {
-        m_HostCodeGenerator.genVariableImplementation(os, type, name, mode);
+        m_HostBackend.genVariableImplementation(os, type, name, mode);
     }
     if(mode & VarLocation::DEVICE) {
         os << type << " d_" << name << ";" << std::endl;
@@ -487,7 +488,7 @@ void CodeGenerator::genVariableImplementation(CodeStream &os, const std::string 
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const
+void CUDA::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const
 {
     if(mode & VarLocation::HOST) {
         // **NOTE** because we want out memory to be pinned for faster copying to GPU, DON'T use host code generator
@@ -507,7 +508,7 @@ void CodeGenerator::genVariableAllocation(CodeStream &os, const std::string &typ
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const
+void CUDA::genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const
 {
     // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
     if(mode & VarLocation::HOST) {
@@ -520,7 +521,7 @@ void CodeGenerator::genVariableFree(CodeStream &os, const std::string &name, Var
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const
+void CUDA::genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const
 {
     // If variable should be initialised on device
     if(mode & VarInit::DEVICE) {
@@ -529,15 +530,15 @@ void CodeGenerator::genVariableInit(CodeStream &os, VarMode mode, size_t count, 
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
+void CUDA::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getVarSubstitution("id") << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                                      GroupHandler<SynapseGroup> wumThreshHandler, 
-                                                      GroupHandler<SynapseGroup> wumSimHandler) const
+void CUDA::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                                             SynapseGroupHandler wumThreshHandler,
+                                             SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "evnt";
@@ -631,8 +632,8 @@ void CodeGenerator::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmo
     }
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::genPresynapticUpdateKernelPostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void CUDA::genPresynapticUpdateKernelPostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                                              SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
      // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "evnt";
@@ -759,7 +760,7 @@ void CodeGenerator::genPresynapticUpdateKernelPostSpan(CodeStream &os, const NNm
     }
 }
 //--------------------------------------------------------------------------
-size_t CodeGenerator::getPresynapticUpdateKernelSize(const SynapseGroup &sg) const
+size_t CUDA::getPresynapticUpdateKernelSize(const SynapseGroup &sg) const
 {
      if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
@@ -777,13 +778,13 @@ size_t CodeGenerator::getPresynapticUpdateKernelSize(const SynapseGroup &sg) con
     }
 }
 //--------------------------------------------------------------------------
-bool CodeGenerator::shouldAccumulateInLinSyn(const SynapseGroup &sg) const
+bool CUDA::shouldAccumulateInLinSyn(const SynapseGroup &sg) const
 {
     // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield (where each thread represents an individual neuron)
     return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
 }
 //--------------------------------------------------------------------------
-bool CodeGenerator::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
+bool CUDA::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
 {
     // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
@@ -797,7 +798,7 @@ bool CodeGenerator::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
     }
 }
 //--------------------------------------------------------------------------
-std::string CodeGenerator::getFloatAtomicAdd(const std::string &ftype) const
+std::string CUDA::getFloatAtomicAdd(const std::string &ftype) const
 {
     USE(ftype);
     int version;
@@ -810,5 +811,5 @@ std::string CodeGenerator::getFloatAtomicAdd(const std::string &ftype) const
         return "atomicAdd";
     }
 }
-
-}   // namespace CUDA
+}   // namespace Backends
+}   // namespace CodeGenerator

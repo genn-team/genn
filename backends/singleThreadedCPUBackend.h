@@ -6,23 +6,25 @@
 #include <string>
 
 // NuGeNN includes
-#include "code_generator.h"
+#include "backend.h"
 
 //--------------------------------------------------------------------------
-// SingleThreadedCPU::CodeGenerator
+// CodeGenerator::Backends::SingleThreadedCPU
 //--------------------------------------------------------------------------
-namespace SingleThreadedCPU
+namespace CodeGenerator
 {
-class CodeGenerator : public ::CodeGenerator::Base
+namespace Backends
+{
+class SingleThreadedCPU : public Base
 {
 public:
-    CodeGenerator(int localHostID) 
+    SingleThreadedCPU(int localHostID)
     :   m_LocalHostID(localHostID)
     {
     }
 
     //--------------------------------------------------------------------------
-    // CodeGenerator::Base virtuals
+    // CodeGenerator::Backends::Base virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const override;
 
@@ -86,4 +88,5 @@ private:
     //--------------------------------------------------------------------------
     const int m_LocalHostID;
 };
-}   // SingleThreadedCPU
+}   // namespace Backends
+}   // namespace CodeGenerator

@@ -15,12 +15,13 @@
 #include "standardSubstitutions.h"
 
 // NuGeNN includes
-#include "code_generator.h"
-#include "cuda_code_generator.h"
-#include "single_threaded_cpu_code_generator.h"
 #include "substitution_stack.h"
 #include "tee_stream.h"
+#include "backends/backend.h"
+#include "backends/cudaBackend.h"
+#include "backends/singleThreadedCPUBackend.h"
 
+using namespace CodeGenerator;
 
 // **TODO** move into NeuronModels::Base
 void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng, 
@@ -91,7 +92,7 @@ void applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarIni
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
 }
 
-void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
+void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Backends::Base &codeGenerator)
 {
     // Neuron update kernel
     codeGenerator.genNeuronUpdateKernel(os, model,
@@ -333,7 +334,7 @@ void generateNeuronUpdateKernel(CodeStream &os, const NNmodel &model, const Code
     );    
 }
 
-void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
+void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const Backends::Base &codeGenerator)
 {
     // Presynaptic update kernel
     codeGenerator.genPresynapticUpdateKernel(os, model,
@@ -366,7 +367,7 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
 }
 // ------------------------------------------------------------------------
 template<typename I, typename M, typename Q>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Base &codeGenerator, const Substitutions &kernelSubs, const NewModels::Base::StringPairVec &vars,
+void genInitNeuronVarCode(CodeStream &os, const Backends::Base &codeGenerator, const Substitutions &kernelSubs, const NewModels::Base::StringPairVec &vars,
                           size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarMode, Q isVarQueueRequired)
 {
@@ -419,7 +420,7 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Base &codeGenerat
 }
 //------------------------------------------------------------------------
 template<typename I, typename M>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Base &codeGenerator, const Substitutions &kernelSubs, const NewModels::Base::StringPairVec &vars, 
+void genInitNeuronVarCode(CodeStream &os, const Backends::Base &codeGenerator, const Substitutions &kernelSubs, const NewModels::Base::StringPairVec &vars,
                           size_t count, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarMode)
 {
@@ -427,7 +428,7 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Base &codeGenerat
                          [](size_t){ return false; });
 }
 
-void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Base &codeGenerator)
+void genInitKernel(CodeStream &os, const NNmodel &model, const Backends::Base &codeGenerator)
 {
     
     codeGenerator.genInitKernel(os, model,
@@ -506,7 +507,7 @@ void genInitKernel(CodeStream &os, const NNmodel &model, const CodeGenerator::Ba
         });
 }
 
-void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &model, const CodeGenerator::Base &codeGenerator, int localHostID)
+void genDefinitions(CodeStream &definitions, CodeStream &runner, const NNmodel &model, const Backends::Base &codeGenerator, int localHostID)
 {
     // Create codestreams to generate different sections of runner
     std::stringstream runnerVarDeclStream;
@@ -829,18 +830,18 @@ int main()
     
     CodeStream output(std::cout);
     
-    SingleThreadedCPU::CodeGenerator cpuCodeGenerator(0);
-    CUDA::CodeGenerator codeGenerator(128, 128, 64, 0, cpuCodeGenerator);
+    Backends::SingleThreadedCPU cpuBackend(0);
+    Backends::CUDA backend(128, 128, 64, 0, cpuBackend);
     
-    generateNeuronUpdateKernel(output, model, codeGenerator);
-    generatePresynapticUpdateKernel(output, model, codeGenerator);
-    genInitKernel(output, model, codeGenerator);
+    generateNeuronUpdateKernel(output, model, backend);
+    generatePresynapticUpdateKernel(output, model, backend);
+    genInitKernel(output, model, backend);
 
     std::stringstream definitions;
     std::stringstream runner;
     CodeStream definitionsStream(definitions);
     CodeStream runnerStream(runner);
-    genDefinitions(definitionsStream, runnerStream, model, codeGenerator, 0);
+    genDefinitions(definitionsStream, runnerStream, model, backend, 0);
     
     std::cout << definitions.str() << std::endl;
     std::cout << runner.str() << std::endl;

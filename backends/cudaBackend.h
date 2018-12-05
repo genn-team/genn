@@ -13,22 +13,24 @@
 #include "codeStream.h"
 
 // NuGeNN includes
-#include "code_generator.h"
-#include "substitution_stack.h"
+#include "backend.h"
+#include "../substitution_stack.h"
 
 //--------------------------------------------------------------------------
-// CUDA::CodeGenerator
+// CodeGenerator::Backends::CUDA
 //--------------------------------------------------------------------------
-namespace CUDA
+namespace CodeGenerator
 {
-class CodeGenerator : public ::CodeGenerator::Base
+namespace Backends
+{
+class CUDA : public Base
 {
 public:
-    CodeGenerator(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
-                  const ::CodeGenerator::Base &hostCodeGenerator);
+    CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
+         const Base &hostBackend);
 
     //--------------------------------------------------------------------------
-    // CodeGenerator::Base virtuals
+    // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model,
                                        NeuronGroupHandler handler) const override;
@@ -131,7 +133,7 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    const ::CodeGenerator::Base &m_HostCodeGenerator;
+    const Base &m_HostBackend;
     
     const size_t m_NeuronUpdateBlockSize;
     const size_t m_PresynapticUpdateBlockSize;
@@ -141,4 +143,5 @@ private:
     std::vector<cudaDeviceProp> m_Devices;
     int m_ChosenDevice;
 };
+}   // Backends
 }   // CodeGenerator
