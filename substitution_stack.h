@@ -67,23 +67,42 @@ public:
 
     void apply(std::string &code) const
     {
-        // Apply variable substitutions
-        for(const auto &v : m_VarSubstitutions) {
-            substitute(code, "$(" + v.first + ")", v.second);
-        }
+        // Apply function and variable substitutions
+        // **NOTE** functions may contain variables so evaluate ALL functions first
+        applyFuncs(code);
+        applyVars(code);
+    }
 
+private:
+    //--------------------------------------------------------------------------
+    // Private API
+    //--------------------------------------------------------------------------
+    void applyFuncs(std::string &code) const
+    {
         // Apply function substitutions
         for(const auto &f : m_FuncSubstitutions) {
             functionSubstitute(code, f.first, f.second.first, f.second.second);
         }
 
-        // If we have a parent, apply their substitutions too
+        // If we have a parent, apply their function substitutions too
         if(m_Parent) {
-            m_Parent->apply(code);
+            m_Parent->applyFuncs(code);
         }
     }
 
-private:
+    void applyVars(std::string &code) const
+    {
+        // Apply variable substitutions
+        for(const auto &v : m_VarSubstitutions) {
+            substitute(code, "$(" + v.first + ")", v.second);
+        }
+
+        // If we have a parent, apply their variable substitutions too
+        if(m_Parent) {
+            m_Parent->applyVars(code);
+        }
+    }
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------

@@ -46,13 +46,12 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
             // code substitutions ----
             const WeightUpdateModels::Base *wu = sg.getWUModel();
             std::string code = wu->getEventThresholdConditionCode();
-            baseSubs.apply(code);
-   
             applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
                                                 sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
             neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
                                                   baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
                                                   model.getDT());
+            baseSubs.apply(code);
             code= ensureFtype(code, model.getPrecision());
             checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
             os << code;
@@ -69,6 +68,7 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
             neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
                                                   baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
                                                   model.getDT());
+            baseSubs.apply(code);
             code= ensureFtype(code, model.getPrecision());
             checkUnreplacedVariables(code, sg.getName() + " : simCode");
             os << code;
@@ -95,12 +95,17 @@ int main()
 
     WeightUpdateModels::StaticPulse::VarValues wumVar(0.5);
 
+    InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProb(0.1); // 0 - prob
+
     // Create population of Izhikevich neurons
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 4, paramValues, initValues);
-    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY,
-                                                                                                           "Neurons", "Neurons",
-                                                                                                           {}, wumVar,
-                                                                                                           {}, {});
+    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY,
+        "Neurons", "Neurons",
+        {}, wumVar,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
+
     //syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
     model.finalize();
     

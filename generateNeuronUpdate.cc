@@ -92,11 +92,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
                 // Apply substitutions to current converter code
                 string psCode = psm->getApplyInputCode();
-                inSynSubs.apply(psCode);
-
                 applyNeuronModelSubstitutions(psCode, ng, "l");
                 applyPostsynapticModelSubstitutions(psCode, *sg, "lps");
-
+                inSynSubs.apply(psCode);
                 psCode = ensureFtype(psCode, model.getPrecision());
                 checkUnreplacedVariables(psCode, sg->getName() + " : postSyntoCurrent");
 
@@ -119,10 +117,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
             }
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
-                popSubs.apply(thCode);
 
                 applyNeuronModelSubstitutions(thCode, ng, "l");
-
+                popSubs.apply(thCode);
                 thCode= ensureFtype(thCode, model.getPrecision());
                 checkUnreplacedVariables(thCode, ng.getName() + " : thresholdConditionCode");
 
@@ -151,12 +148,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 for(const auto &spkEventCond : ng.getSpikeEventCondition()) {
                     // Replace of parameters, derived parameters and extraglobalsynapse parameters
                     string eCode = spkEventCond.first;
-
-                    // code substitutions ----
-                    popSubs.apply(eCode);
-
                     applyNeuronModelSubstitutions(eCode, ng, "l", "", "_pre");
-
+                    popSubs.apply(eCode);
                     eCode = ensureFtype(eCode, model.getPrecision());
                     checkUnreplacedVariables(eCode, ng.getName() + " : neuronSpkEvntCondition");
 
@@ -200,10 +193,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                     // add after-spike reset if provided
                     if (!nm->getResetCode().empty()) {
                         string rCode = nm->getResetCode();
-                        popSubs.apply(rCode);
-
                         applyNeuronModelSubstitutions(rCode, ng, "l");
-
+                        popSubs.apply(rCode);
                         rCode = ensureFtype(rCode, model.getPrecision());
                         checkUnreplacedVariables(rCode, ng.getName() + " : resetCode");
 
@@ -231,11 +222,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getName());
 
                 string pdCode = psm->getDecayCode();
-                inSynSubs.apply(pdCode);
-
                 applyNeuronModelSubstitutions(pdCode, ng, "l");
                 applyPostsynapticModelSubstitutions(pdCode, *sg, "lps");
-
+                inSynSubs.apply(pdCode);
                 pdCode = ensureFtype(pdCode, model.getPrecision());
                 checkUnreplacedVariables(pdCode, sg->getName() + " : postSynDecay");
 

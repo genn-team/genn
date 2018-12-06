@@ -42,8 +42,8 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &b
                         varSubs.addVarSubstitution("value", "initVal");
 
                         std::string code = varInit.getSnippet()->getCode();
-                        varSubs.apply(code);
                         CodeGenerator::applyVarInitSnippetSubstitutions(code, varInit);
+                        varSubs.apply(code);
                         code = ensureFtype(code, ftype);
                         checkUnreplacedVariables(code, "initVar");
                         os << code << std::endl;
@@ -59,8 +59,8 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &b
                         varSubs.addVarSubstitution("value", vars[k].first + popName + "[" + varSubs.getVarSubstitution("id") + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
-                        varSubs.apply(code);
                         CodeGenerator::applyVarInitSnippetSubstitutions(code, varInit);
+                        varSubs.apply(code);
                         code = ensureFtype(code, ftype);
                         checkUnreplacedVariables(code, "initVar");
                         os << code << std::endl;
@@ -234,13 +234,32 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
                 genInitWUVarCode(os, backend, popSubs, sg, sg.getTrgNeuronGroup()->getNumNeurons(), model.getPrecision());
 
             }
-            //**TODO** think about $(id_pre) and $(id_post); and looping over sg.getSrcNeuronGroup()->getNumNeurons()
-            // alternative to genVariableInit COULD solve both
         },
-        [](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
+        [&model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
         {
-            //**TODO** think about $(id_pre) and $(id_post); and looping over sg.getSrcNeuronGroup()->getNumNeurons()
-            // alternative to genVariableInit COULD solve both
+            popSubs.addVarSubstitution("num_post", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+            popSubs.addFuncSubstitution("endRow", 0, "break");
+
+            // Initialise row building state variables and loop on generated code to initialise sparse connectivity
+            const auto &connectInit = sg.getConnectivityInitialiser();
+            os << "// Build sparse connectivity" << std::endl;
+            for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+            }
+            os << "while(true)";
+            {
+                CodeStream::Scope b(os);
+
+                // Apply substitutions
+                std::string code = connectInit.getSnippet()->getRowBuildCode();
+                applySparsConnectInitSnippetSubstitutions(code, sg);
+                popSubs.apply(code);
+                code = ensureFtype(code, model.getPrecision());
+                checkUnreplacedVariables(code, "initSparseConnectivity");
+
+                // Write out code
+                os << code << std::endl;
+            }
         });
 
     backend.genInitSparse(os, model,

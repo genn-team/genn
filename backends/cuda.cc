@@ -518,7 +518,53 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
             [](const SynapseGroup &sg){ return sg.isDeviceSparseConnectivityInitRequired(); },
             [sgSparseConnectHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
-                
+                const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
+                const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
+
+                // If this connectivity requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                    os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                    os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+
+                    // Add substitution for RNG
+                    popSubs.addVarSubstitution("rng", "initRNG");
+                }
+
+                // If the synapse group has bitmask connectivity
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    // Calculate indices of bits at start and end of row
+                    os << "// Calculate indices" << std::endl;
+                    const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
+                    if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                        os << "const uint64_t rowStartGID = " << popSubs.getVarSubstitution("id") << " * " << numTrgNeurons << "ull;" << std::endl;
+                    }
+                    else {
+                        os << "const unsigned int rowStartGID = " << popSubs.getVarSubstitution("id") << " * " << numTrgNeurons << ";" << std::endl;
+                    }
+
+                    // Build function template to set correct bit in bitmask
+                    popSubs.addFuncSubstitution("addSynapse", 1,
+                                                "atomicOr(&dd_gp" + sg.getName() + "[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
+                }
+                // Otherwise, if synapse group has ragged connectivity
+                else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    const std::string rowLength = "dd_rowLength" + sg.getName() + "[" + popSubs.getVarSubstitution("id") + "]";
+                    const std::string ind = "dd_ind" + sg.getName();
+
+                    // Zero row length
+                    os << rowLength << " = 0;" << std::endl;
+
+                    // Build function template to increment row length and insert synapse into ind array
+                    popSubs.addFuncSubstitution("addSynapse", 1,
+                                                ind + "[(" + popSubs.getVarSubstitution("id") + " * " + std::to_string(sg.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)");
+                }
+                else {
+                    assert(false);
+                }
+
+                sgSparseConnectHandler(os, sg, popSubs);
             });
    }
 }

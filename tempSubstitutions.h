@@ -23,8 +23,9 @@ void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng,
 void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroup &sg, const std::string &varPrefix);
 
 void applyWeightUpdateModelSubstitutions(std::string &code, const SynapseGroup &sg,
-                                         const std::string &varPrefix, const std::string &varSuffix = "", const std::string &varExt = ""
-);
+                                         const std::string &varPrefix, const std::string &varSuffix = "", const std::string &varExt = "");
 
 void applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit);
+
+void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroup &sg);
 }   // namespace CodeGenerator

@@ -2,6 +2,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "initSparseConnectivitySnippet.h"
 #include "neuronGroup.h"
 #include "synapseGroup.h"
 #include "newModels.h"
@@ -74,4 +75,15 @@ void CodeGenerator::applyVarInitSnippetSubstitutions(std::string &code, const Ne
     value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
 }
+//--------------------------------------------------------------------------
+void CodeGenerator::applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroup &sg)
+{
+    const auto connectInit = sg.getConnectivityInitialiser();
 
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
+    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+    name_substitutions(code, "initSparseConn", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
+}
