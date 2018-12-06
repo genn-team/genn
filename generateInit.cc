@@ -330,9 +330,8 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
                 // Write out code
                 os << code << std::endl;
             }
-        });
-
-    backend.genInitSparse(os, model,
+        },
+        // Sparse synaptic matrix var initialisation
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
         {
             // If this synapse group has individual variables

@@ -36,22 +36,15 @@ void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const NNmodel &mode
 //--------------------------------------------------------------------------
 void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
                                 NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                                SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
+                                SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                                SynapseGroupHandler sgSparseInitHandler) const
 {
     USE(os);
     USE(model);
     USE(localNGHandler);
     USE(remoteNGHandler);
-    USE(sgDenseVarHandler);
+    USE(sgDenseInitHandler);
     USE(sgSparseConnectHandler);
-    assert(false);
-}
-//--------------------------------------------------------------------------
-void SingleThreadedCPU::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const
-{
-    USE(os);
-    USE(model);
-    USE(sgHandler);
     assert(false);
 }
 //--------------------------------------------------------------------------

@@ -47,8 +47,8 @@ public:
 
     virtual void genInit(CodeStream &os, const NNmodel &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                         SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const = 0;
-    virtual void genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const = 0;
+                         SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                         SynapseGroupHandler sgSparseInitHandler) const = 0;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;

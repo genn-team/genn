@@ -61,11 +61,7 @@
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ItemGroup>
-    <ClCompile Include="cuda_code_generator.cc" />
-    <ClCompile Include="main.cc" />
-    <ClCompile Include="single_threaded_cpu_code_generator.cc" />
-  </ItemGroup>
+ 
   <!-- Reference libgenn so it gets built automatically if required -->
   <ItemGroup>
     <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj">
@@ -73,12 +69,25 @@
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemGroup>
+   <ItemGroup>
+    <ClCompile Include="generateInit.cc" />
+    <ClCompile Include="generateNeuronUpdate.cc" />
+    <ClCompile Include="generateRunner.cc" />
+    <ClCompile Include="main.cc" />
+    <ClCompile Include="tempSubstitutions.cc" />
+    <ClCompile Include="backends\cuda.cc" />
+    <ClCompile Include="backends\singleThreadedCPU.cc" />
+  </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="code_generator.h" />
-    <ClInclude Include="cuda_code_generator.h" />
-    <ClInclude Include="single_threaded_cpu_code_generator.h" />
+    <ClInclude Include="generateInit.h" />
+    <ClInclude Include="generateNeuronUpdate.h" />
+    <ClInclude Include="generateRunner.h" />
     <ClInclude Include="substitution_stack.h" />
     <ClInclude Include="tee_stream.h" />
+    <ClInclude Include="tempSubstitutions.h" />
+    <ClInclude Include="backends\base.h" />
+    <ClInclude Include="backends\cuda.h" />
+    <ClInclude Include="backends\singleThreadedCPU.h" />
   </ItemGroup>
   <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />

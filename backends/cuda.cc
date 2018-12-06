@@ -327,7 +327,8 @@ void CUDA::genPresynapticUpdate(CodeStream &os, const NNmodel &model,
 //--------------------------------------------------------------------------
 void CUDA::genInit(CodeStream &os, const NNmodel &model,
                    NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                   SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
+                   SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                   SynapseGroupHandler sgSparseInitHandler) const
 {
     // Create codestreams to generate different sections of runner
     /*std::stringstream initHostStream;
@@ -347,11 +348,11 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
     }
     initDevice << ")";
 
-    Substitutions kernelSubs(cudaFunctions);
-
     // initialization kernel code
     size_t idStart = 0;
     {
+        Substitutions kernelSubs(cudaFunctions);
+
         // common variables for all cases
         CodeStream::Scope b(initDevice);
 
@@ -422,7 +423,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart, 
             [this](const SynapseGroup &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
             [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUDeviceVarInitRequired(); },
-            [sgDenseVarHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            [sgDenseInitHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
                 // If this post synapse requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
@@ -436,7 +437,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
                 }
 
                 popSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id"));
-                sgDenseVarHandler(os, sg, popSubs);
+                sgDenseInitHandler(os, sg, popSubs);
             });
         os << std::endl;
 
@@ -497,23 +498,15 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
             });
         os << std::endl;
     }
-}
-//--------------------------------------------------------------------------
-void CUDA::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const
-{
-    CodeStream &initDevice = os;
-
-    initDevice << "extern \"C\" __global__ void initializeSparseDevice()";
-
-    Substitutions kernelSubs(cudaFunctions);
-
-    // **TODO** FIXME
-    const unsigned int numStaticInitThreads = 0;
+    const unsigned int numStaticInitThreads = idStart;
 
     // initialization kernel code
+    initDevice << "extern \"C\" __global__ void initializeSparseDevice()";
     {
-        // common variables for all cases
         CodeStream::Scope b(initDevice);
+
+        // common variables for all cases
+        Substitutions kernelSubs(cudaFunctions);
 
         initDevice << "const unsigned int id = " << m_InitSparseBlockSize << " * blockIdx.x + threadIdx.x;" << std::endl;
 
@@ -523,11 +516,10 @@ void CUDA::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandl
         initDevice << "__shared__ unsigned int shRowStart[" << m_InitSparseBlockSize + 1 << "];" << std::endl;
 
         // Initialise weight update variables for synapse groups with dense connectivity
-        size_t idStart = 0;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
             [this](const SynapseGroup &sg){ return padSize(sg.getMaxConnections(), m_InitSparseBlockSize); },
             [](const SynapseGroup &sg){ return sg.isDeviceSparseInitRequired(); },
-            [this, &model, sgHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
                 // If this post synapse requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
@@ -612,7 +604,7 @@ void CUDA::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandl
                             popSubs.addVarSubstitution("id_syn", "idx");
                             popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(m_InitSparseBlockSize) + ") + i)");
                             popSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[idx]");
-                            sgHandler(os, sg, popSubs);
+                            sgSparseInitHandler(os, sg, popSubs);
 
                             // If matrix is ragged, connectivity is initialised on device and postsynaptic learning is required
                             if((sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
