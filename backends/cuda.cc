@@ -325,7 +325,8 @@ void CUDA::genPresynapticUpdate(CodeStream &os, const NNmodel &model,
 }
 
 //--------------------------------------------------------------------------
-void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler localNGHandler,
+void CUDA::genInit(CodeStream &os, const NNmodel &model,
+                   NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                    SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
 {
     // Create codestreams to generate different sections of runner
@@ -335,31 +336,6 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
     CodeStream initDevice(initDeviceStream);*/
     CodeStream &initDevice = os;
     
-    /*primitives
-     1) callbacks for per-population init and per-neuron init for both remote and local ngs
-     2) per-population 
-     
-     os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-    {
-        CodeStream::Scope b(os);
-        os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-    }
-    
-    os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-    
-    3) per-neuron
-    // Zero spikes
-    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-        {
-            CodeStream::Scope b(os);
-            os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
-        }
-    }
-    else {
-        os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
-    }
-     */
     // init kernel header
     initDevice << "extern \"C\" __global__ void initializeDevice(";
     const auto &params = model.getInitKernelParameters();
@@ -392,45 +368,23 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
             }
         }
 
-        // Parallelise over remote neuron groups
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Remote neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(initDevice, kernelSubs, model.getRemoteNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_InitBlockSize); },
             [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
-            [this, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+            [this, remoteNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
-                /*os << "if(lid == 0)";
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
 
-                    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-                        }
-                    }
-                    else {
-                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                    }
+                    remoteNGHandler(os, ng, popSubs);
                 }
-
-                // Zero spikes
-                if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                    os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "dd_glbSpk" << n.first << "[(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid] = 0;" << std::endl;
-                    }
-                }
-                else {
-                    os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
-                }*/
             });
         os << std::endl;
    
-        // Parallelise over local neuron groups
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
@@ -438,63 +392,31 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
             [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
-                //**TODO** second handler for group
-                /*os << "if(lid == 0)";
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
-
-                    // Zero spike count
-                    if(shouldInitSpikeVar) {
-                        if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
-                            }
-                        }
-                        else {
-                            os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-                        }
+                    // If this neuron is going to require a simulation RNG, initialise one using GLOBALthread id for sequence
+                    if(ng.isSimRNGRequired()) {
+                        os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << ng.getName() << "[" << popSubs.getVarSubstitution("id") << "]);" << std::endl;
                     }
 
-                    // Zero spike event count
-                    if(shouldInitSpikeEventVar) {
-                        if(n.second.isDelayRequired()) {
-                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "dd_glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
-                            }
-                        }
-                        else {
-                            os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-                        }
+                    // If this neuron requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    // **NOTE** not LOCAL id
+                    if(ng.isInitRNGRequired(VarInit::DEVICE)) {
+                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+
+                        // Add substitution for RNG
+                        popSubs.addVarSubstitution("rng", "initRNG");
                     }
-                }*/
 
-                // **TODO** spike variables
-
-                // If this neuron is going to require a simulation RNG, initialise one using GLOBALthread id for sequence
-                if(ng.isSimRNGRequired()) {
-                    os << "curand_init(" << model.getSeed() << ", id, 0, &dd_rng" << ng.getName() << "[" << popSubs.getVarSubstitution("id") << "]);" << std::endl;
+                    localNGHandler(os, ng, popSubs);
                 }
-
-                // If this neuron requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(ng.isInitRNGRequired(VarInit::DEVICE)) {
-                    os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                    os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
-
-                    // Add substitution for RNG
-                    popSubs.addVarSubstitution("rng", "initRNG");
-                }
-                    
-                localNGHandler(os, ng, popSubs);
             });
         os << std::endl;
 
-        // Initialise weight update variables for synapse groups with dense connectivity 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with dense connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart, 
@@ -518,7 +440,6 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
             });
         os << std::endl;
 
-        // Initialise sparse connectivity
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
@@ -782,6 +703,20 @@ void CUDA::genVariableFree(CodeStream &os, const std::string &name, VarMode mode
     // If this variable wasn't allocated in zero-copy mode, free it
     if(mode & VarLocation::DEVICE) {
         os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void CUDA::genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const
+{
+    Substitutions varSubs(&kernelSubs);
+
+    // If variable should be initialised on device
+    if(mode & VarInit::DEVICE) {
+        os << "if(" << varSubs.getVarSubstitution("id") << " == 0)";
+        {
+            CodeStream::Scope b(os);
+            handler(os, varSubs);
+        }
     }
 }
 //--------------------------------------------------------------------------

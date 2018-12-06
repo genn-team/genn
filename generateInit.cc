@@ -17,6 +17,42 @@
 //--------------------------------------------------------------------------
 namespace
 {
+void genInitSpikeCount(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs,
+                       const NeuronGroup &ng, bool spikeEvent)
+{
+    // Is initialisation required at all
+    const bool initRequired = spikeEvent ? ng.isSpikeEventRequired() : true;
+    if(initRequired) {
+        // Get variable mode
+        const VarMode varMode = spikeEvent ? ng.getSpikeEventVarMode() : ng.getSpikeVarMode();
+
+        // Generate variable initialisation code
+        backend.genPopVariableInit(os, varMode, popSubs,
+            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
+            {
+                // Get variable name
+                const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+
+                // Is delay required
+                const bool delayRequired = spikeEvent ?
+                    ng.isDelayRequired() :
+                    (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+                if(delayRequired) {
+                    os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << backend.getVarPrefix() << spikeCntPrefix << ng.getName() << "[d] = 0;" << std::endl;
+                    }
+                }
+                else {
+                    os << backend.getVarPrefix() << spikeCntPrefix << ng.getName() << "[0] = 0;" << std::endl;
+                }
+            });
+    }
+
+}
+//--------------------------------------------------------------------------
 void genInitSpikes(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs,
                    const NeuronGroup &ng, bool spikeEvent)
 {
@@ -156,49 +192,34 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
         // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
         {
+            // Initialise spike counts
+            genInitSpikeCount(os, backend, popSubs, ng, false);
+            genInitSpikeCount(os, backend, popSubs, ng, true);
+
             // Initialise spikes
             genInitSpikes(os, backend, popSubs, ng, false);
             genInitSpikes(os, backend, popSubs, ng, true);
 
-            /*// If delay is required and spike vars, spike event vars or spike times should be initialised on device
-            if(n.second.isDelayRequired() &&
-                ((shouldInitSpikeVar && n.second.isTrueSpikeRequired()) || shouldInitSpikeEventVar || shouldInitSpikeTimeVar))
-            {
-                // Build string to use for delayed variable index
-                const std::string delayedIndex = "(i * " + std::to_string(n.second.getNumNeurons()) + ") + lid";
-
-                // Loop through delay slots
-                os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
-                {
-                    CodeStream::Scope b(os);
-
-                    if(shouldInitSpikeVar && n.second.isTrueSpikeRequired()) {
-                        os << "dd_glbSpk" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
-                    }
-
-                    if(shouldInitSpikeEventVar) {
-                        os << "dd_glbSpkEvnt" << n.first << "[" << delayedIndex << "] = 0;" << std::endl;
-                    }
-
-                    if(shouldInitSpikeTimeVar) {
-                        os << "dd_sT" << n.first << "[" << delayedIndex << "] = -TIME_MAX;" << std::endl;
-                    }
-                }
+            // If spike times are required
+            if(ng.isSpikeTimeRequired()) {
+                // Generate variable initialisation code
+                backend.genVariableInit(os, ng.getSpikeTimeVarMode(), ng.getNumNeurons(), "id", popSubs,
+                    [&backend, &ng] (CodeStream &os, Substitutions &varSubs)
+                    {
+                        // Is delay required
+                        if(ng.isDelayRequired()) {
+                            os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << backend.getVarPrefix() << "sT" << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs.getVarSubstitution("id") + "] = -TIME_MAX;" << std::endl;
+                            }
+                        }
+                        else {
+                            os << backend.getVarPrefix() << "sT" << ng.getName() << "[" << varSubs.getVarSubstitution("id") << "] = -TIME_MAX;" << std::endl;
+                        }
+                    });
             }
 
-            if(shouldInitSpikeVar && !(n.second.isTrueSpikeRequired() && n.second.isDelayRequired())) {
-                os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
-            }
-
-            if(!n.second.isDelayRequired()) {
-                if(shouldInitSpikeEventVar) {
-                    os << "dd_glbSpkEvnt" << n.first << "[lid] = 0;" << std::endl;
-                }
-
-                if(shouldInitSpikeTimeVar) {
-                    os << "dd_sT" << n.first << "[lid] = -TIME_MAX;" << std::endl;
-                }
-            }*/
             // Initialise neuron variables
             genInitNeuronVarCode(os, backend, popSubs, ng.getNeuronModel()->getVars(), ng.getNumNeurons(), ng.getNumDelaySlots(),
                                  ng.getName(),  model.getPrecision(),
@@ -264,6 +285,13 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
                                      [cs](size_t i){ return cs->getVarInitialisers()[i]; },
                                      [cs](size_t i){ return cs->getVarMode(i); });
             }
+        },
+        // Remote neuron group initialisation
+        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        {
+            // Initialise spike counts and spikes
+            genInitSpikeCount(os, backend, popSubs, ng, false);
+            genInitSpikes(os, backend, popSubs, ng, false);
         },
         // Dense syanptic matrix variable initialisation
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)

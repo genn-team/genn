@@ -34,12 +34,14 @@ void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const NNmodel &mode
     assert(false);
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
+void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
+                                NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                                 SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
 {
     USE(os);
     USE(model);
-    USE(ngHandler);
+    USE(localNGHandler);
+    USE(remoteNGHandler);
     USE(sgDenseVarHandler);
     USE(sgSparseConnectHandler);
     assert(false);
@@ -73,6 +75,12 @@ void SingleThreadedCPU::genVariableFree(CodeStream &os, const std::string &name,
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
+void SingleThreadedCPU::genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const
+{
+    Substitutions varSubs(&kernelSubs);
+    handler(os, varSubs);
+}
+//--------------------------------------------------------------------------
 void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, const std::string &countVarName,
                                         const Substitutions &kernelSubs, Handler handler) const
 {
@@ -81,7 +89,6 @@ void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, c
     {
         CodeStream::Scope b(os);
 
-        // If variable should be initialised on device
         Substitutions varSubs(&kernelSubs);
         varSubs.addVarSubstitution(countVarName, "i");
         handler(os, varSubs);

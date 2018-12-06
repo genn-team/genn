@@ -45,7 +45,8 @@ public:
     virtual void genPresynapticUpdate(CodeStream &os, const NNmodel &model,
                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const = 0;
 
-    virtual void genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
+    virtual void genInit(CodeStream &os, const NNmodel &model,
+                         NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                          SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const = 0;
     virtual void genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const = 0;
 
@@ -54,6 +55,7 @@ public:
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0; 
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const = 0;
 
+    virtual void genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
 
