@@ -16,7 +16,7 @@ namespace CodeGenerator
 {
 namespace Backends
 {
-void SingleThreadedCPU::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
+void SingleThreadedCPU::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
     USE(os);
     USE(model);
@@ -24,8 +24,8 @@ void SingleThreadedCPU::genNeuronUpdateKernel(CodeStream &os, const NNmodel &mod
     assert(false);
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
-                                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const NNmodel &model,
+                                             SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     USE(os);
     USE(model);
@@ -34,14 +34,22 @@ void SingleThreadedCPU::genPresynapticUpdateKernel(CodeStream &os, const NNmodel
     assert(false);
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
-                                      SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
+void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
+                                SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
 {
     USE(os);
     USE(model);
     USE(ngHandler);
     USE(sgDenseVarHandler);
     USE(sgSparseConnectHandler);
+    assert(false);
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const
+{
+    USE(os);
+    USE(model);
+    USE(sgHandler);
     assert(false);
 }
 //--------------------------------------------------------------------------

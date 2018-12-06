@@ -40,7 +40,7 @@ using namespace CodeGenerator;
 void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
     // Presynaptic update kernel
-    backend.genPresynapticUpdateKernel(os, model,
+    backend.genPresynapticUpdate(os, model,
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             // code substitutions ----

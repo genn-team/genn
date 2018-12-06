@@ -18,7 +18,7 @@
 void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
     // Neuron update kernel
-    backend.genNeuronUpdateKernel(os, model,
+    backend.genNeuronUpdate(os, model,
         [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
         {
             const NeuronModels::Base *nm = ng.getNeuronModel();

@@ -41,12 +41,13 @@ public:
     //--------------------------------------------------------------------------
     // Declared virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const = 0;
-    virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
-                                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const = 0;
+    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const = 0;
+    virtual void genPresynapticUpdate(CodeStream &os, const NNmodel &model,
+                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const = 0;
 
-    virtual void genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
-                               SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const = 0;
+    virtual void genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
+                         SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const = 0;
+    virtual void genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const = 0;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;

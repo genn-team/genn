@@ -60,7 +60,7 @@ CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
+void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
     os << "extern \"C\" __global__ void calcNeurons(float time)" << std::endl;
     {
@@ -183,8 +183,8 @@ void CUDA::genNeuronUpdateKernel(CodeStream &os, const NNmodel &model, NeuronGro
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
-                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void CUDA::genPresynapticUpdate(CodeStream &os, const NNmodel &model,
+                                SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     os << "extern \"C\" __global__ void calcSynapses(";
     for (const auto &p : model.getSynapseKernelParameters()) {
@@ -278,12 +278,12 @@ void CUDA::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
                 if (sg.isSpikeEventRequired()) {
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
                         assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-                        genPresynapticUpdateKernelPreSpan(os, model, sg, popSubs, false, 
-                                                          wumThreshHandler, wumSimHandler);
+                        genPresynapticUpdatePreSpan(os, model, sg, popSubs, false,
+                                                    wumThreshHandler, wumSimHandler);
                     }
                     else {
-                        genPresynapticUpdateKernelPostSpan(os, model, sg, popSubs, false,
-                                                           wumThreshHandler, wumSimHandler);
+                        genPresynapticUpdatePostSpan(os, model, sg, popSubs, false,
+                                                     wumThreshHandler, wumSimHandler);
                     }
                 }
 
@@ -291,12 +291,12 @@ void CUDA::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
                 if (sg.isTrueSpikeRequired()) {
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
                         assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-                        genPresynapticUpdateKernelPreSpan(os, model, sg, popSubs, true, 
-                                                          wumThreshHandler, wumSimHandler);
+                        genPresynapticUpdatePreSpan(os, model, sg, popSubs, true,
+                                                    wumThreshHandler, wumSimHandler);
                     }
                     else {
-                        genPresynapticUpdateKernelPostSpan(os, model, sg, popSubs, true,
-                                                           wumThreshHandler, wumSimHandler);
+                        genPresynapticUpdatePostSpan(os, model, sg, popSubs, true,
+                                                     wumThreshHandler, wumSimHandler);
                     }
                 }
                 
@@ -327,8 +327,8 @@ void CUDA::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
 }
 
 //--------------------------------------------------------------------------
-void CUDA::genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler localNGHandler,
-                         SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
+void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler localNGHandler,
+                   SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
 {
     // Create codestreams to generate different sections of runner
     /*std::stringstream initHostStream;
@@ -523,6 +523,10 @@ void CUDA::genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandle
    }
 }
 //--------------------------------------------------------------------------
+void CUDA::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const
+{
+}
+//--------------------------------------------------------------------------
 void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
     if(mode & VarLocation::HOST) {
@@ -596,9 +600,8 @@ void CUDA::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::st
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getVarSubstitution("id") << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void CUDA::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                             SynapseGroupHandler wumThreshHandler,
-                                             SynapseGroupHandler wumSimHandler) const
+void CUDA::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "evnt";
@@ -692,8 +695,8 @@ void CUDA::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &mode
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genPresynapticUpdateKernelPostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                              SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                                        SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
      // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "evnt";

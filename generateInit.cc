@@ -117,7 +117,7 @@ void genInitWUVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backe
 void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
 
-    backend.genInitKernel(os, model,
+    backend.genInit(os, model,
         [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
         {
             /*// If delay is required and spike vars, spike event vars or spike times should be initialised on device
