@@ -13,6 +13,40 @@
 #include "backends/base.h"
 
 //--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
+void writeTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
+{
+    os << "#ifndef " << prefix << "_MIN" << std::endl;
+    os << "#define " << prefix << "_MIN ";
+    if (precision == "float") {
+        writePreciseString(os, std::numeric_limits<float>::min());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::min());
+        os << std::endl;
+    }
+    os << "#endif" << std::endl;
+
+    os << "#ifndef " << prefix << "_MAX" << std::endl;
+    os << "#define " << prefix << "_MAX ";
+    if (precision == "float") {
+        writePreciseString(os, std::numeric_limits<float>::max());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::max());
+        os << std::endl;
+    }
+    os << "#endif" << std::endl;
+    os << std::endl;
+}
+}
+
+//--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, const NNmodel &model,
@@ -29,10 +63,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     // Create a teestream to allow simultaneous writing to both streams
     TeeStream allStreams(definitions, runnerVarDecl, runnerAlloc, runnerFree);
 
-    // Begin extern C block around variable declarations
-    if(GENN_PREFERENCES::buildSharedLibrary) {
-        runnerVarDecl << "extern \"C\" {" << std::endl;
-    }
+    
 
     // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
@@ -40,6 +71,27 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 #else
     const std::string varExportPrefix = "extern";
 #endif
+
+
+    // write DT macro
+    definitions << "#undef DT" << std::endl;
+    if (model.getTimePrecision() == "float") {
+        definitions << "#define DT " << std::to_string(model.getDT()) << "f" << std::endl;
+    } else {
+        definitions << "#define DT " << std::to_string(model.getDT()) << std::endl;
+    }
+
+    // Typedefine scalar type
+    definitions << "typedef " << model.getPrecision() << " scalar;" << std::endl;
+
+    // Write ranges of scalar and time types
+    writeTypeRange(definitions, model.getPrecision(), "SCALAR");
+    writeTypeRange(definitions, model.getTimePrecision(), "TIME");
+
+    // Begin extern C block around variable declarations
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        runnerVarDecl << "extern \"C\" {" << std::endl;
+    }
 
     //---------------------------------
     // REMOTE NEURON GROUPS
