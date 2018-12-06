@@ -46,7 +46,8 @@ void CodeGenerator::applyPostsynapticModelSubstitutions(std::string &code, const
     value_substitutions(code, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg.getPSDerivedParams());
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::applyWeightUpdateModelSubstitutions(std::string &code, const SynapseGroup &sg, const std::string &varPrefix)
+void CodeGenerator::applyWeightUpdateModelSubstitutions(std::string &code, const SynapseGroup &sg,
+                                                        const std::string &varPrefix, const std::string &varSuffix, const std::string &varExt)
 {
     const auto *wu = sg.getWUModel();
 
@@ -62,12 +63,8 @@ void CodeGenerator::applyWeightUpdateModelSubstitutions(std::string &code, const
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
 
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        // **TODO** prePos = syn_address
-        name_substitutions(code, varPrefix, wuVars.nameBegin, wuVars.nameEnd, sg.getName() + "[prePos]");
+        name_substitutions(code, varPrefix, wuVars.nameBegin, wuVars.nameEnd, varSuffix, varExt);
     }
-
-    //**TODO** preIdx = id_pre and postIdx = id_post
-    // neuron_substitutions_in_synaptic_code(eCode, &sg, preIdx, postIdx, devPrefix);
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit)

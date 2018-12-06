@@ -26,7 +26,16 @@
 using namespace CodeGenerator;
 
 
-
+/*string &wCode,                  //!< the code string to work on
+    const SynapseGroup *sg,         //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const string &preIdx,           //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const string &postIdx,          //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const string &devPrefix,        //!< device prefix, "dd_" for GPU, nothing for CPU
+    double dt,                      //!< simulation timestep (ms)
+    const string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &preVarSuffix,     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const string &postVarSuffix*/
 
 void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
@@ -39,8 +48,11 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
             std::string code = wu->getEventThresholdConditionCode();
             baseSubs.apply(code);
    
-            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix());
-           
+            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
+                                                sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
+            neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
+                                                  baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
+                                                  model.getDT());
             code= ensureFtype(code, model.getPrecision());
             checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
             os << code;
@@ -51,8 +63,12 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
             std::string code = wu->getSimCode(); //**TODO** pass through truespikeness
             baseSubs.apply(code);
     
-            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix());
-
+            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
+                                                sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
+            std::cout << code;
+            neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
+                                                  baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
+                                                  model.getDT());
             code= ensureFtype(code, model.getPrecision());
             checkUnreplacedVariables(code, sg.getName() + " : simCode");
             os << code;

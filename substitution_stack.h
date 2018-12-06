@@ -46,6 +46,11 @@ public:
                                     std::forward_as_tuple(numArguments, funcTemplate));
     }
 
+    bool hasVarSubstitution(const std::string &source) const
+    {
+        return (m_VarSubstitutions.find(source) != m_VarSubstitutions.end());
+    }
+
     const std::string &getVarSubstitution(const std::string &source) const
     {
         auto var = m_VarSubstitutions.find(source);

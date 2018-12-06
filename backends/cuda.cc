@@ -327,8 +327,8 @@ void CUDA::genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
 }
 
 //--------------------------------------------------------------------------
-void CUDA::genInitKernel(CodeStream &os, const NNmodel &model,
-                         NeuronGroupHandler localNGHandler, SynapseGroupHandler sgHandler) const
+void CUDA::genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler localNGHandler,
+                         SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
 {
     // Create codestreams to generate different sections of runner
     /*std::stringstream initHostStream;
@@ -400,8 +400,23 @@ void CUDA::genInitKernel(CodeStream &os, const NNmodel &model,
             [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
             [this, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
-                //**TODO** second handler for group
-                /*// Zero spikes
+                /*os << "if(lid == 0)";
+                {
+                    CodeStream::Scope b(os);
+
+                    if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                        os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                        }
+                    }
+                    else {
+                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                    }
+                }
+
+                // Zero spikes
                 if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
                     os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
                     {
@@ -422,6 +437,38 @@ void CUDA::genInitKernel(CodeStream &os, const NNmodel &model,
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 //**TODO** second handler for group
+                /*os << "if(lid == 0)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Zero spike count
+                    if(shouldInitSpikeVar) {
+                        if(n.second.isTrueSpikeRequired() && n.second.isDelayRequired()) {
+                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "dd_glbSpkCnt" << n.first << "[i] = 0;" << std::endl;
+                            }
+                        }
+                        else {
+                            os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                        }
+                    }
+
+                    // Zero spike event count
+                    if(shouldInitSpikeEventVar) {
+                        if(n.second.isDelayRequired()) {
+                            os << "for (int i = 0; i < " << n.second.getNumDelaySlots() << "; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "dd_glbSpkCntEvnt" << n.first << "[i] = 0;" << std::endl;
+                            }
+                        }
+                        else {
+                            os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                        }
+                    }
+                }*/
 
                 // **TODO** spike variables
 
@@ -448,7 +495,7 @@ void CUDA::genInitKernel(CodeStream &os, const NNmodel &model,
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart, 
             [this](const SynapseGroup &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
             [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUDeviceVarInitRequired(); },
-            [](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            [sgDenseVarHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
                 // If this post synapse requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
@@ -461,14 +508,15 @@ void CUDA::genInitKernel(CodeStream &os, const NNmodel &model,
                     popSubs.addVarSubstitution("rng", "initRNG");
                 }
 
-                //localSGHandler(os, sg, popSubs);
+                popSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id"));
+                sgDenseVarHandler(os, sg, popSubs);
             });
 
         // Initialise sparse connectivity
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
             [this](const SynapseGroup &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
             [](const SynapseGroup &sg){ return sg.isDeviceSparseConnectivityInitRequired(); },
-            [](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            [sgSparseConnectHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
                 
             });
@@ -529,8 +577,12 @@ void CUDA::genVariableFree(CodeStream &os, const std::string &name, VarMode mode
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const
+void CUDA::genVariableInit(CodeStream &os, VarMode mode, size_t, const std::string &countVarName,
+                           const Substitutions &kernelSubs, Handler handler) const
 {
+    // Variable should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution(countVarName));
+
     // If variable should be initialised on device
     if(mode & VarInit::DEVICE) {
         Substitutions varSubs(&kernelSubs);
@@ -613,7 +665,7 @@ void CUDA::genPresynapticUpdateKernelPreSpan(CodeStream &os, const NNmodel &mode
             Substitutions synSubs(&popSubs);
             synSubs.addVarSubstitution("id_pre", "preInd");
             synSubs.addVarSubstitution("id_post", "ipost");
-            synSubs.addVarSubstitution("syn_address", "synAddress");
+            synSubs.addVarSubstitution("id_syn", "synAddress");
 
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
@@ -729,7 +781,7 @@ void CUDA::genPresynapticUpdateKernelPostSpan(CodeStream &os, const NNmodel &mod
                 Substitutions synSubs(&popSubs);
                 synSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
                 synSubs.addVarSubstitution("id_post", "ipost");
-                synSubs.addVarSubstitution("syn_address", "synAddress");
+                synSubs.addVarSubstitution("id_syn", "synAddress");
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {

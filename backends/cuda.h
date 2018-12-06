@@ -38,15 +38,16 @@ public:
     virtual void genPresynapticUpdateKernel(CodeStream &os, const NNmodel &model,
                                             SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const override;
 
-    virtual void genInitKernel(CodeStream &os, const NNmodel &model,
-                               NeuronGroupHandler ngHandler, SynapseGroupHandler sgHandler) const override;
+    virtual void genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
+                               SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const override;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const override;
 
-    virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const Substitutions &kernelSubs, Handler handler) const override;
+    virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
+                                 const Substitutions &kernelSubs, Handler handler) const override;
 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
     {

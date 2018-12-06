@@ -34,13 +34,14 @@ void SingleThreadedCPU::genPresynapticUpdateKernel(CodeStream &os, const NNmodel
     assert(false);
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genInitKernel(CodeStream &os, const NNmodel &model,
-                                      NeuronGroupHandler ngHandler, SynapseGroupHandler sgHandler) const
+void SingleThreadedCPU::genInitKernel(CodeStream &os, const NNmodel &model, NeuronGroupHandler ngHandler,
+                                      SynapseGroupHandler sgDenseVarHandler, SynapseGroupHandler sgSparseConnectHandler) const
 {
     USE(os);
     USE(model);
     USE(ngHandler);
-    USE(sgHandler);
+    USE(sgDenseVarHandler);
+    USE(sgSparseConnectHandler);
     assert(false);
 }
 //--------------------------------------------------------------------------
@@ -64,7 +65,8 @@ void SingleThreadedCPU::genVariableFree(CodeStream &os, const std::string &name,
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, const Substitutions &kernelSubs, Handler handler) const
+void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, const std::string &countVarName,
+                                        const Substitutions &kernelSubs, Handler handler) const
 {
     // **TODO** loops like this should be generated like CUDA threads
     os << "for (unsigned i = 0; i < " << count << "; i++)";
@@ -73,7 +75,7 @@ void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, c
 
         // If variable should be initialised on device
         Substitutions varSubs(&kernelSubs);
-        varSubs.addVarSubstitution("id", "i");
+        varSubs.addVarSubstitution(countVarName, "i");
         handler(os, varSubs);
     }
 }
