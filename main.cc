@@ -64,7 +64,6 @@ void generatePresynapticUpdateKernel(CodeStream &os, const NNmodel &model, const
     
             applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
                                                 sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
-            std::cout << code;
             neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
                                                   baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
                                                   model.getDT());

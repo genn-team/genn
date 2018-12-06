@@ -17,6 +17,41 @@
 //--------------------------------------------------------------------------
 namespace
 {
+void genInitSpikes(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs,
+                   const NeuronGroup &ng, bool spikeEvent)
+{
+    // Is initialisation required at all
+    const bool initRequired = spikeEvent ? ng.isSpikeEventRequired() : true;
+    if(initRequired) {
+        // Get variable mode
+        const VarMode varMode = spikeEvent ? ng.getSpikeEventVarMode() : ng.getSpikeVarMode();
+
+        // Generate variable initialisation code
+        backend.genVariableInit(os, varMode, ng.getNumNeurons(), "id", popSubs,
+            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
+            {
+                // Get variable name
+                const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+
+                // Is delay required
+                const bool delayRequired = spikeEvent ?
+                    ng.isDelayRequired() :
+                    (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+                if(delayRequired) {
+                    os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs.getVarSubstitution("id") + "] = 0;" << std::endl;
+                    }
+                }
+                else {
+                    os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[" << varSubs.getVarSubstitution("id") << "] = 0;" << std::endl;
+                }
+            });
+    }
+}
+//------------------------------------------------------------------------
 template<typename I, typename M, typename Q>
 void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs, const NewModels::Base::StringPairVec &vars,
                           size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
@@ -52,7 +87,7 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &b
                         os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
                         {
                             CodeStream::Scope b(os);
-                            os << backend.getVarPrefix() << vars[k].first << popName << "[(d * " << count << ") + i] = initVal;" << std::endl;
+                            os << backend.getVarPrefix() << vars[k].first << popName << "[(d * " << count << ") + " + varSubs.getVarSubstitution("id") + "] = initVal;" << std::endl;
                         }
                     }
                     else {
@@ -118,8 +153,13 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
 {
 
     backend.genInit(os, model,
+        // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
         {
+            // Initialise spikes
+            genInitSpikes(os, backend, popSubs, ng, false);
+            genInitSpikes(os, backend, popSubs, ng, true);
+
             /*// If delay is required and spike vars, spike event vars or spike times should be initialised on device
             if(n.second.isDelayRequired() &&
                 ((shouldInitSpikeVar && n.second.isTrueSpikeRequired()) || shouldInitSpikeEventVar || shouldInitSpikeTimeVar))
@@ -225,6 +265,7 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
                                      [cs](size_t i){ return cs->getVarMode(i); });
             }
         },
+        // Dense syanptic matrix variable initialisation
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
         {
             // Loop through rows
@@ -235,6 +276,7 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
 
             }
         },
+        // Sparse synaptic matrix connectivity initialisation
         [&model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
         {
             popSubs.addVarSubstitution("num_post", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));

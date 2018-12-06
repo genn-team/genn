@@ -102,8 +102,6 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
         }
             
         os << "__syncthreads();" << std::endl;
-            
-        
 
         // Parallelise over neuron groups
         size_t idStart = 0;
@@ -395,6 +393,8 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
         }
 
         // Parallelise over remote neuron groups
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Remote neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(initDevice, kernelSubs, model.getRemoteNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_InitBlockSize); },
             [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
@@ -428,9 +428,11 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
                     os << "dd_glbSpk" << n.first << "[lid] = 0;" << std::endl;
                 }*/
             });
-
+        os << std::endl;
    
         // Parallelise over local neuron groups
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_InitBlockSize); },
             [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
@@ -490,8 +492,11 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
                     
                 localNGHandler(os, ng, popSubs);
             });
+        os << std::endl;
 
         // Initialise weight update variables for synapse groups with dense connectivity 
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Synapse groups with dense connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart, 
             [this](const SynapseGroup &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
             [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUDeviceVarInitRequired(); },
@@ -511,8 +516,11 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
                 popSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id"));
                 sgDenseVarHandler(os, sg, popSubs);
             });
+        os << std::endl;
 
         // Initialise sparse connectivity
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
             [this](const SynapseGroup &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_InitBlockSize); },
             [](const SynapseGroup &sg){ return sg.isDeviceSparseConnectivityInitRequired(); },
@@ -566,7 +574,8 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
 
                 sgSparseConnectHandler(os, sg, popSubs);
             });
-   }
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void CUDA::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const

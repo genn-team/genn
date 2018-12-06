@@ -84,7 +84,7 @@ private:
             if(filter(g.second)) {
                 const size_t paddedSize = getPaddedSizeFunc(g.second);
 
-                os << "// Group " << g.first << std::endl;
+                os << "// " << g.first << std::endl;
 
                 // If this is the first  group
                 if (idStart == 0) {
