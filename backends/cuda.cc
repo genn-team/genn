@@ -34,10 +34,10 @@ namespace CodeGenerator
 {
 namespace Backends
 {
-CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
-           const Base &hostBackend)
+CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize,
+           int localHostID, const Base &hostBackend)
 :   m_HostBackend(hostBackend), m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize),
-    m_InitBlockSize(initBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
+    m_InitBlockSize(initBlockSize), m_InitSparseBlockSize(initSparseBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
 {
     // Get number of CUDA devices and reserve memory
     int numDevices;
@@ -525,6 +525,155 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model, NeuronGroupHandler loca
 //--------------------------------------------------------------------------
 void CUDA::genInitSparse(CodeStream &os, const NNmodel &model, SynapseGroupHandler sgHandler) const
 {
+    CodeStream &initDevice = os;
+
+    initDevice << "extern \"C\" __global__ void initializeSparseDevice()";
+
+    Substitutions kernelSubs(cudaFunctions);
+
+    // **TODO** FIXME
+    const unsigned int numStaticInitThreads = 0;
+
+    // initialization kernel code
+    {
+        // common variables for all cases
+        CodeStream::Scope b(initDevice);
+
+        initDevice << "const unsigned int id = " << m_InitSparseBlockSize << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+        // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
+        // **TODO** check actually required
+        initDevice << "__shared__ unsigned int shRowLength[" << m_InitSparseBlockSize << "];" << std::endl;
+        initDevice << "__shared__ unsigned int shRowStart[" << m_InitSparseBlockSize + 1 << "];" << std::endl;
+
+        // Initialise weight update variables for synapse groups with dense connectivity
+        size_t idStart = 0;
+        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
+            [this](const SynapseGroup &sg){ return padSize(sg.getMaxConnections(), m_InitSparseBlockSize); },
+            [](const SynapseGroup &sg){ return sg.isDeviceSparseInitRequired(); },
+            [this, &model, sgHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            {
+                // If this post synapse requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(sg.isWUInitRNGRequired(VarInit::DEVICE)) {
+                    os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                    os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
+                }
+
+                os << "unsigned int idx = " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+
+                // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
+                const unsigned int numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
+                const unsigned int numBlocks = padSize(numSrcNeurons, m_InitSparseBlockSize);
+
+                // Loop through blocks
+                os << "for(unsigned int r = 0; r < " << numBlocks << "; r++)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Calculate number of rows to process in this block
+                    os << "const unsigned numRowsInBlock = (r == " << numBlocks - 1 << ")";
+                    os << " ? " << ((numSrcNeurons - 1) % m_InitSparseBlockSize) + 1;
+                    os << " : " << m_InitSparseBlockSize << ";" << std::endl;
+
+                    // Use threads to copy block of sparse structure into shared memory
+                    os << "__syncthreads();" << std::endl;
+                    os << "if (threadIdx.x < numRowsInBlock)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "shRowLength[threadIdx.x] = dd_rowLength" << sg.getName() << "[(r * " << m_InitSparseBlockSize << ") + threadIdx.x];" << std::endl;
+                    }
+
+                    // If this synapse projection has ragged connectivity initialised on device and has synapse dynamics
+                    if(sg.isDeviceSparseConnectivityInitRequired()
+                        && (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                        && model.isSynapseGroupDynamicsRequired(sg.getName()))
+                    {
+                        // Use first thread to generate cumulative sum
+                        os << "if (threadIdx.x == 0)";
+                        {
+                            CodeStream::Scope b(os);
+
+                            // Get index of last row in resultant synapse dynamics structure
+                            // **NOTE** if there IS a previous block, it will always have had initSparseBlkSz rows in it
+                            os << "unsigned int rowStart = (r == 0) ? 0 : shRowStart[" << m_InitSparseBlockSize << "];" << std::endl;
+                            os << "shRowStart[0] = rowStart;" << std::endl;
+
+                            // Loop through rows in block
+                            os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                // Add this row's length to cumulative sum and write this to this row's end
+                                os << "rowStart += shRowLength[i];" << std::endl;
+                                os << "shRowStart[i + 1] = rowStart;" << std::endl;
+                            }
+
+                            // If this is the first thread block and the last block of rows,
+                            // write the total cumulative sum to the first entry of the remap structure
+                            os << "if(blockIdx.x == 0 && (r == " << numBlocks - 1 << "))";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "dd_synRemap" << sg.getName() << "[0] = shRowStart[numRowsInBlock];" << std::endl;
+                            }
+
+                        }
+                    }
+
+                    os << "__syncthreads();" << std::endl;
+
+                    // Loop through rows
+                    os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // If there is a synapse for this thread to initialise
+                        os << "if(" << popSubs.getVarSubstitution("id") << " < shRowLength[i])";
+                        {
+                            CodeStream::Scope b(os);
+
+                            popSubs.addVarSubstitution("id_syn", "idx");
+                            popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(m_InitSparseBlockSize) + ") + i)");
+                            popSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[idx]");
+                            sgHandler(os, sg, popSubs);
+
+                            // If matrix is ragged, connectivity is initialised on device and postsynaptic learning is required
+                            if((sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                                && sg.isDeviceSparseConnectivityInitRequired())
+                            {
+                                // If postsynaptic learning is required
+                                if(model.isSynapseGroupPostLearningRequired(sg.getName())) {
+                                    CodeStream::Scope b(os);
+
+                                    // Extract index of synapse's postsynaptic target
+                                    os << "const unsigned int postIndex = dd_ind" << sg.getName() << "[idx];" << std::endl;
+
+                                    // Atomically increment length of column of connectivity associated with this target
+                                    // **NOTE** this returns previous length i.e. where to insert new entry
+                                    os << "const unsigned int colLocation = atomicAdd(&dd_colLength" << sg.getName() << "[postIndex], 1);" << std::endl;
+
+                                    // From this calculate index into column-major matrix
+                                    os << "const unsigned int colMajorIndex = (postIndex * " << sg.getMaxSourceConnections() << ") + colLocation;" << std::endl;
+
+                                    // Add remapping entry at this location poining back to row-major index
+                                    os << "dd_remap" << sg.getName() << "[colMajorIndex] = idx;" << std::endl;
+                                }
+
+                                // If synapse dynamics are required, copy idx into syn remap structure
+                                if(model.isSynapseGroupDynamicsRequired(sg.getName())) {
+                                    CodeStream::Scope b(os);
+                                    os << "dd_synRemap" << sg.getName() << "[shRowStart[i] + lid + 1] = idx;" << std::endl;
+                                }
+                            }
+                        }
+
+                        // If matrix is ragged, advance index to next row by adding stride
+                        os << "idx += " << sg.getMaxConnections() << ";" << std::endl;
+                    }
+                }
+            });
+    }
 }
 //--------------------------------------------------------------------------
 void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const

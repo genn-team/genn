@@ -107,7 +107,7 @@ int main()
     CodeStream output(std::cout);
     
     Backends::SingleThreadedCPU cpuBackend(0);
-    Backends::CUDA backend(128, 128, 64, 0, cpuBackend);
+    Backends::CUDA backend(128, 128, 64, 64, 0, cpuBackend);
     
     generateNeuronUpdate(output, model, backend);
     generatePresynapticUpdateKernel(output, model, backend);

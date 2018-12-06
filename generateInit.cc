@@ -242,4 +242,14 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
             //**TODO** think about $(id_pre) and $(id_post); and looping over sg.getSrcNeuronGroup()->getNumNeurons()
             // alternative to genVariableInit COULD solve both
         });
+
+    backend.genInitSparse(os, model,
+        [&backend, &model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+        {
+            // If this synapse group has individual variables
+            if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                // **TODO** need row length in string to go into count
+                genInitWUVarCode(os, backend, popSubs, sg, 0, model.getPrecision());
+            }
+        });
 }

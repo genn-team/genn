@@ -26,8 +26,8 @@ namespace Backends
 class CUDA : public Base
 {
 public:
-    CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, int localHostID,
-         const Base &hostBackend);
+    CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize,
+         int localHostID, const Base &hostBackend);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
@@ -139,6 +139,7 @@ private:
     const size_t m_NeuronUpdateBlockSize;
     const size_t m_PresynapticUpdateBlockSize;
     const size_t m_InitBlockSize;
+    const size_t m_InitSparseBlockSize;
     const int m_LocalHostID;
     
     std::vector<cudaDeviceProp> m_Devices;
