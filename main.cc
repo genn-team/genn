@@ -1,5 +1,6 @@
 #include <array>
 #include <functional>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
@@ -108,22 +109,24 @@ int main()
     //syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
     model.finalize();
     
-    CodeStream output(std::cout);
-    
+    std::ofstream definitionsStream("definitions.h");
+    std::ofstream neuronUpdateStream("neuronUpdate.cc");
+    std::ofstream synapseUpdateStream("synapseUpdate.cc");
+    std::ofstream initStream("init.cc");
+    std::ofstream runnerStream("runner.cc");
+    CodeStream definitions(definitionsStream);
+    CodeStream neuronUpdate(neuronUpdateStream);
+    CodeStream synapseUpdate(synapseUpdateStream);
+    CodeStream init(initStream);
+    CodeStream runner(runnerStream);
+
     Backends::SingleThreadedCPU cpuBackend(0);
     Backends::CUDA backend(128, 128, 64, 64, 0, cpuBackend);
     
-    generateNeuronUpdate(output, model, backend);
-    generatePresynapticUpdateKernel(output, model, backend);
-    generateInit(output, model, backend);
+    generateNeuronUpdate(neuronUpdate, model, backend);
+    generatePresynapticUpdateKernel(synapseUpdate, model, backend);
+    generateInit(init, model, backend);
+    generateRunner(definitions, runner, model, backend, 0);
 
-    std::stringstream definitions;
-    std::stringstream runner;
-    CodeStream definitionsStream(definitions);
-    CodeStream runnerStream(runner);
-    generateRunner(definitionsStream, runnerStream, model, backend, 0);
-    
-    std::cout << definitions.str() << std::endl;
-    std::cout << runner.str() << std::endl;
     return EXIT_SUCCESS;
 }

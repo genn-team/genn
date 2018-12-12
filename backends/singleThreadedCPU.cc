@@ -48,6 +48,10 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
     assert(false);
 }
 //--------------------------------------------------------------------------
+void SingleThreadedCPU::genRunnerPreamble(CodeStream &) const
+{
+}
+//--------------------------------------------------------------------------
 void SingleThreadedCPU::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode) const
 {
     os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;

@@ -21,9 +21,14 @@
 //--------------------------------------------------------------------------
 namespace
 {
+size_t ceilDivide(size_t numerator, size_t denominator)
+{
+    return ((numerator + denominator - 1) / denominator);
+}
+//--------------------------------------------------------------------------
 size_t padSize(size_t size, size_t blockSize)
 {
-    return ((size + blockSize - 1) / blockSize) * blockSize;
+    return ceilDivide(size, blockSize) * blockSize;
 }
 }   // Anonymous namespace
 
@@ -62,7 +67,17 @@ CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size
 //--------------------------------------------------------------------------
 void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
-    os << "extern \"C\" __global__ void calcNeurons(float time)" << std::endl;
+    os << "#include \"definitions.h\"" << std::endl;
+
+    size_t idStart = 0;
+    os << "__global__ void updateNeuronsKernel(";
+    for(const auto &p : model.getNeuronKernelParameters()) {
+        os << p.second << " " << p.first << ", ";
+    }
+    for(const auto &p : model.getCurrentSourceKernelParameters()) {
+        os << p.second << " " << p.first << ", ";
+    }
+    os << model.getTimePrecision() << " t)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_NeuronUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -104,7 +119,6 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
         os << "__syncthreads();" << std::endl;
 
         // Parallelise over neuron groups
-        size_t idStart = 0;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_NeuronUpdateBlockSize); },
             [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
@@ -178,6 +192,34 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
                 }
             }
         );
+    }
+
+    os << "void updateNeurons(float t)";
+    {
+        CodeStream::Scope b(os);
+        if(idStart > 0) {
+            const size_t gridSize = ceilDivide(idStart, m_NeuronUpdateBlockSize);
+            os << "const dim3 threads(" << neuronBlkSz << ", 1);" << std::endl;
+            if (gridSize < getChosenCUDADevice().maxGridSize[1]) {
+                os << "const dim3 grid(" << gridSize << ", 1);" << std::endl;
+            }
+            else {
+                // **TODO** this needs to be implemented in genParallelGroup
+                assert(false);
+                const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
+                os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
+            }
+
+            // Launch kernel
+            os << "updateNeuronsKernel<<<grid, threads>>>(";
+            for(const auto &p : model.getNeuronKernelParameters()) {
+                os << p.first << ", ";
+            }
+            for(const auto &p : model.getCurrentSourceKernelParameters()) {
+                os << p.first << ", ";
+            }
+            os << "t);" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -644,6 +686,52 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
+void CUDA::genRunnerPreamble(CodeStream &os) const
+{
+    // Allow host backend to generate any of it's own preamble
+    m_HostBackend.genRunnerPreamble(os);
+
+    // Include header files
+    os << "#include <string>" << std::endl;
+    os << "#include <stdexcept>" << std::endl;
+
+    os << std::endl;
+    os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
+    os << "    cudaError_t error = call;\\" << std::endl;
+    os << "    if (error != cudaSuccess) {\\" << std::endl;
+    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
+    os << "    }\\" << std::endl;
+    os << "}" << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
+    os << std::endl;
+    os << "template<class T>" << std::endl;
+    os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)";
+    {
+        CodeStream::Scope b(os);
+        os << "void *devptr;" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
+    }
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Helper function for getting the device pointer corresponding to a zero-copied host pointer and assigning it to a symbol" << std::endl;
+    os << std::endl;
+    os << "template<class T>" << std::endl;
+    os << "void deviceZeroCopy(T hostPtr, const T *devPtr, const T &devSymbol)";
+    {
+        CodeStream::Scope b(os);
+        os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)devPtr, (void*)hostPtr, 0));" << std::endl;
+        os << "void *devSymbolPtr;" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devSymbolPtr, devSymbol));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(devSymbolPtr, devPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
+    }
+    os << std::endl;
+}
+//--------------------------------------------------------------------------
 void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
     if(mode & VarLocation::HOST) {
@@ -651,6 +739,7 @@ void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const 
     }
     if(mode & VarLocation::DEVICE) {
         os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
+        os << getVarExportPrefix() << " __device__ " << type << " dd_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------

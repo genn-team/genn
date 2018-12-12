@@ -19,7 +19,6 @@ namespace
 {
 void writeTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
 {
-    os << "#ifndef " << prefix << "_MIN" << std::endl;
     os << "#define " << prefix << "_MIN ";
     if (precision == "float") {
         writePreciseString(os, std::numeric_limits<float>::min());
@@ -29,9 +28,7 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
         writePreciseString(os, std::numeric_limits<double>::min());
         os << std::endl;
     }
-    os << "#endif" << std::endl;
 
-    os << "#ifndef " << prefix << "_MAX" << std::endl;
     os << "#define " << prefix << "_MAX ";
     if (precision == "float") {
         writePreciseString(os, std::numeric_limits<float>::max());
@@ -41,7 +38,6 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
         writePreciseString(os, std::numeric_limits<double>::max());
         os << std::endl;
     }
-    os << "#endif" << std::endl;
     os << std::endl;
 }
 }
@@ -52,6 +48,13 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
 void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, const NNmodel &model,
                                    const Backends::Base &backend, int localHostID)
 {
+    // Write definitions pre-amble
+    definitions << "#pragma once" << std::endl;
+
+    // Write runner pre-amble
+    runner << "#include \"definitions.h\"" << std::endl << std::endl;
+    backend.genRunnerPreamble(runner);
+
     // Create codestreams to generate different sections of runner
     std::stringstream runnerVarDeclStream;
     std::stringstream runnerAllocStream;
@@ -63,8 +66,6 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     // Create a teestream to allow simultaneous writing to both streams
     TeeStream allStreams(definitions, runnerVarDecl, runnerAlloc, runnerFree);
 
-    
-
     // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
     const std::string varExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
@@ -74,7 +75,6 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
 
     // write DT macro
-    definitions << "#undef DT" << std::endl;
     if (model.getTimePrecision() == "float") {
         definitions << "#define DT " << std::to_string(model.getDT()) << "f" << std::endl;
     } else {
@@ -362,4 +362,14 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
         runner << runnerFreeStream.str();
     }
+
+    // ---------------------------------------------------------------------
+    // Function definitions
+    definitions << "// Runner functions" << std::endl;
+    definitions << "void allocateMem();" << std::endl;
+    definitions << "void freeMem();" << std::endl;
+    definitions << std::endl;
+    definitions << "// Neuron update functions" << std::endl;
+    definitions << "void updateNeurons(float t);" << std::endl;
+
 }
