@@ -24,8 +24,8 @@ void SingleThreadedCPU::genNeuronUpdate(CodeStream &os, const NNmodel &model, Ne
     assert(false);
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const NNmodel &model,
-                                             SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
+                                         SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     USE(os);
     USE(model);

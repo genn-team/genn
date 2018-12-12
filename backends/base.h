@@ -42,8 +42,8 @@ public:
     // Declared virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const = 0;
-    virtual void genPresynapticUpdate(CodeStream &os, const NNmodel &model,
-                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const = 0;
+    virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
+                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const = 0;
 
     virtual void genInit(CodeStream &os, const NNmodel &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,

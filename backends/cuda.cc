@@ -223,8 +223,8 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genPresynapticUpdate(CodeStream &os, const NNmodel &model,
-                                SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
+                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     os << "extern \"C\" __global__ void calcSynapses(";
     for (const auto &p : model.getSynapseKernelParameters()) {
