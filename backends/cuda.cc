@@ -245,6 +245,17 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             os << "__shared__ " << model.getPrecision() << " shLg[" << m_PresynapticUpdateBlockSize << "];" << std::endl;
         }
         
+        // If any of these synapse groups also have ragged connectivity, allocate shared memory for row length
+        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [&model](const NNmodel::SynapseGroupValueType &s)
+            {
+                return (s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
+                        && (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED));
+            }))
+        {
+            os << "__shared__ unsigned int shRowLength[" << m_PresynapticUpdateBlockSize << "];" << std::endl;
+        }
+
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
             [&model](const NNmodel::SynapseGroupValueType &s)
             { 
@@ -292,26 +303,6 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                     os << "__syncthreads();" << std::endl;
                 }
 
-                if (sg.isSpikeEventRequired()) {
-                    os << "const unsigned int spkCntEvent = dd_glbSpkCntEvnt" << sg.getSrcNeuronGroup()->getName();
-                    if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "[delaySlot];" << std::endl;
-                    }
-                    else {
-                        os << "[0];" << std::endl;
-                    }
-                }
-
-                if (sg.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(sg.getName())) {
-                    os << "const unsigned int spkCnt = dd_glbSpkCnt" << sg.getSrcNeuronGroup()->getName();
-                    if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "[delaySlot];" << std::endl;
-                    }
-                    else {
-                        os << "[0];" << std::endl;
-                    }
-                }
-            
                 // If spike events should be processed
                 if (sg.isSpikeEventRequired()) {
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
@@ -368,11 +359,11 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         CodeStream::Scope b(os);
         if(idPresynapticStart > 0) {
             const size_t gridSize = ceilDivide(idPresynapticStart, m_PresynapticUpdateBlockSize);
-            os << "const dim3 threads(" << m_PresynapticUpdateBlockSize << ", 1);" << std::endl;
-            os << "const dim3 grid(" << gridSize << ", 1);" << std::endl;
+            os << "const dim3 preSynapticThreads(" << m_PresynapticUpdateBlockSize << ", 1);" << std::endl;
+            os << "const dim3 preSynapticGrid(" << gridSize << ", 1);" << std::endl;
 
             // Launch kernel
-            os << "updatePresynapticKernel<<<grid, threads>>>(";
+            os << "updatePresynapticKernel<<<preSynapticGrid, preSynapticThreads>>>(";
             for(const auto &p : model.getSynapseKernelParameters()) {
                 os << p.first << ", ";
             }
@@ -934,15 +925,26 @@ void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, co
                                         SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
      // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "evnt";
+    const std::string eventSuffix = trueSpike ? "" : "Evnt";
+
+    os << "const unsigned int numSpikes = dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName();
+    if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+        os << "[preReadDelaySlot];" << std::endl;
+    }
+    else {
+        os << "[0];" << std::endl;
+    }
+    os << "const unsigned int numSpikeBlocks = (numSpikes + " << m_PresynapticUpdateBlockSize << " - 1) / " << m_PresynapticUpdateBlockSize << ";" << std::endl;
+
+
     const auto *wu = sg.getWUModel();
-    os << "for (unsigned int r = 0; r < numSpikeSubsets" << eventSuffix << "; r++)";
+    os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
     {
         CodeStream::Scope b(os);
-        os << "const unsigned int lmax = (r == numSpikeSubsets" << eventSuffix << " - 1) ? ((lscnt" << eventSuffix << " - 1) % " << m_PresynapticUpdateBlockSize << ") + 1 : " << m_PresynapticUpdateBlockSize << ";" << std::endl;
+        os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << m_PresynapticUpdateBlockSize << ") + 1 : " << m_PresynapticUpdateBlockSize << ";" << std::endl;
         
         os << "__syncthreads();" << std::endl;
-        os << "if (threadIdx.x < lmax)";
+        os << "if (threadIdx.x < numSpikesInBlock)";
         {
             CodeStream::Scope b(os);
             const string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
@@ -955,7 +957,7 @@ void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, co
         os << "__syncthreads();" << std::endl;
 
         os << "// loop through all incoming spikes" << std::endl;
-        os << "for (unsigned int j = 0; j < lmax; j++)";
+        os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(os);
             os << "// only work on existing neurons" << std::endl;

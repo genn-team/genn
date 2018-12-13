@@ -369,7 +369,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     definitions << "void allocateMem();" << std::endl;
     definitions << "void freeMem();" << std::endl;
     definitions << std::endl;
-    definitions << "// Neuron update functions" << std::endl;
+    definitions << "// Timestep functions" << std::endl;
     definitions << "void updateNeurons(float t);" << std::endl;
+    definitions << "void updateSynapses(float t);" << std::endl;
 
 }
