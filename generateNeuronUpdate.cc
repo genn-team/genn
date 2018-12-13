@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
+    os << "#include \"definitions.h\"" << std::endl;
+
     // Neuron update kernel
     backend.genNeuronUpdate(os, model,
         [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)

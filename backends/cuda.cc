@@ -67,8 +67,6 @@ CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size
 //--------------------------------------------------------------------------
 void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
-    os << "#include \"definitions.h\"" << std::endl;
-
     size_t idStart = 0;
     os << "__global__ void updateNeuronsKernel(";
     for(const auto &p : model.getNeuronKernelParameters()) {
@@ -199,7 +197,7 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
         CodeStream::Scope b(os);
         if(idStart > 0) {
             const size_t gridSize = ceilDivide(idStart, m_NeuronUpdateBlockSize);
-            os << "const dim3 threads(" << neuronBlkSz << ", 1);" << std::endl;
+            os << "const dim3 threads(" << m_NeuronUpdateBlockSize << ", 1);" << std::endl;
             if (gridSize < getChosenCUDADevice().maxGridSize[1]) {
                 os << "const dim3 grid(" << gridSize << ", 1);" << std::endl;
             }
@@ -226,7 +224,8 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
 void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                             SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
-    os << "extern \"C\" __global__ void calcSynapses(";
+    size_t idPresynapticStart = 0;
+    os << "__global__ void updatePresynapticKernel(";
     for (const auto &p : model.getSynapseKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
@@ -262,8 +261,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         }
         
         // Parallelise over synapse groups
-        size_t idStart = 0;
-        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idStart,
+        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
             [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
             [wumThreshHandler, wumSimHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
             {
@@ -363,6 +361,23 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                 }
             }
         );
+    }
+
+    os << "void updateSynapses(float t)";
+    {
+        CodeStream::Scope b(os);
+        if(idPresynapticStart > 0) {
+            const size_t gridSize = ceilDivide(idPresynapticStart, m_PresynapticUpdateBlockSize);
+            os << "const dim3 threads(" << m_PresynapticUpdateBlockSize << ", 1);" << std::endl;
+            os << "const dim3 grid(" << gridSize << ", 1);" << std::endl;
+
+            // Launch kernel
+            os << "updatePresynapticKernel<<<grid, threads>>>(";
+            for(const auto &p : model.getSynapseKernelParameters()) {
+                os << p.first << ", ";
+            }
+            os << "t);" << std::endl;
+        }
     }
 }
 

@@ -14,6 +14,7 @@
 #include "backends/base.h"
 #include "backends/cuda.h"
 #include "backends/singleThreadedCPU.h"
+#include "third_party/path.h"
 
 using namespace CodeGenerator;
 
@@ -48,11 +49,12 @@ int main()
     //syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
     model.finalize();
     
-    std::ofstream definitionsStream("definitions.h");
-    std::ofstream neuronUpdateStream("neuronUpdate.cc");
-    std::ofstream synapseUpdateStream("synapseUpdate.cc");
-    std::ofstream initStream("init.cc");
-    std::ofstream runnerStream("runner.cc");
+    filesystem::create_directory("generated_code");
+    std::ofstream definitionsStream("generated_code/definitions.h");
+    std::ofstream neuronUpdateStream("generated_code/neuronUpdate.cc");
+    std::ofstream synapseUpdateStream("generated_code/synapseUpdate.cc");
+    std::ofstream initStream("generated_code/init.cc");
+    std::ofstream runnerStream("generated_code/runner.cc");
     CodeStream definitions(definitionsStream);
     CodeStream neuronUpdate(neuronUpdateStream);
     CodeStream synapseUpdate(synapseUpdateStream);

@@ -17,8 +17,11 @@
 //--------------------------------------------------------------------------
 void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
-    // Presynaptic update kernel
+    os << "#include \"definitions.h\"" << std::endl;
+
+    // Synaptic update kernels
     backend.genSynapseUpdate(os, model,
+        // Presynaptic weight update threshold
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             // code substitutions ----
@@ -34,6 +37,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, 
             checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
             os << code;
         },
+        // Presynaptic simcode
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             const WeightUpdateModels::Base *wu = sg.getWUModel();
