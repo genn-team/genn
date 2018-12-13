@@ -119,9 +119,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             }
 
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, "unsigned int", "glbSpkCnt"+n.first, n.second.getSpikeVarMode(),
-                                   n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
+                             n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, "unsigned int", "glbSpk"+n.first, n.second.getSpikeVarMode(),
-                                   n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+                             n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
         }
     }
     allStreams << std::endl;
@@ -134,15 +134,15 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
     for(const auto &n : model.getLocalNeuronGroups()) {
         backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, "unsigned int", "glbSpkCnt"+n.first, n.second.getSpikeVarMode(),
-                               n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
+                         n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
         backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, "unsigned int", "glbSpk"+n.first, n.second.getSpikeVarMode(),
-                               n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+                         n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
 
         if (n.second.isSpikeEventRequired()) {
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, "unsigned int", "glbSpkCntEvnt"+n.first, n.second.getSpikeEventVarMode(),
-                                   n.second.getNumDelaySlots());
+                             n.second.getNumDelaySlots());
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, "unsigned int", "glbSpkEvnt"+n.first, n.second.getSpikeEventVarMode(),
-                                   n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                             n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
         if (n.second.isDelayRequired()) {
             //**FIXME**
@@ -154,7 +154,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         }
         if (n.second.isSpikeTimeRequired()) {
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, model.getTimePrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode(),
-                                   n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                             n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
         if(n.second.isSimRNGRequired()) {
@@ -164,7 +164,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         auto neuronModel = n.second.getNeuronModel();
         for(auto const &v : neuronModel->getVars()) {
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, v.second, v.first + n.first, n.second.getVarMode(v.first),
-                                   n.second.isVarQueueRequired(v.first) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+                             n.second.isVarQueueRequired(v.first) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
         }
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
             definitions << "extern " << v.second << " " << v.first + n.first << ";" << std::endl;
@@ -178,7 +178,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             auto csModel = cs->getCurrentSourceModel();
             for(auto const &v : csModel->getVars()) {
                 backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, v.second, v.first + cs->getName(), cs->getVarMode(v.first),
-                                       n.second.getNumNeurons());
+                                 n.second.getNumNeurons());
             }
             for(auto const &v : csModel->getExtraGlobalParams()) {
                 definitions << "extern " << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
@@ -199,11 +199,11 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             const auto *sg = m.first;
 
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, model.getPrecision(), "inSyn" + sg->getPSModelTargetName(), sg->getInSynVarMode(),
-                                   sg->getTrgNeuronGroup()->getNumNeurons());
+                             sg->getTrgNeuronGroup()->getNumNeurons());
 
             if (sg->isDendriticDelayRequired()) {
                 backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayVarMode(),
-                                       sg->getMaxDendriticDelayTimesteps() * sg->getTrgNeuronGroup()->getNumNeurons());
+                                 sg->getMaxDendriticDelayTimesteps() * sg->getTrgNeuronGroup()->getNumNeurons());
 
                 //**FIXME**
                 runnerVarDecl << varExportPrefix << " unsigned int denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
@@ -216,7 +216,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 for(const auto &v : sg->getPSModel()->getVars()) {
                     backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree, v.second, v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first),
-                                           sg->getTrgNeuronGroup()->getNumNeurons());
+                                     sg->getTrgNeuronGroup()->getNumNeurons());
                 }
             }
         }
@@ -242,18 +242,18 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
             // Row lengths
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                   "unsigned int", "rowLength" + s.first, varMode, s.second.getSrcNeuronGroup()->getNumNeurons());
+                             "unsigned int", "rowLength" + s.first, varMode, s.second.getSrcNeuronGroup()->getNumNeurons());
 
             // Target indices
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                   "unsigned int", "ind" + s.first, varMode, size);
+                             "unsigned int", "ind" + s.first, varMode, size);
 
             // **TODO** remap is not always required
             if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
                 // Allocate synRemap
                 // **THINK** this is over-allocating
                 backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                       "unsigned int", "synRemap" + s.first, varMode, size + 1);
+                                 "unsigned int", "synRemap" + s.first, varMode, size + 1);
             }
 
             // **TODO** remap is not always required
@@ -262,11 +262,11 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
                 // Allocate column lengths
                 backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                       "unsigned int", "colLength" + s.first, varMode, s.second.getTrgNeuronGroup()->getNumNeurons());
+                                 "unsigned int", "colLength" + s.first, varMode, s.second.getTrgNeuronGroup()->getNumNeurons());
 
                 // Allocate remap
                 backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                       "unsigned int", "remap" + s.first, varMode, postSize);
+                                 "unsigned int", "remap" + s.first, varMode, postSize);
 
             }
 
@@ -274,7 +274,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : wu->getVars()) {
                     backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                           v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
+                                     v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
                 }
             }
         }
@@ -285,7 +285,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 for(const auto &v : wu->getVars()) {
                     backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                           v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
+                                     v.second, v.first + s.first, s.second.getWUVarMode(v.first), size);
                 }
             }
 
@@ -296,7 +296,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                 : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
         for(const auto &v : wu->getPreVars()) {
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                   v.second, v.first + s.first, s.second.getWUPreVarMode(v.first), preSize);
+                             v.second, v.first + s.first, s.second.getWUPreVarMode(v.first), preSize);
         }
 
         const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
@@ -304,7 +304,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                 : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
         for(const auto &v : wu->getPostVars()) {
             backend.genArray(definitions, runnerVarDecl, runnerAlloc, runnerFree,
-                                   v.second, v.first + s.first, s.second.getWUPostVarMode(v.first), postSize);
+                             v.second, v.first + s.first, s.second.getWUPostVarMode(v.first), postSize);
         }
 
         for(const auto &v : wu->getExtraGlobalParams()) {
