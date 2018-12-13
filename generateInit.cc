@@ -28,7 +28,7 @@ void genInitSpikeCount(CodeStream &os, const CodeGenerator::Backends::Base &back
 
         // Generate variable initialisation code
         backend.genPopVariableInit(os, varMode, popSubs,
-            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
+            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &)
             {
                 // Get variable name
                 const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
