@@ -62,6 +62,10 @@ public:
     virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
 
+    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const = 0;
+    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0;
+
+
     virtual void genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const = 0;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                   const std::string &name, size_t count) const = 0;
@@ -84,6 +88,15 @@ public:
         genVariableImplementation(runner, type + "*", name, mode);
         genVariableAllocation(allocations, type, name, mode, count);
         genVariableFree(free, name, mode);
+    }
+
+    void genVariable(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                     CodeStream &push, CodeStream &pull,
+                     const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const
+    {
+        genArray(definitions, runner, allocations, free, type, name, mode, count);
+        genVariablePush(push, type, name, mode, autoInitialized, count);
+        genVariablePull(pull, type, name, mode, count);
     }
 
 protected:

@@ -45,6 +45,7 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
     USE(remoteNGHandler);
     USE(sgDenseInitHandler);
     USE(sgSparseConnectHandler);
+    USE(sgSparseInitHandler);
     assert(false);
 }
 //--------------------------------------------------------------------------
@@ -76,7 +77,7 @@ void SingleThreadedCPU::genVariableFree(CodeStream &os, const std::string &name,
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const
+void SingleThreadedCPU::genPopVariableInit(CodeStream &os, VarMode, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
     handler(os, varSubs);
@@ -94,6 +95,14 @@ void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, c
         varSubs.addVarSubstitution(countVarName, "i");
         handler(os, varSubs);
     }
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genVariablePush(CodeStream&, const std::string&, const std::string&, VarMode, bool, size_t) const
+{
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genVariablePull(CodeStream&, const std::string&, const std::string&, VarMode, size_t) const
+{
 }
 //--------------------------------------------------------------------------
 void SingleThreadedCPU::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const

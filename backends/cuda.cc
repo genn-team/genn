@@ -30,6 +30,15 @@ size_t padSize(size_t size, size_t blockSize)
 {
     return ceilDivide(size, blockSize) * blockSize;
 }
+//--------------------------------------------------------------------------
+bool canPushPullVar(VarMode varMode)
+{
+    // A variable can be pushed and pulled if it is located
+    // on both host and device and doesn't use zero-copy memory
+    return ((varMode & VarLocation::HOST) &&
+            (varMode & VarLocation::DEVICE) &&
+            !(varMode & VarLocation::ZERO_COPY));
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -47,22 +56,25 @@ CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size
     // Get number of CUDA devices and reserve memory
     int numDevices;
     CHECK_CUDA_ERRORS(cudaGetDeviceCount(&numDevices));
-    
+
     // If any devices were found
     if(numDevices > 0) {
         m_Devices.reserve(numDevices);
-        
+
         std::cout << numDevices << " CUDA device found" << std::endl;
         for (int i = 0; i < numDevices; i++) {
             CHECK_CUDA_ERRORS(cudaSetDevice(i));
-            
+
             // Get device properties and add to devices
             m_Devices.push_back(cudaDeviceProp());
             CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&m_Devices.back(), i));
         }
-        
+
         m_ChosenDevice = 0;
     }
+
+    // Get CUDA runtime version
+    cudaRuntimeGetVersion(&m_RuntimeVersion);
 }
 //--------------------------------------------------------------------------
 void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
@@ -786,6 +798,7 @@ void CUDA::genRunnerPreamble(CodeStream &os) const
     // Allow host backend to generate any of it's own preamble
     m_HostBackend.genRunnerPreamble(os);
 
+    // **TODO** move these into a header file shipped with GeNN and copied into generated code along with non-uniform RNGs
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
     os << std::endl;
@@ -897,6 +910,35 @@ void CUDA::genVariableInit(CodeStream &os, VarMode mode, size_t, const std::stri
     }
 }
 //--------------------------------------------------------------------------
+void CUDA::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const
+{
+    // If variable can be pushed or pulled
+    if(canPushPullVar(mode)) {
+        // If variable is initialised on device, only copy if uninitialisedOnly isn't set
+        if(autoInitialized) {
+            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
+        }
+
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
+        os << ", " << name;
+        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+
+        if(autoInitialized) {
+            os << CodeStream::CB(1101);
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void CUDA::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const
+{
+    // If variable can be pushed or pulled
+    if(canPushPullVar(mode)) {
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
+        os << ", d_"  << name;
+        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
 void CUDA::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const
 {
     // Create a single Philox4_32_10 RNG
@@ -910,10 +952,7 @@ void CUDA::genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStr
                              const std::string &name, size_t count) const
 {
     // Create an array or XORWOW RNGs
-    genVariableDefinition(definitions, "curandState*", name, VarMode::LOC_DEVICE_INIT_DEVICE);
-    genVariableImplementation(runner, "curandState*", name, VarMode::LOC_DEVICE_INIT_DEVICE);
-    genVariableAllocation(allocations, "curandState", name, VarMode::LOC_DEVICE_INIT_DEVICE, count);
-    genVariableFree(free, name, VarMode::LOC_DEVICE_INIT_DEVICE);
+    genArray(definitions, runner, allocations, free, "curandState", name, VarMode::LOC_DEVICE_INIT_DEVICE, count);
 }
 //--------------------------------------------------------------------------
 bool CUDA::isGlobalRNGRequired(const NNmodel &model) const
