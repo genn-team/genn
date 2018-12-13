@@ -48,6 +48,10 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
     assert(false);
 }
 //--------------------------------------------------------------------------
+void SingleThreadedCPU::genDefinitionsPreamble(CodeStream &) const
+{
+}
+//--------------------------------------------------------------------------
 void SingleThreadedCPU::genRunnerPreamble(CodeStream &) const
 {
 }
@@ -92,12 +96,38 @@ void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, c
     }
 }
 //--------------------------------------------------------------------------
+void SingleThreadedCPU::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const
+{
+    definitions << getVarExportPrefix() << " " << "std::mt19937 rng;" << std::endl;
+    runner << "std::mt19937 rng;" << std::endl;
+
+    // Define and implement standard host distributions as recreating them each call is slow
+    definitions << getVarExportPrefix() << " " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
+    definitions << getVarExportPrefix() << " " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
+    definitions << getVarExportPrefix() << " " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
+    runner << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+    runner << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+    runner << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &,
+                                         const std::string&, size_t) const
+{
+    // No need for population RNGs for single-threaded CPU
+}
+//--------------------------------------------------------------------------
 void SingleThreadedCPU::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     USE(os);
     USE(subs);
     USE(suffix);
     assert(false);
+}
+//--------------------------------------------------------------------------
+bool SingleThreadedCPU::isGlobalRNGRequired(const NNmodel &model) const
+{
+    // **TODO** move logic from method in here as it is backend-logic specific
+    return model.isHostRNGRequired();
 }
 }   // namespace Backends
 }   // namespace CodeGenerator

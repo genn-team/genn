@@ -36,6 +36,7 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
+    virtual void genDefinitionsPreamble(CodeStream &os) const override;
     virtual void genRunnerPreamble(CodeStream &os) const override;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
@@ -46,6 +47,10 @@ public:
     virtual void genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
+
+    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const override;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                                  const std::string &name, size_t count) const override;
 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
     {
@@ -58,6 +63,8 @@ public:
     }
 
     virtual std::string getVarPrefix() const override{ return ""; }
+
+    virtual bool isGlobalRNGRequired(const NNmodel &model) const override;
 
 private:
     //--------------------------------------------------------------------------

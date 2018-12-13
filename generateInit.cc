@@ -127,7 +127,7 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &b
                         }
                     }
                     else {
-                        varSubs.addVarSubstitution("value", vars[k].first + popName + "[" + varSubs.getVarSubstitution("id") + "]");
+                        varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + popName + "[" + varSubs.getVarSubstitution("id") + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
                         CodeGenerator::applyVarInitSnippetSubstitutions(code, varInit);
@@ -168,7 +168,7 @@ void genInitWUVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backe
                 [&backend, &vars, &varInit, &sg, &ftype, k, count]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addVarSubstitution("value", vars[k].first + sg.getName() + "[(" + varSubs.getVarSubstitution("id_pre") + " * " + std::to_string(count) + ") + " + varSubs.getVarSubstitution("id_post") + "]");
+                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[(" + varSubs.getVarSubstitution("id_pre") + " * " + std::to_string(count) + ") + " + varSubs.getVarSubstitution("id_post") + "]");
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.apply(code);
@@ -187,6 +187,7 @@ void genInitWUVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backe
 //--------------------------------------------------------------------------
 void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
 {
+    os << "#include \"definitions.h\"" << std::endl;
 
     backend.genInit(os, model,
         // Local neuron group initialisation

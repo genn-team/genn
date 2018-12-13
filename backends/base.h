@@ -8,10 +8,10 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "codeStream.h"
 #include "global.h"
 
 // Forward declarations
-class CodeStream;
 class NeuronGroup;
 class NNmodel;
 class Substitutions;
@@ -50,6 +50,7 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
+    virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
@@ -61,11 +62,17 @@ public:
     virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
 
+    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const = 0;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                                  const std::string &name, size_t count) const = 0;
+
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     
     virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
 
     virtual std::string getVarPrefix() const{ return ""; }
+
+    virtual bool isGlobalRNGRequired(const NNmodel &model) const = 0;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -80,6 +87,23 @@ public:
     }
 
 protected:
+    //--------------------------------------------------------------------------
+    // Protected API
+    //--------------------------------------------------------------------------
+    void genGLIBCBugTest(CodeStream &os) const
+    {
+        // **NOTE** if we are using GCC on x86_64, bugs in some version of glibc can cause bad performance issues.
+        // Best solution involves setting LD_BIND_NOW=1 so check whether this has been applied
+        os << "#if defined(__GNUG__) && !defined(__clang__) && defined(__x86_64__) && __GLIBC__ == 2 && (__GLIBC_MINOR__ == 23 || __GLIBC_MINOR__ == 24)" << std::endl;
+        os << "if(std::getenv(\"LD_BIND_NOW\") == NULL)";
+        {
+            CodeStream::Scope b(os);
+            os << "std::cerr << \"Warning: a bug has been found in glibc 2.23 or glibc 2.24 (https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) \";" << std::endl;
+            os << "std::cerr << \"which results in poor CPU maths performance. We recommend setting the environment variable LD_BIND_NOW=1 to work around this issue.\" << std::endl;" << std::endl;
+        }
+        os << "#endif" << std::endl;
+    }
+
     std::string getVarExportPrefix() const
     {
         // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
