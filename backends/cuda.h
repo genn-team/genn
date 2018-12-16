@@ -56,6 +56,22 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
+    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const override
+    {
+        genCurrentSpikePush(os, ng, false);
+    }
+    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const override
+    {
+        genCurrentSpikePull(os, ng, false);
+    }
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const override
+    {
+        genCurrentSpikePush(os, ng, true);
+    }
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const override
+    {
+        genCurrentSpikePull(os, ng, true);
+    }
 
     virtual void genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const override;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -129,6 +145,9 @@ private:
     }
                                  
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
+
+    void genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const;
+    void genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const;
 
     void genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;

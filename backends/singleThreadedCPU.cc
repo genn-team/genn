@@ -105,6 +105,22 @@ void SingleThreadedCPU::genVariablePull(CodeStream&, const std::string&, const s
 {
 }
 //--------------------------------------------------------------------------
+void SingleThreadedCPU::genCurrentTrueSpikePush(CodeStream&, const NeuronGroup&) const
+{
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genCurrentTrueSpikePull(CodeStream&, const NeuronGroup&) const
+{
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroup&) const
+{
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroup&) const
+{
+}
+//--------------------------------------------------------------------------
 void SingleThreadedCPU::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const
 {
     definitions << getVarExportPrefix() << " " << "std::mt19937 rng;" << std::endl;

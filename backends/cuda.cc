@@ -967,6 +967,78 @@ void CUDA::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::st
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getVarSubstitution("id") << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
+void CUDA::genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
+{
+    // Is push required at all
+    const bool pushRequired = spikeEvent ?
+        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventVarMode()))
+        : canPushPullVar(ng.getSpikeVarMode());
+
+    // Is delay required
+    const bool delayRequired = spikeEvent ?
+        ng.isDelayRequired() :
+        (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+
+    if(pushRequired) {
+        if (delayRequired) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
+            os << ", " << spikePrefix << ng.getName();
+            os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
+            os << ", " << spikePrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void CUDA::genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
+{
+    // Is push required at all
+    const bool pullRequired = spikeEvent ?
+        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventVarMode()))
+        : canPushPullVar(ng.getSpikeVarMode());
+
+    // Is delay required
+    const bool delayRequired = spikeEvent ?
+        ng.isDelayRequired() :
+        (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+
+    if(pullRequired) {
+        if (delayRequired) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
+            os << ", d_" << spikeCntPrefix << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
+            os << ", d_" << spikePrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void CUDA::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                        SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {

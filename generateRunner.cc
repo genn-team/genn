@@ -42,7 +42,7 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
 }
 
 void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
-                         const std::string &description,
+                         const std::string &description, bool unitialisedLogic,
                          std::function<void()> handler)
 {
 // In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
@@ -51,10 +51,18 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
 #else
     const std::string funcExportPrefix = "";
 #endif
-    definitionsFunc << funcExportPrefix << "void push" << description << "ToDevice(bool uninitialisedOnly = false);" << std::endl;
+    definitionsFunc << funcExportPrefix << "void push" << description << "ToDevice(";
+    if(unitialisedLogic) {
+        definitionsFunc << "bool uninitialisedOnly = false";
+    }
+    definitionsFunc << ");" << std::endl;
     definitionsFunc << funcExportPrefix << "void pull" << description << "FromDevice();" << std::endl;
 
-    runnerPushFunc << "void push" << description << "ToDevice(bool uninitialisedOnly)";
+    runnerPushFunc << "void push" << description << "ToDevice(";
+    if(unitialisedLogic) {
+        runnerPushFunc << "bool uninitialisedOnly";
+    }
+    runnerPushFunc << ")";
     runnerPullFunc << "void pull" << description << "FromDevice()";
     {
         CodeStream::Scope a(runnerPushFunc);
@@ -170,7 +178,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
     for(const auto &n : model.getLocalNeuronGroups()) {
         // True spike variable
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "Spikes", 
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "Spikes", true,
             [&]()
             {
                 backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
@@ -181,12 +189,16 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                                     true, n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
             });
         
-        //definitionsFunc << funcExportPrefix << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
-        //definitionsFunc << funcExportPrefix << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "CurrentSpikes", false,
+            [&]()
+            {
+                backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
+                backend.genCurrentTrueSpikePull(runnerPullFunc, n.second);
+            });
 
         // If neuron ngroup eeds to emit spike-like events
         if (n.second.isSpikeEventRequired()) {
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "SpikeEvents", 
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "SpikeEvents", true,
                 [&]()
                 {
                     backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
@@ -196,8 +208,13 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                                         "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeEventVarMode(),
                                         true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
                 });
-            //definitionsFunc << funcExportPrefix << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;            
-            //definitionsFunc << funcExportPrefix << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
+
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "CurrentSpikeEvents", false,
+                [&]()
+                {
+                    backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second);
+                    backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second);
+                });
         }
 
         // If neuron group has axonal delays
@@ -221,8 +238,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             backend.genPopulationRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, "rng" + n.first, n.second.getNumNeurons());
         }
 
+        // Neuron state variables
         const auto neuronModel = n.second.getNeuronModel();
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "State", 
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "State", true,
             [&]()
             {
                 const auto vars = neuronModel->getVars();
@@ -246,7 +264,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         for (auto const *cs : n.second.getCurrentSources()) {
             const auto csModel = cs->getCurrentSourceModel();
             const auto csVars = csModel->getVars();
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName() + "State", 
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName() + "State", true,
                 [&]()
                 {
                     for(size_t i = 0; i < csVars.size(); i++) {
@@ -358,7 +376,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
 
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first + "State", 
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first + "State", true,
             [&]()
             {
                 // If weight update variables should be individual

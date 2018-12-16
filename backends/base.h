@@ -64,7 +64,10 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const = 0;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0;
-
+    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const = 0;
+    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const = 0;
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const = 0;
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const = 0;
 
     virtual void genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const = 0;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
