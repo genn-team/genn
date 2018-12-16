@@ -61,7 +61,6 @@
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
- 
   <!-- Reference libgenn so it gets built automatically if required -->
   <ItemGroup>
     <ProjectReference Include="$(GENN_PATH)\lib\lib_genn.vcxproj">
@@ -69,10 +68,11 @@
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemGroup>
-   <ItemGroup>
+  <ItemGroup>
     <ClCompile Include="generateInit.cc" />
     <ClCompile Include="generateNeuronUpdate.cc" />
     <ClCompile Include="generateRunner.cc" />
+    <ClCompile Include="generateSynapseUpdate.cc" />
     <ClCompile Include="main.cc" />
     <ClCompile Include="tempSubstitutions.cc" />
     <ClCompile Include="backends\cuda.cc" />
@@ -82,6 +82,7 @@
     <ClInclude Include="generateInit.h" />
     <ClInclude Include="generateNeuronUpdate.h" />
     <ClInclude Include="generateRunner.h" />
+    <ClInclude Include="generateSynapseUpdate.h" />
     <ClInclude Include="substitution_stack.h" />
     <ClInclude Include="tee_stream.h" />
     <ClInclude Include="tempSubstitutions.h" />
