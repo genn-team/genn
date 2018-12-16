@@ -40,6 +40,29 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
     }
     os << std::endl;
 }
+
+void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
+                         const std::string &description,
+                         std::function<void()> handler)
+{
+// In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
+#ifdef _WIN32
+    const std::string funcExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) " : "";
+#else
+    const std::string funcExportPrefix = "";
+#endif
+    definitionsFunc << funcExportPrefix << "void push" << description << "ToDevice(bool uninitialisedOnly = false);" << std::endl;
+    definitionsFunc << funcExportPrefix << "void pull" << description << "FromDevice();" << std::endl;
+
+    runnerPushFunc << "void push" << description << "ToDevice(bool uninitialisedOnly)";
+    runnerPullFunc << "void pull" << description << "FromDevice()";
+    {
+        CodeStream::Scope a(runnerPushFunc);
+        CodeStream::Scope b(runnerPullFunc);
+
+        handler();
+    }
+}
 }
 
 //--------------------------------------------------------------------------
@@ -79,25 +102,21 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     runner << "#include \"definitions.h\"" << std::endl << std::endl;
     backend.genRunnerPreamble(runner);
 
-    std::stringstream runnerPushFuncStream;
-    std::stringstream runnerPullFuncStream;
-    std::stringstream definitionsFuncStream;
-    CodeStream runnerPushFunc(runnerPushFuncStream);
-    CodeStream runnerPullFunc(runnerPullFuncStream);
-    CodeStream definitionsFunc(definitionsFuncStream);
-
-    // Create a teestream to allow simultaneous writing to both streams
-    TeeStream runnerPushPullFuncStream(runnerPushFunc, runnerPullFunc);
-
-    // Create codestreams to generate different sections of runner
+    // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
     std::stringstream runnerVarAllocStream;
     std::stringstream runnerVarFreeStream;
+    std::stringstream runnerPushFuncStream;
+    std::stringstream runnerPullFuncStream;
     std::stringstream definitionsVarStream;
+    std::stringstream definitionsFuncStream;
     CodeStream runnerVarDecl(runnerVarDeclStream);
     CodeStream runnerVarAlloc(runnerVarAllocStream);
     CodeStream runnerVarFree(runnerVarFreeStream);
-    CodeStream definitionsVar(definitionsVarStream);;
+    CodeStream runnerPushFunc(runnerPushFuncStream);
+    CodeStream runnerPullFunc(runnerPullFuncStream);
+    CodeStream definitionsVar(definitionsVarStream);
+    CodeStream definitionsFunc(definitionsFuncStream);
 
     // Create a teestream to allow simultaneous writing to all streams
     TeeStream allVarStreams(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
@@ -150,44 +169,38 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     allVarStreams << std::endl;
 
     for(const auto &n : model.getLocalNeuronGroups()) {
-        definitionsFunc << funcExportPrefix << "void push" << n.first << "SpikesToDevice(bool uninitialisedOnly = false);" << std::endl;
-        definitionsFunc << funcExportPrefix << "void pull" << n.first << "SpikesFromDevice();" << std::endl;
-
-        runnerPushFunc << "void push" << n.first << "SpikesToDevice(bool uninitialisedOnly)";
-        runnerPullFunc << "void pull" << n.first << "SpikesFromDevice()";
-        {
-            CodeStream::Scope a(runnerPushFunc);
-            CodeStream::Scope b(runnerPullFunc);
-            backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(), 
-                                true, n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
-            backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                "unsigned int", "glbSpk" + n.first, n.second.getSpikeVarMode(),
-                                true, n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
-        }
+        // True spike variable
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "Spikes", 
+            [&]()
+            {
+                backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                    "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(), 
+                                    true, n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
+                backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                    "unsigned int", "glbSpk" + n.first, n.second.getSpikeVarMode(),
+                                    true, n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+            });
         
         //definitionsFunc << funcExportPrefix << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
         //definitionsFunc << funcExportPrefix << "void pull" << n.first << "CurrentSpikesFromDevice();" << std::endl;
 
+        // If neuron ngroup eeds to emit spike-like events
         if (n.second.isSpikeEventRequired()) {
-            definitionsFunc << funcExportPrefix << "void push" << n.first << "SpikeEventsToDevice(bool uninitialisedOnly = false);" << std::endl;
-            definitionsFunc << funcExportPrefix << "void pull" << n.first << "SpikeEventsFromDevice();" << std::endl;
-
-            runnerPushFunc << "void push" << n.first << "SpikeEventsToDevice(bool uninitialisedOnly)";
-            runnerPullFunc << "void pull" << n.first << "SpikeEventsFromDevice()";
-            {
-                CodeStream::Scope a(runnerPushFunc);
-                CodeStream::Scope b(runnerPullFunc);
-                backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                    "unsigned int", "glbSpkCntEvnt" + n.first, n.second.getSpikeEventVarMode(),
-                                    true, n.second.getNumDelaySlots());
-                backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                    "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeEventVarMode(),
-                                    true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
-            }            
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "SpikeEvents", 
+                [&]()
+                {
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        "unsigned int", "glbSpkCntEvnt" + n.first, n.second.getSpikeEventVarMode(),
+                                        true, n.second.getNumDelaySlots());
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeEventVarMode(),
+                                        true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                });
             //definitionsFunc << funcExportPrefix << "void push" << n.first << "CurrentSpikeEventsToDevice();" << std::endl;            
             //definitionsFunc << funcExportPrefix << "void pull" << n.first << "CurrentSpikeEventsFromDevice();" << std::endl;
         }
+
+        // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
             //**FIXME**
             definitionsVar << varExportPrefix << " unsigned int spkQuePtr" << n.first << ";" << std::endl;
@@ -196,33 +209,31 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             runnerVarDecl << "__device__ volatile unsigned int dd_spkQuePtr" << n.first << ";" << std::endl;
 #endif
         }
+
+        // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
             backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, model.getTimePrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode(),
                              n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
+        // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
             backend.genPopulationRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, "rng" + n.first, n.second.getNumNeurons());
         }
 
         const auto neuronModel = n.second.getNeuronModel();
-        definitionsFunc << funcExportPrefix << "void push" << n.first << "StateToDevice(bool uninitialisedOnly = false);" << std::endl;
-        definitionsFunc << funcExportPrefix << "void pull" << n.first << "StateFromDevice();" << std::endl;
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "State", 
+            [&]()
+            {
+                const auto vars = neuronModel->getVars();
+                for(size_t i = 0; i < vars.size(); i++) {
+                    const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+                    const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
 
-        runnerPushFunc << "void push" << n.first << "StateToDevice(bool uninitialisedOnly)";
-        runnerPullFunc << "void pull" << n.first << "StateFromDevice()";
-        {
-            CodeStream::Scope a(runnerPushFunc);
-            CodeStream::Scope b(runnerPullFunc);
-            const auto vars = neuronModel->getVars();
-            for(size_t i = 0; i < vars.size(); i++) {
-                const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-                const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
-
-                backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                    vars[i].second, vars[i].first + n.first, n.second.getVarMode(i), autoInitialized, count);
-            }
-        }
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        vars[i].second, vars[i].first + n.first, n.second.getVarMode(i), autoInitialized, count);
+                }
+            });
 
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
             definitionsVar << "extern " << v.second << " " << v.first + n.first << ";" << std::endl;
@@ -235,22 +246,18 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         for (auto const *cs : n.second.getCurrentSources()) {
             const auto csModel = cs->getCurrentSourceModel();
             const auto csVars = csModel->getVars();
-            definitionsFunc << funcExportPrefix << "void push" << cs->getName() << "StateToDevice(bool uninitialisedOnly = false);" << std::endl;
-            definitionsFunc << funcExportPrefix << "void pull" << cs->getName() << "StateFromDevice();" << std::endl;
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName() + "State", 
+                [&]()
+                {
+                    for(size_t i = 0; i < csVars.size(); i++) {
+                        const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
 
-            runnerPushFunc << "void push" << cs->getName() << "StateToDevice(bool uninitialisedOnly)";
-            runnerPullFunc << "void pull" << cs->getName() << "StateFromDevice()";
-            {
-                CodeStream::Scope a(runnerPushFunc);
-                CodeStream::Scope b(runnerPullFunc);
-                for(size_t i = 0; i < csVars.size(); i++) {
-                    const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
+                        backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                            csVars[i].second, csVars[i].first + cs->getName(), cs->getVarMode(i), autoInitialized, n.second.getNumNeurons());
 
-                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                        csVars[i].second, csVars[i].first + cs->getName(), cs->getVarMode(i), autoInitialized, n.second.getNumNeurons());
+                    }
+                });
 
-                }
-            }
             for(auto const &v : csModel->getExtraGlobalParams()) {
                 definitionsVar << "extern " << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
                 runnerVarDecl << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
@@ -351,54 +358,50 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
 
-        definitionsFunc << funcExportPrefix << "void push" << s.first << "StateToDevice(bool uninitialisedOnly = false);" << std::endl;
-        definitionsFunc << funcExportPrefix << "void pull" << s.first << "StateFromDevice();" << std::endl;
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first + "State", 
+            [&]()
+            {
+                // If weight update variables should be individual
+                if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    const size_t size = (s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE)
+                        ? s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()
+                        : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
 
-        runnerPushFunc << "void push" << s.first << "StateToDevice(bool uninitialisedOnly)";
-        runnerPullFunc << "void pull" << s.first << "StateFromDevice()";
-        {
-            CodeStream::Scope a(runnerPushFunc);
-            CodeStream::Scope b(runnerPullFunc);
+                    const auto wuVars = wu->getVars();
+                    for(size_t i = 0; i < wuVars.size(); i++) {
+                        const bool autoInitialized = !s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty();
 
-            // If weight update variables should be individual
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                const size_t size = (s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-                    ? s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()
-                    : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
+                        backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                            wuVars[i].second, wuVars[i].first + s.first, s.second.getWUVarMode(i), autoInitialized, size);
+                    }
+                }
 
-                const auto wuVars = wu->getVars();
-                for(size_t i = 0; i < wuVars.size(); i++) {
-                    const bool autoInitialized = !s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty();
+                // Presynaptic W.U.M. variables
+                const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
+                        ? s.second.getSrcNeuronGroup()->getNumNeurons()
+                        : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
+                const auto wuPreVars = wu->getPreVars();
+                for(size_t i = 0; i < wuPreVars.size(); i++) {
+                    const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
 
                     backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                        wuVars[i].second, wuVars[i].first + s.first, s.second.getWUVarMode(i), autoInitialized, size);
+                                        wuPreVars[i].second, wuPreVars[i].first + s.first, s.second.getWUPreVarMode(i), autoInitialized, preSize);
                 }
-            }
 
-            // Presynaptic variables
-            const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
-                    ? s.second.getSrcNeuronGroup()->getNumNeurons()
-                    : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
-            const auto wuPreVars = wu->getPreVars();
-            for(size_t i = 0; i < wuPreVars.size(); i++) {
-                const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
+                // Postsynaptic W.U.M. variables
+                const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
+                        ? s.second.getTrgNeuronGroup()->getNumNeurons()
+                        : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
+                const auto wuPostVars = wu->getPostVars();
+                for(size_t i = 0; i < wuPostVars.size(); i++) {
+                    const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
 
-                backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                    wuPreVars[i].second, wuPreVars[i].first + s.first, s.second.getWUPreVarMode(i), autoInitialized, preSize);
-            }
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        wuPostVars[i].second, wuPostVars[i].first + s.first, s.second.getWUPostVarMode(i), autoInitialized, postSize);
+                }
 
-            // Postsynaptic variables
-            const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
-                    ? s.second.getTrgNeuronGroup()->getNumNeurons()
-                    : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
-            const auto wuPostVars = wu->getPostVars();
-            for(size_t i = 0; i < wuPostVars.size(); i++) {
-                const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
-
-                backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                    wuPostVars[i].second, wuPostVars[i].first + s.first, s.second.getWUPostVarMode(i), autoInitialized, postSize);
-            }
-        }
+                // **TODO** postsynaptic model variables
+            });
 
         for(const auto &v : wu->getExtraGlobalParams()) {
             definitionsVar << "extern " << v.second << " " << v.first + s.first << ";" << std::endl;
