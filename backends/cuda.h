@@ -77,6 +77,10 @@ public:
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                   const std::string &name, size_t count) const override;
 
+    virtual void genMakefilePreamble(std::ostream &os) const override;
+    virtual void genMakefileLinkRule(std::ostream &os) const override;
+    virtual void genMakefileCompileRule(std::ostream &os) const override;
+
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
     {
         genEmitSpike(os, subs, "");

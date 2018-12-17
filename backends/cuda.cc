@@ -939,7 +939,7 @@ void CUDA::genVariablePull(CodeStream &os, const std::string &type, const std::s
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const
+void CUDA::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &) const
 {
     // Create a single Philox4_32_10 RNG
     genVariableDefinition(definitions, "curandStatePhilox4_32_10_t*", "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
@@ -953,6 +953,46 @@ void CUDA::genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStr
 {
     // Create an array or XORWOW RNGs
     genArray(definitions, runner, allocations, free, "curandState", name, VarMode::LOC_DEVICE_INIT_DEVICE, count);
+}
+//--------------------------------------------------------------------------
+void CUDA::genMakefilePreamble(std::ostream &os) const
+{
+    const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    std::string linkFlags = "--shared --linker-options '-fPIC' -arch " + architecture;
+    std::string nvccFlags = "-std=c++11 --compiler-options '-fPIC' -x cu -arch " + architecture;
+    nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
+    if (GENN_PREFERENCES::optimizeCode) {
+        nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        nvccFlags += " -O0 -g -G";
+    }
+    if (GENN_PREFERENCES::showPtxInfo) {
+        nvccFlags += " -Xptxas \"-v\"";
+    }
+#ifdef MPI_ENABLE
+    // If MPI is enabled, add MPI include path
+    cxxFlags +=" -I\"$(MPI_PATH)/include\"";
+#endif
+
+    // Write variables to preamble
+    os << "NVCC := nvcc" << std::endl;
+    os << "NVCCFLAGS := " << nvccFlags << std::endl;
+    os << "LINKFLAGS := " << linkFlags << std::endl;
+}
+//--------------------------------------------------------------------------
+void CUDA::genMakefileLinkRule(std::ostream &os) const
+{
+    os << "\t$(NVCC) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
+}
+//--------------------------------------------------------------------------
+void CUDA::genMakefileCompileRule(std::ostream &os) const
+{
+    os << "%.d: %.cc" << std::endl;
+    os << "\t$(NVCC) -M $(NVCCFLAGS) $< 1> $@" << std::endl;
+    os << std::endl;
+    os << "%.o: %.cc %.d" << std::endl;
+    os << "\t$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
 }
 //--------------------------------------------------------------------------
 bool CUDA::isGlobalRNGRequired(const NNmodel &model) const

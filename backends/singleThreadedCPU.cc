@@ -141,6 +141,41 @@ void SingleThreadedCPU::genPopulationRNG(CodeStream &, CodeStream &, CodeStream 
     // No need for population RNGs for single-threaded CPU
 }
 //--------------------------------------------------------------------------
+void SingleThreadedCPU::genMakefilePreamble(std::ostream &os) const
+{
+    std::string linkFlags = "-shared -fPIC";
+    std::string cxxFlags = "-c -fPIC -DCPU_ONLY -std=c++11 -MMD -MP";
+    cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
+    if (GENN_PREFERENCES::optimizeCode) {
+        cxxFlags += " -O3 -ffast-math";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        cxxFlags += " -O0 -g";
+    }
+
+#ifdef MPI_ENABLE
+    // If MPI is enabled, add MPI include path
+    cxxFlags +=" -I\"$(MPI_PATH)/include\"";
+#endif
+
+    // Write variables to preamble
+    os << "CXXFLAGS := " << cxxFlags << std::endl;
+    os << "LINKFLAGS := " << linkFlags << std::endl;
+
+    os << std::endl;
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genMakefileLinkRule(std::ostream &os) const
+{
+    os << "\t$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
+}
+//--------------------------------------------------------------------------
+void SingleThreadedCPU::genMakefileCompileRule(std::ostream &os) const
+{
+    os << "%.o: %.cc %.d" << std::endl;
+    os << "\t$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
+}
+//--------------------------------------------------------------------------
 void SingleThreadedCPU::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     USE(os);

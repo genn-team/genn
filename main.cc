@@ -8,6 +8,7 @@
 
 // NuGeNN includes
 #include "generateInit.h"
+#include "generateMakefile.h"
 #include "generateNeuronUpdate.h"
 #include "generateSynapseUpdate.h"
 #include "generateRunner.h"
@@ -49,25 +50,36 @@ int main()
     //syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
     model.finalize();
     
+    // Create backends
+    Backends::SingleThreadedCPU cpuBackend(0);
+    Backends::CUDA backend(128, 128, 64, 64, 0, cpuBackend);
+
+    // Create directory for generated code
     filesystem::create_directory("generated_code");
+
+    // Open output file streams for generated code files
     std::ofstream definitionsStream("generated_code/definitions.h");
     std::ofstream neuronUpdateStream("generated_code/neuronUpdate.cc");
     std::ofstream synapseUpdateStream("generated_code/synapseUpdate.cc");
     std::ofstream initStream("generated_code/init.cc");
     std::ofstream runnerStream("generated_code/runner.cc");
+
+    // Wrap output file streams in CodeStreams for formatting
     CodeStream definitions(definitionsStream);
     CodeStream neuronUpdate(neuronUpdateStream);
     CodeStream synapseUpdate(synapseUpdateStream);
     CodeStream init(initStream);
     CodeStream runner(runnerStream);
-
-    Backends::SingleThreadedCPU cpuBackend(0);
-    Backends::CUDA backend(128, 128, 64, 64, 0, cpuBackend);
     
+    // Generate modules
     generateNeuronUpdate(neuronUpdate, model, backend);
     generateSynapseUpdate(synapseUpdate, model, backend);
     generateInit(init, model, backend);
     generateRunner(definitions, runner, model, backend, 0);
+
+    // Create makefile to compile and link all generated modules
+    std::ofstream makefile("generated_code/Makefile");
+    generateMakefile(makefile, backend, {"neuronUpdate", "synapseUpdate", "init", "runner"});
 
     return EXIT_SUCCESS;
 }
