@@ -48,10 +48,11 @@ namespace CodeGenerator
 {
 namespace Backends
 {
-CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize,
+CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize, size_t preNeuronResetBlockSize, size_t preSynapseResetBlockSize,
            int localHostID, const Base &hostBackend)
 :   m_HostBackend(hostBackend), m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize),
-    m_InitBlockSize(initBlockSize), m_InitSparseBlockSize(initSparseBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
+    m_InitBlockSize(initBlockSize), m_InitSparseBlockSize(initSparseBlockSize), m_PreNeuronResetBlockSize(preNeuronResetBlockSize),
+    m_PreSynapseResetBlockSize(preSynapseResetBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
 {
     // Get number of CUDA devices and reserve memory
     int numDevices;
@@ -79,6 +80,62 @@ CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size
 //--------------------------------------------------------------------------
 void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
+    // Generate reset kernel to be run before the neuron kernel
+    size_t idPreNeuronReset = 0;
+    os << "__global__ void preNeuronResetKernel()";
+    {
+        CodeStream::Scope b(os);
+
+        os << "unsigned int id = " << m_PreNeuronResetBlockSize << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+        // Loop through remote neuron groups
+        for(const auto &n : model.getRemoteNeuronGroups()) {
+            if(n.second.hasOutputToHost(m_LocalHostID) && n.second.isDelayRequired()) {
+                if(idPreNeuronReset > 0) {
+                    os << "else ";
+                }
+                os << "if(id == " << (idPreNeuronReset++) << ")";
+                {
+                    CodeStream::Scope b(os);
+                    os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                }
+            }
+        }
+
+        // Loop through local neuron groups
+        for(const auto &n : model.getLocalNeuronGroups()) {
+            if(idPreNeuronReset > 0) {
+                os << "else ";
+            }
+            os << "if(id == " << (idPreNeuronReset++) << ")";
+            {
+                CodeStream::Scope b(os);
+
+                if (n.second.isDelayRequired()) { // with delay
+                    os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+
+                    if (n.second.isSpikeEventRequired()) {
+                        os << "dd_glbSpkCntEvnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                    }
+                    if (n.second.isTrueSpikeRequired()) {
+                        os << "dd_glbSpkCnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                    }
+                    else {
+                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                    }
+                }
+                else { // no delay
+                    if (n.second.isSpikeEventRequired()) {
+                        os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                    }
+                    os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                }
+            }
+        }
+    }
+
+    /*
+    for(const auto &n : model.getLocalNeuronGroups()) {*/
     size_t idStart = 0;
     os << "__global__ void updateNeuronsKernel(";
     for(const auto &p : model.getNeuronKernelParameters()) {
@@ -207,6 +264,14 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
     os << "void updateNeurons(float t)";
     {
         CodeStream::Scope b(os);
+        if(idPreNeuronReset > 0) {
+            const size_t gridSize = ceilDivide(idPreNeuronReset, m_PreNeuronResetBlockSize);
+            os << "const dim3 preNeuronResetThreads(" << m_PreNeuronResetBlockSize << ", 1);" << std::endl;
+            os << "const dim3 preNeuronResetGrid(" << gridSize << ", 1);" << std::endl;
+
+            // Launch kernel
+            os << "preNeuronResetKernel<<<preNeuronResetGrid, preNeuronResetThreads>>>();" << std::endl;
+        }
         if(idStart > 0) {
             const size_t gridSize = ceilDivide(idStart, m_NeuronUpdateBlockSize);
             os << "const dim3 threads(" << m_NeuronUpdateBlockSize << ", 1);" << std::endl;
@@ -236,6 +301,41 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
 void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                             SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
+    // If a reset kernel is required to be run before the synapse kernel
+    size_t idPreSynapseReset = 0;
+    if(model.isPreSynapseResetRequired())
+    {
+        // pre synapse reset kernel header
+        os << "__global__ void preSynapseResetKernel()";
+        {
+            CodeStream::Scope b(os);
+
+            os << "unsigned int id = " << m_PreSynapseResetBlockSize << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+            // Loop through neuron groups
+            unsigned int groupID = 0;
+            for(const auto &n : model.getLocalNeuronGroups()) {
+                // Loop through incoming synaptic populations
+                for(const auto &m : n.second.getMergedInSyn()) {
+                    const auto *sg = m.first;
+
+                     // If this kernel requires dendritic delay
+                    if(sg->isDendriticDelayRequired()) {
+                        if(groupID > 0) {
+                            os << "else ";
+                        }
+                        os << "if(id == " << (groupID++) << ")";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << "dd_denDelayPtr" << sg->getPSModelTargetName() << " = (dd_denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     size_t idPresynapticStart = 0;
     os << "__global__ void updatePresynapticKernel(";
     for (const auto &p : model.getSynapseKernelParameters()) {
@@ -369,6 +469,15 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     os << "void updateSynapses(float t)";
     {
         CodeStream::Scope b(os);
+        if(idPreSynapseReset > 0) {
+            const size_t gridSize = ceilDivide(idPreSynapseReset, m_PreSynapseResetBlockSize);
+            os << "const dim3 preSynapseResetThreads(" << m_PreSynapseResetBlockSize << ", 1);" << std::endl;
+            os << "const dim3 preSynapseResetGrid(" << gridSize << ", 1);" << std::endl;
+
+            // Launch kernel
+            os << "preSynapseResetKernel<<<preSynapseResetGrid, preSynapseResetThreads>>>();" << std::endl;
+        }
+
         if(idPresynapticStart > 0) {
             const size_t gridSize = ceilDivide(idPresynapticStart, m_PresynapticUpdateBlockSize);
             os << "const dim3 preSynapticThreads(" << m_PresynapticUpdateBlockSize << ", 1);" << std::endl;

@@ -94,7 +94,7 @@ int main()
     
     // Create backends
     Backends::SingleThreadedCPU cpuBackend(0);
-    Backends::CUDA backend(128, 128, 64, 64, 0, cpuBackend);
+    Backends::CUDA backend(128, 128, 64, 64, 32, 32, 0, cpuBackend);
 
     // Create directory for generated code
     filesystem::create_directory("generated_code");
