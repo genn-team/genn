@@ -24,6 +24,7 @@ namespace
 {
 void modelDefinition(NNmodel &model)
 {
+    GENN_PREFERENCES::buildSharedLibrary = true;
     GENN_PREFERENCES::autoInitSparseVars = true;
     GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
     GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_DEVICE_INIT_DEVICE;

@@ -163,7 +163,18 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     // Begin extern C block around variable declarations
     if(GENN_PREFERENCES::buildSharedLibrary) {
         runnerVarDecl << "extern \"C\" {" << std::endl;
+        definitionsVar << "extern \"C\" {" << std::endl;
     }
+
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    allVarStreams << "// global variables" << std::endl;
+    allVarStreams << std::endl;
+
+    // Define and declare time variables
+    definitionsVar << varExportPrefix << " unsigned long long iT;" << std::endl;
+    definitionsVar << varExportPrefix << " " << model.getTimePrecision() << " t;" << std::endl;
+    runnerVarDecl << "unsigned long long iT;" << std::endl;
+    runnerVarDecl << model.getTimePrecision() << " t;" << std::endl;
 
     // If backend requires a global RNG to simulate (or initialize) this model
     if(backend.isGlobalRNGRequired(model)) {
@@ -499,7 +510,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     allVarStreams << std::endl;
     // End extern C block around variable declarations
     if(GENN_PREFERENCES::buildSharedLibrary) {
-        runnerVarDecl << "}\t// extern \"C\"" << std::endl;
+        runnerVarDecl << "}  // extern \"C\"" << std::endl;
     }
 
     // Write variable declarations to runner
@@ -633,5 +644,10 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     definitions << funcExportPrefix << "void updateSynapses(float t);" << std::endl;
     definitions << funcExportPrefix << "void initialize();" << std::endl;
     definitions << funcExportPrefix << "void initializeSparse();" << std::endl;
+
+    // End extern C block around definitions
+    if(GENN_PREFERENCES::buildSharedLibrary) {
+        definitions << "}  // extern \"C\"" << std::endl;
+    }
 
 }
