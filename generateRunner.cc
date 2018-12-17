@@ -518,6 +518,24 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     runner << std::endl;
 
     // ---------------------------------------------------------------------
+    // Function for copying all state to device
+    runner << "void copyStateToDevice(bool uninitialisedOnly)";
+    {
+        CodeStream::Scope b(runner);
+         for(const auto &n : model.getLocalNeuronGroups()) {
+            runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+        }
+
+        for(const auto &cs : model.getLocalCurrentSources()) {
+            runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+        }
+
+        for(const auto &s : model.getLocalSynapseGroups()) {
+            runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+        }
+    }
+
+    // ---------------------------------------------------------------------
     // Function for setting the CUDA device and the host's global variables.
     // Also estimates memory usage on device ...
     runner << "void allocateMem()";
@@ -560,6 +578,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     // ---------------------------------------------------------------------
     // Function definitions
     definitions << "// Runner functions" << std::endl;
+    definitions << funcExportPrefix << "void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
     definitions << funcExportPrefix << "void allocateMem();" << std::endl;
     definitions << funcExportPrefix << "void freeMem();" << std::endl;
     definitions << std::endl;

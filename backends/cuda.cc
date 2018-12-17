@@ -756,7 +756,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
     {
         CodeStream::Scope b(os);
 
-        // Copy all manually initialised state to device
+        // Copy all uninitialised state variables to device
         os << "copyStateToDevice(true);" << std::endl << std::endl;
 
         // If there are any sparse initialisation threads
