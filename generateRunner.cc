@@ -41,6 +41,35 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
     os << std::endl;
 }
 //-------------------------------------------------------------------------
+void writeSpikeMacros(CodeStream &os, const NeuronGroup &ng, bool trueSpike)
+{
+    const bool delayRequired = trueSpike
+        ? (ng.isDelayRequired() && ng.isTrueSpikeRequired())
+        : ng.isDelayRequired();
+    const std::string eventSuffix = trueSpike ? "" : "Evnt";
+    const std::string eventMacroSuffix = trueSpike ? "" : "Event";
+
+    // convenience macros for accessing spike count
+    os << "#define spike" << eventMacroSuffix << "Count_" << ng.getName() << " glbSpkCnt" << eventSuffix << ng.getName();
+    if (delayRequired) {
+        os << "[spkQuePtr" << ng.getName() << "]";
+    }
+    else {
+        os << "[0]";
+    }
+    os << std::endl;
+
+    // convenience macro for accessing spikes
+    os << "#define spike" << eventMacroSuffix << "_" << ng.getName();
+    if (delayRequired) {
+        os << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << "))";
+    }
+    else {
+        os << " glbSpk" << eventSuffix << ng.getName();
+    }
+    os << std::endl << std::endl;
+}
+//-------------------------------------------------------------------------
 void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
                          const std::string &description, bool unitialisedLogic,
                          std::function<void()> handler)
@@ -153,6 +182,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
         definitionsVar << "#define " << n.first << "_REMOTE" << std::endl;
 
+        // Write convenience macros to access spikes
+        writeSpikeMacros(definitionsVar, n.second, true);
+
         // If this neuron group has outputs to local host
         if(n.second.hasOutputToHost(localHostID)) {
             // Check that, whatever variable mode is set for these variables,
@@ -183,6 +215,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     allVarStreams << std::endl;
 
     for(const auto &n : model.getLocalNeuronGroups()) {
+        // Write convenience macros to access spikes
+        writeSpikeMacros(definitionsVar, n.second, true);
+
         // True spike variable
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "Spikes", true,
             [&]()
@@ -204,6 +239,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
         // If neuron ngroup eeds to emit spike-like events
         if (n.second.isSpikeEventRequired()) {
+            // Write convenience macros to access spike-like events
+            writeSpikeMacros(definitionsVar, n.second, false);
+
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "SpikeEvents", true,
                 [&]()
                 {
