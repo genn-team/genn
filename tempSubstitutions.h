@@ -4,6 +4,7 @@
 #include <string>
 
 // Forward declarations
+class CurrentSource;
 class NeuronGroup;
 class SynapseGroup;
 
@@ -20,10 +21,14 @@ namespace CodeGenerator
 {
 void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng,
                                    const std::string &varPrefix, const std::string &varSuffix = "", const std::string &varExt = "");
+
 void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroup &sg, const std::string &varPrefix);
 
 void applyWeightUpdateModelSubstitutions(std::string &code, const SynapseGroup &sg,
                                          const std::string &varPrefix, const std::string &varSuffix = "", const std::string &varExt = "");
+
+void applyCurrentSourceSubstitutions(std::string &code, const CurrentSource &cs,
+                                     const std::string &varPrefix);
 
 void applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit);
 

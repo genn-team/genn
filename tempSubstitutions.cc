@@ -2,6 +2,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
+#include "currentSource.h"
 #include "initSparseConnectivitySnippet.h"
 #include "neuronGroup.h"
 #include "synapseGroup.h"
@@ -69,6 +70,23 @@ void CodeGenerator::applyWeightUpdateModelSubstitutions(std::string &code, const
     else {
         value_substitutions(code, wuVars.nameBegin, wuVars.nameEnd, sg.getWUConstInitVals());
     }
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::applyCurrentSourceSubstitutions(std::string &code, const CurrentSource &cs,
+                                                    const std::string &varPrefix)
+{
+    const auto* csm = cs.getCurrentSourceModel();
+
+    // Create iteration context to iterate over the variables; derived and extra global parameters
+    VarNameIterCtx csVars(csm->getVars());
+    DerivedParamNameIterCtx csDerivedParams(csm->getDerivedParams());
+    ExtraGlobalParamNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
+
+
+    name_substitutions(code, varPrefix, csVars.nameBegin, csVars.nameEnd);
+    value_substitutions(code, csm->getParamNames(), cs.getParams());
+    value_substitutions(code, csDerivedParams.nameBegin, csDerivedParams.nameEnd, cs.getDerivedParams());
+    name_substitutions(code, "", csExtraGlobalParams.nameBegin, csExtraGlobalParams.nameEnd, cs.getName());
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit)

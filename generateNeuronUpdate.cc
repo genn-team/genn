@@ -85,7 +85,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                     // **TODO** base behaviour from NewModels::Base
                     for (const auto &v : psm->getVars()) {
                         os << v.second << " lps" << v.first << sg->getName();
-                        os << " = " << backend.getVarPrefix() << v.first << sg->getName() << "[n];" << std::endl;
+                        os << " = " << backend.getVarPrefix() << v.first << sg->getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
                     }
                 }
 
@@ -106,6 +106,35 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 os << psCode << std::endl;
                 if (!psm->getSupportCode().empty()) {
                     os << CodeStream::CB(29) << " // namespace bracket closed" << std::endl;
+                }
+            }
+
+            // Loop through all of neuron group's current sources
+            for (const auto *cs : ng.getCurrentSources())
+            {
+                os << "// current source " << cs->getName() << std::endl;
+                CodeStream::Scope b(os);
+
+                const auto* csm = cs->getCurrentSourceModel();
+
+                // Read current source variables into registers
+                for(const auto &v : csm->getVars()) {
+                    os <<  v.second << " lcs" << v.first << " = " << backend.getVarPrefix() << v.first << cs->getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                }
+
+                Substitutions currSourceSubs(&popSubs);
+                currSourceSubs.addFuncSubstitution("injectCurrent", 1, "Isyn += $(0)");
+
+                string iCode = csm->getInjectionCode();
+                applyCurrentSourceSubstitutions(iCode, *cs, "lcs");
+                currSourceSubs.apply(iCode);
+                iCode = ensureFtype(iCode, model.getPrecision());
+                checkUnreplacedVariables(iCode, cs->getName() + " : current source injectionCode");
+                os << iCode << std::endl;
+
+                // Write updated variables back to global memory
+                for(const auto &v : csm->getVars()) {
+                    os << backend.getVarPrefix() << v.first << cs->getName() << "[" << popSubs.getVarSubstitution("id") << "] = lcs" << v.first << ";" << std::endl;
                 }
             }
 
