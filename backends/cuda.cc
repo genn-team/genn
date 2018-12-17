@@ -194,7 +194,11 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
                 popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs.getVarSubstitution("id") + "]");
                 
                 // Call handler to generate generic neuron code
-                handler(os, ng, popSubs);
+                os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
+                {
+                    CodeStream::Scope b(os);
+                    handler(os, ng, popSubs);
+                }
 
                 os << "__syncthreads();" << std::endl;
 
