@@ -66,6 +66,9 @@ void CodeGenerator::applyWeightUpdateModelSubstitutions(std::string &code, const
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         name_substitutions(code, varPrefix, wuVars.nameBegin, wuVars.nameEnd, varSuffix, varExt);
     }
+    else {
+        value_substitutions(code, wuVars.nameBegin, wuVars.nameEnd, sg.getWUConstInitVals());
+    }
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit)

@@ -551,6 +551,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
                     assert(false);
                 }
 
+                popSubs.addVarSubstitution("id_pre", popSubs.getVarSubstitution("id"));
                 sgSparseConnectHandler(os, sg, popSubs);
             });
         os << std::endl;
