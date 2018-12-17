@@ -84,6 +84,13 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
+    void genVariablePushPull(CodeStream &push, CodeStream &pull,
+                             const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const
+    {
+        genVariablePush(push, type, name, mode, autoInitialized, count);
+        genVariablePull(pull, type, name, mode, count);
+    }
+
     void genArray(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                   const std::string &type, const std::string &name, VarMode mode, size_t count) const
     {
@@ -98,8 +105,7 @@ public:
                      const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const
     {
         genArray(definitions, runner, allocations, free, type, name, mode, count);
-        genVariablePush(push, type, name, mode, autoInitialized, count);
-        genVariablePull(pull, type, name, mode, count);
+        genVariablePushPull(push, pull, type, name, mode, autoInitialized, count);
     }
 
 protected:

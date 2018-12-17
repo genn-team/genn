@@ -73,7 +73,7 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
     runnerPushFunc << std::endl;
     runnerPullFunc << std::endl;
 }
-}
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // CodeGenerator
@@ -161,13 +161,17 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                 gennError("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
             }
 
-            backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, "unsigned int", "glbSpkCnt"+n.first, n.second.getSpikeVarMode(),
-                             n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
-            backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, "unsigned int", "glbSpk"+n.first, n.second.getSpikeVarMode(),
-                             n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
-
-            definitionsFunc << "void push" << n.first << "SpikesToDevice(bool uninitialisedOnly = false);" << std::endl;
-            definitionsFunc << "void push" << n.first << "CurrentSpikesToDevice();" << std::endl;
+            // True spike variable
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "Spikes", true,
+                [&]()
+                {
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeVarMode(), true,
+                                        n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1);
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        "unsigned int", "glbSpk" + n.first, n.second.getSpikeVarMode(), true,
+                                        n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons());
+                });
         }
     }
     allVarStreams << std::endl;
@@ -292,7 +296,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     allVarStreams << "// postsynaptic variables" << std::endl;
     allVarStreams << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
-        // Loop through incoming synaptic populations
+        // Loop through merged incoming synaptic populations
+        // **NOTE** because of merging we need to loop through postsynaptic models in this
         for(const auto &m : n.second.getMergedInSyn()) {
             const auto *sg = m.first;
 
@@ -368,7 +373,6 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                         // Allocate remap
                         backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
                                             "unsigned int", "remap" + s.first, varMode, autoInitialized, postSize);
-
                     }
                 }
             });
@@ -381,6 +385,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     allVarStreams << std::endl;
     for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
+        const auto *psm = s.second.getPSModel();
 
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first + "State", true,
             [&]()
@@ -424,7 +429,23 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                                         wuPostVars[i].second, wuPostVars[i].first + s.first, s.second.getWUPostVarMode(i), autoInitialized, postSize);
                 }
 
-                // **TODO** postsynaptic model variables
+                // If this synapse group's postsynaptic models hasn't been merged (which makes pulling them somewhat ambiguous)
+                // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
+                if(!s.second.isPSModelMerged()) {
+                    // Add code to push and pull inSyn
+                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.first,
+                                                s.second.getInSynVarMode(), true, s.second.getTrgNeuronGroup()->getNumNeurons());
+
+                    // If this synapse group has individual postsynaptic model variables
+                    if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                        const auto psmVars = psm->getVars();
+                        for(size_t i = 0; i < psmVars.size(); i++) {
+                            const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
+                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].second, psmVars[i].first + s.first,
+                                                        s.second.getPSVarMode(i), autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
+                        }
+                    }
+                }
             });
 
         for(const auto &v : wu->getExtraGlobalParams()) {
