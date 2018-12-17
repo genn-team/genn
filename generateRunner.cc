@@ -40,7 +40,7 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
     }
     os << std::endl;
 }
-
+//-------------------------------------------------------------------------
 void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
                          const std::string &description, bool unitialisedLogic,
                          std::function<void()> handler)
@@ -70,6 +70,8 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
 
         handler();
     }
+    runnerPushFunc << std::endl;
+    runnerPullFunc << std::endl;
 }
 }
 
@@ -325,47 +327,51 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     allVarStreams << "// synapse connectivity" << std::endl;
     allVarStreams << std::endl;
     for(const auto &s : model.getLocalSynapseGroups()) {
-        const auto *wu = s.second.getWUModel();
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first + "Connectivity", true,
+            [&]()
+            {
+                const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-            backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             "uint32_t", "gp" + s.first, s.second.getSparseConnectivityVarMode(), gpSize);
-        }
-        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-            const VarMode varMode = s.second.getSparseConnectivityVarMode();
-            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
+                if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,runnerPushFunc, runnerPullFunc,
+                                        "uint32_t", "gp" + s.first, s.second.getSparseConnectivityVarMode(), autoInitialized, gpSize);
+                }
+                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    const VarMode varMode = s.second.getSparseConnectivityVarMode();
+                    const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
 
-            // Row lengths
-            backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             "unsigned int", "rowLength" + s.first, varMode, s.second.getSrcNeuronGroup()->getNumNeurons());
+                    // Row lengths
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        "unsigned int", "rowLength" + s.first, varMode, autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
-            // Target indices
-            backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             "unsigned int", "ind" + s.first, varMode, size);
+                    // Target indices
+                    backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                        "unsigned int", "ind" + s.first, varMode, autoInitialized, size);
 
-            // **TODO** remap is not always required
-            if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-                // Allocate synRemap
-                // **THINK** this is over-allocating
-                backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 "unsigned int", "synRemap" + s.first, varMode, size + 1);
-            }
+                    // **TODO** remap is not always required
+                    if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+                        // Allocate synRemap
+                        // **THINK** this is over-allocating
+                        backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                            "unsigned int", "synRemap" + s.first, varMode, autoInitialized, size + 1);
+                    }
 
-            // **TODO** remap is not always required
-            if(!s.second.getWUModel()->getLearnPostCode().empty()) {
-                const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
+                    // **TODO** remap is not always required
+                    if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+                        const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
 
-                // Allocate column lengths
-                backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 "unsigned int", "colLength" + s.first, varMode, s.second.getTrgNeuronGroup()->getNumNeurons());
+                        // Allocate column lengths
+                        backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                            "unsigned int", "colLength" + s.first, varMode, autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
 
-                // Allocate remap
-                backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 "unsigned int", "remap" + s.first, varMode, postSize);
+                        // Allocate remap
+                        backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
+                                            "unsigned int", "remap" + s.first, varMode, autoInitialized, postSize);
 
-            }
-        }
+                    }
+                }
+            });
     }
 
     //----------------------------------
