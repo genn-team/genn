@@ -19,36 +19,78 @@
 
 using namespace CodeGenerator;
 
-
-int main()
+// Anonymous namespace
+namespace
 {
+void modelDefinition(NNmodel &model)
+{
+    GENN_PREFERENCES::autoInitSparseVars = true;
     GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
-    GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
+    GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_DEVICE_INIT_DEVICE;
     initGeNN();
-
-    NNmodel model;
-    model.setDT(0.1);
-    model.setName("izk_regimes");
+    model.setDT(1.0);
+    model.setName("tutorial2");
 
     // Izhikevich model parameters
-    NeuronModels::Izhikevich::ParamValues paramValues(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues initValues(-65.0, -20.0);
+    NeuronModels::Izhikevich::ParamValues izkParams(
+        0.02,   // 0 - A
+        0.2,    // 1 - B
+        -65.0,  // 2 - C
+        8.0);   // 3 - D
 
-    WeightUpdateModels::StaticPulse::VarValues wumVar(0.5);
+    // Izhikevich initial conditions
+    InitVarSnippet::Uniform::ParamValues uDist(
+        0.0,    // 0 - min
+        20.0);  // 1 - max
+    NeuronModels::Izhikevich::VarValues ikzInit(
+        -65.0,                                      // 0 - V
+        initVar<InitVarSnippet::Uniform>(uDist));   // 1 - U
+
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Exc", 8000, izkParams, ikzInit);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Inh", 2000, izkParams, ikzInit);
+
+    // DC current source parameters
+    CurrentSourceModels::DC::ParamValues currentSourceParamVals(4.0);  // 0 - magnitude
+    model.addCurrentSource<CurrentSourceModels::DC>("ExcStim", "Exc", currentSourceParamVals, {});
+    model.addCurrentSource<CurrentSourceModels::DC>("InhStim", "Inh", currentSourceParamVals, {});
+
+    WeightUpdateModels::StaticPulse::VarValues excSynInitValues(0.05);
+    WeightUpdateModels::StaticPulse::VarValues inhSynInitValues(-0.25);
 
     InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProb(0.1); // 0 - prob
-
-    // Create population of Izhikevich neurons
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 4, paramValues, initValues);
-    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY,
-        "Neurons", "Neurons",
-        {}, wumVar,
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Exc_Exc", SynapseMatrixType::RAGGED_GLOBALG, NO_DELAY,
+        "Exc", "Exc",
+        {}, excSynInitValues,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbabilityNoAutapse>(fixedProb));
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Exc_Inh", SynapseMatrixType::RAGGED_GLOBALG, NO_DELAY,
+        "Exc", "Inh",
+        {}, excSynInitValues,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Inh_Inh", SynapseMatrixType::RAGGED_GLOBALG, NO_DELAY,
+        "Inh", "Inh",
+        {}, inhSynInitValues,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbabilityNoAutapse>(fixedProb));
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Inh_Exc", SynapseMatrixType::RAGGED_GLOBALG, NO_DELAY,
+        "Inh", "Exc",
+        {}, inhSynInitValues,
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
 
-    //syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
     model.finalize();
+}
+}
+
+int main()
+{
+    NNmodel model;
+    modelDefinition(model);
     
     // Create backends
     Backends::SingleThreadedCPU cpuBackend(0);
