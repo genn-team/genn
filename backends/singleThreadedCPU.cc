@@ -60,7 +60,7 @@ void SingleThreadedCPU::genNeuronUpdate(CodeStream &os, const NNmodel &model, Ne
                 }
                 os << std::endl;
 
-                os << "for(size_t i = 0; i < " <<  n.second.getNumNeurons() << "; i++)";
+                os << "for(unsigned int i = 0; i < " <<  n.second.getNumNeurons() << "; i++)";
                 {
                     CodeStream::Scope b(os);
 
@@ -276,8 +276,15 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genDefinitionsPreamble(CodeStream &) const
+void SingleThreadedCPU::genDefinitionsPreamble(CodeStream &os) const
 {
+    os << "// Standard C++ includes" << std::endl;
+    os << "#include <iostream>" << std::endl;
+    os << "#include <random>" << std::endl;
+    os << std::endl;
+    os << "// Standard C includes" << std::endl;
+    os << "#include <cmath>" << std::endl;
+    os << "#include <cstring>" << std::endl;
 }
 //--------------------------------------------------------------------------
 void SingleThreadedCPU::genRunnerPreamble(CodeStream &) const
@@ -406,7 +413,7 @@ void SingleThreadedCPU::genMakefileCompileRule(std::ostream &os) const
 bool SingleThreadedCPU::isGlobalRNGRequired(const NNmodel &model) const
 {
     // **TODO** move logic from method in here as it is backend-logic specific
-    return model.isHostRNGRequired();
+    return true;//model.isHostRNGRequired();
 }
 //--------------------------------------------------------------------------
 void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
@@ -485,6 +492,13 @@ void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const SynapseGroup 
             synSubs.addVarSubstitution("id_post", "ipost");
             synSubs.addVarSubstitution("id_syn", "synAddress");
 
+            if(sg.isDendriticDelayRequired()) {
+                synSubs.addFuncSubstitution("addToInSynDelay", 2, "denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+            }
+            else {
+                synSubs.addFuncSubstitution("addToInSyn", 1, "inSyn" + sg.getPSModelTargetName() + "[ipost] += $(0)");
+
+            }
             wumSimHandler(os, sg, synSubs);
 
             if (!trueSpike) {
