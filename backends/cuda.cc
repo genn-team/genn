@@ -265,7 +265,7 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
         );
     }
 
-    os << "void updateNeurons(float t)";
+    os << "void updateNeurons(" << model.getTimePrecision() << ")";
     {
         CodeStream::Scope b(os);
         if(idPreNeuronReset > 0) {
@@ -345,7 +345,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     for (const auto &p : model.getSynapseKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
-    os << model.getPrecision() << " t)" << std::endl; // end of synapse kernel header
+    os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
     {
         CodeStream::Scope b(os);
         
@@ -470,7 +470,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         );
     }
 
-    os << "void updateSynapses(float t)";
+    os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
         if(idPreSynapseReset > 0) {
@@ -869,6 +869,22 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
             os << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
         }
 
+        for(const auto &s : model.getLocalSynapseGroups()) {
+            if(s.second.isDeviceSparseConnectivityInitRequired()) {
+                // If this synapse population has BITMASK connectivity, insert a call to cudaMemset to zero the whole bitmask
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                    os << "cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
+                }
+                // If this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
+                else if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                    && model.isSynapseGroupPostLearningRequired(s.first))
+                {
+                    os << "cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int));" << std::endl;
+                }
+            }
+        }
+
         // If there are any initialisation threads
         if(idInitStart > 0) {
             const size_t gridSize = ceilDivide(idInitStart, m_InitBlockSize);
@@ -1120,9 +1136,12 @@ void CUDA::genMakefileLinkRule(std::ostream &os) const
 //--------------------------------------------------------------------------
 void CUDA::genMakefileCompileRule(std::ostream &os) const
 {
+    // Add one rule to generate dependency files from cc files
     os << "%.d: %.cc" << std::endl;
     os << "\t$(NVCC) -M $(NVCCFLAGS) $< 1> $@" << std::endl;
     os << std::endl;
+
+    // Add another to build object files from cc files
     os << "%.o: %.cc %.d" << std::endl;
     os << "\t$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
 }
