@@ -29,7 +29,8 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const override;
+                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                                  SynapseGroupHandler postLearnHandler) const override;
 
     virtual void genInit(CodeStream &os, const NNmodel &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,

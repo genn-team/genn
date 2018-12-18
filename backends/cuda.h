@@ -26,7 +26,7 @@ namespace Backends
 class CUDA : public Base
 {
 public:
-    CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize, size_t preNeuronResetBlockSize, size_t preSynapseResetBlockSize,
+    CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t postsynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize, size_t preNeuronResetBlockSize, size_t preSynapseResetBlockSize,
          int localHostID, const Base &hostBackend);
 
     //--------------------------------------------------------------------------
@@ -35,7 +35,8 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const override;
+                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                                  SynapseGroupHandler postLearnHandler) const override;
 
     virtual void genInit(CodeStream &os, const NNmodel &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
@@ -159,6 +160,7 @@ private:
                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
     size_t getPresynapticUpdateKernelSize(const SynapseGroup &sg) const;
+    size_t getPostsynapticUpdateKernelSize(const SynapseGroup &sg) const;
 
     bool shouldAccumulateInLinSyn(const SynapseGroup &sg) const;
 
@@ -175,6 +177,7 @@ private:
     
     const size_t m_NeuronUpdateBlockSize;
     const size_t m_PresynapticUpdateBlockSize;
+    const size_t m_PostsynapticUpdateBlockSize;
     const size_t m_InitBlockSize;
     const size_t m_InitSparseBlockSize;
     const size_t m_PreNeuronResetBlockSize;

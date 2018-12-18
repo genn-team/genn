@@ -48,11 +48,12 @@ namespace CodeGenerator
 {
 namespace Backends
 {
-CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize, size_t preNeuronResetBlockSize, size_t preSynapseResetBlockSize,
+CUDA::CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t postsynapticUpdateBlockSize,
+           size_t initBlockSize, size_t initSparseBlockSize, size_t preNeuronResetBlockSize, size_t preSynapseResetBlockSize,
            int localHostID, const Base &hostBackend)
 :   m_HostBackend(hostBackend), m_NeuronUpdateBlockSize(neuronUpdateBlockSize), m_PresynapticUpdateBlockSize(presynapticUpdateBlockSize),
-    m_InitBlockSize(initBlockSize), m_InitSparseBlockSize(initSparseBlockSize), m_PreNeuronResetBlockSize(preNeuronResetBlockSize),
-    m_PreSynapseResetBlockSize(preSynapseResetBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
+    m_PostsynapticUpdateBlockSize(postsynapticUpdateBlockSize), m_InitBlockSize(initBlockSize), m_InitSparseBlockSize(initSparseBlockSize),
+    m_PreNeuronResetBlockSize(preNeuronResetBlockSize), m_PreSynapseResetBlockSize(preSynapseResetBlockSize), m_LocalHostID(localHostID), m_ChosenDevice(-1)
 {
     // Get number of CUDA devices and reserve memory
     int numDevices;
@@ -303,7 +304,8 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
 }
 //--------------------------------------------------------------------------
 void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
-                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                            SynapseGroupHandler postLearnHandler) const
 {
     // If a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
@@ -470,6 +472,115 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         );
     }
 
+    size_t idPostsynapticStart = 0;
+    if(!model.getSynapsePostLearnGroups().empty()) {
+        os << "__global__ void updatePostsynapticKernel(";
+        for (const auto &p : model.getSimLearnPostKernelParameters()) {
+            os << p.second << " " << p.first << ", ";
+        }
+        os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs(cudaFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
+            os << "const unsigned int id = " << m_PostsynapticUpdateBlockSize << " * blockIdx.x + threadIdx.x; " << std::endl;
+            os << "__shared__ unsigned int shSpk[" << m_PostsynapticUpdateBlockSize << "];" << std::endl;
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                [&model](const NNmodel::SynapseGroupValueType &s)
+                {
+                    return ((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) && !s.second.getWUModel()->getLearnPostCode().empty());
+                }))
+            {
+                os << "__shared__ unsigned int shColLength[" << m_PostsynapticUpdateBlockSize << "];" << std::endl;
+            }
+
+            // Parallelise over synapse groups
+            genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
+                [this](const SynapseGroup &sg){ return getPostsynapticUpdateKernelSize(sg); },
+                [](const SynapseGroup &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
+                [postLearnHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
+                {
+                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                    if(sg.getSrcNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("dd_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                    if(sg.getTrgNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot("dd_") << ";" << std::endl;
+                        os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    if (sg.getTrgNeuronGroup()->isDelayRequired() && sg.getTrgNeuronGroup()->isTrueSpikeRequired()) {
+                        os << "const unsigned int numSpikes = dd_glbSpkCnt" << sg.getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
+                    }
+                    else {
+                        os << "const unsigned int numSpikes = dd_glbSpkCnt" << sg.getTrgNeuronGroup()->getName() << "[0];" << std::endl;
+                    }
+
+                    os << "const unsigned int numSpikeBlocks = (numSpikes + " << m_PostsynapticUpdateBlockSize-1 << ") / " << m_PostsynapticUpdateBlockSize << ";" << std::endl;
+                    os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << m_PostsynapticUpdateBlockSize << ") + 1 : " << m_PostsynapticUpdateBlockSize << ";" << std::endl;
+
+                        os << "if (threadIdx.x < numSpikesInBlock)";
+                        {
+                            CodeStream::Scope b(os);
+                            const string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
+                            os << "const unsigned int spk = dd_glbSpk" << sg.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << std::endl;
+                            os << "shSpk[threadIdx.x] = spk;" << std::endl;
+
+                            if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                os << "shColLength[threadIdx.x] = dd_colLength" << sg.getName() << "[spk];" << std::endl;
+                            }
+                        }
+
+                        os << "__syncthreads();" << std::endl;
+                        os << "// only work on existing neurons" << std::endl;
+                        os << "if (" << popSubs.getVarSubstitution("id") << " < " << sg.getMaxSourceConnections() << ")";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "// loop through all incoming spikes for learning" << std::endl;
+                            os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
+                            {
+                                CodeStream::Scope b(os);
+                                if (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                    os << "unsigned int synAddress = shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ";" << std::endl;
+                                    os << "const unsigned int npre = shColLength[j];" << std::endl;
+
+                                    os << "if (" << popSubs.getVarSubstitution("id") << " < npre)" << CodeStream::OB(1540);
+                                    os << "synAddress += " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+                                    os << "const unsigned int ipre = dd_remap" + sg.getName() + "[synAddress] / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
+                                }
+                                else {
+                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+                                }
+
+                                if (!sg.getWUModel()->getLearnPostSupportCode().empty()) {
+                                    os << " using namespace " << sg.getName() << "_weightupdate_simLearnPost;" << std::endl;
+                                }
+
+                                Substitutions synSubs(&popSubs);
+                                synSubs.addVarSubstitution("id_pre", "ipre");
+                                synSubs.addVarSubstitution("id_post", "shSpk[j]");
+                                synSubs.addVarSubstitution("id_syn", "synAddress");
+
+                                postLearnHandler(os, sg, synSubs);
+
+                                if (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                    os << CodeStream::CB(1540);
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+    }
+
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
@@ -484,12 +595,25 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
         if(idPresynapticStart > 0) {
             const size_t gridSize = ceilDivide(idPresynapticStart, m_PresynapticUpdateBlockSize);
-            os << "const dim3 preSynapticThreads(" << m_PresynapticUpdateBlockSize << ", 1);" << std::endl;
-            os << "const dim3 preSynapticGrid(" << gridSize << ", 1);" << std::endl;
+            os << "const dim3 presynapticThreads(" << m_PresynapticUpdateBlockSize << ", 1);" << std::endl;
+            os << "const dim3 presynapticGrid(" << gridSize << ", 1);" << std::endl;
 
             // Launch kernel
-            os << "updatePresynapticKernel<<<preSynapticGrid, preSynapticThreads>>>(";
+            os << "updatePresynapticKernel<<<presynapticGrid, presynapticThreads>>>(";
             for(const auto &p : model.getSynapseKernelParameters()) {
+                os << p.first << ", ";
+            }
+            os << "t);" << std::endl;
+        }
+
+        if(idPostsynapticStart > 0) {
+            const size_t gridSize = ceilDivide(idPostsynapticStart, m_PostsynapticUpdateBlockSize);
+            os << "const dim3 postsynapticThreads(" << m_PostsynapticUpdateBlockSize << ", 1);" << std::endl;
+            os << "const dim3 postsynapticGrid(" << gridSize << ", 1);" << std::endl;
+
+            // Launch kernel
+            os << "updatePostsynapticKernel<<<postsynapticGrid, postsynapticThreads>>>(";
+            for(const auto &p : model.getSimLearnPostKernelParameters()) {
                 os << p.first << ", ";
             }
             os << "t);" << std::endl;
@@ -1466,13 +1590,22 @@ size_t CUDA::getPresynapticUpdateKernelSize(const SynapseGroup &sg) const
         }
         else {
             // paddedSize is the lowest multiple of blockSize >= maxConn[i]
-            // **TODO** integer ceil trick
             return padSize(sg.getMaxConnections(), m_PresynapticUpdateBlockSize);
         }
     }
     else {
         // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
         return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_PresynapticUpdateBlockSize);
+    }
+}
+//--------------------------------------------------------------------------
+size_t CUDA::getPostsynapticUpdateKernelSize(const SynapseGroup &sg) const
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return padSize(sg.getMaxSourceConnections(), m_PostsynapticUpdateBlockSize);
+    }
+    else {
+        return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_PostsynapticUpdateBlockSize);
     }
 }
 //--------------------------------------------------------------------------
