@@ -284,7 +284,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
         // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
-            backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, model.getTimePrecision()+" *", "sT"+n.first, n.second.getSpikeTimeVarMode(),
+            backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, model.getTimePrecision(), "sT" + n.first, n.second.getSpikeTimeVarMode(),
                              n.second.getNumNeurons() * n.second.getNumDelaySlots());
         }
 
