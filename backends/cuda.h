@@ -112,9 +112,9 @@ private:
                           GroupHandler<T> handler) const
     {
         // Populate neuron update groups
-        Substitutions popSubs(&kernelSubs);
         for (const auto &g : groups) {
             // If this synapse group should be processed
+            Substitutions popSubs(&kernelSubs);
             if(filter(g.second)) {
                 const size_t paddedSize = getPaddedSizeFunc(g.second);
 
