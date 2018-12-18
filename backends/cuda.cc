@@ -921,9 +921,6 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
 //--------------------------------------------------------------------------
 void CUDA::genDefinitionsPreamble(CodeStream &os) const
 {
-    // Allow host backend to generate any of it's own preamble
-    m_HostBackend.genDefinitionsPreamble(os);
-
     os << "// Standard C++ includes" << std::endl;
     os << "#include <string>" << std::endl;
     os << "#include <stdexcept>" << std::endl;
@@ -943,9 +940,6 @@ void CUDA::genDefinitionsPreamble(CodeStream &os) const
 //--------------------------------------------------------------------------
 void CUDA::genRunnerPreamble(CodeStream &os) const
 {
-    // Allow host backend to generate any of it's own preamble
-    m_HostBackend.genRunnerPreamble(os);
-
     // **TODO** move these into a header file shipped with GeNN and copied into generated code along with non-uniform RNGs
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
