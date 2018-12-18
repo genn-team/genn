@@ -147,7 +147,7 @@ private:
         genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
                             [](const T&){ return true; }, handler);
     }
-                                 
+
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
 
     void genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const;
@@ -159,15 +159,15 @@ private:
                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
     size_t getPresynapticUpdateKernelSize(const SynapseGroup &sg) const;
-    
+
     bool shouldAccumulateInLinSyn(const SynapseGroup &sg) const;
-    
+
     bool shouldAccumulateInSharedMemory(const SynapseGroup &sg) const;
-    
+
     std::string getFloatAtomicAdd(const std::string &ftype) const;
-    
+
     const cudaDeviceProp &getChosenCUDADevice() const{ return m_Devices[m_ChosenDevice]; }
-    
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
