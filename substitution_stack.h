@@ -36,14 +36,20 @@ public:
     //--------------------------------------------------------------------------
     void addVarSubstitution(const std::string &source, const std::string &destionation) 
     {
-        m_VarSubstitutions.emplace(source, destionation);
+        auto res = m_VarSubstitutions.emplace(source, destionation);
+        if(!res.second) {
+            throw std::runtime_error("'" + source + "' already has a variable substitution");
+        }
     }
 
     void addFuncSubstitution(const std::string &source, unsigned int numArguments, const std::string &funcTemplate)
     {
-        m_FuncSubstitutions.emplace(std::piecewise_construct,
-                                    std::forward_as_tuple(source),
-                                    std::forward_as_tuple(numArguments, funcTemplate));
+        auto res = m_FuncSubstitutions.emplace(std::piecewise_construct,
+                                               std::forward_as_tuple(source),
+                                               std::forward_as_tuple(numArguments, funcTemplate));
+        if(!res.second) {
+            throw std::runtime_error("'" + source + "' already has a function substitution");
+        }
     }
 
     bool hasVarSubstitution(const std::string &source) const
