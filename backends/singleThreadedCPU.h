@@ -63,14 +63,14 @@ public:
     virtual void genMakefileLinkRule(std::ostream &os) const override;
     virtual void genMakefileCompileRule(std::ostream &os) const override;
 
-    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
+    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup &ng, const Substitutions &subs) const override
     {
-        genEmitSpike(os, subs, "");
+        genEmitSpike(os, ng, subs, "");
     }
     
-    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &, const NeuronGroup &, const Substitutions &subs) const override
+    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &, const NeuronGroup &ng, const Substitutions &subs) const override
     {
-        genEmitSpike(os, subs, "Evnt");
+        genEmitSpike(os, ng, subs, "Evnt");
     }
 
     virtual std::string getVarPrefix() const override{ return ""; }
@@ -81,29 +81,10 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    /*void genParallelNeuronGroup(CodeStream &os, const std::map<std::string, NeuronGroup> &ngs, const Substitutions &subs, 
-                                std::function<bool(const NeuronGroup &)> filter,
-                                std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NeuronGroup&, const Substitutions &)> handler) const;
+    void genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                              SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
-    void genParallelNeuronGroup(CodeStream &os, const std::map<std::string, NeuronGroup> &ngs, const Substitutions &subs, 
-                                std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NeuronGroup&, const Substitutions &)> handler) const
-    {
-        genParallelNeuronGroup(os, ngs, subs, [](const NeuronGroup&){ return true; }, handler);
-    }
-
-    void genParallelSynapseGroup(CodeStream &os, const NNmodel &model, const Substitutions &subs, 
-                                 std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
-                                 std::function<bool(const SynapseGroup &)> filter,
-                                 std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions &)> handler) const;
-
-    void genParallelSynapseGroup(CodeStream &os, const NNmodel &model, const Substitutions &subs, 
-                                 std::function<size_t(const SynapseGroup&)> getPaddedSizeFunc,
-                                 std::function<void(CodeStream &, const ::CodeGenerator::Base&, const NNmodel&, const SynapseGroup&, const Substitutions &)> handler) const
-    {
-        genParallelSynapseGroup(os, model, subs, getPaddedSizeFunc, [](const SynapseGroup&){ return true; }, handler);
-    }*/
-                                 
-    void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
+    void genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, const std::string &suffix) const;
 
   
     //--------------------------------------------------------------------------
