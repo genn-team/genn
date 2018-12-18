@@ -194,6 +194,10 @@ void modelDefinition(NNmodel &model)
 
     model.finalize();
 }
+
+void optimizeBlockSize(unsigned int deviceID)
+{
+}
 }
 
 int main()
@@ -203,7 +207,9 @@ int main()
     
     // Create backends
     Backends::SingleThreadedCPU cpuBackend(0);
-    Backends::CUDA backend(128, 128, 64, 64, 64, 32, 32, 0, cpuBackend);
+
+    Backends::CUDA::KernelBlockSize cudaBlockSize{128, 128, 64, 64, 64, 32, 32};
+    Backends::CUDA backend(cudaBlockSize, 0, cpuBackend);
     //Backends::SingleThreadedCPU backend(0);
 
     // Create directory for generated code

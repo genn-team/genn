@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <array>
 #include <functional>
 #include <map>
 #include <string>
@@ -26,8 +27,27 @@ namespace Backends
 class CUDA : public Base
 {
 public:
-    CUDA(size_t neuronUpdateBlockSize, size_t presynapticUpdateBlockSize, size_t postsynapticUpdateBlockSize, size_t initBlockSize, size_t initSparseBlockSize, size_t preNeuronResetBlockSize, size_t preSynapseResetBlockSize,
-         int localHostID, const Base &hostBackend);
+    //--------------------------------------------------------------------------
+    // Enumerations
+    //--------------------------------------------------------------------------
+    enum Kernel
+    {
+        KernelNeuronUpdate,
+        KernelPresynapticUpdate,
+        KernelPostsynapticUpdate,
+        KernelInitialize,
+        KernelInitializeSparse,
+        KernelPreNeuronReset,
+        KernelPreSynapseReset,
+        KernelMax
+    };
+
+    //--------------------------------------------------------------------------
+    // Type definitions
+    //--------------------------------------------------------------------------
+    using KernelBlockSize = std::array<size_t, KernelMax>;
+
+    CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, const Base &hostBackend);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
@@ -96,7 +116,15 @@ public:
 
     virtual bool isGlobalRNGRequired(const NNmodel &model) const override;
 
+    //--------------------------------------------------------------------------
+    // Constants
+    //--------------------------------------------------------------------------
+    static const char *KernelNames[KernelMax];
+
 private:
+    //--------------------------------------------------------------------------
+    // Type definitions
+    //--------------------------------------------------------------------------
     template<typename T>
     using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
 
@@ -175,13 +203,7 @@ private:
     //--------------------------------------------------------------------------
     const Base &m_HostBackend;
     
-    const size_t m_NeuronUpdateBlockSize;
-    const size_t m_PresynapticUpdateBlockSize;
-    const size_t m_PostsynapticUpdateBlockSize;
-    const size_t m_InitBlockSize;
-    const size_t m_InitSparseBlockSize;
-    const size_t m_PreNeuronResetBlockSize;
-    const size_t m_PreSynapseResetBlockSize;
+    const KernelBlockSize m_KernelBlockSizes;
     const int m_LocalHostID;
     
     std::vector<cudaDeviceProp> m_Devices;
