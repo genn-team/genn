@@ -1,6 +1,10 @@
+#include <bitset>
 #include <fstream>
 #include <iostream>
 #include <string>
+
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
 
 // GeNN includes
 #include "codeStream.h"
@@ -24,6 +28,13 @@
 #include "common/vogels_2011.h"
 
 using namespace CodeGenerator;
+
+enum Log
+{
+    LogDefault,
+    LogBackend,
+    LogOptimiser,
+};
 
 // Anonymous namespace
 namespace
@@ -195,23 +206,8 @@ void modelDefinition(NNmodel &model)
     model.finalize();
 }
 
-void optimizeBlockSize(unsigned int deviceID)
+std::vector<std::string> generateCode(const NNmodel &model, const Backends::Base &backend)
 {
-}
-}
-
-int main()
-{
-    NNmodel model;
-    modelDefinition(model);
-    
-    // Create backends
-    Backends::SingleThreadedCPU cpuBackend(0);
-
-    Backends::CUDA::KernelBlockSize cudaBlockSize{128, 128, 64, 64, 64, 32, 32};
-    Backends::CUDA backend(cudaBlockSize, 0, cpuBackend);
-    //Backends::SingleThreadedCPU backend(0);
-
     // Create directory for generated code
     filesystem::create_directory("generated_code");
 
@@ -228,16 +224,167 @@ int main()
     CodeStream synapseUpdate(synapseUpdateStream);
     CodeStream init(initStream);
     CodeStream runner(runnerStream);
-    
+
     // Generate modules
     generateNeuronUpdate(neuronUpdate, model, backend);
     generateSynapseUpdate(synapseUpdate, model, backend);
     generateInit(init, model, backend);
     generateRunner(definitions, runner, model, backend, 0);
 
+    // Return names of generated modules
+    return {"neuronUpdate", "synapseUpdate", "init", "runner"};
+}
+void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes)[Backends::CUDA::KernelMax])
+{
+    using namespace Backends;
+
+    // **TODO** this belongs in code generator somewhere
+
+    // Loop through neuron groups
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        // Add number of neurons to vector of neuron kernels
+        groupSizes[CUDA::KernelNeuronUpdate].push_back(n.second.getNumNeurons());
+
+        // If this neuron group requires on-device initialisation
+        if(n.second.isSimRNGRequired() || n.second.isDeviceVarInitRequired()) {
+            groupSizes[CUDA::KernelInitialize].push_back(n.second.getNumNeurons());
+        }
+    }
+
+    // Loop through synapse groups
+    for(const auto &s : model.getLocalSynapseGroups()) {
+        groupSizes[CUDA::KernelPresynapticUpdate].push_back(CUDA::getNumPresynapticUpdateThreads(s.second));
+
+        if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+            groupSizes[CUDA::KernelPostsynapticUpdate].push_back(CUDA::getNumPostsynapticUpdateThreads(s.second));
+        }
+
+        /*if (model.isSynapseGroupDynamicsRequired(s.first)) {
+            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                groupSizes[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
+            }
+            else {
+                groupSizes[KernelCalcSynapseDynamics].push_back(numSrcNeurons * numTrgNeurons);
+            }
+        }*/
+
+        // If synapse group has individual weights and needs device initialisation
+        if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired()) {
+            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                groupSizes[CUDA::KernelInitializeSparse].push_back(numSrcNeurons);
+            }
+            else {
+                groupSizes[CUDA::KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
+            }
+        }
+    }
+
+    // Add group sizes for reset kernels
+    groupSizes[CUDA::KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
+    groupSizes[CUDA::KernelPreSynapseReset].push_back(model.getNumPreSynapseResetRequiredGroups());
+}
+
+void optimizeBlockSize(int deviceID, const NNmodel &model, Backends::CUDA::KernelBlockSize &blockSize)
+{
+    using namespace Backends;
+
+    // Calculate model group sizes
+    std::vector<unsigned int> groupSizes[Backends::CUDA::KernelMax];
+    calcGroupSizes(model, groupSizes);
+
+    // obtaining ptxas info.
+    CUdevice cuDevice;
+    CUcontext cuContext;
+    CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
+    CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
+
+    // Bitset to mark which kernels are present and array of their attributes for each repetition
+    std::bitset<CUDA::KernelMax> kernelExists(false);
+    cudaFuncAttributes krnlAttr[2][CUDA::KernelMax];
+
+    // Do two repititions with different candidate kernel size
+    const size_t warpSize = 32;
+    for(unsigned int rep = 0; rep < 2; rep++) {
+        const size_t repBlockSize = warpSize * (rep + 1);
+        LOGD_(LogOptimiser)  << "Generating code with block size:" << repBlockSize << std::endl;
+
+        // Start with all group sizes set to warp size
+        std::fill(blockSize.begin(), blockSize.end(), repBlockSize);
+
+        // Create backends
+        Backends::SingleThreadedCPU cpuBackend(0);
+        Backends::CUDA backend(blockSize, 0, deviceID, cpuBackend);
+
+        // Generate code
+        const auto moduleNames = generateCode(model, backend);
+
+        // Set context
+        // **NOTE** CUDA calls in code generation seem to lose driver context
+        CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
+
+        // Loop through generated modules
+        for(const auto &m : moduleNames) {
+            // Build module
+            const std::string nvccCommand = "nvcc -cubin " + backend.getNVCCFlags() + " -o generated_code/" + m + ".cubin generated_code/" + m + ".cc";
+            if(system(nvccCommand.c_str()) != 0) {
+                throw std::runtime_error("optimizeBlockSize: NVCC failed");
+            }
+
+            // Load compiled module
+            CUmodule module;
+            CHECK_CU_ERRORS(cuModuleLoad(&module, ("generated_code/" + m + ".cubin").c_str()));
+
+            // Loop through kernels
+            for (unsigned int i = 0; i < CUDA::KernelMax; i++) {
+
+                // If function is found
+                CUfunction kern;
+                CUresult res = cuModuleGetFunction(&kern, module, CUDA::KernelNames[i]);
+                if (res == CUDA_SUCCESS) {
+                    LOGD_(LogOptimiser) << "Function " << CUDA::KernelNames[i] << " found" << std::endl;
+
+                    // Read it's attributes and mark it as existing
+                    cudaFuncGetAttributesDriver(&krnlAttr[rep][i], kern);
+                    kernelExists[i] = true;
+                }
+            }
+
+            // Unload module
+            CHECK_CU_ERRORS(cuModuleUnload(module));
+        }
+    }
+
+    // Destroy context
+    CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
+}
+}   // Anonymous namespace
+
+int main()
+{
+    // Initialise log channels, appending all to console
+    plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+    plog::init<LogDefault>(plog::debug, &consoleAppender);
+    plog::init<LogBackend>(plog::debug, &consoleAppender);
+    plog::init<LogOptimiser>(plog::debug, &consoleAppender);
+
+    NNmodel model;
+    modelDefinition(model);
+    
+    Backends::CUDA::KernelBlockSize cudaBlockSize{128, 128, 64, 64, 64, 32, 32};
+    optimizeBlockSize(0, model, cudaBlockSize);
+
+     // Create backends
+    Backends::SingleThreadedCPU cpuBackend(0);
+    Backends::CUDA backend(cudaBlockSize, 0, 0, cpuBackend);
+    //Backends::SingleThreadedCPU backend(0);
+
+    const auto moduleNames = generateCode(model, backend);
+
     // Create makefile to compile and link all generated modules
     std::ofstream makefile("generated_code/Makefile");
-    generateMakefile(makefile, backend, {"neuronUpdate", "synapseUpdate", "init", "runner"});
+    generateMakefile(makefile, backend, moduleNames);
 
     return EXIT_SUCCESS;
 }

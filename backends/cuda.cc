@@ -57,28 +57,14 @@ const char *CUDA::KernelNames[KernelMax] = {
     "preNeuronResetKernel",
     "preSynapseResetKernel"};
 //--------------------------------------------------------------------------
-CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, const Base &hostBackend)
-:   m_HostBackend(hostBackend), m_KernelBlockSizes(kernelBlockSizes), m_LocalHostID(localHostID), m_ChosenDevice(-1)
+CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device, const Base &hostBackend)
+:   m_HostBackend(hostBackend), m_KernelBlockSizes(kernelBlockSizes), m_LocalHostID(localHostID)
 {
-    // Get number of CUDA devices and reserve memory
-    int numDevices;
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&numDevices));
+    // Set device
+    CHECK_CUDA_ERRORS(cudaSetDevice(device));
 
-    // If any devices were found
-    if(numDevices > 0) {
-        m_Devices.reserve(numDevices);
-
-        std::cout << numDevices << " CUDA device found" << std::endl;
-        for (int i = 0; i < numDevices; i++) {
-            CHECK_CUDA_ERRORS(cudaSetDevice(i));
-
-            // Get device properties and add to devices
-            m_Devices.push_back(cudaDeviceProp());
-            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&m_Devices.back(), i));
-        }
-
-        m_ChosenDevice = 0;
-    }
+    // Get device properties
+    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&m_ChosenDevice, device));
 
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
@@ -88,7 +74,7 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
 {
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
-    os << "__global__ void " << KernelNames[KernelPreNeuronReset] << "()";
+    os << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "()";
     {
         CodeStream::Scope b(os);
 
@@ -143,7 +129,7 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
     /*
     for(const auto &n : model.getLocalNeuronGroups()) {*/
     size_t idStart = 0;
-    os << "__global__ void " << KernelNames[KernelNeuronUpdate] << "(";
+    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(";
     for(const auto &p : model.getNeuronKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
@@ -317,7 +303,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     if(model.isPreSynapseResetRequired())
     {
         // pre synapse reset kernel header
-        os << "__global__ void " << KernelNames[KernelPreSynapseReset] << "()";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
         {
             CodeStream::Scope b(os);
 
@@ -348,7 +334,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     }
 
     size_t idPresynapticStart = 0;
-    os << "__global__ void " << KernelNames[KernelPresynapticUpdate] << "(";
+    os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(";
     for (const auto &p : model.getSynapseKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
@@ -396,7 +382,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         
         // Parallelise over synapse groups
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
-            [this](const SynapseGroup &sg){ return getPresynapticUpdateKernelSize(sg); },
+            [this](const SynapseGroup &sg){ return padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
             [wumThreshHandler, wumSimHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
             {
                 if (sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -479,7 +465,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
     size_t idPostsynapticStart = 0;
     if(!model.getSynapsePostLearnGroups().empty()) {
-        os << "__global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
         for (const auto &p : model.getSimLearnPostKernelParameters()) {
             os << p.second << " " << p.first << ", ";
         }
@@ -503,7 +489,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
             // Parallelise over synapse groups
             genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
-                [this](const SynapseGroup &sg){ return getPostsynapticUpdateKernelSize(sg); },
+                [this](const SynapseGroup &sg){ return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
                 [](const SynapseGroup &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
                 [postLearnHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
                 {
@@ -638,7 +624,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
 
     // If device RNG is required, generate kernel to initialise it
     if(model.isDeviceRNGRequired()) {
-        os << "__global__ void initializeRNGKernel(unsigned long long deviceRNGSeed)";
+        os << "extern \"C\" __global__ void initializeRNGKernel(unsigned long long deviceRNGSeed)";
         {
             CodeStream::Scope b(os);
             os << "if(threadIdx.x == 0)";
@@ -651,7 +637,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
     }
 
     // init kernel header
-    os << "__global__ void " << KernelNames[KernelInitialize] << "(";
+    os << "extern \"C\" __global__ void " << KernelNames[KernelInitialize] << "(";
     for(const auto &p : model.getInitKernelParameters()) {
         os << p.second << " " << p.first << ", ";
     }
@@ -812,7 +798,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
     if(model.isDeviceSparseInitRequired()) {
-        os << "__global__ void " << KernelNames[KernelInitializeSparse] << "()";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
             CodeStream::Scope b(os);
 
@@ -1224,25 +1210,10 @@ void CUDA::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared --linker-options '-fPIC' -arch " + architecture;
-    std::string nvccFlags = "-std=c++11 --compiler-options '-fPIC' -x cu -arch " + architecture;
-    nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
-    if (GENN_PREFERENCES::optimizeCode) {
-        nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
-    }
-    if (GENN_PREFERENCES::debugCode) {
-        nvccFlags += " -O0 -g -G";
-    }
-    if (GENN_PREFERENCES::showPtxInfo) {
-        nvccFlags += " -Xptxas \"-v\"";
-    }
-#ifdef MPI_ENABLE
-    // If MPI is enabled, add MPI include path
-    cxxFlags +=" -I\"$(MPI_PATH)/include\"";
-#endif
 
     // Write variables to preamble
     os << "NVCC := nvcc" << std::endl;
-    os << "NVCCFLAGS := " << nvccFlags << std::endl;
+    os << "NVCCFLAGS := " << getNVCCFlags() << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -1267,6 +1238,54 @@ bool CUDA::isGlobalRNGRequired(const NNmodel &model) const
 {
     // **TODO** move logic from method in here as it is backend-logic specific
     return model.isDeviceRNGRequired();
+}
+//--------------------------------------------------------------------------
+std::string CUDA::getNVCCFlags() const
+{
+    const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    std::string nvccFlags = "-std=c++11 --compiler-options '-fPIC' -x cu -arch " + architecture;
+    nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
+    if (GENN_PREFERENCES::optimizeCode) {
+        nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+    }
+    if (GENN_PREFERENCES::debugCode) {
+        nvccFlags += " -O0 -g -G";
+    }
+    if (GENN_PREFERENCES::showPtxInfo) {
+        nvccFlags += " -Xptxas \"-v\"";
+    }
+#ifdef MPI_ENABLE
+    // If MPI is enabled, add MPI include path
+    nvccFlags +=" -I\"$(MPI_PATH)/include\"";
+#endif
+    return nvccFlags;
+}
+//--------------------------------------------------------------------------
+size_t CUDA::getNumPresynapticUpdateThreads(const SynapseGroup &sg)
+{
+     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
+            return sg.getSrcNeuronGroup()->getNumNeurons();
+        }
+        else {
+            // paddedSize is the lowest multiple of blockSize >= maxConn[i]
+            return sg.getMaxConnections();
+        }
+    }
+    else {
+        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+size_t CUDA::getNumPostsynapticUpdateThreads(const SynapseGroup &sg)
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return sg.getMaxSourceConnections();
+    }
+    else {
+        return sg.getSrcNeuronGroup()->getNumNeurons();
+    }
 }
 //--------------------------------------------------------------------------
 void CUDA::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
@@ -1578,33 +1597,6 @@ void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, co
                 }
             }
         }
-    }
-}
-//--------------------------------------------------------------------------
-size_t CUDA::getPresynapticUpdateKernelSize(const SynapseGroup &sg) const
-{
-     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-            return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelPresynapticUpdate]);
-        }
-        else {
-            // paddedSize is the lowest multiple of blockSize >= maxConn[i]
-            return padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelPresynapticUpdate]);
-        }
-    }
-    else {
-        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
-        return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelPresynapticUpdate]);
-    }
-}
-//--------------------------------------------------------------------------
-size_t CUDA::getPostsynapticUpdateKernelSize(const SynapseGroup &sg) const
-{
-    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        return padSize(sg.getMaxSourceConnections(), m_KernelBlockSizes[KernelPostsynapticUpdate]);
-    }
-    else {
-        return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelPostsynapticUpdate]);
     }
 }
 //--------------------------------------------------------------------------

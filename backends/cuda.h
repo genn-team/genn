@@ -47,7 +47,7 @@ public:
     //--------------------------------------------------------------------------
     using KernelBlockSize = std::array<size_t, KernelMax>;
 
-    CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, const Base &hostBackend);
+    CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device, const Base &hostBackend);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
@@ -115,6 +115,18 @@ public:
     virtual std::string getVarPrefix() const override{ return "dd_"; }
 
     virtual bool isGlobalRNGRequired(const NNmodel &model) const override;
+
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    const cudaDeviceProp &getChosenCUDADevice() const{ return m_ChosenDevice; }
+    std::string getNVCCFlags() const;
+
+    //--------------------------------------------------------------------------
+    // Static API
+    //--------------------------------------------------------------------------
+    static size_t getNumPresynapticUpdateThreads(const SynapseGroup &sg);
+    static size_t getNumPostsynapticUpdateThreads(const SynapseGroup &sg);
 
     //--------------------------------------------------------------------------
     // Constants
@@ -187,16 +199,11 @@ private:
     void genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
-    size_t getPresynapticUpdateKernelSize(const SynapseGroup &sg) const;
-    size_t getPostsynapticUpdateKernelSize(const SynapseGroup &sg) const;
-
     bool shouldAccumulateInLinSyn(const SynapseGroup &sg) const;
 
     bool shouldAccumulateInSharedMemory(const SynapseGroup &sg) const;
 
     std::string getFloatAtomicAdd(const std::string &ftype) const;
-
-    const cudaDeviceProp &getChosenCUDADevice() const{ return m_Devices[m_ChosenDevice]; }
 
     //--------------------------------------------------------------------------
     // Members
@@ -206,8 +213,7 @@ private:
     const KernelBlockSize m_KernelBlockSizes;
     const int m_LocalHostID;
     
-    std::vector<cudaDeviceProp> m_Devices;
-    int m_ChosenDevice;
+    cudaDeviceProp m_ChosenDevice;
 
     int m_RuntimeVersion;
 };
