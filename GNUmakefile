@@ -35,7 +35,7 @@ endif
 NUGENN_SOURCES      := main.cc generateInit.cc generateMakefile.cc generateNeuronUpdate.cc generateRunner.cc generateSynapseUpdate.cc tempSubstitutions.cc backends/cuda.cc backends/singleThreadedCPU.cc
 NUGENN_SOURCES      :=$(addprefix $(NUGENN_PATH)/,$(NUGENN_SOURCES))
 
-INCLUDE_FLAGS                 += -I $(BOB_ROBOTICS_PATH) -I ~/genn_examples
+INCLUDE_FLAGS                 += -I third_party -I $(BOB_ROBOTICS_PATH) -I ~/genn_examples
 
 # Target rules
 .PHONY: all clean clean_generate_nugenn always_compile
