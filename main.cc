@@ -545,6 +545,37 @@ void optimizeBlockSize(int deviceID, const NNmodel &model, Backends::CUDA::Kerne
         }
     }
 }
+
+int chooseDeviceWithMostGlobalMemory()
+{
+    // Get number of devices
+    int deviceCount;
+    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+    if(deviceCount == 0) {
+        throw std::runtime_error("No CUDA devices found");
+    }
+
+    // Loop through devices
+    size_t mostGlobalMemory = 0;
+    int bestDevice = -1;
+    for(int d = 0; d < deviceCount; d++) {
+        // Select device
+        CHECK_CUDA_ERRORS(cudaSetDevice(d));
+
+        // Get properties
+        cudaDeviceProp deviceProps;
+        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
+
+        // If this device improves on previous best
+        if(deviceProps.totalGlobalMem > mostGlobalMemory) {
+            mostGlobalMemory = deviceProps.totalGlobalMem;
+            bestDevice = d;
+        }
+    }
+
+    LOGI_(LogOptimiser) << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
+    return bestDevice;
+}
 }   // Anonymous namespace
 
 int main()
@@ -558,15 +589,20 @@ int main()
 
     NNmodel model;
     modelDefinition(model);
-    
+
+    const int localHostID = 0;
+
+    // Choose the device with the most memory
+    const int deviceID = chooseDeviceWithMostGlobalMemory();
+
     // Optimise block sizes
     Backends::CUDA::KernelBlockSize cudaBlockSize;
-    optimizeBlockSize(0, model, cudaBlockSize);
+    optimizeBlockSize(deviceID, model, cudaBlockSize);
 
      // Create backends
-    Backends::SingleThreadedCPU cpuBackend(0);
-    Backends::CUDA backend(cudaBlockSize, 0, 0, cpuBackend);
-    //Backends::SingleThreadedCPU backend(0);
+    Backends::SingleThreadedCPU cpuBackend(localHostID);
+    Backends::CUDA backend(cudaBlockSize, localHostID, deviceID, cpuBackend);
+    //Backends::SingleThreadedCPU backend(localHostID);
 
     // Generate code
     const auto moduleNames = generateCode(model, backend);
