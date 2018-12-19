@@ -35,6 +35,7 @@ public:
         KernelNeuronUpdate,
         KernelPresynapticUpdate,
         KernelPostsynapticUpdate,
+        KernelSynapseDynamicsUpdate,
         KernelInitialize,
         KernelInitializeSparse,
         KernelPreNeuronReset,
@@ -127,6 +128,7 @@ public:
     //--------------------------------------------------------------------------
     static size_t getNumPresynapticUpdateThreads(const SynapseGroup &sg);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroup &sg);
+    static size_t getNumSynapseDynamicsThreads(const SynapseGroup &sg);
 
     //--------------------------------------------------------------------------
     // Constants

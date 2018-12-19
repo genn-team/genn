@@ -69,7 +69,18 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, 
             baseSubs.apply(code);
             code= ensureFtype(code, model.getPrecision());
             checkUnreplacedVariables(code, sg.getName() + " : simLearnPost");
+
+            if (!sg.getWUModel()->getLearnPostSupportCode().empty()) {
+                os << " using namespace " << sg.getName() << "_weightupdate_simLearnPost;" << std::endl;
+            }
             os << code;
+        },
+        // Synapse dynamics
+        [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
+        {
+            if (!sg.getWUModel()->getSynapseDynamicsSuppportCode().empty()) {
+                os << " using namespace " << sg.getName() << "_weightupdate_synapseDynamics;" << std::endl;
+            }
         }
     );
 }

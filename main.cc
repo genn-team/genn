@@ -324,14 +324,9 @@ void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes
             groupSizes[CUDA::KernelPostsynapticUpdate].push_back(CUDA::getNumPostsynapticUpdateThreads(s.second));
         }
 
-        /*if (model.isSynapseGroupDynamicsRequired(s.first)) {
-            if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupSizes[KernelCalcSynapseDynamics].push_back(numSrcNeurons * maxConnections);
-            }
-            else {
-                groupSizes[KernelCalcSynapseDynamics].push_back(numSrcNeurons * numTrgNeurons);
-            }
-        }*/
+        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
+            groupSizes[CUDA::KernelSynapseDynamicsUpdate].push_back(CUDA::getNumSynapseDynamicsThreads(s.second));
+        }
 
         // If synapse group has individual weights and needs device initialisation
         if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUDeviceVarInitRequired()) {

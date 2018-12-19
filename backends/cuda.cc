@@ -52,6 +52,7 @@ const char *CUDA::KernelNames[KernelMax] = {
     "updateNeuronsKernel",
     "updatePresynapticKernel",
     "updatePostsynapticKernel",
+    "updateSynapseDynamicsKernel",
     "initializeKernel",
     "initializeSparseKernel",
     "preNeuronResetKernel",
@@ -487,7 +488,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                 os << "__shared__ unsigned int shColLength[" << m_KernelBlockSizes[KernelPostsynapticUpdate] << "];" << std::endl;
             }
 
-            // Parallelise over synapse groups
+            // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
             genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
                 [this](const SynapseGroup &sg){ return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
                 [](const SynapseGroup &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
@@ -550,10 +551,6 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                                     os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " << popSubs.getVarSubstitution("id") << ";" << std::endl;
                                 }
 
-                                if (!sg.getWUModel()->getLearnPostSupportCode().empty()) {
-                                    os << " using namespace " << sg.getName() << "_weightupdate_simLearnPost;" << std::endl;
-                                }
-
                                 Substitutions synSubs(&popSubs);
                                 synSubs.addVarSubstitution("id_pre", "ipre");
                                 synSubs.addVarSubstitution("id_post", "shSpk[j]");
@@ -570,6 +567,76 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                 }
             );
         }
+    }
+
+    size_t idSynapseDynamicsStart = 0;
+    os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
+    for (const auto &p : model.getSynapseDynamicsKernelParameters()) {
+        os << p.second << " " << p.first << ", ";
+    }
+    os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+    {
+        CodeStream::Scope b(os);
+
+        Substitutions kernelSubs(cudaFunctions);
+        kernelSubs.addVarSubstitution("t", "t");
+
+        // Parallelise over synapse groups whose weight update models have code for synapse dynamics
+        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
+            [this](const SynapseGroup &sg){ return padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
+            [](const SynapseGroup &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
+            [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
+            {
+                const auto *wu = sg.getWUModel();
+
+                // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                if(sg->getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("dd_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                if(sg->getTrgNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                Substitutions synSubs(&popSubs);
+
+                if (sg->getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    os << "if (" << popSubs.getVarSubstitution("id") << " < dd_synRemap" << sg.getName() << "[0])";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // Determine synapse and presynaptic indices for this thread
+                        os << "const unsigned int s = dd_synRemap" << sg.getName() << "[1 + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
+
+                        synSubs.addVarSubstitution("id_pre", "s / " + std::to_string(sg.getMaxConnections());
+                        synSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[" + synIdx + "]";
+                        synSubs.addVarSubstitution("id_syn", "s");
+                    }
+                }
+                else {
+                    os << "if (" << popSubs.getVarSubstitution("id") << " < " << sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    {
+                        CodeStream::Scope b(os);
+
+                        Substitutions synSubs(&popSubs);
+                        synSubs.addVarSubstitution("id_pre", popSubs.getVarSubstitution("id") + " / " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons());
+                        synSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id") + " % " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons());
+                        synSubs.addVarSubstitution("id_syn", popSubs.getVarSubstitution("id"));
+                    }
+                }
+
+                // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                if(sg.isDendriticDelayRequired()) {
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg->getDendriticDelayOffset("dd_", "$(1)") + synSubs.getVarSubstitution("id_post") + "], $(0))");
+                }
+                // Otherwise
+                else {
+                    synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs.getVarSubstitution("id_post") + "], $(0))");
+                }
+
+                synapseDynamicsHandler(os, sg, synSubs);
+            });
     }
 
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
@@ -1285,6 +1352,16 @@ size_t CUDA::getNumPostsynapticUpdateThreads(const SynapseGroup &sg)
     }
     else {
         return sg.getSrcNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+size_t CUDA::getNumSynapseDynamicsThreads(const SynapseGroup &sg)
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return getSrcNeuronGroup()->getNumNeurons() * getMaxConnections()
+    }
+    else {
+        return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
     }
 }
 //--------------------------------------------------------------------------
