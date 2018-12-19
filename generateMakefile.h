@@ -21,5 +21,5 @@ namespace Backends
 namespace CodeGenerator
 {
 void generateMakefile(std::ostream &os, const Backends::Base &backend,
-                      const std::vector<std::string> moduleNames);
+                      const std::vector<std::string> &moduleNames);
 }
