@@ -1,6 +1,7 @@
 #include <bitset>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <string>
 
 #include <plog/Log.h>
@@ -234,6 +235,65 @@ std::vector<std::string> generateCode(const NNmodel &model, const Backends::Base
     // Return names of generated modules
     return {"neuronUpdate", "synapseUpdate", "init", "runner"};
 }
+
+// **TODO** move somewhere
+size_t ceilDivide(size_t numerator, size_t denominator)
+{
+    return ((numerator + denominator - 1) / denominator);
+}
+//--------------------------------------------------------------------------
+size_t padSize(size_t size, size_t blockSize)
+{
+    return ceilDivide(size, blockSize) * blockSize;
+}
+//--------------------------------------------------------------------------
+void getOptimisationData(const cudaDeviceProp &deviceProps, size_t &warpAllocGran, size_t &regAllocGran,
+                         size_t &smemAllocGran, size_t &maxBlocksPerSM)
+{
+    if(deviceProps.major == 1) {
+        smemAllocGran = 512;
+        warpAllocGran = 2;
+        regAllocGran = (deviceProps.minor < 2) ? 256 : 512;
+        maxBlocksPerSM = 8;
+    }
+    else if(deviceProps.major == 2) {
+        smemAllocGran = 128;
+        warpAllocGran = 2;
+        regAllocGran = 64;
+        maxBlocksPerSM = 8;
+    }
+    else if(deviceProps.major == 3) {
+        smemAllocGran = 256;
+        warpAllocGran = 4;
+        regAllocGran = 256;
+        maxBlocksPerSM = 16;
+    }
+    else if(deviceProps.major == 5) {
+        smemAllocGran = 256;
+        warpAllocGran = 4;
+        regAllocGran = 256;
+        maxBlocksPerSM = 32;
+    }
+    else if(deviceProps.major == 6) {
+        smemAllocGran = 256;
+        warpAllocGran = (deviceProps.minor == 0) ? 2 : 4;
+        regAllocGran = 256;
+        maxBlocksPerSM = 32;
+    }
+    else {
+        smemAllocGran = 256;
+        warpAllocGran = 4;
+        regAllocGran = 256;
+        maxBlocksPerSM = 32;
+
+        if(deviceProps.major > 7) {
+            LOGW << "Unsupported CUDA device major version: " << deviceProp[theDevice].major;
+            LOGW << "This is a bug! Please report it at https://github.com/genn-team/genn.";
+            LOGW << "Falling back to next latest SM version parameters.";
+        }
+    }
+}
+
 void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes)[Backends::CUDA::KernelMax])
 {
     using namespace Backends;
@@ -302,16 +362,21 @@ void optimizeBlockSize(int deviceID, const NNmodel &model, Backends::CUDA::Kerne
 
     // Bitset to mark which kernels are present and array of their attributes for each repetition
     std::bitset<CUDA::KernelMax> kernelExists(false);
+    std::bitset<CUDA::KernelMax> kernelSmallModel(false);
+    std::array<size_t, CUDA::KernelMax> occupancy;
     cudaFuncAttributes krnlAttr[2][CUDA::KernelMax];
+
+    // Zero occupancy
+    std::fill(occupancy.begin(), occupancy.end(), 0);
 
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
-    for(unsigned int rep = 0; rep < 2; rep++) {
-        const size_t repBlockSize = warpSize * (rep + 1);
-        LOGD_(LogOptimiser)  << "Generating code with block size:" << repBlockSize << std::endl;
+    const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
+    for(unsigned int r = 0; r < 2; r++) {
+        LOGD_(LogOptimiser)  << "Generating code with block size:" << repBlockSizes[r];
 
         // Start with all group sizes set to warp size
-        std::fill(blockSize.begin(), blockSize.end(), repBlockSize);
+        std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backends
         Backends::SingleThreadedCPU cpuBackend(0);
@@ -338,16 +403,18 @@ void optimizeBlockSize(int deviceID, const NNmodel &model, Backends::CUDA::Kerne
 
             // Loop through kernels
             for (unsigned int i = 0; i < CUDA::KernelMax; i++) {
-
                 // If function is found
                 CUfunction kern;
                 CUresult res = cuModuleGetFunction(&kern, module, CUDA::KernelNames[i]);
                 if (res == CUDA_SUCCESS) {
-                    LOGD_(LogOptimiser) << "Function " << CUDA::KernelNames[i] << " found" << std::endl;
+                    LOGD_(LogOptimiser) << "\tKernel '" << CUDA::KernelNames[i] << "' found";
 
                     // Read it's attributes and mark it as existing
-                    cudaFuncGetAttributesDriver(&krnlAttr[rep][i], kern);
+                    cudaFuncGetAttributesDriver(&krnlAttr[r][i], kern);
                     kernelExists[i] = true;
+
+                    LOGD_(LogOptimiser) << "\t\tShared memory bytes:" << krnlAttr[r][i].sharedSizeBytes;
+                    LOGD_(LogOptimiser) << "\t\tNum registers:" << krnlAttr[r][i].numRegs;
                 }
             }
 
@@ -358,12 +425,132 @@ void optimizeBlockSize(int deviceID, const NNmodel &model, Backends::CUDA::Kerne
 
     // Destroy context
     CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
+
+    // Get device properties
+    cudaDeviceProp deviceProps;
+    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
+
+    // Get device optimisation data
+    size_t warpAllocGran;
+    size_t regAllocGran;
+    size_t smemAllocGran;
+    size_t maxBlocksPerSM;
+    getOptimisationData(deviceProps, warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM);
+
+    // Zero block sizes
+    std::fill(blockSize.begin(), blockSize.end(), 0);
+
+    // Loop through kernels
+    for (unsigned int i = 0; i < CUDA::KernelMax; i++) {
+        // If kernel exists
+        if(kernelExists[i]) {
+            LOGD_(LogOptimiser) << "Kernel '" << CUDA::KernelNames[i] << "':";
+
+            // Get required number of registers and shared memory bytes for this kernel
+            // **NOTE** register requirements are assumed to remain constant as they're vector-width
+            const size_t reqNumRegs = krnlAttr[0][i].numRegs;
+            const size_t reqSharedMemBytes[2] = {krnlAttr[0][i].sharedSizeBytes, krnlAttr[1][i].sharedSizeBytes};
+
+            // Calculate coefficients for requiredSharedMemBytes = (A * blockThreads) + B model
+            const size_t reqSharedMemBytesA = (reqSharedMemBytes[1] - reqSharedMemBytes[0]) / (repBlockSizes[1] - repBlockSizes[0]);
+            const size_t reqSharedMemBytesB = reqSharedMemBytes[0] - (reqSharedMemBytesA * repBlockSizes[0]);
+
+            // Loop through possible
+            const size_t maxBlockWarps = deviceProps.maxThreadsPerBlock / warpSize;
+            for(size_t blockWarps = 1; blockWarps < maxBlockWarps; blockWarps++) {
+                const size_t blockThreads = blockWarps * warpSize;
+                LOGD_(LogOptimiser) << "\tCandidate block size:" << blockThreads;
+
+                // Estimate shared memory for block size and padd
+                const size_t reqSharedMemBytes = padSize((reqSharedMemBytesA * blockThreads) + reqSharedMemBytesB, smemAllocGran);
+                LOGD_(LogOptimiser) << "\t\tEstimated shared memory required:" << reqSharedMemBytes << " bytes (padded)";
+
+                // Calculate number of blocks the groups used by this kernel will require
+                const size_t reqBlocks = std::accumulate(groupSizes[i].begin(), groupSizes[i].end(), 0,
+                                                         [blockThreads](size_t acc, size_t size)
+                                                         {
+                                                             return acc + ceilDivide(size, blockThreads);
+                                                         });
+                LOGD_(LogOptimiser) << "\t\tBlocks required (according to padded sum):" << reqBlocks;
+
+                // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
+                size_t smBlockLimit = deviceProps.maxThreadsPerMultiProcessor / blockThreads;
+                LOGD_(LogOptimiser) << "\t\tSM block limit due to maxThreadsPerMultiProcessor:" << smBlockLimit;
+
+                smBlockLimit = std::min(smBlockLimit, maxBlocksPerSM);
+                LOGD_(LogOptimiser) << "\t\tSM block limit corrected for maxBlocksPerSM:" << smBlockLimit;
+
+                // If register allocation is per-block
+                if (deviceProps.major == 1) {
+                    // Pad size of block based on warp allocation granularity
+                    const size_t paddedNumBlockWarps = padSize(blockWarps, warpAllocGran);
+
+                    // Calculate number of registers per block and pad with register allocation granularity
+                    const size_t paddedNumRegPerBlock = padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
+
+                    // Update limit based on maximum registers per block
+                    // **NOTE** this doesn't quite make sense either
+                    smBlockLimit = std::min(smBlockLimit, deviceProps.regsPerBlock / paddedNumRegPerBlock);
+                }
+                // Otherwise, if register allocation is per-warp
+                else {
+                    // Caculate number of registers per warp and pad with register allocation granularity
+                    const size_t paddedNumRegPerWarp = padSize(reqNumRegs * warpSize, regAllocGran);
+
+                    // **THINK** I don't understand this
+                    //blockLimit = floor(deviceProps.regsPerBlock / (paddedNumRegPerWarp * warpAllocGran)*warpAllocGran;
+
+                    // **NOTE** this doesn't quite make sense either
+                    //smBlockLimit = std::min(smBlockLimit, blockLimit / blockWarps);
+                }
+                LOGD_(LogOptimiser) << "\t\tSM block limit corrected for registers:" << smBlockLimit;
+
+                // If this kernel requires any shared memory, update limit to reflect shared memory available in each multiprocessor
+                // **NOTE** this used to be sharedMemPerBlock but that seems incorrect
+                if(reqSharedMemBytes != 0) {
+                    smBlockLimit = std::min(smBlockLimit, deviceProps.sharedMemPerMultiprocessor / reqSharedMemBytes);
+                    LOGD_(LogOptimiser) << "\t\tSM block limit corrected for shared memory:" << smBlockLimit;
+                }
+
+                // Calculate occupancy
+                const size_t newOccupancy = blockWarps * smBlockLimit * deviceProps.multiProcessorCount;
+
+                // Use a small block size if it allows all groups to occupy the device concurrently
+                if (reqBlocks <= (smBlockLimit * deviceProps.multiProcessorCount)) {
+                    blockSize[i] = blockThreads;
+                    occupancy[i] = newOccupancy;
+                    kernelSmallModel[i] = true;
+
+                    LOGD_(LogOptimiser) << "\t\tSmall model situation detected - block size:" << blockSize[i];
+
+                    // For small model the first (smallest) block size allowing it is chosen
+                    break;
+                }
+                // Otherwise, if we've improved on previous best occupancy
+                else if(newOccupancy > occupancy[i]) {
+                    blockSize[i] = blockThreads;
+                    occupancy[i] = newOccupancy;
+
+                    LOGD_(LogOptimiser) << "\t\tNew highest occupancy: " << newOccupancy << ", block size:" << blockSize[i];
+                }
+
+            }
+        }
+    }
+
+    // Output final block size
+    for(unsigned int i = 0 ; i < CUDA::KernelMax; i++) {
+        if(blockSize[i] != 0) {
+            LOGI_(LogOptimiser) << "Kernel: " << CUDA::KernelNames[i] << ", block size:" << blockSize[i];
+        }
+    }
 }
 }   // Anonymous namespace
 
 int main()
 {
     // Initialise log channels, appending all to console
+    // **TODO** de-crud standard logger
     plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
     plog::init<LogDefault>(plog::debug, &consoleAppender);
     plog::init<LogBackend>(plog::debug, &consoleAppender);
@@ -372,7 +559,8 @@ int main()
     NNmodel model;
     modelDefinition(model);
     
-    Backends::CUDA::KernelBlockSize cudaBlockSize{128, 128, 64, 64, 64, 32, 32};
+    // Optimise block sizes
+    Backends::CUDA::KernelBlockSize cudaBlockSize;
     optimizeBlockSize(0, model, cudaBlockSize);
 
      // Create backends
@@ -380,6 +568,7 @@ int main()
     Backends::CUDA backend(cudaBlockSize, 0, 0, cpuBackend);
     //Backends::SingleThreadedCPU backend(0);
 
+    // Generate code
     const auto moduleNames = generateCode(model, backend);
 
     // Create makefile to compile and link all generated modules
