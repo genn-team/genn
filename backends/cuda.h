@@ -48,7 +48,7 @@ public:
     //--------------------------------------------------------------------------
     using KernelBlockSize = std::array<size_t, KernelMax>;
 
-    CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device, const Base &hostBackend);
+    CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
@@ -214,8 +214,6 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    const Base &m_HostBackend;
-    
     const KernelBlockSize m_KernelBlockSizes;
     const int m_LocalHostID;
     

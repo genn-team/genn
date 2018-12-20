@@ -374,9 +374,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, B
         // Start with all group sizes set to warp size
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
-        // Create backends
-        Backends::SingleThreadedCPU cpuBackend(0);
-        Backends::CUDA backend(blockSize, 0, deviceID, cpuBackend);
+        // Create backend
+        Backends::CUDA backend(blockSize, 0, deviceID);
 
         // Generate code
         const auto moduleNames = generateCode(model, backend);
@@ -678,8 +677,7 @@ int main()
     const int deviceID = chooseOptimalDevice(model, cudaBlockSize);
 
      // Create backends
-    Backends::SingleThreadedCPU cpuBackend(localHostID);
-    Backends::CUDA backend(cudaBlockSize, localHostID, deviceID, cpuBackend);
+    Backends::CUDA backend(cudaBlockSize, localHostID, deviceID);
     //Backends::SingleThreadedCPU backend(localHostID);
 
     // Generate code

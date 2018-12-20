@@ -58,8 +58,8 @@ const char *CUDA::KernelNames[KernelMax] = {
     "preNeuronResetKernel",
     "preSynapseResetKernel"};
 //--------------------------------------------------------------------------
-CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device, const Base &hostBackend)
-:   m_HostBackend(hostBackend), m_KernelBlockSizes(kernelBlockSizes), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
+CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device)
+:   m_KernelBlockSizes(kernelBlockSizes), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -1156,7 +1156,7 @@ void CUDA::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
 void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
     if(mode & VarLocation::HOST) {
-        m_HostBackend.genVariableDefinition(os, type, name, mode);
+        os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
     }
     if(mode & VarLocation::DEVICE) {
         os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
@@ -1167,7 +1167,7 @@ void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const 
 void CUDA::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
 {
     if(mode & VarLocation::HOST) {
-        m_HostBackend.genVariableImplementation(os, type, name, mode);
+        os << type << " " << name << ";" << std::endl;
     }
     if(mode & VarLocation::DEVICE) {
         os << type << " d_" << name << ";" << std::endl;
