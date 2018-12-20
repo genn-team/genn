@@ -25,7 +25,7 @@ void SingleThreadedCPU::genNeuronUpdate(CodeStream &os, const NNmodel &model, Ne
         Substitutions funcSubs(cpuFunctions);
         funcSubs.addVarSubstitution("t", "t");
 
-        // function code
+        // Update neurons
         for(const auto &n : model.getLocalNeuronGroups()) {
             os << "// neuron group " << n.first << std::endl;
             {
@@ -85,6 +85,10 @@ void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         funcSubs.addVarSubstitution("t", "t");
 
         CodeStream::Scope b(os);
+
+        // Synapse dynamics
+
+        // Presynaptic update
         for(const auto &s : model.getLocalSynapseGroups()) {
             os << "// synapse group " << s.first << std::endl;
             {
@@ -112,6 +116,82 @@ void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                 }
             }
             os << std::endl;
+        }
+
+        // Postsynaptic update
+        for(const auto &s : model.getLocalSynapseGroups()) {
+            if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+                // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                if(s.second.getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int preReadDelayOffset = " << s.second.getPresynapticAxonalDelaySlot("") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                if(s.second.getTrgNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int postReadDelaySlot = " << s.second.getPostsynapticBackPropDelaySlot("") << ";" << std::endl;
+                    os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                // Get number of postsynaptic spikes
+                if (s.second.getTrgNeuronGroup()->isDelayRequired() && s.second.getTrgNeuronGroup()->isTrueSpikeRequired()) {
+                    os << "const unsigned int numSpikes = dd_glbSpkCnt" << s.second.getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
+                }
+                else {
+                    os << "const unsigned int numSpikes = dd_glbSpkCnt" << s.second.getTrgNeuronGroup()->getName() << "[0];" << std::endl;
+                }
+
+                // Loop through postsynaptic spikes
+                os << "for (const unsigned int j = 0; j < numSpikes; j++)";
+                {
+                    CodeStream::Scope b(os);
+
+                    const string offsetTrueSpkPost = (s.second.getTrgNeuronGroup()->isTrueSpikeRequired() && s.second.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
+                    os << "const unsigned int spike = glbSpk" << s.second.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "j];" << std::endl;
+
+                    // Loop through column of presynaptic neurons
+                    if (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                        os << "const unsigned int npre = colLength" << s.first << "[spike];" << std::endl;
+                        os << "for (unsigned int i = 0; i < npre; i++)";
+                    }
+                    else {
+                        os << "for (unsigned int ipre = 0; ipre < " << s.second.getSrcNeuronGroup()->getNumNeurons() << "; ipre++)";
+                    }
+                    {
+                        CodeStream::Scope b(os);
+
+                        Substitutions synSubs(&popSubs);
+                        if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                            os << "const unsigned int synAddress = remap" << s.first << "remap[ipre]"
+                            synSubs.addVarSubstitution("id_pre", "(remap" + s.first + "[ipre] / " + to_string(sg->getMaxConnections()) + ")");
+                            synSubs.addVarSubstitution("id_syn", "synAddress");
+                        }
+                        else {
+                            synSubs.addVarSubstitution("id_pre", "ipre");
+                            synSubs.addVarSubstitution("id_syn", "synAddress");
+                        }
+                        synSubs.addVarSubstitution("id_post", "spike");
+
+                        postLearnHandler(os, sg, synSubs);
+
+                        /*string code = wu->getLearnPostCode();
+                        substitute(code, "$(t)", "t");
+                        // Code substitutions ----------------------------------------------------------------------------------
+
+                        if (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                            name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
+                                                s.first + "[C" + s.first + ".remap[ipre]]");
+
+                            preIndex = "(C" + s.first + ".remap[ipre] / " + to_string(s.second.getMaxConnections()) + ")";
+                        }
+                        else { // DENSE
+                            name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
+                                            s.first + "[spike + " + to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + " * ipre]");
+
+                            preIndex = "ipre";
+                        }*/
+                    }
+                }
+            }
         }
     }
 }
