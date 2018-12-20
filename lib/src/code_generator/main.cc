@@ -212,17 +212,17 @@ void modelDefinition(NNmodel &model)
     model.finalize();
 }
 
-std::vector<std::string> generateCode(const NNmodel &model, const Backends::Base &backend)
+std::vector<std::string> generateCode(const NNmodel &model, const Backends::Base &backend, const filesystem::path &outputPath)
 {
     // Create directory for generated code
-    filesystem::create_directory("generated_code");
+    filesystem::create_directory(outputPath);
 
     // Open output file streams for generated code files
-    std::ofstream definitionsStream("generated_code/definitions.h");
-    std::ofstream neuronUpdateStream("generated_code/neuronUpdate.cc");
-    std::ofstream synapseUpdateStream("generated_code/synapseUpdate.cc");
-    std::ofstream initStream("generated_code/init.cc");
-    std::ofstream runnerStream("generated_code/runner.cc");
+    std::ofstream definitionsStream((outputPath / "definitions.h").str());
+    std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
+    std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
+    std::ofstream initStream((outputPath / "init.cc").str());
+    std::ofstream runnerStream((outputPath / "runner.cc").str());
 
     // Wrap output file streams in CodeStreams for formatting
     CodeStream definitions(definitionsStream);
@@ -347,7 +347,7 @@ void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes
 }
 
 
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, Backends::CUDA::KernelBlockSize &blockSize)
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, Backends::CUDA::KernelBlockSize &blockSize, const filesystem::path &outputPath)
 {
     using namespace Backends;
 
@@ -378,7 +378,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, B
         Backends::CUDA backend(blockSize, 0, deviceID);
 
         // Generate code
-        const auto moduleNames = generateCode(model, backend);
+        const auto moduleNames = generateCode(model, backend, outputPath);
 
         // Set context
         // **NOTE** CUDA calls in code generation seem to lose driver context
@@ -387,14 +387,16 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, B
         // Loop through generated modules
         for(const auto &m : moduleNames) {
             // Build module
-            const std::string nvccCommand = "nvcc -cubin " + backend.getNVCCFlags() + " -o generated_code/" + m + ".cubin generated_code/" + m + ".cc";
+            const std::string modulePath = (outputPath / m).str();
+            
+            const std::string nvccCommand = "nvcc -cubin " + backend.getNVCCFlags() + " -o " + modulePath + ".cubin " + modulePath + ".cc";
             if(system(nvccCommand.c_str()) != 0) {
                 throw std::runtime_error("optimizeBlockSize: NVCC failed");
             }
 
             // Load compiled module
             CUmodule module;
-            CHECK_CU_ERRORS(cuModuleLoad(&module, ("generated_code/" + m + ".cubin").c_str()));
+            CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
 
             // Loop through kernels
             for (unsigned int k = 0; k < CUDA::KernelMax; k++) {
@@ -538,7 +540,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, B
     return kernelsToOptimise;
 }
 
-int chooseOptimalDevice(const NNmodel &model, Backends::CUDA::KernelBlockSize &blockSize)
+int chooseOptimalDevice(const NNmodel &model, Backends::CUDA::KernelBlockSize &blockSize, const filesystem::path &outputPath)
 {
     // Get number of devices
     int deviceCount;
@@ -559,7 +561,7 @@ int chooseOptimalDevice(const NNmodel &model, Backends::CUDA::KernelBlockSize &b
 
         // Optimise block size for this device
         Backends::CUDA::KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize);
+        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), 0,
@@ -665,6 +667,8 @@ int main()
     NNmodel model;
     modelDefinition(model);
 
+    const filesystem::path outputPath("generated_code");
+
     const int localHostID = 0;
 
     // Choose the device with the most memory
@@ -674,17 +678,18 @@ int main()
     Backends::CUDA::KernelBlockSize cudaBlockSize;
     optimizeBlockSize(deviceID, model, cudaBlockSize);*/
     Backends::CUDA::KernelBlockSize cudaBlockSize;
-    const int deviceID = chooseOptimalDevice(model, cudaBlockSize);
+    const int deviceID = chooseOptimalDevice(model, cudaBlockSize, outputPath);
 
      // Create backends
     Backends::CUDA backend(cudaBlockSize, localHostID, deviceID);
     //Backends::SingleThreadedCPU backend(localHostID);
 
+
     // Generate code
-    const auto moduleNames = generateCode(model, backend);
+    const auto moduleNames = generateCode(model, backend, outputPath);
 
     // Create makefile to compile and link all generated modules
-    std::ofstream makefile("generated_code/Makefile");
+    std::ofstream makefile((outputPath / "Makefile").str());
     generateMakefile(makefile, backend, moduleNames);
 
     return EXIT_SUCCESS;
