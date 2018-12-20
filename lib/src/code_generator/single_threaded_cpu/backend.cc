@@ -123,7 +123,7 @@ void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             if(!s.second.getWUModel()->getLearnPostCode().empty()) {
                 // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                 if(s.second.getSrcNeuronGroup()->isDelayRequired()) {
-                    os << "const unsigned int preReadDelayOffset = " << s.second.getPresynapticAxonalDelaySlot("") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    os << "const unsigned int preReadDelayOffset = " << s.second.getPresynapticAxonalDelaySlot("") << " * " << s.second.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
                 }
 
                 // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
@@ -159,10 +159,10 @@ void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                     {
                         CodeStream::Scope b(os);
 
-                        Substitutions synSubs(&popSubs);
+                        Substitutions synSubs(&funcSubs);
                         if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
-                            os << "const unsigned int synAddress = remap" << s.first << "remap[ipre]"
-                            synSubs.addVarSubstitution("id_pre", "(remap" + s.first + "[ipre] / " + to_string(sg->getMaxConnections()) + ")");
+                            os << "const unsigned int synAddress = remap" << s.first << "remap[ipre]";
+                            synSubs.addVarSubstitution("id_pre", "(remap" + s.first + "[ipre] / " + std::to_string(s.second.getMaxConnections()) + ")");
                             synSubs.addVarSubstitution("id_syn", "synAddress");
                         }
                         else {
@@ -171,7 +171,7 @@ void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                         }
                         synSubs.addVarSubstitution("id_post", "spike");
 
-                        postLearnHandler(os, sg, synSubs);
+                        postLearnHandler(os, s.second, synSubs);
 
                         /*string code = wu->getLearnPostCode();
                         substitute(code, "$(t)", "t");
