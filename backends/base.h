@@ -53,6 +53,7 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
+    virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const = 0;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;

@@ -59,7 +59,7 @@ const char *CUDA::KernelNames[KernelMax] = {
     "preSynapseResetKernel"};
 //--------------------------------------------------------------------------
 CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device, const Base &hostBackend)
-:   m_HostBackend(hostBackend), m_KernelBlockSizes(kernelBlockSizes), m_LocalHostID(localHostID)
+:   m_HostBackend(hostBackend), m_KernelBlockSizes(kernelBlockSizes), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -628,18 +628,26 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
+
+        // Launch pre-synapse reset kernel if required
         if(idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
             os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
         }
 
+        // Launch synapse dynamics kernel if required
         if(idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idPreSynapseReset);
-            //const size_t gridSize = ceilDivide(idSynapseDynamicsStart, m_KernelBlockSizes[KernelSynapseDynamicsUpdate]);
-
+            os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
+            for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
+                os << p.first << ", ";
+            }
+            os << "t);" << std::endl;
         }
+
+        // Launch presynaptic update kernel
         if(idPresynapticStart > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
@@ -650,6 +658,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             os << "t);" << std::endl;
         }
 
+        // Launch postsynaptic update kernel
         if(idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
@@ -1118,6 +1127,30 @@ void CUDA::genRunnerPreamble(CodeStream &os) const
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(devSymbolPtr, devPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
     }
     os << std::endl;
+}
+//--------------------------------------------------------------------------
+void CUDA::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
+{
+    // Get chosen device's PCI bus ID
+    char pciBusID[32];
+    CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, m_ChosenDeviceID));
+
+    // Write code to get device by PCI bus ID
+    // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
+    os << "int deviceID;" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
+
+    // If the model requires zero-copy
+    if(model.zeroCopyInUse()) {
+        // If device doesn't support mapping host memory error
+        if(!getChosenCUDADevice().canMapHostMemory) {
+            gennError("Device does not support mapping CPU host memory!");
+        }
+
+        // set appropriate device flags
+        os << "CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const

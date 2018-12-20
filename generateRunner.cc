@@ -552,21 +552,11 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     runner << "void allocateMem()";
     {
         CodeStream::Scope b(runner);
-#ifndef CPU_ONLY
-        // **TODO** move to code generator
-        runner << "CHECK_CUDA_ERRORS(cudaSetDevice(" << theDevice << "));" << std::endl;
 
-        // If the model requires zero-copy
-        if(model.zeroCopyInUse()) {
-            // If device doesn't support mapping host memory error
-            if(!deviceProp[theDevice].canMapHostMemory) {
-                gennError("Device does not support mapping CPU host memory!");
-            }
+        // Generate preamble -this is the first bit of generated code called by user simulations
+        // so global initialisation is often performed here
+        backend.genAllocateMemPreamble(runner, model);
 
-            // set appropriate device flags
-            runner << "CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
-        }
-#endif
         // Write variable allocations to runner
         runner << runnerVarAllocStream.str();
     }

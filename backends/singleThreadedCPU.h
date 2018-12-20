@@ -39,6 +39,7 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os) const override;
     virtual void genRunnerPreamble(CodeStream &os) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const override;
 
     virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
