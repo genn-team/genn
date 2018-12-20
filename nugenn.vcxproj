@@ -38,16 +38,16 @@
   <!-- Customise C++  compilation and linking tasks -->
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">$(GENN_PATH)\lib\include</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">$(GENN_PATH)\lib\include;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" $(Configuration.Contains('CPU_ONLY')) ">$(GENN_PATH)\lib\include;third_party;C:\sussex\genn_examples;$(BOB_ROBOTICS_PATH)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">$(GENN_PATH)\lib\include;$(CUDA_PATH)\include;third_party;C:\sussex\genn_examples;$(BOB_ROBOTICS_PATH)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
       <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
       <!-- Depending on configuration, set preprocessor options -->
-      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">GENERATOR_MAIN_HANDLED;CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release' ">GENERATOR_MAIN_HANDLED;NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">GENERATOR_MAIN_HANDLED;DEBUG;CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug' ">GENERATOR_MAIN_HANDLED;DEBUG;NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">GENERATOR_MAIN_HANDLED;CPU_ONLY=1;NOMINMAX</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Release' ">GENERATOR_MAIN_HANDLED;NOMINMAX;NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">GENERATOR_MAIN_HANDLED;DEBUG;CPU_ONLY=1;NOMINMAX</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" '$(Configuration)' == 'Debug' ">GENERATOR_MAIN_HANDLED;NOMINMAX;DEBUG;NVCC="$(CUDA_PATH.Replace('\', '/'))/bin/nvcc.exe"</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="generateInit.cc" />
+    <ClCompile Include="generateMakefile.cc" />
     <ClCompile Include="generateNeuronUpdate.cc" />
     <ClCompile Include="generateRunner.cc" />
     <ClCompile Include="generateSynapseUpdate.cc" />
