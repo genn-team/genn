@@ -1773,9 +1773,9 @@ void genRunner(const NNmodel &model,    //!< Model description
                 if(model.isSynapseGroupDynamicsRequired(s.first)) {
                     // Allocate synRemap
                     // **THINK** this is over-allocating
-                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".synRemap", VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                    allocate_host_variable(os,  "unsigned int", "C" + s.first + ".synRemap", s.second.getSparseConnectivityVarMode(),
                                            size + 1);
-                    mem += allocate_device_variable(os,  "unsigned int", "synRemap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST,
+                    mem += allocate_device_variable(os,  "unsigned int", "synRemap" + s.first, s.second.getSparseConnectivityVarMode(),
                                                     size + 1);
                 }
                 
@@ -2001,8 +2001,8 @@ void genRunner(const NNmodel &model,    //!< Model description
                 }
 
                 if (model.isSynapseGroupDynamicsRequired(s.first)) {
-                    free_host_variable(os, "C" + s.first + ".synRemap", VarMode::LOC_HOST_DEVICE_INIT_HOST);
-                    free_device_variable(os, "synRemap" + s.first, VarMode::LOC_HOST_DEVICE_INIT_HOST);
+                    free_host_variable(os, "C" + s.first + ".synRemap", s.second.getSparseConnectivityVarMode());
+                    free_device_variable(os, "synRemap" + s.first, s.second.getSparseConnectivityVarMode());
                 }
             }
             else if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
