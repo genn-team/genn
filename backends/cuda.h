@@ -57,7 +57,7 @@ public:
 
     virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
-                                  SynapseGroupHandler postLearnHandler) const override;
+                                  SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const override;
 
     virtual void genInit(CodeStream &os, const NNmodel &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
@@ -200,6 +200,8 @@ private:
                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
     void genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
+
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
     bool shouldAccumulateInLinSyn(const SynapseGroup &sg) const;
 

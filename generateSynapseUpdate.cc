@@ -13,6 +13,26 @@
 #include "backends/base.h"
 
 //--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
+void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroup &sg,
+                               const Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::Backends::Base &backend)
+{
+    CodeGenerator::applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
+                                                       sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
+    neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
+                                            baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
+                                            model.getDT());
+    baseSubs.apply(code);
+    code= ensureFtype(code, model.getPrecision());
+    checkUnreplacedVariables(code, sg.getName() + errorSuffix);
+    os << code;
+}
+}   // Anonymous namespace
+
+//--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
@@ -24,56 +44,24 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, 
         // Presynaptic weight update threshold
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
-            // code substitutions ----
-            const WeightUpdateModels::Base *wu = sg.getWUModel();
-            std::string code = wu->getEventThresholdConditionCode();
-            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
-                                                sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
-            neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
-                                                  baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
-                                                  model.getDT());
-            baseSubs.apply(code);
-            code= ensureFtype(code, model.getPrecision());
-            checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
-            os << code;
+            applySynapseSubstitutions(os, sg.getWUModel()->getEventThresholdConditionCode(), " : evntThreshold",
+                                      sg, baseSubs, model, backend);
         },
         // Presynaptic simcode
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
-            const WeightUpdateModels::Base *wu = sg.getWUModel();
-            std::string code = wu->getSimCode(); //**TODO** pass through truespikeness
-            baseSubs.apply(code);
-
-            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
-                                                sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
-            neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
-                                                  baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
-                                                  model.getDT());
-            baseSubs.apply(code);
-            code= ensureFtype(code, model.getPrecision());
-            checkUnreplacedVariables(code, sg.getName() + " : simCode");
-            os << code;
+            applySynapseSubstitutions(os, sg.getWUModel()->getSimCode(), " : simCode",
+                                      sg, baseSubs, model, backend);
         },
         // Postsynaptic learning code
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
-            const WeightUpdateModels::Base *wu = sg.getWUModel();
-            std::string code = wu->getLearnPostCode(); //**TODO** pass through truespikeness
-            baseSubs.apply(code);
-
-            applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
-                                                sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
-            neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
-                                                  baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
-                                                  model.getDT());
-            baseSubs.apply(code);
-            code= ensureFtype(code, model.getPrecision());
-            checkUnreplacedVariables(code, sg.getName() + " : simLearnPost");
-
             if (!sg.getWUModel()->getLearnPostSupportCode().empty()) {
                 os << " using namespace " << sg.getName() << "_weightupdate_simLearnPost;" << std::endl;
             }
-            os << code;
+
+            applySynapseSubstitutions(os, sg.getWUModel()->getLearnPostCode(), " : simLearnPost",
+                                      sg, baseSubs, model, backend);
         },
         // Synapse dynamics
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
@@ -81,6 +69,9 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, 
             if (!sg.getWUModel()->getSynapseDynamicsSuppportCode().empty()) {
                 os << " using namespace " << sg.getName() << "_weightupdate_synapseDynamics;" << std::endl;
             }
+
+            applySynapseSubstitutions(os, sg.getWUModel()->getSynapseDynamicsCode(), " : synapseDynamics",
+                                      sg, baseSubs, model, backend);
         }
     );
 }

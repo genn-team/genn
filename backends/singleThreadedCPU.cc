@@ -77,7 +77,7 @@ void SingleThreadedCPU::genNeuronUpdate(CodeStream &os, const NNmodel &model, Ne
 //--------------------------------------------------------------------------
 void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                                          SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
-                                         SynapseGroupHandler postLearnHandler) const
+                                         SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
