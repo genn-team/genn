@@ -130,54 +130,6 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::LegacyWrapper
-//----------------------------------------------------------------------------
-//! Wrapper around legacy weight update models stored in #weightUpdateModels array of weightUpdateModel objects.
-class LegacyWrapper : public NewModels::LegacyWrapper<Base, weightUpdateModel, weightUpdateModels>
-{
-public:
-    LegacyWrapper(unsigned int legacyTypeIndex) : NewModels::LegacyWrapper<Base, weightUpdateModel, weightUpdateModels>(legacyTypeIndex)
-    {
-    }
-
-    //----------------------------------------------------------------------------
-    // Base virtuals
-    //----------------------------------------------------------------------------
-    //! \copydoc Base::getSimCode
-    virtual std::string getSimCode() const;
-
-    //! \copydoc Base::getEventCode
-    virtual std::string getEventCode() const;
-
-    //! \copydoc Base::getLearnPostCode
-    virtual std::string getLearnPostCode() const;
-
-    //! \copydoc Base::getSynapseDynamicsCode
-    virtual std::string getSynapseDynamicsCode() const;
-
-    //! \copydoc Base::getEventThresholdConditionCode
-    virtual std::string getEventThresholdConditionCode() const;
-
-    //! \copydoc Base::getSimSupportCode
-    virtual std::string getSimSupportCode() const;
-
-    //! \copydoc Base::getLearnPostSupportCode
-    virtual std::string getLearnPostSupportCode() const;
-
-    //! \copydoc Base::getSynapseDynamicsSuppportCode
-    virtual std::string getSynapseDynamicsSuppportCode() const;
-
-    //! \copydoc Base::getExtraGlobalParams
-    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const;
-
-    //! \copydoc Base::isPreSpikeTimeRequired
-    virtual bool isPreSpikeTimeRequired() const;
-
-    //! \copydoc Base::isPostSpikeTimeRequired
-    virtual bool isPostSpikeTimeRequired() const;
-};
-
-//----------------------------------------------------------------------------
 // WeightUpdateModels::StaticPulse
 //----------------------------------------------------------------------------
 //! Pulse-coupled, static synapse.

@@ -21,9 +21,7 @@ defining a neuron model and the class definition of NNmodel for defining a neuro
 Part of the code generation and generated code sections.
 */
 //--------------------------------------------------------------------------
-
-#ifndef _MODELSPEC_H_
-#define _MODELSPEC_H_ //!< macro for avoiding multiple inclusion during compilation
+#pragma once
 
 #include "neuronGroup.h"
 #include "synapseGroup.h"
@@ -40,33 +38,7 @@ Part of the code generation and generated code sections.
 
 using namespace std;
 
-
-void initGeNN();
-extern unsigned int GeNNReady;
-
-// connectivity of the network (synapseConnType)
-enum SynapseConnType
-{
-    ALLTOALL,
-    DENSE,
-    SPARSE,
-};
-
-// conductance type (synapseGType)
-enum SynapseGType
-{
-    INDIVIDUALG,
-    GLOBALG,
-    INDIVIDUALID,
-};
-
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
-
-#define NOLEARNING 0 //!< Macro attaching the label "NOLEARNING" to flag 0 
-#define LEARNING 1 //!< Macro attaching the label "LEARNING" to flag 1 
-
-#define EXITSYN 0 //!< Macro attaching the label "EXITSYN" to flag 0 (excitatory synapse)
-#define INHIBSYN 1 //!< Macro attaching the label "INHIBSYN" to flag 1 (inhibitory synapse)
 
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
 #define GPU 1 //!< Macro attaching the label "GPU" to flag 1
@@ -150,16 +122,12 @@ public:
     void setDT(double); //!< Set the integration step size of the model
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
-    void setRNType(const std::string &type); //! Sets the underlying type for random number generation (default: uint64_t)
 
 #ifndef CPU_ONLY
     void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
 #endif
     //! Get the string literal that should be used to represent a value in the model's floating-point type
     string scalarExpr(const double) const;
-
-    void setPopulationSums(); //!< Set the accumulated sums of lowest multiple of kernel block size >= group sizes for all simulated groups.
-    void finalize(); //!< Declare that the model specification is finalised in modelDefinition().
 
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
@@ -177,11 +145,6 @@ public:
     /*! **NOTE** some model code will use per-neuron RNGs instead */
     bool isDeviceRNGRequired() const;
 
-    //! Can this model run on the CPU?
-    /*! If we are running in CPU_ONLY mode this is always true,
-        but some GPU functionality will prevent models being run on both CPU and GPU. */
-    bool canRunOnCPU() const;
-
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
 
@@ -191,20 +154,11 @@ public:
     //! Gets the floating point numerical precision used to represent time
     std::string getTimePrecision() const;
 
-    //! Which kernel should contain the reset logic? Specified in terms of GENN_FLAGS
-    unsigned int getResetKernel() const{ return resetKernel; }
-
     //! Gets the model integration step size
     double getDT() const { return dt; }
 
     //! Get the random seed
     unsigned int getSeed() const { return seed; }
-
-    //! Gets the underlying type for random number generation (default: uint64_t)
-    const std::string &getRNType() const{ return RNtype; }
-
-    //! Is the model specification finalized
-    bool isFinalized() const{ return final; }
 
     //! Are timers and timing commands enabled
     bool isTimingEnabled() const{ return timing; }
@@ -235,11 +189,6 @@ public:
     //! Gets std::map containing names and types of each parameter that should be passed through to the neuron kernel
     const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
 
-    //! Gets the size of the neuron kernel thread grid
-    /*! This is calculated by adding together the number of threads required by
-        each neuron population, padded to be a multiple of GPU's thread block size.*/
-    unsigned int getNeuronGridSize() const;
-
     //! How many neurons are simulated locally in this model
     unsigned int getNumLocalNeurons() const;
 
@@ -255,9 +204,6 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const double *, const double *, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-    NeuronGroup *addNeuronPopulation(const string&, unsigned int, unsigned int, const vector<double>&, const vector<double>&, int hostID = 0, int deviceID = 0); //!< Method for adding a neuron population to a neuronal network model, using C++ string for the name of the population
-
     //! Adds a new neuron group to the model using a neuron model managed by the user
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
         \param name string containing unique name of neuron population.
@@ -272,13 +218,6 @@ public:
                                      const typename NeuronModel::VarValues &varInitialisers,
                                      int hostID = 0, int deviceID = 0)
     {
-        if (!GeNNReady) {
-            gennError("You need to call initGeNN first.");
-        }
-        if (final) {
-            gennError("Trying to add a neuron population to a finalized model.");
-        }
-
 #ifdef MPI_ENABLE
         // Determine the host ID
         int mpiHostID = 0;
@@ -324,11 +263,6 @@ public:
         return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers, hostID, deviceID);
     }
 
-    void setNeuronClusterIndex(const string &neuronGroup, int hostID, int deviceID); //!< This function has been deprecated in GeNN 3.1.0
-
-    void activateDirectInput(const string&, unsigned int type); //! This function has been deprecated in GeNN 2.2
-    void setConstInp(const string&, double);
-
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     //! Get std::map containing local named SynapseGroup objects in model
@@ -336,14 +270,6 @@ public:
 
     //! Get std::map containing remote named SynapseGroup objects in model
     const map<string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
-
-    //! Get std::map containing names of synapse groups which require postsynaptic learning and their thread IDs within
-    //! the postsynaptic learning kernel (padded to multiples of the GPU thread block size)
-    const map<string, std::pair<unsigned int, unsigned int>> &getSynapsePostLearnGroups() const{ return m_SynapsePostLearnGroups; }
-
-    //! Get std::map containing names of synapse groups which require synapse dynamics and their thread IDs within
-    //! the synapse dynamics kernel (padded to multiples of the GPU thread block size)
-    const map<string, std::pair<unsigned int, unsigned int>> &getSynapseDynamicsGroups() const{ return m_SynapseDynamicsGroups; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the synapse kernel
     const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
@@ -354,38 +280,11 @@ public:
     //! Gets std::map containing names and types of each parameter that should be passed through to the synapse dynamics kernel
     const map<string, string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }
 
-    //! Gets the size of the synapse kernel thread grid
-    /*! This is calculated by adding together the number of threads required by each
-        synapse population's synapse kernel, padded to be a multiple of GPU's thread block size.*/
-    unsigned int getSynapseKernelGridSize() const;
-
-    //! Gets the size of the post-synaptic learning kernel thread grid
-    /*! This is calculated by adding together the number of threads required by each
-        synapse population's postsynaptic learning kernel, padded to be a multiple of GPU's thread block size.*/
-    unsigned int getSynapsePostLearnGridSize() const;
-
-    //! Gets the size of the synapse dynamics kernel thread grid
-    /*! This is calculated by adding together the number of threads required by each
-        synapse population's synapse dynamics kernel, padded to be a multiple of GPU's thread block size.*/
-    unsigned int getSynapseDynamicsGridSize() const;
-
     //! Find a synapse group by name
     const SynapseGroup *findSynapseGroup(const std::string &name) const;
 
     //! Find a synapse group by name
     SynapseGroup *findSynapseGroup(const std::string &name);    
-
-    //! Does named synapse group have synapse dynamics
-    bool isSynapseGroupDynamicsRequired(const std::string &name) const;
-
-    //! Does named synapse group have post-synaptic learning
-    bool isSynapseGroupPostLearningRequired(const std::string &name) const;
-
-    SynapseGroup *addSynapsePopulation(const string &name, unsigned int syntype, SynapseConnType conntype, SynapseGType gtype, const string& src, const string& trg, const double *p); //!< This function has been depreciated as of GeNN 2.2.
-    SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *); //!< Overloaded version without initial variables for synapses
-    SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&, const double *, const double *, const double *, const double *); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
-    SynapseGroup *addSynapsePopulation(const string&, unsigned int, SynapseConnType, SynapseGType, unsigned int, unsigned int, const string&, const string&,
-                              const vector<double>&, const vector<double>&, const vector<double>&, const vector<double>&); //!< Method for adding a synapse population to a neuronal network model, using C++ string for the name of the population
 
     //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
     /*! \tparam WeightUpdateModel type of weight update model (derived from WeightUpdateModels::Base).
@@ -410,13 +309,6 @@ public:
                                        const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
-        if (!GeNNReady) {
-            gennError("You need to call initGeNN first.");
-        }
-        if (final) {
-            gennError("Trying to add a synapse population to a finalized model.");
-        }
-
         // Get source and target neuron groups
         auto srcNeuronGrp = findNeuronGroup(src);
         auto trgNeuronGrp = findNeuronGroup(trg);
@@ -514,11 +406,6 @@ public:
 
     }
 
-    void setSynapseG(const string&, double); //!< This function has been depreciated as of GeNN 2.2.
-    void setMaxConn(const string&, unsigned int); //< Set maximum connections per neuron for the given group (needed for optimization by sparse connectivity)
-    void setSpanTypeToPre(const string&); //!< Method for switching the execution order of synapses to pre-to-post
-
-
     // PUBLIC CURRENT SOURCE FUNCTIONS
     //================================
 
@@ -551,12 +438,6 @@ public:
                                     const typename CurrentSourceModel::ParamValues &paramValues,
                                     const typename CurrentSourceModel::VarValues &varInitialisers)
     {
-        if (!GeNNReady) {
-            gennError("You need to call initGeNN first.");
-        }
-        if (final) {
-            gennError("Trying to add a current source to a finalized model.");
-        }
         auto targetGroup = findNeuronGroup(targetNeuronGroupName);
 
 #ifdef MPI_ENABLE
@@ -631,14 +512,6 @@ private:
     //!< Named remote current sources
     map<string, CurrentSource> m_RemoteCurrentSources;
 
-    //!< Mapping  of synapse group names which have postsynaptic learning to their start and end padded indices
-    //!< **THINK** is this the right container?
-    map<string, std::pair<unsigned int, unsigned int>> m_SynapsePostLearnGroups;
-
-    //!< Mapping of synapse group names which have synapse dynamics to their start and end padded indices
-    //!< **THINK** is this the right container?
-    map<string, std::pair<unsigned int, unsigned int>> m_SynapseDynamicsGroups;
-
     // Kernel members
     map<string, string> m_InitKernelParameters;
     map<string, string> neuronKernelParameters;
@@ -651,12 +524,7 @@ private:
     string name;                    //!< Name of the neuronal newtwork model
     string ftype;                   //!< Type of floating point variables (float, double, ...; default: float)
     TimePrecision m_TimePrecision;  //!< Type of floating point variables used to store time
-    string RNtype;                  //!< Underlying type for random number generation (default: uint64_t)
     double dt;                      //!< The integration time step of the model
-    bool final;                     //!< Flag for whether the model has been finalized
     bool timing;
     unsigned int seed;
-    unsigned int resetKernel;       //!< The identity of the kernel in which the spike counters will be reset.
 };
-
-#endif

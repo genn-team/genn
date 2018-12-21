@@ -12,10 +12,6 @@
    This file contains neuron model definitions.
   
 --------------------------------------------------------------------------*/
-
-#ifndef MODELSPEC_CC
-#define MODELSPEC_CC
-
 // Standard C++ includes
 #include <algorithm>
 #include <numeric>
@@ -32,34 +28,6 @@
 #include "modelSpec.h"
 #include "standardSubstitutions.h"
 #include "utils.h"
-
-unsigned int GeNNReady = 0;
-
-//! \brief Method for GeNN initialisation (by preparing standard models)
-    
-void initGeNN()
-{
-    prepareStandardModels();
-    preparePostSynModels();
-    prepareWeightUpdateModels();
-    GeNNReady= 1;
-}
-
-// ------------------------------------------------------------------------
-// Anonymous namespace
-// ------------------------------------------------------------------------
-namespace
-{
-void createVarInitialiserFromLegacyVars(const std::vector<double> &ini, std::vector<NewModels::VarInit> &varInitialisers)
-{
-    varInitialisers.reserve(ini.size());
-    std::transform(ini.cbegin(), ini.cend(), std::back_inserter(varInitialisers),
-                   [](double v)
-                   {
-                       return NewModels::VarInit(v);
-                   });
-}
-}
 
 // ------------------------------------------------------------------------
 // NNmodel
@@ -83,9 +51,6 @@ NNmodel::~NNmodel()
 
 void NNmodel::setName(const string &inname)
 {
-    if (final) {
-        gennError("Trying to set the name of a finalized model.");
-    }
     name= inname;
 }
 
@@ -169,32 +134,6 @@ bool NNmodel::isDeviceRNGRequired() const
     return false;
 }
 
-bool NNmodel::canRunOnCPU() const
-{
-#ifndef CPU_ONLY
-    // If any of the neuron groups can't run on the CPU, return false
-    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
-        [](const NeuronGroupValueType &n)
-        {
-            return !n.second.canRunOnCPU();
-        }))
-    {
-        return false;
-    }
-
-    // If any of the synapse groups can't run on the CPU, return false
-    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
-        [](const SynapseGroupValueType &s)
-        {
-            return !s.second.canRunOnCPU();
-        }))
-    {
-        return false;
-    }
-#endif
-    return true;
-}
-
 std::string NNmodel::getTimePrecision() const
 {
     // If time precision is set to match model precision
@@ -262,27 +201,6 @@ bool NNmodel::isDeviceSparseInitRequired() const
         [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
 }
 
-//--------------------------------------------------------------------------
-/*! \brief This function is for setting which host and which device a neuron group will be simulated on
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::setNeuronClusterIndex(const string &, int, int)
-{
-    gennError("This function has been deprecated since GeNN 3.1.0. Specify neuron cluster index in call to addNeuronPopulation instead.");
-}
-
-unsigned int NNmodel::getNeuronGridSize() const
-{
-    if(m_LocalNeuronGroups.empty()) {
-        return 0;
-    }
-    else {
-        return m_LocalNeuronGroups.rbegin()->second.getPaddedIDRange().second;
-    }
-
-}
-
 unsigned int NNmodel::getNumLocalNeurons() const
 {
     // Return sum of local neuron group sizes
@@ -344,137 +262,6 @@ NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
     }
 }
 
-//--------------------------------------------------------------------------
-/*! \overload
-
-  This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values, the latter two defined as double *
- */
-//--------------------------------------------------------------------------
-
-NeuronGroup *NNmodel::addNeuronPopulation(
-  const string &name, /**<  The name of the neuron population*/
-  unsigned int nNo, /**<  Number of neurons in the population */
-  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-  const double *p, /**< Parameters of this neuron type */
-  const double *ini, /**< Initial values for variables of this neuron type */
-  int hostID, /**< host ID for neuron group*/
-  int deviceID /*device ID for neuron group*/)
-{
-  vector<double> vp;
-  vector<double> vini;
-  for (size_t i= 0; i < nModels[type].pNames.size(); i++) {
-    vp.push_back(p[i]);
-  }
-  for (size_t i= 0; i < nModels[type].varNames.size(); i++) {
-    vini.push_back(ini[i]);
-  }
-  return addNeuronPopulation(name, nNo, type, vp, vini, hostID, deviceID);
-}
-  
-
-//--------------------------------------------------------------------------
-/*! \brief This function adds a neuron population to a neuronal network models, assigning the name, the number of neurons in the group, the neuron type, parameters and initial values. The latter two defined as STL vectors of double.
- */
-//--------------------------------------------------------------------------
-
-NeuronGroup *NNmodel::addNeuronPopulation(
-  const string &name, /**<  The name of the neuron population*/
-  unsigned int nNo, /**<  Number of neurons in the population */
-  unsigned int type, /**<  Type of the neurons, refers to either a standard type or user-defined type*/
-  const vector<double> &p, /**< Parameters of this neuron type */
-  const vector<double> &ini, /**< Initial values for variables of this neuron type */
-  int hostID,
-  int deviceID)
-{
-    if (!GeNNReady) {
-        gennError("You need to call initGeNN first.");
-    }
-    if (final) {
-        gennError("Trying to add a neuron population to a finalized model.");
-    }
-    if (p.size() != nModels[type].pNames.size()) {
-        gennError("The number of parameter values for neuron group " + name + " does not match that of their neuron type, " + to_string(p.size()) + " != " + to_string(nModels[type].pNames.size()));
-    }
-    if (ini.size() != nModels[type].varNames.size()) {
-        gennError("The number of variable initial values for neuron group " + name + " does not match that of their neuron type, " + to_string(ini.size()) + " != " + to_string(nModels[type].varNames.size()));
-    }
-
-    // Create variable initialisers from old-style values
-    std::vector<NewModels::VarInit> varInitialisers;
-    createVarInitialiserFromLegacyVars(ini, varInitialisers);
-
-#ifdef MPI_ENABLE
-    // Determine the host ID
-    int mpiHostID = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
-
-    // Pick map to add group to appropriately
-    auto &groupMap = (hostID == mpiHostID) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
-#else
-    // If MPI is disabled always add to local neuron groups and zero host id
-    auto &groupMap = m_LocalNeuronGroups;
-    hostID = 0;
-#endif
-
-    // Add neuron group to map
-    auto result = groupMap.emplace(std::piecewise_construct,
-        std::forward_as_tuple(name),
-        std::forward_as_tuple(name, nNo, new NeuronModels::LegacyWrapper(type), p, varInitialisers, hostID, deviceID));
-
-    if(!result.second)
-    {
-        gennError("Cannot add a neuron population with duplicate name:" + name);
-        return NULL;
-    }
-    else
-    {
-        return &result.first->second;
-    }
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function defines the type of the explicit input to the neuron model. Current options are common constant input to all neurons, input  from a file and input defines as a rule.
-*/ 
-//--------------------------------------------------------------------------
-void NNmodel::activateDirectInput(
-  const string &, /**< Name of the neuron population */
-  unsigned int /**< Type of input: 1 if common input, 2 if custom input from file, 3 if custom input as a rule*/)
-{
-    gennError("This function has been deprecated since GeNN 2.2. Use neuron variables, extraGlobalNeuronKernelParameters, or parameters instead.");
-}
-
-unsigned int NNmodel::getSynapseKernelGridSize() const
-{
-    if(m_LocalSynapseGroups.empty()) {
-        return 0;
-    }
-    else {
-        return m_LocalSynapseGroups.rbegin()->second.getPaddedKernelIDRange().second;
-    }
-
-}
-
-unsigned int NNmodel::getSynapsePostLearnGridSize() const
-{
-    if(m_SynapsePostLearnGroups.empty()) {
-        return 0;
-    }
-    else {
-        return m_SynapsePostLearnGroups.rbegin()->second.second;
-    }
-}
-
-unsigned int NNmodel::getSynapseDynamicsGridSize() const
-{
-    if(m_SynapseDynamicsGroups.empty()) {
-        return 0;
-    }
-    else {
-        return m_SynapseDynamicsGroups.rbegin()->second.second;
-    }
-}
-
 const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
 {
     // If a matching local synapse group is found, return it
@@ -514,216 +301,6 @@ SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
     else {
         gennError("synapse group " + name + " not found, aborting ...");
         return NULL;
-    }
-}
-
-bool NNmodel::isSynapseGroupDynamicsRequired(const std::string &name) const
-{
-    return (m_SynapseDynamicsGroups.find(name) != end(m_SynapseDynamicsGroups));
-}
-
-bool NNmodel::isSynapseGroupPostLearningRequired(const std::string &name) const
-{
-    return (m_SynapsePostLearnGroups.find(name) != end(m_SynapsePostLearnGroups));
-}
-
-//--------------------------------------------------------------------------
-/*! \overload
-
-  This deprecated function is provided for compatibility with the previous release of GeNN.
- * Default values are provide for new parameters, it is strongly recommended these be selected explicity via the new version othe function
- */
-//--------------------------------------------------------------------------
-
-SynapseGroup *NNmodel::addSynapsePopulation(
-  const string &, /**<  The name of the synapse population*/
-  unsigned int, /**< The type of synapse to be added (i.e. learning mode) */
-  SynapseConnType, /**< The type of synaptic connectivity*/
-  SynapseGType, /**< The way how the synaptic conductivity g will be defined*/
-  const string &, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string &, /**< Name of the (existing!) post-synaptic neuron population*/
-  const double*) /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
-{
-  gennError("This version of addSynapsePopulation() has been deprecated since GeNN 2.2. Please use the newer addSynapsePopulation functions instead.");
-  return NULL;
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief Overloaded old version (deprecated)
-*/
-//--------------------------------------------------------------------------
-
-SynapseGroup *NNmodel::addSynapsePopulation(
-  const string &name, /**<  The name of the synapse population*/
-  unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  SynapseConnType conntype, /**< The type of synaptic connectivity*/
-  SynapseGType gtype, /**< The way how the synaptic conductivity g will be defined*/
-  unsigned int delaySteps, /**< Number of delay slots*/
-  unsigned int postsyn, /**< Postsynaptic integration method*/
-  const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string &trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  const double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
-  const double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  const double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
-{
-    cerr << "!!!!!!GeNN WARNING: This function has been deprecated since GeNN 2.2, and will be removed in a future release. You use the overloaded method which passes a null pointer for the initial values of weight update variables. If you use a method that uses synapse variables, please add a pointer to this vector in the function call, like:\n          addSynapsePopulation(name, syntype, conntype, gtype, NO_DELAY, EXPDECAY, src, target, double * SYNVARINI, params, postSynV,postExpSynapsePopn);" << endl;
-    const double *iniv = NULL;
-    return addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, iniv, p, PSVini, ps);
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters.
- */
-//--------------------------------------------------------------------------
-
-SynapseGroup *NNmodel::addSynapsePopulation(
-  const string &name, /**<  The name of the synapse population*/
-  unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  SynapseConnType conntype, /**< The type of synaptic connectivity*/
-  SynapseGType gtype, /**< The way how the synaptic conductivity g will be defined*/
-  unsigned int delaySteps, /**< Number of delay slots*/
-  unsigned int postsyn, /**< Postsynaptic integration method*/
-  const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string &trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  const double* synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  const double *p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
-  const double* PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  const double *ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
-{
-  vector<double> vsynini;
-  for (size_t j= 0; j < weightUpdateModels[syntype].varNames.size(); j++) {
-    vsynini.push_back(synini[j]);
-  }
-  vector<double> vp;
-  for (size_t j= 0; j < weightUpdateModels[syntype].pNames.size(); j++) {
-    vp.push_back(p[j]);
-  }
-  vector<double> vpsini;
-  for (size_t j= 0; j < postSynModels[postsyn].varNames.size(); j++) {
-    vpsini.push_back(PSVini[j]);
-  }
-  vector<double> vps;
-  for (size_t j= 0; j <  postSynModels[postsyn].pNames.size(); j++) {
-    vps.push_back(ps[j]);
-  }
-  return addSynapsePopulation(name, syntype, conntype, gtype, delaySteps, postsyn, src, trg, vsynini, vp, vpsini, vps);
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function adds a synapse population to a neuronal network model, assigning the name, the synapse type, the connectivity type, the type of conductance specification, the source and destination neuron populations, and the synaptic parameters.
- */
-//--------------------------------------------------------------------------
-
-SynapseGroup *NNmodel::addSynapsePopulation(
-  const string &name, /**<  The name of the synapse population*/
-  unsigned int syntype, /**< The type of synapse to be added (i.e. learning mode) */
-  SynapseConnType conntype, /**< The type of synaptic connectivity*/
-  SynapseGType gtype, /**< The way how the synaptic conductivity g will be defined*/
-  unsigned int delaySteps, /**< Number of delay slots*/
-  unsigned int postsyn, /**< Postsynaptic integration method*/
-  const string &src, /**< Name of the (existing!) pre-synaptic neuron population*/
-  const string &trg, /**< Name of the (existing!) post-synaptic neuron population*/
-  const vector<double> &synini, /**< A C-type array of doubles that contains the initial values for synapse variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  const vector<double> &p, /**< A C-type array of doubles that contains synapse parameter values (common to all synapses of the population) which will be used for the defined synapses.*/
-  const vector<double> &PSVini, /**< A C-type array of doubles that contains the initial values for postsynaptic mechanism variables (common to all synapses of the population) which will be used for the defined synapses.*/
-  const vector<double> &ps /**< A C-type array of doubles that contains postsynaptic mechanism parameter values (common to all synapses of the population) which will be used for the defined synapses.*/)
-{
-    if (!GeNNReady) {
-        gennError("You need to call initGeNN first.");
-    }
-    if (final) {
-        gennError("Trying to add a synapse population to a finalized model.");
-    }
-    if (p.size() != weightUpdateModels[syntype].pNames.size()) {
-        gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + to_string(p.size()) + " != " + to_string(weightUpdateModels[syntype].pNames.size()));
-    }
-    if (synini.size() != weightUpdateModels[syntype].varNames.size()) {
-        gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + to_string(synini.size()) + " != " + to_string(weightUpdateModels[syntype].varNames.size()));
-    }
-    if (ps.size() != postSynModels[postsyn].pNames.size()) {
-        gennError("The number of presynaptic parameter values for synapse group " + name + " does not match that of their synapse type, " + to_string(ps.size()) + " != " + to_string(postSynModels[postsyn].pNames.size()));
-    }
-    if (PSVini.size() != postSynModels[postsyn].varNames.size()) {
-        gennError("The number of presynaptic variable initial values for synapse group " + name + " does not match that of their synapse type, " + to_string(PSVini.size()) + " != " + to_string(postSynModels[postsyn].varNames.size()));
-    }
-
-    SynapseMatrixType mtype;
-    if(conntype == SPARSE && gtype == GLOBALG)
-    {
-        mtype = SynapseMatrixType::SPARSE_GLOBALG;
-    }
-    else if(conntype == SPARSE && gtype == INDIVIDUALG)
-    {
-        mtype = SynapseMatrixType::SPARSE_INDIVIDUALG;
-    }
-    else if((conntype == DENSE || conntype == ALLTOALL) && gtype == INDIVIDUALG)
-    {
-        mtype = SynapseMatrixType::DENSE_INDIVIDUALG;
-    }
-    else if((conntype == DENSE || conntype == ALLTOALL) && gtype == GLOBALG)
-    {
-        mtype = SynapseMatrixType::DENSE_GLOBALG;
-    }
-    else if(gtype == INDIVIDUALID)
-    {
-        mtype = SynapseMatrixType::BITMASK_GLOBALG;
-    }
-    else
-    {
-        gennError("Combination of connection type " + to_string(conntype) + " and weight type " + to_string(gtype) + " not supported");
-        return NULL;
-    }
-
-    // Get source and target neuron groups
-    auto srcNeuronGrp = findNeuronGroup(src);
-    auto trgNeuronGrp = findNeuronGroup(trg);
-
-    // Create variable initialisers from old-style values
-    std::vector<NewModels::VarInit> psVarInitialisers;
-    createVarInitialiserFromLegacyVars(PSVini, psVarInitialisers);
-
-    std::vector<NewModels::VarInit> wuVarInitialisers;
-    createVarInitialiserFromLegacyVars(synini, wuVarInitialisers);
-
-    std::vector<NewModels::VarInit> wuPreVarInitialisers;
-    std::vector<NewModels::VarInit> wuPostVarInitialisers;
-
-#ifdef MPI_ENABLE
-    // Get host ID of target neuron group
-    const int hostID = trgNeuronGrp->getClusterHostID();
-
-    // Determine the host ID
-    int mpiHostID = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
-
-    // Pick map to add group to appropriately
-    auto &groupMap = (hostID == mpiHostID) ? m_LocalSynapseGroups : m_RemoteSynapseGroups;
-#else
-    // If MPI is disabled always add to local synapse groups
-    auto &groupMap = m_LocalSynapseGroups;
-#endif
-
-    // Add synapse group to map
-    auto result = groupMap.emplace(
-        std::piecewise_construct,
-        std::forward_as_tuple(name),
-        std::forward_as_tuple(name, mtype, delaySteps,
-                              new WeightUpdateModels::LegacyWrapper(syntype), p, wuVarInitialisers, wuPreVarInitialisers, wuPostVarInitialisers,
-                              new PostsynapticModels::LegacyWrapper(postsyn), ps, psVarInitialisers,
-                              srcNeuronGrp, trgNeuronGrp,
-                              uninitialisedConnectivity()));
-
-    if(!result.second)
-    {
-        gennError("Cannot add a synapse population with duplicate name:" + name);
-        return NULL;
-    }
-    else
-    {
-        return &result.first->second;
     }
 }
 
@@ -772,64 +349,6 @@ CurrentSource *NNmodel::findCurrentSource(const std::string &name)
         return NULL;
     }
 }
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function defines the maximum number of connections for a neuron in the population
-*/ 
-//--------------------------------------------------------------------------
-
-void NNmodel::setMaxConn(const string &sname, /**<  */
-                         unsigned int maxConnP /**<  */)
-{
-    if (final) {
-        gennError("Trying to set MaxConn in a finalized model.");
-    }
-    findSynapseGroup(sname)->setMaxConnections(maxConnP);
-
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function defines the execution order of the synapses in the kernels
-  (0 : execute for every postsynaptic neuron 1: execute for every presynaptic neuron)
- */ 
-//--------------------------------------------------------------------------
-
-void NNmodel::setSpanTypeToPre(const string &sname /**< name of the synapse group to which to apply the pre-synaptic span type */)
-{
-    if (final) {
-        gennError("Trying to set spanType in a finalized model.");
-    }
-    findSynapseGroup(sname)->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
-
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This functions sets the global value of the maximal synaptic conductance for a synapse population that was idfentified as conductance specifcation method "GLOBALG" 
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::setSynapseG(const string &, /**<  */
-                          double /**<  */)
-{
-    gennError("NOTE: This function has been deprecated as of GeNN 2.2. Please provide the correct initial values in \"addSynapsePopulation\" for all your variables and they will be the constant values in the GLOBALG mode.");
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function sets a global input value to the specified neuron group.
- */
-//--------------------------------------------------------------------------
-
-void NNmodel::setConstInp(const string &, /**<  */
-                          double /**<  */)
-{
-    gennError("This function has been deprecated as of GeNN 2.2. Use parameters in the neuron model instead.");
-}
-
-
 //--------------------------------------------------------------------------
 /*! \brief This function sets the integration time step DT of the model
  */
@@ -837,9 +356,6 @@ void NNmodel::setConstInp(const string &, /**<  */
 
 void NNmodel::setDT(double newDT /**<  */)
 {
-    if (final) {
-        gennError("Trying to set DT in a finalized model.");
-    }
     dt = newDT;
 }
 
@@ -851,9 +367,6 @@ void NNmodel::setDT(double newDT /**<  */)
 
 void NNmodel::setPrecision(FloatType floattype /**<  */)
 {
-    if (final) {
-        gennError("Trying to set the precision of a finalized model.");
-    }
     switch (floattype) {
     case GENN_FLOAT:
         ftype = "float";
@@ -871,10 +384,6 @@ void NNmodel::setPrecision(FloatType floattype /**<  */)
 
 void NNmodel::setTimePrecision(TimePrecision timePrecision)
 {
-    if (final) {
-        gennError("Trying to set time precision of a finalized model.");
-    }
-
     m_TimePrecision = timePrecision;
 }
 
@@ -885,9 +394,6 @@ void NNmodel::setTimePrecision(TimePrecision timePrecision)
 
 void NNmodel::setTiming(bool theTiming /**<  */)
 {
-    if (final) {
-        gennError("Trying to set timing flag in a finalized model.");
-    }
     timing= theTiming;
 }
 
@@ -899,9 +405,6 @@ void NNmodel::setTiming(bool theTiming /**<  */)
 
 void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 {
-    if (final) {
-        gennError("Trying to set the random seed in a finalized model.");
-    }
     seed= inseed;
 }
 
@@ -911,9 +414,6 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 //--------------------------------------------------------------------------
 void NNmodel::setRNType(const std::string &type)
 {
-    if (final) {
-        gennError("Trying to set the random number type in a finalized model.");
-    }
     RNtype= type;
 }
 
@@ -949,50 +449,6 @@ string NNmodel::scalarExpr(const double val) const
         tmp= to_string(val);
     }
     return tmp;
-}
-
-//--------------------------------------------------------------------------
-/*! \brief Accumulate the sums and block-size-padded sums of all simulation groups.
-
-  This method saves the neuron numbers of the populations rounded to the next multiple of the block size as well as the sums s(i) = sum_{1...i} n_i of the rounded population sizes. These are later used to determine the branching structure for the generated neuron kernel code. 
-*/
-//--------------------------------------------------------------------------
-
-void NNmodel::setPopulationSums()
-{
-    // NEURON GROUPS
-    unsigned int neuronIDStart = 0;
-    unsigned int paddedNeuronIDStart = 0;
-    for(auto &n : m_LocalNeuronGroups) {
-        n.second.calcSizes(neuronBlkSz, neuronIDStart, paddedNeuronIDStart);
-    }
-
-    // SYNAPSE groups
-    unsigned int paddedSynapseKernelIDStart = 0;
-    unsigned int paddedSynapseDynamicsIDStart = 0;
-    unsigned int paddedSynapsePostLearnIDStart = 0;
-    for(auto &s : m_LocalSynapseGroups) {
-        // Calculate synapse kernel sizes
-        s.second.calcKernelSizes(synapseBlkSz, paddedSynapseKernelIDStart);
-
-        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
-            const unsigned int startID = paddedSynapsePostLearnIDStart;
-            paddedSynapsePostLearnIDStart += s.second.getPaddedPostLearnKernelSize(learnBlkSz);
-
-            // Add this synapse group to map of synapse groups with postsynaptic learning
-            // or update the existing entry with the new block sizes
-            m_SynapsePostLearnGroups[s.first] = std::make_pair(startID, paddedSynapsePostLearnIDStart);
-        }
-
-         if (!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-            const unsigned int startID = paddedSynapseDynamicsIDStart;
-            paddedSynapseDynamicsIDStart += s.second.getPaddedDynKernelSize(synDynBlkSz);
-
-            // Add this synapse group to map of synapse groups with dynamics
-            // or update the existing entry with the new block sizes
-            m_SynapseDynamicsGroups[s.first] = std::make_pair(startID, paddedSynapseDynamicsIDStart);
-         }
-    }
 }
 
 void NNmodel::finalize()
@@ -1128,23 +584,6 @@ void NNmodel::finalize()
         // Make extra global parameter lists
         cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
-
-    setPopulationSums();
-
-#ifndef CPU_ONLY
-    // figure out where to reset the spike counters
-    if (m_LocalSynapseGroups.empty()) { // no synapses -> reset in neuron kernel
-        resetKernel= GENN_FLAGS::calcNeurons;
-    }
-    else { // there are synapses
-        if (!m_SynapsePostLearnGroups.empty()) {
-            resetKernel= GENN_FLAGS::learnSynapsesPost;
-        }
-        else {
-            resetKernel= GENN_FLAGS::calcSynapses;
-        }
-    }
-#endif
 }
 
 

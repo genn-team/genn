@@ -46,9 +46,8 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser)
-    :   m_PaddedKernelIDRange(0, 0), m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
-    	m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),
-        m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
+    :   mm_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
+        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
         m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),  m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
@@ -204,29 +203,6 @@ void SynapseGroup::initDerivedParams(double dt)
 
     // Initialise any derived connectivity initialiser parameters
     m_ConnectivityInitialiser.initDerivedParams(dt);
-}
-
-void SynapseGroup::calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart)
-{
-    m_PaddedKernelIDRange.first = paddedKernelIDStart;
-
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (getSpanType() == SpanType::PRESYNAPTIC) {
-            // paddedSize is the lowest multiple of blockSize >= neuronN[synapseSource[i]
-            paddedKernelIDStart += ceil((double) getSrcNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
-        }
-        else {
-            // paddedSize is the lowest multiple of blockSize >= maxConn[i]
-            paddedKernelIDStart += ceil((double) getMaxConnections() / (double) blockSize) * (double) blockSize;
-        }
-    }
-    else {
-        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
-        paddedKernelIDStart += ceil((double) getTrgNeuronGroup()->getNumNeurons() / (double) blockSize) * (double) blockSize;
-    }
-
-    // Store padded cumulative sum
-    m_PaddedKernelIDRange.second = paddedKernelIDStart;
 }
 
 unsigned int SynapseGroup::getPaddedDynKernelSize(unsigned int blockSize) const
@@ -517,44 +493,6 @@ bool SynapseGroup::isDeviceSparseInitRequired() const
     }
 
     return false;
-}
-
-bool SynapseGroup::canRunOnCPU() const
-{
-#ifndef CPU_ONLY
-    // Return false if insyn variable isn't present on the host
-    if(!(getInSynVarMode() & VarLocation::HOST)) {
-        return false;
-    }
-    
-    // Return false if matrix type is either ragged or bitmask and sparse connectivity should be initialised on device
-    if(((getMatrixType() & SynapseMatrixConnectivity::RAGGED) || (getMatrixType() & SynapseMatrixConnectivity::BITMASK))
-        && (getSparseConnectivityVarMode() & VarInit::DEVICE))
-    {
-        return false;
-    }
-
-    // Return false if den delay variable isn't present on the host
-    if(!(getDendriticDelayVarMode() & VarLocation::HOST)) {
-        return false;
-    }
-
-    // Return false if any of the weight update variables aren't present on the host
-    if(std::any_of(m_WUVarMode.cbegin(), m_WUVarMode.cend(),
-                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
-    {
-        return false;
-    }
-
-    // Return false if any of the postsynaptic variables aren't present on the host
-    if(std::any_of(m_PSVarMode.cbegin(), m_PSVarMode.cend(),
-                   [](const VarMode mode){ return !(mode & VarLocation::HOST); }))
-    {
-        return false;
-    }
-#endif
-
-    return true;
 }
 
 void SynapseGroup::addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,

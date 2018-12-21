@@ -51,20 +51,6 @@ public:
         m_PSModelTargetName = targetName;
     }
 
-    //!< Function to enable the use of zero-copied memory for a particular weight update model state variable (deprecated use SynapseGroup::setWUVarMode):
-    /*! May improve IO performance at the expense of kernel performance */
-    void setWUVarZeroCopyEnabled(const std::string &varName, bool enabled)
-    {
-        setWUVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
-    }
-
-    //!< Function to enable the use zero-copied memory for a particular postsynaptic model state variable (deprecated use SynapseGroup::setWUVarMode)
-    /*! May improve IO performance at the expense of kernel performance */
-    void setPSVarZeroCopyEnabled(const std::string &varName, bool enabled)
-    {
-        setPSVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
-    }
-
     //! Set variable mode of weight update model state variable
     /*! This is ignored for CPU simulations */
     void setWUVarMode(const std::string &varName, VarMode mode);
@@ -112,7 +98,6 @@ public:
     void setBackPropDelaySteps(unsigned int timesteps);
 
     void initDerivedParams(double dt);
-    void calcKernelSizes(unsigned int blockSize, unsigned int &paddedKernelIDStart);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -245,12 +230,6 @@ public:
 
     //! Is any form of sparse device initialisation required?
     bool isDeviceSparseInitRequired() const;
-
-    //! Can this synapse group run on the CPU?
-    /*! If we are running in CPU_ONLY mode this is always true,
-        but some GPU functionality will prevent models being run on both CPU and GPU.*/
-    bool canRunOnCPU() const;
-
 private:
     //------------------------------------------------------------------------
     // Private methods
@@ -265,9 +244,6 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    //!< Range of indices of this synapse group in synapse kernel
-    std::pair<unsigned int, unsigned int> m_PaddedKernelIDRange;
-
     //!< Name of the synapse group
     std::string m_Name;
 

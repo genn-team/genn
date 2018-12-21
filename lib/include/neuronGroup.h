@@ -21,8 +21,7 @@ class NeuronGroup
 public:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, int hostID, int deviceID) :
-        m_Name(name), m_NumNeurons(numNeurons), m_IDRange(0, 0), m_PaddedIDRange(0, 0),
-        m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
+        m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false),
         m_SpikeVarMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventVarMode(GENN_PREFERENCES::defaultVarMode),
@@ -49,34 +48,6 @@ public:
     void setTrueSpikeRequired(bool req){ m_TrueSpikeRequired = req; }
     void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
 
-    //! Function to enable the use of zero-copied memory for spikes (deprecated use NeuronGroup::setSpikeVarMode):
-    /*! May improve IO performance at the expense of kernel performance */
-    void setSpikeZeroCopyEnabled(bool enabled)
-    {
-        m_SpikeVarMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
-    }
-
-    //! Function to enable the use of zero-copied memory for spike-like events (deprecated use NeuronGroup::setSpikeEventVarMode):
-    /*! May improve IO performance at the expense of kernel performance*/
-    void setSpikeEventZeroCopyEnabled(bool enabled)
-    {
-        m_SpikeEventVarMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
-    }
-
-    //! Function to enable the use of zero-copied memory for spike times (deprecated use NeuronGroup::setSpikeTimeVarMode):
-    /*! May improve IO performance at the expense of kernel performance */
-    void setSpikeTimeZeroCopyEnabled(bool enabled)
-    {
-        m_SpikeTimeVarMode = enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST;
-    }
-
-     //! Function to enable the use zero-copied memory for a particular state variable (deprecated use NeuronGroup::setVarMode):
-     /*! May improve IO performance at the expense of kernel performance */
-    void setVarZeroCopyEnabled(const std::string &varName, bool enabled)
-    {
-        setVarMode(varName, enabled ? VarMode::LOC_ZERO_COPY_INIT_HOST : VarMode::LOC_HOST_DEVICE_INIT_HOST);
-    }
-
     //! Set variable mode used for variables containing this neuron group's output spikes
     /*! This is ignored for CPU simulations */
     void setSpikeVarMode(VarMode mode) { m_SpikeVarMode = mode; }
@@ -99,8 +70,7 @@ public:
     void addOutSyn(SynapseGroup *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
     void initDerivedParams(double dt);
-    void calcSizes(unsigned int blockSize, unsigned int &idStart, unsigned int &paddedIDStart);
-
+ 
     //! Merge incoming postsynaptic models
     void mergeIncomingPSM();
 
@@ -114,8 +84,6 @@ public:
 
     //! Gets number of neurons in group
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
-    const std::pair<unsigned int, unsigned int> &getPaddedIDRange() const{ return m_PaddedIDRange; }
-    const std::pair<unsigned int, unsigned int> &getIDRange() const{ return m_IDRange; }
 
     //! Gets the neuron model used by this group
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
@@ -149,12 +117,6 @@ public:
 
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
-
-    bool isSpikeZeroCopyEnabled() const{ return (m_SpikeVarMode & VarLocation::ZERO_COPY); }
-    bool isSpikeEventZeroCopyEnabled() const{ return (m_SpikeEventVarMode & VarLocation::ZERO_COPY); }
-    bool isSpikeTimeZeroCopyEnabled() const{ return (m_SpikeTimeVarMode & VarLocation::ZERO_COPY); }
-    bool isZeroCopyEnabled() const;
-    bool isVarZeroCopyEnabled(const std::string &var) const{ return (getVarMode(var) & VarLocation::ZERO_COPY); }
 
     //! Get variable mode used for variables containing this neuron group's output spikes
     VarMode getSpikeVarMode() const{ return m_SpikeVarMode; }
@@ -191,11 +153,6 @@ public:
     //! Is any form of device initialisation required?
     bool isDeviceInitRequired() const;
 
-    //! Can this neuron group run on the CPU?
-    /*! If we are running in CPU_ONLY mode this is always true,
-        but some GPU functionality will prevent models being run on both CPU and GPU. */
-    bool canRunOnCPU() const;
-
     //! Does this neuron group have outgoing connections specified host id?
     bool hasOutputToHost(int targetHostID) const;
 
@@ -218,8 +175,6 @@ private:
     std::string m_Name;
 
     unsigned int m_NumNeurons;
-    std::pair<unsigned int, unsigned int> m_IDRange;
-    std::pair<unsigned int, unsigned int> m_PaddedIDRange;
 
     const NeuronModels::Base *m_NeuronModel;
     std::vector<double> m_Params;

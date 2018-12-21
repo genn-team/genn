@@ -30,24 +30,6 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::LegacyWrapper
-//----------------------------------------------------------------------------
-class LegacyWrapper : public NewModels::LegacyWrapper<Base, postSynModel, postSynModels>
-{
-public:
-    LegacyWrapper(unsigned int legacyTypeIndex) : NewModels::LegacyWrapper<Base, postSynModel, postSynModels>(legacyTypeIndex)
-    {
-    }
-
-    //----------------------------------------------------------------------------
-    // Base virtuals
-    //----------------------------------------------------------------------------
-    virtual std::string getDecayCode() const;
-    virtual std::string getApplyInputCode() const;
-    virtual std::string getSupportCode() const;
-};
-
-//----------------------------------------------------------------------------
 // PostsynapticModels::ExpConductance
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a conductance value.

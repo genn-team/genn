@@ -66,39 +66,6 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::LegacyWrapper
-//----------------------------------------------------------------------------
-//! Wrapper around legacy weight update models stored in #nModels array of neuronModel objects.
-class LegacyWrapper : public NewModels::LegacyWrapper<Base, neuronModel, nModels>
-{
-public:
-    LegacyWrapper(unsigned int legacyTypeIndex) : NewModels::LegacyWrapper<Base, neuronModel, nModels>(legacyTypeIndex)
-    {
-    }
-
-    //----------------------------------------------------------------------------
-    // Base virtuals
-    //----------------------------------------------------------------------------
-    //! \copydoc Base::getSimCode
-    virtual std::string getSimCode() const;
-
-    //! \copydoc Base::getThresholdConditionCode
-    virtual std::string getThresholdConditionCode() const;
-
-    //! \copydoc Base::getResetCode
-    virtual std::string getResetCode() const;
-
-    //! \copydoc Base::getSupportCode
-    virtual std::string getSupportCode() const;
-
-    //! \copydoc Base::getExtraGlobalParams
-    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const;
-
-    //! \copydoc Base::isPoisson
-    virtual bool isPoisson() const;
-};
-
-//----------------------------------------------------------------------------
 // NeuronModels::RulkovMap
 //----------------------------------------------------------------------------
 //! Rulkov Map neuron

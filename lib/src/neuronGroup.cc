@@ -65,24 +65,6 @@ void NeuronGroup::initDerivedParams(double dt)
     }
 }
 
-void NeuronGroup::calcSizes(unsigned int blockSize,  unsigned int &idStart, unsigned int &paddedIDStart)
-{
-    // paddedSize is the lowest multiple of neuronBlkSz >= neuronN[i]
-    const unsigned int paddedSize = ceil((double)getNumNeurons() / (double) blockSize) * (double) blockSize;
-
-    // Store current cummulative sum in first
-    m_IDRange.first = idStart;
-    m_PaddedIDRange.first = paddedIDStart;
-
-    // Update global cummulative sums of neurons
-    idStart += getNumNeurons();
-    paddedIDStart +=  paddedSize;
-
-    // Store cummulative sums of point after this neuron group
-    m_IDRange.second = idStart;
-    m_PaddedIDRange.second = paddedIDStart;
-}
-
 void NeuronGroup::mergeIncomingPSM()
 {
     // Create a copy of this neuron groups incoming synapse populations
