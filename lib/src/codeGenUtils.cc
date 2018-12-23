@@ -23,7 +23,6 @@
 
 // GeNN includes
 #include "modelSpec.h"
-#include "standardSubstitutions.h"
 #include "utils.h"
 
 //--------------------------------------------------------------------------

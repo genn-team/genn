@@ -7,7 +7,6 @@
 // GeNN includes
 #include "codeGenUtils.h"
 #include "currentSource.h"
-#include "standardSubstitutions.h"
 #include "synapseGroup.h"
 #include "utils.h"
 
@@ -293,28 +292,6 @@ bool NeuronGroup::isDeviceVarInitRequired() const
 bool NeuronGroup::isDeviceInitRequired() const
 {
     return (isSimRNGRequired() || isDeviceVarInitRequired());
-}
-
-bool NeuronGroup::canRunOnCPU() const
-{
-    // If spike var isn't present on host return false
-    if(!(m_SpikeVarMode & VarLocation::HOST)) {
-        return false;
-    }
-
-    // If spike event var isn't present on host return false
-    if(isSpikeEventRequired() && !(m_SpikeEventVarMode & VarLocation::HOST)) {
-        return false;
-    }
-
-    // If spike time var isn't present on host return false
-    if(isSpikeTimeRequired() && !(m_SpikeTimeVarMode & VarLocation::HOST)) {
-        return false;
-    }
-
-    // Return true if all of the variables are present on the host
-    return std::all_of(m_VarMode.cbegin(), m_VarMode.cend(),
-                       [](const VarMode mode){ return (mode & VarLocation::HOST); });
 }
 
 bool NeuronGroup::hasOutputToHost(int targetHostID) const

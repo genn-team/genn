@@ -2,7 +2,6 @@
 
 // GeNN includes
 #include "newModels.h"
-#include "postSynapseModels.h"
 
 //----------------------------------------------------------------------------
 // Macros

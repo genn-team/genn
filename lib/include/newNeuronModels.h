@@ -9,7 +9,6 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
-#include "neuronModels.h"
 #include "newModels.h"
 
 //----------------------------------------------------------------------------

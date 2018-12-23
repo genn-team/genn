@@ -18,7 +18,7 @@
       <Configuration>Debug_CPU_ONLY</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-	<ProjectConfiguration Include="Release_DYNAMIC|x64">
+    <ProjectConfiguration Include="Release_DYNAMIC|x64">
       <Configuration>Release_DYNAMIC</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
@@ -37,17 +37,14 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8A4E2BFC-0242-40D2-A183-2A2E9483C4EC}</ProjectGuid>
-    
     <!-- **YUCK** When libgenn is referenced from other projects this seems to somehow get lost -->
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
   </PropertyGroup>
-  
   <!-- Import builtin C++ properties -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
-  
   <!-- Configure global properties to build static library and to use default platform toolkit -->
   <PropertyGroup>
-	<ConfigurationType Condition=" $(Configuration.Contains('DYNAMIC')) ">DynamicLibrary</ConfigurationType>
+    <ConfigurationType Condition=" $(Configuration.Contains('DYNAMIC')) ">DynamicLibrary</ConfigurationType>
     <ConfigurationType Condition=" !$(Configuration.Contains('DYNAMIC')) ">StaticLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">genn_CPU_ONLY</TargetName>
@@ -58,10 +55,9 @@
     <TargetName Condition=" '$(Configuration)' == 'Release_DYNAMIC' ">genn_DYNAMIC</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY_DYNAMIC' ">genn_debug_CPU_ONLY_DYNAMIC</TargetName>
     <TargetName Condition=" '$(Configuration)' == 'Debug_DYNAMIC' ">genn_debug_DYNAMIC</TargetName>
-	<OutDir>lib\</OutDir>
+    <OutDir>lib\</OutDir>
     <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
- 
   <!-- Customise C++  compilation and linking tasks for CPU_ONLY mode -->
   <ItemDefinitionGroup>
     <ClCompile>
@@ -86,9 +82,6 @@
     <ClCompile Include="src\binomial.cc" />
     <ClCompile Include="src\global.cc" />
     <ClCompile Include="src\modelSpec.cc" />
-    <ClCompile Include="src\neuronModels.cc" />
-    <ClCompile Include="src\synapseModels.cc" />
-    <ClCompile Include="src\postSynapseModels.cc" />
     <ClCompile Include="src\utils.cc" />
     <ClCompile Include="src\codeStream.cc" />
     <ClCompile Include="src\codeGenUtils.cc" />
@@ -103,8 +96,6 @@
     <ClCompile Include="src\currentSource.cc" />
     <ClCompile Include="src\neuronGroup.cc" />
     <ClCompile Include="src\synapseGroup.cc" />
-    <ClCompile Include="src\standardSubstitutions.cc" />
-    <ClCompile Include="src\standardGeneratedSections.cc" />
   </ItemGroup>
   <!-- Import builtin C++ targets -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />

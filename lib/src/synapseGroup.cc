@@ -7,7 +7,6 @@
 // GeNN includes
 #include "codeGenUtils.h"
 #include "global.h"
-#include "standardSubstitutions.h"
 #include "utils.h"
 
 //----------------------------------------------------------------------------

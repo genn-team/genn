@@ -102,8 +102,6 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    std::pair<unsigned int, unsigned int> getPaddedKernelIDRange() const{ return m_PaddedKernelIDRange; }
-
     const std::string &getName() const{ return m_Name; }
 
     SpanType getSpanType() const{ return m_SpanType; }

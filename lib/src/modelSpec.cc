@@ -26,7 +26,6 @@
 #include "codeGenUtils.h"
 #include "global.h"
 #include "modelSpec.h"
-#include "standardSubstitutions.h"
 #include "utils.h"
 
 // ------------------------------------------------------------------------
@@ -34,7 +33,7 @@
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel() : m_TimePrecision(TimePrecision::DEFAULT), RNtype{"uint64_t"}, final(false)
+NNmodel::NNmodel() : m_TimePrecision(TimePrecision::DEFAULT)
 {
     setDT(0.5);
     setPrecision(GENN_FLOAT);
@@ -408,15 +407,6 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
     seed= inseed;
 }
 
-//--------------------------------------------------------------------------
-/*! \brief Sets the underlying type for random number generation (default: uint64_t)
- */
-//--------------------------------------------------------------------------
-void NNmodel::setRNType(const std::string &type)
-{
-    RNtype= type;
-}
-
 #ifndef CPU_ONLY
 //--------------------------------------------------------------------------
 /*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.
@@ -451,7 +441,7 @@ string NNmodel::scalarExpr(const double val) const
     return tmp;
 }
 
-void NNmodel::finalize()
+/*void NNmodel::finalize()
 {
     //initializing learning parameters to start
     if (final) {
@@ -584,8 +574,4 @@ void NNmodel::finalize()
         // Make extra global parameter lists
         cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
-}
-
-
-
-#endif // MODELSPEC_CC
+}*/

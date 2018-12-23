@@ -6,7 +6,6 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
-#include "standardSubstitutions.h"
 #include "synapseGroup.h"
 #include "utils.h"
 
