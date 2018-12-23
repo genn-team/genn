@@ -141,7 +141,7 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if(isSpikeZeroCopyEnabled() || isSpikeEventZeroCopyEnabled() || isSpikeTimeZeroCopyEnabled()) {
+    if((m_SpikeVarMode & VarLocation::ZERO_COPY) || (m_SpikeEventVarMode & VarLocation::ZERO_COPY) || (m_SpikeTimeVarMode & VarLocation::ZERO_COPY)) {
         return true;
     }
 
