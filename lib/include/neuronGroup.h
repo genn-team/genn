@@ -117,6 +117,7 @@ public:
 
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
+    bool isZeroCopyEnabled() const;
 
     //! Get variable mode used for variables containing this neuron group's output spikes
     VarMode getSpikeVarMode() const{ return m_SpikeVarMode; }
