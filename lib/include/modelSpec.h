@@ -35,8 +35,6 @@ Part of the code generation and generated code sections.
 #include <mpi.h>
 #endif
 
-using namespace std;
-
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
 #define CPU 0 //!< Macro attaching the label "CPU" to flag 0
@@ -157,7 +155,7 @@ public:
 
     // PUBLIC INITIALISATION FUNCTIONS
     //================================
-    const map<string, string> &getInitKernelParameters() const{ return m_InitKernelParameters; }
+    const std::map<std::string, std::string> &getInitKernelParameters() const{ return m_InitKernelParameters; }
 
     //! Does this model require device initialisation kernel
     /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
@@ -170,13 +168,13 @@ public:
     // PUBLIC NEURON FUNCTIONS
     //========================
     //! Get std::map containing local named NeuronGroup objects in model
-    const map<string, NeuronGroup> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
+    const std::map<std::string, NeuronGroup> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
 
     //! Get std::map containing remote named NeuronGroup objects in model
-    const map<string, NeuronGroup> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
+    const std::map<std::string, NeuronGroup> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the neuron kernel
-    const map<string, string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
+    const std::map<std::string, std::string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
 
     //! How many neurons are simulated locally in this model
     unsigned int getNumLocalNeurons() const;
@@ -255,19 +253,19 @@ public:
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     //! Get std::map containing local named SynapseGroup objects in model
-    const map<string, SynapseGroup> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
+    const std::map<std::string, SynapseGroup> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
 
     //! Get std::map containing remote named SynapseGroup objects in model
-    const map<string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
+    const std::map<std::string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the synapse kernel
-    const map<string, string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
+    const std::map<std::string, std::string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the postsynaptic learning kernel
-    const map<string, string> &getSimLearnPostKernelParameters() const{ return simLearnPostKernelParameters; }
+    const std::map<std::string, std::string> &getSimLearnPostKernelParameters() const{ return simLearnPostKernelParameters; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the synapse dynamics kernel
-    const map<string, string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }
+    const std::map<std::string, std::string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }
 
     //! Find a synapse group by name
     const SynapseGroup *findSynapseGroup(const std::string &name) const;
@@ -329,8 +327,7 @@ public:
 
         if(!result.second)
         {
-            gennError("Cannot add a synapse population with duplicate name:" + name);
-            return NULL;
+            throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
         }
         else
         {
@@ -399,13 +396,13 @@ public:
     //================================
 
     //! Get std::map containing local named CurrentSource objects in model
-    const map<string, CurrentSource> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
+    const std::map<std::string, CurrentSource> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
     //! Get std::map containing remote named CurrentSource objects in model
-    const map<string, CurrentSource> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
+    const std::map<std::string, CurrentSource> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
 
     //! Gets std::map containing names and types of each parameter that should be passed through to the current source kernel
-    const map<string, string> &getCurrentSourceKernelParameters() const{ return currentSourceKernelParameters; }
+    const std::map<std::string, std::string> &getCurrentSourceKernelParameters() const{ return currentSourceKernelParameters; }
 
     //! Find a current source by name
     const CurrentSource *findCurrentSource(const std::string &name) const;
@@ -452,8 +449,7 @@ public:
 
         if(!result.second)
         {
-            gennError("Cannot add a current source with duplicate name:" + currentSourceName);
-            return NULL;
+            throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
         }
         else
         {

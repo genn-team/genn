@@ -339,7 +339,7 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
 
 std::string NNmodel::scalarExpr(const double val) const
 {
-    string tmp;
+    std::string tmp;
     float fval= (float) val;
     if (ftype == "float") {
         tmp= std::to_string(fval) + "f";

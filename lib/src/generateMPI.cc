@@ -34,7 +34,7 @@
 namespace
 {
 void genHeader(const NNmodel &model,    //!< Model description
-               const string &path,      //!< Path for code generationn
+               const std::string &path,      //!< Path for code generationn
                int localHostID)         //!< ID of local host
 {
     //=======================
@@ -42,8 +42,8 @@ void genHeader(const NNmodel &model,    //!< Model description
     //=======================
 
     // this file contains helpful macros and is separated out so that it can also be used by other code that is compiled separately
-    string name= model.getGeneratedCodePath(path, "mpi.h");
-    ofstream fs;
+    std::string name= model.getGeneratedCodePath(path, "mpi.h");
+    std::ofstream fs;
     fs.open(name.c_str());
 
     // Attach this to a code stream
@@ -92,14 +92,14 @@ void genHeader(const NNmodel &model,    //!< Model description
 }
 
 void genCode(const NNmodel &model,  //!< Model description
-             const string &path,    //!< Path for code generationn
+             const std::string &path,    //!< Path for code generationn
              int localHostID)       //!< ID of local host
 {
     //=======================
     // generate mpi.cc
     //=======================
-    string name= model.getGeneratedCodePath(path, "mpi.cc");
-    ofstream fs;
+    std::string name= model.getGeneratedCodePath(path, "mpi.cc");
+    std::ofstream fs;
     fs.open(name.c_str());
 
     // Attach this to a code stream
@@ -226,7 +226,7 @@ void genCode(const NNmodel &model,  //!< Model description
 */
 //--------------------------------------------------------------------------
 void genMPI(const NNmodel &model,   //!< Model description
-            const string &path,     //!< Path for code generation
+            const std::string &path,     //!< Path for code generation
             int localHostID)        //!< ID of local host
 {
     genHeader(model, path, localHostID);

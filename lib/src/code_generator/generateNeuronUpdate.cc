@@ -94,7 +94,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getName());
 
                 // Apply substitutions to current converter code
-                string psCode = psm->getApplyInputCode();
+                std::string psCode = psm->getApplyInputCode();
                 applyNeuronModelSubstitutions(psCode, ng, "l");
                 applyPostsynapticModelSubstitutions(psCode, *sg, "lps");
                 inSynSubs.apply(psCode);
@@ -126,7 +126,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 Substitutions currSourceSubs(&popSubs);
                 currSourceSubs.addFuncSubstitution("injectCurrent", 1, "Isyn += $(0)");
 
-                string iCode = csm->getInjectionCode();
+                std::string iCode = csm->getInjectionCode();
                 applyCurrentSourceSubstitutions(iCode, *cs, "lcs");
                 currSourceSubs.apply(iCode);
                 iCode = ensureFtype(iCode, model.getPrecision());
@@ -143,9 +143,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 os << " using namespace " << ng.getName() << "_neuron;" << std::endl;
             }
 
-            string thCode = nm->getThresholdConditionCode();
+            std::string thCode = nm->getThresholdConditionCode();
             if (thCode.empty()) { // no condition provided
-                std::cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!" << endl;
+                std::cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!" << std::endl;
             }
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
@@ -161,7 +161,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
             }
 
             os << "// calculate membrane potential" << std::endl;
-            string sCode = nm->getSimCode();
+            std::string sCode = nm->getSimCode();
             popSubs.apply(sCode);
 
             applyNeuronModelSubstitutions(sCode, ng, "l");
@@ -179,7 +179,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 // Loop through outgoing synapse populations that will contribute to event condition code
                 for(const auto &spkEventCond : ng.getSpikeEventCondition()) {
                     // Replace of parameters, derived parameters and extraglobalsynapse parameters
-                    string eCode = spkEventCond.first;
+                    std::string eCode = spkEventCond.first;
                     applyNeuronModelSubstitutions(eCode, ng, "l", "", "_pre");
                     popSubs.apply(eCode);
                     eCode = ensureFtype(eCode, model.getPrecision());
@@ -224,7 +224,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
                     // add after-spike reset if provided
                     if (!nm->getResetCode().empty()) {
-                        string rCode = nm->getResetCode();
+                        std::string rCode = nm->getResetCode();
                         applyNeuronModelSubstitutions(rCode, ng, "l");
                         popSubs.apply(rCode);
                         rCode = ensureFtype(rCode, model.getPrecision());
@@ -253,7 +253,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 Substitutions inSynSubs(&popSubs);
                 inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getName());
 
-                string pdCode = psm->getDecayCode();
+                std::string pdCode = psm->getDecayCode();
                 applyNeuronModelSubstitutions(pdCode, ng, "l");
                 applyPostsynapticModelSubstitutions(pdCode, *sg, "lps");
                 inSynSubs.apply(pdCode);
@@ -266,7 +266,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 }
                 os << pdCode << std::endl;
                 if (!psm->getSupportCode().empty()) {
-                    os << CodeStream::CB(29) << " // namespace bracket closed" << endl;
+                    os << CodeStream::CB(29) << " // namespace bracket closed" << std::endl;
                 }
 
                 os << backend.getVarPrefix() << "inSyn"  << sg->getName() << "[" << inSynSubs.getVarSubstitution("id") << "] = linSyn" << sg->getName() << ";" << std::endl;

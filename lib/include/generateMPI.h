@@ -27,8 +27,6 @@
 // Forward declarations
 class NNmodel;
 
-using namespace std;
-
 //--------------------------------------------------------------------------
 /*!
   \brief A function that generates predominantly MPI infrastructure code.
@@ -38,5 +36,5 @@ using namespace std;
 */
 //--------------------------------------------------------------------------
 void genMPI(const NNmodel &model,   //!< Model description
-            const string &path,     //!< Path for code generation
+            const std::string &path,     //!< Path for code generation
             int localHostID);       //!< ID of local host

@@ -232,7 +232,7 @@ bool regexSubstitute(std::string &s, const std::regex &regex, const std::string 
 void substitute(std::string &s, const std::string &trg, const std::string &rep)
 {
     size_t found= s.find(trg);
-    while (found != string::npos) {
+    while (found != std::string::npos) {
         s.replace(found,trg.length(),rep);
         found= s.find(trg);
     }
@@ -444,7 +444,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
             }
             break;
         case 1: // looking for start of number
-            if (digits.find(code[i]) != string::npos) {
+            if (digits.find(code[i]) != std::string::npos) {
                 state= 2; // found the beginning of a number starting with a digit
                 break;
             }
@@ -452,7 +452,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
                 state= 3; // number starting with a dot
                 break;
             }
-            if (op.find(code[i]) == string::npos) {
+            if (op.find(code[i]) == std::string::npos) {
                 state= 0;
                 break;
             }
@@ -466,8 +466,8 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
                 state= 4;
                 break;
             }
-            if (digits.find(code[i]) == string::npos) {// the number looks like an integer ...
-                if (op.find(code[i]) != string::npos) state= 1;
+            if (digits.find(code[i]) == std::string::npos) {// the number looks like an integer ...
+                if (op.find(code[i]) != std::string::npos) state= 1;
                 else state= 0;
                 break;
             }
@@ -477,18 +477,18 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
                 state= 4;
                 break;
             }
-            if (digits.find(code[i]) == string::npos) {
+            if (digits.find(code[i]) == std::string::npos) {
                 doFinal(code, i, type, state);
                 break;
             }
             break;
         case 4: // we have had '.' and 'e', 'E', digits only now
-            if (digits.find(code[i]) != string::npos) {
+            if (digits.find(code[i]) != std::string::npos) {
                 state= 6;
                 break;
             }
             if ((code[i] != '+') && (code[i] != '-')) {
-                if (op.find(code[i]) != string::npos) state= 1;
+                if (op.find(code[i]) != std::string::npos) state= 1;
                 else state= 0;
                 break;
             }
@@ -497,17 +497,17 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
                 break;
             }
         case 5: // now one or more digits or else ...
-            if (digits.find(code[i]) != string::npos) {
+            if (digits.find(code[i]) != std::string::npos) {
                 state= 6;
                 break;
             }
             else {
-                if (op.find(code[i]) != string::npos) state= 1;
+                if (op.find(code[i]) != std::string::npos) state= 1;
                 else state= 0;
                 break;
             }
         case 6: // any non-digit character will trigger action
-            if (digits.find(code[i]) == string::npos) {
+            if (digits.find(code[i]) == std::string::npos) {
                 doFinal(code, i, type, state);
                 break;
             }
@@ -517,7 +517,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
     }
     if ((state == 3) || (state == 6)) {
         if (type == "float") {
-            code= code+string("f");
+            code= code+"f";
         }
     }
     ensureMathFunctionFtype(code, type);
@@ -529,17 +529,17 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
  */
 //--------------------------------------------------------------------------
 
-void checkUnreplacedVariables(const string &code, const string &codeName)
+void checkUnreplacedVariables(const std::string &code, const std::string &codeName)
 {
-    regex rgx("\\$\\([\\w]+\\)");
-    string vars= "";
-    for (sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
+    std::regex rgx("\\$\\([\\w]+\\)");
+    std::string vars= "";
+    for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
         vars+= it->str().substr(2,it->str().size()-3) + ", ";
     }
     if (vars.size() > 0) {
         vars= vars.substr(0, vars.size()-2);
 
-        vars = (vars.find(",") != string::npos) ? "variables " + vars + " were " : "variable " + vars + " was ";
+        vars = (vars.find(",") != std::string::npos) ? "variables " + vars + " were " : "variable " + vars + " was ";
        
         throw std::runtime_error("The "+vars+"undefined in code "+codeName+".");
     }
@@ -628,7 +628,7 @@ void preNeuronSubstitutionsInSynapticCode(
     // presynaptic neuron variables, parameters, and global parameters
     const auto *srcNeuronModel = sg->getSrcNeuronGroup()->getNeuronModel();
     if (srcNeuronModel->isPoisson()) {
-        substitute(wCode, "$(V_pre)", to_string(sg->getSrcNeuronGroup()->getParams()[2]));
+        substitute(wCode, "$(V_pre)", std::to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
 
     neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), offset, axonalDelayOffset, preIdx, "_pre", devPrefix, preVarPrefix, preVarSuffix);
