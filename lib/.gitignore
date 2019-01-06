@@ -13,3 +13,5 @@
 **/*.sdf
 **/*.sln
 **/*.vcxproj.user
+/x64/
+/Debug/
