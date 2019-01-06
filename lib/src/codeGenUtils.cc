@@ -569,7 +569,7 @@ uint32_t hashString(const std::string &string)
 
     // Initialize the hash to a 'random' value
 
-    uint32_t h = 0xc70f6907 ^ len;
+    uint32_t h = 0xc70f6907 ^ (uint32_t)len;
 
     // Mix 4 bytes at a time into the hash
     const char *data = string.c_str();

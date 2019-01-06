@@ -63,7 +63,7 @@ void NeuronGroup::initDerivedParams(double dt)
     }
 }
 
-void NeuronGroup::mergeIncomingPSM()
+void NeuronGroup::mergeIncomingPSM(bool merge)
 {
     // Create a copy of this neuron groups incoming synapse populations
     std::vector<SynapseGroup*> inSyn = getInSyn();
@@ -78,7 +78,7 @@ void NeuronGroup::mergeIncomingPSM()
         m_MergedInSyn.emplace_back(a, std::vector<SynapseGroup*>{a});
 
         // Continue if merging of postsynaptic models is disabled
-        if(!GENN_PREFERENCES::mergePostsynapticModels) {
+        if(!merge) {
             continue;
         }
 

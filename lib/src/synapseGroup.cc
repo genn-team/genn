@@ -7,7 +7,6 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
-#include "global.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -44,16 +43,17 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
-                           const InitSparseConnectivitySnippet::Init &connectivityInitialiser)
+                           const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
+                           VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation)
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-        m_InSynLocation(GENN_PREFERENCES::defaultVarLocation),  m_DendriticDelayLocation(GENN_PREFERENCES::defaultVarLocation),
+        m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
-        m_WUVarLocation(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation),
-        m_WUPostVarLocation(wuPostVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation), m_PSVarLocation(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation),
-        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(GENN_PREFERENCES::defaultSparseConnectivityLocation),
+        m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
+        m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation),
+        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_PSModelTargetName(name)
 {
     // If connectivitity initialisation snippet provides a function to calculate row length, call it

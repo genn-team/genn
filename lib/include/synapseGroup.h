@@ -23,7 +23,8 @@ public:
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
-                 const InitSparseConnectivitySnippet::Init &connectivityInitialiser);
+                 const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                 VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation);
     SynapseGroup(const SynapseGroup&) = delete;
     SynapseGroup() = delete;
 

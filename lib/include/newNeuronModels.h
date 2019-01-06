@@ -20,6 +20,7 @@
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const{ return SUPPORT_CODE; }
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
 #define SET_ADDITIONAL_INPUT_VARS(...) virtual NameTypeValVec getAdditionalInputVars() const{ return __VA_ARGS__; }
+#define SET_NEEDS_AUTO_REFRACTORY(AUTO_REFRACTORY_REQUIRED) virtual bool isAutoRefractoryRequired() const{ return AUTO_REFRACTORY_REQUIRED; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::Base
@@ -62,6 +63,9 @@ public:
     //! Is this neuron model the internal Poisson model (which requires a number of special cases)
     //! \private
     virtual bool isPoisson() const{ return false; }
+
+    //! Does this model require auto-refractory logic?
+    virtual bool isAutoRefractoryRequired() const{ return true; }
 };
 
 //----------------------------------------------------------------------------
@@ -209,6 +213,7 @@ public:
     DECLARE_MODEL(NeuronModels::SpikeSource, 0, 0);
 
     SET_THRESHOLD_CONDITION_CODE("0");
+    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
 //----------------------------------------------------------------------------
@@ -230,13 +235,14 @@ class SpikeSourceArray : public Base
 {
 public:
     DECLARE_MODEL(NeuronModels::SpikeSourceArray, 0, 2);
-    SET_SIM_CODE("oldSpike = false;\n")
+    SET_SIM_CODE("")
     SET_THRESHOLD_CONDITION_CODE(
         "$(startSpike) != $(endSpike) && "
         "$(t) >= $(spikeTimes)[$(startSpike)]" );
     SET_RESET_CODE( "$(startSpike)++;\n" );
     SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int"}} );
     SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
+    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
 //----------------------------------------------------------------------------
@@ -343,6 +349,7 @@ public:
     SET_PARAM_NAMES({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
     SET_DERIVED_PARAMS({{"isi", [](const std::vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
+    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
 //----------------------------------------------------------------------------

@@ -23,6 +23,7 @@
     <ClInclude Include="include\codeGenUtils.h" />
     <ClInclude Include="include\codeStream.h" />
     <ClInclude Include="include\code_generator\backend.h" />
+    <ClInclude Include="include\code_generator\generateAll.h" />
     <ClInclude Include="include\code_generator\generateInit.h" />
     <ClInclude Include="include\code_generator\generateMakefile.h" />
     <ClInclude Include="include\code_generator\generateNeuronUpdate.h" />
@@ -34,7 +35,6 @@
     <ClInclude Include="include\currentSource.h" />
     <ClInclude Include="include\currentSourceModels.h" />
     <ClInclude Include="include\generateMPI.h" />
-    <ClInclude Include="include\global.h" />
     <ClInclude Include="include\initSparseConnectivitySnippet.h" />
     <ClInclude Include="include\initVarSnippet.h" />
     <ClInclude Include="include\modelSpec.h" />
@@ -52,6 +52,7 @@
     <ClCompile Include="src\binomial.cc" />
     <ClCompile Include="src\codeGenUtils.cc" />
     <ClCompile Include="src\codeStream.cc" />
+    <ClCompile Include="src\code_generator\generateAll.cc" />
     <ClCompile Include="src\code_generator\generateInit.cc" />
     <ClCompile Include="src\code_generator\generateMakefile.cc" />
     <ClCompile Include="src\code_generator\generateNeuronUpdate.cc" />
@@ -61,7 +62,6 @@
     <ClCompile Include="src\currentSource.cc" />
     <ClCompile Include="src\currentSourceModels.cc" />
     <ClCompile Include="src\generateMPI.cc" />
-    <ClCompile Include="src\global.cc" />
     <ClCompile Include="src\initSparseConnectivitySnippet.cc" />
     <ClCompile Include="src\initVarSnippet.cc" />
     <ClCompile Include="src\modelSpec.cc" />
@@ -140,7 +140,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;../third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -167,7 +167,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;../third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

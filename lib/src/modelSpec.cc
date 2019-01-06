@@ -24,7 +24,6 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
-#include "global.h"
 #include "modelSpec.h"
 
 // ------------------------------------------------------------------------
@@ -32,7 +31,9 @@
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel() : m_TimePrecision(TimePrecision::DEFAULT)
+NNmodel::NNmodel() 
+:   m_TimePrecision(TimePrecision::DEFAULT), m_MergePostsynapticModels(false), m_DefaultVarLocation(VarLocation::HOST_DEVICE), 
+    m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE)
 {
     setDT(0.5);
     setPrecision(GENN_FLOAT);

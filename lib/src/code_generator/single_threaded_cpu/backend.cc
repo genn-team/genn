@@ -2,7 +2,6 @@
 
 // GeNN includes
 #include "codeStream.h"
-#include "global.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
@@ -477,11 +476,11 @@ void SingleThreadedCPU::genMakefilePreamble(std::ostream &os) const
 {
     std::string linkFlags = "-shared -fPIC";
     std::string cxxFlags = "-c -fPIC -DCPU_ONLY -std=c++11 -MMD -MP";
-    cxxFlags += " " + GENN_PREFERENCES::userCxxFlagsGNU;
-    if (GENN_PREFERENCES::optimizeCode) {
+    cxxFlags += " " + m_Preferences.userCxxFlagsGNU;
+    if (m_Preferences.optimizeCode) {
         cxxFlags += " -O3 -ffast-math";
     }
-    if (GENN_PREFERENCES::debugCode) {
+    if (m_Preferences.debugCode) {
         cxxFlags += " -O0 -g";
     }
 
@@ -532,6 +531,13 @@ bool SingleThreadedCPU::isGlobalRNGRequired(const NNmodel &model) const
     }
 
     return false;
+}
+//--------------------------------------------------------------------------
+SingleThreadedCPU SingleThreadedCPU::create(const NNmodel &, const filesystem::path &, int localHostID, const Base::Preferences &preferences)
+{
+    SingleThreadedCPU backend(localHostID, preferences);
+
+    return std::move(backend);
 }
 //--------------------------------------------------------------------------
 void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,

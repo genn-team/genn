@@ -7,7 +7,6 @@
 #include <vector>
 
 // GeNN includes
-#include "global.h"
 #include "currentSourceModels.h"
 #include "variableMode.h"
 
@@ -18,10 +17,10 @@ class CurrentSource
 {
 public:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers) :
-        m_Name(name),
-        m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_VarLocation(varInitialisers.size(), GENN_PREFERENCES::defaultVarLocation)
+                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers,
+                VarLocation defaultVarLocation) 
+    :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
+        m_VarLocation(varInitialisers.size(), defaultVarLocation)
     {
     }
     CurrentSource(const CurrentSource&) = delete;

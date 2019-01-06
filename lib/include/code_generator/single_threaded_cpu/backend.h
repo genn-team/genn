@@ -8,6 +8,12 @@
 // GeNN code generator includes
 #include "code_generator/backend.h"
 
+// Forward declarations
+namespace filesystem
+{
+    class path;
+}
+
 //--------------------------------------------------------------------------
 // CodeGenerator::Backends::SingleThreadedCPU
 //--------------------------------------------------------------------------
@@ -18,8 +24,8 @@ namespace Backends
 class SingleThreadedCPU : public Base
 {
 public:
-    SingleThreadedCPU(int localHostID)
-    :   m_LocalHostID(localHostID)
+    SingleThreadedCPU(int localHostID, const Base::Preferences &preferences)
+    :   m_LocalHostID(localHostID), m_Preferences(preferences)
     {
     }
 
@@ -79,6 +85,11 @@ public:
 
     virtual bool isGlobalRNGRequired(const NNmodel &model) const override;
 
+    //--------------------------------------------------------------------------
+    // Static API
+    //--------------------------------------------------------------------------
+    static SingleThreadedCPU create(const NNmodel &model, const filesystem::path &outputPath, int localHostID, const Base::Preferences &preferences);
+
 private:
     //--------------------------------------------------------------------------
     // Private methods
@@ -93,6 +104,7 @@ private:
     // Members
     //--------------------------------------------------------------------------
     const int m_LocalHostID;
+    const Base::Preferences m_Preferences;
 };
 }   // namespace Backends
 }   // namespace CodeGenerator

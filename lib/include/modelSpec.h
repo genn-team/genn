@@ -506,10 +506,20 @@ private:
     std::map<std::string, std::string> currentSourceKernelParameters;
 
      // Model members
-    std::string name;                    //!< Name of the neuronal newtwork model
-    std::string ftype;                   //!< Type of floating point variables (float, double, ...; default: float)
+    std::string name;               //!< Name of the neuronal newtwork model
+    std::string ftype;              //!< Type of floating point variables (float, double, ...; default: float)
     TimePrecision m_TimePrecision;  //!< Type of floating point variables used to store time
     double dt;                      //!< The integration time step of the model
     bool timing;
     unsigned int seed;
+
+    //! Should compatible postsynaptic models and dendritic delay buffers be merged? 
+    //! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved
+    bool m_MergePostsynapticModels; 
+
+    //!< What is the default location for model state variables? Historically, everything was allocated on both host AND device
+    VarLocation m_DefaultVarLocation;  
+
+    //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
+    VarLocation m_DefaultSparseConnectivityLocation; 
 };

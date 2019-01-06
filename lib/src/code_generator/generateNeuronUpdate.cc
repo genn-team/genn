@@ -155,7 +155,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 thCode= ensureFtype(thCode, model.getPrecision());
                 checkUnreplacedVariables(thCode, ng.getName() + " : thresholdConditionCode");
 
-                if (GENN_PREFERENCES::autoRefractory) {
+                if (nm->isAutoRefractoryRequired()) {
                     os << "const bool oldSpike= (" << thCode << ");" << std::endl;
                 }
             }
@@ -211,7 +211,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
             // test for true spikes if condition is provided
             if (!thCode.empty()) {
                 os << "// test for and register a true spike" << std::endl;
-                if (GENN_PREFERENCES::autoRefractory) {
+                if (nm->isAutoRefractoryRequired()) {
                     os << "if ((" << thCode << ") && !(oldSpike))";
                 }
                 else {

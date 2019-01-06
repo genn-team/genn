@@ -7,7 +7,6 @@
 #include <vector>
 
 // GeNN includes
-#include "global.h"
 #include "newNeuronModels.h"
 #include "variableMode.h"
 
@@ -20,12 +19,13 @@ class NeuronGroup
 {
 public:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, int hostID, int deviceID) :
+                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, 
+                VarLocation defaultVarLocation, int hostID, int deviceID) :
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false),
-        m_SpikeLocation(GENN_PREFERENCES::defaultVarLocation), m_SpikeEventLocation(GENN_PREFERENCES::defaultVarLocation),
-        m_SpikeTimeLocation(GENN_PREFERENCES::defaultVarLocation), m_VarLocation(varInitialisers.size(), GENN_PREFERENCES::defaultVarLocation),
+        m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+        m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_HostID(hostID), m_DeviceID(deviceID)
     {
     }
@@ -68,7 +68,7 @@ public:
     void initDerivedParams(double dt);
  
     //! Merge incoming postsynaptic models
-    void mergeIncomingPSM();
+    void mergeIncomingPSM(bool merge);
 
     //! add input current source
     void injectCurrent(CurrentSource *source);
