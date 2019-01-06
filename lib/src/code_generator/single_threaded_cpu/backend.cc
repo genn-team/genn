@@ -1,13 +1,26 @@
-#include "singleThreadedCPU.h"
+#include "code_generator/single_threaded_cpu/backend.h"
 
 // GeNN includes
 #include "codeStream.h"
 #include "global.h"
 #include "modelSpec.h"
-#include "utils.h"
 
-// NuGeNN includes
-#include "../substitution_stack.h"
+// GeNN code generator includes
+#include "code_generator/substitutions.h"
+
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
+const std::vector<FunctionTemplate> cpuFunctions = {
+    {"gennrand_uniform", 0, "standardUniformDistribution($(rng))", "standardUniformDistribution($(rng))"},
+    {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
+    {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
+    {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
+    {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))", "std::gamma_distribution<float>($(0), 1.0f)($(rng))"}
+};
+}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::Backends::SingleThreadedCPU
@@ -145,7 +158,7 @@ void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                 {
                     CodeStream::Scope b(os);
 
-                    const string offsetTrueSpkPost = (s.second.getTrgNeuronGroup()->isTrueSpikeRequired() && s.second.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
+                    const std::string offsetTrueSpkPost = (s.second.getTrgNeuronGroup()->isTrueSpikeRequired() && s.second.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
                     os << "const unsigned int spike = glbSpk" << s.second.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "j];" << std::endl;
 
                     // Loop through column of presynaptic neurons
@@ -326,7 +339,7 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
                     }
                 }
                 else {
-                    gennError("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
+                    throw std::runtime_error("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
                 }
             }
         }
@@ -341,10 +354,10 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
         os << "// Synapse groups with sparse connectivity" << std::endl;
         for(const auto &s : model.getLocalSynapseGroups()) {
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                if(model.isSynapseGroupDynamicsRequired(s.first)) {
+                if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
                     assert(false);
                 }
-                if (model.isSynapseGroupPostLearningRequired(s.first)) {
+                if (!s.second.getWUModel()->getLearnPostCode().empty()) {
                     assert(false);
                 }
 
@@ -376,33 +389,33 @@ void SingleThreadedCPU::genAllocateMemPreamble(CodeStream &, const NNmodel &) co
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode) const
+void SingleThreadedCPU::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
 {
     os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode) const
+void SingleThreadedCPU::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
 {
     os << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode, size_t count) const
+void SingleThreadedCPU::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count) const
 {
     os << name << " = new " << type << "[" << count << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableFree(CodeStream &os, const std::string &name, VarMode) const
+void SingleThreadedCPU::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
 {
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genPopVariableInit(CodeStream &os, VarMode, const Substitutions &kernelSubs, Handler handler) const
+void SingleThreadedCPU::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, const std::string &countVarName,
+void SingleThreadedCPU::genVariableInit(CodeStream &os, VarLocation, size_t count, const std::string &countVarName,
                                         const Substitutions &kernelSubs, Handler handler) const
 {
     // **TODO** loops like this should be generated like CUDA threads
@@ -416,11 +429,11 @@ void SingleThreadedCPU::genVariableInit(CodeStream &os, VarMode, size_t count, c
     }
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariablePush(CodeStream&, const std::string&, const std::string&, VarMode, bool, size_t) const
+void SingleThreadedCPU::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariablePull(CodeStream&, const std::string&, const std::string&, VarMode, size_t) const
+void SingleThreadedCPU::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
 {
 }
 //--------------------------------------------------------------------------
@@ -500,17 +513,17 @@ bool SingleThreadedCPU::isGlobalRNGRequired(const NNmodel &model) const
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
     if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-        [](const NeuronGroupValueType &n)
+        [](const NNmodel::NeuronGroupValueType &n)
         {
-            return n.second.isSimRNGRequired() || n.second.isInitRNGRequired(VarInit::HOST)
+        return n.second.isSimRNGRequired() || n.second.isInitRNGRequired();
         }))
     {
         return true;
     }
 
     // If any synapse groups require an RNG for weight update model initialisation, return true
-    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend()),
-        [](const SynapseGroupValueType &s)
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const NNmodel::SynapseGroupValueType &s)
         {
             return s.second.isWUInitRNGRequired();
         }))

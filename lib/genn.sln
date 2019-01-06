@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib_genn", "lib_genn.vcxproj", "{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "single_threaded_cpu_backend", "single_threaded_cpu_backend.vcxproj", "{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Debug|x64.ActiveCfg = Debug|x64
+		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Debug|x64.Build.0 = Debug|x64
+		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Release|x64.ActiveCfg = Release|x64
+		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Release|x64.Build.0 = Release|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Debug|x64.ActiveCfg = Debug|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Debug|x64.Build.0 = Debug|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Release|x64.ActiveCfg = Release|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

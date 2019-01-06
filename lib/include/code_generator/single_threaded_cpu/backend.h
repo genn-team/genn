@@ -5,8 +5,8 @@
 #include <map>
 #include <string>
 
-// NuGeNN includes
-#include "base.h"
+// GeNN code generator includes
+#include "code_generator/backend.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator::Backends::SingleThreadedCPU
@@ -41,21 +41,21 @@ public:
     virtual void genRunnerPreamble(CodeStream &os) const override;
     virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const override;
 
-    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const override;
+    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
-    virtual void genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
+    virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const override;
+    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &countVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const override;
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const override;
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const override;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const override;
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
+    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
+    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
 
     virtual void genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const override;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,

@@ -11,7 +11,6 @@
 # Ignore MSBuild/Visual Studio files
 **/*.suo
 **/*.sdf
-**/*.sln
 **/*.vcxproj.user
 /x64/
 /Debug/
