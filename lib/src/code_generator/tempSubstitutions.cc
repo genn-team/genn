@@ -1,4 +1,4 @@
-#include "tempSubstitutions.h"
+#include "code_generator/tempSubstitutions.h"
 
 // GeNN includes
 #include "codeGenUtils.h"
@@ -7,7 +7,6 @@
 #include "neuronGroup.h"
 #include "synapseGroup.h"
 #include "newModels.h"
-#include "standardSubstitutions.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator

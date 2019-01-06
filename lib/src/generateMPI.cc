@@ -49,7 +49,8 @@ void genHeader(const NNmodel &model,    //!< Model description
     // Attach this to a code stream
     CodeStream os(fs);
 
-    writeHeader(os);
+    // **TODO** implement
+    //writeHeader(os);
     os << std::endl;
 
     // write doxygen comment
@@ -104,7 +105,8 @@ void genCode(const NNmodel &model,  //!< Model description
     // Attach this to a code stream
     CodeStream os(fs);
 
-    writeHeader(os);
+    // **TODO** implement somewhere
+    //writeHeader(os);
     os << std::endl;
 
     // write doxygen comment

@@ -136,7 +136,7 @@ protected:
     {
         // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
-        return GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
+        return "__declspec(dllexport) extern";
 #else
         return "extern";
 #endif

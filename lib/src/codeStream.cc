@@ -3,9 +3,6 @@
 // Standard C++ includes
 #include <algorithm>
 
-// GeNN includes
-#include "utils.h"
-
 //----------------------------------------------------------------------------
 // CodeStream::IndentBuffer
 //----------------------------------------------------------------------------
@@ -72,7 +69,7 @@ std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb)
         // Write closed bracket and newline (setting flag)
         c << "}" << std::endl;
     } else {
-        gennError("Code generation error: Attempted to close brace " + std::to_string(cb.Level) + ", expecting brace " + std::to_string(c.m_Braces.back()));
+        throw std::runtime_error("Code generation error: Attempted to close brace " + std::to_string(cb.Level) + ", expecting brace " + std::to_string(c.m_Braces.back()));
     }
 
     return c;

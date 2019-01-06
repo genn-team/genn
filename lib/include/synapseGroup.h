@@ -183,11 +183,11 @@ public:
     //! Get variable mode used by postsynaptic model state variable
     VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
 
-    void addExtraGlobalConnectivityInitialiserParams(std::map<string, string> &kernelParameters) const;
-    void addExtraGlobalNeuronParams(std::map<string, string> &kernelParameters) const;
-    void addExtraGlobalSynapseParams(std::map<string, string> &kernelParameters) const;
-    void addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const;
-    void addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const;
+    void addExtraGlobalConnectivityInitialiserParams(std::map<std::string, std::string> &kernelParameters) const;
+    void addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const;
+    void addExtraGlobalSynapseParams(std::map<std::string, std::string> &kernelParameters) const;
+    void addExtraGlobalPostLearnParams(std::map<std::string, std::string> &kernelParameters) const;
+    void addExtraGlobalSynapseDynamicsParams(std::map<std::string, std::string> &kernelParameters) const;
 
     //! Get the expression to calculate the delay slot for accessing
     //! Presynaptic neuron state variables, taking into account axonal delay

@@ -7,7 +7,6 @@
 // GeNN includes
 #include "codeGenUtils.h"
 #include "synapseGroup.h"
-#include "utils.h"
 
 //------------------------------------------------------------------------
 // CurrentSource
@@ -40,14 +39,14 @@ void CurrentSource::initDerivedParams(double dt)
     }
 }
 
-void CurrentSource::addExtraGlobalParams(std::map<string, string> &kernelParameters) const
+void CurrentSource::addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const
 {
     for(auto const &p : getCurrentSourceModel()->getExtraGlobalParams()) {
         std::string pnamefull = p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getCurrentSourceModel()->getInjectionCode().find("$(" + p.first + ")") != string::npos) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+            if (getCurrentSourceModel()->getInjectionCode().find("$(" + p.first + ")") != std::string::npos) {
+                kernelParameters.emplace(pnamefull, p.second);
             }
         }
     }

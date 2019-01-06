@@ -1,16 +1,17 @@
-#include "generateNeuronUpdate.h"
+#include "code_generator/generateNeuronUpdate.h"
 
 // Standard C++ includes
+#include <iostream>
 #include <string>
 
 // GeNN includes
 #include "codeStream.h"
 #include "modelSpec.h"
 
-// NuGeNN includes
-#include "tempSubstitutions.h"
-#include "substitution_stack.h"
-#include "backends/base.h"
+// GeNN code generator includes
+#include "code_generator/substitutions.h"
+#include "code_generator/tempSubstitutions.h"
+#include "code_generator/backend.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
@@ -144,7 +145,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
             string thCode = nm->getThresholdConditionCode();
             if (thCode.empty()) { // no condition provided
-                cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!" << endl;
+                std::cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!" << endl;
             }
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;

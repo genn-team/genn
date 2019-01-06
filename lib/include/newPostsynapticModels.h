@@ -48,7 +48,7 @@ public:
 
     SET_PARAM_NAMES({"tau", "E"});
 
-    SET_DERIVED_PARAMS({{"expDecay", [](const vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
+    SET_DERIVED_PARAMS({{"expDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
 };
 
 //----------------------------------------------------------------------------

@@ -8,7 +8,6 @@
 #include "codeGenUtils.h"
 #include "currentSource.h"
 #include "synapseGroup.h"
-#include "utils.h"
 
 // ------------------------------------------------------------------------
 // NeuronGroup
@@ -21,12 +20,12 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
     }
 }
 
-void NeuronGroup::updatePreVarQueues(const string &code)
+void NeuronGroup::updatePreVarQueues(const std::string &code)
 {
     updateVarQueues(code, "_pre");
 }
 
-void NeuronGroup::updatePostVarQueues(const string &code)
+void NeuronGroup::updatePostVarQueues(const std::string &code)
 {
     updateVarQueues(code, "_post");
 }
@@ -161,7 +160,7 @@ bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamef
     for(const auto &spkEventCond : m_SpikeEventCondition) {
         // If the event threshold code contains this parameter
         // (in it's non-uniquified form), set flag and stop searching
-        if(spkEventCond.first.find(pnamefull) != string::npos) {
+        if(spkEventCond.first.find(pnamefull) != std::string::npos) {
             return true;
         }
     }
@@ -169,16 +168,17 @@ bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamef
     return false;
 }
 
-void NeuronGroup::addExtraGlobalParams(std::map<string, string> &kernelParameters) const
+void NeuronGroup::addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const
 {
     for(auto const &p : getNeuronModel()->getExtraGlobalParams()) {
         std::string pnamefull = p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getNeuronModel()->getSimCode().find("$(" + p.first + ")") != string::npos
-                || getNeuronModel()->getThresholdConditionCode().find("$(" + p.first + ")") != string::npos
-                || getNeuronModel()->getResetCode().find("$(" + p.first + ")") != string::npos) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+            if (getNeuronModel()->getSimCode().find("$(" + p.first + ")") != std::string::npos
+                || getNeuronModel()->getThresholdConditionCode().find("$(" + p.first + ")") != std::string::npos
+                || getNeuronModel()->getResetCode().find("$(" + p.first + ")") != std::string::npos) 
+            {
+                kernelParameters.emplace(pnamefull, p.second);
             }
         }
     }
@@ -324,7 +324,7 @@ void NeuronGroup::injectCurrent(CurrentSource *src)
     m_CurrentSources.push_back(src);
 }
 
-void NeuronGroup::updateVarQueues(const string &code, const std::string &suffix)
+void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
 {
     // Loop through variables
     const auto vars = getNeuronModel()->getVars();
@@ -332,7 +332,7 @@ void NeuronGroup::updateVarQueues(const string &code, const std::string &suffix)
         const std::string &varName = vars[i].first;
 
         // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(varName + suffix) != string::npos) {
+        if (code.find(varName + suffix) != std::string::npos) {
             m_VarQueueRequired[i] = true;
         }
     }

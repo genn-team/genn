@@ -1,4 +1,4 @@
-#include "generateInit.h"
+#include "code_generator/generateInit.h"
 
 // Standard C++ includes
 #include <string>
@@ -7,10 +7,10 @@
 #include "codeStream.h"
 #include "modelSpec.h"
 
-// NuGeNN includes
-#include "tempSubstitutions.h"
-#include "substitution_stack.h"
-#include "backends/base.h"
+// GeNN code generator includes
+#include "code_generator/tempSubstitutions.h"
+#include "code_generator/substitutions.h"
+#include "code_generator/backend.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace

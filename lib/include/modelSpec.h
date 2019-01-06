@@ -26,7 +26,6 @@ Part of the code generation and generated code sections.
 #include "neuronGroup.h"
 #include "synapseGroup.h"
 #include "currentSource.h"
-#include "utils.h"
 
 #include <map>
 #include <set>
@@ -106,9 +105,9 @@ class NNmodel
 public:
     // Typedefines
     //=======================
-    typedef map<string, NeuronGroup>::value_type NeuronGroupValueType;
-    typedef map<string, SynapseGroup>::value_type SynapseGroupValueType;
-    typedef map<string, std::pair<unsigned int, unsigned int>>::value_type SynapseGroupSubsetValueType;
+    typedef std::map<std::string, NeuronGroup>::value_type NeuronGroupValueType;
+    typedef std::map<std::string, SynapseGroup>::value_type SynapseGroupValueType;
+    typedef std::map<std::string, std::pair<unsigned int, unsigned int>>::value_type SynapseGroupSubsetValueType;
 
     NNmodel();
     ~NNmodel();
@@ -123,17 +122,14 @@ public:
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
 
-#ifndef CPU_ONLY
-    void setGPUDevice(int); //!< Method to choose the GPU to be used for the model. If "AUTODEVICE' (-1), GeNN will choose the device based on a heuristic rule.
-#endif
     //! Get the string literal that should be used to represent a value in the model's floating-point type
-    string scalarExpr(const double) const;
+    std::string scalarExpr(const double) const;
 
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
     //! Return number of synapse groups which require a presynaptic reset kernel to be run
-    unsigned int getNumPreSynapseResetRequiredGroups() const;
+    size_t getNumPreSynapseResetRequiredGroups() const;
 
     //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
     bool isPreSynapseResetRequired() const{ return getNumPreSynapseResetRequiredGroups() > 0; }
@@ -213,7 +209,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size, const NeuronModel *model,
+    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModel *model,
                                      const typename NeuronModel::ParamValues &paramValues,
                                      const typename NeuronModel::VarValues &varInitialisers,
                                      int hostID = 0, int deviceID = 0)
@@ -256,7 +252,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const string &name, unsigned int size,
+    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size,
                                      const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers,
                                      int hostID = 0, int deviceID = 0)
     {
@@ -304,7 +300,7 @@ public:
         \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
-    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const WeightUpdateModel *wum, const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
                                        const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
@@ -363,7 +359,7 @@ public:
         \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
-    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
                                        const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
@@ -394,7 +390,7 @@ public:
         \param postsynapticVarInitialisers postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
-    SynapseGroup *addSynapsePopulation(const string &name, SynapseMatrixType mtype, unsigned int delaySteps, const string& src, const string& trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
                                        const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
                                        const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
@@ -433,8 +429,8 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSource::VarValues object.
         \return pointer to newly created CurrentSource */
     template<typename CurrentSourceModel>
-    CurrentSource *addCurrentSource(const string &currentSourceName, const CurrentSourceModel *model,
-                                    const string &targetNeuronGroupName,
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModel *model,
+                                    const std::string &targetNeuronGroupName,
                                     const typename CurrentSourceModel::ParamValues &paramValues,
                                     const typename CurrentSourceModel::VarValues &varInitialisers)
     {
@@ -481,7 +477,7 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSourceModel::VarValues object.
         \return pointer to newly created CurrentSource */
     template<typename CurrentSourceModel>
-    CurrentSource *addCurrentSource(const string &currentSourceName, const string &targetNeuronGroupName,
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, const std::string &targetNeuronGroupName,
                                     const typename CurrentSourceModel::ParamValues &paramValues,
                                     const typename CurrentSourceModel::VarValues &varInitialisers)
     {
@@ -495,34 +491,34 @@ private:
     // Private members
     //--------------------------------------------------------------------------
     //!< Named local neuron groups
-    map<string, NeuronGroup> m_LocalNeuronGroups;
+    std::map<std::string, NeuronGroup> m_LocalNeuronGroups;
 
     //!< Named remote neuron groups
-    map<string, NeuronGroup> m_RemoteNeuronGroups;
+    std::map<std::string, NeuronGroup> m_RemoteNeuronGroups;
 
     //!< Named local synapse groups
-    map<string, SynapseGroup> m_LocalSynapseGroups;
+    std::map<std::string, SynapseGroup> m_LocalSynapseGroups;
 
     //!< Named remote synapse groups
-    map<string, SynapseGroup> m_RemoteSynapseGroups;
+    std::map<std::string, SynapseGroup> m_RemoteSynapseGroups;
 
     //!< Named local current sources
-    map<string, CurrentSource> m_LocalCurrentSources;
+    std::map<std::string, CurrentSource> m_LocalCurrentSources;
 
     //!< Named remote current sources
-    map<string, CurrentSource> m_RemoteCurrentSources;
+    std::map<std::string, CurrentSource> m_RemoteCurrentSources;
 
     // Kernel members
-    map<string, string> m_InitKernelParameters;
-    map<string, string> neuronKernelParameters;
-    map<string, string> synapseKernelParameters;
-    map<string, string> simLearnPostKernelParameters;
-    map<string, string> synapseDynamicsKernelParameters;
-    map<string, string> currentSourceKernelParameters;
+    std::map<std::string, std::string> m_InitKernelParameters;
+    std::map<std::string, std::string> neuronKernelParameters;
+    std::map<std::string, std::string> synapseKernelParameters;
+    std::map<std::string, std::string> simLearnPostKernelParameters;
+    std::map<std::string, std::string> synapseDynamicsKernelParameters;
+    std::map<std::string, std::string> currentSourceKernelParameters;
 
      // Model members
-    string name;                    //!< Name of the neuronal newtwork model
-    string ftype;                   //!< Type of floating point variables (float, double, ...; default: float)
+    std::string name;                    //!< Name of the neuronal newtwork model
+    std::string ftype;                   //!< Type of floating point variables (float, double, ...; default: float)
     TimePrecision m_TimePrecision;  //!< Type of floating point variables used to store time
     double dt;                      //!< The integration time step of the model
     bool timing;

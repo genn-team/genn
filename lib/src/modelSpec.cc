@@ -26,7 +26,6 @@
 #include "codeGenUtils.h"
 #include "global.h"
 #include "modelSpec.h"
-#include "utils.h"
 
 // ------------------------------------------------------------------------
 // NNmodel
@@ -38,9 +37,6 @@ NNmodel::NNmodel() : m_TimePrecision(TimePrecision::DEFAULT)
     setDT(0.5);
     setPrecision(GENN_FLOAT);
     setTiming(false);
-#ifndef CPU_ONLY
-    setGPUDevice(AUTODEVICE);
-#endif
     setSeed(0);
 }
 
@@ -48,7 +44,7 @@ NNmodel::~NNmodel()
 {
 }
 
-void NNmodel::setName(const string &inname)
+void NNmodel::setName(const std::string &inname)
 {
     name= inname;
 }
@@ -72,7 +68,7 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
-unsigned int NNmodel::getNumPreSynapseResetRequiredGroups() const
+size_t NNmodel::getNumPreSynapseResetRequiredGroups() const
 {
     return std::count_if(getLocalSynapseGroups().cbegin(), getLocalSynapseGroups().cend(),
                          [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
@@ -190,11 +186,6 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
 
 bool NNmodel::isDeviceSparseInitRequired() const
 {
-    // If automatic initialisation of sparse variables isn't enabled, return false
-    if(!GENN_PREFERENCES::autoInitSparseVars) {
-        return false;
-    }
-
     // Return true if any of the synapse groups require device sparse initialisation
     return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
         [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
@@ -236,8 +227,7 @@ const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
     }
     // Otherwise, error
     else {
-        gennError("neuron group " + name + " not found, aborting ...");
-        return NULL;
+        throw std::runtime_error("neuron group " + name + " not found, aborting ...");
     }
 }
 
@@ -256,8 +246,7 @@ NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
     }
     // Otherwise, error
     else {
-        gennError("neuron group " + name + " not found, aborting ...");
-        return NULL;
+        throw std::runtime_error("neuron group " + name + " not found, aborting ...");
     }
 }
 
@@ -277,8 +266,7 @@ const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
     }
     // Otherwise, error
     else {
-        gennError("synapse group " + name + " not found, aborting ...");
-        return NULL;
+        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
     }
 }
 
@@ -298,8 +286,7 @@ SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
     }
     // Otherwise, error
     else {
-        gennError("synapse group " + name + " not found, aborting ...");
-        return NULL;
+        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
     }
 }
 
@@ -323,8 +310,7 @@ const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
     }
     // Otherwise, error
     else {
-        gennError("current source " + name + " not found, aborting ...");
-        return NULL;
+        throw std::runtime_error("current source " + name + " not found, aborting ...");
     }
 }
 
@@ -344,8 +330,7 @@ CurrentSource *NNmodel::findCurrentSource(const std::string &name)
     }
     // Otherwise, error
     else {
-        gennError("current source " + name + " not found, aborting ...");
-        return NULL;
+        throw std::runtime_error("current source " + name + " not found, aborting ...");
     }
 }
 //--------------------------------------------------------------------------
@@ -377,7 +362,7 @@ void NNmodel::setPrecision(FloatType floattype /**<  */)
         ftype = "long double"; // not supported by CUDA at the moment.
         break;
     default:
-        gennError("Unrecognised floating-point type.");
+        throw std::runtime_error("Unrecognised floating-point type.");
     }
 }
 
@@ -407,36 +392,15 @@ void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
     seed= inseed;
 }
 
-#ifndef CPU_ONLY
-//--------------------------------------------------------------------------
-/*! \brief This function defines the way how the GPU is chosen. If "AUTODEVICE" (-1) is given as the argument, GeNN will use internal heuristics to choose the device. Otherwise the argument is the device number and the indicated device will be used.
-*/ 
-//--------------------------------------------------------------------------
-
-void NNmodel::setGPUDevice(int device)
-{
-  int deviceCount;
-  CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-  assert(device >= -1);
-  assert(device < deviceCount);
-  if (device == -1) GENN_PREFERENCES::autoChooseDevice= 1;
-  else {
-      GENN_PREFERENCES::autoChooseDevice= 0;
-      GENN_PREFERENCES::defaultDevice= device;
-  }
-}
-#endif
-
-
-string NNmodel::scalarExpr(const double val) const
+std::string NNmodel::scalarExpr(const double val) const
 {
     string tmp;
     float fval= (float) val;
     if (ftype == "float") {
-        tmp= to_string(fval) + "f";
+        tmp= std::to_string(fval) + "f";
     }
     if (ftype == "double") {
-        tmp= to_string(val);
+        tmp= std::to_string(val);
     }
     return tmp;
 }

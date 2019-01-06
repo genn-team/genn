@@ -1,4 +1,4 @@
-#include "generateSynapseUpdate.h"
+#include "code_generator/generateSynapseUpdate.h"
 
 // Standard C++ includes
 #include <string>
@@ -7,10 +7,10 @@
 #include "codeStream.h"
 #include "modelSpec.h"
 
-// NuGeNN includes
-#include "tempSubstitutions.h"
-#include "substitution_stack.h"
-#include "backends/base.h"
+// GeNN code generator includes
+#include "code_generator/tempSubstitutions.h"
+#include "code_generator/substitutions.h"
+#include "code_generator/backend.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -22,9 +22,9 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 {
     CodeGenerator::applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
                                                        sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
-    neuron_substitutions_in_synaptic_code(code, &sg, baseSubs.getVarSubstitution("id_pre"),
-                                            baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
-                                            model.getDT());
+    neuronSubstitutionsInSynapticCode(code, &sg, baseSubs.getVarSubstitution("id_pre"),
+                                      baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
+                                      model.getDT());
     baseSubs.apply(code);
     code= ensureFtype(code, model.getPrecision());
     checkUnreplacedVariables(code, sg.getName() + errorSuffix);

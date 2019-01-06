@@ -1,4 +1,4 @@
-#include "generateRunner.h"
+#include "code_generator/generateRunner.h"
 
 // Standard C++ includes
 #include <sstream>
@@ -8,9 +8,9 @@
 #include "codeStream.h"
 #include "modelSpec.h"
 
-// NuGeNN includes
-#include "tee_stream.h"
-#include "backends/base.h"
+// GeNN code generator
+#include "code_generator/teeStream.h"
+#include "code_generator/backend.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -76,7 +76,7 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
 {
 // In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
-    const std::string funcExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) " : "";
+    const std::string funcExportPrefix = "__declspec(dllexport) ";
 #else
     const std::string funcExportPrefix = "";
 #endif
@@ -112,8 +112,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 {
     // In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
-    const std::string funcExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) " : "";
-    const std::string varExportPrefix = GENN_PREFERENCES::buildSharedLibrary ? "__declspec(dllexport) extern" : "extern";
+    const std::string funcExportPrefix = "__declspec(dllexport)";
+    const std::string varExportPrefix = "__declspec(dllexport) extern";
 #else
     const std::string funcExportPrefix = "";
     const std::string varExportPrefix = "extern";
@@ -161,10 +161,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     TeeStream allVarStreams(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
 
     // Begin extern C block around variable declarations
-    if(GENN_PREFERENCES::buildSharedLibrary) {
-        runnerVarDecl << "extern \"C\" {" << std::endl;
-        definitionsVar << "extern \"C\" {" << std::endl;
-    }
+   runnerVarDecl << "extern \"C\" {" << std::endl;
+   definitionsVar << "extern \"C\" {" << std::endl;
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// global variables" << std::endl;
@@ -201,7 +199,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             // Check that, whatever variable mode is set for these variables,
             // they are instantiated on host so they can be copied using MPI
             if(!(n.second.getSpikeVarMode() & VarLocation::HOST)) {
-                gennError("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
+                throw std::runtime_error("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
             }
 
             // True spike variable
@@ -508,10 +506,10 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         }
     }
     allVarStreams << std::endl;
+
     // End extern C block around variable declarations
-    if(GENN_PREFERENCES::buildSharedLibrary) {
-        runnerVarDecl << "}  // extern \"C\"" << std::endl;
-    }
+    runnerVarDecl << "}  // extern \"C\"" << std::endl;
+ 
 
     // Write variable declarations to runner
     runner << runnerVarDeclStream.str();
@@ -636,8 +634,6 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     definitions << funcExportPrefix << "void initializeSparse();" << std::endl;
 
     // End extern C block around definitions
-    if(GENN_PREFERENCES::buildSharedLibrary) {
-        definitions << "}  // extern \"C\"" << std::endl;
-    }
+    definitions << "}  // extern \"C\"" << std::endl;
 
 }

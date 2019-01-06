@@ -23,15 +23,14 @@
 
 // GeNN includes
 #include "modelSpec.h"
-#include "utils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-const string digits= string("0123456789");
-const string op= string("+-*/(<>= ,;")+string("\n")+string("\t");
+const std::string digits="0123456789";
+const std::string op= std::string("+-*/(<>= ,;")+std::string("\n")+std::string("\t");
 
 enum MathsFunc
 {
@@ -111,7 +110,7 @@ GenericFunction randomFuncs[] = {
 /*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
  */
 //--------------------------------------------------------------------------
-void ensureMathFunctionFtype(string &code, const string &type)
+void ensureMathFunctionFtype(std::string &code, const std::string &type)
 {
     // If type is double, substitute any single precision maths functions for double precision version
     if (type == "double") {
@@ -131,7 +130,7 @@ void ensureMathFunctionFtype(string &code, const string &type)
 /*! \brief This function is part of the parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */
 //--------------------------------------------------------------------------
-void doFinal(string &code, unsigned int i, const string &type, unsigned int &state)
+void doFinal(std::string &code, unsigned int i, const std::string &type, unsigned int &state)
 {
     if (code[i] == 'f') {
         if (type == "double") {
@@ -144,7 +143,7 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
         }
     }
     if (i < code.size()-1) {
-        if (op.find(code[i]) == string::npos) {
+        if (op.find(code[i]) == std::string::npos) {
             state= 0;
         }
         else {
@@ -154,15 +153,15 @@ void doFinal(string &code, unsigned int i, const string &type, unsigned int &sta
 }
 
 void neuronSubstitutionsInSynapticCode(
-    string &wCode, //!< the code string to work on
+    std::string &wCode, //!< the code string to work on
     const NeuronGroup *ng,
-    const string &offset,
-    const string &delayOffset,
-    const string &idx,
-    const string &sourceSuffix,
-    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
-    const string &varPrefix,
-    const string &varSuffix)
+    const std::string &offset,
+    const std::string &delayOffset,
+    const std::string &idx,
+    const std::string &sourceSuffix,
+    const std::string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    const std::string &varPrefix,
+    const std::string &varSuffix)
 {
     // presynaptic neuron variables, parameters, and global parameters
     const auto *neuronModel = ng->getNeuronModel();
@@ -183,7 +182,7 @@ void neuronSubstitutionsInSynapticCode(
     name_substitutions(wCode, "", preExtraGlobalParams.nameBegin, preExtraGlobalParams.nameEnd, ng->getName(), sourceSuffix);
 }
 
-bool regexSubstitute(string &s, const std::regex &regex, const std::string &format)
+bool regexSubstitute(std::string &s, const std::regex &regex, const std::string &format)
 {
     // **NOTE** the following code performs the same function as std::regex_replace
     // but has a return value indicating whether any replacements are made
@@ -230,7 +229,7 @@ bool regexSubstitute(string &s, const std::regex &regex, const std::string &form
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
-void substitute(string &s, const string &trg, const string &rep)
+void substitute(std::string &s, const std::string &trg, const std::string &rep)
 {
     size_t found= s.find(trg);
     while (found != string::npos) {
@@ -242,7 +241,7 @@ void substitute(string &s, const string &trg, const string &rep)
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
-bool regexVarSubstitute(string &s, const string &trg, const string &rep)
+bool regexVarSubstitute(std::string &s, const std::string &trg, const std::string &rep)
 {
     // Build a regex to match variable name with at least one
     // character that can't be in a variable name on either side (or an end/beginning of string)
@@ -259,7 +258,7 @@ bool regexVarSubstitute(string &s, const string &trg, const string &rep)
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting function  names in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
-bool regexFuncSubstitute(string &s, const string &trg, const string &rep)
+bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::string &rep)
 {
     // Build a regex to match function name with at least one
     // character that can't be part of the function name on the left and a bracket on the right (with optional whitespace)
@@ -454,18 +453,18 @@ void functionSubstitutions(std::string &code, const std::string &ftype,
  */
 //--------------------------------------------------------------------------
 
-string ensureFtype(const string &oldcode, const string &type)
+std::string ensureFtype(const std::string &oldcode, const std::string &type)
 {
 //    cerr << "entering ensure" << endl;
 //    cerr << oldcode << endl;
-    string code= oldcode;
+    std::string code= oldcode;
     unsigned int i= 0;
     unsigned int state= 1; // allowed to start with a number straight away.
     while (i < code.size()) {
         switch (state)
         {
         case 0: // looking for a valid lead-in
-            if (op.find(code[i]) != string::npos) {
+            if (op.find(code[i]) != std::string::npos) {
                 state= 1;
                 break;
             }
@@ -565,9 +564,10 @@ void checkUnreplacedVariables(const string &code, const string &codeName)
     }
     if (vars.size() > 0) {
         vars= vars.substr(0, vars.size()-2);
-        if (vars.find(",") != string::npos) vars= "variables "+vars+" were ";
-        else vars= "variable "+vars+" was ";
-        gennError("The "+vars+"undefined in code "+codeName+".");
+
+        vars = (vars.find(",") != string::npos) ? "variables " + vars + " were " : "variable " + vars + " was ";
+       
+        throw std::runtime_error("The "+vars+"undefined in code "+codeName+".");
     }
 }
 
@@ -642,14 +642,14 @@ uint32_t hashString(const std::string &string)
 */
 //-------------------------------------------------------------------------
 void preNeuronSubstitutionsInSynapticCode(
-    string &wCode, //!< the code string to work on
+    std::string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
-    const string &offset,
-    const string &axonalDelayOffset,
-    const string &preIdx,
-    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
-    const string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const string &preVarSuffix)     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const std::string &offset,
+    const std::string &axonalDelayOffset,
+    const std::string &preIdx,
+    const std::string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    const std::string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &preVarSuffix)     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
     // presynaptic neuron variables, parameters, and global parameters
     const auto *srcNeuronModel = sg->getSrcNeuronGroup()->getNeuronModel();
@@ -661,30 +661,30 @@ void preNeuronSubstitutionsInSynapticCode(
 }
 
 void postNeuronSubstitutionsInSynapticCode(
-    string &wCode, //!< the code string to work on
+    std::string &wCode, //!< the code string to work on
     const SynapseGroup *sg,
-    const string &offset,
-    const string &backPropDelayOffset,
-    const string &postIdx,
-    const string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
-    const string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const std::string &offset,
+    const std::string &backPropDelayOffset,
+    const std::string &postIdx,
+    const std::string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    const std::string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
     // postsynaptic neuron variables, parameters, and global parameters
     neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), offset, backPropDelayOffset, postIdx, "_post", devPrefix, postVarPrefix, postVarSuffix);
 }
 
-void neuron_substitutions_in_synaptic_code(
-    string &wCode,                  //!< the code string to work on
+void neuronSubstitutionsInSynapticCode(
+    std::string &wCode,                  //!< the code string to work on
     const SynapseGroup *sg,         //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const string &preIdx,           //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const string &postIdx,          //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const string &devPrefix,        //!< device prefix, "dd_" for GPU, nothing for CPU
+    const std::string &preIdx,           //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const std::string &postIdx,          //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const std::string &devPrefix,        //!< device prefix, "dd_" for GPU, nothing for CPU
     double dt,                      //!< simulation timestep (ms)
-    const string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const string &preVarSuffix,     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
-    const string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const std::string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &preVarSuffix,     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const std::string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
     const std::string axonalDelayOffset = writePreciseString(dt * (double)(sg->getDelaySteps() + 1)) + " + ";
     const std::string preOffset = sg->getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";

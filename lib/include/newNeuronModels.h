@@ -121,9 +121,9 @@ public:
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"ip0", [](const vector<double> &pars, double){ return pars[0] * pars[0] * pars[1]; }},
-        {"ip1", [](const vector<double> &pars, double){ return pars[0] * pars[2]; }},
-        {"ip2", [](const vector<double> &pars, double){ return (pars[0] * pars[1]) + (pars[0] * pars[2]); }}});
+        {"ip0", [](const std::vector<double> &pars, double){ return pars[0] * pars[0] * pars[1]; }},
+        {"ip1", [](const std::vector<double> &pars, double){ return pars[0] * pars[2]; }},
+        {"ip2", [](const std::vector<double> &pars, double){ return (pars[0] * pars[1]) + (pars[0] * pars[2]); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -342,7 +342,7 @@ public:
 
     SET_PARAM_NAMES({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
-    SET_DERIVED_PARAMS({{"isi", [](const vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
+    SET_DERIVED_PARAMS({{"isi", [](const std::vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
 };
 
 //----------------------------------------------------------------------------

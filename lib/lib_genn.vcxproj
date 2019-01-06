@@ -1,102 +1,178 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <!-- Define project configurations - we support x64 and Win32, debug, release and CPU_ONLY mode -->
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release_CPU_ONLY|x64">
-      <Configuration>Release_CPU_ONLY</Configuration>
-      <Platform>x64</Platform>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_CPU_ONLY|x64">
-      <Configuration>Debug_CPU_ONLY</Configuration>
-      <Platform>x64</Platform>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release_DYNAMIC|x64">
-      <Configuration>Release_DYNAMIC</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release_CPU_ONLY_DYNAMIC|x64">
-      <Configuration>Release_CPU_ONLY_DYNAMIC</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_DYNAMIC|x64">
-      <Configuration>Debug_DYNAMIC</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_CPU_ONLY_DYNAMIC|x64">
-      <Configuration>Debug_CPU_ONLY_DYNAMIC</Configuration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <PropertyGroup Label="Globals">
-    <ProjectGuid>{8A4E2BFC-0242-40D2-A183-2A2E9483C4EC}</ProjectGuid>
-    <!-- **YUCK** When libgenn is referenced from other projects this seems to somehow get lost -->
-    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
-  </PropertyGroup>
-  <!-- Import builtin C++ properties -->
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.default.props" />
-  <!-- Configure global properties to build static library and to use default platform toolkit -->
-  <PropertyGroup>
-    <ConfigurationType Condition=" $(Configuration.Contains('DYNAMIC')) ">DynamicLibrary</ConfigurationType>
-    <ConfigurationType Condition=" !$(Configuration.Contains('DYNAMIC')) ">StaticLibrary</ConfigurationType>
-    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
-    <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY' ">genn_CPU_ONLY</TargetName>
-    <TargetName Condition=" '$(Configuration)' == 'Release' ">genn</TargetName>
-    <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY' ">genn_debug_CPU_ONLY</TargetName>
-    <TargetName Condition=" '$(Configuration)' == 'Debug' ">genn_debug</TargetName>
-    <TargetName Condition=" '$(Configuration)' == 'Release_CPU_ONLY_DYNAMIC' ">genn_CPU_ONLY_DYNAMIC</TargetName>
-    <TargetName Condition=" '$(Configuration)' == 'Release_DYNAMIC' ">genn_DYNAMIC</TargetName>
-    <TargetName Condition=" '$(Configuration)' == 'Debug_CPU_ONLY_DYNAMIC' ">genn_debug_CPU_ONLY_DYNAMIC</TargetName>
-    <TargetName Condition=" '$(Configuration)' == 'Debug_DYNAMIC' ">genn_debug_DYNAMIC</TargetName>
-    <OutDir>lib\</OutDir>
-    <IntDir>obj\$(Platform)\$(Configuration)\</IntDir>
-  </PropertyGroup>
-  <!-- Customise C++  compilation and linking tasks for CPU_ONLY mode -->
-  <ItemDefinitionGroup>
-    <ClCompile>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition=" !$(Configuration.Contains('CPU_ONLY')) ">%(AdditionalIncludeDirectories);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <DebugInformationFormat Condition=" $(Configuration.Contains('Debug')) ">ProgramDatabase</DebugInformationFormat>
-      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
-      <!-- Depending on configuration, set preprocessor options -->
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Release_CPU_ONLY')) ">CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug_CPU_ONLY')) ">DEBUG;CPU_ONLY=1</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('Debug')) ">DEBUG</PreprocessorDefinitions>
-      <ExceptionHandling>Sync</ExceptionHandling>
-    </ClCompile>
-    <LIB>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <GenerateDebugInformation Condition=" $(Configuration.Contains('Debug')) ">true</GenerateDebugInformation>
-    </LIB>
-  </ItemDefinitionGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemGroup>
+    <ClInclude Include="include\binomial.h" />
+    <ClInclude Include="include\codeGenUtils.h" />
+    <ClInclude Include="include\codeStream.h" />
+    <ClInclude Include="include\code_generator\backend.h" />
+    <ClInclude Include="include\code_generator\generateInit.h" />
+    <ClInclude Include="include\code_generator\generateMakefile.h" />
+    <ClInclude Include="include\code_generator\generateNeuronUpdate.h" />
+    <ClInclude Include="include\code_generator\generateRunner.h" />
+    <ClInclude Include="include\code_generator\generateSynapseUpdate.h" />
+    <ClInclude Include="include\code_generator\substitutions.h" />
+    <ClInclude Include="include\code_generator\teeStream.h" />
+    <ClInclude Include="include\code_generator\tempSubstitutions.h" />
+    <ClInclude Include="include\currentSource.h" />
+    <ClInclude Include="include\currentSourceModels.h" />
+    <ClInclude Include="include\generateMPI.h" />
+    <ClInclude Include="include\global.h" />
+    <ClInclude Include="include\initSparseConnectivitySnippet.h" />
+    <ClInclude Include="include\initVarSnippet.h" />
+    <ClInclude Include="include\modelSpec.h" />
+    <ClInclude Include="include\neuronGroup.h" />
+    <ClInclude Include="include\newModels.h" />
+    <ClInclude Include="include\newNeuronModels.h" />
+    <ClInclude Include="include\newPostsynapticModels.h" />
+    <ClInclude Include="include\newWeightUpdateModels.h" />
+    <ClInclude Include="include\snippet.h" />
+    <ClInclude Include="include\synapseGroup.h" />
+    <ClInclude Include="include\synapseMatrixType.h" />
+    <ClInclude Include="include\variableMode.h" />
+  </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\binomial.cc" />
-    <ClCompile Include="src\global.cc" />
-    <ClCompile Include="src\modelSpec.cc" />
-    <ClCompile Include="src\utils.cc" />
-    <ClCompile Include="src\codeStream.cc" />
     <ClCompile Include="src\codeGenUtils.cc" />
-    <ClCompile Include="src\sparseUtils.cc" />
-    <ClCompile Include="src\hr_time.cc" />
+    <ClCompile Include="src\codeStream.cc" />
+    <ClCompile Include="src\code_generator\generateInit.cc" />
+    <ClCompile Include="src\code_generator\generateMakefile.cc" />
+    <ClCompile Include="src\code_generator\generateNeuronUpdate.cc" />
+    <ClCompile Include="src\code_generator\generateRunner.cc" />
+    <ClCompile Include="src\code_generator\generateSynapseUpdate.cc" />
+    <ClCompile Include="src\code_generator\tempSubstitutions.cc" />
+    <ClCompile Include="src\currentSource.cc" />
     <ClCompile Include="src\currentSourceModels.cc" />
-    <ClCompile Include="src\newNeuronModels.cc" />
-    <ClCompile Include="src\newWeightUpdateModels.cc" />
-    <ClCompile Include="src\newPostsynapticModels.cc" />
+    <ClCompile Include="src\generateMPI.cc" />
+    <ClCompile Include="src\global.cc" />
     <ClCompile Include="src\initSparseConnectivitySnippet.cc" />
     <ClCompile Include="src\initVarSnippet.cc" />
-    <ClCompile Include="src\currentSource.cc" />
+    <ClCompile Include="src\modelSpec.cc" />
     <ClCompile Include="src\neuronGroup.cc" />
+    <ClCompile Include="src\newNeuronModels.cc" />
+    <ClCompile Include="src\newPostsynapticModels.cc" />
+    <ClCompile Include="src\newWeightUpdateModels.cc" />
     <ClCompile Include="src\synapseGroup.cc" />
   </ItemGroup>
-  <!-- Import builtin C++ targets -->
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Targets" />
+  <ItemGroup>
+    <None Include="src\header.src" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}</ProjectGuid>
+    <RootNamespace>lib_genn</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>

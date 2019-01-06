@@ -3,11 +3,11 @@
 // Standard includes
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 // GeNN includes
 #include "codeGenUtils.h"
 #include "global.h"
-#include "utils.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -124,13 +124,13 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
-            gennError("setMaxConnections: Synapse group already has max connections defined by connectivity initialisation snippet.");
+            throw std::runtime_error("setMaxConnections: Synapse group already has max connections defined by connectivity initialisation snippet.");
         }
         
         m_MaxConnections = maxConnections;
     }
     else {
-        gennError("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+        throw std::runtime_error("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
 }
 
@@ -138,13 +138,13 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc()) {
-            gennError("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
+            throw std::runtime_error("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
         }
 
         m_MaxSourceConnections = maxConnections;
     }
     else {
-        gennError("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+        throw std::runtime_error("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
     }
 }
 
@@ -160,7 +160,7 @@ void SynapseGroup::setSpanType(SpanType spanType)
         m_SpanType = spanType;
     }
     else {
-        gennError("setSpanType: This function is not enabled for dense connectivity type.");
+        throw std::runtime_error("setSpanType: This function is not enabled for dense connectivity type.");
     }
 }
 
@@ -275,14 +275,14 @@ VarMode SynapseGroup::getPSVarMode(const std::string &var) const
     return m_PSVarMode[getPSModel()->getVarIndex(var)];
 }
 
-void SynapseGroup::addExtraGlobalConnectivityInitialiserParams(std::map<string, string> &kernelParameters) const
+void SynapseGroup::addExtraGlobalConnectivityInitialiserParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Loop through list of global parameters
     for(auto const &p : getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
-        std::string pnamefull = "initSparseConn" + p.first + getName();
+        const std::string pnamefull = "initSparseConn" + p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getConnectivityInitialiser().getSnippet()->getRowBuildCode().find("$(" + p.first + ")") != string::npos) {
+            if (getConnectivityInitialiser().getSnippet()->getRowBuildCode().find("$(" + p.first + ")") != std::string::npos) {
                 kernelParameters.emplace(pnamefull, p.second);
             }
         }
@@ -294,12 +294,10 @@ void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string>
     // Loop through list of extra global weight update parameters
     for(auto const &p : getWUModel()->getExtraGlobalParams()) {
         // If it's not already in set
-        std::string pnamefull = p.first + getName();
-        std::cout << pnamefull << std::endl;
+        const std::string pnamefull = p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
             if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
-                std::cout << pnamefull << "," << p.second;
                 kernelParameters.emplace(pnamefull, p.second);
             }
         }
@@ -323,7 +321,7 @@ void SynapseGroup::addExtraGlobalSynapseParams(std::map<std::string, std::string
 }
 
 
-void SynapseGroup::addExtraGlobalPostLearnParams(std::map<string, string> &kernelParameters) const
+void SynapseGroup::addExtraGlobalPostLearnParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
@@ -338,7 +336,7 @@ void SynapseGroup::addExtraGlobalPostLearnParams(std::map<string, string> &kerne
 
 }
 
-void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<string, string> &kernelParameters) const
+void SynapseGroup::addExtraGlobalSynapseDynamicsParams(std::map<std::string, std::string> &kernelParameters) const
 {
     // Add any of the pre or postsynaptic neuron group's extra global
     // parameters referenced in the sim code to the map of kernel parameters
@@ -381,10 +379,10 @@ std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, 
     assert(isDendriticDelayRequired());
 
     if(offset.empty()) {
-        return "(" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " * " + std::to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
     else {
-        return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + to_string(getMaxDendriticDelayTimesteps()) + ") * " + to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
+        return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + std::to_string(getMaxDendriticDelayTimesteps()) + ") * " + std::to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
 }
 
@@ -502,10 +500,11 @@ void SynapseGroup::addExtraGlobalSimParams(const std::string &prefix, const std:
         std::string pnamefull = p.first + prefix;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getWUModel()->getSimCode().find("$(" + p.first + suffix + ")") != string::npos
-                || getWUModel()->getEventCode().find("$(" + p.first + suffix + ")") != string::npos
-                || getWUModel()->getEventThresholdConditionCode().find("$(" + p.first + suffix + ")") != string::npos) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+            if (getWUModel()->getSimCode().find("$(" + p.first + suffix + ")") != std::string::npos
+                || getWUModel()->getEventCode().find("$(" + p.first + suffix + ")") != std::string::npos
+                || getWUModel()->getEventThresholdConditionCode().find("$(" + p.first + suffix + ")") != std::string::npos) 
+            {
+                kernelParameters.emplace(pnamefull, p.second);
             }
         }
     }
@@ -519,8 +518,8 @@ void SynapseGroup::addExtraGlobalPostLearnParams(const std::string &prefix, cons
         std::string pnamefull = p.first + prefix;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getWUModel()->getLearnPostCode().find("$(" + p.first + suffix) != string::npos) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+            if (getWUModel()->getLearnPostCode().find("$(" + p.first + suffix) != std::string::npos) {
+                kernelParameters.emplace(pnamefull, p.second);
             }
         }
     }
@@ -534,8 +533,8 @@ void SynapseGroup::addExtraGlobalSynapseDynamicsParams(const std::string &prefix
         std::string pnamefull = p.first + prefix;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
-            if (getWUModel()->getSynapseDynamicsCode().find("$(" + p.first + suffix) != string::npos) {
-                kernelParameters.insert(pair<string, string>(pnamefull, p.second));
+            if (getWUModel()->getSynapseDynamicsCode().find("$(" + p.first + suffix) != std::string::npos) {
+                kernelParameters.emplace(pnamefull, p.second);
             }
         }
     }

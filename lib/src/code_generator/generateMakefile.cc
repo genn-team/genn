@@ -1,4 +1,4 @@
-#include "generateMakefile.h"
+#include "code_generator/generateMakefile.h"
 
 // Standard C++ includes
 #include <string>
@@ -7,8 +7,8 @@
 #include "codeStream.h"
 #include "modelSpec.h"
 
-// NuGeNN includes
-#include "backends/base.h"
+// GeNN code generator includes
+#include "code_generator/backend.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
