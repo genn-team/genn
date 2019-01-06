@@ -21,7 +21,7 @@
 
 namespace GENN_PREFERENCES {    
     bool mergePostsynapticModels = false; //!< Should compatible postsynaptic models and dendritic delay buffers be merged? This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved
-    VarMode defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_HOST;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
-    VarMode defaultSparseConnectivityMode = VarMode::LOC_HOST_DEVICE_INIT_HOST;   //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
+    VarLocation defaultVarLocation = VarLocation::LOC_HOST_DEVICE;  //!< What is the default behaviour for model state variables? Historically, everything was allocated on both host AND device and initialised on HOST.
+    VarLocation defaultSparseConnectivityLocation = VarLocation::LOC_HOST_DEVICE;   //! What is the default behaviour for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device and initialised on HOST
     bool autoRefractory= true; //!< Flag for signalling whether spikes are only reported if thresholdCondition changes from false to true (autoRefractory == 1) or spikes are emitted whenever thresholdCondition is true no matter what.
 };

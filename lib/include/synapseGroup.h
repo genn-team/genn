@@ -51,33 +51,33 @@ public:
         m_PSModelTargetName = targetName;
     }
 
-    //! Set variable mode of weight update model state variable
-    /*! This is ignored for CPU simulations */
-    void setWUVarMode(const std::string &varName, VarMode mode);
+    //! Set location of weight update model state variable
+    /*! This is ignored for simulations on harware with a single memory space */
+    void setWUVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set variable mode of weight update model presynaptic state variable
-    /*! This is ignored for CPU simulations */
-    void setWUPreVarMode(const std::string &varName, VarMode mode);
+    //! Set location of weight update model presynaptic state variable
+    /*! This is ignored for simulations on harware with a single memory space */
+    void setWUPreVarLocation(const std::string &varName, VarLocation loc);
     
-    //! Set variable mode of weight update model postsynaptic state variable
-    /*! This is ignored for CPU simulations */
-    void setWUPostVarMode(const std::string &varName, VarMode mode);
+    //! Set location of weight update model postsynaptic state variable
+    /*! This is ignored for simulations on harware with a single memory space */
+    void setWUPostVarLocation(const std::string &varName, VarLocation loc);
     
-    //! Set variable mode of postsynaptic model state variable
-    /*! This is ignored for CPU simulations */
-    void setPSVarMode(const std::string &varName, VarMode mode);
+    //! Set location of postsynaptic model state variable
+    /*! This is ignored for simulations on harware with a single memory space */
+    void setPSVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set variable mode used for variables used to combine input from this synapse group
-    /*! This is ignored for CPU simulations */
-    void setInSynVarMode(VarMode mode) { m_InSynVarMode = mode; }
+    //! Set location of variables used to combine input from this synapse group
+    /*! This is ignored for simulations on harware with a single memory space */
+    void setInSynVarLocation(VarLocation loc) { m_InSynLocation = loc; }
 
     //! Set variable mode used for sparse connectivity
-    /*! This is ignored for CPU simulations */
-    void setSparseConnectivityVarMode(VarMode mode){ m_SparseConnectivityVarMode = mode; }
+    /*! ThisThis is ignored for simulations on harware with a single memory space */
+    void setSparseConnectivityLocation(VarLocation loc){ m_SparseConnectivityLocation = loc; }
 
     //! Set variable mode used for this synapse group's dendritic delay buffers
-    /*! This is ignored for CPU simulations */
-    void setDendriticDelayVarMode(VarMode mode) { m_DendriticDelayVarMode = mode; }
+    /*! This is ignored for simulations on harware with a single memory space */
+    void setDendriticDelayLocation(VarLocation loc) { m_DendriticDelayLocation = loc; }
 
     //! Sets the maximum number of target neurons any source neurons can connect to
     /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
@@ -113,13 +113,13 @@ public:
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
     //! Get variable mode used for variables used to combine input from this synapse group
-    VarMode getInSynVarMode() const { return m_InSynVarMode; }
+    VarLocation getInSynLocation() const { return m_InSynLocation; }
 
     //! Get variable mode used for sparse connectivity
-    VarMode getSparseConnectivityVarMode() const{ return m_SparseConnectivityVarMode; }
+    VarLocation getSparseConnectivityLocation() const{ return m_SparseConnectivityLocation; }
 
     //! Get variable mode used for this synapse group's dendritic delay buffers
-    VarMode getDendriticDelayVarMode() const{ return m_DendriticDelayVarMode; }
+    VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
     unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
     unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
@@ -156,32 +156,32 @@ public:
     bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
 
     bool isZeroCopyEnabled() const;
-    bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarMode(var) & VarLocation::ZERO_COPY); }
-    bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarMode(var) & VarLocation::ZERO_COPY); }
+    bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarLocation(var) & VarLocation::ZERO_COPY); }
+    bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarLocation(var) & VarLocation::ZERO_COPY); }
 
     //! Get variable mode used by weight update model per-synapse state variable
-    VarMode getWUVarMode(const std::string &var) const;
+    VarLocation getWUVarLocation(const std::string &var) const;
 
     //! Get variable mode used by weight update model per-synapse state variable
-    VarMode getWUVarMode(size_t index) const{ return m_WUVarMode[index]; }
+    VarLocation getWUVarLocation(size_t index) const{ return m_WUVarLocation[index]; }
 
     //! Get variable mode used by weight update model presynaptic state variable
-    VarMode getWUPreVarMode(const std::string &var) const;
+    VarLocation getWUPreVarLocation(const std::string &var) const;
 
     //! Get variable mode used by weight update model presynaptic state variable
-    VarMode getWUPreVarMode(size_t index) const{ return m_WUPreVarMode[index]; }
+    VarLocation getWUPreVarLocation(size_t index) const{ return m_WUPreVarLocation[index]; }
 
     //! Get variable mode used by weight update model postsynaptic state variable
-    VarMode getWUPostVarMode(const std::string &var) const;
+    VarLocation getWUPostVarLocation(const std::string &var) const;
 
     //! Get variable mode used by weight update model postsynaptic state variable
-    VarMode getWUPostVarMode(size_t index) const{ return m_WUPostVarMode[index]; }
+    VarLocation getWUPostVarLocation(size_t index) const{ return m_WUPostVarLocation[index]; }
 
     //! Get variable mode used by postsynaptic model state variable
-    VarMode getPSVarMode(const std::string &var) const;
+    VarLocation getPSVarLocation(const std::string &var) const;
 
     //! Get variable mode used by postsynaptic model state variable
-    VarMode getPSVarMode(size_t index) const{ return m_PSVarMode[index]; }
+    VarLocation getPSVarLocation(size_t index) const{ return m_PSVarLocation[index]; }
 
     void addExtraGlobalConnectivityInitialiserParams(std::map<std::string, std::string> &kernelParameters) const;
     void addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const;
@@ -203,10 +203,10 @@ public:
     bool isDendriticDelayRequired() const;
 
     //! Does this synapse group require an RNG for it's postsynaptic init code?
-    bool isPSInitRNGRequired(VarInit varInitMode) const;
+    bool isPSInitRNGRequired() const;
 
     //! Does this synapse group require an RNG for it's weight update init code?
-    bool isWUInitRNGRequired(VarInit varInitMode) const;
+    bool isWUInitRNGRequired() const;
 
     //! Is device var init code required for any variables in this synapse group's postsynaptic model?
     bool isPSDeviceVarInitRequired() const;
@@ -228,6 +228,7 @@ public:
 
     //! Is any form of sparse device initialisation required?
     bool isDeviceSparseInitRequired() const;
+
 private:
     //------------------------------------------------------------------------
     // Private methods
@@ -282,10 +283,10 @@ private:
     bool m_EventThresholdReTestRequired;
 
     //!< Variable mode used for variables used to combine input from this synapse group
-    VarMode m_InSynVarMode;
+    VarLocation m_InSynLocation;
 
     //!< Variable mode used for this synapse group's dendritic delay buffers
-    VarMode m_DendriticDelayVarMode;
+    VarLocation m_DendriticDelayLocation;
 
     //!< Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
@@ -317,23 +318,23 @@ private:
     //!< Initialisers for post synapse model variables
     std::vector<NewModels::VarInit> m_PSVarInitialisers;
 
-    //!< Whether individual per-synapse state variables of weight update model should use zero-copied memory
-    std::vector<VarMode> m_WUVarMode;
+    //!< Location of individual per-synapse state variables 
+    std::vector<VarLocation> m_WUVarLocation;
 
-    //!< Whether individual presynaptic state variables of weight update model should use zero-copied memory
-    std::vector<VarMode> m_WUPreVarMode;
+    //!< Location of individual presynaptic state variables
+    std::vector<VarLocation> m_WUPreVarLocation;
 
-    //!< Whether individual postsynaptic state variables of weight update model should use zero-copied memory
-    std::vector<VarMode> m_WUPostVarMode;
+    //!< Location of individual postsynaptic state variables
+    std::vector<VarLocation> m_WUPostVarLocation;
 
     //!< Whether indidividual state variables of post synapse should use zero-copied memory
-    std::vector<VarMode> m_PSVarMode;
+    std::vector<VarLocation> m_PSVarLocation;
 
     //!< Initialiser used for creating sparse connectivity
     InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
 
-    //!< Variable mode used for sparse connectivity
-    VarMode m_SparseConnectivityVarMode;
+    //!< Location of sparse connectivity
+    VarLocation m_SparseConnectivityLocation;
 
     //! Name of the synapse group in which postsynaptic model is located
     /*! This may not be the name of this group if it has been merged*/

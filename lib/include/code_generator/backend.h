@@ -55,17 +55,17 @@ public:
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
     virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const = 0;
 
-    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const = 0;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0; 
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const = 0;
+    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0; 
+    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
-    virtual void genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
+    virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &countVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const = 0;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const = 0;
+    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
+    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const = 0;
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const = 0;
@@ -91,27 +91,27 @@ public:
     // Public API
     //--------------------------------------------------------------------------
     void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const
+                             const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
     {
-        genVariablePush(push, type, name, mode, autoInitialized, count);
-        genVariablePull(pull, type, name, mode, count);
+        genVariablePush(push, type, name, loc, autoInitialized, count);
+        genVariablePull(pull, type, name, loc, count);
     }
 
     void genArray(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const std::string &type, const std::string &name, VarMode mode, size_t count) const
+                  const std::string &type, const std::string &name, VarLocation loc, size_t count) const
     {
-        genVariableDefinition(definitions, type + "*", name, mode);
-        genVariableImplementation(runner, type + "*", name, mode);
-        genVariableAllocation(allocations, type, name, mode, count);
-        genVariableFree(free, name, mode);
+        genVariableDefinition(definitions, type + "*", name, loc);
+        genVariableImplementation(runner, type + "*", name, loc);
+        genVariableAllocation(allocations, type, name, loc, count);
+        genVariableFree(free, name, loc);
     }
 
     void genVariable(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                      CodeStream &push, CodeStream &pull,
-                     const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const
+                     const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
     {
-        genArray(definitions, runner, allocations, free, type, name, mode, count);
-        genVariablePushPull(push, pull, type, name, mode, autoInitialized, count);
+        genArray(definitions, runner, allocations, free, type, name, loc, count);
+        genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
     }
 
 protected:

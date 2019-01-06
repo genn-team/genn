@@ -24,8 +24,8 @@ public:
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false),
-        m_SpikeVarMode(GENN_PREFERENCES::defaultVarMode), m_SpikeEventVarMode(GENN_PREFERENCES::defaultVarMode),
-        m_SpikeTimeVarMode(GENN_PREFERENCES::defaultVarMode), m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
+        m_SpikeLocation(GENN_PREFERENCES::defaultVarLocation), m_SpikeEventLocation(GENN_PREFERENCES::defaultVarLocation),
+        m_SpikeTimeLocation(GENN_PREFERENCES::defaultVarLocation), m_VarLocation(varInitialisers.size(), GENN_PREFERENCES::defaultVarLocation),
         m_HostID(hostID), m_DeviceID(deviceID)
     {
     }
@@ -49,20 +49,16 @@ public:
     void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
 
     //! Set variable mode used for variables containing this neuron group's output spikes
-    /*! This is ignored for CPU simulations */
-    void setSpikeVarMode(VarMode mode) { m_SpikeVarMode = mode; }
+    void setSpikeLocation(VarLocation loc) { m_SpikeLocation = loc; }
 
      //! Set variable mode used for variables containing this neuron group's output spike events
-     /*! This is ignored for CPU simulations */
-    void setSpikeEventVarMode(VarMode mode) { m_SpikeEventVarMode = mode; }
+    void setSpikeEventLocation(VarLocation loc) { m_SpikeEventLocation = loc; }
 
     //! Set variable mode used for variables containing this neuron group's output spike times
-    /*! This is ignored for CPU simulations */
-    void setSpikeTimeVarMode(VarMode mode) { m_SpikeTimeVarMode = mode; }
+    void setSpikeTimeLocation(VarLocation loc) { m_SpikeTimeLocation = loc; }
 
     //! Set variable mode of neuron model state variable
-    /*! This is ignored for CPU simulations */
-    void setVarMode(const std::string &varName, VarMode mode);
+    void setVarLocation(const std::string &varName, VarLocation loc);
 
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 
@@ -120,19 +116,19 @@ public:
     bool isZeroCopyEnabled() const;
 
     //! Get variable mode used for variables containing this neuron group's output spikes
-    VarMode getSpikeVarMode() const{ return m_SpikeVarMode; }
+    VarLocation getSpikeLocation() const{ return m_SpikeLocation; }
 
     //! Get variable mode used for variables containing this neuron group's output spike events
-    VarMode getSpikeEventVarMode() const{ return m_SpikeEventVarMode; }
+    VarLocation getSpikeEventLocation() const{ return m_SpikeEventLocation; }
 
     //! Get variable mode used for variables containing this neuron group's output spike times
-    VarMode getSpikeTimeVarMode() const{ return m_SpikeTimeVarMode; }
+    VarLocation getSpikeTimeLocation() const{ return m_SpikeTimeLocation; }
 
     //! Get variable mode used by neuron model state variable
-    VarMode getVarMode(const std::string &varName) const;
+    VarLocation getVarLocation(const std::string &varName) const;
 
     //! Get variable mode used by neuron model state variable
-    VarMode getVarMode(size_t index) const{ return m_VarMode[index]; }
+    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
 
     //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
@@ -146,13 +142,13 @@ public:
     bool isSimRNGRequired() const;
 
     //! Does this neuron group require an RNG for it's init code?
-    bool isInitRNGRequired(VarInit varInitMode) const;
+    bool isInitRNGRequired() const;
 
     //! Is device var init code required for any variables in this neuron group?
-    bool isDeviceVarInitRequired() const;
+    /*bool isDeviceVarInitRequired() const;
 
     //! Is any form of device initialisation required?
-    bool isDeviceInitRequired() const;
+    bool isDeviceInitRequired() const;*/
 
     //! Does this neuron group have outgoing connections specified host id?
     bool hasOutputToHost(int targetHostID) const;
@@ -195,16 +191,16 @@ private:
     std::vector<bool> m_VarQueueRequired;
 
     //!< Whether spikes from neuron group should use zero-copied memory
-    VarMode m_SpikeVarMode;
+    VarLocation m_SpikeLocation;
 
     //!< Whether spike-like events from neuron group should use zero-copied memory
-    VarMode m_SpikeEventVarMode;
+    VarLocation m_SpikeEventLocation;
 
     //!< Whether spike times from neuron group should use zero-copied memory
-    VarMode m_SpikeTimeVarMode;
+    VarLocation m_SpikeTimeLocation;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
-    std::vector<VarMode> m_VarMode;
+    std::vector<VarLocation> m_VarLocation;
 
     //!< The ID of the cluster node which the neuron groups are computed on
     int m_HostID;

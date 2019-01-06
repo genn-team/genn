@@ -30,14 +30,14 @@ void NeuronGroup::updatePostVarQueues(const std::string &code)
     updateVarQueues(code, "_post");
 }
 
-void NeuronGroup::setVarMode(const std::string &varName, VarMode mode)
+void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_VarMode[getNeuronModel()->getVarIndex(varName)] = mode;
+    m_VarLocation[getNeuronModel()->getVarIndex(varName)] = loc;
 }
 
-VarMode NeuronGroup::getVarMode(const std::string &varName) const
+VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
 {
-    return m_VarMode[getNeuronModel()->getVarIndex(varName)];
+    return m_VarLocation[getNeuronModel()->getVarIndex(varName)];
 }
 
 void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
@@ -104,7 +104,7 @@ void NeuronGroup::mergeIncomingPSM()
         for(auto b = inSyn.begin(); b != inSyn.end();) {
             // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
             if(typeid((*b)->getPSModel()).hash_code() == aModelTypeHash
-                && a->getInSynVarMode() == (*b)->getInSynVarMode()
+                && a->getInSynLocation() == (*b)->getInSynLocation()
                 && a->getMaxDendriticDelayTimesteps() == (*b)->getMaxDendriticDelayTimesteps()
                 && std::equal(aParamsBegin, aParamsEnd, (*b)->getPSParams().cbegin())
                 && std::equal(aDerivedParamsBegin, aDerivedParamsEnd, (*b)->getPSDerivedParams().cbegin()))
@@ -140,13 +140,13 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if((m_SpikeVarMode & VarLocation::ZERO_COPY) || (m_SpikeEventVarMode & VarLocation::ZERO_COPY) || (m_SpikeTimeVarMode & VarLocation::ZERO_COPY)) {
+    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) || (m_SpikeTimeLocation & VarLocation::ZERO_COPY)) {
         return true;
     }
 
     // If there are any variables implemented in zero-copy mode return true
-    if(any_of(m_VarMode.begin(), m_VarMode.end(),
-        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
+    if(std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
+        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
@@ -221,16 +221,16 @@ bool NeuronGroup::isSimRNGRequired() const
                        });
 }
 
-bool NeuronGroup::isInitRNGRequired(VarInit varInitMode) const
+bool NeuronGroup::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
-    if(::isInitRNGRequired(m_VarInitialisers, m_VarMode, varInitMode)) {
+    if(::isInitRNGRequired(m_VarInitialisers)) {
         return true;
     }
 
     // Return true if any current sources require an RNG for initialisation
     if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
-        [varInitMode](const CurrentSource *cs){ return cs->isInitRNGRequired(varInitMode); }))
+        [](const CurrentSource *cs){ return cs->isInitRNGRequired(); }))
     {
         return true;
     }
@@ -238,9 +238,9 @@ bool NeuronGroup::isInitRNGRequired(VarInit varInitMode) const
     // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [varInitMode](const SynapseGroup *sg){ return sg->isPSInitRNGRequired(varInitMode); });
+                       [](const SynapseGroup *sg){ return sg->isPSInitRNGRequired(); });
 }
-
+/*
 bool NeuronGroup::isDeviceVarInitRequired() const
 {
     // If spike var is initialised on device, return true
@@ -292,7 +292,7 @@ bool NeuronGroup::isDeviceVarInitRequired() const
 bool NeuronGroup::isDeviceInitRequired() const
 {
     return (isSimRNGRequired() || isDeviceVarInitRequired());
-}
+}*/
 
 bool NeuronGroup::hasOutputToHost(int targetHostID) const
 {

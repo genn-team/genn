@@ -198,7 +198,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         if(n.second.hasOutputToHost(localHostID)) {
             // Check that, whatever variable mode is set for these variables,
             // they are instantiated on host so they can be copied using MPI
-            if(!(n.second.getSpikeVarMode() & VarLocation::HOST)) {
+            if(!(n.second.getSpikeVarLocation() & VarLocation::HOST)) {
                 throw std::runtime_error("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
             }
 

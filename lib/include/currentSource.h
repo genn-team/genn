@@ -21,7 +21,7 @@ public:
                 const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers) :
         m_Name(name),
         m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_VarMode(varInitialisers.size(), GENN_PREFERENCES::defaultVarMode)
+        m_VarLocation(varInitialisers.size(), GENN_PREFERENCES::defaultVarLocation)
     {
     }
     CurrentSource(const CurrentSource&) = delete;
@@ -30,10 +30,8 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-
-    //! Set variable mode of neuron model state variable
-    /*! This is ignored for CPU simulations */
-    void setVarMode(const std::string &varName, VarMode mode);
+    //! Set location of neuron model state variable
+    void setVarLocation(const std::string &varName, VarLocation loc);
 
     void initDerivedParams(double dt);
 
@@ -49,11 +47,11 @@ public:
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
     const std::vector<NewModels::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
-    //! Get variable mode used by current source model state variable
-    VarMode getVarMode(const std::string &varName) const;
+    //! Get variable location for current source model state variable
+    VarLocation getVarLocation(const std::string &varName) const;
 
-    //! Get variable mode used by current source model state variable
-    VarMode getVarMode(size_t index) const{ return m_VarMode[index]; }
+    //! Get variable location for current source model state variable
+    VarLocation getVarLocation(size_t index) const{ return m_VarLocation[index]; }
 
     void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
 
@@ -64,10 +62,7 @@ public:
     bool isSimRNGRequired() const;
 
     //! Does this current source group require an RNG for it's init code
-    bool isInitRNGRequired(VarInit varInitMode) const;
-
-    //! Is device var init code required for any variables in this current source
-    bool isDeviceVarInitRequired() const;
+    bool isInitRNGRequired() const;
 
     //! Can this current source run on the CPU?
     /*! If we are running in CPU_ONLY mode this is always true,
@@ -86,5 +81,5 @@ private:
     std::vector<NewModels::VarInit> m_VarInitialisers;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
-    std::vector<VarMode> m_VarMode;
+    std::vector<VarLocation> m_VarLocation;
 };

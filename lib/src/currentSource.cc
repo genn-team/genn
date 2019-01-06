@@ -11,14 +11,14 @@
 //------------------------------------------------------------------------
 // CurrentSource
 //------------------------------------------------------------------------
-void CurrentSource::setVarMode(const std::string &varName, VarMode mode)
+void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_VarMode[getCurrentSourceModel()->getVarIndex(varName)] = mode;
+    m_VarLocation[getCurrentSourceModel()->getVarIndex(varName)] = loc;
 }
 
-VarMode CurrentSource::getVarMode(const std::string &varName) const
+VarLocation CurrentSource::getVarLocation(const std::string &varName) const
 {
-    return m_VarMode[getCurrentSourceModel()->getVarIndex(varName)];
+    return m_VarLocation[getCurrentSourceModel()->getVarIndex(varName)];
 }
 
 void CurrentSource::initDerivedParams(double dt)
@@ -73,30 +73,12 @@ bool CurrentSource::isSimRNGRequired() const
     return false;
 }
 
-bool CurrentSource::isInitRNGRequired(VarInit varInitMode) const
+bool CurrentSource::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
-    if(::isInitRNGRequired(m_VarInitialisers, m_VarMode, varInitMode)) {
+    if(::isInitRNGRequired(m_VarInitialisers)) {
         return true;
     }
 
     return false;
-}
-
-bool CurrentSource::isDeviceVarInitRequired() const
-{
-    // Return true if any of the variables are initialised on the device
-    if(std::any_of(m_VarMode.cbegin(), m_VarMode.cend(),
-                   [](const VarMode mode){ return (mode & VarInit::DEVICE); }))
-    {
-        return true;
-    }
-    return false;
-}
-
-bool CurrentSource::canRunOnCPU() const
-{
-    // Return true if all of the variables are present on the host
-    return std::all_of(m_VarMode.cbegin(), m_VarMode.cend(),
-                       [](const VarMode mode){ return (mode & VarLocation::HOST); });
 }

@@ -48,12 +48,12 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
-        m_InSynVarMode(GENN_PREFERENCES::defaultVarMode),  m_DendriticDelayVarMode(GENN_PREFERENCES::defaultVarMode),
+        m_InSynLocation(GENN_PREFERENCES::defaultVarLocation),  m_DendriticDelayLocation(GENN_PREFERENCES::defaultVarLocation),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
-        m_WUVarMode(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_WUPreVarMode(wuPreVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
-        m_WUPostVarMode(wuPostVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode), m_PSVarMode(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarMode),
-        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityVarMode(GENN_PREFERENCES::defaultSparseConnectivityMode),
+        m_WUVarLocation(wuVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation),
+        m_WUPostVarLocation(wuPostVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation), m_PSVarLocation(psVarInitialisers.size(), GENN_PREFERENCES::defaultVarLocation),
+        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(GENN_PREFERENCES::defaultSparseConnectivityLocation),
         m_PSModelTargetName(name)
 {
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
@@ -100,24 +100,24 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     srcNeuronGroup->addOutSyn(this);
 }
 
-void SynapseGroup::setWUVarMode(const std::string &varName, VarMode mode)
+void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_WUVarMode[getWUModel()->getVarIndex(varName)] = mode;
+    m_WUVarLocation[getWUModel()->getVarIndex(varName)] = loc;
 }
 
-void SynapseGroup::setWUPreVarMode(const std::string &varName, VarMode mode)
+void SynapseGroup::setWUPreVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_WUPreVarMode[getWUModel()->getPreVarIndex(varName)] = mode;
+    m_WUPreVarLocation[getWUModel()->getPreVarIndex(varName)] = loc;
 }
 
-void SynapseGroup::setWUPostVarMode(const std::string &varName, VarMode mode)
+void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_WUPostVarMode[getWUModel()->getPostVarIndex(varName)] = mode;
+    m_WUPostVarLocation[getWUModel()->getPostVarIndex(varName)] = loc;
 }
 
-void SynapseGroup::setPSVarMode(const std::string &varName, VarMode mode)
+void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_PSVarMode[getPSModel()->getVarIndex(varName)] = mode;
+    m_PSVarLocation[getPSModel()->getVarIndex(varName)] = loc;
 }
 
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
@@ -239,15 +239,29 @@ const std::vector<double> SynapseGroup::getPSConstInitVals() const
 bool SynapseGroup::isZeroCopyEnabled() const
 {
     // If there are any postsynaptic variables implemented in zero-copy mode return true
-    if(any_of(m_PSVarMode.begin(), m_PSVarMode.end(),
-        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
+    if(std::any_of(m_PSVarLocation.begin(), m_PSVarLocation.end(),
+        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
 
     // If there are any weight update variables implemented in zero-copy mode return true
-    if(any_of(m_WUVarMode.begin(), m_WUVarMode.end(),
-        [](VarMode mode){ return (mode & VarLocation::ZERO_COPY); }))
+    if(std::any_of(m_WUVarLocation.begin(), m_WUVarLocation.end(),
+        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
+    {
+        return true;
+    }
+
+    // If there are any weight update variables implemented in zero-copy mode return true
+    if(std::any_of(m_WUPreVarLocation.begin(), m_WUPreVarLocation.end(),
+        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
+    {
+        return true;
+    }
+
+    // If there are any weight update variables implemented in zero-copy mode return true
+    if(std::any_of(m_WUPostVarLocation.begin(), m_WUPostVarLocation.end(),
+        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
     {
         return true;
     }
@@ -255,24 +269,24 @@ bool SynapseGroup::isZeroCopyEnabled() const
     return false;
 }
 
-VarMode SynapseGroup::getWUVarMode(const std::string &var) const
+VarLocation SynapseGroup::getWUVarLocation(const std::string &var) const
 {
-    return m_WUVarMode[getWUModel()->getVarIndex(var)];
+    return m_WUVarLocation[getWUModel()->getVarIndex(var)];
 }
 
-VarMode SynapseGroup::getWUPreVarMode(const std::string &var) const
+VarLocation SynapseGroup::getWUPreVarLocation(const std::string &var) const
 {
-    return m_WUPreVarMode[getWUModel()->getPreVarIndex(var)];
+    return m_WUVarLocation[getWUModel()->getPreVarIndex(var)];
 }
 
-VarMode SynapseGroup::getWUPostVarMode(const std::string &var) const
+VarLocation SynapseGroup::getWUPostVarLocation(const std::string &var) const
 {
-    return m_WUPostVarMode[getWUModel()->getPostVarIndex(var)];
+    return m_WUVarLocation[getWUModel()->getPostVarIndex(var)];
 }
 
-VarMode SynapseGroup::getPSVarMode(const std::string &var) const
+VarLocation SynapseGroup::getPSVarLocation(const std::string &var) const
 {
-    return m_PSVarMode[getPSModel()->getVarIndex(var)];
+    return m_WUVarLocation[getPSModel()->getVarIndex(var)];
 }
 
 void SynapseGroup::addExtraGlobalConnectivityInitialiserParams(std::map<std::string, std::string> &kernelParameters) const
@@ -401,24 +415,24 @@ bool SynapseGroup::isDendriticDelayRequired() const
     return false;
 }
 
-bool SynapseGroup::isPSInitRNGRequired(VarInit varInitMode) const
+bool SynapseGroup::isPSInitRNGRequired() const
 {
     // If initialising the postsynaptic variables require an RNG, return true
-    return isInitRNGRequired(m_PSVarInitialisers, m_PSVarMode, varInitMode);
+    return isInitRNGRequired(m_PSVarInitialisers);
 }
 
-bool SynapseGroup::isWUInitRNGRequired(VarInit varInitMode) const
+bool SynapseGroup::isWUInitRNGRequired() const
 {
     // If initialising the weight update variables require an RNG, return true
-    if(isInitRNGRequired(m_WUVarInitialisers, m_WUVarMode, varInitMode)) {
+    if(isInitRNGRequired(m_WUVarInitialisers)) {
         return true;
     }
 
     // Return true if the var init mode we're querying is the one used for sparse connectivity and the connectivity initialiser requires an RNG
-    return ((getSparseConnectivityVarMode() & varInitMode) && ::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
+    return isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode());
 }
 
-bool SynapseGroup::isPSDeviceVarInitRequired() const
+/*bool SynapseGroup::isPSDeviceVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables,
     // return true if any of the postsynapse variables are initialised on the device
@@ -473,7 +487,7 @@ bool SynapseGroup::isDeviceInitRequired() const
     else {
         return isDeviceSparseConnectivityInitRequired();
     }
-}
+}*/
 
 bool SynapseGroup::isDeviceSparseInitRequired() const
 {
