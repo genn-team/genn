@@ -210,7 +210,7 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
         genGLIBCBugTest(os);
 
         // If model requires a host RNG
-        if(true/*model.isHostRNGRequired()*/) {
+        if(isGlobalRNGRequired(model)) {
             // If no seed is specified, use system randomness to generate seed sequence
             CodeStream::Scope b(os);
             if (model.getSeed() == 0) {
@@ -497,8 +497,28 @@ void SingleThreadedCPU::genMakefileCompileRule(std::ostream &os) const
 //--------------------------------------------------------------------------
 bool SingleThreadedCPU::isGlobalRNGRequired(const NNmodel &model) const
 {
-    // **TODO** move logic from method in here as it is backend-logic specific
-    return true;//model.isHostRNGRequired();
+    // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
+    // **NOTE** this takes postsynaptic model initialisation into account
+    if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+        [](const NeuronGroupValueType &n)
+        {
+            return n.second.isSimRNGRequired() || n.second.isInitRNGRequired(VarInit::HOST)
+        }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require an RNG for weight update model initialisation, return true
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend()),
+        [](const SynapseGroupValueType &s)
+        {
+            return s.second.isWUInitRNGRequired();
+        }))
+    {
+        return true;
+    }
+
+    return false;
 }
 //--------------------------------------------------------------------------
 void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,

@@ -74,61 +74,6 @@ size_t NNmodel::getNumPreSynapseResetRequiredGroups() const
                          [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
 }
 
-
-bool NNmodel::isHostRNGRequired() const
-{
-    // Cache whether the model can run on the CPU
-    const bool cpu = canRunOnCPU();
-
-    // If model can run on the CPU and any neuron groups require simulation RNGs
-    // or if any require host RNG for initialisation, return true
-    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
-        [cpu](const NeuronGroupValueType &n)
-        {
-            return ((cpu && n.second.isSimRNGRequired()) || n.second.isInitRNGRequired(VarInit::HOST));
-        }))
-    {
-        return true;
-    }
-
-    // If any synapse groups require a host RNG return true
-    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
-        [](const SynapseGroupValueType &s)
-        {
-            return s.second.isWUInitRNGRequired(VarInit::HOST);
-        }))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool NNmodel::isDeviceRNGRequired() const
-{
-    // If any neuron groups require device RNG for initialisation, return true
-    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
-        [](const NeuronGroupValueType &n)
-        {
-            return n.second.isInitRNGRequired(VarInit::DEVICE);
-        }))
-    {
-        return true;
-    }
-
-    // If any synapse groups require a device RNG for initialisation, return true
-    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
-        [](const SynapseGroupValueType &s)
-        {
-            return s.second.isWUInitRNGRequired(VarInit::DEVICE);
-        }))
-    {
-        return true;
-    }
-
-    return false;
-}
-
 std::string NNmodel::getTimePrecision() const
 {
     // If time precision is set to match model precision
@@ -153,7 +98,7 @@ std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::st
     return path + "/" + getName() + "_CODE/" + filename;
 #endif
     }
-
+/*
 bool NNmodel::isDeviceInitRequired(int localHostID) const
 {
     // If any local neuron groups require device initialisation, return true
@@ -189,7 +134,7 @@ bool NNmodel::isDeviceSparseInitRequired() const
     // Return true if any of the synapse groups require device sparse initialisation
     return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
         [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
-}
+}*/
 
 unsigned int NNmodel::getNumLocalNeurons() const
 {

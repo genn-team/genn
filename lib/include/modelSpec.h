@@ -134,13 +134,6 @@ public:
     //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
     bool isPreSynapseResetRequired() const{ return getNumPreSynapseResetRequiredGroups() > 0; }
 
-    //! Do any populations or initialisation code in this model require a host RNG?
-    bool isHostRNGRequired() const;
-
-    //! Do any populations or initialisation code in this model require a device RNG?
-    /*! **NOTE** some model code will use per-neuron RNGs instead */
-    bool isDeviceRNGRequired() const;
-
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
 
@@ -168,11 +161,11 @@ public:
 
     //! Does this model require device initialisation kernel
     /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
-    bool isDeviceInitRequired(int localHostID) const;
+   // bool isDeviceInitRequired(int localHostID) const;
 
     //! Does this model require a device sparse initialisation kernel
     /*! **NOTE** this is for sparsely connected synapse groups only */
-    bool isDeviceSparseInitRequired() const;
+    //bool isDeviceSparseInitRequired() const;
 
     // PUBLIC NEURON FUNCTIONS
     //========================

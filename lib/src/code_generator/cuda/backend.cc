@@ -681,7 +681,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
     os << std::endl;
 
     // If device RNG is required, generate kernel to initialise it
-    if(model.isDeviceRNGRequired()) {
+    if(isGlobalRNGRequired(model)) {
         os << "extern \"C\" __global__ void initializeRNGKernel(unsigned long long deviceRNGSeed)";
         {
             CodeStream::Scope b(os);
@@ -1310,8 +1310,28 @@ void CUDA::genMakefileCompileRule(std::ostream &os) const
 //--------------------------------------------------------------------------
 bool CUDA::isGlobalRNGRequired(const NNmodel &model) const
 {
-    // **TODO** move logic from method in here as it is backend-logic specific
-    return model.isDeviceRNGRequired();
+    // If any neuron groups require  RNG for initialisation, return true
+    // **NOTE** this takes postsynaptic model initialisation into account
+    if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+        [](const NeuronGroupValueType &n)
+        {
+            return n.second.isInitRNGRequired(VarInit::HOST)
+        }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require an RNG for weight update model initialisation, return true
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend()),
+        [](const SynapseGroupValueType &s)
+        {
+            return s.second.isWUInitRNGRequired();
+        }))
+    {
+        return true;
+    }
+
+    return false;
 }
 //--------------------------------------------------------------------------
 std::string CUDA::getNVCCFlags() const
