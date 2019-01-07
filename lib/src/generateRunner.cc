@@ -1388,7 +1388,7 @@ void genRunner(const NNmodel &model,    //!< Model description
             }
 
             for(auto const &v : sg->getPSModel()->getExtraGlobalParams()) {
-                os << v.second << " " <<  v.first << n.first << ";" << std::endl;
+                os << v.second << " " <<  v.first << sg->getName()<< ";" << std::endl;
             }
 
         }
