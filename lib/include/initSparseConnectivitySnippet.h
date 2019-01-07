@@ -111,7 +111,7 @@ public:
 class FixedProbabilityBase : public Base
 {
 public:
-    virtual std::string getRowBuildCode() const = 0;
+    virtual std::string getRowBuildCode() const override = 0;
 
     SET_ROW_BUILD_STATE_VARS({{"prevJ", {"int", -1}}});
 
