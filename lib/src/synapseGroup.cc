@@ -303,7 +303,7 @@ VarMode SynapseGroup::getPSVarMode(const std::string &var) const
 void SynapseGroup::addExtraGlobalConnectivityInitialiserParams(std::map<string, string> &kernelParameters) const
 {
     // Loop through list of global parameters
-    for(auto const &p : getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
+    for(const auto &p : getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
         std::string pnamefull = "initSparseConn" + p.first + getName();
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // parameter wasn't registered yet - is it used?
@@ -316,15 +316,23 @@ void SynapseGroup::addExtraGlobalConnectivityInitialiserParams(std::map<string, 
 
 void SynapseGroup::addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const
 {
+    // Loop through list of extra global postsynaptic model parameters
+    for(const auto &p : getPSModel()->getExtraGlobalParams()) {
+        // If extra global parameter is referenced by either of the postsynaptic model codestrings, add to parameters map
+        if(getPSModel()->getDecayCode().find("$(" + p.first + ")") != std::string::npos
+            || getPSModel()->getApplyInputCode().find("$(" + p.first + ")") != std::string::npos)
+        {
+            kernelParameters.emplace(p.first + getName(), p.second);
+        }
+    }
+
     // Loop through list of extra global weight update parameters
-    for(auto const &p : getWUModel()->getExtraGlobalParams()) {
+    for(const auto &p : getWUModel()->getExtraGlobalParams()) {
         // If it's not already in set
         std::string pnamefull = p.first + getName();
-        std::cout << pnamefull << std::endl;
         if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
             // If the presynaptic neuron requires this parameter in it's spike event conditions, add it
             if (getSrcNeuronGroup()->isParamRequiredBySpikeEventCondition(pnamefull)) {
-                std::cout << pnamefull << "," << p.second;
                 kernelParameters.emplace(pnamefull, p.second);
             }
         }
