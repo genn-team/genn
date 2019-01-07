@@ -37,9 +37,6 @@ Part of the code generation and generated code sections.
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
-#define CPU 0 //!< Macro attaching the label "CPU" to flag 0
-#define GPU 1 //!< Macro attaching the label "GPU" to flag 1
-
 //!< Floating point precision to use for models
 enum FloatType
 {
@@ -55,8 +52,6 @@ enum class TimePrecision
     FLOAT,      //!< Time uses single precision - not suitable for long simulations
     DOUBLE,     //!< Time uses double precision - may reduce performance
 };
-
-#define AUTODEVICE -1  //!< Macro attaching the label AUTODEVICE to flag -1. Used by setGPUDevice
 
 // Wrappers to save typing when declaring VarInitialisers structures
 template<typename S>
@@ -119,6 +114,12 @@ public:
     void setDT(double); //!< Set the integration step size of the model
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
+
+    //!< What is the default location for model state variables? Historically, everything was allocated on both host AND device
+    void setDefaultVarLocation(VarLocation defaultVarLocation){ m_DefaultVarLocation = defaultVarLocation; } 
+
+    //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
+    void setDefaultSparseConnectivityLocation(VarLocation defaultSparseConnectivityLocation){ m_DefaultSparseConnectivityLocation = defaultSparseConnectivityLocation; }
 
     //! Get the string literal that should be used to represent a value in the model's floating-point type
     std::string scalarExpr(const double) const;
@@ -222,12 +223,12 @@ public:
         auto result = groupMap.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, size, model,
-                                  paramValues.getValues(), varInitialisers.getInitialisers(), hostID, deviceID));
+                                  paramValues.getValues(), varInitialisers.getInitialisers(), 
+                                  m_DefaultVarLocation, hostID, deviceID));
 
         if(!result.second)
         {
-            gennError("Cannot add a neuron population with duplicate name:" + name);
-            return NULL;
+            throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
         }
         else
         {
@@ -323,7 +324,7 @@ public:
                                   wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp,
-                                  connectivityInitialiser));
+                                  connectivityInitialiser, m_DefaultVarLocation, m_DefaultSparseConnectivityLocation));
 
         if(!result.second)
         {

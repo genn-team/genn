@@ -210,25 +210,25 @@ public:
     bool isWUInitRNGRequired() const;
 
     //! Is device var init code required for any variables in this synapse group's postsynaptic model?
-    bool isPSDeviceVarInitRequired() const;
+    bool isPSVarInitRequired() const;
 
-    //! Is device var init code required for any variables in this synapse group's weight update model?
-    bool isWUDeviceVarInitRequired() const;
+    //! Is var init code required for any variables in this synapse group's weight update model?
+    bool isWUVarInitRequired() const;
 
-    //! Is device var init code required for any presynaptic variables in this synapse group's weight update model
-    bool isWUDevicePreVarInitRequired() const;
+    //! Is var init code required for any presynaptic variables in this synapse group's weight update model
+    bool isWUPreVarInitRequired() const;
 
-    //! Is device var init code required for any postsynaptic variables in this synapse group's weight update model
-    bool isWUDevicePostVarInitRequired() const;
+    //! Is var init code required for any postsynaptic variables in this synapse group's weight update model
+    bool isWUPostVarInitRequired() const;
 
-    //! Is device sparse connectivity initialisation code required for this synapse group?
-    bool isDeviceSparseConnectivityInitRequired() const;
+    //! Is sparse connectivity initialisation code required for this synapse group?
+    bool isSparseConnectivityInitRequired() const;
 
     //! Is any form of device initialisation required?
-    bool isDeviceInitRequired() const;
+    bool isInitRequired() const;
 
     //! Is any form of sparse device initialisation required?
-    bool isDeviceSparseInitRequired() const;
+    bool isSparseInitRequired() const;
 
 private:
     //------------------------------------------------------------------------
