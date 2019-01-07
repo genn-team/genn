@@ -313,7 +313,7 @@ public:
     SET_VARS({{"V", "scalar"}, {"seed", "uint64_t"}, {"spikeTime", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t *"}, {"offset", "unsigned int"}});
 
-    virtual bool isPoisson() const{ return true; }
+    virtual bool isPoisson() const override{ return true; }
 };
 
 //----------------------------------------------------------------------------
