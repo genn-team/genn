@@ -53,8 +53,8 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;../third_party;include/code_generator/single_threaded_cpu</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_TYPE=SingleThreadedCPU;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;../third_party;include/code_generator/single_threaded_cpu;c:\sussex\genn_examples;c:\sussex\GeNN_Robotics</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BACKEND_TYPE=SingleThreadedCPU;MODEL="C:\sussex\genn\test_model.cc";%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -69,8 +69,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;../third_party;include/code_generator/single_threaded_cpu</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_TYPE=SingleThreadedCPU;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;../third_party;include/code_generator/single_threaded_cpu;c:\sussex\genn_examples;c:\sussex\GeNN_Robotics</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BACKEND_TYPE=SingleThreadedCPU;MODEL="C:\sussex\genn\test_model.cc";%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

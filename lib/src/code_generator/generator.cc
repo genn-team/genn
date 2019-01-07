@@ -12,12 +12,8 @@
 #include "code_generator/generateAll.h"
 #include "code_generator/generateMakefile.h"
 
+// Include backend
 #include "backend.h"
-
-CodeGenerator::Backends::BACKEND_TYPE::Preferences GENN_PREFERENCES;
-
-// Model definition function
-extern void modelDefinition(NNmodel &model);
 
 enum Log
 {
@@ -25,6 +21,14 @@ enum Log
     LogBackend,
     LogOptimiser,
 };
+
+// Declare global GeNN preferences
+CodeGenerator::Backends::BACKEND_TYPE::Preferences GENN_PREFERENCES;
+
+// Include model
+#include MODEL
+
+
 
 int main(int argc,     //!< number of arguments; expected to be 2
          char *argv[]) //!< Arguments; expected to contain the target directory for code generation.
