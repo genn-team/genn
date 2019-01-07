@@ -115,11 +115,17 @@ public:
     void setTiming(bool); //!< Set whether timers and timing commands are to be included
     void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
 
-    //!< What is the default location for model state variables? Historically, everything was allocated on both host AND device
-    void setDefaultVarLocation(VarLocation defaultVarLocation){ m_DefaultVarLocation = defaultVarLocation; } 
+    //!< What is the default location for model state variables? 
+    /*! Historically, everything was allocated on both the host AND device */
+    void setDefaultVarLocation(VarLocation loc){ m_DefaultVarLocation = loc; } 
 
-    //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
-    void setDefaultSparseConnectivityLocation(VarLocation defaultSparseConnectivityLocation){ m_DefaultSparseConnectivityLocation = defaultSparseConnectivityLocation; }
+    //! What is the default location for sparse synaptic connectivity? 
+    /*! Historically, everything was allocated on both the host AND device */
+    void setDefaultSparseConnectivityLocation(VarLocation loc){ m_DefaultSparseConnectivityLocation = loc; }
+
+    //!< Should compatible postsynaptic models and dendritic delay buffers be merged? 
+    /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
+    void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
 
     //! Get the string literal that should be used to represent a value in the model's floating-point type
     std::string scalarExpr(const double) const;
@@ -153,6 +159,10 @@ public:
 
     //! Generate path for generated code
     std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
+
+    //! Finalise model
+    // **YUCK** this really shouldn't be public
+    void finalize();
 
     // PUBLIC INITIALISATION FUNCTIONS
     //================================
@@ -523,4 +533,8 @@ private:
 
     //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
     VarLocation m_DefaultSparseConnectivityLocation; 
+
+    //!< Should compatible postsynaptic models and dendritic delay buffers be merged? 
+    /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
+    bool m_ShouldMergePostsynapticModels; 
 };

@@ -31,9 +31,9 @@
 // ------------------------------------------------------------------------
 // class NNmodel for specifying a neuronal network model
 
-NNmodel::NNmodel() 
-:   m_TimePrecision(TimePrecision::DEFAULT), m_MergePostsynapticModels(false), m_DefaultVarLocation(VarLocation::HOST_DEVICE), 
-    m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE)
+NNmodel::NNmodel()
+    : m_TimePrecision(TimePrecision::DEFAULT), m_MergePostsynapticModels(false), m_DefaultVarLocation(VarLocation::HOST_DEVICE),
+    m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_ShouldMergePostsynapticModels(false)
 {
     setDT(0.5);
     setPrecision(GENN_FLOAT);
@@ -351,14 +351,8 @@ std::string NNmodel::scalarExpr(const double val) const
     return tmp;
 }
 
-/*void NNmodel::finalize()
+void NNmodel::finalize()
 {
-    //initializing learning parameters to start
-    if (final) {
-        gennError("Your model has already been finalized");
-    }
-    final = true;
-
     // Loop through neuron populations and their outgoing synapse populations
     for(auto &n : m_LocalNeuronGroups) {
         for(auto *sg : n.second.getOutSyn()) {
@@ -374,13 +368,13 @@ std::string NNmodel::scalarExpr(const double val) const
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
 
                 // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
-                string eCode = wu->getEventThresholdConditionCode();
+                std::string eCode = wu->getEventThresholdConditionCode();
                 value_substitutions(eCode, wu->getParamNames(), sg->getWUParams());
                 value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
                 name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
 
                 // Add code and name of
-                string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?
+                std::string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?
                     "" : sg->getName() + "_weightupdate_simCode";
 
                 // Add code and name of support code namespace to set
@@ -445,7 +439,7 @@ std::string NNmodel::scalarExpr(const double val) const
 
         // If this synapse group has either ragged or bitmask connectivity which is initialised
         // using a connectivity snippet AND has individual synaptic variables
-        if(((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+        /*if(((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
             || (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
             && !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()
             && s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
@@ -457,7 +451,7 @@ std::string NNmodel::scalarExpr(const double val) const
                     gennError("Weight update mode variables must be initialised in same place as sparse connectivity variable '" + wuVars[k].first + "' in population '" + s.first + "' is not");
                 }
             }
-        }
+        }*/
     }
 
     // CURRENT SOURCES
@@ -472,7 +466,7 @@ std::string NNmodel::scalarExpr(const double val) const
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
         if(!n.second.getInSyn().empty()) {
-            n.second.mergeIncomingPSM();
+            n.second.mergeIncomingPSM(m_ShouldMergePostsynapticModels);
         }
     }
 
@@ -484,4 +478,4 @@ std::string NNmodel::scalarExpr(const double val) const
         // Make extra global parameter lists
         cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
-}*/
+}

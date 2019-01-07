@@ -28,8 +28,6 @@ CodeGenerator::Backends::BACKEND_TYPE::Preferences GENN_PREFERENCES;
 // Include model
 #include MODEL
 
-
-
 int main(int argc,     //!< number of arguments; expected to be 2
          char *argv[]) //!< Arguments; expected to contain the target directory for code generation.
     
@@ -48,11 +46,15 @@ int main(int argc,     //!< number of arguments; expected to be 2
     
     // Create output path
     const filesystem::path outputPath(argv[1]);
-    
+    filesystem::create_directory(outputPath);
+
     // Create model
     NNmodel model;
     modelDefinition(model);
     
+    // Finalize model
+    model.finalize();
+
     int localHostID = 0;
 
 #ifdef MPI_ENABLE
