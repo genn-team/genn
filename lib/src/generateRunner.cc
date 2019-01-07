@@ -754,6 +754,10 @@ void genDefinitions(const NNmodel &model,   //!< Model description
                     extern_variable_def(os, v.second + " *", v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first));
                 }
             }
+
+            for(auto const &v : sg->getPSModel()->getExtraGlobalParams()) {
+                os << "extern " << v.second << " " <<  v.first << sg->getName() << ";" << std::endl;
+            }
         }
     }
     os << std::endl;
@@ -1381,6 +1385,10 @@ void genRunner(const NNmodel &model,    //!< Model description
                 for(const auto &v : sg->getPSModel()->getVars()) {
                     variable_def(os, v.second+" *", v.first + sg->getPSModelTargetName(), sg->getPSVarMode(v.first));
                 }
+            }
+
+            for(auto const &v : sg->getPSModel()->getExtraGlobalParams()) {
+                os << v.second << " " <<  v.first << n.first << ";" << std::endl;
             }
 
         }
