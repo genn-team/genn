@@ -23,7 +23,7 @@
 
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
-#define SET_VARS(...) virtual StringPairVec getVars() const{ return __VA_ARGS__; }
+#define SET_VARS(...) virtual StringPairVec getVars() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // Models::VarInit

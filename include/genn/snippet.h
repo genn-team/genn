@@ -25,8 +25,8 @@ public:                                                 \
 
 #define IMPLEMENT_SNIPPET(TYPE) TYPE *TYPE::s_Instance = NULL
 
-#define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const{ return __VA_ARGS__; }
-#define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const{ return __VA_ARGS__; }
+#define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const override{ return __VA_ARGS__; }
+#define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // Snippet::ValueBase
