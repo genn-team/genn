@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C includes
+#include <cmath>
+
 // GeNN includes
 #include "models.h"
 

@@ -7,10 +7,10 @@
 // Macros
 //----------------------------------------------------------------------------
 #define DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS)    \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS)                                                           \
+    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                                          \
     typedef NewModels::VarInitContainerBase<NUM_VARS> VarValues;                                \
     typedef NewModels::VarInitContainerBase<NUM_PRE_VARS> PreVarValues;                         \
-    typedef NewModels::VarInitContainerBase<NUM_POST_VARS> PostVarValues;
+    typedef NewModels::VarInitContainerBase<NUM_POST_VARS> PostVarValues
 
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const{ return SIM_CODE; }
 #define SET_EVENT_CODE(EVENT_CODE) virtual std::string getEventCode() const{ return EVENT_CODE; }

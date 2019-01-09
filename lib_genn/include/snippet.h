@@ -20,7 +20,7 @@ public:                                                 \
         }                                               \
         return s_Instance;                              \
     }                                                   \
-    typedef Snippet::ValueBase<NUM_PARAMS> ParamValues; \
+    typedef Snippet::ValueBase<NUM_PARAMS> ParamValues  \
 
 
 #define IMPLEMENT_SNIPPET(TYPE) TYPE *TYPE::s_Instance = NULL

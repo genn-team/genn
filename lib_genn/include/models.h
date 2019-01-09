@@ -16,10 +16,10 @@
 // Macros
 //----------------------------------------------------------------------------
 #define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)                       \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS)                                   \
+    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                  \
     typedef NewModels::VarInitContainerBase<NUM_VARS> VarValues;        \
     typedef NewModels::VarInitContainerBase<0> PreVarValues;            \
-    typedef NewModels::VarInitContainerBase<0> PostVarValues;
+    typedef NewModels::VarInitContainerBase<0> PostVarValues
 
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
