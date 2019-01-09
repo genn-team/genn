@@ -1,4 +1,4 @@
-#include "code_generator/single_threaded_cpu/backend.h"
+#include "backend.h"
 
 // GeNN includes
 #include "codeStream.h"
