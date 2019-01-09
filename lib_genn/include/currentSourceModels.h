@@ -47,7 +47,7 @@ public:
 */
 class DC : public Base
 {
-    DECLARE_MODEL(DC, 1, 0)
+    DECLARE_MODEL(DC, 1, 0);
 
     SET_INJECTION_CODE("$(injectCurrent, $(amp));\n");
 
@@ -64,7 +64,7 @@ class DC : public Base
 */
 class GaussianNoise : public Base
 {
-    DECLARE_MODEL(GaussianNoise, 2, 0)
+    DECLARE_MODEL(GaussianNoise, 2, 0);
 
     SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
 

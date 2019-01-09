@@ -1,8 +1,5 @@
 #pragma once
 
-// Standard C includes
-#include <cmath>
-
 // GeNN includes
 #include "models.h"
 
@@ -43,7 +40,7 @@ public:
 class ExpCond : public Base
 {
 public:
-    DECLARE_MODEL(ExpCond, 2, 0)
+    DECLARE_MODEL(ExpCond, 2, 0);
 
     SET_DECAY_CODE("$(inSyn)*=$(expDecay);");
 
@@ -62,7 +59,7 @@ public:
 class DeltaCurr : public Base
 {
 public:
-    DECLARE_MODEL(DeltaCurr, 0, 0)
+    DECLARE_MODEL(DeltaCurr, 0, 0);
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
 };

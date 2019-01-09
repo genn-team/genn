@@ -73,7 +73,7 @@ public:
 class Uninitialised : public Base
 {
 public:
-    DECLARE_SNIPPET(InitSparseConnectivitySnippet::Uninitialised, 0)
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::Uninitialised, 0);
 };
 
 //----------------------------------------------------------------------------
@@ -83,7 +83,7 @@ public:
 class OneToOne : public Base
 {
 public:
-    DECLARE_SNIPPET(InitSparseConnectivitySnippet::OneToOne, 0)
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::OneToOne, 0);
 
     SET_ROW_BUILD_CODE(
         "$(addSynapse, $(id_pre));\n"
@@ -153,7 +153,7 @@ public:
 class FixedProbability : public FixedProbabilityBase
 {
 public:
-    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbability, 1)
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbability, 1);
 
     SET_ROW_BUILD_CODE(
         "const scalar u = $(gennrand_uniform);\n"
@@ -185,7 +185,7 @@ public:
 class FixedProbabilityNoAutapse : public FixedProbabilityBase
 {
 public:
-    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbabilityNoAutapse, 1)
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbabilityNoAutapse, 1);
 
     SET_ROW_BUILD_CODE(
         "int nextJ;\n"
