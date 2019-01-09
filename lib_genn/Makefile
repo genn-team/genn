@@ -1,6 +1,6 @@
 FRONTEND_SOURCES	:= $(wildcard src/*.cc)
 BACKEND_SOURCES		:= $(wildcard src/code_generator*.cc)
-SOURCES			:= $(FRONTEND_SOURCES) + $(BACKEND_SOURCES) 
+SOURCES			:= $(FRONTEND_SOURCES) $(BACKEND_SOURCES) 
 OBJECTS		:=$(SOURCES:.cc=.o)
 DEPS		:=$(SOURCES:.cc=.d)
 #ARFLAGS		:= -rcs

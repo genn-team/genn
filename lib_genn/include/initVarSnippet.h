@@ -30,7 +30,7 @@ public:
 class Uninitialised : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Uninitialised, 0);
+    DECLARE_SNIPPET(InitVarSnippet::Uninitialised, 0)
 };
 
 //----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ public:
 class Constant : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Constant, 1);
+    DECLARE_SNIPPET(InitVarSnippet::Constant, 1)
 
     SET_CODE("$(value) = $(constant);");
 
@@ -64,7 +64,7 @@ public:
 class Uniform : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Uniform, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Uniform, 2)
 
     SET_CODE(
         "const scalar scale = $(max) - $(min);\n"
@@ -84,7 +84,7 @@ public:
 class Normal : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Normal, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Normal, 2)
 
     SET_CODE("$(value) = $(mean) + ($(gennrand_normal) * $(sd));");
 
@@ -101,7 +101,7 @@ public:
 class Exponential : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Exponential, 1);
+    DECLARE_SNIPPET(InitVarSnippet::Exponential, 1)
 
     SET_CODE("$(value) = $(lambda) * $(gennrand_exponential);");
 
@@ -118,7 +118,7 @@ public:
 class Gamma : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Gamma, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Gamma, 2)
 
     SET_CODE("$(value) = $(b) * $(gennrand_gamma, $(a));");
 

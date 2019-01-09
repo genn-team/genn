@@ -146,7 +146,7 @@ public:
 class StaticPulse : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0)
 
     SET_VARS({{"g", "scalar"}});
 
@@ -172,7 +172,7 @@ public:
 class StaticPulseDendriticDelay : public Base
 {
 public:
-    DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2);
+    DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2)
 
     SET_VARS({{"g", "scalar"},{"d", "uint8_t"}});
 
@@ -208,7 +208,7 @@ public:
 class StaticGraded : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 2, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 2, 1, 0, 0)
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar"}});
@@ -278,7 +278,7 @@ public:
 class PiecewiseSTDP : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(PiecewiseSTDP, 10, 2, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(PiecewiseSTDP, 10, 2, 0, 0)
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
         "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
