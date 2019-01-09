@@ -4,7 +4,7 @@
 #include <cmath>
 
 // GeNN includes
-#include "newModels.h"
+#include "models.h"
 
 //----------------------------------------------------------------------------
 // Macros

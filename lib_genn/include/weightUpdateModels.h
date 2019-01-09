@@ -1,7 +1,7 @@
 #pragma once
 
 // GeNN includes
-#include "newModels.h"
+#include "models.h"
 
 //----------------------------------------------------------------------------
 // Macros

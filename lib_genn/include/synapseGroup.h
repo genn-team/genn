@@ -9,8 +9,8 @@
 // GeNN includes
 #include "initSparseConnectivitySnippet.h"
 #include "neuronGroup.h"
-#include "newPostsynapticModels.h"
-#include "newWeightUpdateModels.h"
+#include "postsynapticModels.h"
+#include "weightUpdateModels.h"
 #include "synapseMatrixType.h"
 
 //------------------------------------------------------------------------

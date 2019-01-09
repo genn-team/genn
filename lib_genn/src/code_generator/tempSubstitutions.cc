@@ -6,7 +6,7 @@
 #include "initSparseConnectivitySnippet.h"
 #include "neuronGroup.h"
 #include "synapseGroup.h"
-#include "newModels.h"
+#include "models.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator

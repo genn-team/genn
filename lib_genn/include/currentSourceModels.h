@@ -10,7 +10,7 @@
 
 // GeNN includes
 #include "codeGenUtils.h"
-#include "newModels.h"
+#include "models.h"
 
 //----------------------------------------------------------------------------
 // Macros

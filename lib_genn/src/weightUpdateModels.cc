@@ -1,4 +1,4 @@
-#include "newWeightUpdateModels.h"
+#include "weightUpdateModels.h"
 
 IMPLEMENT_MODEL(WeightUpdateModels::StaticPulse);
 IMPLEMENT_MODEL(WeightUpdateModels::StaticPulseDendriticDelay);

@@ -8,7 +8,7 @@
 #include <vector>
 
 // GeNN includes
-#include "newModels.h"
+#include "models.h"
 #include "variableMode.h"
 
 // Forward declarations

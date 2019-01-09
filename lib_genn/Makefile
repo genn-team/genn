@@ -5,7 +5,7 @@ OBJECTS		:=$(SOURCES:.cc=.o)
 DEPS		:=$(SOURCES:.cc=.d)
 #ARFLAGS		:= -rcs
 
-
+# **TODO** debug/MPI targets + CLang
 CXXFLAGS += -std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -Iinclude
 
 .PHONY: all clean

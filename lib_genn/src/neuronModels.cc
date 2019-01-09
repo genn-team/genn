@@ -1,4 +1,4 @@
-#include "newNeuronModels.h"
+#include "neuronModels.h"
 
 // Implement models
 IMPLEMENT_MODEL(NeuronModels::RulkovMap);

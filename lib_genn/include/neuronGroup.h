@@ -7,7 +7,7 @@
 #include <vector>
 
 // GeNN includes
-#include "newNeuronModels.h"
+#include "neuronModels.h"
 #include "variableMode.h"
 
 class CurrentSource;
