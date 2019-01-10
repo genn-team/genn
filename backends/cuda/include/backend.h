@@ -17,6 +17,12 @@
 #include "code_generator/backend.h"
 #include "code_generator/substitutions.h"
 
+// Forward declarations
+namespace filesystem
+{
+    class path;
+}
+
 //--------------------------------------------------------------------------
 // CodeGenerator::Backends::CUDA
 //--------------------------------------------------------------------------
@@ -45,10 +51,16 @@ public:
     
     struct Preferences : public Base::Preferences
     {
-        //!< Should PTX assembler information be displayed for each CUDA kernel during compilation
+        //! Should PTX assembler information be displayed for each CUDA kernel during compilation
         bool showPtxInfo; 
-         
-        //!< NVCC compiler options for all GPU code
+      
+        //! Should block size optimisation be performed?
+        bool optimiseBlockSize; 
+        
+        //! Should GPU device be chosen automatically?
+        bool autoChooseDevice;
+
+        //! NVCC compiler options for all GPU code
         std::string userNvccFlags; 
     };
 
@@ -140,6 +152,12 @@ public:
     static size_t getNumPresynapticUpdateThreads(const SynapseGroup &sg);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroup &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroup &sg);
+
+    //--------------------------------------------------------------------------
+    // Static API
+    //--------------------------------------------------------------------------
+    CUDA create(const NNmodel &model, const filesystem::path &outputPath, int localHostID, 
+                const Preferences &preferences, Generator generator);
 
     //--------------------------------------------------------------------------
     // Constants
