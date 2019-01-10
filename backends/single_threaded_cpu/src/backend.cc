@@ -22,13 +22,13 @@ const std::vector<FunctionTemplate> cpuFunctions = {
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::Backends::SingleThreadedCPU
+// CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-namespace Backends
+namespace SingleThreadedCPU
 {
-void SingleThreadedCPU::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
+void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
     os << "void updateNeurons(" << model.getTimePrecision() << " t)";
     {
@@ -87,9 +87,9 @@ void SingleThreadedCPU::genNeuronUpdate(CodeStream &os, const NNmodel &model, Ne
     }
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
-                                         SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
-                                         SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
+                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                               SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
@@ -208,10 +208,10 @@ void SingleThreadedCPU::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
-                                NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                                SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                                SynapseGroupHandler sgSparseInitHandler) const
+void Backend::genInit(CodeStream &os, const NNmodel &model,
+                      NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
+                      SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                      SynapseGroupHandler sgSparseInitHandler) const
 {
     os << "void initialize()";
     {
@@ -369,7 +369,7 @@ void SingleThreadedCPU::genInit(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genDefinitionsPreamble(CodeStream &os) const
+void Backend::genDefinitionsPreamble(CodeStream &os) const
 {
     os << "// Standard C++ includes" << std::endl;
     os << "#include <iostream>" << std::endl;
@@ -380,42 +380,42 @@ void SingleThreadedCPU::genDefinitionsPreamble(CodeStream &os) const
     os << "#include <cstring>" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genRunnerPreamble(CodeStream &) const
+void Backend::genRunnerPreamble(CodeStream &) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genAllocateMemPreamble(CodeStream &, const NNmodel &) const
+void Backend::genAllocateMemPreamble(CodeStream &, const NNmodel &) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
 {
     os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
 {
     os << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count) const
+void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count) const
 {
     os << name << " = new " << type << "[" << count << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
+void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
 {
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
+void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariableInit(CodeStream &os, VarLocation, size_t count, const std::string &countVarName,
-                                        const Substitutions &kernelSubs, Handler handler) const
+void Backend::genVariableInit(CodeStream &os, VarLocation, size_t count, const std::string &countVarName,
+                              const Substitutions &kernelSubs, Handler handler) const
 {
     // **TODO** loops like this should be generated like CUDA threads
     os << "for (unsigned i = 0; i < " << count << "; i++)";
@@ -428,31 +428,31 @@ void SingleThreadedCPU::genVariableInit(CodeStream &os, VarLocation, size_t coun
     }
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
+void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
+void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genCurrentTrueSpikePush(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroup&) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genCurrentTrueSpikePull(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroup&) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroup&) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroup&) const
 {
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const
 {
     definitions << getVarExportPrefix() << " " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
@@ -466,13 +466,13 @@ void SingleThreadedCPU::genGlobalRNG(CodeStream &definitions, CodeStream &runner
     runner << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &,
-                                         const std::string&, size_t) const
+void Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &,
+                               const std::string&, size_t) const
 {
     // No need for population RNGs for single-threaded CPU
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genMakefilePreamble(std::ostream &os) const
+void Backend::genMakefilePreamble(std::ostream &os) const
 {
     std::string linkFlags = "-shared -fPIC";
     std::string cxxFlags = "-c -fPIC -DCPU_ONLY -std=c++11 -MMD -MP";
@@ -496,18 +496,18 @@ void SingleThreadedCPU::genMakefilePreamble(std::ostream &os) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genMakefileLinkRule(std::ostream &os) const
+void Backend::genMakefileLinkRule(std::ostream &os) const
 {
     os << "\t$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genMakefileCompileRule(std::ostream &os) const
+void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     os << "%.o: %.cc %.d" << std::endl;
     os << "\t$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
 }
 //--------------------------------------------------------------------------
-bool SingleThreadedCPU::isGlobalRNGRequired(const NNmodel &model) const
+bool Backend::isGlobalRNGRequired(const NNmodel &model) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
@@ -533,15 +533,8 @@ bool SingleThreadedCPU::isGlobalRNGRequired(const NNmodel &model) const
     return false;
 }
 //--------------------------------------------------------------------------
-SingleThreadedCPU SingleThreadedCPU::create(const NNmodel &, const filesystem::path &, int localHostID, const Base::Preferences &preferences)
-{
-    SingleThreadedCPU backend(localHostID, preferences);
-
-    return std::move(backend);
-}
-//--------------------------------------------------------------------------
-void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                             SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "evnt";
@@ -635,7 +628,7 @@ void SingleThreadedCPU::genPresynapticUpdate(CodeStream &os, const SynapseGroup 
     }
 }
 //--------------------------------------------------------------------------
-void SingleThreadedCPU::genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, const std::string &suffix) const
+void Backend::genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, const std::string &suffix) const
 {
     const std::string queueOffset = ng.isDelayRequired() ? "writeDelayOffset + " : "";
 
@@ -648,5 +641,15 @@ void SingleThreadedCPU::genEmitSpike(CodeStream &os, const NeuronGroup &ng, cons
     }
     os << " = " << subs.getVarSubstitution("id") << ";" << std::endl;
 }
-}   // namespace Backends
+
+//--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Optimiser
+//--------------------------------------------------------------------------
+Backend Optimiser::createBackend(const NNmodel &, const filesystem::path &, int localHostID, const Backend::Preferences &preferences)
+{
+    Backend backend(localHostID, preferences);
+
+    return std::move(backend);
+}
+}   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

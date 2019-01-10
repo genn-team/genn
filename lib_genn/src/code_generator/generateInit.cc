@@ -10,14 +10,14 @@
 // GeNN code generator includes
 #include "code_generator/tempSubstitutions.h"
 #include "code_generator/substitutions.h"
-#include "code_generator/backend.h"
+#include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-void genInitSpikeCount(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs,
+void genInitSpikeCount(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs,
                        const NeuronGroup &ng, bool spikeEvent)
 {
     // Is initialisation required at all
@@ -53,7 +53,7 @@ void genInitSpikeCount(CodeStream &os, const CodeGenerator::Backends::Base &back
 
 }
 //--------------------------------------------------------------------------
-void genInitSpikes(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs,
+void genInitSpikes(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs,
                    const NeuronGroup &ng, bool spikeEvent)
 {
     // Is initialisation required at all
@@ -89,7 +89,7 @@ void genInitSpikes(CodeStream &os, const CodeGenerator::Backends::Base &backend,
 }
 //------------------------------------------------------------------------
 template<typename I, typename M, typename Q>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs, const NewModels::Base::StringPairVec &vars,
+void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs, const NewModels::Base::StringPairVec &vars,
                           size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarLocation, Q isVarQueueRequired)
 {
@@ -142,7 +142,7 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &b
 }
 //------------------------------------------------------------------------
 template<typename I, typename M>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backend, const Substitutions &popSubs, const NewModels::Base::StringPairVec &vars,
+void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs, const NewModels::Base::StringPairVec &vars,
                           size_t count, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarMode)
 {
@@ -151,7 +151,7 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::Backends::Base &b
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
-void genInitWUVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backend,const Substitutions &popSubs,
+void genInitWUVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend,const Substitutions &popSubs,
                       const SynapseGroup &sg, size_t count, const std::string &ftype)
 {
     const auto vars = sg.getWUModel()->getVars();
@@ -185,7 +185,7 @@ void genInitWUVarCode(CodeStream &os, const CodeGenerator::Backends::Base &backe
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
+void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const BackendBase &backend)
 {
     os << "#include \"definitions.h\"" << std::endl;
 

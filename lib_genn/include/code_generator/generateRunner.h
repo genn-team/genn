@@ -6,10 +6,7 @@ class NNmodel;
 
 namespace CodeGenerator
 {
-namespace Backends
-{
-    class Base;
-}
+class BackendBase;
 }
 
 //--------------------------------------------------------------------------
@@ -18,5 +15,5 @@ namespace Backends
 namespace CodeGenerator
 {
 void generateRunner(CodeStream &definitions, CodeStream &runner, const NNmodel &model,
-                    const Backends::Base &backend, int localHostID);
+                    const BackendBase &backend, int localHostID);
 }

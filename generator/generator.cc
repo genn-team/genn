@@ -26,7 +26,7 @@ enum Log
 };
 
 // Declare global GeNN preferences
-CodeGenerator::Backends::BACKEND_TYPE::Preferences GENN_PREFERENCES;
+CodeGenerator::BACKEND_TYPE::Backend::Preferences GENN_PREFERENCES;
 
 // Include model
 #include MODEL
@@ -67,7 +67,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 #endif
     
     // Create backend
-    auto backend = CodeGenerator::Backends::BACKEND_TYPE::create(model, outputPath, localHostID, GENN_PREFERENCES);
+    auto backend = CodeGenerator::BACKEND_TYPE::Optimiser::createBackend(model, outputPath, localHostID, GENN_PREFERENCES);
     
     // Generate code
     const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);

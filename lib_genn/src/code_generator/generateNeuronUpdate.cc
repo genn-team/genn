@@ -11,12 +11,12 @@
 // GeNN code generator includes
 #include "code_generator/substitutions.h"
 #include "code_generator/tempSubstitutions.h"
-#include "code_generator/backend.h"
+#include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, const BackendBase &backend)
 {
     os << "#include \"definitions.h\"" << std::endl;
 

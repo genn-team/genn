@@ -6,10 +6,7 @@ class NNmodel;
 
 namespace CodeGenerator
 {
-namespace Backends
-{
-    class Base;
-}
+class BackendBase;
 }
 
 //--------------------------------------------------------------------------
@@ -17,5 +14,5 @@ namespace Backends
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateNeuronUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend);
+void generateNeuronUpdate(CodeStream &os, const NNmodel &model, const BackendBase &backend);
 }

@@ -6,7 +6,7 @@
 #include <string>
 
 // GeNN code generator includes
-#include "code_generator/backend.h"
+#include "code_generator/backendBase.h"
 
 // Forward declarations
 namespace filesystem
@@ -15,22 +15,22 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::Backends::SingleThreadedCPU
+// CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-namespace Backends
+namespace SingleThreadedCPU
 {
-class SingleThreadedCPU : public Base
+class Backend : public BackendBase
 {
 public:
-    SingleThreadedCPU(int localHostID, const Base::Preferences &preferences)
+    Backend(int localHostID, const Preferences &preferences)
     :   m_LocalHostID(localHostID), m_Preferences(preferences)
     {
     }
 
     //--------------------------------------------------------------------------
-    // CodeGenerator::Backends::Base virtuals
+    // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const override;
 
@@ -85,11 +85,6 @@ public:
 
     virtual bool isGlobalRNGRequired(const NNmodel &model) const override;
 
-    //--------------------------------------------------------------------------
-    // Static API
-    //--------------------------------------------------------------------------
-    static SingleThreadedCPU create(const NNmodel &model, const filesystem::path &outputPath, int localHostID, const Base::Preferences &preferences);
-
 private:
     //--------------------------------------------------------------------------
     // Private methods
@@ -104,7 +99,16 @@ private:
     // Members
     //--------------------------------------------------------------------------
     const int m_LocalHostID;
-    const Base::Preferences m_Preferences;
+    const BackendBase::Preferences m_Preferences;
 };
-}   // namespace Backends
+
+//--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Optimiser
+//--------------------------------------------------------------------------
+namespace Optimiser
+{
+Backend createBackend(const NNmodel &model, const filesystem::path &outputPath, int localHostID, 
+                      const Backend::Preferences &preferences);
+}
+}   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

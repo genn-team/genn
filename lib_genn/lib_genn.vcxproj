@@ -22,7 +22,7 @@
     <ClInclude Include="include\binomial.h" />
     <ClInclude Include="include\codeGenUtils.h" />
     <ClInclude Include="include\codeStream.h" />
-    <ClInclude Include="include\code_generator\backend.h" />
+    <ClInclude Include="include\code_generator\backendBase.h" />
     <ClInclude Include="include\code_generator\generateAll.h" />
     <ClInclude Include="include\code_generator\generateInit.h" />
     <ClInclude Include="include\code_generator\generateMakefile.h" />

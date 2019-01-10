@@ -10,7 +10,7 @@
 // GeNN code generator includes
 #include "code_generator/tempSubstitutions.h"
 #include "code_generator/substitutions.h"
-#include "code_generator/backend.h"
+#include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -18,7 +18,7 @@
 namespace
 {
 void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroup &sg,
-                               const Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::Backends::Base &backend)
+                               const Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::BackendBase &backend)
 {
     CodeGenerator::applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
                                                        sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
@@ -35,7 +35,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, const Backends::Base &backend)
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, const BackendBase &backend)
 {
     os << "#include \"definitions.h\"" << std::endl;
 

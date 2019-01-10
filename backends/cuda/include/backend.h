@@ -14,7 +14,7 @@
 #include "codeStream.h"
 
 // GeNN code generator includes
-#include "code_generator/backend.h"
+#include "code_generator/backendBase.h"
 #include "code_generator/substitutions.h"
 
 // Forward declarations
@@ -24,13 +24,13 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::Backends::CUDA
+// CodeGenerator::CUDA::Backend
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-namespace Backends
+namespace CUDA
 {
-class CUDA : public Base
+class Backend : public BackendBase
 {
 public:
     //--------------------------------------------------------------------------
@@ -49,7 +49,7 @@ public:
         KernelMax
     };
     
-    struct Preferences : public Base::Preferences
+    struct Preferences : public BackendBase::Preferences
     {
         //! Should PTX assembler information be displayed for each CUDA kernel during compilation
         bool showPtxInfo; 
@@ -69,7 +69,7 @@ public:
     //--------------------------------------------------------------------------
     using KernelBlockSize = std::array<size_t, KernelMax>;
 
-    CUDA(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device);
+    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
@@ -152,12 +152,6 @@ public:
     static size_t getNumPresynapticUpdateThreads(const SynapseGroup &sg);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroup &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroup &sg);
-
-    //--------------------------------------------------------------------------
-    // Static API
-    //--------------------------------------------------------------------------
-    CUDA create(const NNmodel &model, const filesystem::path &outputPath, int localHostID, 
-                const Preferences &preferences, Generator generator);
 
     //--------------------------------------------------------------------------
     // Constants
@@ -250,5 +244,5 @@ private:
 
     int m_RuntimeVersion;
 };
-}   // Backends
+}   // CUDA
 }   // CodeGenerator

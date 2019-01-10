@@ -9,10 +9,7 @@ class NNmodel;
 
 namespace CodeGenerator
 {
-namespace Backends
-{
-    class Base;
-}
+class BackendBase;
 }
 
 namespace filesystem
@@ -25,5 +22,5 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-    std::vector<std::string> generateAll(const NNmodel &model, const Backends::Base &backend, const filesystem::path &outputPath);
+    std::vector<std::string> generateAll(const NNmodel &model, const BackendBase &backend, const filesystem::path &outputPath);
 }

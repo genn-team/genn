@@ -8,12 +8,12 @@
 #include "modelSpec.h"
 
 // GeNN code generator includes
-#include "code_generator/backend.h"
+#include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateMakefile(std::ostream &os, const Backends::Base &backend,
+void CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backend,
                                      const std::vector<std::string> &moduleNames)
 {
     //**TODO** deal with standard include paths e.g. MPI here

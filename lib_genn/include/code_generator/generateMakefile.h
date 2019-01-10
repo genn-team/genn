@@ -9,10 +9,7 @@ class NNmodel;
 
 namespace CodeGenerator
 {
-namespace Backends
-{
-    class Base;
-}
+class BackendBase;
 }
 
 //--------------------------------------------------------------------------
@@ -20,6 +17,6 @@ namespace Backends
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateMakefile(std::ostream &os, const Backends::Base &backend,
+void generateMakefile(std::ostream &os, const BackendBase &backend,
                       const std::vector<std::string> &moduleNames);
 }

@@ -2,18 +2,9 @@
 
 // Standard C++ includes
 #include <algorithm>
-#include <iostream>
-#include <numeric>
-
-// CUDA includes
-#include <cuda.h>
-#include <cuda_runtime.h>
 
 // PLOG includes
 #include <plog/Log.h>
-
-// Filesystem includes
-#include "path.h"
 
 // GeNN includes
 #include "codeGenUtils.h"
@@ -23,44 +14,14 @@
 // GeNN code generator includes
 #include "code_generator/substitutions.h"
 
-
-#if CUDA_VERSION >= 6050
-#define CHECK_CU_ERRORS(call)                                        \
-  {                                                                \
-    CUresult error = call;                                        \
-    if (error != CUDA_SUCCESS)                                        \
-      {                                                                \
-        const char *errStr;                                        \
-        cuGetErrorName(error, &errStr);                                \
-        std::cerr << __FILE__ << ": " <<  __LINE__;                        \
-        std::cerr << ": cuda driver error " << error << ": ";        \
-        std::cerr << errStr << std::endl;                                        \
-        exit(EXIT_FAILURE);                                        \
-      }                                                                \
-  }
-#else
-#define CHECK_CU_ERRORS(call) call
-#endif
-
-#define CHECK_CUDA_ERRORS(call)                                        \
-  {                                                                \
-    cudaError_t error = call;                                        \
-    if (error != cudaSuccess)                                        \
-      {                                                                \
-        std::cerr << __FILE__ << ": " <<  __LINE__;                        \
-        std::cerr << ": cuda runtime error " << error << ": ";        \
-        std::cerr << cudaGetErrorString(error) << std::endl;                \
-        exit(EXIT_FAILURE);                                        \
-      }                                                                \
-  }
+// CUDA backend includes
+#include "utils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
-
 const std::vector<FunctionTemplate> cudaFunctions = {
     {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
     {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
@@ -68,16 +29,6 @@ const std::vector<FunctionTemplate> cudaFunctions = {
     {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
     {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
 };
-
-size_t ceilDivide(size_t numerator, size_t denominator)
-{
-    return ((numerator + denominator - 1) / denominator);
-}
-//--------------------------------------------------------------------------
-size_t padSize(size_t size, size_t blockSize)
-{
-    return ceilDivide(size, blockSize) * blockSize;
-}
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
 {
@@ -87,424 +38,16 @@ bool canPushPullVar(VarLocation loc)
             (loc & VarLocation::DEVICE) &&
             !(loc & VarLocation::ZERO_COPY));
 }
-//--------------------------------------------------------------------------
-void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &warpAllocGran, size_t &regAllocGran,
-                                     size_t &smemAllocGran, size_t &maxBlocksPerSM)
-{
-    if(deviceProps.major == 1) {
-        smemAllocGran = 512;
-        warpAllocGran = 2;
-        regAllocGran = (deviceProps.minor < 2) ? 256 : 512;
-        maxBlocksPerSM = 8;
-    }
-    else if(deviceProps.major == 2) {
-        smemAllocGran = 128;
-        warpAllocGran = 2;
-        regAllocGran = 64;
-        maxBlocksPerSM = 8;
-    }
-    else if(deviceProps.major == 3) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 16;
-    }
-    else if(deviceProps.major == 5) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
-    }
-    else if(deviceProps.major == 6) {
-        smemAllocGran = 256;
-        warpAllocGran = (deviceProps.minor == 0) ? 2 : 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
-    }
-    else {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
-
-        if(deviceProps.major > 7) {
-            LOGW << "Unsupported CUDA device major version: " << deviceProps.major;
-            LOGW << "This is a bug! Please report it at https://github.com/genn-team/genn.";
-            LOGW << "Falling back to next latest SM version parameters.";
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes)[CodeGenerator::Backends::CUDA::KernelMax])
-{
-    using namespace CodeGenerator;
-    using namespace Backends;
-
-    // **TODO** this belongs in code generator somewhere
-
-    // Loop through neuron groups
-    for(const auto &n : model.getLocalNeuronGroups()) {
-        // Add number of neurons to vector of neuron kernels
-        groupSizes[CUDA::KernelNeuronUpdate].push_back(n.second.getNumNeurons());
-
-        // If this neuron group requires on-device initialisation
-        if(n.second.isSimRNGRequired() || n.second.isInitCodeRequired()) {
-            groupSizes[CUDA::KernelInitialize].push_back(n.second.getNumNeurons());
-        }
-    }
-
-    // Loop through synapse groups
-    for(const auto &s : model.getLocalSynapseGroups()) {
-        groupSizes[CUDA::KernelPresynapticUpdate].push_back(CUDA::getNumPresynapticUpdateThreads(s.second));
-
-        if(!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[CUDA::KernelPostsynapticUpdate].push_back(CUDA::getNumPostsynapticUpdateThreads(s.second));
-        }
-
-        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[CUDA::KernelSynapseDynamicsUpdate].push_back(CUDA::getNumSynapseDynamicsThreads(s.second));
-        }
-
-        // If synapse group has individual weights and needs device initialisation
-        if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUVarInitRequired()) {
-            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupSizes[CUDA::KernelInitializeSparse].push_back(numSrcNeurons);
-            }
-            else {
-                groupSizes[CUDA::KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
-            }
-        }
-    }
-
-    // Add group sizes for reset kernels
-    groupSizes[CUDA::KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
-    groupSizes[CUDA::KernelPreSynapseReset].push_back(model.getNumPreSynapseResetRequiredGroups());
-}
-//--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, CodeGenerator::Backends::CUDA::KernelBlockSize &blockSize, const CodeGenerator::Backends::CUDA::Preferences &preferences, 
-                                           CodeGenerator::Backends::Base::Generator generator, const filesystem::path &outputPath)
-{
-    using namespace CodeGenerator;
-    using namespace Backends;
-
-    // Calculate model group sizes
-    std::vector<unsigned int> groupSizes[CUDA::KernelMax];
-    calcGroupSizes(model, groupSizes);
-
-    // Create CUDA drive API device and context for accessing kernel attributes
-    CUdevice cuDevice;
-    CUcontext cuContext;
-    CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
-    CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
-
-    // Bitset to mark which kernels are present and array of their attributes for each repetition
-    cudaFuncAttributes krnlAttr[2][CUDA::KernelMax];
-
-    // Do two repititions with different candidate kernel size
-    const size_t warpSize = 32;
-    const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
-    KernelOptimisationOutput kernelsToOptimise;
-    for(unsigned int r = 0; r < 2; r++) {
-        LOGD  << "Generating code with block size:" << repBlockSizes[r];
-
-        // Start with all group sizes set to warp size
-        std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
-
-        // Create backend
-        CUDA backend(blockSize, preferences, 0, deviceID);
-
-        // Generate code
-        const auto moduleNames = generator(model, backend, outputPath);
-
-        // Set context
-        // **NOTE** CUDA calls in code generation seem to lose driver context
-        CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
-
-        // Loop through generated modules
-        for(const auto &m : moduleNames) {
-            // Build module
-            const std::string modulePath = (outputPath / m).str();
-            
-            const std::string nvccCommand = "nvcc -cubin " + backend.getNVCCFlags() + " -o " + modulePath + ".cubin " + modulePath + ".cc";
-            if(system(nvccCommand.c_str()) != 0) {
-                throw std::runtime_error("optimizeBlockSize: NVCC failed");
-            }
-
-            // Load compiled module
-            CUmodule module;
-            CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
-
-            // Loop through kernels
-            for (unsigned int k = 0; k < CUDA::KernelMax; k++) {
-                // If function is found
-                CUfunction kern;
-                CUresult res = cuModuleGetFunction(&kern, module, CUDA::KernelNames[k]);
-                if (res == CUDA_SUCCESS) {
-                    LOGD << "\tKernel '" << CUDA::KernelNames[k] << "' found";
-
-                    // Read it's attributes and add blank entry to map of kernels to optimise
-                    cudaFuncGetAttributes(&krnlAttr[r][k], kern);
-                    kernelsToOptimise.emplace(std::piecewise_construct,
-                                              std::forward_as_tuple(k),
-                                              std::forward_as_tuple(false, 0));
-
-                    LOGD << "\t\tShared memory bytes:" << krnlAttr[r][k].sharedSizeBytes;
-                    LOGD << "\t\tNum registers:" << krnlAttr[r][k].numRegs;
-                }
-            }
-
-            // Unload module
-            CHECK_CU_ERRORS(cuModuleUnload(module));
-        }
-    }
-
-    // Destroy context
-    CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
-
-    // Get device properties
-    cudaDeviceProp deviceProps;
-    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
-
-    // Get properties of device architecture
-    size_t warpAllocGran;
-    size_t regAllocGran;
-    size_t smemAllocGran;
-    size_t maxBlocksPerSM;
-    getDeviceArchitectureProperties(deviceProps, warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM);
-
-    // Zero block sizes
-    std::fill(blockSize.begin(), blockSize.end(), 0);
-
-    // Loop through kernels to optimise
-    for(auto &k : kernelsToOptimise) {
-        LOGD << "Kernel '" << CUDA::KernelNames[k.first] << "':";
-
-        // Get required number of registers and shared memory bytes for this kernel
-        // **NOTE** register requirements are assumed to remain constant as they're vector-width
-        const size_t reqNumRegs = krnlAttr[0][k.first].numRegs;
-        const size_t reqSharedMemBytes[2] = {krnlAttr[0][k.first].sharedSizeBytes, krnlAttr[1][k.first].sharedSizeBytes};
-
-        // Calculate coefficients for requiredSharedMemBytes = (A * blockThreads) + B model
-        const size_t reqSharedMemBytesA = (reqSharedMemBytes[1] - reqSharedMemBytes[0]) / (repBlockSizes[1] - repBlockSizes[0]);
-        const size_t reqSharedMemBytesB = reqSharedMemBytes[0] - (reqSharedMemBytesA * repBlockSizes[0]);
-
-        // Loop through possible
-        const size_t maxBlockWarps = deviceProps.maxThreadsPerBlock / warpSize;
-        for(size_t blockWarps = 1; blockWarps < maxBlockWarps; blockWarps++) {
-            const size_t blockThreads = blockWarps * warpSize;
-            LOGD << "\tCandidate block size:" << blockThreads;
-
-            // Estimate shared memory for block size and padd
-            const size_t reqSharedMemBytes = padSize((reqSharedMemBytesA * blockThreads) + reqSharedMemBytesB, smemAllocGran);
-            LOGD << "\t\tEstimated shared memory required:" << reqSharedMemBytes << " bytes (padded)";
-
-            // Calculate number of blocks the groups used by this kernel will require
-            const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), 0,
-                                                        [blockThreads](size_t acc, size_t size)
-                                                        {
-                                                            return acc + ceilDivide(size, blockThreads);
-                                                        });
-            LOGD << "\t\tBlocks required (according to padded sum):" << reqBlocks;
-
-            // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
-            size_t smBlockLimit = deviceProps.maxThreadsPerMultiProcessor / blockThreads;
-            LOGD << "\t\tSM block limit due to maxThreadsPerMultiProcessor:" << smBlockLimit;
-
-            smBlockLimit = std::min(smBlockLimit, maxBlocksPerSM);
-            LOGD << "\t\tSM block limit corrected for maxBlocksPerSM:" << smBlockLimit;
-
-            // If register allocation is per-block
-            if (deviceProps.major == 1) {
-                // Pad size of block based on warp allocation granularity
-                const size_t paddedNumBlockWarps = padSize(blockWarps, warpAllocGran);
-
-                // Calculate number of registers per block and pad with register allocation granularity
-                const size_t paddedNumRegPerBlock = padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
-
-                // Update limit based on maximum registers per block
-                // **NOTE** this doesn't quite make sense either
-                smBlockLimit = std::min(smBlockLimit, deviceProps.regsPerBlock / paddedNumRegPerBlock);
-            }
-            // Otherwise, if register allocation is per-warp
-            else {
-                // Caculate number of registers per warp and pad with register allocation granularity
-                const size_t paddedNumRegPerWarp = padSize(reqNumRegs * warpSize, regAllocGran);
-
-                // **THINK** I don't understand this
-                //blockLimit = floor(deviceProps.regsPerBlock / (paddedNumRegPerWarp * warpAllocGran)*warpAllocGran;
-
-                // **NOTE** this doesn't quite make sense either
-                //smBlockLimit = std::min(smBlockLimit, blockLimit / blockWarps);
-            }
-            LOGD << "\t\tSM block limit corrected for registers:" << smBlockLimit;
-
-            // If this kernel requires any shared memory, update limit to reflect shared memory available in each multiprocessor
-            // **NOTE** this used to be sharedMemPerBlock but that seems incorrect
-            if(reqSharedMemBytes != 0) {
-                smBlockLimit = std::min(smBlockLimit, deviceProps.sharedMemPerMultiprocessor / reqSharedMemBytes);
-                LOGD << "\t\tSM block limit corrected for shared memory:" << smBlockLimit;
-            }
-
-            // Calculate occupancy
-            const size_t newOccupancy = blockWarps * smBlockLimit * deviceProps.multiProcessorCount;
-
-            // Use a small block size if it allows all groups to occupy the device concurrently
-            if (reqBlocks <= (smBlockLimit * deviceProps.multiProcessorCount)) {
-                blockSize[k.first] = blockThreads;
-                k.second.second = newOccupancy;
-                k.second.first = true;
-
-                LOGD << "\t\tSmall model situation detected - block size:" << blockSize[k.first];
-
-                // For small model the first (smallest) block size allowing it is chosen
-                break;
-            }
-            // Otherwise, if we've improved on previous best occupancy
-            else if(newOccupancy > k.second.second) {
-                blockSize[k.first] = blockThreads;
-                k.second.second = newOccupancy;
-
-                LOGD << "\t\tNew highest occupancy: " << newOccupancy << ", block size:" << blockSize[k.first];
-            }
-
-        }
-
-        LOGI << "Kernel: " << CUDA::KernelNames[k.first] << ", block size:" << blockSize[k.first];
-    }
-
-    // Return optimisation data
-    return kernelsToOptimise;
-}
-//--------------------------------------------------------------------------
-int chooseOptimalDevice(const NNmodel &model, CodeGenerator::Backends::CUDA::KernelBlockSize &blockSize, const CodeGenerator::Backends::CUDA::Preferences &preferences, 
-                        CodeGenerator::Backends::Base::Generator generator, const filesystem::path &outputPath)
-{
-    using namespace CodeGenerator;
-    using namespace Backends;
-    
-    // Get number of devices
-    int deviceCount;
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-    if(deviceCount == 0) {
-        throw std::runtime_error("No CUDA devices found");
-    }
-
-    // Loop through devices
-    typedef std::tuple<int, size_t, size_t, CUDA::KernelBlockSize> Device;
-    std::vector<Device> devices;
-    devices.reserve(deviceCount);
-    for(int d = 0; d < deviceCount; d++) {
-        // Get properties
-        cudaDeviceProp deviceProps;
-        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
-        const int smVersion = (deviceProps.major * 10) + deviceProps.minor;
-
-        // Optimise block size for this device
-        CUDA::KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences, generator, outputPath);
-
-        // Sum up occupancy of each kernel
-        const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), 0,
-                                                      [](size_t acc, const KernelOptimisationOutput::value_type &kernel)
-                                                      {
-                                                          return acc + kernel.second.second;
-                                                      });
-
-        // Count number of kernels that count as small models
-        const size_t numSmallModelKernels = std::accumulate(kernels.begin(), kernels.end(), 0,
-                                                            [](size_t acc, const KernelOptimisationOutput::value_type &kernel)
-                                                            {
-                                                                return acc + (kernel.second.first ? 1 : 0);
-                                                            });
-
-        LOGD << "Device " << d << " - total occupancy:" << totalOccupancy << ", number of small models:" << numSmallModelKernels << ", SM version:" << smVersion;
-        devices.emplace_back(smVersion, totalOccupancy, numSmallModelKernels, optimalBlockSize);
-    }
-
-    // Find best device
-    const auto bestDevice = std::min_element(devices.cbegin(), devices.cend(),
-        [](const Device &a, const Device &b)
-        {
-            // If 'a' have a higher number of small model kernels -  return true - it is better
-            const size_t numSmallModelKernelsA = std::get<2>(a);
-            const size_t numSmallModelKernelsB = std::get<2>(b);
-            if (numSmallModelKernelsA > numSmallModelKernelsB) {
-                return true;
-            }
-            // Otherwise, if the two devices have an identical small model kernel count
-            else if(numSmallModelKernelsA == numSmallModelKernelsB) {
-                // If 'a' has a higher total occupancy - return true - it is better
-                const size_t totalOccupancyA = std::get<1>(a);
-                const size_t totalOccupancyB = std::get<1>(b);
-                if(totalOccupancyA > totalOccupancyB) {
-                    return true;
-                }
-                // Otherwise, if the two devices have identical occupancy
-                else if(totalOccupancyA == totalOccupancyB) {
-                    // If 'a' has a higher SM version - return true - it's better
-                    const int smVersionA = std::get<0>(a);
-                    const int smVersionB = std::get<0>(b);
-                    if(smVersionA > smVersionB) {
-                        return true;
-                    }
-                }
-            }
-
-            // 'a' is not better - return false
-            return false;
-        });
-
-    // Find ID of best device
-    const int bestDeviceID = std::distance(devices.cbegin(), bestDevice);
-    LOGI << "Optimal  device " << bestDeviceID << " - total occupancy:" << std::get<1>(*bestDevice) << ", number of small models:" << std::get<2>(*bestDevice) << ", SM version:" << std::get<0>(*bestDevice);
-
-    // Get optimal block size from best device
-    blockSize = std::get<3>(*bestDevice);
-
-
-    // Return ID of best device
-    return bestDeviceID;
-}
-//--------------------------------------------------------------------------
-int chooseDeviceWithMostGlobalMemory()
-{
-    // Get number of devices
-    int deviceCount;
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-    if(deviceCount == 0) {
-        throw std::runtime_error("No CUDA devices found");
-    }
-
-    // Loop through devices
-    size_t mostGlobalMemory = 0;
-    int bestDevice = -1;
-    for(int d = 0; d < deviceCount; d++) {
-        // Get properties
-        cudaDeviceProp deviceProps;
-        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
-
-        // If this device improves on previous best
-        if(deviceProps.totalGlobalMem > mostGlobalMemory) {
-            mostGlobalMemory = deviceProps.totalGlobalMem;
-            bestDevice = d;
-        }
-    }
-
-    LOGI << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
-    return bestDevice;
-}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// CodeGenerator::Backends::CUDA
+// CodeGenerator::CUDA::Backend
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-namespace Backends
+namespace CUDA
 {
-const char *CUDA::KernelNames[KernelMax] = {
+const char *Backend::KernelNames[KernelMax] = {
     "updateNeuronsKernel",
     "updatePresynapticKernel",
     "updatePostsynapticKernel",
@@ -514,7 +57,7 @@ const char *CUDA::KernelNames[KernelMax] = {
     "preNeuronResetKernel",
     "preSynapseResetKernel"};
 //--------------------------------------------------------------------------
-CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device)
+Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device)
 :   m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
 {
     // Set device
@@ -527,7 +70,7 @@ CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, const Preferences &preferenc
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 }
 //--------------------------------------------------------------------------
-void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
+void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -636,7 +179,7 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
 
         // Parallelise over neuron groups
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
-            [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
+            [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
             [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 // Get name of rng to use for this neuron
@@ -737,9 +280,9 @@ void CUDA::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHand
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
-                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
-                            SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
+                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                               SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     // If a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
@@ -825,7 +368,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         
         // Parallelise over synapse groups
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
-            [this](const SynapseGroup &sg){ return padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
+            [this](const SynapseGroup &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
             [wumThreshHandler, wumSimHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
             {
                 if (sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -935,7 +478,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
             // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
             genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
-                [this](const SynapseGroup &sg){ return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
+                [this](const SynapseGroup &sg){ return Utils::padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
                 [](const SynapseGroup &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
                 [postLearnHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
                 {
@@ -1031,7 +574,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
             // Parallelise over synapse groups whose weight update models have code for synapse dynamics
             genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
-                [this](const SynapseGroup &sg){ return padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
+                [this](const SynapseGroup &sg){ return Utils::padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
                 [](const SynapseGroup &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
                 [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
                 {
@@ -1132,10 +675,10 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genInit(CodeStream &os, const NNmodel &model,
-                   NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                   SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                   SynapseGroupHandler sgSparseInitHandler) const
+void Backend::genInit(CodeStream &os, const NNmodel &model,
+                      NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
+                      SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                      SynapseGroupHandler sgSparseInitHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -1175,7 +718,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Remote neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
-            [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [this](const NeuronGroup &ng){ return ng.hasOutputToHost(m_LocalHostID); },
             [this, remoteNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
@@ -1192,7 +735,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
-            [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [this](const NeuronGroup &ng){ return ng.isInitCodeRequired(); },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
@@ -1224,7 +767,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with dense connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
-            [this](const SynapseGroup &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const SynapseGroup &sg){ return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
             [sgDenseInitHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
@@ -1252,7 +795,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
-            [this](const SynapseGroup &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const SynapseGroup &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [](const SynapseGroup &sg){ return sg.isSparseConnectivityInitRequired(); },
             [sgSparseConnectHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
@@ -1335,7 +878,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
 
             // Initialise weight update variables for synapse groups with dense connectivity
             genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
-                [this](const SynapseGroup &sg){ return padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
+                [this](const SynapseGroup &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
                 [](const SynapseGroup &sg){ return sg.isSparseInitRequired(); },
                 [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
                 {
@@ -1354,7 +897,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
 
                     // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
                     const unsigned int numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
-                    const unsigned int numBlocks = ceilDivide(numSrcNeurons, m_KernelBlockSizes[KernelInitializeSparse]);
+                    const unsigned int numBlocks = Utils::ceilDivide(numSrcNeurons, m_KernelBlockSizes[KernelInitializeSparse]);
 
                     // Loop through blocks
                     os << "for(unsigned int r = 0; r < " << numBlocks << "; r++)";
@@ -1541,7 +1084,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genDefinitionsPreamble(CodeStream &os) const
+void Backend::genDefinitionsPreamble(CodeStream &os) const
 {
     os << "// Standard C++ includes" << std::endl;
     os << "#include <string>" << std::endl;
@@ -1560,7 +1103,7 @@ void CUDA::genDefinitionsPreamble(CodeStream &os) const
     os << "}" << std::endl;
 }
 //--------------------------------------------------------------------------
-void CUDA::genRunnerPreamble(CodeStream &os) const
+void Backend::genRunnerPreamble(CodeStream &os) const
 {
     // **TODO** move these into a header file shipped with GeNN and copied into generated code along with non-uniform RNGs
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -1592,7 +1135,7 @@ void CUDA::genRunnerPreamble(CodeStream &os) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void CUDA::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
 {
     // Get chosen device's PCI bus ID
     char pciBusID[32];
@@ -1616,7 +1159,7 @@ void CUDA::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
     if(loc & VarLocation::HOST) {
         os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
@@ -1627,7 +1170,7 @@ void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const 
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
     if(loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
@@ -1638,7 +1181,7 @@ void CUDA::genVariableImplementation(CodeStream &os, const std::string &type, co
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
     if(loc & VarLocation::HOST) {
         // **NOTE** because we want out memory to be pinned for faster copying to GPU, DON'T use host code generator
@@ -1658,7 +1201,7 @@ void CUDA::genVariableAllocation(CodeStream &os, const std::string &type, const 
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
+void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
 {
     // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
     if(loc & VarLocation::HOST) {
@@ -1671,7 +1214,7 @@ void CUDA::genVariableFree(CodeStream &os, const std::string &name, VarLocation 
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
+void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
 
@@ -1683,7 +1226,7 @@ void CUDA::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableInit(CodeStream &os, VarLocation, size_t, const std::string &countVarName,
+void Backend::genVariableInit(CodeStream &os, VarLocation, size_t, const std::string &countVarName,
                            const Substitutions &kernelSubs, Handler handler) const
 {
     // Variable should already be provided via parallelism
@@ -1693,7 +1236,7 @@ void CUDA::genVariableInit(CodeStream &os, VarLocation, size_t, const std::strin
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
+void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
 {
     // If variable can be pushed or pulled
     if(canPushPullVar(loc)) {
@@ -1712,7 +1255,7 @@ void CUDA::genVariablePush(CodeStream &os, const std::string &type, const std::s
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
     // If variable can be pushed or pulled
     if(canPushPullVar(loc)) {
@@ -1722,7 +1265,7 @@ void CUDA::genVariablePull(CodeStream &os, const std::string &type, const std::s
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &) const
 {
     // Create a single Philox4_32_10 RNG
     genVariableDefinition(definitions, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
@@ -1731,14 +1274,14 @@ void CUDA::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream 
     genVariableFree(free, "rng", VarLocation::DEVICE);
 }
 //--------------------------------------------------------------------------
-void CUDA::genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                              const std::string &name, size_t count) const
 {
     // Create an array or XORWOW RNGs
     genArray(definitions, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);
 }
 //--------------------------------------------------------------------------
-void CUDA::genMakefilePreamble(std::ostream &os) const
+void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared --linker-options '-fPIC' -arch " + architecture;
@@ -1749,12 +1292,12 @@ void CUDA::genMakefilePreamble(std::ostream &os) const
     os << "LINKFLAGS := " << linkFlags << std::endl;
 }
 //--------------------------------------------------------------------------
-void CUDA::genMakefileLinkRule(std::ostream &os) const
+void Backend::genMakefileLinkRule(std::ostream &os) const
 {
     os << "\t$(NVCC) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
 }
 //--------------------------------------------------------------------------
-void CUDA::genMakefileCompileRule(std::ostream &os) const
+void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     // Add one rule to generate dependency files from cc files
     os << "%.d: %.cc" << std::endl;
@@ -1766,7 +1309,7 @@ void CUDA::genMakefileCompileRule(std::ostream &os) const
     os << "\t$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
 }
 //--------------------------------------------------------------------------
-bool CUDA::isGlobalRNGRequired(const NNmodel &model) const
+bool Backend::isGlobalRNGRequired(const NNmodel &model) const
 {
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
@@ -1792,7 +1335,7 @@ bool CUDA::isGlobalRNGRequired(const NNmodel &model) const
     return false;
 }
 //--------------------------------------------------------------------------
-std::string CUDA::getNVCCFlags() const
+std::string Backend::getNVCCFlags() const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string nvccFlags = "-std=c++11 --compiler-options '-fPIC' -x cu -arch " + architecture;
@@ -1813,7 +1356,7 @@ std::string CUDA::getNVCCFlags() const
     return nvccFlags;
 }
 //--------------------------------------------------------------------------
-size_t CUDA::getNumPresynapticUpdateThreads(const SynapseGroup &sg)
+size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroup &sg)
 {
      if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
@@ -1830,7 +1373,7 @@ size_t CUDA::getNumPresynapticUpdateThreads(const SynapseGroup &sg)
     }
 }
 //--------------------------------------------------------------------------
-size_t CUDA::getNumPostsynapticUpdateThreads(const SynapseGroup &sg)
+size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroup &sg)
 {
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxSourceConnections();
@@ -1840,7 +1383,7 @@ size_t CUDA::getNumPostsynapticUpdateThreads(const SynapseGroup &sg)
     }
 }
 //--------------------------------------------------------------------------
-size_t CUDA::getNumSynapseDynamicsThreads(const SynapseGroup &sg)
+size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroup &sg)
 {
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
@@ -1850,37 +1393,13 @@ size_t CUDA::getNumSynapseDynamicsThreads(const SynapseGroup &sg)
     }
 }
 //--------------------------------------------------------------------------
-CUDA CUDA::create(const NNmodel &model, const filesystem::path &outputPath, int localHostID, 
-                  const Preferences &preferences, Generator generator)
-{
-    if(preferences.autoChooseDevice) {
-        KernelBlockSize cudaBlockSize;
-        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, generator, outputPath);
-
-        // Create backends
-        CUDA backend(cudaBlockSize, localHostID, deviceID);
-        return std::move(backend);
-    }
-    else {
-        const int deviceID = chooseDeviceWithMostGlobalMemory();
-        
-        // Optimise block size
-        KernelBlockSize cudaBlockSize;
-        optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, generator, outputPath);
-        
-        // Create backends
-        CUDA backend(cudaBlockSize, localHostID, deviceID);
-        return std::move(backend);
-    }
-}
-//--------------------------------------------------------------------------
-void CUDA::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
+void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getVarSubstitution("id") << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void CUDA::genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
 {
     // Is push required at all
     const bool pushRequired = spikeEvent ?
@@ -1916,7 +1435,7 @@ void CUDA::genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spike
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
 {
     // Is push required at all
     const bool pullRequired = spikeEvent ?
@@ -1952,8 +1471,8 @@ void CUDA::genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spike
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                                          SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "evnt";
@@ -2047,8 +1566,8 @@ void CUDA::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, con
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
-                                        SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+                                           SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
      // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -2186,10 +1705,10 @@ void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, co
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const
 {
     // Calculate grid size
-    const size_t gridSize = ceilDivide(numThreads, m_KernelBlockSizes[kernel]);
+    const size_t gridSize = Utils::ceilDivide(numThreads, m_KernelBlockSizes[kernel]);
     os << "const dim3 threads(" << m_KernelBlockSizes[kernel] << ", 1);" << std::endl;
 
     if (gridSize < getChosenCUDADevice().maxGridSize[1]) {
@@ -2203,13 +1722,13 @@ void CUDA::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads)
     }
 }
 //--------------------------------------------------------------------------
-bool CUDA::shouldAccumulateInLinSyn(const SynapseGroup &sg) const
+bool Backend::shouldAccumulateInLinSyn(const SynapseGroup &sg) const
 {
     // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield (where each thread represents an individual neuron)
     return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
 }
 //--------------------------------------------------------------------------
-bool CUDA::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
+bool Backend::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
 {
     // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
@@ -2223,7 +1742,7 @@ bool CUDA::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
     }
 }
 //--------------------------------------------------------------------------
-std::string CUDA::getFloatAtomicAdd(const std::string &ftype) const
+std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
 {
     int version;
     cudaRuntimeGetVersion(&version);
@@ -2235,5 +1754,5 @@ std::string CUDA::getFloatAtomicAdd(const std::string &ftype) const
         return "atomicAdd";
     }
 }
-}   // namespace Backends
+}   // namespace CUDA
 }   // namespace CodeGenerator

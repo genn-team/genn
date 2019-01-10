@@ -10,7 +10,7 @@
 
 // GeNN code generator
 #include "code_generator/teeStream.h"
-#include "code_generator/backend.h"
+#include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -108,7 +108,7 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, const NNmodel &model,
-                                   const Backends::Base &backend, int localHostID)
+                                   const BackendBase &backend, int localHostID)
 {
     // In windows wrapping functions in extern "C" isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
 #ifdef _WIN32
