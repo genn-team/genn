@@ -1,3 +1,4 @@
+// Standard C++ includes
 #include <fstream>
 
 // PLOG includes
@@ -7,8 +8,10 @@
 // Filesystem includes
 #include "path.h"
 
+// GeNN includes
 #include "modelSpec.h"
 
+// GeNN code generator includes
 #include "code_generator/generateAll.h"
 #include "code_generator/generateMakefile.h"
 
