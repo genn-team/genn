@@ -1,7 +1,8 @@
-#include "cuda.h"
+#include "backend.h"
 
 // Standard C++ includes
 #include <algorithm>
+#include <iostream>
 
 // CUDA includes
 #include <cuda_runtime.h>
@@ -9,18 +10,55 @@
 // GeNN includes
 #include "codeGenUtils.h"
 #include "codeStream.h"
-#include "global.h"
 #include "modelSpec.h"
 
-// NuGeNN includes
-#include "../substitution_stack.h"
-#include "../tee_stream.h"
+// GeNN code generator includes
+#include "code_generator/substitutions.h"
+
+
+#if CUDA_VERSION >= 6050
+#define CHECK_CU_ERRORS(call)                                        \
+  {                                                                \
+    CUresult error = call;                                        \
+    if (error != CUDA_SUCCESS)                                        \
+      {                                                                \
+        const char *errStr;                                        \
+        cuGetErrorName(error, &errStr);                                \
+        std::cerr << __FILE__ << ": " <<  __LINE__;                        \
+        std::cerr << ": cuda driver error " << error << ": ";        \
+        std::cerr << errStr << std::endl;                                        \
+        exit(EXIT_FAILURE);                                        \
+      }                                                                \
+  }
+#else
+#define CHECK_CU_ERRORS(call) call
+#endif
+
+#define CHECK_CUDA_ERRORS(call)                                        \
+  {                                                                \
+    cudaError_t error = call;                                        \
+    if (error != cudaSuccess)                                        \
+      {                                                                \
+        std::cerr << __FILE__ << ": " <<  __LINE__;                        \
+        std::cerr << ": cuda runtime error " << error << ": ";        \
+        std::cerr << cudaGetErrorString(error) << std::endl;                \
+        exit(EXIT_FAILURE);                                        \
+      }                                                                \
+  }
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
+const std::vector<FunctionTemplate> cudaFunctions = {
+    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
+    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
+    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
+};
+
 size_t ceilDivide(size_t numerator, size_t denominator)
 {
     return ((numerator + denominator - 1) / denominator);
@@ -31,13 +69,13 @@ size_t padSize(size_t size, size_t blockSize)
     return ceilDivide(size, blockSize) * blockSize;
 }
 //--------------------------------------------------------------------------
-bool canPushPullVar(VarMode varMode)
+bool canPushPullVar(VarLocation loc)
 {
     // A variable can be pushed and pulled if it is located
     // on both host and device and doesn't use zero-copy memory
-    return ((varMode & VarLocation::HOST) &&
-            (varMode & VarLocation::DEVICE) &&
-            !(varMode & VarLocation::ZERO_COPY));
+    return ((loc & VarLocation::HOST) &&
+            (loc & VarLocation::DEVICE) &&
+            !(loc & VarLocation::ZERO_COPY));
 }
 }   // Anonymous namespace
 
@@ -58,8 +96,8 @@ const char *CUDA::KernelNames[KernelMax] = {
     "preNeuronResetKernel",
     "preSynapseResetKernel"};
 //--------------------------------------------------------------------------
-CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device)
-:   m_KernelBlockSizes(kernelBlockSizes), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
+CUDA::CUDA(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device)
+:   m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -355,7 +393,7 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
             [&model](const NNmodel::SynapseGroupValueType &s)
             { 
-                return (s.second.isTrueSpikeRequired() || model.isSynapseGroupPostLearningRequired(s.first));
+                return (s.second.isTrueSpikeRequired() || !s.second.getWUModel()->getLearnPostCode().empty());
             }))
         {
             os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
@@ -450,8 +488,11 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         );
     }
 
+    // If any synapse groups require postsynaptic learning
     size_t idPostsynapticStart = 0;
-    if(!model.getSynapsePostLearnGroups().empty()) {
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const NNmodel::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
+    {
         os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
         for (const auto &p : model.getSimLearnPostKernelParameters()) {
             os << p.second << " " << p.first << ", ";
@@ -507,8 +548,8 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                         os << "if (threadIdx.x < numSpikesInBlock)";
                         {
                             CodeStream::Scope b(os);
-                            const string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
-                            os << "const unsigned int spk = dd_glbSpk" << sg.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << learnBlkSz << ") + threadIdx.x];" << std::endl;
+                            const std::string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
+                            os << "const unsigned int spk = dd_glbSpk" << sg.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << m_KernelBlockSizes[KernelPostsynapticUpdate] << ") + threadIdx.x];" << std::endl;
                             os << "shSpk[threadIdx.x] = spk;" << std::endl;
 
                             if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
@@ -556,7 +597,9 @@ void CUDA::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     }
 
     size_t idSynapseDynamicsStart = 0;
-    if(!model.getSynapseDynamicsGroups().empty()) {
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const NNmodel::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
+    {
         os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
         for (const auto &p : model.getSynapseDynamicsKernelParameters()) {
             os << p.second << " " << p.first << ", ";
@@ -715,7 +758,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// Remote neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
             [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroup &ng){ return (ng.hasOutputToHost(m_LocalHostID) && ng.getSpikeVarMode() & VarInit::DEVICE); },
+            [this](const NeuronGroup &ng){ return ng.hasOutputToHost(m_LocalHostID); },
             [this, remoteNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;
@@ -732,7 +775,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
             [this](const NeuronGroup &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroup &ng){ return ng.isDeviceInitRequired(); },
+            [this](const NeuronGroup &ng){ return ng.isInitCodeRequired(); },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;
@@ -747,7 +790,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
                     // If this neuron requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
-                    if(ng.isInitRNGRequired(VarInit::DEVICE)) {
+                    if(ng.isInitRNGRequired()) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
@@ -764,7 +807,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// Synapse groups with dense connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroup &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUDeviceVarInitRequired(); },
+            [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
             [sgDenseInitHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing postsynaptic neurons" << std::endl;
@@ -774,7 +817,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
                     // If this post synapse requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
-                    if(sg.isWUInitRNGRequired(VarInit::DEVICE)) {
+                    if(sg.isWUInitRNGRequired()) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
@@ -792,7 +835,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroup &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroup &sg){ return sg.isDeviceSparseConnectivityInitRequired(); },
+            [](const SynapseGroup &sg){ return sg.isSparseConnectivityInitRequired(); },
             [sgSparseConnectHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
@@ -855,7 +898,9 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
-    if(model.isDeviceSparseInitRequired()) {
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isSparseInitRequired(); })) 
+    {
         os << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
             CodeStream::Scope b(os);
@@ -873,13 +918,13 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
             // Initialise weight update variables for synapse groups with dense connectivity
             genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
                 [this](const SynapseGroup &sg){ return padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
-                [](const SynapseGroup &sg){ return sg.isDeviceSparseInitRequired(); },
+                [](const SynapseGroup &sg){ return sg.isSparseInitRequired(); },
                 [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
                 {
                     // If this post synapse requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
-                    if(sg.isWUInitRNGRequired(VarInit::DEVICE)) {
+                    if(sg.isWUInitRNGRequired()) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
 
@@ -912,9 +957,9 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
                         }
 
                         // If this synapse projection has ragged connectivity initialised on device and has synapse dynamics
-                        if(sg.isDeviceSparseConnectivityInitRequired()
+                        if(sg.isSparseConnectivityInitRequired()
                             && (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
-                            && model.isSynapseGroupDynamicsRequired(sg.getName()))
+                            && !sg.getWUModel()->getSynapseDynamicsCode().empty())
                         {
                             // Use first thread to generate cumulative sum
                             os << "if (threadIdx.x == 0)";
@@ -966,10 +1011,10 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
 
                                 // If matrix is ragged, connectivity is initialised on device and postsynaptic learning is required
                                 if((sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
-                                    && sg.isDeviceSparseConnectivityInitRequired())
+                                    && sg.isSparseConnectivityInitRequired())
                                 {
                                     // If postsynaptic learning is required
-                                    if(model.isSynapseGroupPostLearningRequired(sg.getName())) {
+                                    if(!sg.getWUModel()->getSynapseDynamicsCode().empty()) {
                                         CodeStream::Scope b(os);
 
                                         // Extract index of synapse's postsynaptic target
@@ -987,7 +1032,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
                                     }
 
                                     // If synapse dynamics are required, copy idx into syn remap structure
-                                    if(model.isSynapseGroupDynamicsRequired(sg.getName())) {
+                                    if(!sg.getWUModel()->getSynapseDynamicsCode().empty()) {
                                         CodeStream::Scope b(os);
                                         os << "dd_synRemap" << sg.getName() << "[shRowStart[i] + lid + 1] = idx;" << std::endl;
                                     }
@@ -1013,7 +1058,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         os << "unsigned long long deviceRNGSeed = 0;" << std::endl;
 
         // If on-device global RNG is required
-        if(model.isDeviceRNGRequired()) {
+        if(isGlobalRNGRequired(model)) {
             // If no seed is specified
             if (model.getSeed() == 0) {
                 CodeStream::Scope b(os);
@@ -1037,7 +1082,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
         }
 
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if(s.second.isDeviceSparseConnectivityInitRequired()) {
+            if(s.second.isSparseConnectivityInitRequired()) {
                 // If this synapse population has BITMASK connectivity, insert a call to cudaMemset to zero the whole bitmask
                 if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
@@ -1045,7 +1090,7 @@ void CUDA::genInit(CodeStream &os, const NNmodel &model,
                 }
                 // If this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
                 else if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
-                    && model.isSynapseGroupPostLearningRequired(s.first))
+                    && !s.second.getWUModel()->getLearnPostCode().empty())
                 {
                     os << "cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int));" << std::endl;
                 }
@@ -1145,7 +1190,7 @@ void CUDA::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
     if(model.zeroCopyInUse()) {
         // If device doesn't support mapping host memory error
         if(!getChosenCUDADevice().canMapHostMemory) {
-            gennError("Device does not support mapping CPU host memory!");
+            throw std::runtime_error("Device does not support mapping CPU host memory!");
         }
 
         // set appropriate device flags
@@ -1153,40 +1198,40 @@ void CUDA::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
+void CUDA::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    if(mode & VarLocation::HOST) {
+    if(loc & VarLocation::HOST) {
         os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
     }
-    if(mode & VarLocation::DEVICE) {
+    if(loc & VarLocation::DEVICE) {
         os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
         os << getVarExportPrefix() << " __device__ " << type << " dd_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const
+void CUDA::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    if(mode & VarLocation::HOST) {
+    if(loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
     }
-    if(mode & VarLocation::DEVICE) {
+    if(loc & VarLocation::DEVICE) {
         os << type << " d_" << name << ";" << std::endl;
         os << "__device__ " << type << " dd_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const
+void CUDA::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
-    if(mode & VarLocation::HOST) {
+    if(loc & VarLocation::HOST) {
         // **NOTE** because we want out memory to be pinned for faster copying to GPU, DON'T use host code generator
-        const char *flags = (mode & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+        const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
         os << "cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << ");" << std::endl;
     }
 
     // If variable is present on device at all
-    if(mode & VarLocation::DEVICE) {
+    if(loc & VarLocation::DEVICE) {
         // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
-        if(mode & VarLocation::ZERO_COPY) {
+        if(loc & VarLocation::ZERO_COPY) {
             os << "deviceZeroCopy(" << name << ", &d_" << name << ", dd_" << name << ");" << std::endl;
         }
         else {
@@ -1195,50 +1240,45 @@ void CUDA::genVariableAllocation(CodeStream &os, const std::string &type, const 
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const
+void CUDA::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
 {
     // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
-    if(mode & VarLocation::HOST) {
+    if(loc & VarLocation::HOST) {
         os << "CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << std::endl;
     }
 
     // If this variable wasn't allocated in zero-copy mode, free it
-    if(mode & VarLocation::DEVICE) {
+    if(loc & VarLocation::DEVICE) {
         os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const
+void CUDA::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
 
-    // If variable should be initialised on device
-    if(mode & VarInit::DEVICE) {
-        os << "if(" << varSubs.getVarSubstitution("id") << " == 0)";
-        {
-            CodeStream::Scope b(os);
-            handler(os, varSubs);
-        }
+    // If this is first thread in group
+    os << "if(" << varSubs.getVarSubstitution("id") << " == 0)";
+    {
+        CodeStream::Scope b(os);
+        handler(os, varSubs);
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariableInit(CodeStream &os, VarMode mode, size_t, const std::string &countVarName,
+void CUDA::genVariableInit(CodeStream &os, VarLocation, size_t, const std::string &countVarName,
                            const Substitutions &kernelSubs, Handler handler) const
 {
     // Variable should already be provided via parallelism
     assert(kernelSubs.hasVarSubstitution(countVarName));
 
-    // If variable should be initialised on device
-    if(mode & VarInit::DEVICE) {
-        Substitutions varSubs(&kernelSubs);
-        handler(os, varSubs);
-    }
+    Substitutions varSubs(&kernelSubs);
+    handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const
+void CUDA::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
 {
     // If variable can be pushed or pulled
-    if(canPushPullVar(mode)) {
+    if(canPushPullVar(loc)) {
         // If variable is initialised on device, only copy if uninitialisedOnly isn't set
         if(autoInitialized) {
             os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
@@ -1254,10 +1294,10 @@ void CUDA::genVariablePush(CodeStream &os, const std::string &type, const std::s
     }
 }
 //--------------------------------------------------------------------------
-void CUDA::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const
+void CUDA::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
     // If variable can be pushed or pulled
-    if(canPushPullVar(mode)) {
+    if(canPushPullVar(loc)) {
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
         os << ", d_"  << name;
         os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
@@ -1267,17 +1307,17 @@ void CUDA::genVariablePull(CodeStream &os, const std::string &type, const std::s
 void CUDA::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &) const
 {
     // Create a single Philox4_32_10 RNG
-    genVariableDefinition(definitions, "curandStatePhilox4_32_10_t*", "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
-    genVariableImplementation(runner, "curandStatePhilox4_32_10_t*", "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
-    genVariableAllocation(allocations, "curandStatePhilox4_32_10_t", "rng", VarMode::LOC_DEVICE_INIT_DEVICE, 1);
-    genVariableFree(free, "rng", VarMode::LOC_DEVICE_INIT_DEVICE);
+    genVariableDefinition(definitions, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
+    genVariableImplementation(runner, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
+    genVariableAllocation(allocations, "curandStatePhilox4_32_10_t", "rng", VarLocation::DEVICE, 1);
+    genVariableFree(free, "rng", VarLocation::DEVICE);
 }
 //--------------------------------------------------------------------------
 void CUDA::genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                              const std::string &name, size_t count) const
 {
     // Create an array or XORWOW RNGs
-    genArray(definitions, runner, allocations, free, "curandState", name, VarMode::LOC_DEVICE_INIT_DEVICE, count);
+    genArray(definitions, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);
 }
 //--------------------------------------------------------------------------
 void CUDA::genMakefilePreamble(std::ostream &os) const
@@ -1313,17 +1353,17 @@ bool CUDA::isGlobalRNGRequired(const NNmodel &model) const
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
     if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-        [](const NeuronGroupValueType &n)
+        [](const NNmodel::NeuronGroupValueType &n)
         {
-            return n.second.isInitRNGRequired(VarInit::HOST)
+            return n.second.isInitRNGRequired();
         }))
     {
         return true;
     }
 
     // If any synapse groups require an RNG for weight update model initialisation, return true
-    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend()),
-        [](const SynapseGroupValueType &s)
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const NNmodel::SynapseGroupValueType &s)
         {
             return s.second.isWUInitRNGRequired();
         }))
@@ -1338,14 +1378,14 @@ std::string CUDA::getNVCCFlags() const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string nvccFlags = "-std=c++11 --compiler-options '-fPIC' -x cu -arch " + architecture;
-    nvccFlags += " " + GENN_PREFERENCES::userNvccFlags;
-    if (GENN_PREFERENCES::optimizeCode) {
+    nvccFlags += " " + m_Preferences.userNvccFlags;
+    if (m_Preferences.optimizeCode) {
         nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
     }
-    if (GENN_PREFERENCES::debugCode) {
+    if (m_Preferences.debugCode) {
         nvccFlags += " -O0 -g -G";
     }
-    if (GENN_PREFERENCES::showPtxInfo) {
+    if (m_Preferences.showPtxInfo) {
         nvccFlags += " -Xptxas \"-v\"";
     }
 #ifdef MPI_ENABLE
@@ -1402,8 +1442,8 @@ void CUDA::genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spike
 {
     // Is push required at all
     const bool pushRequired = spikeEvent ?
-        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventVarMode()))
-        : canPushPullVar(ng.getSpikeVarMode());
+        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventLocation()))
+        : canPushPullVar(ng.getSpikeLocation());
 
     // Is delay required
     const bool delayRequired = spikeEvent ?
@@ -1438,8 +1478,8 @@ void CUDA::genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spike
 {
     // Is push required at all
     const bool pullRequired = spikeEvent ?
-        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventVarMode()))
-        : canPushPullVar(ng.getSpikeVarMode());
+        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventLocation()))
+        : canPushPullVar(ng.getSpikeLocation());
 
     // Is delay required
     const bool delayRequired = spikeEvent ?
@@ -1533,7 +1573,7 @@ void CUDA::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, con
             os << "const unsigned int ipost = dd_ind" <<  sg.getName() << "[prePos];" << std::endl;
 
             // Code substitutions ----------------------------------------------------------------------------------
-            string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
+            std::string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
 
             Substitutions synSubs(&popSubs);
             synSubs.addVarSubstitution("id_pre", "preInd");
@@ -1591,7 +1631,7 @@ void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, co
         os << "if (threadIdx.x < numSpikesInBlock)";
         {
             CodeStream::Scope b(os);
-            const string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
+            const std::string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
             os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << m_KernelBlockSizes[KernelPresynapticUpdate] << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
             if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
@@ -1650,7 +1690,7 @@ void CUDA::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, co
                         os << "const unsigned int npost = dd_indInG" << sg.getName() << "[shSpk" << eventSuffix << "[j] + 1] - synAddress;" << std::endl;
                     }
                     else {
-                        os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << to_string(sg.getMaxConnections()) << ";" << std::endl;
+                        os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
                         os << "const unsigned int npost = shRowLength" << eventSuffix << "[j];" << std::endl;
                     }
 
@@ -1743,7 +1783,6 @@ bool CUDA::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
 //--------------------------------------------------------------------------
 std::string CUDA::getFloatAtomicAdd(const std::string &ftype) const
 {
-    USE(ftype);
     int version;
     cudaRuntimeGetVersion(&version);
     if (((getChosenCUDADevice().major < 2) && (ftype == "float"))

@@ -13,9 +13,9 @@
 // GeNN includes
 #include "codeStream.h"
 
-// NuGeNN includes
-#include "base.h"
-#include "../substitution_stack.h"
+// GeNN code generator includes
+#include "code_generator/backend.h"
+#include "code_generator/substitutions.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator::Backends::CUDA
@@ -42,13 +42,22 @@ public:
         KernelPreSynapseReset,
         KernelMax
     };
+    
+    struct Preferences : public Base::Preferences
+    {
+        //!< Should PTX assembler information be displayed for each CUDA kernel during compilation
+        bool showPtxInfo; 
+         
+        //!< NVCC compiler options for all GPU code
+        std::string userNvccFlags; 
+    };
 
     //--------------------------------------------------------------------------
     // Type definitions
     //--------------------------------------------------------------------------
     using KernelBlockSize = std::array<size_t, KernelMax>;
 
-    CUDA(const KernelBlockSize &kernelBlockSizes, int localHostID, int device);
+    CUDA(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
@@ -68,17 +77,17 @@ public:
     virtual void genRunnerPreamble(CodeStream &os) const override;
     virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const override;
 
-    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode) const override;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarMode mode) const override;
+    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
-    virtual void genPopVariableInit(CodeStream &os, VarMode mode, const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genVariableInit(CodeStream &os, VarMode mode, size_t count, const std::string &countVarName,
+    virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const override;
+    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &countVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarMode mode, size_t count) const override;
+    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
+    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const override
     {
         genCurrentSpikePush(os, ng, false);
@@ -215,6 +224,7 @@ private:
     // Members
     //--------------------------------------------------------------------------
     const KernelBlockSize m_KernelBlockSizes;
+    const Preferences m_Preferences;
     const int m_LocalHostID;
     
     const int m_ChosenDeviceID;
