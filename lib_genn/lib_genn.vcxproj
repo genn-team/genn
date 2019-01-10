@@ -39,10 +39,10 @@
     <ClInclude Include="include\initVarSnippet.h" />
     <ClInclude Include="include\modelSpec.h" />
     <ClInclude Include="include\neuronGroup.h" />
-    <ClInclude Include="include\newModels.h" />
-    <ClInclude Include="include\newNeuronModels.h" />
-    <ClInclude Include="include\newPostsynapticModels.h" />
-    <ClInclude Include="include\newWeightUpdateModels.h" />
+    <ClInclude Include="include\models.h" />
+    <ClInclude Include="include\neuronModels.h" />
+    <ClInclude Include="include\postsynapticModels.h" />
+    <ClInclude Include="include\weightUpdateModels.h" />
     <ClInclude Include="include\snippet.h" />
     <ClInclude Include="include\synapseGroup.h" />
     <ClInclude Include="include\synapseMatrixType.h" />
@@ -66,9 +66,9 @@
     <ClCompile Include="src\initVarSnippet.cc" />
     <ClCompile Include="src\modelSpec.cc" />
     <ClCompile Include="src\neuronGroup.cc" />
-    <ClCompile Include="src\newNeuronModels.cc" />
-    <ClCompile Include="src\newPostsynapticModels.cc" />
-    <ClCompile Include="src\newWeightUpdateModels.cc" />
+    <ClCompile Include="src\neuronModels.cc" />
+    <ClCompile Include="src\postsynapticModels.cc" />
+    <ClCompile Include="src\weightUpdateModels.cc" />
     <ClCompile Include="src\synapseGroup.cc" />
   </ItemGroup>
   <ItemGroup>

@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\code_generator\single_threaded_cpu\backend.cc" />
+    <ClCompile Include="src\backend.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\code_generator\single_threaded_cpu\backend.h" />
+    <ClInclude Include="include\backend.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}</ProjectGuid>
@@ -57,7 +57,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\..\lib_genn\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -70,7 +70,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\..\lib_genn\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

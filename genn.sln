@@ -3,14 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib_genn", "lib_genn.vcxproj", "{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib_genn", "lib_genn\lib_genn.vcxproj", "{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "single_threaded_cpu_backend", "single_threaded_cpu_backend.vcxproj", "{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "single_threaded_cpu_backend", "backends\single_threaded_cpu\single_threaded_cpu_backend.vcxproj", "{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "code_generator", "code_generator.vcxproj", "{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generator", "generator\generator.vcxproj", "{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
 		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21} = {14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}
