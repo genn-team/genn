@@ -122,9 +122,6 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    unsigned int getPaddedDynKernelSize(unsigned int blockSize) const;
-    unsigned int getPaddedPostLearnKernelSize(unsigned int blockSize) const;
-
     const NeuronGroup *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroup *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
