@@ -22,7 +22,7 @@ CXXFLAGS		+=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 CXXFLAGS += -I../backends/$(BACKEND_NAME)/include -DMODEL=\"$(MODEL)\" -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
 
 # Add prefix to generator name
-GENERATOR		:=generator$(GENN_PREFIX).a
+GENERATOR		:=generator$(GENN_PREFIX)
 
 .PHONY: all clean libgenn backend
 
