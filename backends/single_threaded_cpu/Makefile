@@ -1,24 +1,35 @@
-SOURCES		:= $(wildcard src/*.cc)
-OBJECTS		:=$(SOURCES:.cc=.o)
-DEPS		:=$(SOURCES:.cc=.d)
-#ARFLAGS		:= -rcs
+# Include common makefile
+include ../../MakefileCommon
 
-# **TODO** debug/MPI targets + CLang
-CXXFLAGS += -std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -Iinclude -I../../lib_genn/include -I../../third_party
+# Add include paths to CXX flags
+CXXFLAGS		+=-Iinclude -I../../lib_genn/include -I../../third_party
+
+# Add prefix to object directory and library name
+OBJECT_DIRECTORY	:=obj$(GENN_PREFIX)
+BACKEND			:=$(GENN_DIR)/lib/libsingle_threaded_cpu_backend$(GENN_PREFIX).a
+
+# Find source files
+SOURCES			:= $(wildcard src/*.cc)
+
+# Remove src prefix and replace with object directory
+OBJECTS			:=$(SOURCES:src/%.cc=$(OBJECT_DIRECTORY)/%.o)
+DEPS			:=$(OBJECTS:.o=.d)
 
 .PHONY: all clean
 
-all: libsingle_threaded_cpu_backend.a
+all: $(BACKEND)
 
-libsingle_threaded_cpu_backend.a: $(OBJECTS)
+$(BACKEND): $(OBJECTS)
+	mkdir -p $(@D)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
 
 -include $(DEPS)
 
-%.o: %.cc %.d
+$(OBJECT_DIRECTORY)/%.o: src/%.cc $(OBJECT_DIRECTORY)/%.d
+	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
 
 clean:
-	rm -f $(OBJECTS) $(DEPS) libsingle_threaded_cpu_backend.a
+	rm -f $(OBJECTS) $(DEPS) $(BACKEND)
