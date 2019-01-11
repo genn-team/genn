@@ -43,8 +43,6 @@ public:
     NeuronGroup *getSrcNeuronGroup(){ return m_SrcNeuronGroup; }
     NeuronGroup *getTrgNeuronGroup(){ return m_TrgNeuronGroup; }
 
-    void setTrueSpikeRequired(bool req){ m_TrueSpikeRequired = req; }
-    void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
     void setPSModelMergeTarget(const std::string &targetName)
@@ -128,8 +126,12 @@ public:
     int getClusterHostID() const{ return m_TrgNeuronGroup->getClusterHostID(); }
     int getClusterDeviceID() const{ return m_TrgNeuronGroup->getClusterDeviceID(); }
 
-    bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
-    bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }
+    //! Does synapse group need to handle 'true' spikes
+    bool isTrueSpikeRequired() const;
+
+    //! Does synapse group need to handle spike-like events
+    bool isSpikeEventRequired() const;
+
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
@@ -270,12 +272,6 @@ private:
 
     //!< Pointer to postsynaptic neuron group
     NeuronGroup *m_TrgNeuronGroup;
-
-    //!< Defines if synapse update is done after detection of real spikes (only one point after threshold)
-    bool m_TrueSpikeRequired;
-
-    //!< Defines if synapse update is done after detection of spike events (every point above threshold)
-    bool m_SpikeEventRequired;
 
     //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
     bool m_EventThresholdReTestRequired;

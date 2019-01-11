@@ -359,7 +359,6 @@ void NNmodel::finalize()
             const auto *wu = sg->getWUModel();
 
             if (!wu->getEventCode().empty()) {
-                sg->setSpikeEventRequired(true);
                 n.second.setSpikeEventRequired(true);
                 assert(!wu->getEventThresholdConditionCode().empty());
 
@@ -410,7 +409,6 @@ void NNmodel::finalize()
         s.second.initDerivedParams(dt);
 
         if (!wu->getSimCode().empty()) {
-            s.second.setTrueSpikeRequired(true);
             s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
 
             // analyze which neuron variables need queues

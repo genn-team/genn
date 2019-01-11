@@ -47,7 +47,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation)
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_TrueSpikeRequired(false), m_SpikeEventRequired(false), m_EventThresholdReTestRequired(false),
+        m_EventThresholdReTestRequired(false),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
@@ -202,6 +202,16 @@ void SynapseGroup::initDerivedParams(double dt)
 
     // Initialise any derived connectivity initialiser parameters
     m_ConnectivityInitialiser.initDerivedParams(dt);
+}
+
+bool SynapseGroup::isTrueSpikeRequired() const
+{
+    return !getWUModel()->getSimCode().empty();
+}
+
+bool SynapseGroup::isSpikeEventRequired() const
+{
+     return !getWUModel()->getEventCode().empty();
 }
 
 const std::vector<double> SynapseGroup::getWUConstInitVals() const
