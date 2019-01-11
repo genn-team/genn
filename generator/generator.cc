@@ -43,13 +43,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
     plog::init<LogOptimiser>(plog::info, &consoleAppender);
     
     if (argc != 2) {
-        LOGE << "usage: generateALL <target dir>";
+        LOGE << "usage: generator <target dir>";
         return EXIT_FAILURE;
     }
     
-    // Create output path
-    const filesystem::path outputPath(argv[1]);
-    filesystem::create_directory(outputPath);
+    const filesystem::path targetPath(argv[1]);
 
     // Create model
     NNmodel model;
@@ -58,14 +56,21 @@ int main(int argc,     //!< number of arguments; expected to be 2
     // Finalize model
     model.finalize();
 
+    // Create code generation path
     int localHostID = 0;
-
 #ifdef MPI_ENABLE
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
     cout << "MPI initialized - host ID:" << localHostID << endl;
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
+    const filesystem::path outputPath = targetPath / (model.getName() + "_" + std::to_string(localHostID) + "_CODE");
+#else
+    const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
 #endif
-    
+    // Create output path
+    filesystem::create_directory(outputPath);
+
     // Create backend
     auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, outputPath, localHostID, GENN_PREFERENCES);
     

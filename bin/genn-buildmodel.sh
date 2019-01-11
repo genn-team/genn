@@ -23,10 +23,11 @@ trap 'genn_error $LINENO 50 "command failure"' ERR
 # parse command options
 OUT_PATH="$PWD";
 BUILD_MODEL_INCLUDE=""
+GENERATOR_MAKEFILE="MakefileCUDA"
 while [[ -n "${!OPTIND}" ]]; do
     while getopts "cdmvo:i:h" option; do
     case $option in
-        c) CPU_ONLY=1;;
+        c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
         d) DEBUG=1;;
         m) MPI_ENABLE=1;;
         v) COVERAGE=1;;
@@ -64,42 +65,37 @@ pushd $OUT_PATH > /dev/null
 OUT_PATH="$PWD"
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
-MACROS="MODEL=$PWD/$(basename $MODEL) GENERATEALL_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE"
-GENERATEALL=./generateALL
+MACROS="MODEL=$PWD/$(basename $MODEL) GENERATOR_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE"
+GENERATOR=./generator
 popd > /dev/null
 if [[ -n "$DEBUG" ]]; then
     MACROS="$MACROS DEBUG=1";
 fi
 
-if [[ -n "$CPU_ONLY" ]]; then
-    MACROS="$MACROS CPU_ONLY=1";
-    GENERATEALL="$GENERATEALL"_CPU_ONLY
-fi
-
 if [[ -n "$MPI_ENABLE" ]]; then
     MACROS="$MACROS MPI_ENABLE=1";
-    GENERATEALL="$GENERATEALL"_MPI
+    GENERATOR="$GENERATOR"_MPI
 fi
 
 if [[ -n "$COVERAGE" ]]; then
     MACROS="$MACROS COVERAGE=1";
-    GENERATEALL="$GENERATEALL"_COVERAGE
+    GENERATOR="$GENERATOR"_COVERAGE
 fi
 
 # generate model code
-make -f "$GENN_PATH/lib/GNUmakefile" $MACROS
+make -C "$GENN_PATH/generator" -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$MPI_ENABLE" ]]; then
-    cp "$GENERATEALL" "$GENERATEALL"_"$OMPI_COMM_WORLD_RANK"
+    cp "$GENERATOR" "$GENERATOR"_"$OMPI_COMM_WORLD_RANK"
 fi
 
 if [[ -n "$DEBUG" ]]; then
-    gdb -tui --args "$GENERATEALL" "$OUT_PATH"
+    gdb -tui --args "$GENERATOR" "$OUT_PATH"
 else
     if [[ -n "$MPI_ENABLE" ]]; then
-        "$GENERATEALL"_"$OMPI_COMM_WORLD_RANK" "$OUT_PATH"
+        "$GENERATOR"_"$OMPI_COMM_WORLD_RANK" "$OUT_PATH"
     else
-        "$GENERATEALL" "$OUT_PATH"
+        "$GENERATOR" "$OUT_PATH"
     fi
 fi
 
