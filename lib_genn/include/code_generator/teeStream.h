@@ -5,11 +5,12 @@
 #include <streambuf>
 #include <vector>
 
-
 //--------------------------------------------------------------------------
-// TeeBuf
+// CodeGenerator::TeeBuf
 //--------------------------------------------------------------------------
 // A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
+namespace CodeGenerator
+{
 class TeeBuf: public std::streambuf
 {
 public:
@@ -59,7 +60,7 @@ private:
 };
 
 //--------------------------------------------------------------------------
-// TeeStream
+// CodeGenerator::TeeStream
 //--------------------------------------------------------------------------
 class TeeStream : public std::ostream
 {
@@ -76,3 +77,4 @@ private:
     //--------------------------------------------------------------------------
     TeeBuf m_TeeBuf;
 };
+}   // namespace CodeGenerator
