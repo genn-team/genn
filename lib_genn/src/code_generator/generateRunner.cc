@@ -389,7 +389,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                     backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,runnerPushFunc, runnerPullFunc,
                                         "uint32_t", "gp" + s.first, s.second.getSparseConnectivityLocation(), autoInitialized, gpSize);
                 }
-                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     const VarLocation varLoc = s.second.getSparseConnectivityLocation();
                     const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
 

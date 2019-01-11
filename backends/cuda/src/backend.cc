@@ -340,12 +340,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             os << "__shared__ " << model.getPrecision() << " shLg[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
         }
         
-        // If any of these synapse groups also have ragged connectivity, allocate shared memory for row length
+        // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
             [&model](const NNmodel::SynapseGroupValueType &s)
             {
                 return (s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
-                        && (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED));
+                        && (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
             }))
         {
             os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
@@ -470,7 +470,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                 [&model](const NNmodel::SynapseGroupValueType &s)
                 {
-                    return ((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) && !s.second.getWUModel()->getLearnPostCode().empty());
+                    return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty());
                 }))
             {
                 os << "__shared__ unsigned int shColLength[" << m_KernelBlockSizes[KernelPostsynapticUpdate] << "];" << std::endl;
@@ -513,7 +513,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                             os << "const unsigned int spk = dd_glbSpk" << sg.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << m_KernelBlockSizes[KernelPostsynapticUpdate] << ") + threadIdx.x];" << std::endl;
                             os << "shSpk[threadIdx.x] = spk;" << std::endl;
 
-                            if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                            if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                 os << "shColLength[threadIdx.x] = dd_colLength" << sg.getName() << "[spk];" << std::endl;
                             }
                         }
@@ -527,7 +527,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                             os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
                             {
                                 CodeStream::Scope b(os);
-                                if (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     os << "unsigned int synAddress = shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ";" << std::endl;
                                     os << "const unsigned int npre = shColLength[j];" << std::endl;
 
@@ -546,7 +546,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
                                 postLearnHandler(os, sg, synSubs);
 
-                                if (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     os << CodeStream::CB(1540);
                                 }
                             }
@@ -590,7 +590,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
                     Substitutions synSubs(&popSubs);
 
-                    if (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         os << "if (" << popSubs.getVarSubstitution("id") << " < dd_synRemap" << sg.getName() << "[0])";
                     }
                     else {
@@ -599,7 +599,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                     {
                         CodeStream::Scope b(os);
 
-                        if (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                        if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             // Determine synapse and presynaptic indices for this thread
                             os << "const unsigned int s = dd_synRemap" << sg.getName() << "[1 + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
 
@@ -834,7 +834,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                                                     "atomicOr(&dd_gp" + sg.getName() + "[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
                     }
                     // Otherwise, if synapse group has ragged connectivity
-                    else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    else if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         const std::string rowLength = "dd_rowLength" + sg.getName() + "[" + popSubs.getVarSubstitution("id") + "]";
                         const std::string ind = "dd_ind" + sg.getName();
 
@@ -919,7 +919,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
 
                         // If this synapse projection has ragged connectivity initialised on device and has synapse dynamics
                         if(sg.isSparseConnectivityInitRequired()
-                            && (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                            && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
                             && !sg.getWUModel()->getSynapseDynamicsCode().empty())
                         {
                             // Use first thread to generate cumulative sum
@@ -971,7 +971,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                                 sgSparseInitHandler(os, sg, popSubs);
 
                                 // If matrix is ragged, connectivity is initialised on device and postsynaptic learning is required
-                                if((sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                                if((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
                                     && sg.isSparseConnectivityInitRequired())
                                 {
                                     // If postsynaptic learning is required
@@ -1050,7 +1050,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                     os << "cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
                 }
                 // If this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
-                else if((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
+                else if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
                     && !s.second.getWUModel()->getLearnPostCode().empty())
                 {
                     os << "cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int));" << std::endl;
@@ -1505,7 +1505,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
             os << "unsigned int synAddress = dd_indInG" << sg.getName() << "[preInd];" << std::endl;
             os << "const unsigned int npost = dd_indInG" << sg.getName() << "[preInd + 1] - prePos;" << std::endl;
         }
-        else if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+        else if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
             os << "const unsigned int npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
         }
@@ -1595,7 +1595,7 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model,
             const std::string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
             os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << m_KernelBlockSizes[KernelPresynapticUpdate] << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
-            if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength" << eventSuffix << "[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
             }
         }

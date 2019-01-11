@@ -161,7 +161,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                     os << "const unsigned int spike = glbSpk" << s.second.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "j];" << std::endl;
 
                     // Loop through column of presynaptic neurons
-                    if (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                    if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         os << "const unsigned int npre = colLength" << s.first << "[spike];" << std::endl;
                         os << "for (unsigned int i = 0; i < npre; i++)";
                     }
@@ -172,7 +172,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                         CodeStream::Scope b(os);
 
                         Substitutions synSubs(&funcSubs);
-                        if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                        if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             os << "const unsigned int synAddress = remap" << s.first << "remap[ipre]";
                             synSubs.addVarSubstitution("id_pre", "(remap" + s.first + "[ipre] / " + std::to_string(s.second.getMaxConnections()) + ")");
                             synSubs.addVarSubstitution("id_syn", "synAddress");
@@ -189,7 +189,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                         substitute(code, "$(t)", "t");
                         // Code substitutions ----------------------------------------------------------------------------------
 
-                        if (s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                        if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             name_substitutions(code, "", wuVars.nameBegin, wuVars.nameEnd,
                                                 s.first + "[C" + s.first + ".remap[ipre]]");
 
@@ -291,7 +291,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                 const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
 
                 // If matrix connectivity is ragged
-                if(s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+                if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     const std::string rowLength = "rowLength" + s.first;
                     const std::string ind = "ind" + s.first;
 
@@ -338,7 +338,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                     }
                 }
                 else {
-                    throw std::runtime_error("Only BITMASK and RAGGED format connectivity can be generated using a connectivity initialiser");
+                    throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
                 }
             }
         }
@@ -554,7 +554,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
         const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
         os << "const unsigned int ipre = glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "i];" << std::endl;
 
-        if (sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+        if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "const unsigned int npost = rowLength" << sg.getName() << "[ipre];" << std::endl;
             os << "for (unsigned int j = 0; j < npost; j++)";
         }
@@ -564,7 +564,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
         }
         {
             CodeStream::Scope b(os);
-            if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 // **TODO** seperate stride from max connections
                 os << "const unsigned int ipost = ind" << sg.getName() << "[(ipre * " << sg.getMaxConnections() << ") + j];" << std::endl;
             }
@@ -597,7 +597,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
             }
 
 
-            if(sg.getMatrixType() & SynapseMatrixConnectivity::RAGGED) {
+            if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getMaxConnections()) + ") + j;" << std::endl;
             }
             else {
