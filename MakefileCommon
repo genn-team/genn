@@ -1,0 +1,29 @@
+# Determine whether OS is Darwin i.e. Mac OS X
+OS_UPPER		:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+DARWIN			:=$(strip $(findstring DARWIN,$(OS_UPPER)))
+
+# Set standard compiler and archiver flags
+CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP
+ARFLAGS			:=-rcs
+
+# On Mac OS X, use Clang++ rather than GC++
+ifeq ($(DARWIN),DARWIN)
+	CXX		:=clang++
+endif
+
+# Setup compiler based on configuration
+ifdef MPI_ENABLE
+	GENN_PREFIX	:=$(GENN_PREFIX)_mpi
+	CXXFLAGS	+=-DMPI_ENABLE
+	CXX		:=mpiCC
+endif
+
+ifdef COVERAGE
+	GENN_PREFIX	:=$(GENN_PREFIX)_coverage
+	CXXFLAGS	+=-O0 --coverage
+endif
+
+ifdef DEBUG
+	GENN_PREFIX	:=$(GENN_PREFIX)_debug
+	CXXFLAGS	+=-g -O0 -DDEBUG
+endif 
