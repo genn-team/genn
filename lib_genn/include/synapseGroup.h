@@ -185,9 +185,6 @@ public:
 
     void addExtraGlobalConnectivityInitialiserParams(std::map<std::string, std::string> &kernelParameters) const;
     void addExtraGlobalNeuronParams(std::map<std::string, std::string> &kernelParameters) const;
-    void addExtraGlobalSynapseParams(std::map<std::string, std::string> &kernelParameters) const;
-    void addExtraGlobalPostLearnParams(std::map<std::string, std::string> &kernelParameters) const;
-    void addExtraGlobalSynapseDynamicsParams(std::map<std::string, std::string> &kernelParameters) const;
 
     //! Get the expression to calculate the delay slot for accessing
     //! Presynaptic neuron state variables, taking into account axonal delay
@@ -230,16 +227,6 @@ public:
     bool isSparseInitRequired() const;
 
 private:
-    //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    void addExtraGlobalSimParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
-                                 std::map<std::string, std::string> &kernelParameters) const;
-    void addExtraGlobalPostLearnParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
-                                       std::map<std::string, std::string> &kernelParameters) const;
-    void addExtraGlobalSynapseDynamicsParams(const std::string &prefix, const std::string &suffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
-                                             std::map<std::string, std::string> &kernelParameters) const;
-
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

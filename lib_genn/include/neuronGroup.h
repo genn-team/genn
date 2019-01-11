@@ -128,8 +128,6 @@ public:
     //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
-    void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
-
     //! Does this neuron group require any initialisation code to be run?
     bool isInitCodeRequired() const;
 

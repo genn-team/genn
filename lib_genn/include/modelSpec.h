@@ -168,14 +168,6 @@ public:
     //================================
     const std::map<std::string, std::string> &getInitKernelParameters() const{ return m_InitKernelParameters; }
 
-    //! Does this model require device initialisation kernel
-    /*! **NOTE** this is for neuron groups and densely connected synapse groups only */
-   // bool isDeviceInitRequired(int localHostID) const;
-
-    //! Does this model require a device sparse initialisation kernel
-    /*! **NOTE** this is for sparsely connected synapse groups only */
-    //bool isDeviceSparseInitRequired() const;
-
     // PUBLIC NEURON FUNCTIONS
     //========================
     //! Get std::map containing local named NeuronGroup objects in model
@@ -183,9 +175,6 @@ public:
 
     //! Get std::map containing remote named NeuronGroup objects in model
     const std::map<std::string, NeuronGroup> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
-
-    //! Gets std::map containing names and types of each parameter that should be passed through to the neuron kernel
-    const std::map<std::string, std::string> &getNeuronKernelParameters() const{ return neuronKernelParameters; }
 
     //! How many neurons are simulated locally in this model
     unsigned int getNumLocalNeurons() const;
@@ -268,15 +257,6 @@ public:
 
     //! Get std::map containing remote named SynapseGroup objects in model
     const std::map<std::string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
-
-    //! Gets std::map containing names and types of each parameter that should be passed through to the synapse kernel
-    const std::map<std::string, std::string> &getSynapseKernelParameters() const{ return synapseKernelParameters; }
-
-    //! Gets std::map containing names and types of each parameter that should be passed through to the postsynaptic learning kernel
-    const std::map<std::string, std::string> &getSimLearnPostKernelParameters() const{ return simLearnPostKernelParameters; }
-
-    //! Gets std::map containing names and types of each parameter that should be passed through to the synapse dynamics kernel
-    const std::map<std::string, std::string> &getSynapseDynamicsKernelParameters() const{ return synapseDynamicsKernelParameters; }
 
     //! Find a synapse group by name
     const SynapseGroup *findSynapseGroup(const std::string &name) const;
@@ -412,9 +392,6 @@ public:
     //! Get std::map containing remote named CurrentSource objects in model
     const std::map<std::string, CurrentSource> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
 
-    //! Gets std::map containing names and types of each parameter that should be passed through to the current source kernel
-    const std::map<std::string, std::string> &getCurrentSourceKernelParameters() const{ return currentSourceKernelParameters; }
-
     //! Find a current source by name
     const CurrentSource *findCurrentSource(const std::string &name) const;
 
@@ -510,11 +487,6 @@ private:
 
     // Kernel members
     std::map<std::string, std::string> m_InitKernelParameters;
-    std::map<std::string, std::string> neuronKernelParameters;
-    std::map<std::string, std::string> synapseKernelParameters;
-    std::map<std::string, std::string> simLearnPostKernelParameters;
-    std::map<std::string, std::string> synapseDynamicsKernelParameters;
-    std::map<std::string, std::string> currentSourceKernelParameters;
 
      // Model members
     std::string name;               //!< Name of the neuronal newtwork model

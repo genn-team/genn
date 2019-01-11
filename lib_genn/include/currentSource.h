@@ -52,8 +52,6 @@ public:
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(size_t index) const{ return m_VarLocation[index]; }
 
-    void addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const;
-
     //! Does this current source require any initialisation code to be run
     bool isInitCodeRequired() const;
 

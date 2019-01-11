@@ -39,19 +39,6 @@ void CurrentSource::initDerivedParams(double dt)
     }
 }
 
-void CurrentSource::addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const
-{
-    for(auto const &p : getCurrentSourceModel()->getExtraGlobalParams()) {
-        std::string pnamefull = p.first + getName();
-        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
-            // parameter wasn't registered yet - is it used?
-            if (getCurrentSourceModel()->getInjectionCode().find("$(" + p.first + ")") != std::string::npos) {
-                kernelParameters.emplace(pnamefull, p.second);
-            }
-        }
-    }
-}
-
 bool CurrentSource::isInitCodeRequired() const
 {
     // Return true if any of the variables initialisers have any code

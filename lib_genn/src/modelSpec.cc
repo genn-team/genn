@@ -395,9 +395,6 @@ void NNmodel::finalize()
     for(auto &n : m_LocalNeuronGroups) {
         // Initialize derived parameters
         n.second.initDerivedParams(dt);
-
-        // Make extra global parameter lists
-        n.second.addExtraGlobalParams(neuronKernelParameters);
     }
 
     // SYNAPSE groups
@@ -425,10 +422,7 @@ void NNmodel::finalize()
 
         // Make extra global parameter lists
         s.second.addExtraGlobalConnectivityInitialiserParams(m_InitKernelParameters);
-        s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
-        s.second.addExtraGlobalSynapseParams(synapseKernelParameters);
-        s.second.addExtraGlobalPostLearnParams(simLearnPostKernelParameters);
-        s.second.addExtraGlobalSynapseDynamicsParams(synapseDynamicsKernelParameters);
+        //s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
 
         // If this synapse group has either ragged or bitmask connectivity which is initialised
         // using a connectivity snippet AND has individual synaptic variables
@@ -451,9 +445,6 @@ void NNmodel::finalize()
     for(auto &cs : m_LocalCurrentSources) {
         // Initialize derived parameters
         cs.second.initDerivedParams(dt);
-
-        // Make extra global parameter lists
-        cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
 
     // Merge incoming postsynaptic models
@@ -467,8 +458,5 @@ void NNmodel::finalize()
     for(auto &cs : m_LocalCurrentSources) {
         // Initialize derived parameters
         cs.second.initDerivedParams(dt);
-
-        // Make extra global parameter lists
-        cs.second.addExtraGlobalParams(currentSourceKernelParameters);
     }
 }

@@ -213,22 +213,6 @@ bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamef
     return false;
 }
 
-void NeuronGroup::addExtraGlobalParams(std::map<std::string, std::string> &kernelParameters) const
-{
-    for(auto const &p : getNeuronModel()->getExtraGlobalParams()) {
-        std::string pnamefull = p.first + getName();
-        if (kernelParameters.find(pnamefull) == kernelParameters.end()) {
-            // parameter wasn't registered yet - is it used?
-            if (getNeuronModel()->getSimCode().find("$(" + p.first + ")") != std::string::npos
-                || getNeuronModel()->getThresholdConditionCode().find("$(" + p.first + ")") != std::string::npos
-                || getNeuronModel()->getResetCode().find("$(" + p.first + ")") != std::string::npos) 
-            {
-                kernelParameters.emplace(pnamefull, p.second);
-            }
-        }
-    }
-}
-
 bool NeuronGroup::isInitCodeRequired() const
 {
     // Return true if any of the variables initialisers have any code

@@ -15,7 +15,7 @@
 #include "code_generator/substitutions.h"
 
 // CUDA backend includes
-#include "utils.h"
+//#include "utils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -37,6 +37,36 @@ bool canPushPullVar(VarLocation loc)
     return ((loc & VarLocation::HOST) &&
             (loc & VarLocation::DEVICE) &&
             !(loc & VarLocation::ZERO_COPY));
+}
+//--------------------------------------------------------------------------
+void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
+                             std::map<std::string, std::string> &kernelParameters, const std::vector<std::string> &codeStrings)
+{
+    // Loop through list of global parameters
+    for(const auto &p : extraGlobalParameters) {
+        // If this parameter is used in any codestrings, add it to list of kernel parameters
+        if(std::any_of(codeStrings.cbegin(), codeStrings.cend(),
+            [p, codeSuffix](const std::string &c){ return c.find("$(" + p.first + codeSuffix + ")") != std::string::npos; }))
+        {
+            kernelParameters.emplace(p.first + varSuffix, p.second);
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void updateSynapseGroupExtraGlobalParams(const SynapseGroup &sg, std::map<std::string, std::string> &kernelParameters,
+                                         const std::vector<std::string> &codeStrings)
+{
+    // Synapse kernel
+    // --------------
+    // Add any of the pre or postsynaptic neuron group's extra global
+    // parameters referenced in code strings to the map of kernel parameters
+    updateExtraGlobalParams(sg.getSrcNeuronGroup()->getName(), "_pre", sg.getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+                             kernelParameters, codeStrings);
+    updateExtraGlobalParams(sg.getTrgNeuronGroup()->getName(), "_post", sg.getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+                             kernelParameters, codeStrings);
+
+    // Finally add any weight update model extra global parameters referenced in code strings to the map of kernel paramters
+    updateExtraGlobalParams(sg.getName(), "", sg.getWUModel()->getExtraGlobalParams(), kernelParameters, codeStrings);
 }
 }   // Anonymous namespace
 
@@ -60,6 +90,7 @@ const char *Backend::KernelNames[KernelMax] = {
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device)
 :   m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
 {
+#define CHECK_CUDA_ERRORS(X) X
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
 
@@ -126,14 +157,25 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
         }
     }
 
-    /*
-    for(const auto &n : model.getLocalNeuronGroups()) {*/
+    // Add extra global parameters references by neuron models to map of kernel parameters
+    std::map<std::string, std::string> neuronKernelParameters;
+    for(const auto &n : model.getLocalNeuronGroups()) {
+        const auto *nm = n.second.getNeuronModel();
+        updateExtraGlobalParams(n.first, "", nm->getExtraGlobalParams(), neuronKernelParameters,
+                                {nm->getSimCode(), nm->getThresholdConditionCode(), nm->getResetCode()});
+    }
+
+    // Add extra global parameters references by current source models to map of kernel parameters
+    for(const auto &c : model.getLocalCurrentSources()) {
+        const auto *csm = c.second.getCurrentSourceModel();
+        updateExtraGlobalParams(c.first, "", csm->getExtraGlobalParams(), neuronKernelParameters,
+                                {csm->getInjectionCode()});
+    }
+    // **TODO** add neuron kernel parameters from spike-like event conditions
+
     size_t idStart = 0;
     os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(";
-    for(const auto &p : model.getNeuronKernelParameters()) {
-        os << p.second << " " << p.first << ", ";
-    }
-    for(const auto &p : model.getCurrentSourceKernelParameters()) {
+    for(const auto &p : neuronKernelParameters) {
         os << p.second << " " << p.first << ", ";
     }
     os << model.getTimePrecision() << " t)" << std::endl;
@@ -269,10 +311,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(";
-            for(const auto &p : model.getNeuronKernelParameters()) {
-                os << p.first << ", ";
-            }
-            for(const auto &p : model.getCurrentSourceKernelParameters()) {
+            for(const auto &p : neuronKernelParameters) {
                 os << p.first << ", ";
             }
             os << "t);" << std::endl;
@@ -319,9 +358,21 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         }
     }
 
+    // Add extra global parameters references by weight updates models to maps of kernel parameters
+    std::map<std::string, std::string> presynapticKernelParameters;
+    std::map<std::string, std::string> postsynapticKernelParameters;
+    std::map<std::string, std::string> synapseDynamicsKernelParameters;
+    for(const auto &s : model.getLocalSynapseGroups()) {
+        const auto *wum = s->getWUModel();
+        updateSynapseGroupExtraGlobalParams(s.second, presynapticKernelParameters,
+                                            {wum->getSimCode(), wum->getEventCode(), wum->getEventThresholdCode()});
+        updateSynapseGroupExtraGlobalParams(s.second, postsynapticKernelParameters, {wum->getLearnPostCode()});
+        updateSynapseGroupExtraGlobalParams(s.second, synapseDynamicsKernelParameters, {wum->getSynapseDynamicsCode()});
+    }
+
     size_t idPresynapticStart = 0;
     os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(";
-    for (const auto &p : model.getSynapseKernelParameters()) {
+    for (const auto &p : presynapticKernelParameters) {
         os << p.second << " " << p.first << ", ";
     }
     os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
@@ -455,7 +506,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         [](const NNmodel::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
     {
         os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
-        for (const auto &p : model.getSimLearnPostKernelParameters()) {
+        for (const auto &p : postsynapticKernelParameters) {
             os << p.second << " " << p.first << ", ";
         }
         os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
@@ -562,7 +613,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         [](const NNmodel::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
     {
         os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
-        for (const auto &p : model.getSynapseDynamicsKernelParameters()) {
+        for (const auto &p : synapseDynamicsKernelParameters) {
             os << p.second << " " << p.first << ", ";
         }
         os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
@@ -645,7 +696,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idPreSynapseReset);
             os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
-            for(const auto &p : model.getSynapseDynamicsKernelParameters()) {
+            for(const auto &p : synapseDynamicsKernelParameters) {
                 os << p.first << ", ";
             }
             os << "t);" << std::endl;
@@ -656,7 +707,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
             os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(";
-            for(const auto &p : model.getSynapseKernelParameters()) {
+            for(const auto &p : presynapticKernelParameters) {
                 os << p.first << ", ";
             }
             os << "t);" << std::endl;
@@ -667,7 +718,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
             os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(";
-            for(const auto &p : model.getSimLearnPostKernelParameters()) {
+            for(const auto &p : postsynapticKernelParameters) {
                 os << p.first << ", ";
             }
             os << "t);" << std::endl;
