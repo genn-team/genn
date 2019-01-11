@@ -147,14 +147,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
                 // Get number of postsynaptic spikes
                 if (s.second.getTrgNeuronGroup()->isDelayRequired() && s.second.getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                    os << "const unsigned int numSpikes = dd_glbSpkCnt" << s.second.getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
+                    os << "const unsigned int numSpikes = glbSpkCnt" << s.second.getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
                 }
                 else {
-                    os << "const unsigned int numSpikes = dd_glbSpkCnt" << s.second.getTrgNeuronGroup()->getName() << "[0];" << std::endl;
+                    os << "const unsigned int numSpikes = glbSpkCnt" << s.second.getTrgNeuronGroup()->getName() << "[0];" << std::endl;
                 }
 
                 // Loop through postsynaptic spikes
-                os << "for (const unsigned int j = 0; j < numSpikes; j++)";
+                os << "for (unsigned int j = 0; j < numSpikes; j++)";
                 {
                     CodeStream::Scope b(os);
 
@@ -174,7 +174,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
                         Substitutions synSubs(&funcSubs);
                         if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            os << "const unsigned int synAddress = remap" << s.first << "remap[ipre]";
+                            os << "const unsigned int synAddress = remap" << s.first << "[ipre]" << std::endl;
                             synSubs.addVarSubstitution("id_pre", "(remap" + s.first + "[ipre] / " + std::to_string(s.second.getMaxConnections()) + ")");
                             synSubs.addVarSubstitution("id_syn", "synAddress");
                         }
