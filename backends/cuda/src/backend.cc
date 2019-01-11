@@ -39,7 +39,7 @@ bool canPushPullVar(VarLocation loc)
             !(loc & VarLocation::ZERO_COPY));
 }
 //--------------------------------------------------------------------------
-void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const NewModels::Base::StringPairVec &extraGlobalParameters,
+void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Models::Base::StringPairVec &extraGlobalParameters,
                              std::map<std::string, std::string> &kernelParameters, const std::vector<std::string> &codeStrings)
 {
     // Loop through list of global parameters

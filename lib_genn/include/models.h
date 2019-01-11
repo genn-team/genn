@@ -17,18 +17,18 @@
 //----------------------------------------------------------------------------
 #define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)                       \
     DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                  \
-    typedef NewModels::VarInitContainerBase<NUM_VARS> VarValues;        \
-    typedef NewModels::VarInitContainerBase<0> PreVarValues;            \
-    typedef NewModels::VarInitContainerBase<0> PostVarValues
+    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;        \
+    typedef Models::VarInitContainerBase<0> PreVarValues;            \
+    typedef Models::VarInitContainerBase<0> PostVarValues
 
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
 #define SET_VARS(...) virtual StringPairVec getVars() const{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// NewModels::VarInit
+// Models::VarInit
 //----------------------------------------------------------------------------
-namespace NewModels
+namespace Models
 {
 //! Class used to bind together everything required to initialise a variable:
 //! 1. A pointer to a variable initialisation snippet
@@ -48,7 +48,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NewModels::VarInitContainerBase
+// Models::VarInitContainerBase
 //----------------------------------------------------------------------------
 //! Wrapper to ensure at compile time that correct number of value initialisers
 //! are used when specifying the values of a model's initial state.
@@ -95,7 +95,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// NewModels::VarInitContainerBase<0>
+// Models::VarInitContainerBase<0>
 //----------------------------------------------------------------------------
 //! Template specialisation of ValueInitBase to avoid compiler warnings
 //! in the case when a model requires no variable initialisers
@@ -126,7 +126,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NewModels::Base
+// Models::Base
 //----------------------------------------------------------------------------
 //! Base class for all models - in addition to the parameters snippets have, models can have state variables
 class Base : public Snippet::Base
@@ -161,4 +161,4 @@ protected:
         return distance(vars.begin(), varIter);
     }
 };
-} // NewModels
+} // Models

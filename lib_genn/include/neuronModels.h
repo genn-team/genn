@@ -8,7 +8,6 @@
 #include <vector>
 
 // GeNN includes
-#include "codeGenUtils.h"
 #include "models.h"
 
 //----------------------------------------------------------------------------
@@ -28,7 +27,7 @@
 namespace NeuronModels
 {
 //! Base class for all neuron models
-class Base : public NewModels::Base
+class Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -54,11 +53,11 @@ public:
 
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
-    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
+    virtual Models::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
 
     //! Gets names, types (as strings) and initial values of local variables into which
     //! the 'apply input code' of (potentially) multiple postsynaptic input models can apply input
-    virtual NewModels::Base::NameTypeValVec getAdditionalInputVars() const{ return {}; }
+    virtual Models::Base::NameTypeValVec getAdditionalInputVars() const{ return {}; }
 
     //! Is this neuron model the internal Poisson model (which requires a number of special cases)
     //! \private

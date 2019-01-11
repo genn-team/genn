@@ -8,7 +8,7 @@ class CurrentSource;
 class NeuronGroup;
 class SynapseGroup;
 
-namespace NewModels
+namespace Models
 {
     class VarInit;
 }
@@ -30,7 +30,7 @@ void applyWeightUpdateModelSubstitutions(std::string &code, const SynapseGroup &
 void applyCurrentSourceSubstitutions(std::string &code, const CurrentSource &cs,
                                      const std::string &varPrefix);
 
-void applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit);
+void applyVarInitSnippetSubstitutions(std::string &code, const Models::VarInit &varInit);
 
 void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroup &sg);
 }   // namespace CodeGenerator

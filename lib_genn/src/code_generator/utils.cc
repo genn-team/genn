@@ -227,6 +227,11 @@ bool regexSubstitute(std::string &s, const std::regex &regex, const std::string 
 }    // Anonymous namespace
 
 //--------------------------------------------------------------------------
+// CodeGenerator
+//--------------------------------------------------------------------------
+namespace CodeGenerator
+{
+//--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
 void substitute(std::string &s, const std::string &trg, const std::string &rep)
@@ -299,11 +304,11 @@ bool isRNGRequired(const std::string &code)
 //--------------------------------------------------------------------------
 //! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init mode
 //--------------------------------------------------------------------------
-bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers)
+bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const NewModels::VarInit &varInit)
+                       [](const Models::VarInit &varInit)
                        {
                            return isRNGRequired(varInit.getSnippet()->getCode());
                        });
@@ -668,3 +673,4 @@ void neuronSubstitutionsInSynapticCode(
     const std::string postOffset = sg->getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
     postNeuronSubstitutionsInSynapticCode(wCode, sg, postOffset, backPropDelayMs, postIdx, devPrefix, postVarPrefix, postVarSuffix);
 }
+}   // namespace CodeGenerator

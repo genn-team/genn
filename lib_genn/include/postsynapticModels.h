@@ -20,7 +20,7 @@
 namespace PostsynapticModels
 {
 //! Base class for all postsynaptic models
-class Base : public NewModels::Base
+class Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------

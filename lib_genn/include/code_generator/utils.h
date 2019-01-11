@@ -16,6 +16,11 @@ class NNmodel;
 class SynapseGroup;
 
 //--------------------------------------------------------------------------
+// CodeGenerator
+//--------------------------------------------------------------------------
+namespace CodeGenerator
+{
+//--------------------------------------------------------------------------
 // GenericFunction
 //--------------------------------------------------------------------------
 //! Immutable structure for specifying the name and number of
@@ -113,9 +118,9 @@ struct NameIterCtx
 //----------------------------------------------------------------------------
 // Typedefines
 //----------------------------------------------------------------------------
-typedef NameIterCtx<NewModels::Base::StringPairVec> VarNameIterCtx;
-typedef NameIterCtx<NewModels::Base::DerivedParamVec> DerivedParamNameIterCtx;
-typedef NameIterCtx<NewModels::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
+typedef NameIterCtx<Models::Base::StringPairVec> VarNameIterCtx;
+typedef NameIterCtx<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
+typedef NameIterCtx<Models::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
 
 
 //--------------------------------------------------------------------------
@@ -154,7 +159,7 @@ bool isRNGRequired(const std::string &code);
 //--------------------------------------------------------------------------
 //! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
 //--------------------------------------------------------------------------
-bool isInitRNGRequired(const std::vector<NewModels::VarInit> &varInitialisers);
+bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers);
 
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
@@ -316,3 +321,4 @@ void neuronSubstitutionsInSynapticCode(
     const std::string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
     const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const std::string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+}   // namespace CodeGenerator

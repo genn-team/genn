@@ -17,7 +17,7 @@ class CurrentSource
 {
 public:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers,
+                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                 VarLocation defaultVarLocation) 
     :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_VarLocation(varInitialisers.size(), defaultVarLocation)
@@ -44,7 +44,7 @@ public:
 
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
-    const std::vector<NewModels::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -75,7 +75,7 @@ private:
     const CurrentSourceModels::Base *m_CurrentSourceModel;
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
-    std::vector<NewModels::VarInit> m_VarInitialisers;
+    std::vector<Models::VarInit> m_VarInitialisers;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
     std::vector<VarLocation> m_VarLocation;

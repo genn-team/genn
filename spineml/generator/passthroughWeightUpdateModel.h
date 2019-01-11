@@ -27,9 +27,9 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef Snippet::ValueBase<0> ParamValues;
-    typedef NewModels::VarInitContainerBase<0> VarValues;
-    typedef NewModels::VarInitContainerBase<0> PreVarValues;
-    typedef NewModels::VarInitContainerBase<0> PostVarValues;
+    typedef Models::VarInitContainerBase<0> VarValues;
+    typedef Models::VarInitContainerBase<0> PreVarValues;
+    typedef Models::VarInitContainerBase<0> PostVarValues;
 
     //------------------------------------------------------------------------
     // WeightUpdateModels::Base virtuals

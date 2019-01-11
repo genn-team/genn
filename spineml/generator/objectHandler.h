@@ -78,8 +78,8 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void addDerivedParams(const NewModels::Base::StringVec &paramNames,
-                          NewModels::Base::DerivedParamVec &derivedParams) const;
+    void addDerivedParams(const Models::Base::StringVec &paramNames,
+                          Models::Base::DerivedParamVec &derivedParams) const;
 
 private:
     //------------------------------------------------------------------------

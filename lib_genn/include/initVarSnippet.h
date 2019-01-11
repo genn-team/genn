@@ -41,7 +41,7 @@ public:
  *
     - \c value - The value to intialise the variable to
 
-    \note This snippet type is seldom used directly - NewModels::VarInit
+    \note This snippet type is seldom used directly - Models::VarInit
     has an implicit constructor that, internally, creates one of these snippets*/
 class Constant : public Base
 {

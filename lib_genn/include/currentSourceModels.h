@@ -24,7 +24,7 @@
 namespace CurrentSourceModels
 {
 //! Base class for all current source models
-class Base : public NewModels::Base
+class Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ public:
     virtual std::string getInjectionCode() const{ return ""; }
 
     //! Gets names and types (as strings) of additional parameters
-    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
+    virtual Models::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------

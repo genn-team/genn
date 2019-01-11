@@ -55,20 +55,20 @@ enum class TimePrecision
 
 // Wrappers to save typing when declaring VarInitialisers structures
 template<typename S>
-inline NewModels::VarInit initVar(const typename S::ParamValues &params)
+inline Models::VarInit initVar(const typename S::ParamValues &params)
 {
-    return NewModels::VarInit(S::getInstance(), params.getValues());
+    return Models::VarInit(S::getInstance(), params.getValues());
 }
 
 template<typename S>
-inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::ValueBase<0>>::value, NewModels::VarInit>::type initVar()
+inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::ValueBase<0>>::value, Models::VarInit>::type initVar()
 {
-   return NewModels::VarInit(S::getInstance(), {});
+   return Models::VarInit(S::getInstance(), {});
 }
 
-inline NewModels::VarInit uninitialisedVar()
+inline Models::VarInit uninitialisedVar()
 {
-    return NewModels::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
+    return Models::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
 }
 
 template<typename S>

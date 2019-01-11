@@ -8,10 +8,13 @@
 
 // GeNN includes
 #include "initSparseConnectivitySnippet.h"
-#include "neuronGroup.h"
 #include "postsynapticModels.h"
 #include "weightUpdateModels.h"
 #include "synapseMatrixType.h"
+#include "variableMode.h"
+
+// Forward declarations
+class NeuronGroup;
 
 //------------------------------------------------------------------------
 // SynapseGroup
@@ -20,8 +23,8 @@ class SynapseGroup
 {
 public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
-                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
+                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                  NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation);
@@ -123,8 +126,8 @@ public:
     const NeuronGroup *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroup *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    int getClusterHostID() const{ return m_TrgNeuronGroup->getClusterHostID(); }
-    int getClusterDeviceID() const{ return m_TrgNeuronGroup->getClusterDeviceID(); }
+    int getClusterHostID() const;
+    int getClusterDeviceID() const;
 
     //! Does synapse group need to handle 'true' spikes
     bool isTrueSpikeRequired() const;
@@ -138,16 +141,16 @@ public:
 
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
     const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
-    const std::vector<NewModels::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
-    const std::vector<NewModels::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
-    const std::vector<NewModels::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
+    const std::vector<Models::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
+    const std::vector<Models::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
+    const std::vector<Models::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
     const std::vector<double> getWUConstInitVals() const;
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
     const std::vector<double> &getPSParams() const{ return m_PSParams; }
     const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
-    const std::vector<NewModels::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
+    const std::vector<Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
@@ -279,13 +282,13 @@ private:
     std::vector<double> m_WUDerivedParams;
 
     //!< Initialisers for weight update model per-synapse variables
-    std::vector<NewModels::VarInit> m_WUVarInitialisers;
+    std::vector<Models::VarInit> m_WUVarInitialisers;
 
     //!< Initialisers for weight update model per-presynaptic neuron variables
-    std::vector<NewModels::VarInit> m_WUPreVarInitialisers;
+    std::vector<Models::VarInit> m_WUPreVarInitialisers;
 
     //!< Initialisers for weight update model post-presynaptic neuron variables
-    std::vector<NewModels::VarInit> m_WUPostVarInitialisers;
+    std::vector<Models::VarInit> m_WUPostVarInitialisers;
     
     //!< Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
@@ -297,7 +300,7 @@ private:
     std::vector<double> m_PSDerivedParams;
 
     //!< Initialisers for post synapse model variables
-    std::vector<NewModels::VarInit> m_PSVarInitialisers;
+    std::vector<Models::VarInit> m_PSVarInitialisers;
 
     //!< Location of individual per-synapse state variables 
     std::vector<VarLocation> m_WUVarLocation;

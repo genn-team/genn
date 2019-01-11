@@ -15,7 +15,7 @@
 // GeNN includes
 #include "codeStream.h"
 #include "initVarSnippet.h"
-#include "newModels.h"
+#include "Models.h"
 
 // Forward declarations
 namespace SpineMLGenerator
@@ -34,7 +34,7 @@ namespace SpineMLGenerator
 class ParamValues
 {
 public:
-    ParamValues(const std::map<std::string, NewModels::VarInit> &varInitialisers, const NewModels::Base &model)
+    ParamValues(const std::map<std::string, Models::VarInit> &varInitialisers, const Models::Base &model)
         : m_VarInitialisers(varInitialisers), m_Model(model){}
 
     //----------------------------------------------------------------------------
@@ -46,8 +46,8 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    const std::map<std::string, NewModels::VarInit> &m_VarInitialisers;
-    const NewModels::Base &m_Model;
+    const std::map<std::string, Models::VarInit> &m_VarInitialisers;
+    const Models::Base &m_Model;
 };
 
 //------------------------------------------------------------------------
@@ -57,19 +57,19 @@ template<typename M>
 class VarValues
 {
 public:
-    VarValues(const std::map<std::string, NewModels::VarInit> &varInitialisers, const M &model)
+    VarValues(const std::map<std::string, Models::VarInit> &varInitialisers, const M &model)
         : m_VarInitialisers(varInitialisers), m_Model(model){}
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    std::vector<NewModels::VarInit> getInitialisers() const
+    std::vector<Models::VarInit> getInitialisers() const
     {
         // Get variables from model
         auto modelVars = m_Model.getVars();
 
         // Reserve vector of values to match it
-        std::vector<NewModels::VarInit> varValues;
+        std::vector<Models::VarInit> varValues;
         varValues.reserve(modelVars.size());
 
         // Populate this vector with either values from map or 0s
@@ -78,16 +78,16 @@ public:
                        [this](const std::pair<std::string, std::string> &n)
                        {
                            if(n.first == "_regimeID") {
-                               return NewModels::VarInit(InitVarSnippet::Constant::getInstance(),
+                               return Models::VarInit(InitVarSnippet::Constant::getInstance(),
                                                          {(double)m_Model.getInitialRegimeID()});
                            }
                            else {
                                auto v = m_VarInitialisers.find(n.first);
                                if(v == m_VarInitialisers.end()) {
-                                   return NewModels::VarInit(InitVarSnippet::Constant::getInstance(), {0.0});
+                                   return Models::VarInit(InitVarSnippet::Constant::getInstance(), {0.0});
                                }
                                else {
-                                   return NewModels::VarInit(v->second);
+                                   return Models::VarInit(v->second);
                                }
                            }
                         });
@@ -98,7 +98,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    const std::map<std::string, NewModels::VarInit> &m_VarInitialisers;
+    const std::map<std::string, Models::VarInit> &m_VarInitialisers;
     const M &m_Model;
 };
 
@@ -206,13 +206,13 @@ void wrapVariableNames(std::string &code, const std::string &variableName);
 
 //!< Based on the set of parameter names which are deemed to be variable,
 //!< build vectors of variables and parameters to be used by GeNN model
-std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> findModelVariables(
+std::tuple<Models::Base::StringVec, Models::Base::StringPairVec> findModelVariables(
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
     bool multipleRegimes);
 
-void substituteModelVariables(const NewModels::Base::StringVec &paramNames,
-                              const NewModels::Base::StringPairVec &vars,
-                              const NewModels::Base::DerivedParamVec &derivedParams,
+void substituteModelVariables(const Models::Base::StringVec &paramNames,
+                              const Models::Base::StringPairVec &vars,
+                              const Models::Base::DerivedParamVec &derivedParams,
                               const std::vector<std::string*> &codeStrings);
 
 // Read aliases into map
@@ -223,7 +223,7 @@ bool expandAliases(std::string &code, const std::map<std::string, std::string> &
 
 //! Return code to implement send port - will either return a variable directly or will expand an alias
 std::string getSendPortCode(const std::map<std::string, std::string> &aliases,
-                            const NewModels::Base::StringPairVec &vars,
+                            const Models::Base::StringPairVec &vars,
                             const std::string &sendPortName);
 
 }   // namespace SpineMLGenerator

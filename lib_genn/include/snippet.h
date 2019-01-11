@@ -72,7 +72,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// NewModels::ValueBase<0>
+// Models::ValueBase<0>
 //----------------------------------------------------------------------------
 //! Template specialisation of ValueBase to avoid compiler warnings
 //! in the case when a model requires no parameters or state variables

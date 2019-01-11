@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
                 const auto *overridenPropertyNames = getNamedSet(overridenProperties, popName);
 
                 // Read neuron properties
-                std::map<std::string, NewModels::VarInit> varInitialisers;
+                std::map<std::string, Models::VarInit> varInitialisers;
                 ModelParams::Neuron modelParams(basePath, neuron, externalInputPorts,
                                                 overridenPropertyNames, varInitialisers);
 
@@ -444,7 +444,7 @@ int main(int argc, char *argv[])
                     const auto *weightUpdateOverridenPropertyNames = getNamedSet(overridenProperties, weightUpdateName);
 
                     // Read weight update properties
-                    std::map<std::string, NewModels::VarInit> weightUpdateVarInitialisers;
+                    std::map<std::string, Models::VarInit> weightUpdateVarInitialisers;
                     ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
                                                                       popName, trgPopName,
                                                                       weightUpdateExternalInputPorts,
@@ -469,7 +469,7 @@ int main(int argc, char *argv[])
                     const auto *postSynapseOverridenPropertyNames = getNamedSet(overridenProperties, postSynapseName);
 
                     // Read postsynapse properties
-                    std::map<std::string, NewModels::VarInit> postsynapticVarInitialisers;
+                    std::map<std::string, Models::VarInit> postsynapticVarInitialisers;
                     ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
                                                                       trgPopName,
                                                                       postSynapseExternalInputPorts,

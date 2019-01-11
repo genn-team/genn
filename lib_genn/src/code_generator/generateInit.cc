@@ -89,7 +89,7 @@ void genInitSpikes(CodeStream &os, const CodeGenerator::BackendBase &backend, co
 }
 //------------------------------------------------------------------------
 template<typename I, typename M, typename Q>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs, const NewModels::Base::StringPairVec &vars,
+void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs, const Models::Base::StringPairVec &vars,
                           size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarLocation, Q isVarQueueRequired)
 {
@@ -142,7 +142,7 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &back
 }
 //------------------------------------------------------------------------
 template<typename I, typename M>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs, const NewModels::Base::StringPairVec &vars,
+void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const Substitutions &popSubs, const Models::Base::StringPairVec &vars,
                           size_t count, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarMode)
 {

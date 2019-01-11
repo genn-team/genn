@@ -217,7 +217,7 @@ bool NeuronGroup::isInitCodeRequired() const
 {
     // Return true if any of the variables initialisers have any code
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
-                       [](const NewModels::VarInit &v)
+                       [](const Models::VarInit &v)
                        {
                            return !v.getSnippet()->getCode().empty();
                        });

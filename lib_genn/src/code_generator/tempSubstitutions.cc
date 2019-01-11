@@ -88,7 +88,7 @@ void CodeGenerator::applyCurrentSourceSubstitutions(std::string &code, const Cur
     name_substitutions(code, "", csExtraGlobalParams.nameBegin, csExtraGlobalParams.nameEnd, cs.getName());
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::applyVarInitSnippetSubstitutions(std::string &code, const NewModels::VarInit &varInit)
+void CodeGenerator::applyVarInitSnippetSubstitutions(std::string &code, const Models::VarInit &varInit)
 {
     // Substitue derived and standard parameters into init code
     DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());

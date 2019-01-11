@@ -10,7 +10,9 @@
 #include "neuronModels.h"
 #include "variableMode.h"
 
+// Forward declarations
 class CurrentSource;
+class SynapseGroup;
 
 //------------------------------------------------------------------------
 // NeuronGroup
@@ -19,7 +21,7 @@ class NeuronGroup
 {
 public:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, 
+                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                 VarLocation defaultVarLocation, int hostID, int deviceID) :
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false),
@@ -81,7 +83,7 @@ public:
 
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
-    const std::vector<NewModels::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Gets pointers to all synapse groups which provide input to this neuron group
     const std::vector<SynapseGroup*> &getInSyn() const{ return m_InSyn; }
@@ -163,7 +165,7 @@ private:
     const NeuronModels::Base *m_NeuronModel;
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
-    std::vector<NewModels::VarInit> m_VarInitialisers;
+    std::vector<Models::VarInit> m_VarInitialisers;
     std::vector<SynapseGroup*> m_InSyn;
     std::vector<SynapseGroup*> m_OutSyn;
     std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> m_MergedInSyn;

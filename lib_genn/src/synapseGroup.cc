@@ -6,14 +6,18 @@
 #include <iostream>
 
 // GeNN includes
-#include "codeGenUtils.h"
+#include "neuronGroup.h"
+
+// GeNN code generator includes
+// **YUCK**
+#include "code_generator/utils.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
 namespace
 {
-std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varInitialisers)
+std::vector<double> getConstInitVals(const std::vector<Models::VarInit> &varInitialisers)
 {
     // Reserve initial values to match initialisers
     std::vector<double> initVals;
@@ -21,7 +25,7 @@ std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varI
 
     // Transform variable initialisers into a vector of doubles
     std::transform(varInitialisers.cbegin(), varInitialisers.cend(), std::back_inserter(initVals),
-                   [](const NewModels::VarInit &v)
+                   [](const Models::VarInit &v)
                    {
                        // Check
                        if(dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr) {
@@ -40,8 +44,8 @@ std::vector<double> getConstInitVals(const std::vector<NewModels::VarInit> &varI
 // SynapseGroup
 // ------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<NewModels::VarInit> &wuVarInitialisers, const std::vector<NewModels::VarInit> &wuPreVarInitialisers, const std::vector<NewModels::VarInit> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<NewModels::VarInit> &psVarInitialisers,
+                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                            NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
                            VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation)
@@ -190,6 +194,16 @@ void SynapseGroup::initDerivedParams(double dt)
 
     // Initialise any derived connectivity initialiser parameters
     m_ConnectivityInitialiser.initDerivedParams(dt);
+}
+
+int SynapseGroup::getClusterHostID() const
+{
+    return m_TrgNeuronGroup->getClusterHostID();
+}
+
+int SynapseGroup::getClusterDeviceID() const
+{
+    return m_TrgNeuronGroup->getClusterDeviceID();
 }
 
 bool SynapseGroup::isTrueSpikeRequired() const
@@ -368,7 +382,7 @@ bool SynapseGroup::isPSVarInitRequired() const
     // return true if any of them have initialisation code
     if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         return std::any_of(m_PSVarInitialisers.cbegin(), m_PSVarInitialisers.cend(),
-                           [](const NewModels::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
+                           [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
     }
     else {
         return false;
@@ -381,7 +395,7 @@ bool SynapseGroup::isWUVarInitRequired() const
     // return true if any of them have initialisation code
     if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
-                           [](const NewModels::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
+                           [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
     }
     else {
         return false;
@@ -391,13 +405,13 @@ bool SynapseGroup::isWUVarInitRequired() const
 bool SynapseGroup::isWUPreVarInitRequired() const
 {
     return std::any_of(m_WUPreVarInitialisers.cbegin(), m_WUPreVarInitialisers.cend(),
-                       [](const NewModels::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
+                       [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
 }
 
 bool SynapseGroup::isWUPostVarInitRequired() const
 {
     return std::any_of(m_WUPostVarInitialisers.cbegin(), m_WUPostVarInitialisers.cend(),
-                       [](const NewModels::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
+                       [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
 }
 
 bool SynapseGroup::isSparseConnectivityInitRequired() const

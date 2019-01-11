@@ -79,8 +79,8 @@ void SpineMLGenerator::ObjectHandler::TimeDerivative::onObject(const pugi::xml_n
     }
 }
 //------------------------------------------------------------------------
-void SpineMLGenerator::ObjectHandler::TimeDerivative::addDerivedParams(const NewModels::Base::StringVec &paramNames,
-                                                                       NewModels::Base::DerivedParamVec &derivedParams) const
+void SpineMLGenerator::ObjectHandler::TimeDerivative::addDerivedParams(const Models::Base::StringVec &paramNames,
+                                                                       Models::Base::DerivedParamVec &derivedParams) const
 {
     // If a closed form tau parameter exists
     if(!m_ClosedFormTauParamName.empty()) {

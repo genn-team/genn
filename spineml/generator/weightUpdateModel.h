@@ -44,8 +44,8 @@ public:
     //------------------------------------------------------------------------
     typedef SpineMLGenerator::ParamValues ParamValues;
     typedef SpineMLGenerator::VarValues<WeightUpdateModel> VarValues;
-    typedef NewModels::VarInitContainerBase<0> PreVarValues;
-    typedef NewModels::VarInitContainerBase<0> PostVarValues;
+    typedef Models::VarInitContainerBase<0> PreVarValues;
+    typedef Models::VarInitContainerBase<0> PostVarValues;
 
     //------------------------------------------------------------------------
     // Public API
@@ -71,9 +71,9 @@ public:
     virtual std::string getSimCode() const{ return m_SimCode; }
     virtual std::string getSynapseDynamicsCode() const{ return m_SynapseDynamicsCode; }
 
-    virtual NewModels::Base::StringVec getParamNames() const{ return m_ParamNames; }
-    virtual NewModels::Base::StringPairVec getVars() const{ return m_Vars; }
-    virtual NewModels::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
+    virtual Models::Base::StringVec getParamNames() const{ return m_ParamNames; }
+    virtual Models::Base::StringPairVec getVars() const{ return m_Vars; }
+    virtual Models::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
 
     //------------------------------------------------------------------------
     // Constants
@@ -91,9 +91,9 @@ private:
     std::string m_SendPortSpikeImpulse;
     std::string m_SendPortAnalogue;
 
-    NewModels::Base::StringVec m_ParamNames;
-    NewModels::Base::StringPairVec m_Vars;
-    NewModels::Base::DerivedParamVec m_DerivedParams;
+    Models::Base::StringVec m_ParamNames;
+    Models::Base::StringPairVec m_Vars;
+    Models::Base::DerivedParamVec m_DerivedParams;
 
     unsigned int m_InitialRegimeID;
 };

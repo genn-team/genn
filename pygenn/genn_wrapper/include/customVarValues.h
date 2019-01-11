@@ -11,7 +11,7 @@ private:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::vector<NewModels::VarInit> InitialiserArray;
+    typedef std::vector<Models::VarInit> InitialiserArray;
 
 public:
     VarValues()
@@ -26,7 +26,7 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Gets initialisers as a vector of Values
-    const std::vector<NewModels::VarInit> &getInitialisers() const
+    const std::vector<Models::VarInit> &getInitialisers() const
     {
         return m_Initialisers;
     }
@@ -34,7 +34,7 @@ public:
     //----------------------------------------------------------------------------
     // Operators
     //----------------------------------------------------------------------------
-    const NewModels::VarInit &operator[](size_t pos) const
+    const Models::VarInit &operator[](size_t pos) const
     {
         return m_Initialisers[pos];
     }

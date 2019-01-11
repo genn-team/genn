@@ -27,7 +27,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
             // Generate code to copy neuron state into local variable
-            // **TODO** basic behaviour could exist in NewModels::Base, NeuronModels::Base could add queuing logic
+            // **TODO** basic behaviour could exist in Models::Base, NeuronModels::Base could add queuing logic
             for(const auto &v : nm->getVars()) {
                 os << v.second << " l" << v.first << " = ";
                 os << backend.getVarPrefix() << v.first << ng.getName() << "[";
@@ -83,7 +83,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
                 // If synapse group has individual postsynaptic variables, also pull these in a coalesced access
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    // **TODO** base behaviour from NewModels::Base
+                    // **TODO** base behaviour from Models::Base
                     for (const auto &v : psm->getVars()) {
                         os << v.second << " lps" << v.first << sg->getName();
                         os << " = " << backend.getVarPrefix() << v.first << sg->getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;

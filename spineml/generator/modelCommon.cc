@@ -193,7 +193,7 @@ void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &v
     wrapAndReplaceVariableNames(code, variableName, variableName);
 }
 //----------------------------------------------------------------------------
-std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGenerator::findModelVariables(
+std::tuple<Models::Base::StringVec, Models::Base::StringPairVec> SpineMLGenerator::findModelVariables(
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams, bool multipleRegimes)
 {
     // Starting with those the model needs to vary, create a set of genn variables
@@ -206,7 +206,7 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
                    [](const pugi::xml_node &n){ return n.attribute("name").value(); });
 
     // Loop through model parameters
-    NewModels::Base::StringVec paramNames;
+    Models::Base::StringVec paramNames;
     for(auto param : componentClass.children("Parameter")) {
         // If parameter hasn't been declared variable by model, add it to vector of parameter names
         std::string paramName = param.attribute("name").value();
@@ -216,7 +216,7 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
     }
 
     // Add all GeNN variables
-    NewModels::Base::StringPairVec vars;
+    Models::Base::StringPairVec vars;
     std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(vars),
                    [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
 
@@ -229,9 +229,9 @@ std::tuple<NewModels::Base::StringVec, NewModels::Base::StringPairVec> SpineMLGe
     return std::make_tuple(paramNames, vars);
 }
 //----------------------------------------------------------------------------
-void SpineMLGenerator::substituteModelVariables(const NewModels::Base::StringVec &paramNames,
-                                                const NewModels::Base::StringPairVec &vars,
-                                                const NewModels::Base::DerivedParamVec &derivedParams,
+void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &paramNames,
+                                                const Models::Base::StringPairVec &vars,
+                                                const Models::Base::DerivedParamVec &derivedParams,
                                                 const std::vector<std::string*> &codeStrings)
 {
     // Loop through model parameters
@@ -325,7 +325,7 @@ bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::stri
 }
 //----------------------------------------------------------------------------
 std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::string> &aliases,
-                                              const NewModels::Base::StringPairVec &vars,
+                                              const Models::Base::StringPairVec &vars,
                                               const std::string &sendPortName)
 {
     std::cout << "\t\tAnalogue send port:" << sendPortName << std::endl;
