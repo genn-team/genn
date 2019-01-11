@@ -22,7 +22,6 @@ public:
                 const std::vector<double> &params, const std::vector<NewModels::VarInit> &varInitialisers, 
                 VarLocation defaultVarLocation, int hostID, int deviceID) :
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_SpikeTimeRequired(false), m_TrueSpikeRequired(false), m_SpikeEventRequired(false),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false),
         m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
         m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
@@ -43,10 +42,6 @@ public:
 
     //! Update which postsynaptic variables  require queues based on piece of code
     void updatePostVarQueues(const std::string &code);
-
-    void setSpikeTimeRequired(bool req){ m_SpikeTimeRequired = req; }
-    void setTrueSpikeRequired(bool req){ m_TrueSpikeRequired = req; }
-    void setSpikeEventRequired(bool req){ m_SpikeEventRequired = req; }
 
     //! Set variable mode used for variables containing this neuron group's output spikes
     void setSpikeLocation(VarLocation loc) { m_SpikeLocation = loc; }
@@ -102,9 +97,9 @@ public:
 
     int getClusterDeviceID() const{ return m_DeviceID; }
 
-    bool isSpikeTimeRequired() const{ return m_SpikeTimeRequired; }
-    bool isTrueSpikeRequired() const{ return m_TrueSpikeRequired; }
-    bool isSpikeEventRequired() const{ return m_SpikeEventRequired; }
+    bool isSpikeTimeRequired() const;
+    bool isTrueSpikeRequired() const;
+    bool isSpikeEventRequired() const;
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
@@ -144,12 +139,6 @@ public:
     //! Does this neuron group require an RNG for it's init code?
     bool isInitRNGRequired() const;
 
-    //! Is device var init code required for any variables in this neuron group?
-    /*bool isDeviceVarInitRequired() const;
-
-    //! Is any form of device initialisation required?
-    bool isDeviceInitRequired() const;*/
-
     //! Does this neuron group have outgoing connections specified host id?
     bool hasOutputToHost(int targetHostID) const;
 
@@ -180,9 +169,6 @@ private:
     std::vector<SynapseGroup*> m_InSyn;
     std::vector<SynapseGroup*> m_OutSyn;
     std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> m_MergedInSyn;
-    bool m_SpikeTimeRequired;
-    bool m_TrueSpikeRequired;
-    bool m_SpikeEventRequired;
     std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSource*> m_CurrentSources;

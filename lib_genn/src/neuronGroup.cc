@@ -131,6 +131,51 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
     }
 }
 
+bool NeuronGroup::isSpikeTimeRequired() const
+{
+    // If any INCOMING synapse groups require POSTSYNAPTIC spike times, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+        [](SynapseGroup *sg){ return sg->getWUModel()->isPostSpikeTimeRequired(); }))
+    {
+        return true;
+    }
+
+    // If any OUTGOING synapse groups require PRESYNAPTIC spike times, return true
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+        [](SynapseGroup *sg){ return sg->getWUModel()->isPreSpikeTimeRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NeuronGroup::isTrueSpikeRequired() const
+{
+    // If any OUTGOING synapse groups require true spikes, return true
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+        [](SynapseGroup *sg){ return sg->isTrueSpikeRequired(); }))
+    {
+        return true;
+    }
+
+    // If any INCOMING synapse groups require postsynaptic learning, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+        [](SynapseGroup *sg){ return !sg->getWUModel()->getLearnPostCode().empty(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool NeuronGroup::isSpikeEventRequired() const
+{
+     // Spike like events are required if any OUTGOING synapse groups require spike like events
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](SynapseGroup *sg){ return sg->isSpikeEventRequired(); });
+}
+
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
     // Return flag corresponding to variable

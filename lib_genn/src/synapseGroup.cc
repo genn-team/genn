@@ -83,18 +83,6 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     // Check that the source neuron group supports the desired number of delay steps
     srcNeuronGroup->checkNumDelaySlots(delaySteps);
 
-    // If the weight update model requires presynaptic
-    // spike times, set flag in source neuron group
-    if (getWUModel()->isPreSpikeTimeRequired()) {
-        srcNeuronGroup->setSpikeTimeRequired(true);
-    }
-
-    // If the weight update model requires postsynaptic
-    // spike times, set flag in target neuron group
-    if (getWUModel()->isPostSpikeTimeRequired()) {
-        trgNeuronGroup->setSpikeTimeRequired(true);
-    }
-
     // Add references to target and source neuron groups
     trgNeuronGroup->addInSyn(this);
     srcNeuronGroup->addOutSyn(this);

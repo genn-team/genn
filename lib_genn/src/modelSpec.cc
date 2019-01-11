@@ -359,7 +359,6 @@ void NNmodel::finalize()
             const auto *wu = sg->getWUModel();
 
             if (!wu->getEventCode().empty()) {
-                n.second.setSpikeEventRequired(true);
                 assert(!wu->getEventThresholdConditionCode().empty());
 
                  // Create iteration context to iterate over derived and extra global parameters
@@ -409,16 +408,12 @@ void NNmodel::finalize()
         s.second.initDerivedParams(dt);
 
         if (!wu->getSimCode().empty()) {
-            s.second.getSrcNeuronGroup()->setTrueSpikeRequired(true);
-
             // analyze which neuron variables need queues
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
         }
 
         if (!wu->getLearnPostCode().empty()) {
-            s.second.getTrgNeuronGroup()->setTrueSpikeRequired(true);
-
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
         }
