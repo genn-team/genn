@@ -11,6 +11,7 @@
 // GeNN code generator
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
+#include "code_generator/utils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -19,6 +20,8 @@ namespace
 {
 void writeTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
 {
+    using namespace CodeGenerator;
+
     os << "#define " << prefix << "_MIN ";
     if (precision == "float") {
         writePreciseString(os, std::numeric_limits<float>::min());

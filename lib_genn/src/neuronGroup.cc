@@ -5,9 +5,9 @@
 #include <cmath>
 
 // GeNN includes
-#include "codeGenUtils.h"
 #include "currentSource.h"
 #include "synapseGroup.h"
+#include "utils.h"
 
 // ------------------------------------------------------------------------
 // NeuronGroup
@@ -226,9 +226,9 @@ bool NeuronGroup::isInitCodeRequired() const
 bool NeuronGroup::isSimRNGRequired() const
 {
     // Returns true if any parts of the neuron code require an RNG
-    if(::isRNGRequired(getNeuronModel()->getSimCode())
-        || ::isRNGRequired(getNeuronModel()->getThresholdConditionCode())
-        || ::isRNGRequired(getNeuronModel()->getResetCode()))
+    if(Utils::isRNGRequired(getNeuronModel()->getSimCode())
+        || Utils::isRNGRequired(getNeuronModel()->getThresholdConditionCode())
+        || Utils::isRNGRequired(getNeuronModel()->getResetCode()))
     {
         return true;
     }
@@ -245,15 +245,15 @@ bool NeuronGroup::isSimRNGRequired() const
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroup *sg)
                        {
-                           return (::isRNGRequired(sg->getPSModel()->getApplyInputCode()) ||
-                                   ::isRNGRequired(sg->getPSModel()->getDecayCode()));
+                           return (Utils::isRNGRequired(sg->getPSModel()->getApplyInputCode()) ||
+                                   Utils::isRNGRequired(sg->getPSModel()->getDecayCode()));
                        });
 }
 
 bool NeuronGroup::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
-    if(::isInitRNGRequired(m_VarInitialisers)) {
+    if(Utils::isInitRNGRequired(m_VarInitialisers)) {
         return true;
     }
 

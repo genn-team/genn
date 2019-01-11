@@ -1,4 +1,4 @@
-#include "codeGenUtils.h"
+#include "code_generator/utils.h"
 
 // Is C++ regex library operational?
 // We assume it is for:
@@ -98,20 +98,14 @@ const char *mathsFuncs[][MathsFuncMax] = {
     {"fma", "fmaf"}
 };
 
-GenericFunction randomFuncs[] = {
-    {"gennrand_uniform", 0},
-    {"gennrand_normal", 0},
-    {"gennrand_exponential", 0},
-    {"gennrand_log_normal", 2},
-    {"gennrand_gamma", 1}
-};
-
 //--------------------------------------------------------------------------
 /*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
  */
 //--------------------------------------------------------------------------
 void ensureMathFunctionFtype(std::string &code, const std::string &type)
 {
+    using namespace CodeGenerator;
+
     // If type is double, substitute any single precision maths functions for double precision version
     if (type == "double") {
         for(const auto &m : mathsFuncs) {
@@ -163,6 +157,8 @@ void neuronSubstitutionsInSynapticCode(
     const std::string &varPrefix,
     const std::string &varSuffix)
 {
+    using namespace CodeGenerator;
+
     // presynaptic neuron variables, parameters, and global parameters
     const auto *neuronModel = ng->getNeuronModel();
     substitute(wCode, "$(sT" + sourceSuffix + ")",
@@ -277,42 +273,6 @@ bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::stri
     return regexSubstitute(s, regex, format);
 }
 
-//--------------------------------------------------------------------------
-//! \brief Does the code string contain any functions requiring random number generator
-//--------------------------------------------------------------------------
-bool isRNGRequired(const std::string &code)
-{
-    // Loop through random functions
-    for(const auto &r : randomFuncs) {
-        // If this function takes no arguments, return true if
-        // generic function name enclosed in $() markers is found
-        if(r.numArguments == 0) {
-            if(code.find("$(" + r.genericName + ")") != std::string::npos) {
-                return true;
-            }
-        }
-        // Otherwise, return true if generic function name
-        // prefixed by $( and suffixed with comma is found
-        else if(code.find("$(" + r.genericName + ",") != std::string::npos) {
-            return true;
-        }
-    }
-    return false;
-
-}
-
-//--------------------------------------------------------------------------
-//! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init mode
-//--------------------------------------------------------------------------
-bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
-{
-    // Return true if any of these variable initialisers require an RNG
-    return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const Models::VarInit &varInit)
-                       {
-                           return isRNGRequired(varInit.getSnippet()->getCode());
-                       });
-}
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
  *
@@ -550,71 +510,6 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
     }
 }
 
-//--------------------------------------------------------------------------
-/*! \brief This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash
- */
-//--------------------------------------------------------------------------
-//! https://stackoverflow.com/questions/19411742/what-is-the-default-hash-function-used-in-c-stdunordered-map
-//! suggests that libstdc++ uses MurmurHash2 so this seems as good a bet as any
-//! MurmurHash2, by Austin Appleby
-//! It has a few limitations -
-//! 1. It will not work incrementally.
-//! 2. It will not produce the same results on little-endian and big-endian
-//!    machines.
-uint32_t hashString(const std::string &string)
-{
-    // 'm' and 'r' are mixing constants generated offline.
-    // They're not really 'magic', they just happen to work well.
-
-    const uint32_t m = 0x5bd1e995;
-    const unsigned int r = 24;
-
-    // Get string length
-    size_t len = string.length();
-
-    // Initialize the hash to a 'random' value
-
-    uint32_t h = 0xc70f6907 ^ (uint32_t)len;
-
-    // Mix 4 bytes at a time into the hash
-    const char *data = string.c_str();
-    while(len >= 4)
-    {
-        // **NOTE** one of the assumptions of the original MurmurHash2 was that
-        // "We can read a 4-byte value from any address without crashing".
-        // Bad experiance tells me this may not be the case on ARM so use memcpy
-        uint32_t k;
-        memcpy(&k, data, 4);
-
-        k *= m;
-        k ^= k >> r;
-        k *= m;
-
-        h *= m;
-        h ^= k;
-
-        data += 4;
-        len -= 4;
-    }
-
-    // Handle the last few bytes of the input array
-    switch(len)
-    {
-        case 3: h ^= data[2] << 16; // falls through
-        case 2: h ^= data[1] << 8;  // falls through
-        case 1: h ^= data[0];
-                h *= m;             // falls through
-    };
-
-    // Do a few final mixes of the hash to ensure the last few
-    // bytes are well-incorporated.
-
-    h ^= h >> 13;
-    h *= m;
-    h ^= h >> 15;
-
-    return h;
-}
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
@@ -636,7 +531,7 @@ void preNeuronSubstitutionsInSynapticCode(
         substitute(wCode, "$(V_pre)", std::to_string(sg->getSrcNeuronGroup()->getParams()[2]));
     }
 
-    neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), offset, axonalDelayOffset, preIdx, "_pre", devPrefix, preVarPrefix, preVarSuffix);
+    ::neuronSubstitutionsInSynapticCode(wCode, sg->getSrcNeuronGroup(), offset, axonalDelayOffset, preIdx, "_pre", devPrefix, preVarPrefix, preVarSuffix);
 }
 
 void postNeuronSubstitutionsInSynapticCode(
@@ -650,7 +545,7 @@ void postNeuronSubstitutionsInSynapticCode(
     const std::string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
     // postsynaptic neuron variables, parameters, and global parameters
-    neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), offset, backPropDelayOffset, postIdx, "_post", devPrefix, postVarPrefix, postVarSuffix);
+    ::neuronSubstitutionsInSynapticCode(wCode, sg->getTrgNeuronGroup(), offset, backPropDelayOffset, postIdx, "_post", devPrefix, postVarPrefix, postVarSuffix);
 }
 
 void neuronSubstitutionsInSynapticCode(

@@ -21,20 +21,6 @@ class SynapseGroup;
 namespace CodeGenerator
 {
 //--------------------------------------------------------------------------
-// GenericFunction
-//--------------------------------------------------------------------------
-//! Immutable structure for specifying the name and number of
-//! arguments of a generic funcion e.g. gennrand_uniform
-struct GenericFunction
-{
-    //! Generic name used to refer to function in user code
-    const std::string genericName;
-
-    //! Number of function arguments
-    const unsigned int numArguments;
-};
-
-//--------------------------------------------------------------------------
 // FunctionTemplate
 //--------------------------------------------------------------------------
 //! Immutable structure for specifying how to implement
@@ -122,20 +108,6 @@ typedef NameIterCtx<Models::Base::StringPairVec> VarNameIterCtx;
 typedef NameIterCtx<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
 typedef NameIterCtx<Models::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
 
-
-//--------------------------------------------------------------------------
-//! \brief CUDA implementations of standard functions
-//--------------------------------------------------------------------------
-// **TODO** move to backend
-/*const std::vector<FunctionTemplate> cudaFunctions = {
-    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
-    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
-    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
-};*/
-
-
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
@@ -150,16 +122,6 @@ bool regexVarSubstitute(std::string &s, const std::string &trg, const std::strin
 //! \brief Tool for substituting function names in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
 bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::string &rep);
-
-//--------------------------------------------------------------------------
-//! \brief Does the code string contain any functions requiring random number generator
-//--------------------------------------------------------------------------
-bool isRNGRequired(const std::string &code);
-
-//--------------------------------------------------------------------------
-//! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
-//--------------------------------------------------------------------------
-bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers);
 
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
@@ -277,13 +239,6 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type);
  */
 //--------------------------------------------------------------------------
 void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
-
-//--------------------------------------------------------------------------
-/*! \brief This function returns the 32-bit hash of a string - because these are used across MPI nodes which may have different libstdc++ it would be risky to use std::hash
- */
-//--------------------------------------------------------------------------
-uint32_t hashString(const std::string &string);
-
 
 void preNeuronSubstitutionsInSynapticCode(
     std::string &wCode, //!< the code string to work on

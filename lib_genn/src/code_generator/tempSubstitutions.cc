@@ -1,12 +1,14 @@
 #include "code_generator/tempSubstitutions.h"
 
 // GeNN includes
-#include "codeGenUtils.h"
 #include "currentSource.h"
 #include "initSparseConnectivitySnippet.h"
 #include "neuronGroup.h"
 #include "synapseGroup.h"
 #include "models.h"
+
+// GeNN code generator includes
+#include "code_generator/utils.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator

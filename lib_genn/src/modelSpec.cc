@@ -23,8 +23,10 @@
 #include <cassert>
 
 // GeNN includes
-#include "codeGenUtils.h"
 #include "modelSpec.h"
+
+// GeNN code generator includes
+#include "code_generator/utils.h"
 
 // ------------------------------------------------------------------------
 // NNmodel
@@ -359,6 +361,7 @@ void NNmodel::finalize()
             const auto *wu = sg->getWUModel();
 
             if (!wu->getEventCode().empty()) {
+                using namespace CodeGenerator;
                 assert(!wu->getEventThresholdConditionCode().empty());
 
                  // Create iteration context to iterate over derived and extra global parameters

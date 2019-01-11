@@ -7,14 +7,18 @@
 #include <vector>
 
 // GeNN includes
-#include "codeGenUtils.h"
 #include "codeStream.h"
+#include "variableMode.h"
 
 // Forward declarations
 class NeuronGroup;
 class NNmodel;
-class Substitutions;
 class SynapseGroup;
+
+namespace CodeGenerator
+{
+    class Substitutions;
+}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase

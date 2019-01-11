@@ -5,8 +5,7 @@
 #include <cmath>
 
 // GeNN includes
-#include "codeGenUtils.h"
-#include "synapseGroup.h"
+#include "utils.h"
 
 //------------------------------------------------------------------------
 // CurrentSource
@@ -52,8 +51,7 @@ bool CurrentSource::isInitCodeRequired() const
 bool CurrentSource::isSimRNGRequired() const
 {
     // Returns true if any parts of the current source code require an RNG
-    if(::isRNGRequired(getCurrentSourceModel()->getInjectionCode()))
-    {
+    if(Utils::isRNGRequired(getCurrentSourceModel()->getInjectionCode())) {
         return true;
     }
 
@@ -63,7 +61,7 @@ bool CurrentSource::isSimRNGRequired() const
 bool CurrentSource::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
-    if(::isInitRNGRequired(m_VarInitialisers)) {
+    if(Utils::isInitRNGRequired(m_VarInitialisers)) {
         return true;
     }
 

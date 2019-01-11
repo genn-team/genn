@@ -9,11 +9,13 @@
 #include <cassert>
 
 // GeNN includes
-#include "codeGenUtils.h"
+#include "utils.h"
 
 //--------------------------------------------------------------------------
 // Substitutions
 //--------------------------------------------------------------------------
+namespace CodeGenerator
+{
 class Substitutions
 {
 public:
@@ -116,3 +118,4 @@ private:
     std::map<std::string, std::pair<unsigned int, std::string>> m_FuncSubstitutions;
     const Substitutions *m_Parent;
 };
+}   // namespace CodeGenerator

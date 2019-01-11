@@ -7,10 +7,7 @@
 
 // GeNN includes
 #include "neuronGroup.h"
-
-// GeNN code generator includes
-// **YUCK**
-#include "code_generator/utils.h"
+#include "utils.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -362,18 +359,18 @@ bool SynapseGroup::isDendriticDelayRequired() const
 bool SynapseGroup::isPSInitRNGRequired() const
 {
     // If initialising the postsynaptic variables require an RNG, return true
-    return isInitRNGRequired(m_PSVarInitialisers);
+    return Utils::isInitRNGRequired(m_PSVarInitialisers);
 }
 
 bool SynapseGroup::isWUInitRNGRequired() const
 {
     // If initialising the weight update variables require an RNG, return true
-    if(isInitRNGRequired(m_WUVarInitialisers)) {
+    if(Utils::isInitRNGRequired(m_WUVarInitialisers)) {
         return true;
     }
 
     // Return true if the var init mode we're querying is the one used for sparse connectivity and the connectivity initialiser requires an RNG
-    return isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode());
+    return Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode());
 }
 
 bool SynapseGroup::isPSVarInitRequired() const

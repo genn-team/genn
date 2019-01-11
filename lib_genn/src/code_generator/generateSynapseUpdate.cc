@@ -18,10 +18,11 @@
 namespace
 {
 void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroup &sg,
-                               const Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::BackendBase &backend)
+                               const CodeGenerator::Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::BackendBase &backend)
 {
-    CodeGenerator::applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
-                                                       sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
+    using namespace CodeGenerator;
+    applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
+                                        sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
     neuronSubstitutionsInSynapticCode(code, &sg, baseSubs.getVarSubstitution("id_pre"),
                                       baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
                                       model.getDT());
