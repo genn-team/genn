@@ -355,10 +355,47 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
         for(const auto &s : model.getLocalSynapseGroups()) {
             if (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-                    assert(false);
+                    CodeStream::Scope b(os);
+                    os << "unsigned int &synRemapCount = synRemap" << s.first << "[0];" << std::endl;
+                    os << "unsigned int *synRemap = &synRemap" << s.first << "[1];" << std::endl;
+                    os << "// Loop through presynaptic neurons" << std::endl;
+                    os << "synRemapCount  = 0;" << std::endl;
+                    os << "for (unsigned int i = 0; i < " << s.second.getSrcNeuronGroup()->getNumNeurons() << "; i++)" << std::endl;
+                    {
+                        CodeStream::Scope b(os);
+                        os << "// Loop through synapses in corresponding matrix row" << std::endl;
+                        os << "for(unsigned int j = 0; j < rowLength" << s.first << "[i]; j++)" << std::endl;
+                        {
+                            CodeStream::Scope b(os);
+                            os << "synRemap[synRemapCount++] = (i * maxRowLength" << s.first << ") + j;" << std::endl;
+                        }
+                    }
                 }
                 if (!s.second.getWUModel()->getLearnPostCode().empty()) {
-                    assert(false);
+                    CodeStream::Scope b(os);
+
+                    os << "// Zero column lengths" << std::endl;
+                    os << "std::fill_n(colLength" << s.first << ", " << s.second.getTrgNeuronGroup()->getNumNeurons() << ", 0);" << std::endl;
+                    os << "// Loop through presynaptic neurons" << std::endl;
+                    os << "for (unsigned int i = 0; i < " << s.second.getSrcNeuronGroup()->getNumNeurons() << "; i++)" << std::endl;
+                    {
+                        CodeStream::Scope b(os);
+                        os << "// Loop through synapses in corresponding matrix row" << std::endl;
+                        os << "for(unsigned int j = 0; j < rowLength" << s.first << "[i]; j++)" << std::endl;
+                        {
+                            CodeStream::Scope b(os);
+                            os << "// Calculate index of this synapse in the row-major matrix" << std::endl;
+                            os << "const unsigned int rowMajorIndex = (i * maxRowLength" << s.first << ") + j;" << std::endl;
+                            os << "// Using this, lookup postsynaptic target" << std::endl;
+                            os << "const unsigned int postIndex = ind" << s.first << "[rowMajorIndex];" << std::endl;
+                            os << "// From this calculate index of this synapse in the column-major matrix" << std::endl;
+                            os << "const unsigned int colMajorIndex = (postIndex * maxColLength" << s.first << ") + colLength" << s.first << "[postIndex];" << std::endl;
+                            os << "// Increment column length corresponding to this postsynaptic neuron" << std::endl;
+                            os << "colLength" << s.first << "[postIndex]++;" << std::endl;
+                            os << "// Add remapping entry" << std::endl;
+                            os << "remap" << s.first << "[colMajorIndex] = rowMajorIndex;" << std::endl;
+                        }
+                    }
                 }
 
                 /*popSubs.addVarSubstitution("id_syn", "idx");
