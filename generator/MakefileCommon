@@ -1,6 +1,17 @@
 # Include common makefile
 include ../MakefileCommon
 
+# Check required environment variable names are set
+ifndef BACKEND_NAME
+	$(error Environment variable BACKEND_NAME must be defined)
+endif
+ifndef BACKEND_NAMESPACE
+	$(error Environment variable BACKEND_NAMESPACE must be defined)
+endif
+ifndef MODEL
+	$(error Environment variable MODEL must be defined)
+endif
+
 # Add include paths to CXX flags
 CXXFLAGS		+= -I../lib_genn/include -I../third_party
 

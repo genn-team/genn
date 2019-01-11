@@ -1,0 +1,6 @@
+# Configure for single-threaded CPU backend
+BACKEND_NAME        :=single_threaded_cpu
+BACKEND_NAMESPACE   :=SingleThreadedCPU
+
+# Include common makefile
+include MakefileCommon
