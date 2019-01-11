@@ -5,10 +5,10 @@
 #include <string>
 
 // GeNN includes
-#include "codeStream.h"
 #include "modelSpec.h"
 
 // GeNN code generator
+#include "code_generator/codeStream.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
 #include "code_generator/utils.h"
@@ -18,7 +18,7 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void writeTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
+void writeTypeRange(CodeGenerator::CodeStream &os, const std::string &precision, const std::string &prefix)
 {
     using namespace CodeGenerator;
 
@@ -44,7 +44,7 @@ void writeTypeRange(CodeStream &os, const std::string &precision, const std::str
     os << std::endl;
 }
 //-------------------------------------------------------------------------
-void writeSpikeMacros(CodeStream &os, const NeuronGroup &ng, bool trueSpike)
+void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroup &ng, bool trueSpike)
 {
     const bool delayRequired = trueSpike
         ? (ng.isDelayRequired() && ng.isTrueSpikeRequired())
@@ -73,7 +73,7 @@ void writeSpikeMacros(CodeStream &os, const NeuronGroup &ng, bool trueSpike)
     os << std::endl << std::endl;
 }
 //-------------------------------------------------------------------------
-void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
+void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
                          const std::string &description, bool unitialisedLogic,
                          std::function<void()> handler)
 {
@@ -97,8 +97,8 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
     runnerPushFunc << ")";
     runnerPullFunc << "void pull" << description << "FromDevice()";
     {
-        CodeStream::Scope a(runnerPushFunc);
-        CodeStream::Scope b(runnerPullFunc);
+        CodeGenerator::CodeStream::Scope a(runnerPushFunc);
+        CodeGenerator::CodeStream::Scope b(runnerPullFunc);
 
         handler();
     }

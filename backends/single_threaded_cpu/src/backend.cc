@@ -1,18 +1,19 @@
 #include "backend.h"
 
 // GeNN includes
-#include "codeStream.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
+#include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
+#include "code_generator/utils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<FunctionTemplate> cpuFunctions = {
+const std::vector<CodeGenerator::FunctionTemplate> cpuFunctions = {
     {"gennrand_uniform", 0, "standardUniformDistribution($(rng))", "standardUniformDistribution($(rng))"},
     {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},

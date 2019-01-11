@@ -1,12 +1,12 @@
 #pragma once
 
 // Forward declarations
-class CodeStream;
 class NNmodel;
 
 namespace CodeGenerator
 {
 class BackendBase;
+class CodeStream;
 }
 
 //--------------------------------------------------------------------------

@@ -8,10 +8,8 @@
 // Third party includes
 #include "path.h"
 
-// GeNN includes
-#include "codeStream.h"
-
 // Code generator includes
+#include "code_generator/codeStream.h"
 #include "code_generator/generateInit.h"
 #include "code_generator/generateNeuronUpdate.h"
 #include "code_generator/generateSynapseUpdate.h"

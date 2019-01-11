@@ -1,11 +1,13 @@
-#include "codeStream.h"
+#include "code_generator/codeStream.h"
 
 // Standard C++ includes
 #include <algorithm>
 
 //----------------------------------------------------------------------------
-// CodeStream::IndentBuffer
+// CodeGenerator::CodeStream::IndentBuffer
 //----------------------------------------------------------------------------
+namespace CodeGenerator
+{
 int CodeStream::IndentBuffer::overflow(int c)
 {
     // If the character is an end-of-file, pass it directly to the sink
@@ -33,7 +35,7 @@ int CodeStream::IndentBuffer::overflow(int c)
 }
 
 //------------------------------------------------------------------------
-// CodeStream::Scope
+// CodeGenerator::CodeStream::Scope
 //------------------------------------------------------------------------
 unsigned int CodeStream::Scope::s_NextLevel = 0;
 
@@ -74,3 +76,4 @@ std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb)
 
     return c;
 }
+}   // namspace CodeGenerator

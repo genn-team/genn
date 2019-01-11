@@ -28,7 +28,7 @@
 #include <cstring>
 
 // GeNN includes
-#include "codeStream.h"
+#include "code_generator/codeStream.h"
 #include "modelSpec.h"
 
 //--------------------------------------------------------------------------
@@ -107,6 +107,8 @@ void genHeader(const NNmodel &model,    //!< Model description
                const std::string &path,      //!< Path for code generationn
                int localHostID)         //!< ID of local host
 {
+    using namespace CodeGenerator;
+
     //=======================
     // generate mpi.h
     //=======================
@@ -165,6 +167,8 @@ void genCode(const NNmodel &model,  //!< Model description
              const std::string &path,    //!< Path for code generationn
              int localHostID)       //!< ID of local host
 {
+    using namespace CodeGenerator;
+
     //=======================
     // generate mpi.cc
     //=======================

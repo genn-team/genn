@@ -4,7 +4,6 @@
 #include <string>
 
 // GeNN includes
-#include "codeStream.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes

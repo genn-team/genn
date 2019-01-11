@@ -4,10 +4,10 @@
 #include <string>
 
 // GeNN includes
-#include "codeStream.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
+#include "code_generator/codeStream.h"
 #include "code_generator/tempSubstitutions.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/backendBase.h"
@@ -17,9 +17,11 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void genInitSpikeCount(CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                       const NeuronGroup &ng, bool spikeEvent)
+void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
+                       const CodeGenerator::Substitutions &popSubs, const NeuronGroup &ng, bool spikeEvent)
 {
+    using namespace CodeGenerator;
+
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.isSpikeEventRequired() : true;
     if(initRequired) {
@@ -28,7 +30,7 @@ void genInitSpikeCount(CodeStream &os, const CodeGenerator::BackendBase &backend
 
         // Generate variable initialisation code
         backend.genPopVariableInit(os, varLoc, popSubs,
-            [&backend, &ng, spikeEvent] (CodeStream &os, CodeGenerator::Substitutions &)
+            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &)
             {
                 // Get variable name
                 const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
@@ -53,9 +55,11 @@ void genInitSpikeCount(CodeStream &os, const CodeGenerator::BackendBase &backend
 
 }
 //--------------------------------------------------------------------------
-void genInitSpikes(CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                   const NeuronGroup &ng, bool spikeEvent)
+void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
+                   const CodeGenerator::Substitutions &popSubs, const NeuronGroup &ng, bool spikeEvent)
 {
+    using namespace CodeGenerator;
+
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.isSpikeEventRequired() : true;
     if(initRequired) {
@@ -64,7 +68,7 @@ void genInitSpikes(CodeStream &os, const CodeGenerator::BackendBase &backend, co
 
         // Generate variable initialisation code
         backend.genVariableInit(os, varLoc, ng.getNumNeurons(), "id", popSubs,
-            [&backend, &ng, spikeEvent] (CodeStream &os, CodeGenerator::Substitutions &varSubs)
+            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
             {
                 // Get variable name
                 const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
@@ -89,11 +93,12 @@ void genInitSpikes(CodeStream &os, const CodeGenerator::BackendBase &backend, co
 }
 //------------------------------------------------------------------------
 template<typename I, typename M, typename Q>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs, const Models::Base::StringPairVec &vars,
-                          size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
+void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
+                          const Models::Base::StringPairVec &vars, size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarLocation, Q isVarQueueRequired)
 {
     using namespace CodeGenerator;
+
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
         const VarLocation varLoc = getVarLocation(k);
@@ -143,8 +148,8 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &back
 }
 //------------------------------------------------------------------------
 template<typename I, typename M>
-void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs, const Models::Base::StringPairVec &vars,
-                          size_t count, const std::string &popName, const std::string &ftype,
+void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
+                          const Models::Base::StringPairVec &vars, size_t count, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarMode)
 {
     genInitNeuronVarCode(os, backend, popSubs, vars, count, 0, popName, ftype, getVarInitialiser, getVarMode,
@@ -152,8 +157,8 @@ void genInitNeuronVarCode(CodeStream &os, const CodeGenerator::BackendBase &back
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
-void genInitWUVarCode(CodeStream &os, const CodeGenerator::BackendBase &backend,const CodeGenerator::Substitutions &popSubs,
-                      const SynapseGroup &sg, size_t count, const std::string &ftype)
+void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
+                      const CodeGenerator::Substitutions &popSubs, const SynapseGroup &sg, size_t count, const std::string &ftype)
 {
     using namespace CodeGenerator;
 

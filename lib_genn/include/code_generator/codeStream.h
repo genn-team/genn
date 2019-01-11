@@ -7,10 +7,12 @@
 #include <vector>
 
 //----------------------------------------------------------------------------
-// CodeStream
+// CodeGenerator::CodeStream
 //----------------------------------------------------------------------------
 //! Helper class for generating code - automatically inserts brackets, indents etc
 /*! Based heavily on: https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class */
+namespace CodeGenerator
+{
 class CodeStream : public std::ostream
 {
 private:
@@ -143,3 +145,6 @@ private:
 //------------------------------------------------------------------------
 std::ostream& operator << (std::ostream& s, const CodeStream::OB &ob);
 std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb);
+}   // namespace CodeGenerator;
+
+

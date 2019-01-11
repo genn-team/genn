@@ -4,10 +4,10 @@
 #include <string>
 
 // GeNN includes
-#include "codeStream.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
+#include "code_generator/codeStream.h"
 #include "code_generator/tempSubstitutions.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/backendBase.h"
@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroup &sg,
+void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroup &sg,
                                const CodeGenerator::Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::BackendBase &backend)
 {
     using namespace CodeGenerator;
