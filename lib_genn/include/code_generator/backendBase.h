@@ -17,13 +17,11 @@ class Substitutions;
 class SynapseGroup;
 
 //--------------------------------------------------------------------------
-// CodeGenerator::Backends::Base
+// CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-namespace Backends
-{
-class Base
+class BackendBase
 {
 public:
     //--------------------------------------------------------------------------
@@ -160,5 +158,4 @@ protected:
 #endif
     }
 };
-}   // namespace Backends
 }   // namespace CodeGenerator
