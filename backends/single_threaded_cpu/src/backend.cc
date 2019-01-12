@@ -6,7 +6,7 @@
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
-#include "code_generator/utils.h"
+#include "code_generator/codeGenUtils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
