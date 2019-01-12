@@ -5,7 +5,7 @@
 #include <cmath>
 
 // GeNN includes
-#include "utils.h"
+#include "gennUtils.h"
 
 //------------------------------------------------------------------------
 // CurrentSource

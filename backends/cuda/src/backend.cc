@@ -7,22 +7,23 @@
 #include <plog/Log.h>
 
 // GeNN includes
-#include "codeGenUtils.h"
-#include "codeStream.h"
 #include "modelSpec.h"
+#include "gennUtils.h"
 
 // GeNN code generator includes
+#include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
+#include "code_generator/codeGenUtils.h"
 
 // CUDA backend includes
-//#include "utils.h"
+#include "utils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<FunctionTemplate> cudaFunctions = {
+const std::vector<CodeGenerator::FunctionTemplate> cudaFunctions = {
     {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
     {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
@@ -90,7 +91,6 @@ const char *Backend::KernelNames[KernelMax] = {
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device)
 :   m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
 {
-#define CHECK_CUDA_ERRORS(X) X
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
 
@@ -363,9 +363,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     std::map<std::string, std::string> postsynapticKernelParameters;
     std::map<std::string, std::string> synapseDynamicsKernelParameters;
     for(const auto &s : model.getLocalSynapseGroups()) {
-        const auto *wum = s->getWUModel();
+        const auto *wum = s.second.getWUModel();
         updateSynapseGroupExtraGlobalParams(s.second, presynapticKernelParameters,
-                                            {wum->getSimCode(), wum->getEventCode(), wum->getEventThresholdCode()});
+                                            {wum->getSimCode(), wum->getEventCode(), wum->getEventThresholdConditionCode()});
         updateSynapseGroupExtraGlobalParams(s.second, postsynapticKernelParameters, {wum->getLearnPostCode()});
         updateSynapseGroupExtraGlobalParams(s.second, synapseDynamicsKernelParameters, {wum->getSynapseDynamicsCode()});
     }
@@ -860,7 +860,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                     // If this connectivity requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
-                    if(::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                    if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
@@ -1552,11 +1552,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
             os << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
         }
 
-        if(sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
-            os << "unsigned int synAddress = dd_indInG" << sg.getName() << "[preInd];" << std::endl;
-            os << "const unsigned int npost = dd_indInG" << sg.getName() << "[preInd + 1] - prePos;" << std::endl;
-        }
-        else if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
             os << "const unsigned int npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
         }
@@ -1697,15 +1693,9 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model,
 
 
                 if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    if (sg.getMatrixType() & SynapseMatrixConnectivity::YALE) {
-                        os << "unsigned int synAddress = dd_indInG" << sg.getName() << "[shSpk" << eventSuffix << "[j]];" << std::endl;
-                        os << "const unsigned int npost = dd_indInG" << sg.getName() << "[shSpk" << eventSuffix << "[j] + 1] - synAddress;" << std::endl;
-                    }
-                    else {
-                        os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
-                        os << "const unsigned int npost = shRowLength" << eventSuffix << "[j];" << std::endl;
-                    }
-
+                    os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
+                    os << "const unsigned int npost = shRowLength" << eventSuffix << "[j];" << std::endl;
+                    
                     os << "if (" << popSubs.getVarSubstitution("id") << " < npost)" << CodeStream::OB(140);
                     os << "synAddress += " << popSubs.getVarSubstitution("id") << ";" << std::endl;
                     os << "const unsigned int ipost = dd_ind" << sg.getName() << "[synAddress];" << std::endl;

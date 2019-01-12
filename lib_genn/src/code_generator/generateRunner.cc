@@ -11,7 +11,7 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
-#include "code_generator/utils.h"
+#include "code_generator/codeGenUtils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace

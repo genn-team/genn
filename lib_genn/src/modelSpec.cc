@@ -26,7 +26,7 @@
 #include "modelSpec.h"
 
 // GeNN code generator includes
-#include "code_generator/utils.h"
+#include "code_generator/codeGenUtils.h"
 
 // ------------------------------------------------------------------------
 // NNmodel

@@ -7,7 +7,7 @@
 
 // GeNN includes
 #include "neuronGroup.h"
-#include "utils.h"
+#include "gennUtils.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace

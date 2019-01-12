@@ -20,9 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\binomial.h" />
-    <ClInclude Include="include\codeGenUtils.h" />
-    <ClInclude Include="include\codeStream.h" />
     <ClInclude Include="include\code_generator\backendBase.h" />
+    <ClInclude Include="include\code_generator\codeStream.h" />
     <ClInclude Include="include\code_generator\generateAll.h" />
     <ClInclude Include="include\code_generator\generateInit.h" />
     <ClInclude Include="include\code_generator\generateMakefile.h" />
@@ -32,6 +31,7 @@
     <ClInclude Include="include\code_generator\substitutions.h" />
     <ClInclude Include="include\code_generator\teeStream.h" />
     <ClInclude Include="include\code_generator\tempSubstitutions.h" />
+    <ClInclude Include="include\code_generator\codeGenUtils.h" />
     <ClInclude Include="include\currentSource.h" />
     <ClInclude Include="include\currentSourceModels.h" />
     <ClInclude Include="include\generateMPI.h" />
@@ -42,6 +42,7 @@
     <ClInclude Include="include\models.h" />
     <ClInclude Include="include\neuronModels.h" />
     <ClInclude Include="include\postsynapticModels.h" />
+    <ClInclude Include="include\gennUtils.h" />
     <ClInclude Include="include\weightUpdateModels.h" />
     <ClInclude Include="include\snippet.h" />
     <ClInclude Include="include\synapseGroup.h" />
@@ -50,8 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\binomial.cc" />
-    <ClCompile Include="src\codeGenUtils.cc" />
-    <ClCompile Include="src\codeStream.cc" />
+    <ClCompile Include="src\code_generator\codeStream.cc" />
     <ClCompile Include="src\code_generator\generateAll.cc" />
     <ClCompile Include="src\code_generator\generateInit.cc" />
     <ClCompile Include="src\code_generator\generateMakefile.cc" />
@@ -59,6 +59,7 @@
     <ClCompile Include="src\code_generator\generateRunner.cc" />
     <ClCompile Include="src\code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="src\code_generator\tempSubstitutions.cc" />
+    <ClCompile Include="src\code_generator\codeGenUtils.cc" />
     <ClCompile Include="src\currentSource.cc" />
     <ClCompile Include="src\currentSourceModels.cc" />
     <ClCompile Include="src\generateMPI.cc" />
@@ -68,6 +69,7 @@
     <ClCompile Include="src\neuronGroup.cc" />
     <ClCompile Include="src\neuronModels.cc" />
     <ClCompile Include="src\postsynapticModels.cc" />
+    <ClCompile Include="src\gennUtils.cc" />
     <ClCompile Include="src\weightUpdateModels.cc" />
     <ClCompile Include="src\synapseGroup.cc" />
   </ItemGroup>

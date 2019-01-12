@@ -7,7 +7,7 @@
 // GeNN includes
 #include "currentSource.h"
 #include "synapseGroup.h"
-#include "utils.h"
+#include "gennUtils.h"
 
 // ------------------------------------------------------------------------
 // NeuronGroup
