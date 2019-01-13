@@ -16,7 +16,7 @@
 #include "code_generator/generateMakefile.h"
 
 // Include backend
-#include "backend.h"
+#include "optimiser.h"
 
 enum Log
 {

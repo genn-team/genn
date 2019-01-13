@@ -47,12 +47,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>lib\</OutDir>
+    <OutDir>..\..\lib\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
+    <TargetName>cuda_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>lib\</OutDir>
+    <OutDir>..\..\lib\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
+    <TargetName>cuda_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
