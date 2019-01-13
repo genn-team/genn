@@ -72,7 +72,7 @@
     <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_CUDA|x64'">
-    <OutDir$(GeneratePath)\</OutDir>
+    <OutDir>$(GeneratePath)\</OutDir>
     <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
