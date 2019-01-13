@@ -64,22 +64,22 @@ if defined -d (
 	if defined -c (
 		set "BACKEND_PROJECT=single_threaded_cpu_backend"
 		set "MACROS=%MACROS% /p:Configuration=Debug"
-		set GENERATEALL=.\generateALL_debug_CPU_ONLY.exe
+		set GENERATOR=.\generator_Debug.exe
 	) else (
 		set "BACKEND_PROJECT=cuda"
 		set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
-		set GENERATEALL=.\generateALL_debug.exe
+		set GENERATOR=.\generator_Debug_CUDA.exe
 	)    
 ) else (
 	set "BACKEND_MACROS= /p:Configuration=Release"
 	if defined -c (
 		set "BACKEND_PROJECT=single_threaded_cpu_backend"
 		set "MACROS=%MACROS% /p:Configuration=Release"
-		set GENERATEALL=.\generateALL_CPU_ONLY.exe
+		set GENERATOR=.\generator_Release.exe
 	) else (
 		set "BACKEND_PROJECT=cuda"
 		set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
-		set GENERATEALL=.\generateALL.exe
+		set GENERATOR=.\generator_Release_CUDA.exe
 	)
 )
 
@@ -91,9 +91,9 @@ rem :: build generator
 msbuild "%GENN_PATH%\generator\generator.vcxproj" %MACROS%
 
 if defined -d (
-    devenv /debugexe "%GENERATEALL%" "%-o%"
+    devenv /debugexe "%GENERATOR%" "%-o%"
 ) else (
-    "%GENERATEALL%" "%-o%"
+    "%GENERATOR%" "%-o%"
 )
 
 echo model build complete
