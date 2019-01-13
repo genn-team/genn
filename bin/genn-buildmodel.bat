@@ -61,25 +61,26 @@ for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o%
 
 if defined -d (
 	if defined -c (
-		set "MACROS=%MACROS% /p:Configuration=Debug_CPU_ONLY"
+		set "MACROS=%MACROS% /p:Configuration=Debug"
 		set GENERATEALL=.\generateALL_debug_CPU_ONLY.exe
 	) else (
-		set "MACROS=%MACROS% /p:Configuration=Debug"
+		set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
 		set GENERATEALL=.\generateALL_debug.exe
 	)    
 ) else (
 	if defined -c (
-		set "MACROS=%MACROS% /p:Configuration=Release_CPU_ONLY"
+		set "MACROS=%MACROS% /p:Configuration=Release"
 		set GENERATEALL=.\generateALL_CPU_ONLY.exe
 	) else (
-		set "MACROS=%MACROS% /p:Configuration=Release"
+		set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
 		set GENERATEALL=.\generateALL.exe
 	)
 )
 
 
 rem :: generate model code
-msbuild "%GENN_PATH%\lib\generate.vcxproj" %MACROS%
+msbuild "%GENN_PATH%\genn.sln" /t:generator %MACROS% /p:BuildProjectReferences=true
+
 if defined -d (
     devenv /debugexe "%GENERATEALL%" "%-o%"
 ) else (
