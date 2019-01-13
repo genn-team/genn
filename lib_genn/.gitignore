@@ -1,16 +1,1 @@
-/lib/
-/obj/
-/obj_CPU_ONLY/
-
-# Ignore GNU Make files
-**/*.o
-**/*.d
-**/*.gcda
-**/*.gcno
-
-# Ignore MSBuild/Visual Studio files
-**/*.suo
-**/*.sdf
-**/*.vcxproj.user
 /x64/
-/Debug/
