@@ -10,12 +10,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "single_threaded_cpu_backend
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generator", "generator\generator.vcxproj", "{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}"
-	ProjectSection(ProjectDependencies) = postProject
-		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
-		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21} = {14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cuda", "backends\cuda\cuda.vcxproj", "{F7026BD9-7181-4F28-A2F0-41C41FAC1018}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
@@ -23,40 +17,22 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cuda", "backends\cuda\cuda.
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug_CUDA|x64 = Debug_CUDA|x64
 		Debug|x64 = Debug|x64
-		Release_CUDA|x64 = Release_CUDA|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Debug_CUDA|x64.ActiveCfg = Debug|x64
-		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Debug_CUDA|x64.Build.0 = Debug|x64
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Debug|x64.ActiveCfg = Debug|x64
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Debug|x64.Build.0 = Debug|x64
-		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Release_CUDA|x64.ActiveCfg = Release|x64
-		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Release_CUDA|x64.Build.0 = Release|x64
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Release|x64.ActiveCfg = Release|x64
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}.Release|x64.Build.0 = Release|x64
-		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Debug_CUDA|x64.ActiveCfg = Debug|x64
 		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Debug|x64.ActiveCfg = Debug|x64
 		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Debug|x64.Build.0 = Debug|x64
-		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Release_CUDA|x64.ActiveCfg = Release|x64
 		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Release|x64.ActiveCfg = Release|x64
 		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}.Release|x64.Build.0 = Release|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Debug_CUDA|x64.ActiveCfg = Debug_CUDA|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Debug_CUDA|x64.Build.0 = Debug_CUDA|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Debug|x64.ActiveCfg = Debug|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Debug|x64.Build.0 = Debug|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Release_CUDA|x64.ActiveCfg = Release_CUDA|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Release_CUDA|x64.Build.0 = Release_CUDA|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Release|x64.ActiveCfg = Release|x64
-		{BD7DE2D6-0524-40D9-ABCA-C60ADA7A96AF}.Release|x64.Build.0 = Release|x64
-		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Debug_CUDA|x64.ActiveCfg = Debug|x64
-		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Debug_CUDA|x64.Build.0 = Debug|x64
 		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Debug|x64.ActiveCfg = Debug|x64
-		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Release_CUDA|x64.ActiveCfg = Release|x64
-		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Release_CUDA|x64.Build.0 = Release|x64
+		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Debug|x64.Build.0 = Debug|x64
 		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Release|x64.ActiveCfg = Release|x64
+		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
