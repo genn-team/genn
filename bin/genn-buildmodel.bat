@@ -60,26 +60,35 @@ for /f %%I in ("%-i%") do set "-i=%%~fI"
 for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o% /p:BuildModelInclude=%-i%"
 
 if defined -d (
+	set "BACKEND_MACROS= /p:Configuration=Debug"
 	if defined -c (
+		set "BACKEND_PROJECT=single_threaded_cpu_backend"
 		set "MACROS=%MACROS% /p:Configuration=Debug"
 		set GENERATEALL=.\generateALL_debug_CPU_ONLY.exe
 	) else (
+		set "BACKEND_PROJECT=cuda"
 		set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
 		set GENERATEALL=.\generateALL_debug.exe
 	)    
 ) else (
+	set "BACKEND_MACROS= /p:Configuration=Release"
 	if defined -c (
+		set "BACKEND_PROJECT=single_threaded_cpu_backend"
 		set "MACROS=%MACROS% /p:Configuration=Release"
 		set GENERATEALL=.\generateALL_CPU_ONLY.exe
 	) else (
+		set "BACKEND_PROJECT=cuda"
 		set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
 		set GENERATEALL=.\generateALL.exe
 	)
 )
 
 
-rem :: generate model code
-msbuild "%GENN_PATH%\genn.sln" /t:generator %MACROS% /p:BuildProjectReferences=true
+rem :: build backend
+msbuild "%GENN_PATH%\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true
+
+rem :: build generator
+msbuild "%GENN_PATH%\generator\generator.vcxproj" %MACROS%
 
 if defined -d (
     devenv /debugexe "%GENERATEALL%" "%-o%"
