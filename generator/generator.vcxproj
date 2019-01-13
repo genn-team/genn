@@ -69,19 +69,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(GeneratePath)\</OutDir>
-    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)</IntDir>
+    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_CUDA|x64'">
     <OutDir>$(GeneratePath)\</OutDir>
-    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)</IntDir>
+    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(GeneratePath)\</OutDir>
-    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)</IntDir>
+    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_CUDA|x64'">
     <OutDir>$(GeneratePath)\</OutDir>
-    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)</IntDir>
+    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
