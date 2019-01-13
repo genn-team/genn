@@ -88,13 +88,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\lib_genn\include;..\third_party;..\backends\\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\lib_genn\include;..\third_party;..\backends\single_threaded_cpu\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_TYPE=SingleThreadedCPU;MODEL="test_model.cc";%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>lib_genn.lib;single_threaded_cpu_backend.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\backends\single_threaded_cpu\lib;..\lib_genn\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>genn_Debug.lib;single_threaded_cpu_backend_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_CUDA|x64'">
@@ -107,8 +107,8 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>genn.lib;cuda_backend.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\backends\single_threaded_cpu\lib;..\lib_genn\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>genn_Debug.lib;cuda_backend_Debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -118,15 +118,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\lib_genn\include;..\third_party;..\backends\\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\lib_genn\include;..\third_party;..\backends\single_threaded_cpu\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_TYPE=SingleThreadedCPU;MODEL="test_model.cc";%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>lib_genn.lib;single_threaded_cpu_backend.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\backends\single_threaded_cpu\lib;..\lib_genn\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>genn_Release.lib;single_threaded_cpu_backend_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_CUDA|x64'">
@@ -143,8 +143,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>genn.lib;cuda_backend.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\backends\single_threaded_cpu\lib;..\lib_genn\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>genn_Release.lib;cuda_backend_Release.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
