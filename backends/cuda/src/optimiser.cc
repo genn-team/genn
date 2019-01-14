@@ -140,7 +140,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
     // Bitset to mark which kernels are present and array of their attributes for each repetition
-    cudaFuncAttributes krnlAttr[2][Backend::KernelMax];
+    int krnlSharedSizeBytes[2][Backend::KernelMax];
+    int krnlNumRegs[2][Backend::KernelMax];
 
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
@@ -184,14 +185,17 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
                 if (res == CUDA_SUCCESS) {
                     LOGD << "\tKernel '" << Backend::KernelNames[k] << "' found";
 
-                    // Read it's attributes and add blank entry to map of kernels to optimise
-                    cudaFuncGetAttributes(&krnlAttr[r][k], kern);
+                    // Read function's shared memory size and register counand add blank entry to map of kernels to optimise
+                    CHECK_CU_ERRORS(cuFuncGetAttribute(&krnlSharedSizeBytes[r][k], CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
+                    CHECK_CU_ERRORS(cuFuncGetAttribute(&krnlNumRegs[r][k], CU_FUNC_ATTRIBUTE_NUM_REGS , kern));
+
+                    //CHECK_CUDA_ERRORS(cudaFuncGetAttributes(&krnlAttr[r][k], kern));
                     kernelsToOptimise.emplace(std::piecewise_construct,
                                               std::forward_as_tuple(k),
                                               std::forward_as_tuple(false, 0));
 
-                    LOGD << "\t\tShared memory bytes:" << krnlAttr[r][k].sharedSizeBytes;
-                    LOGD << "\t\tNum registers:" << krnlAttr[r][k].numRegs;
+                    LOGD << "\t\tShared memory bytes:" << krnlSharedSizeBytes[r][k];
+                    LOGD << "\t\tNum registers:" << krnlNumRegs[r][k];
                 }
             }
 
@@ -223,8 +227,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
 
         // Get required number of registers and shared memory bytes for this kernel
         // **NOTE** register requirements are assumed to remain constant as they're vector-width
-        const size_t reqNumRegs = krnlAttr[0][k.first].numRegs;
-        const size_t reqSharedMemBytes[2] = {krnlAttr[0][k.first].sharedSizeBytes, krnlAttr[1][k.first].sharedSizeBytes};
+        const size_t reqNumRegs = krnlNumRegs[0][k.first];
+        const size_t reqSharedMemBytes[2] = {krnlSharedSizeBytes[0][k.first], krnlSharedSizeBytes[1][k.first]};
 
         // Calculate coefficients for requiredSharedMemBytes = (A * blockThreads) + B model
         const size_t reqSharedMemBytesA = (reqSharedMemBytes[1] - reqSharedMemBytes[0]) / (repBlockSizes[1] - repBlockSizes[0]);
