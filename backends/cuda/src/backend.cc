@@ -733,6 +733,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
+    os << "#include <cstdint>" << std::endl;
     os << std::endl;
 
     // If device RNG is required, generate kernel to initialise it
@@ -1389,7 +1390,11 @@ bool Backend::isGlobalRNGRequired(const NNmodel &model) const
 std::string Backend::getNVCCFlags() const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
-    std::string nvccFlags = "-std=c++11 --compiler-options '-fPIC' -x cu -arch " + architecture;
+    std::string nvccFlags = "-x cu -arch " + architecture;
+#ifndef _WIN32
+    nvccFlags += " -std=c++11 --compiler-options '-fPIC'";
+#endif
+
     nvccFlags += " " + m_Preferences.userNvccFlags;
     if (m_Preferences.optimizeCode) {
         nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
