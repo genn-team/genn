@@ -24,6 +24,9 @@
 // CUDA backend includes
 #include "utils.h"
 
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
 namespace
 {
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
@@ -79,8 +82,6 @@ void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes
 {
     using namespace CodeGenerator;
     using namespace CUDA;
-
-    // **TODO** this belongs in code generator somewhere
 
     // Loop through neuron groups
     for(const auto &n : model.getLocalNeuronGroups()) {

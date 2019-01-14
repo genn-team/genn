@@ -47,19 +47,22 @@ public:
         KernelMax
     };
     
+    //--------------------------------------------------------------------------
+    // Preferences
+    //--------------------------------------------------------------------------
     struct Preferences : public BackendBase::Preferences
     {
         //! Should PTX assembler information be displayed for each CUDA kernel during compilation
-        bool showPtxInfo; 
+        bool showPtxInfo = false; 
       
         //! Should block size optimisation be performed?
-        bool optimiseBlockSize; 
+        bool optimiseBlockSize = true; 
         
         //! Should GPU device be chosen automatically?
-        bool autoChooseDevice;
+        bool autoChooseDevice = true;
 
         //! NVCC compiler options for all GPU code
-        std::string userNvccFlags; 
+        std::string userNvccFlags = ""; 
     };
 
     //--------------------------------------------------------------------------

@@ -46,16 +46,16 @@ public:
     struct Preferences
     {
         //! Generate speed-optimized code, potentially at the expense of floating-point accuracy
-        bool optimizeCode; 
+        bool optimizeCode = false; 
 
         //! Generate code with debug symbols
-        bool debugCode; 
+        bool debugCode = false; 
         
         //! C++ compiler options to be used for building all host side code (used for unix based platforms)
-        std::string userCxxFlagsGNU; 
+        std::string userCxxFlagsGNU = ""; 
         
         //!< NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
-        std::string userNvccFlagsGNU; 
+        std::string userNvccFlagsGNU = ""; 
     };
 
     //--------------------------------------------------------------------------
