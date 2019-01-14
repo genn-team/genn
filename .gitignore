@@ -13,9 +13,9 @@
 **/*.suo
 **/*.sdf
 **/*.vcxproj.user
+**/*.opensdf
 
 /lib
 /documentation/
 /build/
 /pygenn.egg-info/
-
