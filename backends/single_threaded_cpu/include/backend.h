@@ -101,14 +101,5 @@ private:
     const int m_LocalHostID;
     const BackendBase::Preferences m_Preferences;
 };
-
-//--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Optimiser
-//--------------------------------------------------------------------------
-namespace Optimiser
-{
-Backend createBackend(const NNmodel &model, const filesystem::path &outputPath, int localHostID, 
-                      const Backend::Preferences &preferences);
-}
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

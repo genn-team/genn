@@ -679,15 +679,5 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitu
     }
     os << " = " << subs.getVarSubstitution("id") << ";" << std::endl;
 }
-
-//--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Optimiser
-//--------------------------------------------------------------------------
-Backend Optimiser::createBackend(const NNmodel &, const filesystem::path &, int localHostID, const Backend::Preferences &preferences)
-{
-    Backend backend(localHostID, preferences);
-
-    return std::move(backend);
-}
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator
