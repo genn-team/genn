@@ -99,6 +99,12 @@ public:
     virtual void genMakefileLinkRule(std::ostream &os) const = 0;
     virtual void genMakefileCompileRule(std::ostream &os) const = 0;
 
+    virtual void genMSBuildConfigProperties(std::ostream &os) const = 0;
+    virtual void genMSBuildImportProps(std::ostream &os) const = 0;
+    virtual void genMSBuildItemDefinitions(std::ostream &os) const = 0;
+    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
+    virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
+
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
     
     virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;

@@ -907,7 +907,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
             });
     }
     os << std::endl;
-    const unsigned int numStaticInitThreads = idInitStart;
+    const size_t numStaticInitThreads = idInitStart;
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
@@ -949,7 +949,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
 
                     // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
                     const unsigned int numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
-                    const unsigned int numBlocks = Utils::ceilDivide(numSrcNeurons, m_KernelBlockSizes[KernelInitializeSparse]);
+                    const size_t numBlocks = Utils::ceilDivide(numSrcNeurons, m_KernelBlockSizes[KernelInitializeSparse]);
 
                     // Loop through blocks
                     os << "for(unsigned int r = 0; r < " << numBlocks << "; r++)";
@@ -1359,6 +1359,65 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     // Add another to build object files from cc files
     os << "%.o: %.cc %.d" << std::endl;
     os << "\t$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildConfigProperties(std::ostream &os) const
+{
+    // Add property to extract CUDA path
+    os << "\t\t<!-- **HACK** determine the installed CUDA version by regexing CUDA path -->" << std::endl;
+    os << "\t\t<CudaVersion>$([System.Text.RegularExpressions.Regex]::Match($(CUDA_PATH), \"\\\\v([0-9.]+)$\").Groups[1].Value)</CudaVersion>" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildImportProps(std::ostream &os) const
+{
+    // Import CUDA props file
+    os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
+    os << "\t\t<Import Project=\"$(VCTargetsPath)\\BuildCustomizations\\CUDA $(CudaVersion).props\" />" << std::endl;
+    os << "</ImportGroup>" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildItemDefinitions(std::ostream &os) const
+{
+    // Add item definition for host compilation
+    os << "\t\t<ClCompile>" << std::endl;
+    os << "\t\t\t<WarningLevel>Level3</WarningLevel>" << std::endl;
+    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Release'\">MaxSpeed</Optimization>" << std::endl;
+    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
+    os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
+    os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t</ClCompile>" << std::endl;
+
+    // Add item definition for linking
+    os << "\t\t<Link>" << std::endl;
+    os << "\t\t\t<GenerateDebugInformation>true</GenerateDebugInformation>" << std::endl;
+    os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
+    os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
+    os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
+    os << "\t\t\t<AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
+    os << "\t\t</Link>" << std::endl;
+
+    // Add item definition for CUDA compilation
+    const std::string architecture = std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    const std::string virtualArchitecture = (architecture == "21") ? "20" : architecture;
+    os << "\t\t<CudaCompile>" << std::endl;
+    os << "\t\t\t<TargetMachinePlatform>64</TargetMachinePlatform>" << std::endl;
+    os << "\t\t\t<GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>" << std::endl;
+    os << "\t\t\t<CodeGeneration>compute_" << virtualArchitecture <<",sm_" << architecture << "</CodeGeneration>" << std::endl;
+    os << "\t\t</CudaCompile>" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const
+{
+    os << "\t\t<CudaCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildImportTarget(std::ostream &os) const
+{
+    os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
+    os << "\t\t<Import Project=\"$(VCTargetsPath)\\BuildCustomizations\\CUDA $(CudaVersion).targets\" />" << std::endl;
+    os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
 bool Backend::isGlobalRNGRequired(const NNmodel &model) const

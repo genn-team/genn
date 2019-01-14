@@ -14,6 +14,7 @@
 // GeNN code generator includes
 #include "code_generator/generateAll.h"
 #include "code_generator/generateMakefile.h"
+#include "code_generator/generateMSBuild.h"
 
 // Include backend
 #include "optimiser.h"
@@ -77,10 +78,16 @@ int main(int argc,     //!< number of arguments; expected to be 2
     // Generate code
     const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
 
+#ifdef _WIN32
+    // Create MSBuild project to compile and link all generated modules
+    std::ofstream makefile((outputPath / "runner.vcxproj").str());
+    CodeGenerator::generateMSBuild(makefile, backend, moduleNames);
+#else
     // Create makefile to compile and link all generated modules
     std::ofstream makefile((outputPath / "Makefile").str());
     CodeGenerator::generateMakefile(makefile, backend, moduleNames);
-    
+#endif
+
 #ifdef MPI_ENABLE
     MPI_Finalize();
     cout << "MPI finalized." << endl;
