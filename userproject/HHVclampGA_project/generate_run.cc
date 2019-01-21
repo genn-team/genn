@@ -104,7 +104,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
 	  cmd += "_CPU_ONLY";
   }
 #else // UNIX
-  cmd += " && make clean all SIM_CODE=" + modelName + "_CODE";
+  cmd += " && make clean all SIM_CODE=HHVClamp_CODE";
   if (dbgMode) cmd += " DEBUG=1";
   if (cpu_only) cmd += " CPU_ONLY=1";
 #endif
