@@ -6,7 +6,7 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_CODE(CODE) virtual std::string getCode() const{ return CODE; }
+#define SET_CODE(CODE) virtual std::string getCode() const override{ return CODE; }
 
 //----------------------------------------------------------------------------
 // InitVarSnippet::Base

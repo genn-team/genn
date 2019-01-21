@@ -47,8 +47,9 @@ void StandardSubstitutions::postSynapseApplyInput(
     const std::string &rng)
 {
     // Create iterators to iterate over the names of the postsynaptic model's initial values
-    auto psmVars = VarNameIterCtx(sg->getPSModel()->getVars());
-    auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->getDerivedParams());
+    VarNameIterCtx psmVars(sg->getPSModel()->getVars());
+    DerivedParamNameIterCtx psmDerivedParams(sg->getPSModel()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx psmExtraGlobalParams(sg->getPSModel()->getExtraGlobalParams());
 
     // Substitute in time and standard Isyn parameters
     substitute(psCode, "$(t)", "t");
@@ -68,6 +69,8 @@ void StandardSubstitutions::postSynapseApplyInput(
 
     // Create iterators to iterate over the names of the postsynaptic model's derived parameters
     value_substitutions(psCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
+    name_substitutions(psCode, "", psmExtraGlobalParams.nameBegin, psmExtraGlobalParams.nameEnd, sg->getName());
+
     name_substitutions(psCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
 
     functionSubstitutions(psCode, ftype, functions);
@@ -82,23 +85,27 @@ void StandardSubstitutions::postSynapseDecay(
     const NeuronGroup &ng,
     const VarNameIterCtx &nmVars,
     const DerivedParamNameIterCtx &nmDerivedParams,
-    const ExtraGlobalParamNameIterCtx &,
+    const ExtraGlobalParamNameIterCtx &nmExtraGlobalParams,
     const std::vector<FunctionTemplate> &functions,
     const std::string &ftype,
     const std::string &rng)
 {
     // Create iterators to iterate over the names of the postsynaptic model's initial values
-    auto psmVars = VarNameIterCtx(sg->getPSModel()->getVars());
-    auto psmDerivedParams = DerivedParamNameIterCtx(sg->getPSModel()->getDerivedParams());
+    VarNameIterCtx psmVars(sg->getPSModel()->getVars());
+    DerivedParamNameIterCtx psmDerivedParams(sg->getPSModel()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx psmExtraGlobalParams(sg->getPSModel()->getExtraGlobalParams());
 
     substitute(pdCode, "$(t)", "t");
 
     name_substitutions(pdCode, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
     value_substitutions(pdCode, sg->getPSModel()->getParamNames(), sg->getPSParams());
     value_substitutions(pdCode, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg->getPSDerivedParams());
+    name_substitutions(pdCode, "", psmExtraGlobalParams.nameBegin, psmExtraGlobalParams.nameEnd, sg->getName());
+
     name_substitutions(pdCode, "l", nmVars.nameBegin, nmVars.nameEnd, "");
     value_substitutions(pdCode, ng.getNeuronModel()->getParamNames(), ng.getParams());
     value_substitutions(pdCode, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
+    name_substitutions(pdCode, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
 
     functionSubstitutions(pdCode, ftype, functions);
     substitute(pdCode, "$(rng)", rng);

@@ -15,13 +15,13 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const{ return CODE; }
-#define SET_ROW_BUILD_STATE_VARS(...) virtual NameTypeValVec getRowBuildStateVars() const{ return __VA_ARGS__; }
+#define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const override{ return CODE; }
+#define SET_ROW_BUILD_STATE_VARS(...) virtual NameTypeValVec getRowBuildStateVars() const override{ return __VA_ARGS__; }
 
-#define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return FUNC; }
-#define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const{ return FUNC; }
+#define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
+#define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base
@@ -111,7 +111,7 @@ public:
 class FixedProbabilityBase : public Base
 {
 public:
-    virtual std::string getRowBuildCode() const = 0;
+    virtual std::string getRowBuildCode() const override = 0;
 
     SET_ROW_BUILD_STATE_VARS({{"prevJ", {"int", -1}}});
 
