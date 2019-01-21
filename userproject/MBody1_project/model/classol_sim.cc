@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 #endif
 
     //-----------------------------------------------------------------
-    // build the neuronal circuitery
+    // build the neuronal circuitry
     classol locust(patSetTime, patFireTime);
     CStopWatch timer;
 #ifdef TIMING
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     fprintf(timeros, "%% Initialisation: %f \n", tme);
 #endif
 
-    fprintf(stdout, "# neuronal circuitery built, start computation ... \n\n");
+    fprintf(stdout, "# neuronal circuitry built, start computation ... \n\n");
 
     //------------------------------------------------------------------
     // output general parameters to output file and start the simulation

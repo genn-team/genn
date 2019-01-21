@@ -325,7 +325,7 @@ void classol::generate_baserates()
     for (int i= 0; i <  _NAL; i++) {
 	baserates[i]= inputBase;
     }
-    fprintf(stdout, "generated basereates ... \n");
+    fprintf(stdout, "generated baserates ... \n");
     fprintf(stdout, "baserate value: %f ", InputBaseRate);
     fprintf(stdout, "\n\n");  
 }
