@@ -46,7 +46,7 @@ repository.
 
 (ii) Define the environment variable "GENN_PATH" to point to the main
      GeNN directory, e.g. if you extracted/downloaded GeNN to
-     /usr/local/GeNN, then you can add "export GENN_PATH=/usr/local/GeNN"
+     $HOME/GeNN, then you can add "export GENN_PATH=$HOME/GeNN"
      to your login script (e.g. `.profile` or `.bashrc`. If you are using
      WINDOWS, the path should be a windows path as it will be
      interpreted by the Visual C++ compiler `cl`, and environment
