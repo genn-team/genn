@@ -119,15 +119,7 @@ create a shortcut for this tool on the desktop, for convenience.
 \section testInstall Testing Your Installation
 
 To test your installation, follow the example in the
-\link Quickstart Quickstart section\endlink. Linux and Mac users can
-perform a more comprehensive test by running:
-\code
-cd $GENN_PATH/userproject && ./testprojects.sh
-\endcode
-This test script may take a long while to complete, and will terminate
-if any errors are detected.
-
-<br />
+\link Quickstart Quickstart section\endlink.
 
 -----
 \link Installation Top\endlink | \link Quickstart Next\endlink
