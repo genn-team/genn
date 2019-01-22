@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     name= OutDir+ "/" + argv[1] + ".out.Vm";
     FILE *osf= fopen(name.c_str(),"w");
     //-----------------------------------------------------------------
-    // build the neuronal circuitery
+    // build the neuronal circuitry
     classol PNIzhNN;
 
     /*/SPARSE CONNECTIVITY
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
     PNIzhNN.init(which);         // this includes copying g's for the GPU version
 
-    fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
+    fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
 
     //------------------------------------------------------------------
     // output general parameters to output file and start the simulation

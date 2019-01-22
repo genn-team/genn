@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     FILE *osb= fopen(name.c_str(),"w");
 
     //-----------------------------------------------------------------
-    // build the neuronal circuitery
+    // build the neuronal circuitry
     allocateMem();
     initialize();
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     randomGauss RG;
     var_init_fullrange(R); // initialize uniformly on large range
     initexpHH();
-    fprintf(stderr, "# neuronal circuitery built, start computation ... \n\n");
+    fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
 
     double *theExp_p[7];
     theExp_p[0]= &gNaexp;
