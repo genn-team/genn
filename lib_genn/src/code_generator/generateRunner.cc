@@ -396,6 +396,10 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
                     const VarLocation varLoc = s.second.getSparseConnectivityLocation();
                     const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
 
+                    // Maximum row length constant
+                    definitionsVar << "extern const unsigned int maxRowLength" << s.first << ";" << std::endl;
+                    runnerVarDecl << "const unsigned int maxRowLength" << s.first << " = " << s.second.getMaxConnections() << ";" << std::endl;
+
                     // Row lengths
                     backend.genVariable(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
                                         "unsigned int", "rowLength" + s.first, varLoc, autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
