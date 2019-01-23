@@ -41,6 +41,7 @@ uninstall:
 	@rm -rf $(PREFIX)/lib/libgenn*.a
 	@rm -rf $(PREFIX)/include/genn
 	@rm -rf $(PREFIX)/include/genn_*_backend
+	@rm -f $(PREFIX)/bin/genn-buildmodel.sh
 	
 $(LIBGENN):
 	$(MAKE) -C src/genn
