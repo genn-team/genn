@@ -280,4 +280,4 @@ std::tuple<double, double> kolmogorovSmirnovTest(std::vector<double> &data, F cd
     // Compute significance and return
     return std::make_tuple(d, probks(sqrt(en) * d));
 }
-};  // namespace Stats
+}  // namespace Stats
