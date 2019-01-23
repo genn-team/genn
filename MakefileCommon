@@ -7,7 +7,7 @@ DARWIN			:=$(strip $(findstring DARWIN,$(OS_UPPER)))
 GENN_DIR 		:= $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 # Set standard compiler and archiver flags
-CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP
+CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -Iinclude -Iinclude/third_party
 ARFLAGS			:=-rcs
 
 # On Mac OS X, use Clang++ rather than GC++
@@ -31,3 +31,7 @@ ifdef DEBUG
 	GENN_PREFIX	:=$(GENN_PREFIX)_debug
 	CXXFLAGS	+=-g -O0 -DDEBUG
 endif 
+
+# Add prefix to object directory and library name
+OBJECT_DIRECTORY	:=obj$(GENN_PREFIX)
+LIBGENN			:=$(GENN_DIR)/lib/libgenn$(GENN_PREFIX).a

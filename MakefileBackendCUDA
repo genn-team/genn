@@ -1,26 +1,25 @@
 # Include common makefile
-include ../../MakefileCommon
+include MakefileCommon
 
 # Check CUDA is present
 ifndef CUDA_PATH
 	$(error Environment variable CUDA_PATH must be defined)
 endif
-	
-# Add include paths to CXX flags
-CXXFLAGS		+=-Iinclude -I../../lib_genn/include -I../../third_party -I"$(CUDA_PATH)/include"
+
+# Add backend and CUDA include directories to compiler flags
+CXXFLAGS		+=-I$(GENN_DIR)/include/code_generator/cuda_backend -I"$(CUDA_PATH)/include"
 
 # Add prefix to object directory and library name
-OBJECT_DIRECTORY	:=obj$(GENN_PREFIX)
 BACKEND			:=$(GENN_DIR)/lib/libcuda_backend$(GENN_PREFIX).a
 
 # Find source files
-SOURCES			:= $(wildcard src/*.cc)
+SOURCES			:= $(wildcard src/code_generator/cuda_backend/*.cc)
 
 # Remove src prefix and replace with object directory
 OBJECTS			:=$(SOURCES:src/%.cc=$(OBJECT_DIRECTORY)/%.o)
 DEPS			:=$(OBJECTS:.o=.d)
 
-.PHONY: all clean
+.PHONY: all
 
 all: $(BACKEND)
 
@@ -35,6 +34,3 @@ $(OBJECT_DIRECTORY)/%.o: src/%.cc $(OBJECT_DIRECTORY)/%.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
-
-clean:
-	rm -f $(OBJECTS) $(DEPS) $(BACKEND)
