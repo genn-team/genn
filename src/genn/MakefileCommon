@@ -33,5 +33,5 @@ ifdef DEBUG
 endif 
 
 # Add prefix to object directory and library name
-OBJECT_DIRECTORY	:=obj$(GENN_PREFIX)
+OBJECT_DIRECTORY	:=$(GENN_DIR)/obj$(GENN_PREFIX)
 LIBGENN			:=$(GENN_DIR)/lib/libgenn$(GENN_PREFIX).a
