@@ -54,16 +54,17 @@ GENERATOR=./generator
 popd > /dev/null
 if [[ -n "$DEBUG" ]]; then
     MACROS="$MACROS DEBUG=1";
+    GENERATOR="$GENERATOR"_debug
 fi
 
 if [[ -n "$MPI_ENABLE" ]]; then
     MACROS="$MACROS MPI_ENABLE=1";
-    GENERATOR="$GENERATOR"_MPI
+    GENERATOR="$GENERATOR"_mpi
 fi
 
 if [[ -n "$COVERAGE" ]]; then
     MACROS="$MACROS COVERAGE=1";
-    GENERATOR="$GENERATOR"_COVERAGE
+    GENERATOR="$GENERATOR"_coverage
 fi
 
 # generate model code

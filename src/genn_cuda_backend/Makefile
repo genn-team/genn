@@ -12,6 +12,9 @@ CXXFLAGS		+=-I$(GENN_DIR)/include/genn_cuda_backend -I"$(CUDA_PATH)/include"
 # Add prefix to object directory and library name
 BACKEND			:=$(GENN_DIR)/lib/libgenn_cuda_backend$(GENN_PREFIX).a
 
+# Build objecs in sub-directory
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn_cuda_backend
+
 # Find source files
 SOURCES			:= $(wildcard *.cc)
 

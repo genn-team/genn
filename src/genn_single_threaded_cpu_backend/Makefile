@@ -7,6 +7,9 @@ CXXFLAGS		+=-I$(GENN_DIR)/include/genn_single_threaded_cpu_backend
 # Add prefix to object directory and library name
 BACKEND			:=$(GENN_DIR)/lib/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).a
 
+# Build objecs in sub-directory
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn_cuda_backend
+
 # Find source files
 SOURCES			:= $(wildcard *.cc)
 
