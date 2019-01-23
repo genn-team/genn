@@ -32,8 +32,14 @@ PREFIX 			:= /usr/local
 
 all: $(LIBGENN) $(BACKEND_LIBS)
 
-#install: $(LIBGENN) $(BACKEND_LIBS)
-#	mkdir -p 
+install: $(LIBGENN) $(BACKEND_LIBS)
+	@# Make install directories
+	@mkdir -p $(PREFIX)/lib
+	@mkdir -p $(PREFIX)/include/genn
+	@mkdir -p $(PREFIX)/src/genn
+	@# Deploy libraries and headers
+	@cp -f $(GENN_DIR)/lib/*.a $(PREFIX)/lib
+	@cp -rf $(GENN_DIR)/include/* $(PREFIX)/include
 
 $(LIBGENN):
 	$(MAKE) -f MakefileLibGeNN
