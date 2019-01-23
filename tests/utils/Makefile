@@ -1,11 +1,14 @@
-EXECUTABLE      := test
-SOURCES         := test.cc $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc
-
-INCLUDE_FLAGS	:= -I $(GTEST_DIR) -isystem $(GTEST_DIR)/include 
-LINK_FLAGS	:= -lpthread
-
-ifdef SIM_CODE
-	INCLUDE_FLAGS += -DMODEL_NAME=$(subst _CODE,,$(SIM_CODE)) -DDEFINITIONS_HEADER='"$(SIM_CODE)/definitions.h"'
+CXXFLAGS	+=-std=c++11 -Wall -Wpedantic -Wextra -I $(GTEST_DIR) -isystem $(GTEST_DIR)/include -DMODEL_NAME=$(subst _CODE,,$(SIM_CODE)) -DDEFINITIONS_HEADER='"$(SIM_CODE)/definitions.h"'
+ifdef CUDA_PATH
+		CXXFLAGS+=-I$(CUDA_PATH)/include 
 endif
 
-include $(GENN_PATH)/userproject/include/makefile_common_gnu.mk
+.PHONY: all clean generated_code
+
+all: test
+
+test: test.cc generated_code
+	$(CXX) $(CXXFLAGS) test.cc $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc -o test -L$(SIM_CODE) -lpthread -lrunner -Wl,-rpath=$(SIM_CODE)
+	
+generated_code: 
+	$(MAKE) -C $(SIM_CODE)
