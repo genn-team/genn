@@ -1,5 +1,5 @@
 # Include common makefile
-include MakefileCommon
+include ../genn/MakefileCommon
 
 # Add backend  include directory to compiler flags
 CXXFLAGS		+=-I$(GENN_DIR)/include/genn_single_threaded_cpu_backend
@@ -8,10 +8,10 @@ CXXFLAGS		+=-I$(GENN_DIR)/include/genn_single_threaded_cpu_backend
 BACKEND			:=$(GENN_DIR)/lib/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).a
 
 # Find source files
-SOURCES			:= $(wildcard src/genn_single_threaded_cpu_backend/*.cc)
+SOURCES			:= $(wildcard *.cc)
 
-# Remove src prefix and replace with object directory
-OBJECTS			:=$(SOURCES:src/%.cc=$(OBJECT_DIRECTORY)/%.o)
+# Add object directory prefix
+OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
 DEPS			:=$(OBJECTS:.o=.d)
 
 .PHONY: all
@@ -24,7 +24,7 @@ $(BACKEND): $(OBJECTS)
 
 -include $(DEPS)
 
-$(OBJECT_DIRECTORY)/%.o: src/%.cc $(OBJECT_DIRECTORY)/%.d
+$(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 

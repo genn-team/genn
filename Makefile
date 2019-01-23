@@ -1,5 +1,5 @@
 # Include common makefile
-include MakefileCommon
+include src/genn/MakefileCommon
 
 # List of backends
 BACKENDS		:=single_threaded_cpu
@@ -34,21 +34,25 @@ all: $(LIBGENN) $(BACKEND_LIBS)
 
 install: $(LIBGENN) $(BACKEND_LIBS)
 	@# Make install directories
+	@mkdir -p $(PREFIX)/bin
+	@mkdir -p $(PREFIX)/include
 	@mkdir -p $(PREFIX)/lib
-	@mkdir -p $(PREFIX)/include/genn
-	@mkdir -p $(PREFIX)/src/genn
+	@mkdir -p $(PREFIX)/src
 	@# Deploy libraries and headers
 	@cp -f $(GENN_DIR)/lib/*.a $(PREFIX)/lib
 	@cp -rf $(GENN_DIR)/include/* $(PREFIX)/include
+	@# Deploy genn_generator source and shell script
+	@cp -r $(GENN_DIR)/src/genn_generator/* $(PREFIX)/src
+	@cp -r $(GENN_DIR)/bin/genn-buildmodel.sh $(PREFIX)/bin
 
 $(LIBGENN):
-	$(MAKE) -f MakefileLibGeNN
+	$(MAKE) -C src/genn
 
 $(GENN_DIR)/lib/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).a:
-	$(MAKE) -f MakefileBackendSingleThreadedCPU
+	$(MAKE) -C src/genn_single_threaded_cpu_backend
 
 $(GENN_DIR)/lib/libgenn_cuda_backend$(GENN_PREFIX).a:
-	$(MAKE) -f MakefileBackendCUDA
+	$(MAKE) -C src/genn_cuda_backend
 	
 clean:
 	rm -rf $(OBJECT_DIRECTORY)/* $(LIBGENN)
