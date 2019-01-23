@@ -7,13 +7,13 @@ ifndef CUDA_PATH
 endif
 
 # Add backend and CUDA include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/code_generator/cuda_backend -I"$(CUDA_PATH)/include"
+CXXFLAGS		+=-I$(GENN_DIR)/include/genn_cuda_backend -I"$(CUDA_PATH)/include"
 
 # Add prefix to object directory and library name
-BACKEND			:=$(GENN_DIR)/lib/libcuda_backend$(GENN_PREFIX).a
+BACKEND			:=$(GENN_DIR)/lib/libgenn_cuda_backend$(GENN_PREFIX).a
 
 # Find source files
-SOURCES			:= $(wildcard src/code_generator/cuda_backend/*.cc)
+SOURCES			:= $(wildcard src/genn_cuda_backend/*.cc)
 
 # Remove src prefix and replace with object directory
 OBJECTS			:=$(SOURCES:src/%.cc=$(OBJECT_DIRECTORY)/%.o)

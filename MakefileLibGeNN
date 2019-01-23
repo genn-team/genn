@@ -2,8 +2,8 @@
 include MakefileCommon
 
 # Find source files
-FRONTEND_SOURCES	:=$(wildcard src/*.cc)
-BACKEND_SOURCES		:=$(wildcard src/code_generator/*.cc)
+FRONTEND_SOURCES	:=$(wildcard src/genn/*.cc)
+BACKEND_SOURCES		:=$(wildcard src/genn/code_generator/*.cc)
 SOURCES			:=$(FRONTEND_SOURCES) $(BACKEND_SOURCES) 
 
 # Remove src prefix and replace with object directory
