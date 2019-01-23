@@ -551,6 +551,24 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
         }
     }
 
+     // ---------------------------------------------------------------------
+    // Function for copying all state from device
+    runner << "void copyStateFromDevice()";
+    {
+        CodeStream::Scope b(runner);
+         for(const auto &n : model.getLocalNeuronGroups()) {
+            runner << "pull" << n.first << "StateFromDevice();" << std::endl;
+        }
+
+        for(const auto &cs : model.getLocalCurrentSources()) {
+            runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
+        }
+
+        for(const auto &s : model.getLocalSynapseGroups()) {
+            runner << "pull" << s.first << "StateFromDevice();" << std::endl;
+        }
+    }
+
     // ---------------------------------------------------------------------
     // Function for setting the CUDA device and the host's global variables.
     // Also estimates memory usage on device ...
@@ -630,6 +648,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
     // Function definitions
     definitions << "// Runner functions" << std::endl;
     definitions << funcExportPrefix << "void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
+    definitions << funcExportPrefix << "void copyStateFromDevice();" << std::endl;
     definitions << funcExportPrefix << "void allocateMem();" << std::endl;
     definitions << funcExportPrefix << "void freeMem();" << std::endl;
     definitions << funcExportPrefix << "void stepTime();" << std::endl;
