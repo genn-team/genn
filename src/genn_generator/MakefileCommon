@@ -1,5 +1,5 @@
 # Include common makefile
-include ../MakefileCommon
+include ../genn/MakefileCommon
 
 # Check required environment variable names are set
 ifndef BACKEND_NAME
@@ -15,33 +15,33 @@ ifndef GENERATOR_PATH
 	$(error Environment variable GENERATOR_PATH must be defined)
 endif
 
-# Add include paths to CXX flags
-CXXFLAGS		+= -I../lib_genn/include -I../third_party
-
 # BUILD_MODEL_INCLUDE contains a colon-seperated list of additional include paths.
 # substitute :s for spaces and then prepend each path with -I so it gets turned into an include directory
 CXXFLAGS		+=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 
-# Add standard compiler and linker flags
-LDFLAGS			+= -L../lib -lgenn$(GENN_PREFIX) -l$(BACKEND_NAME)_backend$(GENN_PREFIX) 
-CXXFLAGS		+= -I../backends/$(BACKEND_NAME)/include -DMODEL=\"$(MODEL)\" -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
+# Add compiler and linker flags to link libGeNN and correct backend; and to configure generator to use backend
+LDFLAGS			+= -L$(GENN_DIR)/lib -lgenn$(GENN_PREFIX) -lgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX) 
+CXXFLAGS		+= -I$(GENN_DIR)/include/genn_$(BACKEND_NAME)_backend -DMODEL=\"$(MODEL)\" -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
 
-# Add prefix to generator name
+# Determine full path to generator and backend
 GENERATOR		:=$(GENERATOR_PATH)/generator$(GENN_PREFIX)
+BACKEND			:=$(GENN_DIR)/lib/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
 
-.PHONY: all clean libgenn backend
+.PHONY: all clean
 
 all: $(GENERATOR)
 
-$(GENERATOR): generator.cc libgenn backend
+$(GENERATOR): generator.cc $(LIBGENN) $(BACKEND)
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) generator.cc -o $@ $(LDFLAGS)
 
-libgenn:
-	$(MAKE) -C ../lib_genn
+# **NOTE** if GeNN is installed, libGeNN should be installed and thus rule won't run
+$(LIBGENN):
+	$(MAKE) -C $(GENN_DIR)/src/genn
 
-backend:
-	$(MAKE) -C ../backends/$(BACKEND_NAME)
+# **NOTE** if GeNN is installed, backend should be installed and thus rule won't run
+$(BACKEND):
+	$(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend
 
 clean:
 	rm -f generator.o $(GENERATOR)

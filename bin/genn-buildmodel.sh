@@ -42,22 +42,6 @@ while [[ -n "${!OPTIND}" ]]; do
     let OPTIND++
 done
 
-# command options logic
-if [[ -z "$GENN_PATH" ]]; then
-    if [[ $(uname -s) == "Linux" ]]; then
-        echo "GENN_PATH is not defined - trying to auto-detect"
-        export GENN_PATH="$(readlink -f $(dirname $0)/../..)"
-        echo "GENN_PATH is $GENN_PATH" 
-    else
-        if [[ $(uname -s) == "Darwin" ]]; then
-            echo "GENN_PATH is not defined - trying to auto-detect"
-            export GENN_PATH="$(cd $(dirname $0)/../.. && pwd -P)"
-            echo "GENN_PATH is $GENN_PATH"
-        else
-            genn_error $LINENO 1 "GENN_PATH is not defined"
-        fi
-    fi
-fi
 if [[ -z "$MODEL" ]]; then
     genn_error $LINENO 2 "no model file given"
 fi
@@ -83,7 +67,8 @@ if [[ -n "$COVERAGE" ]]; then
 fi
 
 # generate model code
-make -C "$GENN_PATH/generator" -f $GENERATOR_MAKEFILE $MACROS
+BASEDIR=$(dirname "$0")
+make -C $BASEDIR/../src/genn_generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$MPI_ENABLE" ]]; then
     cp "$GENERATOR" "$GENERATOR"_"$OMPI_COMM_WORLD_RANK"
