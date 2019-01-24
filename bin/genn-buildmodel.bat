@@ -88,7 +88,7 @@ rem :: build backend
 msbuild "%GENN_PATH%\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true
 
 rem :: build generator
-msbuild "%GENN_PATH%\generator\generator.vcxproj" %MACROS%
+msbuild "%GENN_PATH%\src\genn_generator\generator.vcxproj" %MACROS%
 
 if defined -d (
     devenv /debugexe "%GENERATOR%" "%-o%"
