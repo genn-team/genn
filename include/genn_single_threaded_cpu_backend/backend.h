@@ -71,6 +71,12 @@ public:
     virtual void genMakefileLinkRule(std::ostream &os) const override;
     virtual void genMakefileCompileRule(std::ostream &os) const override;
 
+    virtual void genMSBuildConfigProperties(std::ostream &os) const override;
+    virtual void genMSBuildImportProps(std::ostream &os) const override;
+    virtual void genMSBuildItemDefinitions(std::ostream &os) const override;
+    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
+    virtual void genMSBuildImportTarget(std::ostream &os) const override;
+
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup &ng, const Substitutions &subs) const override
     {
         genEmitSpike(os, ng, subs, "");

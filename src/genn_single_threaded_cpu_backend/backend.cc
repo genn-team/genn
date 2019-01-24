@@ -545,6 +545,46 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genMSBuildConfigProperties(std::ostream &os) const
+{
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildImportProps(std::ostream &os) const
+{
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildItemDefinitions(std::ostream &os) const
+{
+    // Add item definition for host compilation
+    os << "\t\t<ClCompile>" << std::endl;
+    os << "\t\t\t<WarningLevel>Level3</WarningLevel>" << std::endl;
+    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Release'\">MaxSpeed</Optimization>" << std::endl;
+    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
+    os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
+    os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t</ClCompile>" << std::endl;
+
+    // Add item definition for linking
+    os << "\t\t<Link>" << std::endl;
+    os << "\t\t\t<GenerateDebugInformation>true</GenerateDebugInformation>" << std::endl;
+    os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
+    os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
+    os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
+    os << "\t\t\t<AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
+    os << "\t\t</Link>" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const
+{
+    os << "\t\t<ClCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMSBuildImportTarget(std::ostream &os) const
+{
+}
+//--------------------------------------------------------------------------
 bool Backend::isGlobalRNGRequired(const NNmodel &model) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
