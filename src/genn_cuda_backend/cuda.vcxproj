@@ -14,13 +14,8 @@
     <ProjectGuid>{F7026BD9-7181-4F28-A2F0-41C41FAC1018}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="src\backend.cc" />
-    <ClCompile Include="src\optimiser.cc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\backend.h" />
-    <ClInclude Include="include\optimiser.h" />
-    <ClInclude Include="include\utils.h" />
+    <ClCompile Include="backend.cc" />
+    <ClCompile Include="optimiser.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -46,14 +41,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <PropertyGroup>
     <OutDir>..\..\lib\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
-    <TargetName>cuda_backend_$(Configuration)</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\lib\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
+    <IntDir>..\..\$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
     <TargetName>cuda_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -61,7 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;..\..\lib_genn\include;$(CUDA_PATH)\include;..\..\third_party</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -75,7 +65,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;..\..\lib_genn\include;$(CUDA_PATH)\include;..\..\third_party</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>

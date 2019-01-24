@@ -11,68 +11,36 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\binomial.h" />
-    <ClInclude Include="include\code_generator\backendBase.h" />
-    <ClInclude Include="include\code_generator\codeStream.h" />
-    <ClInclude Include="include\code_generator\generateAll.h" />
-    <ClInclude Include="include\code_generator\generateInit.h" />
-    <ClInclude Include="include\code_generator\generateMakefile.h" />
-    <ClInclude Include="include\code_generator\generateMSBuild.h" />
-    <ClInclude Include="include\code_generator\generateNeuronUpdate.h" />
-    <ClInclude Include="include\code_generator\generateRunner.h" />
-    <ClInclude Include="include\code_generator\generateSynapseUpdate.h" />
-    <ClInclude Include="include\code_generator\substitutions.h" />
-    <ClInclude Include="include\code_generator\teeStream.h" />
-    <ClInclude Include="include\code_generator\tempSubstitutions.h" />
-    <ClInclude Include="include\code_generator\codeGenUtils.h" />
-    <ClInclude Include="include\currentSource.h" />
-    <ClInclude Include="include\currentSourceModels.h" />
-    <ClInclude Include="include\generateMPI.h" />
-    <ClInclude Include="include\initSparseConnectivitySnippet.h" />
-    <ClInclude Include="include\initVarSnippet.h" />
-    <ClInclude Include="include\modelSpec.h" />
-    <ClInclude Include="include\neuronGroup.h" />
-    <ClInclude Include="include\models.h" />
-    <ClInclude Include="include\neuronModels.h" />
-    <ClInclude Include="include\postsynapticModels.h" />
-    <ClInclude Include="include\gennUtils.h" />
-    <ClInclude Include="include\weightUpdateModels.h" />
-    <ClInclude Include="include\snippet.h" />
-    <ClInclude Include="include\synapseGroup.h" />
-    <ClInclude Include="include\synapseMatrixType.h" />
-    <ClInclude Include="include\variableMode.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\binomial.cc" />
-    <ClCompile Include="src\code_generator\codeStream.cc" />
-    <ClCompile Include="src\code_generator\generateAll.cc" />
-    <ClCompile Include="src\code_generator\generateInit.cc" />
-    <ClCompile Include="src\code_generator\generateMakefile.cc" />
-    <ClCompile Include="src\code_generator\generateMSBuild.cc" />
-    <ClCompile Include="src\code_generator\generateNeuronUpdate.cc" />
-    <ClCompile Include="src\code_generator\generateRunner.cc" />
-    <ClCompile Include="src\code_generator\generateSynapseUpdate.cc" />
-    <ClCompile Include="src\code_generator\tempSubstitutions.cc" />
-    <ClCompile Include="src\code_generator\codeGenUtils.cc" />
-    <ClCompile Include="src\currentSource.cc" />
-    <ClCompile Include="src\currentSourceModels.cc" />
-    <ClCompile Include="src\generateMPI.cc" />
-    <ClCompile Include="src\initSparseConnectivitySnippet.cc" />
-    <ClCompile Include="src\initVarSnippet.cc" />
-    <ClCompile Include="src\modelSpec.cc" />
-    <ClCompile Include="src\neuronGroup.cc" />
-    <ClCompile Include="src\neuronModels.cc" />
-    <ClCompile Include="src\postsynapticModels.cc" />
-    <ClCompile Include="src\gennUtils.cc" />
-    <ClCompile Include="src\weightUpdateModels.cc" />
-    <ClCompile Include="src\synapseGroup.cc" />
+    <ClCompile Include="binomial.cc" />
+    <ClCompile Include="code_generator\codeStream.cc" />
+    <ClCompile Include="code_generator\generateAll.cc" />
+    <ClCompile Include="code_generator\generateInit.cc" />
+    <ClCompile Include="code_generator\generateMakefile.cc" />
+    <ClCompile Include="code_generator\generateMSBuild.cc" />
+    <ClCompile Include="code_generator\generateNeuronUpdate.cc" />
+    <ClCompile Include="code_generator\generateRunner.cc" />
+    <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
+    <ClCompile Include="code_generator\tempSubstitutions.cc" />
+    <ClCompile Include="code_generator\codeGenUtils.cc" />
+    <ClCompile Include="currentSource.cc" />
+    <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="generateMPI.cc" />
+    <ClCompile Include="initSparseConnectivitySnippet.cc" />
+    <ClCompile Include="initVarSnippet.cc" />
+    <ClCompile Include="modelSpec.cc" />
+    <ClCompile Include="neuronGroup.cc" />
+    <ClCompile Include="neuronModels.cc" />
+    <ClCompile Include="postsynapticModels.cc" />
+    <ClCompile Include="gennUtils.cc" />
+    <ClCompile Include="weightUpdateModels.cc" />
+    <ClCompile Include="synapseGroup.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\header.src" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}</ProjectGuid>
-    <RootNamespace>lib_genn</RootNamespace>
+    <RootNamespace>genn</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -98,13 +66,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\lib\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\lib_genn\</IntDir>
-    <TargetName>genn_$(Configuration)</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\lib\</OutDir>
+  <PropertyGroup>
+    <OutDir>..\..\lib\</OutDir>
+    <IntDir>..\..\$(Platform)\$(Configuration)\lib_genn\</IntDir>
     <TargetName>genn_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -112,7 +76,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;../third_party</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\genn;..\..\include\genn\third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -125,7 +89,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;../third_party</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\genn;..\..\include\genn\third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

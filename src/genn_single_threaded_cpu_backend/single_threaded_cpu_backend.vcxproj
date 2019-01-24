@@ -11,10 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\backend.cc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\backend.h" />
+    <ClCompile Include="backend.cc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}</ProjectGuid>
@@ -44,14 +41,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <PropertyGroup>
     <OutDir>..\..\lib\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
-    <TargetName>single_threaded_cpu_backend_$(Configuration)</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\lib\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
+    <IntDir>..\..\$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
     <TargetName>single_threaded_cpu_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -59,7 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;..\..\lib_genn\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\genn;..\..\include\genn\third_party;..\..\include\genn_single_threaded_cpu_backend</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -72,7 +64,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>include;..\..\lib_genn\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\genn;..\..\include\genn\third_party;..\..\include\genn_single_threaded_cpu_backend</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

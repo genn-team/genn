@@ -3,14 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib_genn", "lib_genn\lib_genn.vcxproj", "{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "genn", "src\genn\genn.vcxproj", "{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "single_threaded_cpu_backend", "backends\single_threaded_cpu\single_threaded_cpu_backend.vcxproj", "{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "single_threaded_cpu_backend", "src\genn_single_threaded_cpu_backend\single_threaded_cpu_backend.vcxproj", "{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cuda", "backends\cuda\cuda.vcxproj", "{F7026BD9-7181-4F28-A2F0-41C41FAC1018}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cuda", "src\genn_cuda_backend\cuda.vcxproj", "{F7026BD9-7181-4F28-A2F0-41C41FAC1018}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
 	EndProjectSection
