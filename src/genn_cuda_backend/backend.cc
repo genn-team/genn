@@ -926,7 +926,11 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
             // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
             // **TODO** check actually required
             os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelInitializeSparse] << "];" << std::endl;
-            os << "__shared__ unsigned int shRowStart[" << m_KernelBlockSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                           [](const NNmodel::SynapseGroupValueType &s) { return s.second.isSparseConnectivityInitRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
+            {
+                os << "__shared__ unsigned int shRowStart[" << m_KernelBlockSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
+            }
 
             // Initialise weight update variables for synapse groups with dense connectivity
             genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
@@ -970,10 +974,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                         }
 
                         // If this synapse projection has ragged connectivity initialised on device and has synapse dynamics
-                        if(sg.isSparseConnectivityInitRequired()
-                            && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-                            && !sg.getWUModel()->getSynapseDynamicsCode().empty())
-                        {
+                        if(sg.isSparseConnectivityInitRequired() && !sg.getWUModel()->getSynapseDynamicsCode().empty()) {
                             // Use first thread to generate cumulative sum
                             os << "if (threadIdx.x == 0)";
                             {
@@ -1017,17 +1018,17 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                             {
                                 CodeStream::Scope b(os);
 
-                                popSubs.addVarSubstitution("id_syn", "idx");
-                                popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(m_KernelBlockSizes[KernelInitializeSparse]) + ") + i)");
-                                popSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[idx]");
-                                sgSparseInitHandler(os, sg, popSubs);
+                                // Generate sparse initialisation code
+                                if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                                    popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(m_KernelBlockSizes[KernelInitializeSparse]) + ") + i)");
+                                    popSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[idx]");
+                                    sgSparseInitHandler(os, sg, popSubs);
+                                }
 
-                                // If matrix is ragged, connectivity is initialised on device and postsynaptic learning is required
-                                if((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-                                    && sg.isSparseConnectivityInitRequired())
-                                {
+                                // If connectivity is initialised on device
+                                if(sg.isSparseConnectivityInitRequired()) {
                                     // If postsynaptic learning is required
-                                    if(!sg.getWUModel()->getSynapseDynamicsCode().empty()) {
+                                    if(!sg.getWUModel()->getLearnPostCode().empty()) {
                                         CodeStream::Scope b(os);
 
                                         // Extract index of synapse's postsynaptic target
@@ -1279,10 +1280,21 @@ void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitution
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableInit(CodeStream &os, VarLocation, size_t, const std::string &countVarName,
-                           const Substitutions &kernelSubs, Handler handler) const
+                              const Substitutions &kernelSubs, Handler handler) const
 {
     // Variable should already be provided via parallelism
     assert(kernelSubs.hasVarSubstitution(countVarName));
+
+    Substitutions varSubs(&kernelSubs);
+    handler(os, varSubs);
+}
+//--------------------------------------------------------------------------
+void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroup &,
+                                        const Substitutions &kernelSubs, Handler handler) const
+{
+    // Pre and postsynaptic ID should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution("id_pre"));
+    assert(kernelSubs.hasVarSubstitution("id_post"));
 
     Substitutions varSubs(&kernelSubs);
     handler(os, varSubs);

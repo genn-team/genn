@@ -158,7 +158,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                      const CodeGenerator::Substitutions &popSubs, const SynapseGroup &sg, size_t count, const std::string &ftype)
+                      const CodeGenerator::Substitutions &popSubs, const SynapseGroup &sg, const std::string &ftype)
 {
     using namespace CodeGenerator;
 
@@ -172,11 +172,12 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
             CodeStream::Scope b(os);
 
             // Generate target-specific code to initialise variable
-            backend.genVariableInit(os, varLoc, count, "id_post", popSubs,
-                [&backend, &vars, &varInit, &sg, &ftype, k, count]
+            backend.genSynapseVariableRowInit(os, varLoc, sg, popSubs,
+                [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[(" + varSubs.getVarSubstitution("id_pre") + " * " + std::to_string(count) + ") + " + varSubs.getVarSubstitution("id_post") + "]");
+                    const size_t stride = (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) ? sg.getMaxConnections() : sg.getTrgNeuronGroup()->getNumNeurons();
+                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[(" + varSubs.getVarSubstitution("id_pre") + " * " + std::to_string(stride) + ") + " + varSubs.getVarSubstitution("id_post") + "]");
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.apply(code);
@@ -309,7 +310,7 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
             os << "for(unsigned int i = 0; i < " << sg.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
             {
                 popSubs.addVarSubstitution("id_pre", "i");
-                genInitWUVarCode(os, backend, popSubs, sg, sg.getTrgNeuronGroup()->getNumNeurons(), model.getPrecision());
+                genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
 
             }
         },
@@ -343,10 +344,6 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
         // Sparse synaptic matrix var initialisation
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
         {
-            // If this synapse group has individual variables
-            if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                // **TODO** need row length in string to go into count
-                genInitWUVarCode(os, backend, popSubs, sg, 0, model.getPrecision());
-            }
+            genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         });
 }

@@ -50,10 +50,10 @@ public:
 
         //! Generate code with debug symbols
         bool debugCode = false; 
-        
+
         //! C++ compiler options to be used for building all host side code (used for unix based platforms)
         std::string userCxxFlagsGNU = ""; 
-        
+
         //!< NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
         std::string userNvccFlagsGNU = ""; 
     };
@@ -81,8 +81,10 @@ public:
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
     virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &countVarName,
+    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroup &sg,
+                                           const Substitutions &kernelSubs, Handler handler) const = 0;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
@@ -106,7 +108,7 @@ public:
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
-    
+
     virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
 
     virtual std::string getVarPrefix() const{ return ""; }

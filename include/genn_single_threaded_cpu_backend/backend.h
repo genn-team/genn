@@ -53,8 +53,11 @@ public:
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
     virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &countVarName,
+    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
+    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroup &sg,
+                                           const Substitutions &kernelSubs, Handler handler) const override;
+
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const override;
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const override;
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const override;
