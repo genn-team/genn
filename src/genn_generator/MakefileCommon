@@ -27,20 +27,18 @@ CXXFLAGS		+= -I$(GENN_DIR)/include/genn_$(BACKEND_NAME)_backend -DMODEL=\"$(MODE
 GENERATOR		:=$(GENERATOR_PATH)/generator$(GENN_PREFIX)
 BACKEND			:=$(GENN_DIR)/lib/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
 
-.PHONY: all clean
+.PHONY: all clean libgenn backend
 
 all: $(GENERATOR)
 
-$(GENERATOR): generator.cc $(LIBGENN) $(BACKEND)
+$(GENERATOR): generator.cc libgenn backend
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) generator.cc -o $@ $(LDFLAGS)
 
-# **NOTE** if GeNN is installed, libGeNN should be installed and thus rule won't run
-$(LIBGENN):
+libgenn:
 	$(MAKE) -C $(GENN_DIR)/src/genn
 
-# **NOTE** if GeNN is installed, backend should be installed and thus rule won't run
-$(BACKEND):
+backend:
 	$(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend
 
 clean:

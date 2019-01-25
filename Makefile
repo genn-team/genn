@@ -13,9 +13,9 @@ BACKEND_LIBS		:=$(BACKENDS:%=$(GENN_DIR)/lib/libgenn_%_backend$(GENN_PREFIX).a)
 # Default install location
 PREFIX 			:= /usr/local
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall libgenn $(BACKENDS)
 
-all: $(LIBGENN) $(BACKEND_LIBS)
+all: libgenn $(BACKENDS)
 
 install: $(LIBGENN) $(BACKEND_LIBS)
 	@# Make install directories
@@ -42,14 +42,14 @@ uninstall:
 	@rm -rf $(PREFIX)/include/genn
 	@rm -rf $(PREFIX)/include/genn_*_backend
 	@rm -f $(PREFIX)/bin/genn-buildmodel.sh
-	
-$(LIBGENN):
+
+libgenn:
 	$(MAKE) -C src/genn
 
-$(GENN_DIR)/lib/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).a:
+single_threaded_cpu:
 	$(MAKE) -C src/genn_single_threaded_cpu_backend
 
-$(GENN_DIR)/lib/libgenn_cuda_backend$(GENN_PREFIX).a:
+cuda:
 	$(MAKE) -C src/genn_cuda_backend
 	
 clean:
