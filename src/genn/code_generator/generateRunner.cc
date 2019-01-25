@@ -275,12 +275,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
 
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
-            //**FIXME**
-            definitionsVar << varExportPrefix << " unsigned int spkQuePtr" << n.first << ";" << std::endl;
-            runnerVarDecl << "unsigned int spkQuePtr" << n.first << ";" << std::endl;
-#ifndef CPU_ONLY
-            runnerVarDecl << "__device__ volatile unsigned int dd_spkQuePtr" << n.first << ";" << std::endl;
-#endif
+            backend.genScalar(definitionsVar, runnerVarDecl, "unsigned int", "spkQuePtr" + n.first);
         }
 
         // If neuron group needs to record its spike times
@@ -357,13 +352,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &runner, 
             if (sg->isDendriticDelayRequired()) {
                 backend.genArray(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayLocation(),
                                  sg->getMaxDendriticDelayTimesteps() * sg->getTrgNeuronGroup()->getNumNeurons());
-
-                //**FIXME**
-                runnerVarDecl << varExportPrefix << " unsigned int denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
-                runnerVarDecl << "unsigned int denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
-#ifndef CPU_ONLY
-                runnerVarDecl << "__device__ volatile unsigned int dd_denDelayPtr" << sg->getPSModelTargetName() << ";" << std::endl;
-#endif
+                backend.genScalar(definitionsVar, runnerVarDecl, "unsigned int", "denDelayPtr" + sg->getPSModelTargetName());
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {

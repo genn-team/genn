@@ -134,6 +134,12 @@ public:
         genVariableFree(free, name, loc);
     }
 
+    void genScalar(CodeStream &definitions, CodeStream &runner, const std::string &type, const std::string &name) const
+    {
+        genVariableDefinition(definitions, type, name, VarLocation::HOST_DEVICE);
+        genVariableImplementation(runner, type, name, VarLocation::HOST_DEVICE);
+    }
+
     void genVariable(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                      CodeStream &push, CodeStream &pull,
                      const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const

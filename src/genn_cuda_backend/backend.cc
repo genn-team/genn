@@ -1218,8 +1218,15 @@ void Backend::genVariableDefinition(CodeStream &os, const std::string &type, con
         os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
     }
     if(loc & VarLocation::DEVICE) {
-        os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
-        os << getVarExportPrefix() << " __device__ " << type << " dd_" << name << ";" << std::endl;
+        // If the type is a pointer type we need a host and a device pointer
+        if(type.back() == '*') {
+            os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
+            os << getVarExportPrefix() << " __device__ " << type << " dd_" << name << ";" << std::endl;
+        }
+        // Otherwise we just need a device variable, made volatile for safety
+        else {
+            os << getVarExportPrefix() << " __device__ volatile " << type << " dd_" << name << ";" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -1229,8 +1236,15 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
         os << type << " " << name << ";" << std::endl;
     }
     if(loc & VarLocation::DEVICE) {
-        os << type << " d_" << name << ";" << std::endl;
-        os << "__device__ " << type << " dd_" << name << ";" << std::endl;
+        // If the type is a pointer type we need a host and a device pointer
+        if(type.back() == '*') {
+            os << type << " d_" << name << ";" << std::endl;
+            os << "__device__ " << type << " dd_" << name << ";" << std::endl;
+        }
+        // Otherwise we just need a device variable, made volatile for safety
+        else {
+            os << "__device__ volatile " << type << " dd_" << name << ";" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
