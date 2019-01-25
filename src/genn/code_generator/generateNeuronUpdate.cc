@@ -67,31 +67,32 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn" << sg->getName() << " = " << backend.getVarPrefix() << "inSyn" << sg->getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                os << model.getPrecision() << " linSyn" << sg->getPSModelTargetName() << " = " << backend.getVarPrefix() << "inSyn" << sg->getPSModelTargetName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
-                    os << model.getPrecision() << " &denDelay" << sg->getName() << " = " << backend.getVarPrefix() << "denDelay" + sg->getName() + "[" + sg->getDendriticDelayOffset("") + "n];" << std::endl;
+                    os << model.getPrecision() << " &denDelayFront" << sg->getPSModelTargetName() << " = ";
+                    os << backend.getVarPrefix() << "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset(backend.getVarPrefix()) + popSubs.getVarSubstitution("id") + "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
-                    os << "linSyn" + sg->getName() + " += denDelay" << sg->getName() << ";" << std::endl;
+                    os << "linSyn" + sg->getPSModelTargetName() + " += denDelayFront" << sg->getPSModelTargetName() << ";" << std::endl;
 
                     // Zero delay buffer slot
-                    os << "denDelay" << sg->getName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    os << "denDelayFront" << sg->getPSModelTargetName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
                 }
 
                 // If synapse group has individual postsynaptic variables, also pull these in a coalesced access
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     // **TODO** base behaviour from Models::Base
                     for (const auto &v : psm->getVars()) {
-                        os << v.second << " lps" << v.first << sg->getName();
-                        os << " = " << backend.getVarPrefix() << v.first << sg->getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                        os << v.second << " lps" << v.first << sg->getPSModelTargetName();
+                        os << " = " << backend.getVarPrefix() << v.first << sg->getPSModelTargetName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
                     }
                 }
 
                 Substitutions inSynSubs(&popSubs);
-                inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getName());
+                inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getPSModelTargetName());
 
                 // Apply substitutions to current converter code
                 std::string psCode = psm->getApplyInputCode();
@@ -99,10 +100,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 applyPostsynapticModelSubstitutions(psCode, *sg, "lps");
                 inSynSubs.apply(psCode);
                 psCode = ensureFtype(psCode, model.getPrecision());
-                checkUnreplacedVariables(psCode, sg->getName() + " : postSyntoCurrent");
+                checkUnreplacedVariables(psCode, sg->getPSModelTargetName() + " : postSyntoCurrent");
 
                 if (!psm->getSupportCode().empty()) {
-                    os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
+                    os << CodeStream::OB(29) << " using namespace " << sg->getPSModelTargetName() << "_postsyn;" << std::endl;
                 }
                 os << psCode << std::endl;
                 if (!psm->getSupportCode().empty()) {
@@ -251,14 +252,14 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 const auto *psm = sg->getPSModel();
 
                 Substitutions inSynSubs(&popSubs);
-                inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getName());
+                inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getPSModelTargetName());
 
                 std::string pdCode = psm->getDecayCode();
                 applyNeuronModelSubstitutions(pdCode, ng, "l");
                 applyPostsynapticModelSubstitutions(pdCode, *sg, "lps");
                 inSynSubs.apply(pdCode);
                 pdCode = ensureFtype(pdCode, model.getPrecision());
-                checkUnreplacedVariables(pdCode, sg->getName() + " : postSynDecay");
+                checkUnreplacedVariables(pdCode, sg->getPSModelTargetName() + " : postSynDecay");
 
                 os << "// the post-synaptic dynamics" << std::endl;
                 if (!psm->getSupportCode().empty()) {
@@ -269,9 +270,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                     os << CodeStream::CB(29) << " // namespace bracket closed" << std::endl;
                 }
 
-                os << backend.getVarPrefix() << "inSyn"  << sg->getName() << "[" << inSynSubs.getVarSubstitution("id") << "] = linSyn" << sg->getName() << ";" << std::endl;
+                os << backend.getVarPrefix() << "inSyn"  << sg->getPSModelTargetName() << "[" << inSynSubs.getVarSubstitution("id") << "] = linSyn" << sg->getPSModelTargetName() << ";" << std::endl;
                 for (const auto &v : psm->getVars()) {
-                    os << backend.getVarPrefix() << v.first << sg->getName() << "[n]" << " = lps" << v.first << sg->getName() << ";" << std::endl;
+                    os << backend.getVarPrefix() << v.first << sg->getPSModelTargetName() << "[n]" << " = lps" << v.first << sg->getPSModelTargetName() << ";" << std::endl;
                 }
             }
         }
