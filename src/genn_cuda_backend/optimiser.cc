@@ -228,8 +228,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
 
         // Get required number of registers and shared memory bytes for this kernel
         // **NOTE** register requirements are assumed to remain constant as they're vector-width
-        const size_t reqNumRegs = krnlNumRegs[0][k.first];
-        const size_t reqSharedMemBytes[2] = {krnlSharedSizeBytes[0][k.first], krnlSharedSizeBytes[1][k.first]};
+        const size_t reqNumRegs = (size_t)krnlNumRegs[0][k.first];
+        const size_t reqSharedMemBytes[2] = {(size_t)krnlSharedSizeBytes[0][k.first], (size_t)krnlSharedSizeBytes[1][k.first]};
 
         // Calculate coefficients for requiredSharedMemBytes = (A * blockThreads) + B model
         const size_t reqSharedMemBytesA = (reqSharedMemBytes[1] - reqSharedMemBytes[0]) / (repBlockSizes[1] - repBlockSizes[0]);
