@@ -36,10 +36,10 @@ $(GENERATOR): generator.cc libgenn backend
 	$(CXX) $(CXXFLAGS) generator.cc -o $@ $(LDFLAGS)
 
 libgenn:
-	$(MAKE) -C $(GENN_DIR)/src/genn
+	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn; fi;
 
 backend:
-	$(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend
+	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend; fi;
 
 clean:
 	rm -f generator.o $(GENERATOR)
