@@ -427,6 +427,10 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "#include <cstring>" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genDefinitionsInternalPreamble(CodeStream &) const
+{
+}
+//--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &) const
 {
 }
@@ -435,9 +439,9 @@ void Backend::genAllocateMemPreamble(CodeStream &, const NNmodel &) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, const std::string &type, const std::string &name, VarLocation) const
 {
-    os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
+    definitions << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
@@ -523,7 +527,7 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroup&) cons
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const
 {
     definitions << getVarExportPrefix() << " " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
@@ -537,7 +541,7 @@ void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStre
     runner << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &,
+void Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
                                const std::string&, size_t) const
 {
     // No need for population RNGs for single-threaded CPU
