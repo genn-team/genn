@@ -741,6 +741,11 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitu
         os << "[0]++]";
     }
     os << " = " << subs.getVarSubstitution("id") << ";" << std::endl;
+
+    // Reset spike time
+    if(ng.isSpikeTimeRequired()) {
+        os << "sT" << ng.getName() << "[" << queueOffset << subs.getVarSubstitution("id") << "] = " << subs.getVarSubstitution("t") << ";" << std::endl;
+    }
 }
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator
