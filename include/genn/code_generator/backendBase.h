@@ -57,6 +57,7 @@ public:
         //!< NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
         std::string userNvccFlagsGNU = ""; 
     };
+    virtual ~BackendBase(){}
 
     //--------------------------------------------------------------------------
     // Declared virtuals
