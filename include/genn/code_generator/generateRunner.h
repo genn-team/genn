@@ -14,6 +14,6 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateRunner(CodeStream &definitions, CodeStream &runner, const NNmodel &model,
-                    const BackendBase &backend, int localHostID);
+void generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
+                    const NNmodel &model, const BackendBase &backend, int localHostID);
 }

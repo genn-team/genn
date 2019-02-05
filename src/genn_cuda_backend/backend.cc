@@ -1143,6 +1143,15 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "#include <string>" << std::endl;
     os << "#include <stdexcept>" << std::endl;
     os << std::endl;
+    os << "// Forward declare cuRAND structures" << std::endl;
+    os << "struct curandStatePhilox4_32_10;" << std::endl;
+    os << "struct curandStateXORWOW;" << std::endl;
+    os << "typedef struct curandStatePhilox4_32_10 curandStatePhilox4_32_10_t;" << std::endl;
+    os << "typedef struct curandStateXORWOW curandState;" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
+{
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
     os << std::endl;
@@ -1212,20 +1221,20 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const
 {
     if(loc & VarLocation::HOST) {
-        os << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
+        definitions << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
     }
     if(loc & VarLocation::DEVICE) {
         // If the type is a pointer type we need a host and a device pointer
         if(type.back() == '*') {
-            os << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
-            os << getVarExportPrefix() << " __device__ " << type << " dd_" << name << ";" << std::endl;
+            definitions << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
+            definitionsInternal << getVarExportPrefix() << " __device__ " << type << " dd_" << name << ";" << std::endl;
         }
         // Otherwise we just need a device variable, made volatile for safety
         else {
-            os << getVarExportPrefix() << " __device__ volatile " << type << " dd_" << name << ";" << std::endl;
+            definitionsInternal << getVarExportPrefix() << " __device__ volatile " << type << " dd_" << name << ";" << std::endl;
         }
     }
 }
@@ -1343,20 +1352,20 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &) const
 {
     // Create a single Philox4_32_10 RNG
-    genVariableDefinition(definitions, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
+    genVariableDefinition(definitions, definitionsInternal, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
     genVariableImplementation(runner, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
     genVariableAllocation(allocations, "curandStatePhilox4_32_10_t", "rng", VarLocation::DEVICE, 1);
     genVariableFree(free, "rng", VarLocation::DEVICE);
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                             const std::string &name, size_t count) const
+void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                               const std::string &name, size_t count) const
 {
     // Create an array or XORWOW RNGs
-    genArray(definitions, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);
+    genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
@@ -1365,7 +1374,8 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     std::string linkFlags = "--shared --linker-options '-fPIC' -arch " + architecture;
 
     // Write variables to preamble
-    os << "NVCC := nvcc" << std::endl;
+    os << "CUDA_PATH ?=/usr/local/cuda" << std::endl;
+    os << "NVCC := $(CUDA_PATH)/bin/nvcc" << std::endl;
     os << "NVCCFLAGS := " << getNVCCFlags() << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
 }

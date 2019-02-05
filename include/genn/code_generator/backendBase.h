@@ -72,10 +72,11 @@ public:
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
     virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os) const = 0;
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
     virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const = 0;
 
-    virtual void genVariableDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0; 
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
@@ -93,8 +94,8 @@ public:
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const = 0;
 
-    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const = 0;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const = 0;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                   const std::string &name, size_t count) const = 0;
 
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
@@ -125,26 +126,26 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
-    void genArray(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                   const std::string &type, const std::string &name, VarLocation loc, size_t count) const
     {
-        genVariableDefinition(definitions, type + "*", name, loc);
+        genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
         genVariableImplementation(runner, type + "*", name, loc);
         genVariableAllocation(allocations, type, name, loc, count);
         genVariableFree(free, name, loc);
     }
 
-    void genScalar(CodeStream &definitions, CodeStream &runner, const std::string &type, const std::string &name) const
+    void genScalar(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const std::string &type, const std::string &name) const
     {
-        genVariableDefinition(definitions, type, name, VarLocation::HOST_DEVICE);
+        genVariableDefinition(definitions, definitionsInternal, type, name, VarLocation::HOST_DEVICE);
         genVariableImplementation(runner, type, name, VarLocation::HOST_DEVICE);
     }
 
-    void genVariable(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+    void genVariable(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                      CodeStream &push, CodeStream &pull,
                      const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
     {
-        genArray(definitions, runner, allocations, free, type, name, loc, count);
+        genArray(definitions, definitionsInternal, runner, allocations, free, type, name, loc, count);
         genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
     }
 

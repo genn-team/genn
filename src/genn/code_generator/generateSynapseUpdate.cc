@@ -38,7 +38,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, const BackendBase &backend)
 {
-    os << "#include \"definitions.h\"" << std::endl;
+    os << "#include \"definitionsInternal.h\"" << std::endl;
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, model,

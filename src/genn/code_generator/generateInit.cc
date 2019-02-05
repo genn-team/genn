@@ -196,7 +196,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const BackendBase &backend)
 {
-    os << "#include \"definitions.h\"" << std::endl;
+    os << "#include \"definitionsInternal.h\"" << std::endl;
 
     backend.genInit(os, model,
         // Local neuron group initialisation
