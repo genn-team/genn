@@ -148,7 +148,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
     int krnlNumRegs[2][Backend::KernelMax];
 
     // Get CUDA_PATH environment variable
-    # **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
+    // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
     filesystem::path nvccPath;
     if(const char *cudaPath = std::getenv("CUDA_PATH")) {
         // Build path to NVCC using this
