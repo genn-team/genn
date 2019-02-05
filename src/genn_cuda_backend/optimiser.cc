@@ -5,6 +5,9 @@
 #include <map>
 #include <numeric>
 
+// Standard C includes
+#include <cstdlib>
+
 // CUDA includes
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -144,6 +147,21 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
     int krnlSharedSizeBytes[2][Backend::KernelMax];
     int krnlNumRegs[2][Backend::KernelMax];
 
+    // Get CUDA_PATH environment variable
+    # **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
+    filesystem::path nvccPath;
+    if(const char *cudaPath = std::getenv("CUDA_PATH")) {
+        // Build path to NVCC using this
+#ifdef _WIN32
+        nvccPath = filesystem::path(cudaPath) / "bin" / "nvcc.exe";
+#else
+        nvccPath = filesystem::path(cudaPath) / "bin" / "nvcc";
+#endif
+    }
+    else {
+        throw std::runtime_error("CUDA_PATH environment variable not set - ");
+    }
+    
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
@@ -169,7 +187,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
             // Build module
             const std::string modulePath = (outputPath / m).str();
             
-            const std::string nvccCommand = "nvcc -cubin " + backend.getNVCCFlags() + " -o " + modulePath + ".cubin " + modulePath + ".cc";
+            const std::string nvccCommand = nvccPath.str() + " -cubin " + backend.getNVCCFlags() + " -o " + modulePath + ".cubin " + modulePath + ".cc";
             if(system(nvccCommand.c_str()) != 0) {
                 throw std::runtime_error("optimizeBlockSize: NVCC failed");
             }

@@ -1,6 +1,11 @@
-# Configure for single-threaded CPU backend
+# Configure for CUDA backend
 BACKEND_NAME		:=cuda
 BACKEND_NAMESPACE 	:=CUDA
+
+# Check CUDA is present
+ifndef CUDA_PATH
+	$(error Environment variable CUDA_PATH must be defined)
+endif
 
 # Include common makefile
 include MakefileCommon

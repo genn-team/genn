@@ -67,6 +67,10 @@ if [[ -n "$COVERAGE" ]]; then
     GENERATOR="$GENERATOR"_coverage
 fi
 
+# If CUDA path isn't set, default to standard path for (at least Ubuntu) Linux systems
+# **NOTE** setting CUDA_PATH is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
+export CUDA_PATH=${CUDA_PATH-/usr/local/cuda} 
+
 # generate model code
 BASEDIR=$(dirname "$0")
 make -C $BASEDIR/../src/genn_generator -f $GENERATOR_MAKEFILE $MACROS

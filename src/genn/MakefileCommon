@@ -12,26 +12,26 @@ ARFLAGS			:=-rcs
 
 # On Mac OS X, use Clang++ rather than GC++
 ifeq ($(DARWIN),DARWIN)
-	CXX		:=clang++
+    CXX		:=clang++
 endif
 
 # Setup compiler based on configuration
 ifdef MPI_ENABLE
-	GENN_PREFIX	:=$(GENN_PREFIX)_mpi
-	CXXFLAGS	+=-DMPI_ENABLE
-	CXX		:=mpiCC
+    GENN_PREFIX	:=$(GENN_PREFIX)_mpi
+    CXXFLAGS	+=-DMPI_ENABLE
+    CXX			:=mpiCC
 endif
 
 ifdef COVERAGE
-	GENN_PREFIX	:=$(GENN_PREFIX)_coverage
-	CXXFLAGS	+=-O0 --coverage
+    GENN_PREFIX	:=$(GENN_PREFIX)_coverage
+    CXXFLAGS	+=-O0 --coverage
 endif
 
 ifdef DEBUG
-	GENN_PREFIX	:=$(GENN_PREFIX)_debug
-	CXXFLAGS	+=-g -O0 -DDEBUG
+    GENN_PREFIX	:=$(GENN_PREFIX)_debug
+    CXXFLAGS	+=-g -O0 -DDEBUG
 endif 
 
 # Add prefix to object directory and library name
 OBJECT_DIRECTORY	:=$(GENN_DIR)/obj$(GENN_PREFIX)
-LIBGENN			:=$(GENN_DIR)/lib/libgenn$(GENN_PREFIX).a
+LIBGENN				:=$(GENN_DIR)/lib/libgenn$(GENN_PREFIX).a

@@ -3,16 +3,16 @@ include ../genn/MakefileCommon
 
 # Check required environment variable names are set
 ifndef BACKEND_NAME
-	$(error Environment variable BACKEND_NAME must be defined)
+    $(error Environment variable BACKEND_NAME must be defined)
 endif
 ifndef BACKEND_NAMESPACE
-	$(error Environment variable BACKEND_NAMESPACE must be defined)
+    $(error Environment variable BACKEND_NAMESPACE must be defined)
 endif
 ifndef MODEL
-	$(error Environment variable MODEL must be defined)
+    $(error Environment variable MODEL must be defined)
 endif
 ifndef GENERATOR_PATH
-	$(error Environment variable GENERATOR_PATH must be defined)
+    $(error Environment variable GENERATOR_PATH must be defined)
 endif
 
 # BUILD_MODEL_INCLUDE contains a colon-seperated list of additional include paths.

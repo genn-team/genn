@@ -1,10 +1,9 @@
 # Include common makefile
 include ../genn/MakefileCommon
 
-# Check CUDA is present
-ifndef CUDA_PATH
-	$(error Environment variable CUDA_PATH must be defined)
-endif
+# If CUDA path isn't set, default to standard path for (at least Ubuntu) Linux systems
+# **NOTE** setting CUDA_PATH is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
+CUDA_PATH		?=/usr/local/cuda
 
 # Add backend and CUDA include directories to compiler flags
 CXXFLAGS		+=-I$(GENN_DIR)/include/genn_cuda_backend -I"$(CUDA_PATH)/include"
