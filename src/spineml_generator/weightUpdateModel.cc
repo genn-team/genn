@@ -101,21 +101,21 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     readAliases(componentClass, aliases);
 
     // Loop through send ports
-    LOGD << "\t\tSend ports:" << std::endl;
+    LOGD << "\t\tSend ports:";
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
         std::string nodeType = sendPort.node().name();
         const char *portName = sendPort.node().attribute("name").value();
 
         if(nodeType == "ImpulseSendPort" && m_SendPortSpikeImpulse.empty() && m_SendPortAnalogue.empty()) {
-            LOGD << "\t\t\tImplementing impulse send port '" << portName << "' as a GeNN linear synapse" << std::endl;
+            LOGD << "\t\t\tImplementing impulse send port '" << portName << "' as a GeNN linear synapse";
             m_SendPortSpikeImpulse = portName;
         }
         else if(nodeType == "AnalogSendPort" && m_SendPortSpikeImpulse.empty() && m_SendPortAnalogue.empty()) {
-            LOGD << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN linear synapse" << std::endl;
+            LOGD << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN linear synapse";
             m_SendPortAnalogue = portName;
         }
         else if(nodeType == "EventSendPort" && m_SendPortSpikeImpulse.empty() && m_SendPortAnalogue.empty()) {
-            LOGD << "\t\t\tImplementing event send port '" << portName << "' as a GeNN linear synapse" << std::endl;
+            LOGD << "\t\t\tImplementing event send port '" << portName << "' as a GeNN linear synapse";
             m_SendPortSpikeImpulse = portName;
         }
         else {
@@ -124,7 +124,7 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     }
 
     // Loop through receive ports
-    LOGD << "\t\tReceive ports:" << std::endl;
+    LOGD << "\t\tReceive ports:";
     std::string trueSpikeReceivePort;
     std::string spikeLikeEventReceivePort;
     std::map<std::string, std::string> receivePortVariableMap;
@@ -138,28 +138,28 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
         if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON
             && ((srcNeuronModel == nullptr && portSrc.second == "spike") || srcNeuronModel->getSendPortSpike() == portSrc.second))
         {
-            LOGD << "\t\t\tImplementing event receive port '" << portName << "' as GeNN true spike" << std::endl;
+            LOGD << "\t\t\tImplementing event receive port '" << portName << "' as GeNN true spike";
             trueSpikeReceivePort = portName;
         }
         // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
         else if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON
             && srcNeuronModel->getSendPortSpikeLikeEvent() == portSrc.second)
         {
-            LOGD << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike-like event" << std::endl;
+            LOGD << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN spike-like event";
             spikeLikeEventReceivePort = portName;
         }
         // If this is an analog receive port from the presynaptic neuron, add send port variable to map with _pre suffix
         else if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON
             && srcNeuronModel->hasSendPortVariable(portSrc.second))
         {
-            LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'";
             receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_pre"));
         }
         // If this is an analog receive port from the postsynaptic neuron, add send port variable to map with _post suffix
         else if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON
             && trgNeuronModel->hasSendPortVariable(portSrc.second))
         {
-            LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'";
             receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_post"));
         }
         else {
@@ -176,13 +176,13 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
         if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::PRESYNAPTIC_NEURON
             && srcNeuronModel->hasSendPortVariable(portSrc.second) && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0)
         {
-            LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'";
             receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_pre"));
         }
         else if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON
             && trgNeuronModel->hasSendPortVariable(portSrc.second) && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0)
         {
-            LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'";
             receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_post"));
         }
         else {

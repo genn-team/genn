@@ -207,7 +207,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     readAliases(componentClass, aliases);
 
     // Loop through send ports
-    LOGD << "\t\tSend ports:" << std::endl;
+    LOGD << "\t\tSend ports:";
     std::vector<std::string> sendPortAliases;
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
         std::string nodeType = sendPort.node().name();
@@ -215,11 +215,11 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
         if(nodeType == "AnalogSendPort") {
             // If there is an alias matching this port name, add alias code to map to resolve later
             if(aliases.find(portName) != aliases.end()) {
-                LOGD << "\t\t\tImplementing analogue send port '" << portName << "' as an alias" << std::endl;
+                LOGD << "\t\t\tImplementing analogue send port '" << portName << "' as an alias";
                 sendPortAliases.push_back(portName);
             }
             else {
-                LOGD << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable" << std::endl;
+                LOGD << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable";
             }
 
             // Add send port to set
@@ -227,11 +227,11 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
         }
         else if(nodeType == "EventSendPort") {
             if(m_SendPortSpike.empty()) {
-                LOGD << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike" << std::endl;
+                LOGD << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike";
                 m_SendPortSpike = portName;
             }
             else {
-                LOGD << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike-like-event" << std::endl;
+                LOGD << "\t\t\tImplementing event send port '" << portName << "' as a GeNN spike-like-event";
                 m_SendPortSpikeLikeEvent = portName;
                 throw std::runtime_error("Spike-like event sending not currently implemented");
             }
@@ -242,7 +242,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     }
 
     // Check that there are no unhandled receive ports
-    LOGD << "\t\tReceive ports:" << std::endl;
+    LOGD << "\t\tReceive ports:";
     std::string trueSpikeReceivePort;
     std::vector<std::string> externalInputPorts;
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
@@ -251,16 +251,16 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
 
         if(nodeType == "AnalogReceivePort") {
             if(params.isInputPortExternal(portName)) {
-                LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' as state variable to receive external input" << std::endl;
+                LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' as state variable to receive external input";
                 externalInputPorts.push_back(portName);
             }
             else {
-                LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' as GeNN additional input variable" << std::endl;
+                LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' as GeNN additional input variable";
                 m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
             }
         }
         else if(nodeType == "EventReceivePort") {
-            LOGD << "\t\t\tImplementing event receive port '" << portName << "' as a GeNN additional input variable" << std::endl;
+            LOGD << "\t\t\tImplementing event receive port '" << portName << "' as a GeNN additional input variable";
             m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
             trueSpikeReceivePort = portName;
         }
@@ -270,7 +270,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     }
 
     // Loop through reduce ports
-    LOGD << "\t\tReduce ports:" << std::endl;
+    LOGD << "\t\tReduce ports:";
     for(auto reducePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReducePort").c_str())) {
         std::string nodeType = reducePort.node().name();
         const char *portName = reducePort.node().attribute("name").value();
@@ -278,11 +278,11 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
         // **TODO** implement other reduce operations
         if(nodeType == "AnalogReducePort" && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0) {
             if(params.isInputPortExternal(portName)) {
-                LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as state variable to receive external input" << std::endl;
+                LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as state variable to receive external input";
                 externalInputPorts.push_back(portName);
             }
             else {
-                LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN additional input variable" << std::endl;
+                LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN additional input variable";
                 m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
             }
         }

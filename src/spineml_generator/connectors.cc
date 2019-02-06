@@ -197,7 +197,7 @@ unsigned int SpineMLGenerator::Connectors::FixedProbability::estimateMaxRowLengt
     const double quantile = pow(0.9999, 1.0 / (double)numPre);
 
     unsigned int maxRowLength = binomialInverseCDF(quantile, numPost, connectionProbability);
-    LOGD << "\tFixed probability:" << connectionProbability << ", num pre:" << numPre << ", num post:" << numPost << " - Max row length:" << maxRowLength << std::endl;
+    LOGD << "\tFixed probability:" << connectionProbability << ", num pre:" << numPre << ", num post:" << numPost << " - Max row length:" << maxRowLength;
     return maxRowLength;
 }
 
@@ -328,7 +328,7 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
         const float meanDelay = sumDelayMs / (float)numConnections;
 
         // Give warning regarding how they will actually be implemented
-        LOGW << "\tGeNN doesn't support heterogenous synaptic delays - mean delay of " << meanDelay << "ms will be used for all synapses" << std::endl;
+        LOGW << "\tGeNN doesn't support heterogenous synaptic delays - mean delay of " << meanDelay << "ms will be used for all synapses";
 
         // Return size of largest histogram bin and explicit delay value
         return std::make_pair(maxRowLength, meanDelay);

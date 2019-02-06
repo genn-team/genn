@@ -126,7 +126,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
                                                        const WeightUpdateModel *weightUpdateModel)
 {
     // Loop through send ports
-    LOGD << "\t\tSend ports:" << std::endl;
+    LOGD << "\t\tSend ports:";
     std::vector<std::tuple<std::string, std::string, bool>> sendPortVariables;
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
         std::string nodeType = sendPort.node().name();
@@ -138,7 +138,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
             const auto &neuronPortTrg = params.getOutputPortTrg(portName);
             if(neuronPortTrg.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON) {
                 if(trgNeuronModel->hasAdditionalInputVar(neuronPortTrg.second)) {
-                    LOGD << "\t\t\tImplementing " << nodeType << " '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg.second << "'" << std::endl;
+                    LOGD << "\t\t\tImplementing " << nodeType << " '" << portName << "' using postsynaptic neuron additional input var '" << neuronPortTrg.second << "'";
 
                     // Add mapping to vector
                     sendPortVariables.push_back(std::make_tuple(neuronPortTrg.second, portName, nodeType == "EventSendPort"));
@@ -170,7 +170,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     readAliases(componentClass, aliases);
 
     // Loop through receive ports
-    LOGD << "\t\tReceive ports:" << std::endl;
+    LOGD << "\t\tReceive ports:";
     std::map<std::string, std::string> receivePortVariableMap;
     PortTypeName<WUMInputType, WUMInputType::None> wumInputPort;
     for(auto receivePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReceivePort").c_str())) {
@@ -182,21 +182,21 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON
             && trgNeuronModel->hasSendPortVariable(portSrc.second))
         {
-            LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'" << std::endl;
+            LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'";
             receivePortVariableMap.insert(std::make_pair(portName, portSrc.second));
         }
         // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
         else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE
             && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second)
         {
-            LOGD << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN weight update model input" << std::endl;
+            LOGD << "\t\t\tImplementing impulse receive port '" << portName << "' as GeNN weight update model input";
             wumInputPort.set(WUMInputType::ImpulseReceive, portName);
         }
         // Otherwise if this port is an event receive port which receives spikes from weight update model
         else if(nodeType == "EventReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE
             && weightUpdateModel->getSendPortSpikeImpulse() == portSrc.second)
         {
-            LOGD << "\t\t\tImplementing event receive port '" << portName << "' as GeNN weight update model input" << std::endl;
+            LOGD << "\t\t\tImplementing event receive port '" << portName << "' as GeNN weight update model input";
             wumInputPort.set(WUMInputType::EventReceive, portName);
         }
         else
@@ -206,7 +206,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     }
 
     // Loop through reduce ports
-    LOGD << "\t\tReduce ports:" << std::endl;
+    LOGD << "\t\tReduce ports:";
     for(auto reducePort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("ReducePort").c_str())) {
         std::string nodeType = reducePort.node().name();
         const char *portName = reducePort.node().attribute("name").value();
@@ -216,7 +216,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE
             && weightUpdateModel->getSendPortAnalogue() == portSrc.second)
         {
-            LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN weight update model input" << std::endl;
+            LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN weight update model input";
             wumInputPort.set(WUMInputType::AnalogueReduce, portName);
         }
         else
@@ -301,7 +301,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 
     // If incoming impulse is being assigned to a state variable
     if(wumInputPort.getType() == WUMInputType::ImpulseReceive && !impulseAssignStateVar.empty()) {
-        LOGD << "\t\tImpulse assign state variable:" << impulseAssignStateVar << std::endl;
+        LOGD << "\t\tImpulse assign state variable:" << impulseAssignStateVar;
 
         // Substitute name of analogue send port for internal variable
         wrapAndReplaceVariableNames(m_DecayCode, impulseAssignStateVar, "inSyn");

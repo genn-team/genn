@@ -18,7 +18,7 @@ SpineMLGenerator::PassthroughPostsynapticModel::PassthroughPostsynapticModel(con
     // If the target neuron model has a additional input var with the specified
     // name, create apply input code to add it to the neurons input
     if(trgNeuronModel->hasAdditionalInputVar(trgPortName)) {
-        LOGD << "\t\tPassing through input to postsynaptic neuron port '" << trgPortName << "'" << std::endl;
+        LOGD << "\t\tPassing through input to postsynaptic neuron port '" << trgPortName << "'";
 
         m_ApplyInputCode = trgPortName + " += $(inSyn); $(inSyn) = 0;\n";
     }
