@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <utility>
 
+// GeNN includes
+#include "initSparseConnectivitySnippet.h"
+
 // Forward declarations
 namespace pugi
 {
@@ -26,7 +29,7 @@ namespace Connectors
 namespace FixedProbability
 {
     SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
-    unsigned int estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
+    InitSparseConnectivitySnippet::Init getConnectivityInit(const pugi::xml_node &node);
 }   // namespace FixedProbability
 
 //----------------------------------------------------------------------------
@@ -35,7 +38,7 @@ namespace FixedProbability
 namespace OneToOne
 {
     SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
-    unsigned int estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
+    InitSparseConnectivitySnippet::Init getConnectivityInit(const pugi::xml_node &node);
 }   // namespace OneToOne
 
 

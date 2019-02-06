@@ -143,28 +143,28 @@ unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 }
 //----------------------------------------------------------------------------
 // Helper function to determine the correct type of GeNN projection to use for a SpineML 'Synapse' node
-std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(const filesystem::path &basePath, const pugi::xml_node &node,
-                                                                                unsigned int numPre, unsigned int numPost, bool globalG, double dt)
+std::tuple<SynapseMatrixType, unsigned int, unsigned int, InitSparseConnectivitySnippet::Init> getSynapticMatrixType(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                                                                                     unsigned int numPre, unsigned int numPost, bool globalG, double dt)
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
         return std::make_tuple(Connectors::OneToOne::getMatrixType(oneToOne, numPre, numPost, globalG),
-                               readDelaySteps(oneToOne, dt),
-                               Connectors::OneToOne::estimateMaxRowLength(oneToOne, numPre, numPost));
+                               readDelaySteps(oneToOne, dt), 0,
+                               Connectors::OneToOne::getConnectivityInit(oneToOne));
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
         return std::make_tuple(Connectors::AllToAll::getMatrixType(allToAll, numPre, numPost, globalG),
-                               readDelaySteps(allToAll, dt),
-                               Connectors::AllToAll::estimateMaxRowLength(allToAll, numPre, numPost));
+                               readDelaySteps(allToAll, dt), 0,
+                               uninitialisedConnectivity());
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
         return std::make_tuple(Connectors::FixedProbability::getMatrixType(fixedProbability, numPre, numPost, globalG),
-                               readDelaySteps(fixedProbability, dt),
-                               Connectors::FixedProbability::estimateMaxRowLength(fixedProbability, numPre, numPost));
+                               readDelaySteps(fixedProbability, dt), 0,
+                               Connectors::FixedProbability::getConnectivityInit(fixedProbability));
     }
 
     auto connectionList = node.child("ConnectionList");
@@ -178,7 +178,7 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
         // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
         unsigned int delay = std::isnan(explicitDelay) ? readDelaySteps(connectionList, dt) : (unsigned int)std::round(explicitDelay / dt);
         return std::make_tuple(Connectors::List::getMatrixType(connectionList, numPre, numPost, globalG),
-                               delay, maxRowLength);
+                               delay, maxRowLength, uninitialisedConnectivity());
     }
 
     throw std::runtime_error("No supported connection type found for projection");
@@ -394,24 +394,22 @@ int main(int argc, char *argv[])
                 const auto &passthroughPostsynapticModel = getCreatePassthroughModel(dstPort, passthroughPostsynapticModels,
                                                                                      neuronModel);
 
-                // Determine the GeNN matrix type and number of delay steps
-                SynapseMatrixType mtype;
-                unsigned int delaySteps;
-                unsigned int maxConnections;
-                std::tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, input,
-                                                                                    srcNeuronGroup->getNumNeurons(),
-                                                                                    neuronGroup->getNumNeurons(),
-                                                                                    true, dt);
+                // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
+                const auto synapseMatrixType = getSynapticMatrixType(basePath, input,
+                                                                     srcNeuronGroup->getNumNeurons(),
+                                                                     neuronGroup->getNumNeurons(),
+                                                                     true, dt);
 
-                // Add synapse population to model
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
-                auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, mtype, delaySteps, srcPopName, popName,
+                auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, std::get<0>(synapseMatrixType), std::get<1>(synapseMatrixType), 
+                                                             srcPopName, popName,
                                                              &passthroughWeightUpdateModel, {}, {}, {}, {},
-                                                             &passthroughPostsynapticModel, {}, {});
+                                                             &passthroughPostsynapticModel, {}, {},
+                                                             std::get<3>(synapseMatrixType));
 
-                // If matrix uses sparse connectivity set max connections
-                if(mtype & SynapseMatrixConnectivity::SPARSE) {
-                    synapsePop->setMaxConnections(maxConnections);
+                // If matrix uses sparse connectivity and one is specified (if initialiser is used, it's not required)
+                if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE && std::get<2>(synapseMatrixType) != 0) {
+                    synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
                 }
             }
 
@@ -481,24 +479,23 @@ int main(int argc, char *argv[])
                     // **TODO** seperate individualness for PSM and WUM should be used here
                     const bool globalG = weightUpdateModel.getVars().empty() && postsynapticModel.getVars().empty();
 
-                    // Determine the GeNN matrix type and number of delay steps
-                    SynapseMatrixType mtype;
-                    unsigned int delaySteps;
-                    unsigned int maxConnections;
-                    std::tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
-                                                                                        neuronGroup->getNumNeurons(),
-                                                                                        trgNeuronGroup->getNumNeurons(),
-                                                                                        globalG, dt);
+                    // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
+                    const auto synapseMatrixType = getSynapticMatrixType(basePath, synapse,
+                                                                         neuronGroup->getNumNeurons(),
+                                                                         trgNeuronGroup->getNumNeurons(),
+                                                                         globalG, dt);
 
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
-                    auto synapsePop = model.addSynapsePopulation(weightUpdateName, mtype, delaySteps, popName, trgPopName,
+                    auto synapsePop = model.addSynapsePopulation(weightUpdateName, std::get<0>(synapseMatrixType), std::get<1>(synapseMatrixType), 
+                                                                 popName, trgPopName,
                                                                  &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel), {}, {},
-                                                                 &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel));
+                                                                 &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
+                                                                 std::get<3>(synapseMatrixType));
 
-                    // If matrix uses sparse connectivity set max connections
-                    if(mtype & SynapseMatrixConnectivity::SPARSE) {
-                        synapsePop->setMaxConnections(maxConnections);
+                    // If matrix uses sparse connectivity and one is specified (if initialiser is used, it's not required)
+                    if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE && std::get<2>(synapseMatrixType) != 0) {
+                        synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
                     }
                 }
             }
