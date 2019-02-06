@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <iostream>
 
+// PLOG includes
+#include <plog/Log.h>
+
 // Spine ML generator includes
 #include "neuronModel.h"
 
@@ -15,7 +18,7 @@ SpineMLGenerator::PassthroughPostsynapticModel::PassthroughPostsynapticModel(con
     // If the target neuron model has a additional input var with the specified
     // name, create apply input code to add it to the neurons input
     if(trgNeuronModel->hasAdditionalInputVar(trgPortName)) {
-        std::cout << "\t\tPassing through input to postsynaptic neuron port '" << trgPortName << "'" << std::endl;
+        LOGD << "\t\tPassing through input to postsynaptic neuron port '" << trgPortName << "'" << std::endl;
 
         m_ApplyInputCode = trgPortName + " += $(inSyn); $(inSyn) = 0;\n";
     }

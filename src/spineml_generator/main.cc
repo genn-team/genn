@@ -12,10 +12,14 @@
 #include <cstdlib>
 
 // Filesystem includes
-#include "third_party/path.h"
+#include "path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
+
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
 
 // GeNN includes
 #include "modelSpec.h"
@@ -48,6 +52,11 @@ using namespace SpineMLGenerator;
 //----------------------------------------------------------------------------
 namespace
 {
+enum Log
+{
+    LogDefault,
+   
+};
 // Helper function to either find existing model that provides desired parameters or create new one
 template<typename Param, typename Model, typename ...Args>
 const Model &getCreateModel(const Param &params, std::map<Param, Model> &models, Args... args)
@@ -78,7 +87,7 @@ const Model &getCreateModel(const Param &params, std::map<Param, Model> &models,
 
         // Create new model
         // **THINK** some sort of move-semantic magic could probably make this a move
-        std::cout << "\tCreating new model" << std::endl;
+        LOGD << "\tCreating new model" << std::endl;
         auto newModel = models.insert(
             std::make_pair(params, Model(params, componentClass, args...)));
 
@@ -100,7 +109,7 @@ const Model &getCreatePassthroughModel(const Param &params, std::map<Param, Mode
     {
         // Create new model
         // **THINK** some sort of move-semantic magic could probably make this a move
-        std::cout << "\tCreating new model" << std::endl;
+        LOGI << "\tCreating new model" << std::endl;
         auto newModel = models.insert(
             std::make_pair(params, Model(params, args...)));
 
@@ -200,6 +209,11 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Expected experiment XML file passed as argument");
         }
 
+        // Initialise log channels, appending all to console
+        // **TODO** de-crud standard logger
+        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+        plog::init<LogDefault>(plog::info, &consoleAppender);
+        
         // Use filesystem library to get parent path of the network XML file
         const auto experimentPath = filesystem::path(argv[1]).make_absolute();
         const auto basePath = experimentPath.parent_path();
@@ -207,8 +221,8 @@ int main(int argc, char *argv[])
         // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
         const auto outputPath = (argc > 2) ? filesystem::path(argv[2]).make_absolute() : basePath.parent_path();
 
-        std::cout << "Output path:" << outputPath.str() << std::endl;
-        std::cout << "Parsing experiment '" << experimentPath.str() << "'" << std::endl;
+        LOGI << "Output path:" << outputPath.str() << std::endl;
+        LOGI << "Parsing experiment '" << experimentPath.str() << "'" << std::endl;
 
         // Load experiment document
         pugi::xml_document experimentDoc;
@@ -237,7 +251,7 @@ int main(int argc, char *argv[])
             const std::string port = input.node().attribute("port").value();
 
             // Add to map
-            std::cout << "\tInput targetting: " << target << ":" << port << std::endl;
+            LOGD << "\tInput targetting: " << target << ":" << port << std::endl;
             if(!externalInputs[target].emplace(port).second) {
                 throw std::runtime_error("Multiple inputs targetting " + target + ":" + port);
             }
@@ -251,7 +265,7 @@ int main(int argc, char *argv[])
 
         // Build path to network from URL in model
         auto networkPath = basePath / experimentModel.attribute("network_layer_url").value();
-        std::cout << "\tExperiment using model:" << networkPath << std::endl;
+        LOGI << "\tExperiment using model:" << networkPath << std::endl;
 
         // Loop through configurations (overriden property values)
         std::map<std::string, std::set<std::string>> overridenProperties;
@@ -264,7 +278,7 @@ int main(int argc, char *argv[])
                 const std::string propertyName = property.attribute("name").value();
 
                 // Add to map
-                std::cout << "\tOverriding property " << target << ":" << propertyName << std::endl;
+                LOGD << "\tOverriding property " << target << ":" << propertyName << std::endl;
                 if(!overridenProperties[target].emplace(propertyName).second) {
                     throw std::runtime_error("Multiple overrides for property " + target + ":" + propertyName);
                 }
@@ -283,7 +297,7 @@ int main(int argc, char *argv[])
 
         // Read integration timestep
         const double dt = eulerIntegration.attribute("dt").as_double(0.1);
-        std::cout << "\tDT = " << dt << "ms" << std::endl;
+        LOGI << "\tDT = " << dt << "ms" << std::endl;
 
         // Load XML document
         pugi::xml_document doc;
@@ -325,8 +339,7 @@ int main(int argc, char *argv[])
             // Read basic population properties
             auto popName = SpineMLUtils::getSafeName(neuron.attribute("name").value());
             const unsigned int popSize = neuron.attribute("size").as_int();
-            std::cout << "Population " << popName << " consisting of ";
-            std::cout << popSize << " neurons" << std::endl;
+            LOGD << "Population " << popName << " consisting of " << popSize << " neurons";
 
             // If population is a spike source add GeNN spike source
             // **TODO** is this the only special case?
@@ -371,7 +384,7 @@ int main(int argc, char *argv[])
                 std::string srcPort = input.attribute("src_port").value();
                 std::string dstPort = input.attribute("dst_port").value();
 
-                std::cout << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")" << std::endl;
+                LOGD << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")" << std::endl;
 
                 // Either get existing passthrough weight update model or create new one of no suitable models are available
                 const auto &passthroughWeightUpdateModel = getCreatePassthroughModel(srcPort, passthroughWeightUpdateModels,
@@ -412,7 +425,7 @@ int main(int argc, char *argv[])
                 // Loop through synapse children
                 // **NOTE** multiple projections between the same two populations of neurons are implemented in this way
                 for(auto synapse : projection.children("LL:Synapse")) {
-                    std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
+                    LOGD << "Projection from population:" << popName << "->" << trgPopName << std::endl;
 
                     // Get weight update
                     auto weightUpdate = synapse.child("LL:WeightUpdate");

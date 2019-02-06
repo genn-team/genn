@@ -78,7 +78,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -92,7 +92,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -108,7 +108,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -126,7 +126,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>

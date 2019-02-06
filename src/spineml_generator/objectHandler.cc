@@ -10,6 +10,9 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// PLOG includes
+#include <plog/Log.h>
+
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
 
@@ -68,7 +71,7 @@ void SpineMLGenerator::ObjectHandler::TimeDerivative::onObject(const pugi::xml_n
     std::regex regex("\\s*-\\s*" + stateVariable + "\\s*\\/\\s*([a-zA-Z_]+)\\s*");
     std::cmatch match;
     if(std::regex_match(codeString.c_str(), match, regex)) {
-        std::cout << "\t\t\t\tLinear dynamics with time constant:" << match[1].str() << " identified" << std::endl;
+        LOGD << "\t\t\t\tLinear dynamics with time constant:" << match[1].str() << " identified" << std::endl;
 
         // Stash name of tau parameter in class
         m_ClosedFormTauParamName = match[1].str();

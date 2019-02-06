@@ -4,6 +4,9 @@
 #include <iostream>
 #include <regex>
 
+// PLOG includes
+#include <plog/Log.h>
+
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 
@@ -89,7 +92,7 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
                                                                   ObjectHandler::Base *objectHandlerTimeDerivative,
                                                                   std::function<void(bool, unsigned int)> regimeEndFunc)
 {
-    std::cout << "\t\tModel name:" << componentClass.attribute("name").value() << std::endl;
+    LOGD << "\t\tModel name:" << componentClass.attribute("name").value() << std::endl;
 
     // Build mapping from regime names to IDs
     auto dynamics = componentClass.child("Dynamics");
@@ -103,11 +106,11 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
     const bool multipleRegimes = (regimeIDs.size() > 1);
 
     // Loop through regimes
-    std::cout << "\t\tRegimes:" << std::endl;
+    LOGD << "\t\tRegimes:" << std::endl;
     for(auto regime : dynamics.children("Regime")) {
         const auto *currentRegimeName = regime.attribute("name").value();
         const unsigned int currentRegimeID = regimeIDs[currentRegimeName];
-        std::cout << "\t\t\tRegime name:" << currentRegimeName << ", id:" << currentRegimeID << std::endl;
+        LOGD << "\t\t\tRegime name:" << currentRegimeName << ", id:" << currentRegimeID << std::endl;
 
         // Loop through internal conditions by which model might leave regime
         for(auto condition : regime.children("OnCondition")) {
@@ -175,7 +178,7 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
         throw std::runtime_error("No initial regime set");
     }
 
-    std::cout << "\t\t\tInitial regime ID:" << initialRegime->second << std::endl;
+    LOGD << "\t\t\tInitial regime ID:" << initialRegime->second << std::endl;
 
     // Return whether this model has multiple regimes and what the ID of the initial regime is
     return std::make_pair(multipleRegimes, initialRegime->second);
@@ -235,9 +238,9 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
                                                 const std::vector<std::string*> &codeStrings)
 {
     // Loop through model parameters
-    std::cout << "\t\tParameters:" << std::endl;
+    LOGD << "\t\tParameters:" << std::endl;
     for(const auto &p : paramNames) {
-        std::cout << "\t\t\t" << p << std::endl;
+        LOGD << "\t\t\t" << p << std::endl;
 
         // Wrap variable names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
@@ -245,9 +248,9 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
         }
     }
 
-    std::cout << "\t\tVariables:" << std::endl;
+    LOGD << "\t\tVariables:" << std::endl;
     for(const auto &v : vars) {
-        std::cout << "\t\t\t" << v.first << ":" << v.second << std::endl;
+        LOGD << "\t\t\t" << v.first << ":" << v.second << std::endl;
 
         // Wrap variable names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
@@ -255,9 +258,9 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
         }
     }
 
-    std::cout << "\t\tDerived params:" << std::endl;
+    LOGD << "\t\tDerived params:" << std::endl;
     for(const auto &d : derivedParams) {
-        std::cout << "\t\t\t" << d.first << std::endl;
+        LOGD << "\t\t\t" << d.first << std::endl;
 
         // Wrap derived param names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
@@ -281,7 +284,7 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
 //----------------------------------------------------------------------------
 void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases)
 {
-    std::cout << "\t\tAliases:" << std::endl;
+    LOGD << "\t\tAliases:" << std::endl;
     
     // Loop through aliases and add to map
     auto dynamics = componentClass.child("Dynamics");
@@ -289,9 +292,9 @@ void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::ma
         const std::string name = alias.attribute("name").value();
         const std::string code = alias.child_value("MathInline");
 
-        std::cout << "\t\t\t" << name << std::endl;
+        LOGD << "\t\t\t" << name << std::endl;
 
-        aliases.insert(std::make_pair(name, code));
+        aliases.emplace(name, code);
     }
 
     // Loop through aliases
@@ -328,7 +331,7 @@ std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::s
                                               const Models::Base::StringPairVec &vars,
                                               const std::string &sendPortName)
 {
-    std::cout << "\t\tAnalogue send port:" << sendPortName << std::endl;
+    LOGD << "\t\tAnalogue send port:" << sendPortName << std::endl;
 
     // If this send port corresponds to a state variable
     auto correspondingVar = std::find_if(vars.begin(), vars.end(),

@@ -17,6 +17,9 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// PLOG includes
+#include <plog/Log.h>
+
 // GeNN includes
 #include "synapseMatrixType.h"
 
@@ -145,11 +148,11 @@ inline unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     // **NOTE** this function assumes that DENSE_GLOBALG cannot be used
     if(globalG) {
         if(sparseDataStructureSize < denseSize) {
-            std::cout << "\tImplementing as SPARSE_GLOBALG" << std::endl;
+            LOGD << "\tImplementing as SPARSE_GLOBALG";
             return SynapseMatrixType::SPARSE_GLOBALG;
         }
         else {
-            std::cout << "\tImplementing as DENSE_INDIVIDUALG" << std::endl;
+            LOGD << "\tImplementing as DENSE_INDIVIDUALG";
             return SynapseMatrixType::DENSE_INDIVIDUALG;
         }
     }
@@ -158,11 +161,11 @@ inline unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     else {
         const unsigned int sparseSize = sparseDataStructureSize + (sizeof(float) * numSynapses);
         if(sparseSize < denseSize) {
-            std::cout << "\tImplementing as SPARSE_INDIVIDUALG" << std::endl;
+            LOGD << "\tImplementing as SPARSE_INDIVIDUALG";
             return SynapseMatrixType::SPARSE_INDIVIDUALG;
         }
         else {
-            std::cout << "\tImplementing as DENSE_INDIVIDUALG" << std::endl;
+            LOGD << "\tImplementing as DENSE_INDIVIDUALG";
             return SynapseMatrixType::DENSE_INDIVIDUALG;
         }
     }
@@ -178,7 +181,7 @@ SynapseMatrixType SpineMLGenerator::Connectors::FixedProbability::getMatrixType(
 
     // If we're implementing a fully-connected matrix use DENSE format
     if(connectionProbability == 1.0) {
-        std::cout << "\tFully-connected FixedProbability connector implemented as DENSE" << std::endl;
+        LOGD << "\tFully-connected FixedProbability connector implemented as DENSE";
         return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
     }
     else {
@@ -194,7 +197,7 @@ unsigned int SpineMLGenerator::Connectors::FixedProbability::estimateMaxRowLengt
     const double quantile = pow(0.9999, 1.0 / (double)numPre);
 
     unsigned int maxRowLength = binomialInverseCDF(quantile, numPost, connectionProbability);
-    std::cout << "\tFixed probability:" << connectionProbability << ", num pre:" << numPre << ", num post:" << numPost << " - Max row length:" << maxRowLength << std::endl;
+    LOGD << "\tFixed probability:" << connectionProbability << ", num pre:" << numPre << ", num post:" << numPost << " - Max row length:" << maxRowLength << std::endl;
     return maxRowLength;
 }
 
@@ -325,7 +328,7 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
         const float meanDelay = sumDelayMs / (float)numConnections;
 
         // Give warning regarding how they will actually be implemented
-        std::cout << "\tWARNING: GeNN doesn't support heterogenous synaptic delays - mean delay of " << meanDelay << "ms will be used for all synapses" << std::endl;
+        LOGW << "\tGeNN doesn't support heterogenous synaptic delays - mean delay of " << meanDelay << "ms will be used for all synapses" << std::endl;
 
         // Return size of largest histogram bin and explicit delay value
         return std::make_pair(maxRowLength, meanDelay);
