@@ -46,8 +46,7 @@ public:
         auto outgoingImpulses = node.children("ImpulseOut");
         const size_t numOutgoingImpulses = std::distance(outgoingImpulses.begin(), outgoingImpulses.end());
         if(numOutgoingImpulses == 1) {
-            m_CodeStream << "addtoinSyn = " << outgoingImpulses.begin()->attribute("port").value() << ";" << std::endl;
-            m_CodeStream << "updatelinsyn;" << std::endl;
+            m_CodeStream << "$(addToInSyn, " << outgoingImpulses.begin()->attribute("port").value() << ");" << std::endl;
         }
         // Otherwise, throw an exception
         else if(numOutgoingImpulses > 1) {
@@ -58,8 +57,7 @@ public:
         auto outgoingEvents = node.children("EventOut");
         const size_t numOutgoingEvents = std::distance(outgoingEvents.begin(), outgoingEvents.end());
         if(numOutgoingEvents == 1) {
-            m_CodeStream << "addtoinSyn = 1;" << std::endl;
-            m_CodeStream << "updatelinsyn;" << std::endl;
+            m_CodeStream << "$(addToInSyn, 1.0);" << std::endl;
         }
         // Otherwise, throw an exception
         else if(numOutgoingEvents > 1) {
@@ -225,19 +223,12 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
 
     // If we have an analogue send port, add code to apply it to synapse dynamics
     if(!m_SendPortAnalogue.empty()) {
-        synapseDynamicsStream << "addtoinSyn = " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ";" << std::endl;
-        synapseDynamicsStream << "updatelinsyn;" << std::endl;
+        synapseDynamicsStream << "$(addToInSyn, " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ");" << std::endl;
     }
 
     // Store generated code in class
     m_SimCode = simCodeStream.str();
     m_SynapseDynamicsCode = synapseDynamicsStream.str();
-
-    // Wrap internal variables used in sim code
-    wrapVariableNames(m_SimCode, "addtoinSyn");
-    wrapVariableNames(m_SimCode, "updatelinsyn");
-    wrapVariableNames(m_SynapseDynamicsCode, "addtoinSyn");
-    wrapVariableNames(m_SynapseDynamicsCode, "updatelinsyn");
 
     // Correctly wrap and replace references to receive port variable in code string
     for(const auto &r : receivePortVariableMap) {
