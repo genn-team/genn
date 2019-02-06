@@ -95,11 +95,11 @@ void SpineMLGenerator::ObjectHandler::TimeDerivative::addDerivedParams(const Mod
             paramNames.cbegin(), std::find(paramNames.cbegin(), paramNames.cend(), m_ClosedFormTauParamName));
         if(tauParamIndex < paramNames.size()) {
             // Add a derived parameter to calculate e ^ (-dt / tau)
-            derivedParams.push_back(std::make_pair("_expDecay" + m_ClosedFormTauParamName,
-                                                   [tauParamIndex](const std::vector<double> &params, double dt)
-                                                   {
-                                                       return std::exp(-dt / params[tauParamIndex]);
-                                                   }));
+            derivedParams.emplace_back("_expDecay" + m_ClosedFormTauParamName,
+                                       [tauParamIndex](const std::vector<double> &params, double dt)
+                                       {
+                                           return std::exp(-dt / params[tauParamIndex]);
+                                       });
         }
         // Otherwise, give an error
         else {

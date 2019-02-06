@@ -183,7 +183,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
             && trgNeuronModel->hasSendPortVariable(portSrc.second))
         {
             LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'";
-            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second));
+            receivePortVariableMap.emplace(portName, portSrc.second);
         }
         // Otherwise if this port is an impulse receive port which receives spike impulses from weight update model
         else if(nodeType == "ImpulseReceivePort" && portSrc.first == ModelParams::Base::PortSource::WEIGHT_UPDATE

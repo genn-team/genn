@@ -225,7 +225,7 @@ std::tuple<Models::Base::StringVec, Models::Base::StringPairVec> SpineMLGenerato
 
     // If model has multiple regimes, add unsigned int regime ID to values
     if(multipleRegimes) {
-        vars.push_back(std::make_pair("_regimeID", "unsigned int"));
+        vars.emplace_back("_regimeID", "unsigned int");
     }
 
     // Return parameter names and variables

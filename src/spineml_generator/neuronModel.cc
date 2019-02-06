@@ -40,7 +40,7 @@ public:
     void addTriggerCode(unsigned int regimeID, const std::string &triggerCodeString) {
         // If there isn't already a piece of trigger code for this regime, add one
         // **THINK** is this a fair restriction - if not should they be ORed or ANDed together?
-        if(!m_RegimeThresholds.insert(std::make_pair(regimeID, triggerCodeString)).second) {
+        if(!m_RegimeThresholds.emplace(regimeID, triggerCodeString).second) {
             throw std::runtime_error("Only one spike trigger is supported per regime");
         }
     }
@@ -252,16 +252,16 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
         if(nodeType == "AnalogReceivePort") {
             if(params.isInputPortExternal(portName)) {
                 LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' as state variable to receive external input";
-                externalInputPorts.push_back(portName);
+                externalInputPorts.emplace_back(portName);
             }
             else {
                 LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' as GeNN additional input variable";
-                m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+                m_AdditionalInputVars.emplace_back(portName, std::make_pair("scalar", 0.0));
             }
         }
         else if(nodeType == "EventReceivePort") {
             LOGD << "\t\t\tImplementing event receive port '" << portName << "' as a GeNN additional input variable";
-            m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+            m_AdditionalInputVars.emplace_back(portName, std::make_pair("scalar", 0.0));
             trueSpikeReceivePort = portName;
         }
         else {
@@ -283,7 +283,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
             }
             else {
                 LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN additional input variable";
-                m_AdditionalInputVars.push_back(std::make_pair(portName, std::make_pair("scalar", 0.0)));
+                m_AdditionalInputVars.emplace_back(portName, std::make_pair("scalar", 0.0));
             }
         }
         else {

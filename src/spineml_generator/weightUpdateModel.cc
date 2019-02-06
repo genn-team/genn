@@ -151,14 +151,14 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
             && srcNeuronModel->hasSendPortVariable(portSrc.second))
         {
             LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'";
-            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_pre"));
+            receivePortVariableMap.emplace(portName, portSrc.second + "_pre");
         }
         // If this is an analog receive port from the postsynaptic neuron, add send port variable to map with _post suffix
         else if(nodeType == "AnalogReceivePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON
             && trgNeuronModel->hasSendPortVariable(portSrc.second))
         {
             LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'";
-            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_post"));
+            receivePortVariableMap.emplace(portName, portSrc.second + "_post");
         }
         else {
             throw std::runtime_error("GeNN does not currently support '" + nodeType + "' receive ports in weight update models");
@@ -175,13 +175,13 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
             && srcNeuronModel->hasSendPortVariable(portSrc.second) && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0)
         {
             LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' using presynaptic neuron send port variable '" << portSrc.second << "'";
-            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_pre"));
+            receivePortVariableMap.emplace(portName, portSrc.second + "_pre");
         }
         else if(nodeType == "AnalogReducePort" && portSrc.first == ModelParams::Base::PortSource::POSTSYNAPTIC_NEURON
             && trgNeuronModel->hasSendPortVariable(portSrc.second) && strcmp(reducePort.node().attribute("reduce_op").value(), "+") == 0)
         {
             LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' using postsynaptic neuron send port variable '" << portSrc.second << "'";
-            receivePortVariableMap.insert(std::make_pair(portName, portSrc.second + "_post"));
+            receivePortVariableMap.emplace(portName, portSrc.second + "_post");
         }
         else {
             throw std::runtime_error("GeNN does not currently support '" + std::string(reducePort.node().name()) + "' reduce ports in weight update models");

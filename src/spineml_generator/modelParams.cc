@@ -40,8 +40,8 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
         auto fixedValue = param.child("FixedValue");
         if(fixedValue) {
             // Add initialiser
-            varInitialisers.insert(std::make_pair(paramName, Models::VarInit(InitVarSnippet::Constant::getInstance(), {
-                fixedValue.attribute("value").as_double() })));
+            varInitialisers.emplace(paramName, Models::VarInit(InitVarSnippet::Constant::getInstance(), {
+                fixedValue.attribute("value").as_double() }));
 
             // Typically fixed-value parameters are candidates for hard-coding into model however,
             // if they are overriden in experiment, they should be implemented as state variables so mark them as such
@@ -56,23 +56,23 @@ SpineMLGenerator::ModelParams::Base::Base(const filesystem::path &basePath, cons
 
             // If property is uniformly distributed, add uniform initialiser
             if(pugi::xml_node uniformDistribution = param.child("UniformDistribution")) {
-                varInitialisers.insert(std::make_pair(paramName, Models::VarInit(InitVarSnippet::Uniform::getInstance(), {
-                    uniformDistribution.attribute("minimum").as_double(), uniformDistribution.attribute("maximum").as_double() })));
+                varInitialisers.emplace(paramName, Models::VarInit(InitVarSnippet::Uniform::getInstance(), {
+                    uniformDistribution.attribute("minimum").as_double(), uniformDistribution.attribute("maximum").as_double() }));
             }
             // Otherwise, if property is normally distributed, add normal initialiser
             else if(pugi::xml_node normalDistribution = param.child("NormalDistribution")) {
-                varInitialisers.insert(std::make_pair(paramName, Models::VarInit(InitVarSnippet::Normal::getInstance(), {
-                    normalDistribution.attribute("mean").as_double(), std::sqrt(normalDistribution.attribute("variance").as_double()) })));
+                varInitialisers.emplace(paramName, Models::VarInit(InitVarSnippet::Normal::getInstance(), {
+                    normalDistribution.attribute("mean").as_double(), std::sqrt(normalDistribution.attribute("variance").as_double()) }));
             }
             // Otherwise, if property is exponentially distributed, add poisson initialiser
             // **NOTE** Poisson distribution isn't actually one - it is the exponential
             else if(pugi::xml_node exponentialDistribution = param.child("PoissonDistribution")) {
-                varInitialisers.insert(std::make_pair(paramName, Models::VarInit(InitVarSnippet::Exponential::getInstance(), {
-                    exponentialDistribution.attribute("mean").as_double() })));
+                varInitialisers.emplace(paramName, Models::VarInit(InitVarSnippet::Exponential::getInstance(), {
+                    exponentialDistribution.attribute("mean").as_double() }));
             }
             // Otherwise, as this type of property cannot be initialised by GeNN, mark it as unitialised
             else {
-                varInitialisers.insert(std::make_pair(paramName, Models::VarInit(InitVarSnippet::Uninitialised::getInstance(), {})));
+                varInitialisers.emplace(paramName, Models::VarInit(InitVarSnippet::Uninitialised::getInstance(), {}));
             }
         }
     }
@@ -116,14 +116,14 @@ bool SpineMLGenerator::ModelParams::Base::isInputPortExternal(const std::string 
 //----------------------------------------------------------------------------
 void SpineMLGenerator::ModelParams::Base::addInputPortMapping(const std::string &dstPort, PortSource srcComponent, const std::string &srcPort)
 {
-    if(!m_InputPortSources.insert(std::make_pair(dstPort, std::make_pair(srcComponent, srcPort))).second) {
+    if(!m_InputPortSources.emplace(std::piecewise_construct, std::forward_as_tuple(dstPort), std::forward_as_tuple(srcComponent, srcPort)).second) {
         throw std::runtime_error("Duplicate input port destination:" + dstPort);
     }
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::ModelParams::Base::addOutputPortMapping(const std::string &srcPort, PortSource dstComponent, const std::string &dstPort)
 {
-    if(!m_OutputPortTargets.insert(std::make_pair(srcPort, std::make_pair(dstComponent, dstPort))).second) {
+    if(!m_OutputPortTargets.emplace(std::piecewise_construct, std::forward_as_tuple(srcPort), std::forward_as_tuple(dstComponent, dstPort)).second) {
         throw std::runtime_error("Duplicate output port source:" + srcPort);
     }
 }
