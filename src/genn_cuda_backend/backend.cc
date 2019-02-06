@@ -224,6 +224,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
             [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
             [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
+                // If axonal delays are required
+                if (ng.isDelayRequired()) {
+                    // We should READ from delay slot before spkQuePtr
+                    os << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset("dd_") << ";" << std::endl;
+                    
+                    // And we should WRITE to delay slot pointed to be spkQuePtr
+                    os << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset("dd_") << ";" << std::endl;
+                }
+                os << std::endl;
+
                 // Get name of rng to use for this neuron
                 popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs.getVarSubstitution("id") + "]");
                 
@@ -619,6 +629,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
         {
             CodeStream::Scope b(os);
+            os << "unsigned int id = " << m_KernelBlockSizes[KernelSynapseDynamicsUpdate] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
             Substitutions kernelSubs(cudaFunctions);
             kernelSubs.addVarSubstitution("t", "t");

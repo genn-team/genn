@@ -4,6 +4,9 @@
 #include <iostream>
 #include <string>
 
+// PLOG includes
+#include <plog/Log.h>
+
 // GeNN includes
 #include "modelSpec.h"
 
@@ -27,24 +30,20 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
             // Generate code to copy neuron state into local variable
-            // **TODO** basic behaviour could exist in Models::Base, NeuronModels::Base could add queuing logic
             for(const auto &v : nm->getVars()) {
                 os << v.second << " l" << v.first << " = ";
                 os << backend.getVarPrefix() << v.first << ng.getName() << "[";
                 if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
-                    os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
+                    os << "readDelayOffset + ";
                 }
                 os << popSubs.getVarSubstitution("id") << "];" << std::endl;
             }
-
-            if ((nm->getSimCode().find("$(sT)") != std::string::npos)
-                || (nm->getThresholdConditionCode().find("$(sT)") != std::string::npos)
-                || (nm->getResetCode().find("$(sT)") != std::string::npos))
-            {
-                // load sT into local variable
-                os << model.getPrecision() << " lsT= " << backend.getVarPrefix() << "sT" << ng.getName() << "[";
+    
+            // Also read spike time into local variable
+            if(ng.isSpikeTimeRequired()) {
+                os << model.getTimePrecision() << " lsT = " << backend.getVarPrefix() << "sT" << ng.getName() << "[";
                 if (ng.isDelayRequired()) {
-                    os << "(delaySlot * " << ng.getNumNeurons() << ") + ";
+                    os << "readDelayOffset + ";
                 }
                 os << popSubs.getVarSubstitution("id") << "];" << std::endl;
             }
@@ -146,7 +145,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
             std::string thCode = nm->getThresholdConditionCode();
             if (thCode.empty()) { // no condition provided
-                std::cerr << "Warning: No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!" << std::endl;
+                LOGW << "No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!";
             }
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
@@ -242,7 +241,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 os << backend.getVarPrefix() << v.first << ng.getName() << "[";
 
                 if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
-                    os << "readDelayOffset + ";
+                    os << "writeDelayOffset + ";
                 }
                 os << popSubs.getVarSubstitution("id") << "] = l" << v.first << ";" << std::endl;
             }
