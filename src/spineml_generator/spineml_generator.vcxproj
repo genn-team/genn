@@ -79,7 +79,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -93,7 +93,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -109,7 +109,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -127,7 +127,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
