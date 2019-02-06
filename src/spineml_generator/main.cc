@@ -513,6 +513,10 @@ int main(int argc, char *argv[])
         filesystem::create_directory(runPath);
         runPath = runPath.make_absolute();
 
+        // Create directory for generated code within run path
+        const auto codePath = runPath / (model.getName() + "_CODE");
+        filesystem::create_directory(codePath);
+
         // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
         const int localHostID = 0;
         CodeGenerator::BACKEND_NAMESPACE::Backend::Preferences preferences;
@@ -521,24 +525,35 @@ int main(int argc, char *argv[])
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, outputPath, localHostID, preferences);
     
         // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
+        const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath);
 
 #ifdef _WIN32
         // Create MSBuild project to compile and link all generated modules
-        std::ofstream makefile((outputPath / "runner.vcxproj").str());
-        CodeGenerator::generateMSBuild(makefile, backend, moduleNames);
+        // **NOTE** scope requiredso it gets closed before being built
+        {
+            std::ofstream makefile((codePath / "runner.vcxproj").str());
+            CodeGenerator::generateMSBuild(makefile, backend, moduleNames);
+        }
+
+        // Generate command to build using msbuild
+        const std::string buildCommand = "msbuild /p:Configuration=Release \"" + (codePath / "runner.vcxproj").str() + "\"";
 #else
         // Create makefile to compile and link all generated modules
-        std::ofstream makefile((outputPath / "Makefile").str());
-        CodeGenerator::generateMakefile(makefile, backend, moduleNames);
+        // **NOTE** scope requiredso it gets closed before being built
+        {
+            std::ofstream makefile((codePath / "Makefile").str());
+            CodeGenerator::generateMakefile(makefile, backend, moduleNames);
+        }
+
+        // Generate command to build using make
+        const std::string buildCommand = "make -C " + (codePath / "runner.vcxproj").str();
 #endif
 
-
-        // Execute command
-        /*int retval = system(cmd.c_str());
+        // Execute build command
+        const int retval = system(buildCommand.c_str());
         if (retval != 0){
-            throw std::runtime_error("Building generated code with call:'" + cmd + "' failed with return value:" + std::to_string(retval));
-        }*/
+            throw std::runtime_error("Building generated code with call:'" + buildCommand + "' failed with return value:" + std::to_string(retval));
+        }
     }
     catch(const std::exception &exception)
     {
