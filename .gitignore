@@ -8,6 +8,7 @@
 **/*.gcno
 
 # Ignore MSBuild/Visual Studio files
+**/*.exe
 **/*.pdb
 **/*.ilk
 **/*.suo
