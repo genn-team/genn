@@ -1059,7 +1059,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
                                     // If synapse dynamics are required, copy idx into syn remap structure
                                     if(!sg.getWUModel()->getSynapseDynamicsCode().empty()) {
                                         CodeStream::Scope b(os);
-                                        os << "dd_synRemap" << sg.getName() << "[shRowStart[i] + lid + 1] = idx;" << std::endl;
+                                        os << "dd_synRemap" << sg.getName() << "[shRowStart[i] + " + popSubs.getVarSubstitution("id") + " + 1] = idx;" << std::endl;
                                     }
                                 }
                             }
