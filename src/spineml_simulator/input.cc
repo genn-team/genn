@@ -10,9 +10,6 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
-// GeNN includes
-#include "utils.h"
-
 // SpineML simulator includes
 #include "inputValue.h"
 #include "modelProperty.h"

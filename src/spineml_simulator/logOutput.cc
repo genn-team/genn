@@ -10,13 +10,10 @@
 #include <cmath>
 
 // Filesystem includes
-#include "filesystem/path.h"
+#include "path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
-
-// GeNN includes
-#include "utils.h"
 
 // SpineML common includes
 #include "spineMLUtils.h"

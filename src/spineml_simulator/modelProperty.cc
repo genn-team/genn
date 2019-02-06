@@ -10,13 +10,10 @@
 #include <cstring>
 
 // Filesystem includes
-#include "filesystem/path.h"
+#include "path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
-
-// GeNN includes
-#include "utils.h"
 
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::Base
