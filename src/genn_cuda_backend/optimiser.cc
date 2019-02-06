@@ -81,7 +81,7 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes)[CodeGenerator::CUDA::Backend::KernelMax])
+void calcGroupSizes(const NNmodel &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::Backend::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -111,8 +111,8 @@ void calcGroupSizes(const NNmodel &model, std::vector<unsigned int> (&groupSizes
 
         // If synapse group has individual weights and needs device initialisation
         if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUVarInitRequired()) {
-            const unsigned int numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-            const unsigned int numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
             if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSizes[Backend::KernelInitializeSparse].push_back(numSrcNeurons);
             }
@@ -134,7 +134,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
     using namespace CUDA;
 
     // Calculate model group sizes
-    std::vector<unsigned int> groupSizes[Backend::KernelMax];
+    std::vector<size_t> groupSizes[Backend::KernelMax];
     calcGroupSizes(model, groupSizes);
 
     // Create CUDA drive API device and context for accessing kernel attributes
@@ -187,7 +187,12 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
             // Build module
             const std::string modulePath = (outputPath / m).str();
             
-            const std::string nvccCommand = nvccPath.str() + " -cubin " + backend.getNVCCFlags() + " -o " + modulePath + ".cubin " + modulePath + ".cc";
+#ifdef _WIN32
+            // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
+            const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
+#else
+            const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
+ #endif
             if(system(nvccCommand.c_str()) != 0) {
                 throw std::runtime_error("optimizeBlockSize: NVCC failed");
             }
@@ -264,7 +269,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
             LOGD << "\t\tEstimated shared memory required:" << reqSharedMemBytes << " bytes (padded)";
 
             // Calculate number of blocks the groups used by this kernel will require
-            const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), 0,
+            const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), size_t{0},
                                                         [blockThreads](size_t acc, size_t size)
                                                         {
                                                             return acc + Utils::ceilDivide(size, blockThreads);
@@ -369,14 +374,14 @@ int chooseOptimalDevice(const NNmodel &model, CodeGenerator::CUDA::Backend::Kern
         const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences, outputPath);
 
         // Sum up occupancy of each kernel
-        const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), 0,
+        const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
                                                       [](size_t acc, const KernelOptimisationOutput::value_type &kernel)
                                                       {
                                                           return acc + kernel.second.second;
                                                       });
 
         // Count number of kernels that count as small models
-        const size_t numSmallModelKernels = std::accumulate(kernels.begin(), kernels.end(), 0,
+        const size_t numSmallModelKernels = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
                                                             [](size_t acc, const KernelOptimisationOutput::value_type &kernel)
                                                             {
                                                                 return acc + (kernel.second.first ? 1 : 0);
