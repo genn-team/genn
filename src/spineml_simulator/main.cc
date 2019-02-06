@@ -725,13 +725,16 @@ int main(int argc, char *argv[])
 
                 std::string geNNSynPopName = SpineMLUtils::getSafeName(srcPopName) + "_" + srcPort + "_" + SpineMLUtils::getSafeName(popName) + "_"  + dstPort;
 
-                // Find allocate function and sparse projection
-                Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str(), true);
-                SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str(), true);
+                // Find row lengths, indices and max row length associated with sparse connection
+                unsigned int **rowLength = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
+                unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
+                unsigned int *maxRowLength = (unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
 
                 // Create connector
                 std::vector<unsigned int> remapIndices;
-                Connectors::create(input, srcPopSize, popSize, sparseProjection, allocateFn, basePath, remapIndices);
+                Connectors::create(input, srcPopSize, popSize, 
+                                   rowLength, ind, maxRowLength,
+                                   basePath, remapIndices);
             }
 
             // Loop through outgoing projections
@@ -761,14 +764,15 @@ int main(int argc, char *argv[])
                     // **NOTE** this is an arbitrary choice but these are guaranteed unique
                     std::string geNNSynPopName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
 
-                    // Find allocate function and sparse projection
-                    Connectors::AllocateFn allocateFn = (Connectors::AllocateFn)getLibrarySymbol(modelLibrary, ("allocate" + geNNSynPopName).c_str(), true);
-                    SparseProjection *sparseProjection = (SparseProjection*)getLibrarySymbol(modelLibrary, ("C" + geNNSynPopName).c_str(), true);
+                    // Find row lengths, indices and max row length associated with sparse connection
+                    unsigned int **rowLength = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
+                    unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
+                    unsigned int *maxRowLength = (unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
 
                     // Create connector
                     std::vector<unsigned int> remapIndices;
                     const unsigned int numSynapses = Connectors::create(synapse, popSize, trgPopSize,
-                                                                        sparseProjection, allocateFn,
+                                                                        rowLength, ind, maxRowLength,
                                                                         basePath, remapIndices);
 
                     // Add postsynapse properties to dictionary
