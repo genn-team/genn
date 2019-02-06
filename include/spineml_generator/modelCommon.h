@@ -7,15 +7,18 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
 // GeNN includes
-#include "codeStream.h"
 #include "initVarSnippet.h"
-#include "Models.h"
+#include "models.h"
+
+// GeNN code generator includes
+#include "code_generator/codeStream.h"
 
 // Forward declarations
 namespace SpineMLGenerator
@@ -105,7 +108,7 @@ private:
 //------------------------------------------------------------------------
 // CodeStream
 //------------------------------------------------------------------------
-class CodeStream : public ::CodeStream
+class CodeStream : public CodeGenerator::CodeStream
 {
 public:
     CodeStream() : m_FirstNonEmptyRegime(true), m_CodeStream(m_Stream)
@@ -134,7 +137,7 @@ private:
     std::ostringstream m_Stream;
 
     //! < Second internal code stream used to correctly intent the
-    ::CodeStream m_CodeStream;
+    CodeGenerator::CodeStream m_CodeStream;
 
     //!< Internal codestream used to write regime code to
     std::ostringstream m_CurrentRegimeStream;

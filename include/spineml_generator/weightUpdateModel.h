@@ -5,7 +5,7 @@
 #include <string>
 
 // GeNN includes
-#include "newWeightUpdateModels.h"
+#include "weightUpdateModels.h"
 
 // Spine ML generator includes
 #include "modelCommon.h"

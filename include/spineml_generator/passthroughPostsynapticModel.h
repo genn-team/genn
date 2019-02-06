@@ -4,7 +4,7 @@
 #include <string>
 
 // GeNN includes
-#include "newPostsynapticModels.h"
+#include "postsynapticModels.h"
 
 // Forward declarations
 namespace SpineMLGenerator

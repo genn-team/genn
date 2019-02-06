@@ -12,7 +12,7 @@
 #include <cstdint>
 
 // Filesystem includes
-#include "filesystem/path.h"
+#include "third_party/path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"

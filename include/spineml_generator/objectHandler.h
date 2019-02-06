@@ -4,6 +4,9 @@
 #include <map>
 #include <string>
 
+// GeNN includes
+#include "models.h"
+
 // SpineML generator includes
 #include "modelCommon.h"
 

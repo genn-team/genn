@@ -4,8 +4,8 @@
 #include <iostream>
 #include <regex>
 
-// GeNN includes
-#include "codeGenUtils.h"
+// GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 
 // SpineML generator includes
 #include "objectHandler.h"
@@ -185,7 +185,7 @@ void SpineMLGenerator::wrapAndReplaceVariableNames(std::string &code, const std:
                                                    const std::string &replaceVariableName)
 {
     // Replace variable name with replacement variable name, within GeNN $(XXXX) wrapper
-    regexVarSubstitute(code, variableName, "$(" + replaceVariableName + ")");
+    CodeGenerator::regexVarSubstitute(code, variableName, "$(" + replaceVariableName + ")");
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &variableName)
@@ -319,7 +319,7 @@ bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::stri
     // Replace all alias names with their code string
     bool aliasesExpanded = false;
     for(const auto &alias : aliases) {
-        aliasesExpanded |= regexVarSubstitute(code, alias.first, alias.second);
+        aliasesExpanded |= CodeGenerator::regexVarSubstitute(code, alias.first, alias.second);
     }
     return aliasesExpanded;
 }

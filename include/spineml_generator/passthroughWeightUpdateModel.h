@@ -4,7 +4,7 @@
 #include <string>
 
 // GeNN includes
-#include "newWeightUpdateModels.h"
+#include "weightUpdateModels.h"
 
 // Forward declarations
 namespace SpineMLGenerator

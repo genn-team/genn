@@ -1,4 +1,5 @@
 // Standard C++ includes
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -11,16 +12,21 @@
 #include <cstdlib>
 
 // Filesystem includes
-#include "filesystem/path.h"
+#include "third_party/path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
 // GeNN includes
-#include "generateALL.h"
-#include "global.h"
 #include "modelSpec.h"
-#include "utils.h"
+
+// GeNN code generator includes
+#include "code_generator/generateAll.h"
+#include "code_generator/generateMakefile.h"
+#include "code_generator/generateMSBuild.h"
+
+// GeNN backend includes
+#include "optimiser.h"
 
 // SpineMLCommon includes
 #include "connectors.h"
@@ -157,8 +163,8 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int> getSynapticMatrixType(
         // Read maximum row length and any explicit delay from connector
         unsigned int maxRowLength;
         double explicitDelay;
-        tie(maxRowLength, explicitDelay) = Connectors::List::readMaxRowLengthAndDelay(basePath, connectionList,
-                                                                                      numPre, numPost);
+        std::tie(maxRowLength, explicitDelay) = Connectors::List::readMaxRowLengthAndDelay(basePath, connectionList,
+                                                                                           numPre, numPost);
 
         // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
         unsigned int delay = std::isnan(explicitDelay) ? readDelaySteps(connectionList, dt) : (unsigned int)std::round(explicitDelay / dt);
@@ -193,15 +199,6 @@ int main(int argc, char *argv[])
         if(argc < 2) {
             throw std::runtime_error("Expected experiment XML file passed as argument");
         }
-
-#ifndef CPU_ONLY
-        CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-        deviceProp = new cudaDeviceProp[deviceCount];
-        for (int device = 0; device < deviceCount; device++) {
-            CHECK_CUDA_ERRORS(cudaSetDevice(device));
-            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
-        }
-#endif // CPU_ONLY
 
         // Use filesystem library to get parent path of the network XML file
         const auto experimentPath = filesystem::path(argv[1]).make_absolute();
@@ -313,19 +310,6 @@ int main(int argc, char *argv[])
         std::string networkName = networkPath.filename();
         networkName = networkName.substr(0, networkName.find_last_of("."));
 
-        // Instruct GeNN to export all functions as extern "C"
-        GENN_PREFERENCES::buildSharedLibrary = true;
-
-        // Turn off autorefractory behaviour
-        // **THINK** this allows inputs to be used in threshold conditions but is it actually a good idea more generally?
-        GENN_PREFERENCES::autoRefractory = false;
-
-        // Enable new intialization mode for sparse projections where their variables are automatically initialised
-        GENN_PREFERENCES::autoInitSparseVars = true;
-
-        // Initialize GeNN
-        initGeNN();
-
         // The neuron model
         NNmodel model;
         model.setDT(dt);
@@ -401,10 +385,10 @@ int main(int argc, char *argv[])
                 SynapseMatrixType mtype;
                 unsigned int delaySteps;
                 unsigned int maxConnections;
-                tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, input,
-                                                                               srcNeuronGroup->getNumNeurons(),
-                                                                               neuronGroup->getNumNeurons(),
-                                                                               true, dt);
+                std::tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, input,
+                                                                                    srcNeuronGroup->getNumNeurons(),
+                                                                                    neuronGroup->getNumNeurons(),
+                                                                                    true, dt);
 
                 // Add synapse population to model
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
@@ -488,10 +472,10 @@ int main(int argc, char *argv[])
                     SynapseMatrixType mtype;
                     unsigned int delaySteps;
                     unsigned int maxConnections;
-                    tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
-                                                                                   neuronGroup->getNumNeurons(),
-                                                                                   trgNeuronGroup->getNumNeurons(),
-                                                                                   globalG, dt);
+                    std::tie(mtype, delaySteps, maxConnections) = getSynapticMatrixType(basePath, synapse,
+                                                                                        neuronGroup->getNumNeurons(),
+                                                                                        trgNeuronGroup->getNumNeurons(),
+                                                                                        globalG, dt);
 
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
@@ -518,31 +502,30 @@ int main(int argc, char *argv[])
 
         // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
         const int localHostID = 0;
-#ifndef CPU_ONLY
-        chooseDevice(model, runPath.str(), localHostID);
-#endif // CPU_ONLY
-        generate_model_runner(model, runPath.str(), localHostID);
+        CodeGenerator::BACKEND_NAMESPACE::Backend::Preferences preferences;
+        
+        // Create backend
+        auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, outputPath, localHostID, preferences);
+    
+        // Generate code
+        const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
 
-        // Build path to generated model code
-        auto modelPath = runPath / (networkName + "_CODE");
-
-        // Use this to build command line for building generated code
-        std::string cmd = "cd \"" + modelPath.str() + "\" && ";
 #ifdef _WIN32
-        cmd += "nmake /nologo clean all";
-#else // UNIX
-        cmd += "make clean all";
+        // Create MSBuild project to compile and link all generated modules
+        std::ofstream makefile((outputPath / "runner.vcxproj").str());
+        CodeGenerator::generateMSBuild(makefile, backend, moduleNames);
+#else
+        // Create makefile to compile and link all generated modules
+        std::ofstream makefile((outputPath / "Makefile").str());
+        CodeGenerator::generateMakefile(makefile, backend, moduleNames);
 #endif
 
-#ifdef CPU_ONLY
-        cmd += " CPU_ONLY=1";
-#endif  // CPU_ONLY
 
         // Execute command
-        int retval = system(cmd.c_str());
+        /*int retval = system(cmd.c_str());
         if (retval != 0){
             throw std::runtime_error("Building generated code with call:'" + cmd + "' failed with return value:" + std::to_string(retval));
-        }
+        }*/
     }
     catch(const std::exception &exception)
     {

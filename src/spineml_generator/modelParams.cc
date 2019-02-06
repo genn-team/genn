@@ -7,13 +7,14 @@
 #include <iostream>
 
 // Filesystem includes
-#include "filesystem/path.h"
+#include "third_party/path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
 // GeNN includes
-#include "Models.h"
+#include "initVarSnippet.h"
+#include "models.h"
 
 // SpineMLCommon includes
 #include "spineMLUtils.h"

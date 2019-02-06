@@ -10,6 +10,9 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// GeNN code generator includes
+#include "code_generator/codeStream.h"
+
 //------------------------------------------------------------------------
 // SpineMLGenerator::ObjectHandler::Condition
 //------------------------------------------------------------------------

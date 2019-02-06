@@ -7,7 +7,7 @@
 #include <string>
 
 // GeNN includes
-#include "newPostsynapticModels.h"
+#include "postsynapticModels.h"
 
 // Spine ML generator includes
 #include "modelCommon.h"
