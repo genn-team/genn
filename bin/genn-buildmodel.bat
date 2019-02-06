@@ -85,16 +85,26 @@ if defined -d (
 
 
 rem :: build backend
-msbuild "%GENN_PATH%\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true
-
-rem :: build generator
-msbuild "%GENN_PATH%\src\genn_generator\generator.vcxproj" %MACROS%
-
-if defined -d (
-    devenv /debugexe "%GENERATOR%" "%-o%"
-) else (
-    "%GENERATOR%" "%-o%"
+msbuild "%GENN_PATH%\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true && (
+	echo Successfully built GeNN
+) || (
+	echo Unable to build GeNN
+	goto :eof
 )
 
-echo model build complete
-goto :eof
+
+rem :: build generator
+msbuild "%GENN_PATH%\src\genn_generator\generator.vcxproj" %MACROS%&& (
+	echo Successfully built code generator
+) || (
+	echo Unable to build code generator
+	goto :eof
+)
+
+if defined -d (
+	devenv /debugexe "%GENERATOR%" "%-o%"
+) else (
+	"%GENERATOR%" "%-o%"
+)
+
+echo Model build complete
