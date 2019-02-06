@@ -225,6 +225,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
 
             // Unload module
             CHECK_CU_ERRORS(cuModuleUnload(module));
+
+            // Remove tempory cubin file
+            if(std::remove((modulePath + ".cubin").c_str())) {
+                LOGW << "Cannot remove dry-run cubin file";
+            }
         }
     }
 
