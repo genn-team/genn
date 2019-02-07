@@ -1337,7 +1337,7 @@ void Backend::genVariableInit(CodeStream &os, VarLocation, size_t, const std::st
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroup &,
+void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroup &sg,
                                         const Substitutions &kernelSubs, Handler handler) const
 {
     // Pre and postsynaptic ID should already be provided via parallelism
@@ -1345,6 +1345,12 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
     assert(kernelSubs.hasVarSubstitution("id_post"));
 
     Substitutions varSubs(&kernelSubs);
+     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getMaxConnections()) + ") + " + kernelSubs.getVarSubstitution("id"));
+    }
+    else {
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + " + kernelSubs.getVarSubstitution("id"));
+    }
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------

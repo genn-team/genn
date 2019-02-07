@@ -176,8 +176,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    const size_t stride = (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) ? sg.getMaxConnections() : sg.getTrgNeuronGroup()->getNumNeurons();
-                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[(" + varSubs.getVarSubstitution("id_pre") + " * " + std::to_string(stride) + ") + " + varSubs.getVarSubstitution("id_post") + "]");
+                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[" + varSubs.getVarSubstitution("id_syn") +  "]");
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.apply(code);

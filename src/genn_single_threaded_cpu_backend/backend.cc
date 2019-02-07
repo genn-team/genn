@@ -480,9 +480,11 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
 
         Substitutions varSubs(&kernelSubs);
         if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getMaxConnections()) + ") + j");
             varSubs.addVarSubstitution("id_post", "ind" + sg.getName() + "[(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getMaxConnections()) + ") + j]");
         }
         else {
+            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + j");
             varSubs.addVarSubstitution("id_post", "j");
         }
         handler(os, varSubs);
