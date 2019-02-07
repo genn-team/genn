@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file decode_matrix_den_delay_individualg_dense/model_new.cc
+/*! \file decode_matrix_den_delay_individualg_dense/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -28,7 +28,7 @@ IMPLEMENT_MODEL(Neuron);
 void modelDefinition(NNmodel &model)
 {
     model.setDT(1.0);
-    model.setName("decode_matrix_den_delay_individualg_dense_new");
+    model.setName("decode_matrix_den_delay_individualg_dense");
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticSynapseInit(

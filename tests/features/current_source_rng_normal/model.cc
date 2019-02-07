@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file current_source_rng_normal/model_new.cc
+/*! \file current_source_rng_normal/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -31,7 +31,7 @@ void modelDefinition(NNmodel &model)
         1.0);       // 3 - standard deviation
 
     model.setDT(0.1);
-    model.setName("current_source_rng_normal_new");
+    model.setName("current_source_rng_normal");
 
     model.addNeuronPopulation<Neuron>("Pop", 1000, {}, Neuron::VarValues(uninitialisedVar()));
 

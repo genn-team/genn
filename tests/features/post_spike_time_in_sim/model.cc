@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file post_spike_time_in_sim/model_new.cc
+/*! \file post_spike_time_in_sim/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -55,7 +55,7 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 void modelDefinition(NNmodel &model)
 {
     model.setDT(1.0);
-    model.setName("post_spike_time_in_sim_new");
+    model.setName("post_spike_time_in_sim");
 
     model.addNeuronPopulation<PreNeuron>("pre", 10, {}, {});
     model.addNeuronPopulation<PostNeuron>("post", 10, {}, {});

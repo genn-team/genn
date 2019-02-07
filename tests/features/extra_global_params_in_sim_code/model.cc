@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file extra_global_params_in_sim_code/model_new.cc
+/*! \file extra_global_params_in_sim_code/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -29,7 +29,7 @@ IMPLEMENT_MODEL(Neuron);
 void modelDefinition(NNmodel &model)
 {
   model.setDT(0.1);
-  model.setName("extra_global_params_in_sim_code_new");
+  model.setName("extra_global_params_in_sim_code");
 
   model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
   model.setPrecision(GENN_FLOAT);

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file post_vars_in_synapse_dynamics_ragged/model_new.cc
+/*! \file post_vars_in_synapse_dynamics_ragged/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -42,7 +42,7 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 void modelDefinition(NNmodel &model)
 {
     model.setDT(0.1);
-    model.setName("post_vars_in_synapse_dynamics_ragged_new");
+    model.setName("post_vars_in_synapse_dynamics_ragged");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));

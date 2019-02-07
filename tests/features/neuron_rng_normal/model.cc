@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file neuron_rng_normal/model_new.cc
+/*! \file neuron_rng_normal/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -28,7 +28,7 @@ IMPLEMENT_MODEL(Neuron);
 void modelDefinition(NNmodel &model)
 {
     model.setDT(0.1);
-    model.setName("neuron_rng_normal_new");
+    model.setName("neuron_rng_normal");
 
     model.addNeuronPopulation<Neuron>("Pop", 1000, {}, Neuron::VarValues(uninitialisedVar()));
 

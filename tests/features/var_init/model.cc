@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file var_init/model_new.cc
+/*! \file var_init/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -61,7 +61,7 @@ void modelDefinition(NNmodel &model)
 {
     model.setSeed(12345);
     model.setDT(0.1);
-    model.setName("var_init_new");
+    model.setName("var_init");
 
 
     // Parameters for configuring uniform and normal distributions

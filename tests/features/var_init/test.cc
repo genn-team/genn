@@ -75,8 +75,6 @@ public:
             CRaggedGPU.ind[i] = i;
         }
 #endif
-        // Call sparse initialisation function
-        initvar_init_new();
     }
 };
 

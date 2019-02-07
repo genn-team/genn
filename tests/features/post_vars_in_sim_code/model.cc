@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file post_vars_in_sim_code/model_new.cc
+/*! \file post_vars_in_sim_code/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -43,7 +43,7 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 void modelDefinition(NNmodel &model)
 {
     model.setDT(0.1);
-    model.setName("post_vars_in_sim_code_new");
+    model.setName("post_vars_in_sim_code");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));

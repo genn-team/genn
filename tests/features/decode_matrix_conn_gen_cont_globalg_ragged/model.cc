@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file decode_matrix_conn_gen_cont_globalg_ragged/model_new.cc
+/*! \file decode_matrix_conn_gen_cont_globalg_ragged/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -81,7 +81,7 @@ IMPLEMENT_MODEL(Continuous);
 void modelDefinition(NNmodel &model)
 {
     model.setDT(1.0);
-    model.setName("decode_matrix_conn_gen_cont_globalg_ragged_new");
+    model.setName("decode_matrix_conn_gen_cont_globalg_ragged");
 
     // Continuous synapse parameters
     Continuous::VarValues staticSynapseInit(1.0);    // 0 - Wij (nA)
