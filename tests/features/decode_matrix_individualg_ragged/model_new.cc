@@ -38,7 +38,7 @@ void modelDefinition(NNmodel &model)
 
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY, "Pre", "Post",
+        "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
 

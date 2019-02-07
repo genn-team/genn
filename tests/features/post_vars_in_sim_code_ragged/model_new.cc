@@ -53,7 +53,7 @@ void modelDefinition(NNmodel &model)
     {
         string theName= synName + std::to_string(i);
         auto *syn = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
-            theName, SynapseMatrixType::RAGGED_INDIVIDUALG, i, "pre", "post",
+            theName, SynapseMatrixType::SPARSE_INDIVIDUALG, i, "pre", "post",
             {}, WeightUpdateModel::VarValues(0.0),
             {}, {});
         syn->setMaxConnections(1);

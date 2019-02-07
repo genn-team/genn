@@ -65,7 +65,7 @@ void modelDefinition(NNmodel &model)
 
 
     model.addSynapsePopulation<Continuous, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY, "Pre", "Post",
+        "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
 

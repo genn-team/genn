@@ -68,7 +68,7 @@ void modelDefinition(NNmodel &model)
 
 
     auto *syn = model.addSynapsePopulation<ContinuousDendriticDelay, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY, "Pre", "Post",
+        "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
     syn->setMaxDendriticDelayTimesteps(10);

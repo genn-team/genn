@@ -90,7 +90,7 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<PostNeuron>("Post", 4, {}, PostNeuron::VarValues(0.0));
 
     model.addSynapsePopulation<Continuous, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY, "Pre", "Post",
+        "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {},
         initConnectivity<Decoder>({}));

@@ -133,7 +133,7 @@ void modelDefinition(NNmodel &model)
 
     // Ragged synapse populations
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
-        "Ragged", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY,
+        "Ragged", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Pop",
         {}, weightUpdateInit,
         {}, postsynapticInit);

@@ -65,7 +65,7 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<PostNeuron>("post", 10, {}, {});
 
     auto *syn = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
-        "syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY, "pre", "post",
+        "syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "pre", "post",
         {}, WeightUpdateModel::VarValues(0.0), {}, WeightUpdateModel::PostVarValues(std::numeric_limits<float>::lowest()),
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>({}));
