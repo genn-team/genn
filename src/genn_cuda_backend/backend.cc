@@ -1159,12 +1159,6 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "struct curandStateXORWOW;" << std::endl;
     os << "typedef struct curandStatePhilox4_32_10 curandStatePhilox4_32_10_t;" << std::endl;
     os << "typedef struct curandStateXORWOW curandState;" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
-{
-    os << "// CUDA includes" << std::endl;
-    os << "#include <curand_kernel.h>" << std::endl;
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking CUDA calls" << std::endl;
@@ -1174,6 +1168,13 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
     os << "    }\\" << std::endl;
     os << "}" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
+{
+    os << "// CUDA includes" << std::endl;
+    os << "#include <curand_kernel.h>" << std::endl;
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &os) const
