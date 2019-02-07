@@ -367,6 +367,11 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                                      sg->getTrgNeuronGroup()->getNumNeurons());
                 }
             }
+
+            for(auto const &v : sg->getPSModel()->getExtraGlobalParams()) {
+                definitionsVar << "extern " << v.second << " " <<  v.first << sg->getPSModelTargetName() << ";" << std::endl;
+                runnerVarDecl << v.second << " " <<  v.first << sg->getPSModelTargetName() << ";" << std::endl;
+            }
         }
     }
     allVarStreams << std::endl;
