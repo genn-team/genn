@@ -1,5 +1,5 @@
 # Include common makefile
-include ../genn/MakefileCommon
+include ../MakefileCommon
 
 # Check required environment variable names are set
 ifndef BACKEND_NAME
@@ -31,9 +31,13 @@ BACKEND			:=$(GENN_DIR)/lib/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
 
 all: $(GENERATOR)
 
-$(GENERATOR): generator.cc libgenn backend
+-include $(DEPS)
+
+$(GENERATOR): generator.cc generator.d libgenn backend
 	mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) generator.cc -o $@ $(LDFLAGS)
+
+generator.d: ;
 
 libgenn:
 	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn; fi;
@@ -42,4 +46,4 @@ backend:
 	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend; fi;
 
 clean:
-	rm -f generator.o $(GENERATOR)
+	rm -f generator.d $(GENERATOR)

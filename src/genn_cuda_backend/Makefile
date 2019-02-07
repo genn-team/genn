@@ -1,5 +1,5 @@
 # Include common makefile
-include ../genn/MakefileCommon
+include ../MakefileCommon
 
 # If CUDA path isn't set, default to standard path for (at least Ubuntu) Linux systems
 # **NOTE** setting CUDA_PATH is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
@@ -36,3 +36,6 @@ $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
+
+clean:
+	rm -f $(OBJECT_DIRECTORY)/*.o $(OBJECT_DIRECTORY)/*.d $(BACKEND)

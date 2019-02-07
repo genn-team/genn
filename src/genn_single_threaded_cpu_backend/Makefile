@@ -1,5 +1,5 @@
 # Include common makefile
-include ../genn/MakefileCommon
+include ../MakefileCommon
 
 # Add backend  include directory to compiler flags
 CXXFLAGS		+=-I$(GENN_DIR)/include/genn_single_threaded_cpu_backend
@@ -8,7 +8,7 @@ CXXFLAGS		+=-I$(GENN_DIR)/include/genn_single_threaded_cpu_backend
 BACKEND			:=$(GENN_DIR)/lib/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).a
 
 # Build objecs in sub-directory
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn_cuda_backend
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn_single_threaded_cpu_backend
 
 # Find source files
 SOURCES			:= $(wildcard *.cc)
@@ -32,3 +32,6 @@ $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
+
+clean:
+	@rm -f $(OBJECT_DIRECTORY)/*.o $(OBJECT_DIRECTORY)/*.d $(BACKEND)

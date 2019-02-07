@@ -4,7 +4,7 @@ OS_UPPER		:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 DARWIN			:=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
 # Get directory of this makefile i.e. GeNN directory (means make can be invoked else where)
-GENN_DIR 		:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
+GENN_DIR 		:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../)
 
 # Set standard compiler and archiver flags
 CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn -I$(GENN_DIR)/include/genn/third_party
@@ -34,4 +34,4 @@ endif
 
 # Add prefix to object directory and library name
 OBJECT_DIRECTORY	:=$(GENN_DIR)/obj$(GENN_PREFIX)
-LIBGENN				:=$(GENN_DIR)/lib/libgenn$(GENN_PREFIX).a
+LIBGENN			:=$(GENN_DIR)/lib/libgenn$(GENN_PREFIX).a
