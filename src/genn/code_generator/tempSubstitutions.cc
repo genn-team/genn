@@ -36,6 +36,7 @@ void CodeGenerator::applyPostsynapticModelSubstitutions(std::string &code, const
     // Create iterators to iterate over the names of the postsynaptic model's initial values
     VarNameIterCtx psmVars(psm->getVars());
     DerivedParamNameIterCtx psmDerivedParams(psm->getDerivedParams());
+    ExtraGlobalParamNameIterCtx psmExtraGlobalParams(psm->getExtraGlobalParams());
 
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         name_substitutions(code, varPrefix, psmVars.nameBegin, psmVars.nameEnd, sg.getName());
@@ -47,6 +48,7 @@ void CodeGenerator::applyPostsynapticModelSubstitutions(std::string &code, const
 
     // Create iterators to iterate over the names of the postsynaptic model's derived parameters
     value_substitutions(code, psmDerivedParams.nameBegin, psmDerivedParams.nameEnd, sg.getPSDerivedParams());
+    name_substitutions(code, "", psmExtraGlobalParams.nameBegin, psmExtraGlobalParams.nameEnd, sg.getName());
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::applyWeightUpdateModelSubstitutions(std::string &code, const SynapseGroup &sg,
