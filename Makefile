@@ -1,5 +1,5 @@
 # Include common makefile
-include src/genn/MakefileCommon
+include src/MakefileCommon
 
 # List of backends
 BACKENDS		:=single_threaded_cpu
