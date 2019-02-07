@@ -1,25 +1,25 @@
 #!/bin/bash
 
-reset_coverage () {
-    # On OSX remove existing raw coverage files before running each test
-    # **NOTE** GCC can successfully combine gcno and gcda files itself but not LLVM
-    # **NOTE** only remove libgenn coverage COUNTS as libgenn itself and hence its .gcdo files don't get rebuilt
-    if [[ "$(uname)" = "Darwin" ]]; then
-        rm -f *.gcno *.gcda
-        rm -rf $GENN_PATH/lib/**/*.gcda
-    fi
-}
-
-update_coverage () {
-    # On OSX convert the coverage of each test to LCOV format
-    if [[ "$(uname)" = "Darwin" ]]; then
-        # Capture GCOV output for this test
-        lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file $1.txt 1>> ../../msg 2>> ../../msg
-
-        # Add this test's output to LCOV command line
-        LCOV_INPUTS+=" --add-tracefile $PWD/$1.txt"
-    fi
-}
+# reset_coverage () {
+#     # On OSX remove existing raw coverage files before running each test
+#     # **NOTE** GCC can successfully combine gcno and gcda files itself but not LLVM
+#     # **NOTE** only remove libgenn coverage COUNTS as libgenn itself and hence its .gcdo files don't get rebuilt
+#     if [[ "$(uname)" = "Darwin" ]]; then
+#         rm -f *.gcno *.gcda
+#         rm -rf $GENN_PATH/lib/**/*.gcda
+#     fi
+# }
+# 
+# update_coverage () {
+#     # On OSX convert the coverage of each test to LCOV format
+#     if [[ "$(uname)" = "Darwin" ]]; then
+#         # Capture GCOV output for this test
+#         lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file $1.txt 1>> ../../msg 2>> ../../msg
+# 
+#         # Add this test's output to LCOV command line
+#         LCOV_INPUTS+=" --add-tracefile $PWD/$1.txt"
+#     fi
+# }
 # By default no flags are passed to genn-buildmodel.sh or make
 BUILD_FLAGS=""
 MAKE_FLAGS=""
@@ -39,19 +39,17 @@ while getopts "crd" opt; do
     esac
 done
 
+# Find this script i.e. tests directory and hence GeNN itself
+TESTS_DIR=$(dirname "$0")
+GENN_PATH=$TESTS_DIR/../
+
 # Clean GeNN library
-pushd $GENN_PATH/lib
-make clean
+pushd $GENN_PATH
 make clean COVERAGE=1
 popd
 
-# Delete existing output and libgenn coverage data
-rm -f msg
-rm -f $GENN_PATH/lib/**/*.gcno $GENN_PATH/lib/**/*.gcda
-
-# Delete existing test coverage data
-find . -type f -name "*.gcda" -delete
-find . -type f -name "*.gcno" -delete
+# Push tests directory
+pushd $TESTS_DIR
 
 # Loop through feature tests
 for f in features/*;
@@ -60,84 +58,89 @@ for f in features/*;
 
         # Push feature directory
         pushd $f
-        
-        # Loop through model suffixes
-        for s in "" _new;
-            do
-                if [ -f "model$s.cc" ]; then
-                    # Reset coverage  before running test
-                    reset_coverage
-                    
-                    # Determine where the sim code is located for this test
-                    c=$(basename $f)$s"_CODE"
 
-                    # Run code generator once, generating coverage
-                    if genn-buildmodel.sh $BUILD_FLAGS -v model$s.cc 1>>../../msg 2>> ../../msg ; then
-                        # Clean and build test
-                        if make clean all $MAKE_FLAGS COVERAGE=1 SIM_CODE=$c 1>>../../msg 2>>../../msg ; then
-                            # Run tests
-                            ./test --gtest_output="xml:test_results$s.xml"
-                        fi
-                    fi
-                    
-                    # Update coverage after test
-                    update_coverage coverage$s
-                fi
-            done;
+        # Reset coverage  before running test
+        #reset_coverage
+        
+        # Determine where the sim code is located for this test
+        c=$(basename $f)"_CODE"
+
+        # Run code generator once, generating coverage
+        if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
+            # Clean and build test
+            if make clean all SIM_CODE=$c; then
+                # Run tests
+                ./test --gtest_output="xml:test_results$s.xml"
+            fi
+        fi
+        
+        # Update coverage after test
+        #update_coverage coverage$s
 
         # Pop feature directory
         popd
     done;
 
-# Run unit tests
-pushd unit
 
-# Reset coverage  before running test
-reset_coverage
+# # Run unit tests
+# pushd unit
+# 
+# # Reset coverage  before running test
+# reset_coverage
+# 
+# # Clean and build
+# make clean all COVERAGE=1 $MAKE_FLAGS 1>>../msg 2>>../msg 
+# 
+# # Run tests
+# ./test --gtest_output="xml:test_results_unit.xml"
+# 
+# # Update coverage after test
+# update_coverage coverage_unit
+# 
+# # Pop unit tests directory
+# popd
+# 
+# # Run SpineML tests
+# pushd spineml
+# pushd simulator
+# 
+# # Clean and build
+# make clean all $MAKE_FLAGS 1>>../../msg 2>>../../msg 
+# 
+# # Run SpineML simulator tests
+# ./test --gtest_output="xml:test_results_spineml.xml"
+# 
+# 
+# popd    # simulator
+# popd    # spineml
 
-# Clean and build
-make clean all COVERAGE=1 $MAKE_FLAGS 1>>../msg 2>>../msg 
-
-# Run tests
-./test --gtest_output="xml:test_results_unit.xml"
-
-# Update coverage after test
-update_coverage coverage_unit
-
-# Pop unit tests directory
-popd
-
-# Run SpineML tests
-pushd spineml
-pushd simulator
-
-# Clean and build
-make clean all $MAKE_FLAGS 1>>../../msg 2>>../../msg 
-
-# Run SpineML simulator tests
-./test --gtest_output="xml:test_results_spineml.xml"
-
-
-popd    # simulator
-popd    # spineml
-
-echo "Combining coverage data..."
-
-# On OSX combine the LCOV output gathered for each test into a single report
 if [[ "$(uname)" = "Darwin" ]]; then
-    lcov $LCOV_INPUTS --output-file coverage.txt 
-# Otherwise generate report from raw GCOV output in child directories
+    echo "Coverage not currently implemented on Mac OS X"
 else
-    lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file coverage.txt  1>> ../../msg 2>> msg
+    # Loop through directories in which there might be coverage
+    for OBJ_DIR in $GENN_PATH/obj_coverage/*/ ; do
+        # Get corresponding module name
+        MODULE=$(basename $OBJ_DIR)
+
+        # Use lcov to capture all coverage for this module
+        lcov --directory $d --base-directory $GENN_PATH/src/$MODULE/ --capture -rc lcov_branch_coverage=1 --output-file ${MODULE}_coverage.txt
+
+        # Add tracefile to list of tracefile arguments to pass to lcov
+        lcov_tracefile_args+=" --add-tracefile ${MODULE}_coverage.txt" 
+    done
+
+    # Combine all tracefiles together
+    lcov $(lcov_tracefile_args) --output-file coverage.txt 
+
+    # Strip system libraries from output
+    lcov --remove coverage.txt "/usr/*" --output-file coverage.txt
 fi
 
 if [ $REPORT -eq 1 ]; then
     echo "Generating HTML coverage report..."
 
-    # Do preprocessing normally performed by Jenkins
-    lcov --remove coverage.txt "/usr/*" --output-file coverage.txt
-    lcov --remove coverage.txt "*/test/*" --output-file coverage.txt
-    
     # Generate browseable HTML
     genhtml coverage.txt --branch-coverage --output-directory ./code_coverage_report/ 1>> ../../msg 2>> msg
 fi
+
+popd    # tests
