@@ -32,7 +32,7 @@ void modelDefinition(NNmodel &model)
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticSynapseInit(
-        uninitialisedVar(),     // 0 - Wij (nA)
+        1.0,                    // 0 - Wij (nA)
         uninitialisedVar());    // 1 - Dij (timestep)
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});

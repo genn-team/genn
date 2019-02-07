@@ -32,7 +32,7 @@ void modelDefinition(NNmodel &model)
 
     // Static synapse parameters
     WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticSynapseInit(
-        uninitialisedVar(),     // 0 - Wij (nA)
+        1.0,                    // 0 - Wij (nA)
         uninitialisedVar());    // 1 - Dij (timestep)
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
@@ -40,7 +40,7 @@ void modelDefinition(NNmodel &model)
 
 
     auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
-        "Syn", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY, "Pre", "Post",
+        "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
     syn->setMaxDendriticDelayTimesteps(10);

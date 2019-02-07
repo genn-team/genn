@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C includes
+#include <cmath>
+
 // Test includes
 #include "simulation_test.h"
 
@@ -21,25 +24,21 @@ public:
             glbSpkCntPre[0] = 1;
             glbSpkPre[0] = activeNeuron;
 
-#ifndef CPU_ONLY
-            if(GetParam())
-            {
-                pushPreSpikesToDevice();
-            }
-#endif  // CPU_ONLY
+            // Push spikes to device
+            pushPreSpikesToDevice();
 
             // Step GeNN
             StepGeNN();
 
             // If delay code should be active, return false if x isn't ten (all neurons)
             if(activeNeuron == 9) {
-                if(fabs(xPost[0] - 10.0f) >= 1E-5) {
+                if(std::fabs(xPost[0] - 10.0f) >= 1E-5) {
                     return false;
                 }
             }
             // Otherwise, return false if x isn't zero
             else {
-                if(fabs(xPost[0]) >= 1E-5) {
+                if(std::fabs(xPost[0]) >= 1E-5) {
                     return false;
                 }
             }
