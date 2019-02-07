@@ -26,8 +26,6 @@ IMPLEMENT_MODEL(Neuron);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-
     CurrentSourceModels::GaussianNoise::ParamValues paramVals(
         0.0,        // 2 - mean
         1.0);       // 3 - standard deviation
@@ -42,5 +40,4 @@ void modelDefinition(NNmodel &model)
                                                                paramVals, {});
 
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

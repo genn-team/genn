@@ -59,13 +59,10 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-
     model.setSeed(12345);
     model.setDT(0.1);
     model.setName("var_init_new");
 
-    GENN_PREFERENCES::autoInitSparseVars = true;
 
     // Parameters for configuring uniform and normal distributions
     InitVarSnippet::Uniform::ParamValues uniformParams(
@@ -119,21 +116,6 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 1, {}, {});
     model.addNeuronPopulation<Neuron>("Pop", 10000, {}, neuronInit);
     model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
-#ifndef CPU_ONLY
-    auto *popGPU = model.addNeuronPopulation<Neuron>("PopGPU", 10000, {}, neuronInit);
-    popGPU->setVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    popGPU->setVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    popGPU->setVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    popGPU->setVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    popGPU->setVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-
-    auto *currSourceGPU = model.addCurrentSource<CurrentSrc>("CurrSourceGPU", "PopGPU", {}, neuronInit);
-    currSourceGPU->setVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    currSourceGPU->setVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    currSourceGPU->setVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    currSourceGPU->setVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    currSourceGPU->setVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-#endif
 
     // Dense synapse populations
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
@@ -141,23 +123,6 @@ void modelDefinition(NNmodel &model)
         "SpikeSource", "Pop",
         {}, weightUpdateInit,
         {}, postsynapticInit);
-#ifndef CPU_ONLY
-    auto *denseGPU = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
-        "DenseGPU", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "PopGPU",
-        {}, weightUpdateInit,
-        {}, postsynapticInit);
-    denseGPU->setPSVarMode("pconstant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setPSVarMode("puniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setPSVarMode("pnormal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setPSVarMode("pexponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setPSVarMode("pgamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setWUVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setWUVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setWUVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    denseGPU->setWUVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-#endif
 
     // Sparse synapse populations
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
@@ -165,23 +130,6 @@ void modelDefinition(NNmodel &model)
         "SpikeSource", "Pop",
         {}, weightUpdateInit,
         {}, postsynapticInit);
-#ifndef CPU_ONLY
-    auto *sparseGPU = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
-        "SparseGPU", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "PopGPU",
-        {}, weightUpdateInit,
-        {}, postsynapticInit);
-    sparseGPU->setPSVarMode("pconstant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setPSVarMode("puniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setPSVarMode("pnormal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setPSVarMode("pexponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setPSVarMode("pgamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setWUVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setWUVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setWUVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    sparseGPU->setWUVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-#endif  // CPU_ONLY
 
     // Ragged synapse populations
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
@@ -189,24 +137,6 @@ void modelDefinition(NNmodel &model)
         "SpikeSource", "Pop",
         {}, weightUpdateInit,
         {}, postsynapticInit);
-#ifndef CPU_ONLY
-    auto *raggedGPU = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
-        "RaggedGPU", SynapseMatrixType::RAGGED_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "PopGPU",
-        {}, weightUpdateInit,
-        {}, postsynapticInit);
-    raggedGPU->setPSVarMode("pconstant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setPSVarMode("puniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setPSVarMode("pnormal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setPSVarMode("pexponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setPSVarMode("pgamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setWUVarMode("constant", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setWUVarMode("uniform", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setWUVarMode("normal", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setWUVarMode("exponential", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-    raggedGPU->setWUVarMode("gamma", VarMode::LOC_HOST_DEVICE_INIT_DEVICE);
-#endif  // CPU_ONLY
 
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

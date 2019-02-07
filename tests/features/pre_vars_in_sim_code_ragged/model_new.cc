@@ -43,7 +43,6 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
     model.setDT(0.1);
     model.setName("pre_vars_in_sim_code_ragged_new");
 
@@ -61,5 +60,4 @@ void modelDefinition(NNmodel &model)
         syn->setMaxConnections(1);
     }
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

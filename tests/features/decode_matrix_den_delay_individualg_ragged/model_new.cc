@@ -27,8 +27,6 @@ IMPLEMENT_MODEL(Neuron);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-
     model.setDT(1.0);
     model.setName("decode_matrix_den_delay_individualg_ragged_new");
 
@@ -49,5 +47,4 @@ void modelDefinition(NNmodel &model)
     syn->setMaxConnections(1);
 
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

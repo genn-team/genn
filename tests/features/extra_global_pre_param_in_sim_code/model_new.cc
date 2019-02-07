@@ -43,7 +43,6 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
     model.setDT(0.1);
     model.setName("extra_global_pre_param_in_sim_code_new");
 
@@ -60,5 +59,4 @@ void modelDefinition(NNmodel &model)
             {}, {});
     }
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

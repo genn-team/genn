@@ -46,8 +46,6 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-    model.setDT(0.1);
     model.setName("pre_vars_in_sim_code_event_new");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
@@ -63,5 +61,4 @@ void modelDefinition(NNmodel &model)
             {}, {});
     }
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

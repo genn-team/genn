@@ -27,8 +27,6 @@ IMPLEMENT_MODEL(Neuron);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-
     model.setDT(1.0);
     model.setName("decode_matrix_den_delay_individualg_dense_new");
 
@@ -47,5 +45,4 @@ void modelDefinition(NNmodel &model)
     syn->setMaxDendriticDelayTimesteps(10);
 
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

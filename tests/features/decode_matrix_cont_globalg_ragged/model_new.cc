@@ -54,8 +54,6 @@ IMPLEMENT_MODEL(Continuous);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-
     model.setDT(1.0);
     model.setName("decode_matrix_cont_globalg_ragged_new");
 
@@ -71,5 +69,4 @@ void modelDefinition(NNmodel &model)
         {}, {});
 
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

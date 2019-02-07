@@ -55,8 +55,6 @@ IMPLEMENT_MODEL(Continuous);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-
     model.setDT(0.1);
     model.setName("decode_matrix_cont_individualg_dense_new");
 
@@ -73,5 +71,4 @@ void modelDefinition(NNmodel &model)
         {}, {});
 
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

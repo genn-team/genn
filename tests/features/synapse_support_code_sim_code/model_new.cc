@@ -44,7 +44,6 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
     model.setDT(0.1);
     model.setName("synapse_support_code_sim_code_new");
 
@@ -61,5 +60,4 @@ void modelDefinition(NNmodel &model)
             {}, {});
     }
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }

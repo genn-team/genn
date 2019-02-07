@@ -51,12 +51,6 @@ IMPLEMENT_MODEL(Neuron);
 
 void modelDefinition(NNmodel &model)
 {
-    initGeNN();
-
-    GENN_PREFERENCES::autoInitSparseVars = true;
-    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
-    GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
-
     model.setDT(0.1);
     model.setName("decode_matrix_conn_gen_globalg_bitmask_new");
 
@@ -74,5 +68,4 @@ void modelDefinition(NNmodel &model)
         initConnectivity<Decoder>({}));
 
     model.setPrecision(GENN_FLOAT);
-    model.finalize();
 }
