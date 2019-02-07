@@ -19,7 +19,7 @@ endif
 ifdef MPI_ENABLE
     GENN_PREFIX	:=$(GENN_PREFIX)_mpi
     CXXFLAGS	+=-DMPI_ENABLE
-    CXX			:=mpiCC
+    CXX		:=mpiCC
 endif
 
 ifdef COVERAGE
