@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C includes
+#include <cmath>
+
 // Test includes
 #include "simulation_test.h"
 
@@ -22,25 +25,20 @@ public:
                 xPre[j] = (j == activeNeuron) ? 1.0f : 0.0f;
             }
 
-#ifndef CPU_ONLY
-            if(GetParam())
-            {
-                pushPreStateToDevice();
-            }
-#endif  // CPU_ONLY
+            pushPreStateToDevice();
 
             // Step GeNN
             StepGeNN();
 
             // If delay code should be active, return false if x isn't ten (all neurons)
             if(activeNeuron == 9) {
-                if(fabs(xPost[0] - 10.0f) >= 1E-5) {
+                if(std::fabs(xPost[0] - 10.0f) >= 1E-5) {
                     return false;
                 }
             }
             // Otherwise, return false if x isn't zero
             else {
-                if(fabs(xPost[0]) >= 1E-5) {
+                if(std::fabs(xPost[0]) >= 1E-5) {
                     return false;
                 }
             }

@@ -32,11 +32,10 @@ public:
         for(unsigned int i = 0; i < 10; i++)
         {
             // Set rowlength to 1
-            CSyn.rowLength[i] = 1;
+            rowLengthSyn[i] = 1;
 
             // Connect row to output neuron with weight of one and dendritic delay of (9 - i)
-            CSyn.ind[i] = 0;
-            gSyn[i] = 1.0f;
+            indSyn[i] = 0;
             dSyn[i] = (uint8_t)(9 - i);
         }
     }
@@ -44,9 +43,6 @@ public:
 
 TEST_P(SimTest, CorrectDecoding)
 {
-    // Initialize sparse arrays
-    initdecode_matrix_cont_den_delay_individualg_ragged_new();
-
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
 }

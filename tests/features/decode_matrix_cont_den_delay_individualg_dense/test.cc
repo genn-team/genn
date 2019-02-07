@@ -32,7 +32,6 @@ public:
         for(unsigned int i = 0; i < 10; i++)
         {
             // Connect row to output neuron with weight of one and dendritic delay of (9 - i)
-            gSyn[i] = 1.0f;
             dSyn[i] = (uint8_t)(9 - i);
         }
     }

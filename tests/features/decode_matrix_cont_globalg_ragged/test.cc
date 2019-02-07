@@ -51,9 +51,6 @@ public:
 
 TEST_P(SimTest, CorrectDecoding)
 {
-    // Initialize sparse arrays
-    initdecode_matrix_cont_globalg_ragged_new();
-
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
 }

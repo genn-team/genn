@@ -60,7 +60,7 @@ void modelDefinition(NNmodel &model)
 
     // Static synapse parameters
     ContinuousDendriticDelay::VarValues staticSynapseInit(
-        uninitialisedVar(),     // 0 - Wij (nA)
+        1.0,                    // 0 - Wij (nA)
         uninitialisedVar());    // 1 - Dij (timestep)
 
     model.addNeuronPopulation<PreNeuron>("Pre", 10, {}, PreNeuron::VarValues(0.0));
