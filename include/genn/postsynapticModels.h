@@ -32,7 +32,7 @@ public:
 
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
-    virtual NewModels::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
+    virtual Models::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
