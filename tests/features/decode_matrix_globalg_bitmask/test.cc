@@ -30,22 +30,18 @@ public:
     {
         // Loop through presynaptic neurons
         unsigned int c = 0;
-        for(unsigned int i = 0; i < 10; i++)
-        {
+        for(unsigned int i = 0; i < 10; i++) {
             // Set start index for this presynaptic neuron's weight matrix row
-            for(unsigned int j = 0; j < 4; j++)
-            {
+            for(unsigned int j = 0; j < 4; j++) {
                 // Get value this post synaptic neuron represents
                 const unsigned int j_value = (1 << j);
 
                 // If this postsynaptic neuron should be connected, add 1.0 otherwise 0.0
                 unsigned int gid = ((i * 4) + j);
-                if(((i + 1) & j_value) != 0)
-                {
+                if(((i + 1) & j_value) != 0) {
                     setB(gpSyn[gid >> 5], gid & 31);
                 }
-                else
-                {
+                else {
                     delB(gpSyn[gid >> 5], gid & 31);
                 }
 

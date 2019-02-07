@@ -32,7 +32,7 @@ public:
         for(unsigned int i = 0; i < 10; i++)
         {
             // Initially zero row length
-            CSyn.rowLength[i] = 0;
+            rowLengthSyn[i] = 0;
             for(unsigned int j = 0; j < 4; j++)
             {
                 // Get value this post synaptic neuron represents
@@ -41,8 +41,8 @@ public:
                 // If this postsynaptic neuron should be connected, add index
                 if(((i + 1) & j_value) != 0)
                 {
-                    const unsigned int idx = (i * 4) + CSyn.rowLength[i]++;
-                    CSyn.ind[idx] = j;
+                    const unsigned int idx = (i * 4) + rowLengthSyn[i]++;
+                    indSyn[idx] = j;
                 }
             }
         }
