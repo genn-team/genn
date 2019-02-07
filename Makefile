@@ -38,9 +38,12 @@ uninstall:
 	@# Delete sources
 	@rm -rf $(PREFIX)/src/genn_generator
 	@rm -rf $(PREFIX)/src/genn
+	@# Delete installed libraries
 	@rm -rf $(PREFIX)/lib/libgenn*.a
+	@# Delete installed headers
 	@rm -rf $(PREFIX)/include/genn
 	@rm -rf $(PREFIX)/include/genn_*_backend
+	# Delete installed executables
 	@rm -f $(PREFIX)/bin/genn-buildmodel.sh
 
 libgenn:
@@ -51,6 +54,11 @@ single_threaded_cpu:
 
 cuda:
 	$(MAKE) -C src/genn_cuda_backend
-	
+
 clean:
-	rm -rf $(OBJECT_DIRECTORY)/* $(LIBGENN)
+	@# Delete all objects, dependencies and coverage files if object directory exists
+	@if [ -d "${OBJECT_DIRECTORY}" ]; then find $(OBJECT_DIRECTORY) -type f \( -name "*.o" -o -name "*.d" -o -name "*.gcda" -o -name "*.gcdo" \) -delete; fi;
+
+	@# Delete libGeNN
+	@# Delete libGeNN
+	@rm -f $(LIBGENN)
