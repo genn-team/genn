@@ -550,8 +550,20 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
     }
+    runner << std::endl;
 
-     // ---------------------------------------------------------------------
+    // ---------------------------------------------------------------------
+    // Function for copying all connectivity to device
+    runner << "void copyConnectivityToDevice(bool uninitialisedOnly)";
+    {
+        CodeStream::Scope b(runner);
+        for(const auto &s : model.getLocalSynapseGroups()) {
+            runner << "push" << s.first << "ConnectivityToDevice(uninitialisedOnly);" << std::endl;
+        }
+    }
+    runner << std::endl;
+
+    // ---------------------------------------------------------------------
     // Function for copying all state from device
     runner << "void copyStateFromDevice()";
     {
@@ -568,6 +580,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             runner << "pull" << s.first << "StateFromDevice();" << std::endl;
         }
     }
+    runner << std::endl;
 
     // ---------------------------------------------------------------------
     // Function for setting the CUDA device and the host's global variables.
@@ -594,6 +607,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         // Write variable frees to runner
         runner << runnerVarFreeStream.str();
     }
+    runner << std::endl;
 
     // ------------------------------------------------------------------------
     // Function to free all global memory structures
@@ -639,6 +653,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             runner << "cudaDeviceSynchronize();" << std::endl;
         }
     }
+    runner << std::endl;
 
     // Write variable and function definitions to header
     definitions << definitionsVarStream.str();
@@ -648,6 +663,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     // Function definitions
     definitions << "// Runner functions" << std::endl;
     definitions << funcExportPrefix << "void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
+    definitions << funcExportPrefix << "void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
     definitions << funcExportPrefix << "void copyStateFromDevice();" << std::endl;
     definitions << funcExportPrefix << "void allocateMem();" << std::endl;
     definitions << funcExportPrefix << "void freeMem();" << std::endl;

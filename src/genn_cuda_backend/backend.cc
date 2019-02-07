@@ -1150,7 +1150,8 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
         CodeStream::Scope b(os);
 
         // Copy all uninitialised state variables to device
-        os << "copyStateToDevice(true);" << std::endl << std::endl;
+        os << "copyStateToDevice(true);" << std::endl;
+        os << "copyConnectivityToDevice(true);" << std::endl << std::endl;
 
         // If there are any sparse initialisation threads
         if(idSparseInitStart > 0) {
