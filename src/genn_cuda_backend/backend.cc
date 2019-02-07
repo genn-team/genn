@@ -1907,6 +1907,10 @@ bool Backend::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC && getChosenCUDADevice().major < 5) {
         return false;
     }
+    // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
+    else if(sg.isDendriticDelayRequired()) {
+        return false;
+    }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
     else {
