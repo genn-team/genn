@@ -41,7 +41,7 @@ private:
     }
     
     // Sync all teed buffers.
-    virtual int sync()
+    virtual int sync() override
     {
         bool anyNonZero = false;
         for(auto &s: m_StreamBufs) {
