@@ -43,10 +43,43 @@ done
 TESTS_DIR=$(dirname "$0")
 GENN_PATH=$TESTS_DIR/../
 
+# Clean GeNN library
+pushd $GENN_PATH
+make clean COVERAGE=1
+popd
 
 # Push tests directory
 pushd $TESTS_DIR
 
+# Loop through feature tests
+for f in features/*;
+    do
+        echo "Running test $f..."
+
+        # Push feature directory
+        pushd $f
+
+        # Reset coverage  before running test
+        #reset_coverage
+
+        # Determine where the sim code is located for this test
+        c=$(basename $f)"_CODE"
+
+        # Run code generator once, generating coverage
+        if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
+            # Clean and build test
+            if make clean all SIM_CODE=$c; then
+                # Run tests
+                ./test --gtest_output="xml:test_results$s.xml"
+            fi
+        fi
+
+        # Update coverage after test
+        #update_coverage coverage$s
+
+        # Pop feature directory
+        popd
+    done;
 
 
 # # Run unit tests
@@ -86,10 +119,9 @@ if [[ "$(uname)" = "Darwin" ]]; then
 else
     # Loop through directories in which there might be coverage
     for OBJ_DIR in ${GENN_PATH}obj_coverage/*/ ; do
-        
         # Get corresponding module name
         MODULE=$(basename $OBJ_DIR)
-        
+
         # Use lcov to capture all coverage for this module
         lcov --directory $OBJ_DIR --base-directory ${GENN_PATH}src/$MODULE/ --capture -rc lcov_branch_coverage=1 --output-file ${MODULE}_coverage.txt
 
