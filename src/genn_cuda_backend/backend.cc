@@ -171,6 +171,13 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
         updateExtraGlobalParams(c.first, "", csm->getExtraGlobalParams(), neuronKernelParameters,
                                 {csm->getInjectionCode()});
     }
+
+    // Add extra global parameters referenced by postsynaptic mode to map of kernel parameters
+    for(const auto &s : model.getLocalSynapseGroups()) {
+        const auto *psm = s.second.getPSModel();
+        updateExtraGlobalParams(s.first, "", psm->getExtraGlobalParams(), neuronKernelParameters,
+                                {psm->getDecayCode(), psm->getApplyInputCode()});
+    }
     // **TODO** add neuron kernel parameters from spike-like event conditions
 
     size_t idStart = 0;
