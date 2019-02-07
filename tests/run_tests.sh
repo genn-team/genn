@@ -52,39 +52,43 @@ popd
 pushd $TESTS_DIR
 
 # Loop through feature tests
-for f in features/*;
-    do
-        echo "Running test $f..."
+for f in features/* ; do
+    echo "Running test $f..."
 
-        # Push feature directory
-        pushd $f
+    # Push feature directory
+    pushd $f
 
-        # Reset coverage  before running test
-        #reset_coverage
+    # Reset coverage  before running test
+    #reset_coverage
 
-        # Determine where the sim code is located for this test
-        c=$(basename $f)"_CODE"
+    # Determine where the sim code is located for this test
+    c=$(basename $f)"_CODE"
 
-        # Run code generator once, generating coverage
-        if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
-            # Clean and build test
-            if make clean all SIM_CODE=$c; then
-                # Run tests
-                ./test --gtest_output="xml:test_results$s.xml"
-            fi
+    # Clean test 
+    # **NOTE** we do this to be sure profile data is deleted, even if building model fails
+    make clean SIM_CODE=$c
+    
+    # Run code generator once, generating coverage
+    if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
+        # Build test
+        if make SIM_CODE=$c; then
+            # Run tests
+            ./test --gtest_output="xml:test_results$s.xml"
         fi
+    fi
 
-        # Update coverage after test
-        #update_coverage coverage$s
+    # Update coverage after test
+    #update_coverage coverage$s
 
-        # Pop feature directory
-        popd
-    done;
+    # Pop feature directory
+    popd
+done;
 
 
 # # Run unit tests
 # pushd unit
-# 
+# or f in features/*;
+    do
 # # Reset coverage  before running test
 # reset_coverage
 # 
@@ -116,6 +120,16 @@ for f in features/*;
 
 if [[ "$(uname)" = "Darwin" ]]; then
     echo "Coverage not currently implemented on Mac OS X"
+    
+    # Loop through features and build list of raw profile output files
+    for f in features/* ; do
+        if [ -f "$f/default.profraw" ]; then
+            LLVM_PROFRAW_FILES+=$f/default.profraw
+        fi
+    done
+    
+    # Merge coverage
+    llvm-profdata merge -sparse $LLVM_PROFRAW_FILES -o coverage.profdata
 else
     # Loop through directories in which there might be coverage
     for OBJ_DIR in ${GENN_PATH}obj_coverage/*/ ; do
