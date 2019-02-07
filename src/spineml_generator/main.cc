@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
         CodeGenerator::BACKEND_NAMESPACE::Backend::Preferences preferences;
         
         // Create backend
-        auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, outputPath, localHostID, preferences);
+        auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, codePath, localHostID, preferences);
     
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath);
@@ -543,7 +543,7 @@ int main(int argc, char *argv[])
         }
 
         // Generate command to build using make
-        const std::string buildCommand = "make -C " + (codePath / "runner.vcxproj").str();
+        const std::string buildCommand = "make -C " + codePath.str();
 #endif
 
         // Execute build command
