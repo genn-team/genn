@@ -1843,7 +1843,7 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model,
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                         if (shouldAccumulateInSharedMemory(sg)) {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
+                            synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[ipost] += $(0)");
                         }
                         else {
                             synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
