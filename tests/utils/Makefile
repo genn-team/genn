@@ -11,4 +11,4 @@ generated_code:
 	$(MAKE) -C $(SIM_CODE)
 
 clean:
-	@rm -f test $(SIM_CODE)/librunner.so $(SIM_CODE)/*.o $(SIM_CODE)/*.d
+	@rm -f test $(SIM_CODE)/librunner.so $(SIM_CODE)/*.o $(SIM_CODE)/*.d default.profraw
