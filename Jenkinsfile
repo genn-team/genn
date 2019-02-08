@@ -98,8 +98,7 @@ for(b = 0; b < builderNodes.size; b++) {
             // Customise this nodes environment so GeNN and googletest environment variables are set and genn binaries are in path
             // **NOTE** these are NOT set directly using env.PATH as this makes the change across ALL nodes which means you get a randomly mangled path depending on node startup order
             withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.8.0/googletest",
-                     "GENN_PATH=" + pwd() + "/genn",
-                     "PATH+GENN=" + pwd() + "/genn/lib/bin"]) {
+                     "PATH+GENN=" + pwd() + "/genn/bin"]) {
                 stage(installationStageName) {
                     echo "Checking out GeNN";
                     
@@ -173,7 +172,7 @@ for(b = 0; b < builderNodes.size; b++) {
                             // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
                             def parserName = ("mac" in nodeLabel) ? "Apple LLVM Compiler (Clang)" : "GNU compiler 4 (gcc)";
                             step([$class: "WarningsPublisher", 
-                                parserConfigurations: [[parserName: parserName, pattern: "uniqueMsg"]], 
+                                parserConfigurations: [[parserName: parserName, pattern: uniqueMsg]], 
                                 unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
                         }
                     } 
