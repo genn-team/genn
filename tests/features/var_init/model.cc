@@ -131,12 +131,5 @@ void modelDefinition(NNmodel &model)
         {}, weightUpdateInit,
         {}, postsynapticInit);
 
-    // Ragged synapse populations
-    model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
-        "Ragged", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "Pop",
-        {}, weightUpdateInit,
-        {}, postsynapticInit);
-
     model.setPrecision(GENN_FLOAT);
 }
