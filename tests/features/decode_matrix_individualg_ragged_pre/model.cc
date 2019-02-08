@@ -37,10 +37,10 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<Neuron>("Post", 4, {}, Neuron::VarValues(0.0));
 
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+    auot *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
-    model.setSpanTypeToPre("Syn");
+    syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
     model.setPrecision(GENN_FLOAT);
 }

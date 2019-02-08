@@ -45,7 +45,7 @@ void modelDefinition(NNmodel &model)
         {}, {});
     syn->setMaxDendriticDelayTimesteps(10);
     syn->setMaxConnections(1);
-    model.setSpanTypeToPre("Syn");
+    syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
 
     model.setPrecision(GENN_FLOAT);
 }
