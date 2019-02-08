@@ -29,21 +29,17 @@ public:
     virtual void Init()
     {
         // Loop through presynaptic neurons
-        for(unsigned int i = 0; i < 10; i++)
-        {
+        for(unsigned int i = 0; i < 10; i++) {
             // Initially zero row length
-            CSyn.rowLength[i] = 0;
-            for(unsigned int j = 0; j < 4; j++)
-            {
+            rowLengthSyn[i] = 0;
+            for(unsigned int j = 0; j < 4; j++) {
                 // Get value this post synaptic neuron represents
                 const unsigned int j_value = (1 << j);
 
                 // If this postsynaptic neuron should be connected, add index
-                if(((i + 1) & j_value) != 0)
-                {
-                    const unsigned int idx = (i * 4) + CSyn.rowLength[i]++;
-                    CSyn.ind[idx] = j;
-                    gSyn[idx] = 1.0f;
+                if(((i + 1) & j_value) != 0) {
+                    const unsigned int idx = (i * 4) + rowLengthSyn[i]++;
+                    indSyn[idx] = j;
                 }
             }
         }
