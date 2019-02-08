@@ -308,6 +308,7 @@ void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const Bac
             // Loop through rows
             os << "for(unsigned int i = 0; i < " << sg.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
             {
+                CodeStream::Scope b(os);
                 popSubs.addVarSubstitution("id_pre", "i");
                 genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
 
