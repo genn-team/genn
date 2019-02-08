@@ -43,13 +43,3 @@ TEST_F(SimTest, KolmogorovSmirnovTest)
     // Check p value passes 95% confidence interval
     EXPECT_GT(Simulate(), 0.05);
 }
-
-#ifndef CPU_ONLY
-auto simulatorBackends = ::testing::Values(true, false);
-#else
-auto simulatorBackends = ::testing::Values(false);
-#endif
-
-WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
-                                SimTest,
-                                simulatorBackends);

@@ -46,13 +46,3 @@ TEST_F(SimTest, CorrectDecoding)
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
 }
-
-#ifndef CPU_ONLY
-auto simulatorBackends = ::testing::Values(true, false);
-#else
-auto simulatorBackends = ::testing::Values(false);
-#endif
-
-WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
-                                SimTest,
-                                simulatorBackends);

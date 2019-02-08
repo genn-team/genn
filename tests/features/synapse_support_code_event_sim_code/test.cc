@@ -41,13 +41,3 @@ TEST_F(SimTest, AcceptableError)
   // Check total error is less than some tolerance
   EXPECT_LT(err, 1e-2);
 }
-
-#ifndef CPU_ONLY
-auto simulatorBackends = ::testing::Values(true, false);
-#else
-auto simulatorBackends = ::testing::Values(false);
-#endif
-
-WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
-                                SimTest,
-                                simulatorBackends);

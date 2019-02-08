@@ -123,13 +123,3 @@ TEST_F(SimTest, Vars)
 #endif
 }
 
-
-#ifndef CPU_ONLY
-auto simulatorBackends = ::testing::Values(true);
-#else
-auto simulatorBackends = ::testing::Values(false);
-#endif
-
-WRAPPED_INSTANTIATE_TEST_CASE_P(MODEL_NAME,
-                                SimTest,
-                                simulatorBackends);
