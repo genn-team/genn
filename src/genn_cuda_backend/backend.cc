@@ -1187,6 +1187,147 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
     os << std::endl;
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float exponentialDistFloat(RNG *rng)";
+    {
+        CodeStream::Scope b(os);
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "const float u = curand_uniform(rng);" << std::endl;
+            os << "if (u != 0.0f)";
+            {
+                CodeStream::Scope b(os);
+                os << "return -logf(u);" << std::endl;
+            }
+        }
+    }
+    os << std::endl;
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ double exponentialDistDouble(RNG *rng)";
+    {
+        CodeStream::Scope b(os);
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "const double u = curand_uniform_double(rng);" << std::endl;
+            os << "if (u != 0.0)";
+            {
+                CodeStream::Scope b(os);
+                os << "return -log(u);" << std::endl;
+            }
+        }
+    }
+    os << std::endl;
+
+    // Generate gamma-distributed variates using Marsaglia and Tsang's method
+    // G. Marsaglia and W. Tsang. A simple method for generating gamma variables. ACM Transactions on Mathematical Software, 26(3):363-372, 2000.
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistFloatInternal(RNG *rng, float c, float d)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "float x, v, u;" << std::endl;
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "x = curand_normal(rng);" << std::endl;
+                os << "v = 1.0f + c*x;" << std::endl;
+            }
+            os << "while (v <= 0.0f);" << std::endl;
+            os << std::endl;
+            os << "v = v*v*v;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "u = curand_uniform(rng);" << std::endl;
+            }
+            os << "while (u == 1.0f);" << std::endl;
+            os << std::endl;
+            os << "if (u < 1.0f - 0.0331f*x*x*x*x) break;" << std::endl;
+            os << "if (logf(u) < 0.5f*x*x + d*(1.0f - v + logf(v))) break;" << std::endl;
+        }
+        os << std::endl;
+        os << "return d*v;" << std::endl;
+    }
+    os << std::endl;
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistFloat(RNG *rng, float a)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "if (a > 1)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const float u = curand_uniform (rng);" << std::endl;
+            os << "const float d = (1.0f + a) - 1.0f / 3.0f;" << std::endl;
+            os << "const float c = (1.0f / 3.0f) / sqrtf(d);" << std::endl;
+            os << "return gammaDistFloatInternal (rng, c, d) * powf(u, 1.0f / a);" << std::endl;
+        }
+        os << "else" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const float d = a - 1.0f / 3.0f;" << std::endl;
+            os << "const float c = (1.0f / 3.0f) / sqrtf(d);" << std::endl;
+            os << "return gammaDistFloatInternal(rng, c, d);" << std::endl;
+        }
+    }
+    os << std::endl;
+
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistDoubleInternal(RNG *rng, double c, double d)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "double x, v, u;" << std::endl;
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "x = curand_normal_double(rng);" << std::endl;
+                os << "v = 1.0 + c*x;" << std::endl;
+            }
+            os << "while (v <= 0.0);" << std::endl;
+            os << std::endl;
+            os << "v = v*v*v;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "u = curand_uniform_double(rng);" << std::endl;
+            }
+            os << "while (u == 1.0);" << std::endl;
+            os << std::endl;
+            os << "if (u < 1.0 - 0.0331*x*x*x*x) break;" << std::endl;
+            os << "if (log(u) < 0.5*x*x + d*(1.0 - v + log(v))) break;" << std::endl;
+        }
+        os << std::endl;
+        os << "return d*v;" << std::endl;
+    }
+    os << std::endl;
+
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ float gammaDistDouble(RNG *rng, double a)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "if (a > 1.0)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const double u = curand_uniform (rng);" << std::endl;
+            os << "const double d = (1.0 + a) - 1.0 / 3.0;" << std::endl;
+            os << "const double c = (1.0 / 3.0) / sqrt(d);" << std::endl;
+            os << "return gammaDistDoubleInternal (rng, c, d) * pow(u, 1.0 / a);" << std::endl;
+        }
+        os << "else" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const float d = a - 1.0 / 3.0;" << std::endl;
+            os << "const float c = (1.0 / 3.0) / sqrt(d);" << std::endl;
+            os << "return gammaDistDoubleInternal(rng, c, d);" << std::endl;
+        }
+    }
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &os) const
