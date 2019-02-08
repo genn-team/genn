@@ -49,7 +49,7 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, 0.0));
 
-    string synName= "syn";
+    std::string synName= "syn";
     for (int i= 0; i < 10; i++)
     {
         string theName= synName + std::to_string(i);
