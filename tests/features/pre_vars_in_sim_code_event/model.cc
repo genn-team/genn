@@ -54,7 +54,7 @@ void modelDefinition(NNmodel &model)
     std::string synName= "syn";
     for (int i= 0; i < 10; i++)
     {
-        string theName= synName + std::to_string(i);
+        std::string theName= synName + std::to_string(i);
         model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
             theName, SynapseMatrixType::DENSE_INDIVIDUALG, i, "pre", "post",
             WeightUpdateModel::ParamValues((double)(2*(i+1))), WeightUpdateModel::VarValues(0.0),
