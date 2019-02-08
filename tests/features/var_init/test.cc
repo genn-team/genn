@@ -93,7 +93,7 @@ double getProb(scalar *data, unsigned int size, F cdf)
     return prob;
 }
 
-TEST_P(SimTest, Vars)
+TEST_F(SimTest, Vars)
 {
     const double p = 0.025;
 

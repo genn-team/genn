@@ -23,7 +23,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicyNone> SimTest;
 
 
-TEST_P(SimTest, AcceptableError)
+TEST_F(SimTest, AcceptableError)
 {
     float err = Simulate(
       [](unsigned int i, unsigned int j, float t, float &newX)

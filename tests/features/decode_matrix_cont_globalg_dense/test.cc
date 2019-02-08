@@ -5,7 +5,8 @@
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
 */
 //--------------------------------------------------------------------------
-
+// Standard C includes
+#include <cmath>
 
 // Google test includes
 #include "gtest/gtest.h"
@@ -35,8 +36,7 @@ public:
     //----------------------------------------------------------------------------
     bool Simulate()
     {
-        for (int i = 0; i < (int)(10.0f / DT); i++)
-        {
+        for (int i = 0; i < (int)(10.0f / DT); i++) {
             // How many neurons should be active this timestep
             const unsigned int num_active_pre = i / 10;
 
@@ -45,22 +45,15 @@ public:
                 xPre[j] = (j < num_active_pre) ? 1.0f : 0.0f;
             }
 
-#ifndef CPU_ONLY
-            if(GetParam())
-            {
-                pushPreStateToDevice();
-            }
-#endif  // CPU_ONLY
+            pushPreStateToDevice();
 
             // Step GeNN
             StepGeNN();
 
             // Loop through output neurons
-            for(unsigned int j = 0; j < 4; j++)
-            {
+            for(unsigned int j = 0; j < 4; j++) {
                 // If activation of postsynaptic neuron is incorrect fail
-                if(fabs(xPost[j] - (float)num_active_pre) >= 1E-5)
-                {
+                if(std::fabs(xPost[j] - (float)num_active_pre) >= 1E-5) {
                     return false;
                 }
             }
@@ -71,7 +64,7 @@ public:
     }
 };
 
-TEST_P(SimTest, CorrectDecoding)
+TEST_F(SimTest, CorrectDecoding)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());

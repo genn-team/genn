@@ -120,7 +120,7 @@ private:
 typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy> SimTest;
 
 
-TEST_P(SimTest, AcceptableError)
+TEST_F(SimTest, AcceptableError)
 {
     float err = Simulate(
       [](unsigned int i, unsigned int d, unsigned int j, float t, float evntT, bool beforeSwap, float &newX)

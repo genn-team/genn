@@ -38,7 +38,7 @@ public:
     }
 };
 
-TEST_P(SimTest, KolmogorovSmirnovTest)
+TEST_F(SimTest, KolmogorovSmirnovTest)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());

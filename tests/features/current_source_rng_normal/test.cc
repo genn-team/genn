@@ -38,7 +38,7 @@ public:
     }
 };
 
-TEST_P(SimTest, KolmogorovSmirnovTest)
+TEST_F(SimTest, KolmogorovSmirnovTest)
 {
     // Check p value passes 95% confidence interval
     EXPECT_GT(Simulate(), 0.05);

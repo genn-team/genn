@@ -34,7 +34,7 @@ public:
     }
 };
 
-TEST_P(SimTest, CorrectDecoding)
+TEST_F(SimTest, CorrectDecoding)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());

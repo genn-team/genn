@@ -53,7 +53,7 @@ public:
     }
 };
 
-TEST_P(SimTest, AcceptableError)
+TEST_F(SimTest, AcceptableError)
 {
     Simulate();
 }
