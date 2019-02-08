@@ -87,8 +87,7 @@ done;
 
 # # Run unit tests
 # pushd unit
-# or f in features/*;
-    do
+#
 # # Reset coverage  before running test
 # reset_coverage
 # 
