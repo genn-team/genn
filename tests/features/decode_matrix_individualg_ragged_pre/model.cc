@@ -37,7 +37,7 @@ void modelDefinition(NNmodel &model)
     model.addNeuronPopulation<Neuron>("Post", 4, {}, Neuron::VarValues(0.0));
 
 
-    auot *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {});
