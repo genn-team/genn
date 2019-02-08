@@ -154,7 +154,16 @@ for(b = 0; b < builderNodes.size; b++) {
                             
                             // Run tests
                             def uniqueMsg = "msg_" + env.NODE_NAME;
-                            sh "./run_tests.sh" + runTestArguments + " 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\""
+                            def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
+                            def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
+                            
+                            // If tests failed, set failure status
+                            if(runTestsStatus != 0) {
+                                setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
+                            }
+                            
+                            // Archive output
+                            archive uniqueMsg;
                             
                             // Parse test output for GCC warnings
                             // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
@@ -175,10 +184,6 @@ for(b = 0; b < builderNodes.size; b++) {
                         dir("genn/tests") {
                             // Process JUnit test output
                             junit "**/test_results*.xml";
-                            
-                            // Archive output
-                            def uniqueMsg = "msg_" + env.NODE_NAME;
-                            archive uniqueMsg;
                             
                             // If coverage was emitted
                             if(fileExists("coverage.txt")) {
