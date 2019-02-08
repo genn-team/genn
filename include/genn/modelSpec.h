@@ -433,7 +433,8 @@ public:
         auto result = groupMap.emplace(std::piecewise_construct,
             std::forward_as_tuple(currentSourceName),
             std::forward_as_tuple(currentSourceName, model,
-                                  paramValues.getValues(), varInitialisers.getInitialisers()));
+                                  paramValues.getValues(), varInitialisers.getInitialisers(),
+                                  m_DefaultVarLocation));
 
         if(!result.second)
         {
@@ -495,10 +496,6 @@ private:
     double dt;                      //!< The integration time step of the model
     bool timing;
     unsigned int seed;
-
-    //! Should compatible postsynaptic models and dendritic delay buffers be merged? 
-    //! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved
-    bool m_MergePostsynapticModels; 
 
     //!< What is the default location for model state variables? Historically, everything was allocated on both host AND device
     VarLocation m_DefaultVarLocation;  

@@ -34,7 +34,7 @@
 // class NNmodel for specifying a neuronal network model
 
 NNmodel::NNmodel()
-    : m_TimePrecision(TimePrecision::DEFAULT), m_MergePostsynapticModels(false), m_DefaultVarLocation(VarLocation::HOST_DEVICE),
+    : m_TimePrecision(TimePrecision::DEFAULT), m_DefaultVarLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_ShouldMergePostsynapticModels(false)
 {
     setDT(0.5);
