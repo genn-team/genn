@@ -271,7 +271,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
                 os << backend.getVarPrefix() << "inSyn"  << sg->getPSModelTargetName() << "[" << inSynSubs.getVarSubstitution("id") << "] = linSyn" << sg->getPSModelTargetName() << ";" << std::endl;
                 for (const auto &v : psm->getVars()) {
-                    os << backend.getVarPrefix() << v.first << sg->getPSModelTargetName() << "[n]" << " = lps" << v.first << sg->getPSModelTargetName() << ";" << std::endl;
+                    os << backend.getVarPrefix() << v.first << sg->getPSModelTargetName() << "[" << inSynSubs.getVarSubstitution("id") << "]" << " = lps" << v.first << sg->getPSModelTargetName() << ";" << std::endl;
                 }
             }
         }
