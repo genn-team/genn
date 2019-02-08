@@ -17,8 +17,7 @@ public:
     //----------------------------------------------------------------------------
     bool Simulate()
     {
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             // Active single neuron in each timestep
             const unsigned int activeNeuron = (i % 10);
             for(unsigned int j = 0; j < 10; j++) {

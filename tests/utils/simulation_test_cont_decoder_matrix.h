@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C includes
+#include <cmath>
+
 // Test includes
 #include "simulation_test.h"
 
@@ -14,8 +17,7 @@ public:
     //----------------------------------------------------------------------------
     bool Simulate()
     {
-        for (int i = 0; i < 100; i++)
-        {
+        for (int i = 0; i < 100; i++) {
             // What value should neurons be representing this time step?
             const unsigned int inValue = (i % 10) + 1;
 
@@ -25,30 +27,22 @@ public:
                 xPre[j] = (j == (inValue - 1)) ? 1.0f : 0.0f;
             }
 
-#ifndef CPU_ONLY
-            if(GetParam())
-            {
-                pushPreStateToDevice();
-            }
-#endif  // CPU_ONLY
+            pushPreStateToDevice();
 
             // Step GeNN
             StepGeNN();
 
             // Loop through output neurons
             unsigned int outValue = 0;
-            for(unsigned int j = 0; j < 4; j++)
-            {
+            for(unsigned int j = 0; j < 4; j++) {
                 // If this neuron is representing 1 add value it represents to output
-                if(fabs(xPost[j] - 1.0f) < 1E-5)
-                {
+                if(std::fabs(xPost[j] - 1.0f) < 1E-5) {
                     outValue += (1 << j);
                 }
             }
 
             // If input value isn't correctly decoded, return false
-            if(outValue != inValue)
-            {
+            if(outValue != inValue) {
                 return false;
             }
         }
