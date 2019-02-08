@@ -35,8 +35,8 @@ http://genn-team.github.io/genn/
     directory in which GeNN was located. For example, use: 
     `SETX GENN_PATH "\path\to\genn"`.
 
-4. Add `%GENN_PATH%\lib\bin` to your %PATH% variable. For example,
-    use: `SETX PATH "%GENN_PATH%\lib\bin;%PATH%"`.
+4. Add `%GENN_PATH%\bin` to your %PATH% variable. For example,
+    use: `SETX PATH "%GENN_PATH%\bin;%PATH%"`.
 
 5. To access a developer command prompt, use the shortcut link in:
     start menu -\> all programs -\> Microsoft Visual Studio
@@ -134,11 +134,8 @@ c)  The programmer defines their own modeling code along similar lines
 -   they define input patterns (e.g. for Poisson neurons like in the
     example)
 
--   they use `stepTimeGPU();` to run one time step on the GPU or
-    `stepTimeCPU();` to run one on the CPU. (both versions are
-    always compiled). However, mixing the two does not make too much
-    sense. The host version uses the same memory whereto results from
-    the GPU version are copied (see next point)
+-   they use `stepTime();` to run one time step on whatever 
+    backend the model was built using.
 
 -   they use functions like `copyStateFromDevice();` etcetera to obtain
     results from GPU calculations.
