@@ -305,9 +305,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
                 // Caculate number of registers per warp and pad with register allocation granularity
                 const size_t paddedNumRegPerWarp = Utils::padSize(reqNumRegs * warpSize, regAllocGran);
 
+                // **JAMES** number of warps per SM given the register limit and; the register and warp allocation granularity
                 // **THINK** I don't understand this
                 //blockLimit = floor(deviceProps.regsPerBlock / (paddedNumRegPerWarp * warpAllocGran)*warpAllocGran;
 
+                //**JAMES** given the number of warps you can fit per SM, how many blocks fit
                 // **NOTE** this doesn't quite make sense either
                 //smBlockLimit = std::min(smBlockLimit, blockLimit / blockWarps);
             }
