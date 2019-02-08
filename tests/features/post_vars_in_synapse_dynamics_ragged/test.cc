@@ -5,11 +5,6 @@
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
 */
 //--------------------------------------------------------------------------
-
-
-#include <functional>
-#include <numeric>
-
 // Google test includes
 #include "gtest/gtest.h"
 
@@ -27,22 +22,18 @@ typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePo
 
 TEST_F(SimTest, AcceptableError)
 {
-  INIT_SPARSE(MODEL_NAME);
-
-  float err = Simulate(
-    [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
-    {
-        if (t > 0.0001+DT)
+    float err = Simulate(
+        [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
         {
-            newX = t-2*DT+10*((j+1)%10);
-            return true;
-        }
-        else
-        {
-          return false;
-        }
-    });
+            if (t > 0.0001+DT) {
+                newX = t-2*DT+10*((j+1)%10);
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
 
-  // Check total error is less than some tolerance
-  EXPECT_LT(err, 5e-3);
+    // Check total error is less than some tolerance
+    EXPECT_LT(err, 5e-3);
 }

@@ -24,22 +24,18 @@ typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy
 
 TEST_F(SimTest, AcceptableError)
 {
-  INIT_SPARSE(MODEL_NAME);
-
-  float err = Simulate(
-    [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
-    {
-        if (t > 0.0001+(d+1)*DT)
+    float err = Simulate(
+        [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
         {
-            newX = t-DT-(d+1)*DT+10*j;
-            return true;
-        }
-        else
-        {
-          return false;
-        }
-    });
+            if (t > 0.0001+(d+1)*DT) {
+                newX = t-DT-(d+1)*DT+10*j;
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
 
-  // Check total error is less than some tolerance
-  EXPECT_LT(err, 5e-3);
+    // Check total error is less than some tolerance
+    EXPECT_LT(err, 5e-3);
 }
