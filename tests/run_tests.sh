@@ -134,10 +134,10 @@ if [[ "$(uname)" = "Darwin" ]]; then
     done
     
     # Merge coverage
-    llvm-profdata merge -sparse $LLVM_PROFRAW_FILES -o coverage.profdata
+    xcrun llvm-profdata merge -sparse $LLVM_PROFRAW_FILES -o coverage.profdata
     
     # 'Show' text based coverage
-    llvm-cov show $LLVM_TEST_EXECUTABLES -instr-profile=coverage.profdata > coverage_$NODE_NAME.txt
+    xcrun llvm-cov show $LLVM_TEST_EXECUTABLES -instr-profile=coverage.profdata > coverage_$NODE_NAME.txt
 else
     # Loop through directories in which there might be coverage
     for OBJ_DIR in ${GENN_PATH}obj_coverage/*/ ; do
