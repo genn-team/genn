@@ -125,7 +125,7 @@ if [[ "$(uname)" = "Darwin" ]]; then
         if [ -f "$f/default.profraw" ]; then
             LLVM_PROFRAW_FILES+="$f/default.profraw "
             
-            if [ -z "$LLVM_TEST_EXECUTABLES" ];
+            if [ -z "$LLVM_TEST_EXECUTABLES" ]; then
                 LLVM_TEST_EXECUTABLES+="$f/test "
             else
                 LLVM_TEST_EXECUTABLES+="-object $f/test "
