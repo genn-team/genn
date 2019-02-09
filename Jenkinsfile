@@ -101,9 +101,6 @@ for(b = 0; b < builderNodes.size; b++) {
                      "PATH+GENN=" + pwd() + "/genn/bin"]) {
                 stage(installationStageName) {
                     echo "Checking out GeNN";
-                    
-                    echo pwd()
-                    echo env.PATH;
 
                     // Deleting existing checked out version of GeNN
                     sh "rm -rf genn";
@@ -185,12 +182,13 @@ for(b = 0; b < builderNodes.size; b++) {
                             junit "**/test_results*.xml";
                             
                             // If coverage was emitted
-                            if(fileExists("coverage.txt")) {
-                                // Stash it
-                                stash name: nodeName + "_coverage", includes: "coverage.txt"
+                            def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
+                            if(fileExists(uniqueCoverage)) {
+                                // Archive it
+                                archive uniqueCoverage;
                                 
                                 // Upload to code cov
-                                sh "curl -s https://codecov.io/bash | bash -s - -f coverage.txt -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                                sh "curl -s https://codecov.io/bash | bash -s - -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
                             }
                         }
                     }

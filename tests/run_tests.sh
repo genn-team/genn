@@ -123,12 +123,21 @@ if [[ "$(uname)" = "Darwin" ]]; then
     # Loop through features and build list of raw profile output files
     for f in features/* ; do
         if [ -f "$f/default.profraw" ]; then
-            LLVM_PROFRAW_FILES+=$f/default.profraw
+            LLVM_PROFRAW_FILES+="$f/default.profraw "
+            
+            if [ -z "$LLVM_TEST_EXECUTABLES" ];
+                LLVM_TEST_EXECUTABLES+="$f/test "
+            else
+                LLVM_TEST_EXECUTABLES+="-object $f/test "
+            fi
         fi
     done
     
     # Merge coverage
     llvm-profdata merge -sparse $LLVM_PROFRAW_FILES -o coverage.profdata
+    
+    # 'Show' text based coverage
+    llvm-cov show $LLVM_TEST_EXECUTABLES -instr-profile=coverage.profdata > coverage_$NODE_NAME.txt
 else
     # Loop through directories in which there might be coverage
     for OBJ_DIR in ${GENN_PATH}obj_coverage/*/ ; do
@@ -143,10 +152,10 @@ else
     done
 
     # Combine all tracefiles together
-    lcov $LCOV_TRACEFILE_ARGS --output-file coverage.txt 
+    lcov $LCOV_TRACEFILE_ARGS --output-file coverage_$NODE_NAME.txt 
 
     # Strip system libraries from output
-    lcov --remove coverage.txt "/usr/*" --output-file coverage.txt
+    lcov --remove coverage_$NODE_NAME.txt "/usr/*" --output-file coverage_$NODE_NAME.txt
 fi
 
 if [ $REPORT -eq 1 ]; then
