@@ -122,13 +122,13 @@ if [[ "$(uname)" = "Darwin" ]]; then
     
     # Loop through features and build list of raw profile output files
     for f in features/* ; do
-        if [ -f "$f/default.profraw" ]; then
+        if [[ -f "$f/default.profraw" && -f "$f/generator_coverage" ]]; then
             LLVM_PROFRAW_FILES+="$f/default.profraw "
             
             if [ -z "$LLVM_TEST_EXECUTABLES" ]; then
-                LLVM_TEST_EXECUTABLES+="$f/test "
+                LLVM_TEST_EXECUTABLES+="$f/generator_coverage "
             else
-                LLVM_TEST_EXECUTABLES+="-object $f/test "
+                LLVM_TEST_EXECUTABLES+="-object $f/generator_coverage "
             fi
         fi
     done
