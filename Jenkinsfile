@@ -174,22 +174,28 @@ for(b = 0; b < builderNodes.size; b++) {
                         }
                     } 
                 }
+                
                 buildStep("Gathering test results (" + env.NODE_NAME + ")") {
-                    // Process JUnit test output
-                    junit "**/test_results*.xml";
-                }
-                buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
-                    // If coverage was emitted
-                    def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
-                    if(fileExists(uniqueCoverage)) {
-                        // Archive it
-                        archive uniqueCoverage;
-                        
-                        // Upload to code cov
-                        sh "curl -s https://codecov.io/bash | bash -s - -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                    dir("genn/tests") {
+                        // Process JUnit test output
+                        junit "**/test_results*.xml";
                     }
-                    else {
-                        echo uniqueCoverage + " doesn't exist!";
+                }
+                
+                buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
+                    dir("genn/tests") {
+                        // If coverage was emitted
+                        def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
+                        if(fileExists(uniqueCoverage)) {
+                            // Archive it
+                            archive uniqueCoverage;
+                            
+                            // Upload to code cov
+                            sh "curl -s https://codecov.io/bash | bash -s - -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                        }
+                        else {
+                            echo uniqueCoverage + " doesn't exist!";
+                        }
                     }
                 }
             }
