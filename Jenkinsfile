@@ -161,23 +161,6 @@ for(b = 0; b < builderNodes.size; b++) {
                             // Archive output
                             archive uniqueMsg;
                             
-                            // Parse test output for GCC warnings
-                            // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
-                            // this is based mostly on examples here https://github.com/kitconcept/jenkins-pipeline-examples
-                            // **YUCK** fatal errors aren't detected by the 'GNU Make + GNU C Compiler (gcc)' parser
-                            // however JENKINS-18081 fixes this for 
-                            // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
-                            def parserName = ("mac" in nodeLabel) ? "Apple LLVM Compiler (Clang)" : "GNU compiler 4 (gcc)";
-                            step([$class: "WarningsPublisher", 
-                                parserConfigurations: [[parserName: parserName, pattern: uniqueMsg]], 
-                                unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
-                        }
-                    } 
-                }
-                
-                buildStep("Gathering test results (" + env.NODE_NAME + ")") {
-                    if (isUnix()) {
-                        dir("genn/tests") {
                             // Process JUnit test output
                             junit "**/test_results*.xml";
                             
@@ -190,8 +173,19 @@ for(b = 0; b < builderNodes.size; b++) {
                                 // Upload to code cov
                                 sh "curl -s https://codecov.io/bash | bash -s - -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
                             }
+                            
+                            // Parse test output for GCC warnings
+                            // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
+                            // this is based mostly on examples here https://github.com/kitconcept/jenkins-pipeline-examples
+                            // **YUCK** fatal errors aren't detected by the 'GNU Make + GNU C Compiler (gcc)' parser
+                            // however JENKINS-18081 fixes this for 
+                            // the 'GNU compiler 4 (gcc)' parser at the expense of it not detecting make errors...
+                            def parserName = ("mac" in nodeLabel) ? "Apple LLVM Compiler (Clang)" : "GNU compiler 4 (gcc)";
+                            step([$class: "WarningsPublisher", 
+                                parserConfigurations: [[parserName: parserName, pattern: uniqueMsg]], 
+                                unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
                         }
-                    }
+                    } 
                 }
             }
         }
