@@ -1,25 +1,4 @@
 #!/bin/bash
-
-# reset_coverage () {
-#     # On OSX remove existing raw coverage files before running each test
-#     # **NOTE** GCC can successfully combine gcno and gcda files itself but not LLVM
-#     # **NOTE** only remove libgenn coverage COUNTS as libgenn itself and hence its .gcdo files don't get rebuilt
-#     if [[ "$(uname)" = "Darwin" ]]; then
-#         rm -f *.gcno *.gcda
-#         rm -rf $GENN_PATH/lib/**/*.gcda
-#     fi
-# }
-# 
-# update_coverage () {
-#     # On OSX convert the coverage of each test to LCOV format
-#     if [[ "$(uname)" = "Darwin" ]]; then
-#         # Capture GCOV output for this test
-#         lcov --directory $GENN_PATH --capture -rc lcov_branch_coverage=1 --output-file $1.txt 1>> ../../msg 2>> ../../msg
-# 
-#         # Add this test's output to LCOV command line
-#         LCOV_INPUTS+=" --add-tracefile $PWD/$1.txt"
-#     fi
-# }
 # By default no flags are passed to genn-buildmodel.sh or make
 BUILD_FLAGS=""
 MAKE_FLAGS=""
@@ -58,9 +37,6 @@ for f in features/* ; do
     # Push feature directory
     pushd $f
 
-    # Reset coverage  before running test
-    #reset_coverage
-
     # Determine where the sim code is located for this test
     c=$(basename $f)"_CODE"
 
@@ -76,9 +52,6 @@ for f in features/* ; do
             ./test --gtest_output="xml:test_results$s.xml"
         fi
     fi
-
-    # Update coverage after test
-    #update_coverage coverage$s
 
     # Pop feature directory
     popd
@@ -118,8 +91,6 @@ done;
 # popd    # spineml
 
 if [[ "$(uname)" = "Darwin" ]]; then
-    echo "Coverage not currently implemented on Mac OS X"
-    
     # Loop through features and build list of raw profile output files
     for f in features/* ; do
         if [[ -f "$f/default.profraw" && -f "$f/generator_coverage" ]]; then
