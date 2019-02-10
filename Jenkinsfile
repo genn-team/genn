@@ -161,22 +161,6 @@ for(b = 0; b < builderNodes.size; b++) {
                             // Archive output
                             archive uniqueMsg;
                             
-                            // Process JUnit test output
-                            junit "**/test_results*.xml";
-                            
-                            // If coverage was emitted
-                            def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
-                            if(fileExists(uniqueCoverage)) {
-                                // Archive it
-                                archive uniqueCoverage;
-                                
-                                // Upload to code cov
-                                sh "curl -s https://codecov.io/bash | bash -s - -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
-                            }
-                            else {
-                                echo uniqueCoverage + " doesn't exist!";
-                            }
-                            
                             // Parse test output for GCC warnings
                             // **NOTE** driving WarningsPublisher from pipeline is entirely undocumented
                             // this is based mostly on examples here https://github.com/kitconcept/jenkins-pipeline-examples
@@ -189,6 +173,24 @@ for(b = 0; b < builderNodes.size; b++) {
                                 unstableTotalAll: '0', usePreviousBuildAsReference: true]); 
                         }
                     } 
+                }
+                buildStep("Gathering test results (" + env.NODE_NAME + ")") {
+                    // Process JUnit test output
+                    junit "**/test_results*.xml";
+                }
+                buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
+                    // If coverage was emitted
+                    def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
+                    if(fileExists(uniqueCoverage)) {
+                        // Archive it
+                        archive uniqueCoverage;
+                        
+                        // Upload to code cov
+                        sh "curl -s https://codecov.io/bash | bash -s - -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                    }
+                    else {
+                        echo uniqueCoverage + " doesn't exist!";
+                    }
                 }
             }
         }
