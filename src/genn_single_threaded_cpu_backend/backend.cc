@@ -537,7 +537,7 @@ void Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStr
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
-    std::string linkFlags = "-shared -fPIC";
+    std::string linkFlags = "-shared ";
     std::string cxxFlags = "-c -fPIC -DCPU_ONLY -std=c++11 -MMD -MP";
     cxxFlags += " " + m_Preferences.userCxxFlagsGNU;
     if (m_Preferences.optimizeCode) {

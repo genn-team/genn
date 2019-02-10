@@ -1542,7 +1542,7 @@ void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsI
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
-    std::string linkFlags = "--shared --linker-options '-fPIC' -arch " + architecture;
+    std::string linkFlags = "--shared -arch " + architecture;
 
     // Write variables to preamble
     os << "CUDA_PATH ?=/usr/local/cuda" << std::endl;
