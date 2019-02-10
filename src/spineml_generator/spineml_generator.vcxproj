@@ -22,7 +22,6 @@
     <ProjectGuid>{C7A136E7-6B8B-4A3A-A598-CAD396AE0E3C}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="../spineml_common/pugixml/pugixml.cpp" />
     <ClCompile Include="connectors.cc" />
     <ClCompile Include="main.cc" />
     <ClCompile Include="modelCommon.cc" />
@@ -83,7 +82,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>genn_Debug.lib;single_threaded_cpu_backend_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>genn_Debug.lib;single_threaded_cpu_backend_Debug.lib;spineml_common_Debug.lib%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -97,7 +96,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>genn_Debug.lib;cuda_backend_Debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>genn_Debug.lib;cuda_backend_Debug.lib;spineml_common_Debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -115,7 +114,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>genn_Release.lib;single_threaded_cpu_backend_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>genn_Release.lib;single_threaded_cpu_backend_Release.lib;spineml_common_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -133,7 +132,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>genn_Release.lib;cuda_backend_Release.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>genn_Release.lib;cuda_backend_Release.lib;spineml_common_Release.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
