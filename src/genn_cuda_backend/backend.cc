@@ -718,7 +718,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         // Launch synapse dynamics kernel if required
         if(idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idPreSynapseReset);
+            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
             os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : synapseDynamicsKernelParameters) {
                 os << p.first << ", ";
