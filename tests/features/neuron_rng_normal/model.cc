@@ -30,7 +30,7 @@ void modelDefinition(NNmodel &model)
     model.setDT(0.1);
     model.setName("neuron_rng_normal");
 
-    model.addNeuronPopulation<Neuron>("Pop", 1000, {}, Neuron::VarValues(uninitialisedVar()));
+    model.addNeuronPopulation<Neuron>("Pop", 1000, {}, Neuron::VarValues(0.0));
 
     model.setPrecision(GENN_FLOAT);
 }

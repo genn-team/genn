@@ -33,7 +33,7 @@ void modelDefinition(NNmodel &model)
     model.setDT(0.1);
     model.setName("current_source_rng_normal");
 
-    model.addNeuronPopulation<Neuron>("Pop", 1000, {}, Neuron::VarValues(uninitialisedVar()));
+    model.addNeuronPopulation<Neuron>("Pop", 1000, {}, Neuron::VarValues(0.0));
 
     model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CurrentSource",
                                                                "Pop",
