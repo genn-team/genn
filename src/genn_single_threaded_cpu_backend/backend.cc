@@ -80,6 +80,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
                     Substitutions popSubs(&funcSubs);
                     popSubs.addVarSubstitution("id", "i");
 
+                    // If this neuron group requires a simulation RNG, substitute in global RNG
+                    if(n.second.isSimRNGRequired()) {
+                        popSubs.addVarSubstitution("rng", "rng");
+                    }
+
                     handler(os, n.second, popSubs);
                 }
             }

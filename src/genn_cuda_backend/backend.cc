@@ -235,15 +235,17 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
                 if (ng.isDelayRequired()) {
                     // We should READ from delay slot before spkQuePtr
                     os << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset("dd_") << ";" << std::endl;
-                    
+
                     // And we should WRITE to delay slot pointed to be spkQuePtr
                     os << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset("dd_") << ";" << std::endl;
                 }
                 os << std::endl;
 
-                // Get name of rng to use for this neuron
-                popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs.getVarSubstitution("id") + "]");
-                
+                // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
+                if(ng.isSimRNGRequired()) {
+                    popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs.getVarSubstitution("id") + "]");
+                }
+
                 // Call handler to generate generic neuron code
                 os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
                 {
