@@ -145,6 +145,13 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     writeTypeRange(definitions, model.getPrecision(), "SCALAR");
     writeTypeRange(definitions, model.getTimePrecision(), "TIME");
 
+    definitions << "// ------------------------------------------------------------------------" << std::endl;
+    definitions << "// bit tool macros" << std::endl;
+    definitions << "#define B(x,i) ((x) & (0x80000000 >> (i))) //!< Extract the bit at the specified position i from x" << std::endl;
+    definitions << "#define setB(x,i) x= ((x) | (0x80000000 >> (i))) //!< Set the bit at the specified position i in x to 1" << std::endl;
+    definitions << "#define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0" << std::endl;
+    definitions << std::endl;
+
     // Write runner preamble
     runner << "#include \"definitionsInternal.h\"" << std::endl << std::endl;
     backend.genRunnerPreamble(runner);
