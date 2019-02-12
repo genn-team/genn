@@ -1851,7 +1851,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
             CodeStream::Scope b(os);
 
             // **TODO** pretty sure __ldg will boost performance here - basically will bring whole row into cache
-            os << "const unsigned int ipost = dd_ind" <<  sg.getName() << "[prePos];" << std::endl;
+            os << "const unsigned int ipost = dd_ind" <<  sg.getName() << "[synAddress];" << std::endl;
 
             // Code substitutions ----------------------------------------------------------------------------------
             std::string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
