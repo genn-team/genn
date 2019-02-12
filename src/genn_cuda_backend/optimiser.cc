@@ -91,10 +91,8 @@ void calcGroupSizes(const NNmodel &model, std::vector<size_t> (&groupSizes)[Code
         // Add number of neurons to vector of neuron kernels
         groupSizes[Backend::KernelNeuronUpdate].push_back(n.second.getNumNeurons());
 
-        // If this neuron group requires on-device initialisation
-        if(n.second.isSimRNGRequired() || n.second.isInitCodeRequired()) {
-            groupSizes[Backend::KernelInitialize].push_back(n.second.getNumNeurons());
-        }
+        // Add number of neurons to initialisation kernel (all neuron groups at least require spike counts initialising)
+        groupSizes[Backend::KernelInitialize].push_back(n.second.getNumNeurons());
     }
 
     // Loop through synapse groups

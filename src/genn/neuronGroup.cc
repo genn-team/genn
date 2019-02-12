@@ -213,16 +213,6 @@ bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamef
     return false;
 }
 
-bool NeuronGroup::isInitCodeRequired() const
-{
-    // Return true if any of the variables initialisers have any code
-    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
-                       [](const Models::VarInit &v)
-                       {
-                           return !v.getSnippet()->getCode().empty();
-                       });
-}
-
 bool NeuronGroup::isSimRNGRequired() const
 {
     // Returns true if any parts of the neuron code require an RNG

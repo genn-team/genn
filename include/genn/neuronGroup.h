@@ -130,9 +130,6 @@ public:
     //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
-    //! Does this neuron group require any initialisation code to be run?
-    bool isInitCodeRequired() const;
-
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 

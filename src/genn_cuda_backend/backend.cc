@@ -810,7 +810,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
         os << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
             [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroup &ng){ return ng.isInitCodeRequired(); },
+            [this](const NeuronGroup &){ return true; },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;
