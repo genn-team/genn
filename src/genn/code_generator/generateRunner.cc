@@ -70,6 +70,17 @@ void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroup &ng, bool
     else {
         os << " glbSpk" << eventSuffix << ng.getName();
     }
+    os << std::endl;
+
+    // convenience macro for accessing delay offset
+    os << "#define glbSpkShift" << ng.getName() << " ";
+    if (ng.isDelayRequired()) {
+        os << "spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons();
+    }
+    else {
+        os << "0";
+    }
+
     os << std::endl << std::endl;
 }
 //-------------------------------------------------------------------------
