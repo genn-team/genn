@@ -1,11 +1,15 @@
 #pragma once
 
-#include "simulation_synapse_policy_dense.h"
+// Standard C includes
+#include <cmath>
 
-// Standard includes
+// Standard C++ includes
 #include <cassert>
 #include <functional>
 #include <numeric>
+
+// Test utils includes
+#include "simulation_synapse_policy_dense.h"
 
 //----------------------------------------------------------------------------
 // SimulationSynapsePolicyRagged
@@ -80,10 +84,10 @@ public:
 
                 // Add error for this time step to total
                 err += std::inner_product(&x[d][0], &x[d][10],
-                                            GetTheW(d),
-                                            0.0f,
-                                            std::plus<float>(),
-                                            [](float a, float b){ return abs(a - b); });
+                                          GetTheW(d),
+                                          0.0f,
+                                          std::plus<float>(),
+                                          [](float a, float b){ return std::fabs(a - b); });
             }
 
             // Step GeNN
