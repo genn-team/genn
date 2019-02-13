@@ -77,11 +77,6 @@ protected:
         return m_TheW[delay];
     }
 
-    void SetTheW(unsigned int i, unsigned int j, float value)
-    {
-        m_TheW[i][j] = value;
-    }
-
 private:
     //--------------------------------------------------------------------------
     // Members
