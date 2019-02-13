@@ -31,6 +31,6 @@ void modelDefinition(NNmodel &model)
   model.setDT(0.1);
   model.setName("extra_global_params_in_sim_code");
 
-  model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, 0.0));
+  model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, uninitialisedVar()));
   model.setPrecision(GENN_FLOAT);
 }

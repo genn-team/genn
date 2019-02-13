@@ -5,7 +5,8 @@
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
 */
 //--------------------------------------------------------------------------
-
+// Standard C includes
+#include <cmath>
 
 // Google test includes
 #include "gtest/gtest.h"
@@ -17,17 +18,17 @@ suite of minimal models with known analytic outcomes that are used for continuou
 // included after auto-generated globals are includes
 #include "../../utils/simulation_test_vars.h"
 #include "../../utils/simulation_neuron_policy_pre_var.h"
-#include "../../utils/simulation_synapse_policy_sparse.h"
+#include "../../utils/simulation_synapse_policy_ragged.h"
 
 // Combine neuron and synapse policies together to build variable-testing fixture
-typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicySparse> SimTest;
+typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicyRagged> SimTest;
 
 TEST_F(SimTest, AcceptableError)
 {
   float err = Simulate(
     [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
     {
-        if ((t > d*DT+0.1001) && (fmod(t-2*DT-d*DT+5e-5+10*j,(float) (2*(d+1))) < 1e-4))
+        if ((t > d*DT+0.1001) && (std::fmod(t-2*DT-d*DT+5e-5+10*j,(float) (2*(d+1))) < 1e-4))
         {
             newX = t-2*DT-d*DT+10*j;
             return true;

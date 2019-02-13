@@ -48,8 +48,8 @@ void modelDefinition(NNmodel &model)
     model.setDT(0.1);
     model.setName("synapse_support_code_post_learn");
 
-    model.addNeuronPopulation<Neuron>("pre", 10, Neuron::ParamValues(1.0), Neuron::VarValues(0.0, 0.0));
-    model.addNeuronPopulation<Neuron>("post", 10, Neuron::ParamValues(2.0), Neuron::VarValues(0.0, 0.0));
+    model.addNeuronPopulation<Neuron>("pre", 10, Neuron::ParamValues(1.0), Neuron::VarValues(0.0, uninitialisedVar()));
+    model.addNeuronPopulation<Neuron>("post", 10, Neuron::ParamValues(2.0), Neuron::VarValues(0.0, uninitialisedVar()));
 
     std::string synName= "syn";
     for (int i= 0; i < 10; i++)
