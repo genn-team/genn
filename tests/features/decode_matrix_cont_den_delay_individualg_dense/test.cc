@@ -37,7 +37,7 @@ public:
     }
 };
 
-TEST_F(SimTest, CorrectDecoding)
+TEST_F(SimTest, DecodeMatrixContDenDelayIndividualgDense)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());

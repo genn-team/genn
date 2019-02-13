@@ -53,7 +53,7 @@ public:
     }
 };
 
-TEST_F(SimTest, AcceptableError)
+TEST_F(SimTest, PostSpikeTimeInSim)
 {
     Simulate();
 }

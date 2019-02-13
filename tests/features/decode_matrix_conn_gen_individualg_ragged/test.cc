@@ -34,7 +34,7 @@ public:
     }
 };
 
-TEST_F(SimTest, CorrectDecoding)
+TEST_F(SimTest, DecodeMatrixConnGenIndividualgRagged)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());

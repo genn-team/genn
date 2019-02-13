@@ -38,7 +38,7 @@ public:
     }
 };
 
-TEST_F(SimTest, KolmogorovSmirnovTest)
+TEST_F(SimTest, NeuronRngUniform)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());

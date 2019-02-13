@@ -20,7 +20,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 // Combine neuron and synapse policies together to build variable-testing fixture
 typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePolicyRagged> SimTest;
 
-TEST_F(SimTest, AcceptableError)
+TEST_F(SimTest, PostVarsInSynapseDynamicsRagged)
 {
     float err = Simulate(
         [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
