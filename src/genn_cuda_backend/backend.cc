@@ -1818,7 +1818,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
 
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[(delaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
         }
         else {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
@@ -1912,8 +1912,8 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model,
         os << "if (threadIdx.x < numSpikesInBlock)";
         {
             CodeStream::Scope b(os);
-            const std::string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
-            os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << m_KernelBlockSizes[KernelPresynapticUpdate] << ") + threadIdx.x];" << std::endl;
+            const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+            os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * " << m_KernelBlockSizes[KernelPresynapticUpdate] << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
             if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength" << eventSuffix << "[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
