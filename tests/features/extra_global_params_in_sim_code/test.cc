@@ -5,7 +5,8 @@
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
 */
 //--------------------------------------------------------------------------
-
+// Standard C include
+#include <cmath>
 
 // Google test includes
 #include "gtest/gtest.h"
@@ -28,13 +29,11 @@ TEST_F(SimTest, AcceptableError)
     float err = Simulate(
       [](unsigned int i, unsigned int j, float t, float &newX)
       {
-          if(i > 0)
-          {
-              newX = (t - DT) + pow(t - DT, 2.0) + (j * 10);
+          if(i > 0) {
+              newX = (t - DT) + std::pow(t - DT, 2.0) + (j * 10);
               return true;
           }
-          else
-          {
+          else {
             return false;
           }
       });

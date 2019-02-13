@@ -1,6 +1,9 @@
 #pragma once
 
-// Standard includes
+// Standard C include
+#include <cmath>
+
+// Standard C++ includes
 #include <numeric>
 
 //----------------------------------------------------------------------------
@@ -21,23 +24,16 @@ public:
     {
         float err = 0.0f;
         inputpre = 0.0f;
-        for (int i = 0; i < (int)(20.0f / DT); i++)
-        {
-            // **YUCK** update global time - this shouldn't be user responsibility
-            t = i * DT;
-
+        while(t < 20.0f) {
             // for all pre-synaptic neurons
             float x[10];
-            for (int j = 0; j < 10; j++)
-            {
+            for (int j = 0; j < 10; j++) {
                 // generate expected values
                 float newX;
-                if(updateFn(i, j, t, newX))
-                {
+                if(updateFn(iT, j, t, newX)) {
                     x[j]= newX;
                 }
-                else
-                {
+                else {
                     x[j] = 0.0f;
                 }
             }
@@ -47,10 +43,10 @@ public:
                                       &xpre[glbSpkShiftpre],
                                       0.0f,
                                       std::plus<float>(),
-                                      [](float a, float b){ return abs(a - b); });
+                                      [](float a, float b){ return std::fabs(a - b); });
 
             // Update global
-            inputpre = pow(t, 2.0);
+            inputpre = std::pow(t, 2.0f);
 
             // Step GeNN kernel
             stepGeNNFn();
