@@ -85,7 +85,7 @@ for(b in desiredBuilds) {
 //--------------------------------------------------------------------------
 // **YUCK** need to do a C style loop here - probably due to JENKINS-27421 
 def builders = [:]
-for(b = 0; b < builderNodes.size; b++) {
+for(b = 0; b < builderNodes.size(); b++) {
     // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
     def nodeName = builderNodes.get(b).get(0)
     def nodeLabel = builderNodes.get(b).get(1)
@@ -206,7 +206,7 @@ node {
             // Loop through builders
             def lcovCommandLine = "lcov";
             def anyCoverage = false
-            for(b = 0; b < builderNodes.size; b++) {
+            for(b = 0; b < builderNodes.size(); b++) {
                 // **YUCK** meed to bind the label variable before the closure - can't do 'for (label in labels)'
                 def nodeName = builderNodes.get(b).get(0)
                 def nodeCoverageName = nodeName + "_coverage"
