@@ -49,7 +49,7 @@ public:
         bool optimizeCode = false; 
 
         //! Generate code with debug symbols
-        bool debugCode = false; 
+        bool debugCode = false;
 
         //! C++ compiler options to be used for building all host side code (used for unix based platforms)
         std::string userCxxFlagsGNU = ""; 
@@ -166,16 +166,6 @@ protected:
             os << "std::cerr << \"which results in poor CPU maths performance. We recommend setting the environment variable LD_BIND_NOW=1 to work around this issue.\" << std::endl;" << std::endl;
         }
         os << "#endif" << std::endl;
-    }
-
-    std::string getVarExportPrefix() const
-    {
-        // In windows making variables extern isn't enough to export then as DLL symbols - you need to add __declspec(dllexport)
-#ifdef _WIN32
-        return "__declspec(dllexport) extern";
-#else
-        return "extern";
-#endif
     }
 };
 }   // namespace CodeGenerator

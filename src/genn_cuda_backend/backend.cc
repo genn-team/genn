@@ -1391,17 +1391,17 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const
 {
     if(loc & VarLocation::HOST) {
-        definitions << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
+        definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
     if(loc & VarLocation::DEVICE) {
         // If the type is a pointer type we need a host and a device pointer
         if(type.back() == '*') {
-            definitions << getVarExportPrefix() << " " << type << " d_" << name << ";" << std::endl;
-            definitionsInternal << getVarExportPrefix() << " __device__ " << type << " dd_" << name << ";" << std::endl;
+            definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+            definitionsInternal << "EXPORT_VAR __device__ " << type << " dd_" << name << ";" << std::endl;
         }
         // Otherwise we just need a device variable, made volatile for safety
         else {
-            definitionsInternal << getVarExportPrefix() << " __device__ volatile " << type << " dd_" << name << ";" << std::endl;
+            definitionsInternal << "EXPORT_VAR __device__ volatile " << type << " dd_" << name << ";" << std::endl;
         }
     }
 }
@@ -1594,8 +1594,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
     os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking

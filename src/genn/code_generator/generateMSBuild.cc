@@ -55,7 +55,7 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend
     // Generate property group configuring build target
     os << "\t<PropertyGroup>" << std::endl;
     os << "\t\t<LinkIncremental Condition=\"'$(Configuration)'=='Debug'\">true</LinkIncremental>" << std::endl;
-    os << "\t\t<OutDir>./</OutDir>" << std::endl;
+    os << "\t\t<OutDir>../</OutDir>" << std::endl;
     os << "\t\t<TargetName>$(ProjectName)_$(Configuration)</TargetName>" << std::endl;
     os << "\t\t<TargetExt>.dll</TargetExt>" << std::endl;
     os << "\t</PropertyGroup>" << std::endl;

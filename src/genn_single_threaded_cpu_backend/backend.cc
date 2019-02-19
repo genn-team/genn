@@ -432,7 +432,7 @@ void Backend::genAllocateMemPreamble(CodeStream &, const NNmodel &) const
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, const std::string &type, const std::string &name, VarLocation) const
 {
-    definitions << getVarExportPrefix() << " " << type << " " << name << ";" << std::endl;
+    definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
@@ -522,13 +522,13 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroup&) cons
 //--------------------------------------------------------------------------
 void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const NNmodel &model) const
 {
-    definitions << getVarExportPrefix() << " " << "std::mt19937 rng;" << std::endl;
+    definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
 
     // Define and implement standard host distributions as recreating them each call is slow
-    definitions << getVarExportPrefix() << " " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
-    definitions << getVarExportPrefix() << " " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
-    definitions << getVarExportPrefix() << " " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
+    definitions << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
+    definitions << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
+    definitions << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
     runner << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
     runner << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
     runner << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
@@ -592,8 +592,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
     os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking
