@@ -740,10 +740,12 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
 //--------------------------------------------------------------------------
 void Backend::genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, const std::string &suffix) const
 {
-    const std::string queueOffset = ng.isDelayRequired() ? "writeDelayOffset + " : "";
+    const bool delayRequired = (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+
+    const std::string queueOffset = delayRequired ? "writeDelayOffset + " : "";
 
     os << "glbSpk" << suffix << ng.getName() << "[" << queueOffset << "glbSpkCnt" << suffix << ng.getName();
-    if (ng.isDelayRequired()) { // WITH DELAY
+    if(delayRequired) { // WITH DELAY
         os << "[spkQuePtr" << ng.getName() << "]++]";
     }
     else { // NO DELAY
