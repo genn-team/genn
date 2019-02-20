@@ -108,8 +108,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
         // Presynaptic update
         for(const auto &s : model.getLocalSynapseGroups()) {
-            os << "// synapse group " << s.first << std::endl;
-            {
+            if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+                os << "// synapse group " << s.first << std::endl;
                 CodeStream::Scope b(os);
 
                 // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
@@ -132,14 +132,15 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                 if (s.second.isTrueSpikeRequired()) {
                     genPresynapticUpdate(os, s.second, funcSubs, true, wumThreshHandler, wumSimHandler);
                 }
+                os << std::endl;
             }
-            os << std::endl;
         }
 
         // Postsynaptic update
         for(const auto &s : model.getLocalSynapseGroups()) {
             if(!s.second.getWUModel()->getLearnPostCode().empty()) {
                 os << "// synapse group " << s.first << std::endl;
+                CodeStream::Scope b(os);
 
                 // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                 if(s.second.getSrcNeuronGroup()->isDelayRequired()) {
@@ -195,6 +196,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                         postLearnHandler(os, s.second, synSubs);
                     }
                 }
+                os << std::endl;
             }
         }
     }
