@@ -711,7 +711,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
                 os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getMaxConnections()) + ") + j;" << std::endl;
             }
             else {
-                os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + j;" << std::endl;
+                os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + ipost;" << std::endl;
             }
 
             Substitutions synSubs(&popSubs);
