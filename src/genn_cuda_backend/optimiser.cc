@@ -187,9 +187,9 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
             
 #ifdef _WIN32
             // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
-            const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
+            const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + "-DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
 #else
-            const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
+            const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + "-DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
  #endif
             if(system(nvccCommand.c_str()) != 0) {
                 throw std::runtime_error("optimizeBlockSize: NVCC failed");
