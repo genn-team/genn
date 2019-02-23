@@ -28,8 +28,7 @@ public:
     //----------------------------------------------------------------------------
     virtual void Init()
     {
-        // Loop through presynaptic neurons
-        unsigned int c = 0;
+        // Loop through presynaptic neuronss
         for(unsigned int i = 0; i < 10; i++) {
             // Set start index for this presynaptic neuron's weight matrix row
             for(unsigned int j = 0; j < 4; j++) {
