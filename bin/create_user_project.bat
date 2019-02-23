@@ -4,6 +4,9 @@ REM Read project name and hence code directory from first command line argument
 SET PROJECT_FILE=%1.vcxproj
 SET CODE_DIRECTORY=%1_CODE
 
+REM Create a new GUID for project
+FOR /f %%i IN ('uuidgen -c') DO SET GUID=%%i
+
 REM throw project name parameter away
 SHIFT
 SET SOURCE_FILES=%1
@@ -28,7 +31,7 @@ REM Write out MSBuild project
 @ECHO     ^</ProjectConfiguration^> >> %PROJECT_FILE%
 @ECHO   ^</ItemGroup^> >> %PROJECT_FILE%
 @ECHO   ^<PropertyGroup Label="Globals"^> >> %PROJECT_FILE%
-@ECHO     ^<ProjectGuid^>{85FBA02A-804A-49CB-8374-892CCBC49A54}^</ProjectGuid^> >> %PROJECT_FILE%
+@ECHO     ^<ProjectGuid^>{%GUID%}^</ProjectGuid^> >> %PROJECT_FILE%
 @ECHO   ^</PropertyGroup^> >> %PROJECT_FILE%
 @ECHO   ^<ItemGroup^> >> %PROJECT_FILE%
 FOR %%U IN (%SOURCE_FILES%) DO (
