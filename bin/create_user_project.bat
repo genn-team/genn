@@ -1,11 +1,17 @@
 ECHO OFF
 
 REM Read project name and hence code directory from first command line argument
-SET PROJECT_FILE=%1.vcxproj
-SET CODE_DIRECTORY=%1_CODE
+SET PROJECT_NAME=%1
+SET PROJECT_FILE=%PROJECT_NAME%.vcxproj
+SET SOLUTION_FILE=%PROJECT_NAME%.sln
+SET CODE_DIRECTORY=%PROJECT_NAME%_CODE
+SET RUNNER_GUID_FILE=%CODE_DIRECTORY%\guid.txt
 
-REM Create a new GUID for project
-FOR /f %%i IN ('uuidgen -c') DO SET GUID=%%i
+REM Create a new GUID for user project
+FOR /f %%i IN ('uuidgen -c') DO SET USER_GUID=%%i
+
+REM Read GUID from file in code directory
+FOR /f %%i IN (%RUNNER_GUID_FILE%) DO SET RUNNER_GUID=%%i
 
 REM throw project name parameter away
 SHIFT
@@ -31,7 +37,7 @@ REM Write out MSBuild project
 @ECHO     ^</ProjectConfiguration^> >> %PROJECT_FILE%
 @ECHO   ^</ItemGroup^> >> %PROJECT_FILE%
 @ECHO   ^<PropertyGroup Label="Globals"^> >> %PROJECT_FILE%
-@ECHO     ^<ProjectGuid^>{%GUID%}^</ProjectGuid^> >> %PROJECT_FILE%
+@ECHO     ^<ProjectGuid^>{%USER_GUID%}^</ProjectGuid^> >> %PROJECT_FILE%
 @ECHO   ^</PropertyGroup^> >> %PROJECT_FILE%
 @ECHO   ^<ItemGroup^> >> %PROJECT_FILE%
 FOR %%U IN (%SOURCE_FILES%) DO (
@@ -98,3 +104,36 @@ FOR %%U IN (%SOURCE_FILES%) DO (
 @ECHO   ^<ImportGroup Label="ExtensionTargets"^> >> %PROJECT_FILE%
 @ECHO   ^</ImportGroup^> >> %PROJECT_FILE%
 @ECHO ^</Project^> >> %PROJECT_FILE%
+
+REM Write out MSBuild solution
+
+@ECHO Microsoft Visual Studio Solution File, Format Version 12.00 > %SOLUTION_FILE%
+@ECHO # Visual Studio 2013 >> %SOLUTION_FILE%
+@ECHO VisualStudioVersion = 12.0.30501.0 >> %SOLUTION_FILE%
+@ECHO MinimumVisualStudioVersion = 10.0.40219.1 >> %SOLUTION_FILE%
+@ECHO Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "%PROJECT_NAME%", "%PROJECT_FILE%", "{%USER_GUID%}" >> %SOLUTION_FILE%
+@ECHO 	ProjectSection(ProjectDependencies) = postProject >> %SOLUTION_FILE%
+@ECHO 		{%RUNNER_GUID%} = {%RUNNER_GUID%} >> %SOLUTION_FILE%
+@ECHO 	EndProjectSection >> %SOLUTION_FILE%
+@ECHO EndProject >> %SOLUTION_FILE%
+@ECHO Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "%CODE_DIRECTORY%\runner.vcxproj", "{%RUNNER_GUID%}" >> %SOLUTION_FILE%
+@ECHO EndProject >> %SOLUTION_FILE%
+@ECHO Global >> %SOLUTION_FILE%
+@ECHO 	GlobalSection(SolutionConfigurationPlatforms) = preSolution >> %SOLUTION_FILE%
+@ECHO 		Debug^|x64 = Debug^|x64 >> %SOLUTION_FILE%
+@ECHO 		Release^|x64 = Release^|x64 >> %SOLUTION_FILE%
+@ECHO 	EndGlobalSection >> %SOLUTION_FILE%
+@ECHO 	GlobalSection(ProjectConfigurationPlatforms) = postSolution >> %SOLUTION_FILE%
+@ECHO 		{%USER_GUID%}.Debug^|x64.ActiveCfg = Debug^|x64 >> %SOLUTION_FILE%
+@ECHO 		{%USER_GUID%}.Debug^|x64.Build.0 = Debug^|x64 >> %SOLUTION_FILE%
+@ECHO 		{%USER_GUID%}.Release^|x64.ActiveCfg = Release^|x64 >> %SOLUTION_FILE%
+@ECHO 		{%USER_GUID%}.Release^|x64.Build.0 = Release^|x64 >> %SOLUTION_FILE%
+@ECHO 		{%RUNNER_GUID%}.Debug^|x64.ActiveCfg = Debug^|x64 >> %SOLUTION_FILE%
+@ECHO 		{%RUNNER_GUID%}.Debug^|x64.Build.0 = Debug^|x64 >> %SOLUTION_FILE%
+@ECHO 		{%RUNNER_GUID%}.Release^|x64.ActiveCfg = Release^|x64 >> %SOLUTION_FILE%
+@ECHO 		{%RUNNER_GUID%}.Release^|x64.Build.0 = Release^|x64 >> %SOLUTION_FILE%
+@ECHO 	EndGlobalSection >> %SOLUTION_FILE%
+@ECHO 	GlobalSection(SolutionProperties) = preSolution >> %SOLUTION_FILE%
+@ECHO 		HideSolutionNode = FALSE >> %SOLUTION_FILE%
+@ECHO 	EndGlobalSection >> %SOLUTION_FILE%
+@ECHO EndGlobal >> %SOLUTION_FILE%
