@@ -9,7 +9,7 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend,
+void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend, const std::string &projectGUID,
                                     const std::vector<std::string> &moduleNames)
 {
     // Generate header and targets for release and debug builds
@@ -27,6 +27,7 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend
     os << "\t</ItemGroup>" << std::endl;
    
     os << "\t<PropertyGroup Label=\"Globals\">" << std::endl;
+    os << "\t\t<ProjectGuid>{" << projectGUID << "}</ProjectGuid>" << std::endl;
     os << "\t\t<RootNamespace>runner</RootNamespace>" << std::endl;
     os << "\t</PropertyGroup>" << std::endl;
 

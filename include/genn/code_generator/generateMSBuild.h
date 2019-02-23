@@ -15,6 +15,6 @@ class BackendBase;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateMSBuild(std::ostream &os, const BackendBase &backend,
+void generateMSBuild(std::ostream &os, const BackendBase &backend, const std::string &projectGUID,
                      const std::vector<std::string> &moduleNames);
 }

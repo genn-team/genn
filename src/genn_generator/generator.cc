@@ -119,7 +119,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
     }
     // Create MSBuild project to compile and link all generated modules
     std::ofstream makefile((outputPath / "runner.vcxproj").str());
-    CodeGenerator::generateMSBuild(makefile, backend, moduleNames);
+    CodeGenerator::generateMSBuild(makefile, backend, projectGUIDString, moduleNames);
 #else
     // Create makefile to compile and link all generated modules
     std::ofstream makefile((outputPath / "Makefile").str());
