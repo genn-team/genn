@@ -99,7 +99,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
         projectGUIDStream << std::setw(8)<< guid.Data1 << '-';
         projectGUIDStream << std::setw(4) << guid.Data2 << '-';
         projectGUIDStream << std::setw(4) << guid.Data3 << '-';
-        projectGUIDStream << std::setw(2) << static_cast<short>(guid.Data4[0]) << static_cast<short>(guid.Data4[1]) << '-';
+        projectGUIDStream << std::setw(2) << static_cast<short>(guid.Data4[0]) << std::setw(2) << static_cast<short>(guid.Data4[1]) << '-';
         projectGUIDStream << static_cast<short>(guid.Data4[2]) << static_cast<short>(guid.Data4[3]) << static_cast<short>(guid.Data4[4]) << static_cast<short>(guid.Data4[5]) << static_cast<short>(guid.Data4[6]) << static_cast<short>(guid.Data4[7]);
         
         // Use result as project GUID string
