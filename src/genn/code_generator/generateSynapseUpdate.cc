@@ -63,8 +63,24 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, 
         // Presynaptic weight update threshold
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
-            applySynapseSubstitutions(os, sg.getWUModel()->getEventThresholdConditionCode(), " : evntThreshold",
-                                      sg, baseSubs, model, backend);
+            // Get event threshold condition code
+            std::string code = sg.getWUModel()->getEventThresholdConditionCode();
+
+            // Make weight update model substitutions
+            DerivedParamNameIterCtx wuDerivedParams(sg.getWUModel()->getDerivedParams());
+            ExtraGlobalParamNameIterCtx wuExtraGlobalParams(sg.getWUModel()->getExtraGlobalParams());
+            value_substitutions(code, sg.getWUModel()->getParamNames(), sg.getWUParams());
+            value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
+            name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
+
+            // Get read offset if required
+            const std::string offset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+            preNeuronSubstitutionsInSynapticCode(code, sg, offset, "", baseSubs.getVarSubstitution("id_pre"), backend.getVarPrefix());
+
+            baseSubs.apply(code);
+            code = ensureFtype(code, model.getPrecision());
+            checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
+            os << code;
         },
         // Presynaptic simcode
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
