@@ -83,12 +83,12 @@ public:
 
     virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup &ng, const Substitutions &subs) const override
     {
-        genEmitSpike(os, ng, subs, "");
+        genEmitSpike(os, ng, subs, true);
     }
     
     virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &, const NeuronGroup &ng, const Substitutions &subs) const override
     {
-        genEmitSpike(os, ng, subs, "Evnt");
+        genEmitSpike(os, ng, subs, false);
     }
 
     virtual std::string getVarPrefix() const override{ return ""; }
@@ -102,7 +102,7 @@ private:
     void genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
-    void genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, const std::string &suffix) const;
+    void genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, bool trueSpike) const;
 
   
     //--------------------------------------------------------------------------
