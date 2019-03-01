@@ -239,4 +239,41 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type);
  */
 //--------------------------------------------------------------------------
 void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
+
+void preNeuronSubstitutionsInSynapticCode(
+    std::string &wCode, //!< the code string to work on
+    const SynapseGroup &sg,
+    const std::string &offset,
+    const std::string &axonalDelayOffset,
+    const std::string &postIdx,
+    const std::string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
+    const std::string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &preVarSuffix = "");   //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
+void postNeuronSubstitutionsInSynapticCode(
+    std::string &wCode, //!< the code string to work on
+    const SynapseGroup &sg,
+    const std::string &offset,
+    const std::string &backPropDelayOffset,
+    const std::string &preIdx,
+    const std::string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
+    const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
+//-------------------------------------------------------------------------
+/*!
+  \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
+*/
+//-------------------------------------------------------------------------
+void neuronSubstitutionsInSynapticCode(
+    std::string &wCode,                      //!< the code string to work on
+    const SynapseGroup &sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const std::string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
+    const std::string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
+    const std::string &devPrefix,            //!< device prefix, "dd_" for GPU, nothing for CPU
+    double dt,                          //!< simulation timestep (ms)
+    const std::string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 }   // namespace CodeGenerator
