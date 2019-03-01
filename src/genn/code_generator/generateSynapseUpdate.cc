@@ -82,10 +82,16 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, 
             checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
             os << code;
         },
-        // Presynaptic simcode
+        // Presynaptic spike
         [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getWUModel()->getSimCode(), " : simCode",
+                                      sg, baseSubs, model, backend);
+        },
+        // Presynaptic spike-like event
+        [&backend, &model](CodeStream &os, const SynapseGroup &sg, const Substitutions &baseSubs)
+        {
+            applySynapseSubstitutions(os, sg.getWUModel()->getEventCode(), " : eventCode",
                                       sg, baseSubs, model, backend);
         },
         // Postsynaptic learning code

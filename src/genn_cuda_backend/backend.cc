@@ -339,7 +339,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
-                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     // If a reset kernel is required to be run before the synapse kernel
@@ -438,7 +438,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         // Parallelise over synapse groups
         genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
             [this](const SynapseGroup &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
-            [wumThreshHandler, wumSimHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
+            [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
             {
                 // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                 if(sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -477,11 +477,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
                         assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
                         genPresynapticUpdatePreSpan(os, model, sg, popSubs, false,
-                                                    wumThreshHandler, wumSimHandler);
+                                                    wumThreshHandler, wumEventHandler);
                     }
                     else {
                         genPresynapticUpdatePostSpan(os, model, sg, popSubs, false,
-                                                     wumThreshHandler, wumSimHandler);
+                                                     wumThreshHandler, wumEventHandler);
                     }
                 }
 

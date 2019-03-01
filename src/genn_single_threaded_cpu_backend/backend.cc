@@ -94,7 +94,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
-                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
@@ -125,7 +125,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
                 // generate the code for processing spike-like events
                 if (s.second.isSpikeEventRequired()) {
-                    genPresynapticUpdate(os, s.second, funcSubs, false, wumThreshHandler, wumSimHandler);
+                    genPresynapticUpdate(os, s.second, funcSubs, false, wumThreshHandler, wumEventHandler);
                 }
 
                 // generate the code for processing true spike events
