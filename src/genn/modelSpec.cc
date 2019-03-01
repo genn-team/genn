@@ -369,6 +369,7 @@ void NNmodel::finalize()
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
 
                 // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
+                // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
                 std::string eCode = wu->getEventThresholdConditionCode();
                 value_substitutions(eCode, wu->getParamNames(), sg->getWUParams());
                 value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());

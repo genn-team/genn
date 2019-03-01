@@ -135,6 +135,8 @@ public:
     //! Does synapse group need to handle spike-like events
     bool isSpikeEventRequired() const;
 
+    //!< Does the event threshold needs to be retested in the synapse kernel?
+    /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
@@ -263,7 +265,8 @@ private:
     //!< Pointer to postsynaptic neuron group
     NeuronGroup *m_TrgNeuronGroup;
 
-    //!< Defines whether the Evnt Threshold needs to be retested in the synapse kernel due to multiple non-identical events in the pre-synaptic neuron population
+    //!< Does the event threshold needs to be retested in the synapse kernel?
+    /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool m_EventThresholdReTestRequired;
 
     //!< Variable mode used for variables used to combine input from this synapse group
