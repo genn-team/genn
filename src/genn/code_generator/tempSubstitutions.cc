@@ -10,6 +10,9 @@
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
 namespace
 {
 void neuronSubstitutionsInSynapticCode(
@@ -43,7 +46,8 @@ void neuronSubstitutionsInSynapticCode(
     ExtraGlobalParamNameIterCtx extraGlobalParams(neuronModel->getExtraGlobalParams());
     name_substitutions(wCode, "", extraGlobalParams.nameBegin, extraGlobalParams.nameEnd, ng->getName(), sourceSuffix);
 }
-}
+}   // Anonymous namespace
+
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
