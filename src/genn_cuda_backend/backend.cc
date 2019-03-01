@@ -1799,7 +1799,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
                                           SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "evnt";
+    const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
 
     os << "if (" << popSubs.getVarSubstitution("id") << " < " ;
@@ -1835,7 +1835,6 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
  
             Substitutions threshSubs(&popSubs);
             threshSubs.addVarSubstitution("id_pre", "preInd");
-            threshSubs.addVarSubstitution("id_post", "i");
 
             // Generate weight update threshold condition
             wumThreshHandler(os, sg, threshSubs);
@@ -1950,8 +1949,7 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model,
                     }
 
                     Substitutions threshSubs(&popSubs);
-                    threshSubs.addVarSubstitution("id_pre", "preInd");
-                    threshSubs.addVarSubstitution("id_post", "ipost");
+                    threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
                    
                     // Generate weight update threshold condition
                     wumThreshHandler(os, sg, threshSubs);

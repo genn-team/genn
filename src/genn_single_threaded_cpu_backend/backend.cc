@@ -252,7 +252,9 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
             if(n.second.hasOutputToHost(m_LocalHostID)) {
                 os << "// neuron group " << n.first << std::endl;
                 CodeStream::Scope b(os);
-                remoteNGHandler(os, n.second, funcSubs);
+
+                Substitutions popSubs(&funcSubs);
+                remoteNGHandler(os, n.second, popSubs);
             }
         }
         os << std::endl;
@@ -262,7 +264,9 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
         for(const auto &n : model.getLocalNeuronGroups()) {
             os << "// neuron group " << n.first << std::endl;
             CodeStream::Scope b(os);
-            localNGHandler(os, n.second, funcSubs);
+
+            Substitutions popSubs(&funcSubs);
+            localNGHandler(os, n.second, popSubs);
         }
 
         os << "// ------------------------------------------------------------------------" << std::endl;
@@ -271,7 +275,9 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
             if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
                 os << "// synapse group " << s.first << std::endl;
                 CodeStream::Scope b(os);
-                sgDenseInitHandler(os, s.second, funcSubs);
+
+                Substitutions popSubs(&funcSubs);
+                sgDenseInitHandler(os, s.second, popSubs);
             }
         }
 
@@ -647,7 +653,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
                                    SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "evnt";
+    const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
 
     // Detect spike events or spikes and do the update
@@ -660,9 +666,26 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
     }
     {
         CodeStream::Scope b(os);
+        if (!wu->getSimSupportCode().empty()) {
+            os << " using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
+        }
 
         const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
         os << "const unsigned int ipre = glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "i];" << std::endl;
+
+        // If this is a spike-like event, insert threshold check for this presynaptic neuron
+        if (!trueSpike) {
+            os << "if(";
+
+            Substitutions threshSubs(&popSubs);
+            threshSubs.addVarSubstitution("id_pre", "ipre");
+
+            // Generate weight update threshold condition
+            wumThreshHandler(os, sg, threshSubs);
+
+            os << ")";
+            os << CodeStream::OB(10);
+        }
 
         if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "const unsigned int npost = rowLength" << sg.getName() << "[ipre];" << std::endl;
@@ -680,32 +703,8 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
             }
             else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 os << "const uint64_t gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + ipost);" << std::endl;
+                os << "if (B(gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(20);
             }
-
-            if (!wu->getSimSupportCode().empty()) {
-                os << " using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
-            }
-
-            if (!trueSpike) {
-                os << "if(";
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "(B(gp" << sg.getName() << "[gid / 32], gid & 31)) && ";
-                }
-
-                Substitutions threshSubs(&popSubs);
-                threshSubs.addVarSubstitution("id_pre", "ipre");
-                threshSubs.addVarSubstitution("id_post", "ipost");
-
-                // Generate weight update threshold condition
-                wumThreshHandler(os, sg, threshSubs);
-
-                os << ")";
-                os << CodeStream::OB(2041);
-            }
-            else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                os << "if (B(gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(2041);
-            }
-
 
             if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getMaxConnections()) + ") + j;" << std::endl;
@@ -728,12 +727,14 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
             }
             wumSimHandler(os, sg, synSubs);
 
-            if (!trueSpike) {
-                os << CodeStream::CB(2041); // end if (eCode)
+            if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                os << CodeStream::CB(20);
             }
-            else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                os << CodeStream::CB(2041); // end if (B(gp" << sgName << "[gid / 32], gid
-            }
+        }
+
+        // If this is a spike-like event, close braces around threshold check
+        if (!trueSpike) {
+            os << CodeStream::CB(10);
         }
     }
 }
