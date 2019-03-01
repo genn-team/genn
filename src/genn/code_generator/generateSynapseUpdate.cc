@@ -23,7 +23,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     using namespace CodeGenerator;
     applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
                                         sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
-    neuronSubstitutionsInSynapticCode(code, &sg, baseSubs.getVarSubstitution("id_pre"),
+    neuronSubstitutionsInSynapticCode(code, sg, baseSubs.getVarSubstitution("id_pre"),
                                       baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
                                       model.getDT());
     baseSubs.apply(code);
