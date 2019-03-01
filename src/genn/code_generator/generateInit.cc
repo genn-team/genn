@@ -4,11 +4,12 @@
 #include <string>
 
 // GeNN includes
+#include "models.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
-#include "code_generator/tempSubstitutions.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/backendBase.h"
 
@@ -17,6 +18,30 @@
 //--------------------------------------------------------------------------
 namespace
 {
+void applyVarInitSnippetSubstitutions(std::string &code, const Models::VarInit &varInit)
+{
+    using namespace CodeGenerator;
+
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
+    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+}
+//--------------------------------------------------------------------------
+void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroup &sg)
+{
+    using namespace CodeGenerator;
+
+    const auto connectInit = sg.getConnectivityInitialiser();
+
+    // Substitue derived and standard parameters into init code
+    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+    ExtraGlobalParamNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
+    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+    name_substitutions(code, "initSparseConn", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
+}
+//--------------------------------------------------------------------------
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
                        const CodeGenerator::Substitutions &popSubs, const NeuronGroup &ng, bool spikeEvent)
 {

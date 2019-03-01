@@ -21,8 +21,27 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
                                const CodeGenerator::Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::BackendBase &backend)
 {
     using namespace CodeGenerator;
-    applyWeightUpdateModelSubstitutions(code, sg, backend.getVarPrefix(),
-                                        sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
+    const auto *wu = sg.getWUModel();
+
+    // Create iteration context to iterate over the variables; derived and extra global parameters
+    DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
+    ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+    VarNameIterCtx wuVars(wu->getVars());
+    VarNameIterCtx wuPreVars(wu->getPreVars());
+    VarNameIterCtx wuPostVars(wu->getPostVars());
+
+    value_substitutions(code, sg.getWUModel()->getParamNames(), sg.getWUParams());
+    value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
+    name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
+
+    if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        name_substitutions(code, backend.getVarPrefix(), wuVars.nameBegin, wuVars.nameEnd,
+                           sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
+    }
+    else {
+        value_substitutions(code, wuVars.nameBegin, wuVars.nameEnd, sg.getWUConstInitVals());
+    }
+
     neuronSubstitutionsInSynapticCode(code, sg, baseSubs.getVarSubstitution("id_pre"),
                                       baseSubs.getVarSubstitution("id_post"), backend.getVarPrefix(),
                                       model.getDT());
