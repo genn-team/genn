@@ -172,13 +172,17 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
                                 {csm->getInjectionCode()});
     }
 
-    // Add extra global parameters referenced by postsynaptic mode to map of kernel parameters
+    // Add extra global parameters referenced by postsynaptic models and
+    // event thresholds of weight update models to map of kernel parameters
     for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *psm = s.second.getPSModel();
         updateExtraGlobalParams(s.first, "", psm->getExtraGlobalParams(), neuronKernelParameters,
                                 {psm->getDecayCode(), psm->getApplyInputCode()});
+
+        const auto *wum = s.second.getWUModel();
+        updateExtraGlobalParams(s.first, "", wum->getExtraGlobalParams(), neuronKernelParameters,
+                                {wum->getEventThresholdConditionCode()});
     }
-    // **TODO** add neuron kernel parameters from spike-like event conditions
 
     size_t idStart = 0;
     os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(";
@@ -1804,7 +1808,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
 
     os << "if (" << popSubs.getVarSubstitution("id") << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[delaySlot])";
+        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot])";
     }
     else {
         os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[0])";
