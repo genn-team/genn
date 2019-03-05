@@ -293,6 +293,56 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                         os << rCode << std::endl;
                     }
                 }
+
+                // Spike triggered variables don't need to be copied
+                // if delay isn't required as there's only one copy of them
+                if(ng.isDelayRequired()) {
+                    // Are there any outgoing synapse groups with axonal delay and presynaptic WUM variables?
+                    const bool preVars = std::any_of(ng.getOutSyn().cbegin(), ng.getOutSyn().cend(),
+                                                    [](const SynapseGroup *sg)
+                                                    {
+                                                        return (sg->getDelaySteps() != NO_DELAY) && !sg->getWUModel()->getPreVars().empty();
+                                                    });
+
+                    // Are there any incoming synapse groups with back-propagation delay and postsynaptic WUM variables?
+                    const bool postVars = std::any_of(ng.getInSyn().cbegin(), ng.getInSyn().cend(),
+                                                    [](const SynapseGroup *sg)
+                                                    {
+                                                        return (sg->getBackPropDelaySteps() != NO_DELAY) && !sg->getWUModel()->getPostVars().empty();
+                                                    });
+
+                    // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
+                    if(ng.isSpikeTimeRequired() || preVars || postVars) {
+                        os << "else";
+                        CodeStream::Scope b(os);
+
+                        // If spike timing is required, copy spike time from register
+                        if(ng.isSpikeTimeRequired()) {
+                            os << backend.getVarPrefix() << "sT" << ng.getName() << "[writeDelayOffset + " << popSubs.getVarSubstitution("id") << "] = lsT;" << std::endl;
+                        }
+
+                        // Copy presynaptic WUM variables between delay slots
+                        for(const auto *sg : ng.getOutSyn()) {
+                            if(sg->getDelaySteps() != NO_DELAY) {
+                                for(const auto &v : sg->getWUModel()->getPreVars()) {
+                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[writeDelayOffset + " << popSubs.getVarSubstitution("id") <<  "] = ";
+                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[readDelayOffset + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                                }
+                            }
+                        }
+
+
+                        // Copy postsynaptic WUM variables between delay slots
+                        for(const auto *sg : ng.getInSyn()) {
+                            if(sg->getBackPropDelaySteps() != NO_DELAY) {
+                                for(const auto &v : sg->getWUModel()->getPostVars()) {
+                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[writeDelayOffset + " << popSubs.getVarSubstitution("id") <<  "] = ";
+                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[readDelayOffset + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // store the defined parts of the neuron state into the global state variables dd_V etc
