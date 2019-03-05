@@ -73,7 +73,7 @@ double getProb(scalar *data, unsigned int size, F cdf)
 
 TEST_F(SimTest, Vars)
 {
-    const double p = 0.025;
+    const double p = 0.02;
 
     // Pull vars back to host
     pullPopStateFromDevice();
