@@ -75,7 +75,7 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler handler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,

@@ -101,7 +101,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler handler) const
+void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -233,7 +233,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupS
         // Parallelise over neuron groups
         genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
             [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
-            [&model, handler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+            [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
             {
                 // If axonal delays are required
                 if (ng.isDelayRequired()) {
@@ -254,14 +254,14 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupS
                 os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
-                    handler(os, ng, popSubs,
+                    simHandler(os, ng, popSubs,
                         // Emit true spikes
-                        [this](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronGroup &, Substitutions &subs)
                         {
                             genEmitSpike(os, subs, "");
                         },
                         // Emit spike-like events
-                        [this](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronGroup &, Substitutions &subs)
                         {
                             genEmitSpike(os, subs, "Evnt");
                         });
@@ -323,11 +323,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupS
                     {
                         CodeStream::Scope b(os);
 
-                        // **TODO** allow code generator to insert code here for WUM pre and post variables
+                        os << "const unsigned int n = shSpk[threadIdx.x];" << std::endl;
 
-                        os << "dd_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = shSpk[threadIdx.x];" << std::endl;
+                        // Create new substition stack and explicitly replace id with 'n' and perform WU var update
+                        Substitutions wuSubs(&popSubs);
+                        wuSubs.addVarSubstitution("id", "n", true);
+                        wuVarUpdateHandler(os, ng, wuSubs);
+
+                        os << "dd_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = n;" << std::endl;
                         if (ng.isSpikeTimeRequired()) {
-                            os << "dd_sT" << ng.getName() << "[" << queueOffset << "shSpk[threadIdx.x]] = t;" << std::endl;
+                            os << "dd_sT" << ng.getName() << "[" << queueOffset << "n] = t;" << std::endl;
                         }
                     }
                 }

@@ -29,7 +29,7 @@ namespace CodeGenerator
 {
 namespace SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler handler) const
+void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
     os << "void updateNeurons(" << model.getTimePrecision() << " t)";
     {
@@ -85,15 +85,20 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupS
                         popSubs.addVarSubstitution("rng", "rng");
                     }
 
-                    handler(os, n.second, popSubs,
+                    simHandler(os, n.second, popSubs,
                         // Emit true spikes
-                        [this](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
+                        [this, wuVarUpdateHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
                         {
+                            // Insert code to emit true spikes
                             genEmitSpike(os, ng, subs, true);
+
+                            // Insert code to update WU vars
+                            wuVarUpdateHandler(os, ng, subs);
                         },
                         // Emit spike-like events
                         [this](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
                         {
+                            // Insert code to emit spike-like events
                             genEmitSpike(os, ng, subs, false);
                         });
                 }
