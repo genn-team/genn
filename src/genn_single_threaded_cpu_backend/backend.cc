@@ -349,6 +349,11 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
         CodeStream::Scope b(os);
         Substitutions funcSubs(cpuFunctions);
 
+        // If model requires RNG, add it to substitutions
+        if(isGlobalRNGRequired(model)) {
+            funcSubs.addVarSubstitution("rng", "rng");
+        }
+
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
         for(const auto &s : model.getLocalSynapseGroups()) {
