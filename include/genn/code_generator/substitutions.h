@@ -36,20 +36,20 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    void addVarSubstitution(const std::string &source, const std::string &destionation) 
+    void addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride = false)
     {
         auto res = m_VarSubstitutions.emplace(source, destionation);
-        if(!res.second) {
+        if(!allowOverride && !res.second) {
             throw std::runtime_error("'" + source + "' already has a variable substitution");
         }
     }
 
-    void addFuncSubstitution(const std::string &source, unsigned int numArguments, const std::string &funcTemplate)
+    void addFuncSubstitution(const std::string &source, unsigned int numArguments, const std::string &funcTemplate, bool allowOverride = false)
     {
         auto res = m_FuncSubstitutions.emplace(std::piecewise_construct,
                                                std::forward_as_tuple(source),
                                                std::forward_as_tuple(numArguments, funcTemplate));
-        if(!res.second) {
+        if(!allowOverride && !res.second) {
             throw std::runtime_error("'" + source + "' already has a function substitution");
         }
     }
