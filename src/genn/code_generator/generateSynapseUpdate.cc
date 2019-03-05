@@ -33,6 +33,13 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
     name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());
 
+    // Substitute names of pre and postsynaptic weight update variables
+    const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? baseSubs.getVarSubstitution("id_pre") : "preReadDelayOffset + " + baseSubs.getVarSubstitution("id_pre");
+    name_substitutions(code, backend.getVarPrefix(), wuPreVars.nameBegin, wuPreVars.nameEnd, sg.getName() + "[" + delayedPreIdx + "]");
+
+    const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? baseSubs.getVarSubstitution("id_post") : "postReadDelayOffset + " + baseSubs.getVarSubstitution("id_post");
+    name_substitutions(code, backend.getVarPrefix(), wuPostVars.nameBegin, wuPostVars.nameEnd, sg.getName() + "[" + delayedPostIdx + "]");
+
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         name_substitutions(code, backend.getVarPrefix(), wuVars.nameBegin, wuVars.nameEnd,
                            sg.getName() + "[" + baseSubs.getVarSubstitution("id_syn") + "]", "");
