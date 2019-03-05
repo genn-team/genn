@@ -5,7 +5,8 @@
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
 */
 //--------------------------------------------------------------------------
-
+// Standard C includes
+#include <cmath>
 
 // Google test includes
 #include "gtest/gtest.h"
@@ -18,7 +19,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 #include "../../utils/simulation_test.h"
 
 // Combine neuron and synapse policies together to build variable-testing fixture
-class SimTest : public SimulationTestModern
+class SimTest : public SimulationTest
 {
 public:
     void Simulate()
