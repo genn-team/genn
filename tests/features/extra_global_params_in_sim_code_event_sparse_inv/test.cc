@@ -76,10 +76,10 @@ public:
                 for (int j = 0; j < 10; j++) {
                     float newX;
                     float evntT = t-2*DT-d*DT+5e-5;
-                    if(updateFn(i, d, j, t, evntT, (evntT < theSwap), newX)) {
+                    if(updateFn(d, j, t, evntT, (evntT < theSwap), newX)) {
                         x[d][j] = newX;
                     }
-                    else if(i == 0) {
+                    else if(iT == 0) {
                         x[d][j] = 0.0f;
                     }
                 }
@@ -113,7 +113,7 @@ typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy
 TEST_F(SimTest, ExtraGlobalParamsInSimCodeEventRaggedInv)
 {
     float err = Simulate(
-        [](unsigned int i, unsigned int d, unsigned int j, float t, float evntT, bool beforeSwap, float &newX)
+        [](unsigned int d, unsigned int j, float t, float evntT, bool beforeSwap, float &newX)
         {
             if(beforeSwap) {
                 if ((t > d*DT+0.1001) && (fmod(evntT+10*j,(float) (2*(d+1))) < 1e-4)) {
