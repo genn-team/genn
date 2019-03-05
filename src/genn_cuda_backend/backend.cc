@@ -101,7 +101,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const
+void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler handler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -254,7 +254,17 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
                 os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
-                    handler(os, ng, popSubs);
+                    handler(os, ng, popSubs,
+                        // Emit true spikes
+                        [this](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
+                        {
+                            genEmitSpike(os, subs, "");
+                        },
+                        // Emit spike-like events
+                        [this](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
+                        {
+                            genEmitSpike(os, subs, "Evnt");
+                        });
                 }
 
                 os << "__syncthreads();" << std::endl;
@@ -312,6 +322,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupH
                     os << "if (threadIdx.x < shSpkCount)";
                     {
                         CodeStream::Scope b(os);
+
+                        // **TODO** allow code generator to insert code here for WUM pre and post variables
+
                         os << "dd_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = shSpk[threadIdx.x];" << std::endl;
                         if (ng.isSpikeTimeRequired()) {
                             os << "dd_sT" << ng.getName() << "[" << queueOffset << "shSpk[threadIdx.x]] = t;" << std::endl;

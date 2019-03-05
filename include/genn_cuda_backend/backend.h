@@ -75,7 +75,7 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler handler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
@@ -134,16 +134,6 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const override;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
-
-    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel&, const NeuronGroup&, const Substitutions &subs) const override
-    {
-        genEmitSpike(os, subs, "");
-    }
-
-    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &, const NeuronGroup &, const Substitutions &subs) const override
-    {
-        genEmitSpike(os, subs, "Evnt");
-    }
 
     virtual std::string getVarPrefix() const override{ return "dd_"; }
 

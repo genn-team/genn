@@ -34,10 +34,15 @@ public:
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
     
     template<typename T>
-    using GroupHandler = std::function < void(CodeStream &, const T &, Substitutions&) > ;
+    using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
     typedef GroupHandler<NeuronGroup> NeuronGroupHandler;
     typedef GroupHandler<SynapseGroup> SynapseGroupHandler;
+
+    //! Callback function type for generation neuron group simulation code
+    /*! Provides additional callbacks to insert code to emit spikes */
+    typedef std::function <void(CodeStream &, const NeuronGroup &, Substitutions&,
+                                NeuronGroupHandler, NeuronGroupHandler)> NeuronGroupSimHandler;
     
     //--------------------------------------------------------------------------
     // Preferences
@@ -62,7 +67,7 @@ public:
     //--------------------------------------------------------------------------
     // Declared virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupHandler handler) const = 0;
+    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler handler) const = 0;
     virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const = 0;
@@ -108,10 +113,6 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const = 0;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
-
-    virtual void genEmitTrueSpike(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
-
-    virtual void genEmitSpikeLikeEvent(CodeStream &os, const NNmodel &model, const NeuronGroup &ng, const Substitutions &subs) const = 0;
 
     virtual std::string getVarPrefix() const{ return ""; }
 

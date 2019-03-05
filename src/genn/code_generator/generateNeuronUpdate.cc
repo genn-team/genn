@@ -74,7 +74,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, model,
-        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs,
+                           BackendBase::NeuronGroupHandler genEmitTrueSpike, BackendBase::NeuronGroupHandler genEmitSpikeLikeEvent)
         {
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
@@ -263,7 +264,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 os << "if (spikeLikeEvent)";
                 {
                     CodeStream::Scope b(os);
-                    backend.genEmitSpikeLikeEvent(os, model, ng, popSubs);
+                    genEmitSpikeLikeEvent(os, ng, popSubs);
                 }
             }
 
@@ -278,8 +279,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, c
                 }
                 {
                     CodeStream::Scope b(os);
-
-                    backend.genEmitTrueSpike(os, model, ng, popSubs);
+                    genEmitTrueSpike(os, ng, popSubs);
 
                     // add after-spike reset if provided
                     if (!nm->getResetCode().empty()) {
