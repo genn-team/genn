@@ -120,6 +120,69 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         CodeStream::Scope b(os);
 
         // Synapse dynamics
+        for(const auto &s : model.getLocalSynapseGroups()) {
+            if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+                os << "// synapse group " << s.first << std::endl;
+                CodeStream::Scope b(os);
+
+                // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                if(s.second.getSrcNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int preReadDelayOffset = " << s.second.getPresynapticAxonalDelaySlot("") << " * " << s.second.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                if(s.second.getTrgNeuronGroup()->isDelayRequired()) {
+                    os << "const unsigned int postReadDelayOffset = " << s.second.getPostsynapticBackPropDelaySlot("") << " * " << s.second.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                }
+
+                // Loop through presynaptic neurons
+                os << "for(unsigned int i = 0; i < " <<  s.second.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
+                {
+                    // If this synapse group has sparse connectivity, loop through length of this row
+                    CodeStream::Scope b(os);
+                    if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                        os << "for(unsigned int s = 0; s < rowLength" << s.first << "[i]; s++)";
+                    }
+                    // Otherwise, if it's dense, loop through each postsynaptic neuron
+                    else if(s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) {
+                        os << "for (unsigned int j = 0; j < " <<  s.second.getTrgNeuronGroup()->getNumNeurons() << "; j++)";
+                    }
+                    else {
+                        throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for synapse dynamics");
+                    }
+                    {
+                        CodeStream::Scope b(os);
+
+                        Substitutions synSubs(&funcSubs);
+                        if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                            // Calculate index of synapse and use it to look up postsynaptic index
+                            os << "const unsigned int n = (i * " << s.second.getMaxConnections() <<  ") + s;" << std::endl;
+                            os << "const unsigned int j = ind" << s.first << "[n];" << std::endl;
+
+                            synSubs.addVarSubstitution("id_syn", "n");
+                        }
+                        else {
+                            synSubs.addVarSubstitution("id_syn", "(i * " + std::to_string(s.second.getTrgNeuronGroup()->getNumNeurons()) + ") + j");
+                        }
+
+                        // Add pre and postsynaptic indices to substitutions
+                        synSubs.addVarSubstitution("id_pre", "i");
+                        synSubs.addVarSubstitution("id_post", "j");
+
+                        // Add correct functions for apply synaptic input
+                        if(s.second.isDendriticDelayRequired()) {
+                            synSubs.addFuncSubstitution("addToInSynDelay", 2, "denDelay" + s.second.getPSModelTargetName() + "[" + s.second.getDendriticDelayOffset("", "$(1)") + "j] += $(0)");
+                        }
+                        else {
+                            synSubs.addFuncSubstitution("addToInSyn", 1, "inSyn" + s.second.getPSModelTargetName() + "[j] += $(0)");
+                        }
+
+                        // Call synapse dynamics handler
+                        synapseDynamicsHandler(os, s.second, synSubs);
+                    }
+                }
+            }
+        }
 
         // Presynaptic update
         for(const auto &s : model.getLocalSynapseGroups()) {
