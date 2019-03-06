@@ -1937,7 +1937,7 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model,
             os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * " << m_KernelBlockSizes[KernelPresynapticUpdate] << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
             if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "shRowLength" << eventSuffix << "[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
+                os << "shRowLength[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
             }
         }
         os << "__syncthreads();" << std::endl;
@@ -1988,7 +1988,7 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model,
                 synSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
                 if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
-                    os << "const unsigned int npost = shRowLength" << eventSuffix << "[j];" << std::endl;
+                    os << "const unsigned int npost = shRowLength[j];" << std::endl;
                     
                     os << "if (" << popSubs.getVarSubstitution("id") << " < npost)" << CodeStream::OB(140);
                     os << "synAddress += " << popSubs.getVarSubstitution("id") << ";" << std::endl;
