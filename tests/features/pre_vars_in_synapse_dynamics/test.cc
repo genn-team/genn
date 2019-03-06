@@ -25,7 +25,7 @@ typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy
 TEST_F(SimTest, PreVarsInSynapseDynamics)
 {
   float err = Simulate(
-    [](unsigned int d, unsigned int j, unsigned int k, float t, float &newX)
+    [](unsigned int d, unsigned int j, unsigned int, float t, float &newX)
     {
         if (t > 0.0001+(d+1)*DT)
         {

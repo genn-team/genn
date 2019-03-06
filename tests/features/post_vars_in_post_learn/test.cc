@@ -25,7 +25,7 @@ typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePo
 TEST_F(SimTest, PostVarsInPostLearn)
 {
   float err = Simulate(
-    [](unsigned int d, unsigned int j, unsigned int k, float t, float &newX)
+    [](unsigned int, unsigned int, unsigned int k, float t, float &newX)
     {
         if ((t > 2.1001) && (fmod(t - 2*DT+5e-5, 2.0f) < 1e-4))
         {
