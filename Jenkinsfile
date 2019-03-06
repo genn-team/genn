@@ -1,5 +1,7 @@
 #!groovy​
 
+import hudson.tasks.test.AbstractTestResultAction
+
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
     ["cuda9", "linux", "x86_64"] as Set,
@@ -176,6 +178,15 @@ for(b = 0; b < builderNodes.size(); b++) {
                     dir("genn/tests") {
                         // Process JUnit test output
                         junit "**/test_results*.xml";
+                        
+                        // Get test results from current build
+                        AbstractTestResultAction testResultAction = currentBuild.rawBuild.getAction(AbstractTestResultAction.class)
+                        if (testResultAction != null) {
+                            // If all tests haven't been run, fail build
+                            if(testResultAction.totalCount != 59) {
+                                setBuildStatus("Gathering test results (" + env.NODE_NAME + ")", "FAILURE");
+                            }
+                        }
                     }
                 }
                 
