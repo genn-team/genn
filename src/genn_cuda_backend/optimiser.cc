@@ -491,9 +491,8 @@ Backend createBackend(const ModelSpec &model, const filesystem::path &outputPath
         Backend::KernelBlockSize cudaBlockSize;
         const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
-        // Create backends
-        Backend backend(cudaBlockSize, preferences, localHostID, deviceID);
-        return std::move(backend);
+        // Create backend
+        return Backend(cudaBlockSize, preferences, localHostID, deviceID);
     }
     else {
         const int deviceID = chooseDeviceWithMostGlobalMemory();
@@ -502,9 +501,8 @@ Backend createBackend(const ModelSpec &model, const filesystem::path &outputPath
         Backend::KernelBlockSize cudaBlockSize;
         optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, outputPath);
         
-        // Create backends
-        Backend backend(cudaBlockSize, preferences, localHostID, deviceID);
-        return std::move(backend);
+        // Create backend
+        return Backend(cudaBlockSize, preferences, localHostID, deviceID);
     }
 }
 }   // namespace Optimiser
