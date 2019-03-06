@@ -623,20 +623,19 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                             os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
                             {
                                 CodeStream::Scope b(os);
-                                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    os << "unsigned int synAddress = shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ";" << std::endl;
-                                    os << "const unsigned int npre = shColLength[j];" << std::endl;
 
-                                    os << "if (" << popSubs.getVarSubstitution("id") << " < npre)" << CodeStream::OB(1540);
-                                    os << "synAddress += " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+                                Substitutions synSubs(&popSubs);
+                                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                    os << "if (" << popSubs.getVarSubstitution("id") << " < shColLength[j])" << CodeStream::OB(1540);
+                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs.getVarSubstitution("id") << ";" << std::endl;
                                     os << "const unsigned int ipre = dd_remap" + sg.getName() + "[synAddress] / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
+                                    synSubs.addVarSubstitution("id_pre", "ipre");
                                 }
                                 else {
                                     os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+                                    synSubs.addVarSubstitution("id_pre", synSubs.getVarSubstitution("id"));
                                 }
 
-                                Substitutions synSubs(&popSubs);
-                                synSubs.addVarSubstitution("id_pre", "ipre");
                                 synSubs.addVarSubstitution("id_post", "shSpk[j]");
                                 synSubs.addVarSubstitution("id_syn", "synAddress");
 
@@ -708,7 +707,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
                             synSubs.addVarSubstitution("id_pre", popSubs.getVarSubstitution("id") + " / " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
                             synSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id") + " % " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
                             synSubs.addVarSubstitution("id_syn", popSubs.getVarSubstitution("id"));
-
                         }
 
                         // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
