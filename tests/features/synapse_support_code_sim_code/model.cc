@@ -36,7 +36,7 @@ public:
 
     SET_VARS({{"w", "scalar"}});
 
-    SET_SIM_SUPPORT_CODE("__device__ __host__ scalar getWeight(scalar x){ return x; }");
+    SET_SIM_SUPPORT_CODE("SUPPORT_CODE_FUNC scalar getWeight(scalar x){ return x; }");
     SET_SIM_CODE("$(w)= getWeight($(x_pre));");
 };
 

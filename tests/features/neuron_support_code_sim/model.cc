@@ -17,7 +17,7 @@ class Neuron : public NeuronModels::Base
 public:
     DECLARE_MODEL(Neuron, 0, 2);
 
-    SET_SUPPORT_CODE("__device__ __host__ scalar calcActivation(scalar t, scalar shift){ return (t + shift); }");
+    SET_SUPPORT_CODE("SUPPORT_CODE_FUNC scalar calcActivation(scalar t, scalar shift){ return (t + shift); }");
 
     SET_SIM_CODE("$(x) = calcActivation($(t), $(shift));\n");
 

@@ -37,7 +37,7 @@ public:
     SET_VARS({{"w", "scalar"}});
     SET_PARAM_NAMES({"myTrigger"});
 
-    SET_SIM_SUPPORT_CODE("__device__ __host__ bool checkThreshold(scalar x, scalar trigger){ return (fmod(x, trigger) < 1e-4); }");
+    SET_SIM_SUPPORT_CODE("SUPPORT_CODE_FUNC bool checkThreshold(scalar x, scalar trigger){ return (fmod(x, trigger) < 1e-4); }");
     SET_EVENT_THRESHOLD_CONDITION_CODE("checkThreshold($(x_pre),$(myTrigger))");
     SET_EVENT_CODE("$(w)= $(x_pre);");
 };

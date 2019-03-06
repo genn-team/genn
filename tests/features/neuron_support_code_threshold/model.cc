@@ -17,7 +17,7 @@ class Neuron : public NeuronModels::Base
 public:
     DECLARE_MODEL(Neuron, 0, 2);
 
-    SET_SUPPORT_CODE("__device__ __host__ bool checkThreshold(scalar x){ return (fmod(x, 1.0) < 1e-4); }");
+    SET_SUPPORT_CODE("SUPPORT_CODE_FUNC bool checkThreshold(scalar x){ return (fmod(x, 1.0) < 1e-4); }");
 
     SET_SIM_CODE("$(x)= $(t)+$(shift);\n");
 
