@@ -60,6 +60,7 @@ void modelDefinition(NNmodel &model)
             WeightUpdateModel::ParamValues((double)(2*(i+1))), WeightUpdateModel::VarValues(0.0),
             {}, {});
         syn->setSpanType(SynapseGroup::SpanType::PRESYNAPTIC);
+        syn->setMaxConnections(1);
     }
     model.setPrecision(GENN_FLOAT);
 }
