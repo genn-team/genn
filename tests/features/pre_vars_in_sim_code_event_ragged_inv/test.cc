@@ -26,7 +26,7 @@ typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy
 TEST_F(SimTest, PreVarsInSimCodeEventRaggedInv)
 {
   float err = Simulate(
-    [](unsigned int i, unsigned int d, unsigned int j, float t, float &newX)
+    [](unsigned int, unsigned int d, unsigned int j, float t, float &newX)
     {
         if ((t > d*DT+0.1001) && (std::fmod(t-2*DT-d*DT+5e-5+10*j,(float) (2*(d+1))) < 1e-4))
         {
