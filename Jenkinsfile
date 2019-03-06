@@ -187,6 +187,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 setBuildStatus("Gathering test results (" + env.NODE_NAME + ")", "FAILURE");
                             }
                         }
+                        else {
+                            echo "Test result action doesn't exist";
+                        }
                     }
                 }
                 
