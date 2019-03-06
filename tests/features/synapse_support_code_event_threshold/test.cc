@@ -25,7 +25,7 @@ typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicy
 TEST_F(SimTest, SynapseSupportCodeEventThreshold)
 {
   float err = Simulate(
-    [](unsigned int d, unsigned int j, unsigned int k, float t, float &newX)
+    [](unsigned int d, unsigned int j, unsigned int, float t, float &newX)
     {
         if ((t > d*DT+0.1001) && (fmod(t-2*DT-d*DT+5e-5+10*j,(float) (2*(d+1))) < 1e-4))
         {
