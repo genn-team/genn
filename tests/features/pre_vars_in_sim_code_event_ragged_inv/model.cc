@@ -46,7 +46,7 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 void modelDefinition(NNmodel &model)
 {
     model.setDT(0.1);
-    model.setName("pre_vars_in_sim_code_event_sparse_inv");
+    model.setName("pre_vars_in_sim_code_event_ragged_inv");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, uninitialisedVar()));
     model.addNeuronPopulation<Neuron>("post", 10, {}, Neuron::VarValues(0.0, uninitialisedVar()));
