@@ -1209,6 +1209,8 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
     os << std::endl;
+    os << "#define SUPPORT_CODE_FUNC __device__ __host__ inline" << std::endl;
+    os << std::endl;
     os << "template<typename RNG>" << std::endl;
     os << "__device__ float exponentialDistFloat(RNG *rng)";
     {

@@ -509,8 +509,10 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "#include <cstring>" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &) const
+void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
 {
+    os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &) const
