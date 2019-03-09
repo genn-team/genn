@@ -68,7 +68,7 @@ void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroup *
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const NNmodel &model, const BackendBase &backend)
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpec &model, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;

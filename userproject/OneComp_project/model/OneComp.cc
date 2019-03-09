@@ -51,7 +51,7 @@ MyIzhikevich::VarValues exIzh_ini(
 
 
 
-void modelDefinition(NNmodel &model) 
+void modelDefinition(ModelSpec &model) 
 {
     initGeNN();
 

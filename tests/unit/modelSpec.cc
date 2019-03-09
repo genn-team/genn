@@ -37,14 +37,14 @@ protected:
     //--------------------------------------------------------------------------
     // Protected API
     //--------------------------------------------------------------------------
-    NNmodel &getModel() { return m_Model; }
+    ModelSpec &getModel() { return m_Model; }
     NeuronGroup *getNeuronGroup(size_t i) { return m_NeuronGroups[i]; }
 
 private:
     //--------------------------------------------------------------------------
     // Private API
     //--------------------------------------------------------------------------
-    NNmodel m_Model;
+    ModelSpec m_Model;
     NeuronGroup *m_NeuronGroups[2];
 };
 
@@ -82,7 +82,7 @@ protected:
     //--------------------------------------------------------------------------
     // Protected API
     //--------------------------------------------------------------------------
-    NNmodel &getModel() { return m_Model; }
+    ModelSpec &getModel() { return m_Model; }
     NeuronGroup *getNeuronGroup(size_t i) { return m_NeuronGroups[i]; }
     SynapseGroup *getSynapseGroup() { return m_SynapseGroup; }
 
@@ -90,7 +90,7 @@ private:
     //--------------------------------------------------------------------------
     // Private API
     //--------------------------------------------------------------------------
-    NNmodel m_Model;
+    ModelSpec m_Model;
     NeuronGroup *m_NeuronGroups[2];
     SynapseGroup *m_SynapseGroup;
 };

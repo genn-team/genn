@@ -25,7 +25,7 @@ public:
 IMPLEMENT_MODEL(Neuron);
 
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(1.0);
     model.setName("decode_matrix_den_delay_individualg_ragged");

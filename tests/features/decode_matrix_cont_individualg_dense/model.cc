@@ -53,7 +53,7 @@ public:
 IMPLEMENT_MODEL(Continuous);
 
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(0.1);
     model.setName("decode_matrix_cont_individualg_dense");

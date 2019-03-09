@@ -5,7 +5,7 @@
 #include <vector>
 
 // Forward declarations
-class NNmodel;
+class ModelSpec;
 
 namespace CodeGenerator
 {
@@ -22,5 +22,5 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-    std::vector<std::string> generateAll(const NNmodel &model, const BackendBase &backend, const filesystem::path &outputPath);
+    std::vector<std::string> generateAll(const ModelSpec &model, const BackendBase &backend, const filesystem::path &outputPath);
 }

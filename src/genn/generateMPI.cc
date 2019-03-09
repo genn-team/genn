@@ -103,7 +103,7 @@ uint32_t hashString(const std::string &string)
     return h;
 }
 
-void genHeader(const NNmodel &model,    //!< Model description
+void genHeader(const ModelSpec &model,    //!< Model description
                const std::string &path,      //!< Path for code generationn
                int localHostID)         //!< ID of local host
 {
@@ -163,7 +163,7 @@ void genHeader(const NNmodel &model,    //!< Model description
     fs.close();
 }
 
-void genCode(const NNmodel &model,  //!< Model description
+void genCode(const ModelSpec &model,  //!< Model description
              const std::string &path,    //!< Path for code generationn
              int localHostID)       //!< ID of local host
 {
@@ -299,7 +299,7 @@ void genCode(const NNmodel &model,  //!< Model description
   including: MPI send and receive functions.
 */
 //--------------------------------------------------------------------------
-void genMPI(const NNmodel &model,   //!< Model description
+void genMPI(const ModelSpec &model,   //!< Model description
             const std::string &path,     //!< Path for code generation
             int localHostID)        //!< ID of local host
 {

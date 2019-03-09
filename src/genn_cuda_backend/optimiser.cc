@@ -81,7 +81,7 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const NNmodel &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::Backend::KernelMax])
+void calcGroupSizes(const ModelSpec &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::Backend::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -125,7 +125,7 @@ void calcGroupSizes(const NNmodel &model, std::vector<size_t> (&groupSizes)[Code
     groupSizes[Backend::KernelPreSynapseReset].push_back(model.getNumPreSynapseResetRequiredGroups());
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize, 
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpec &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize, 
                                            const CodeGenerator::CUDA::Backend::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
@@ -351,7 +351,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const NNmodel &model, C
     return kernelsToOptimise;
 }
 //--------------------------------------------------------------------------
-int chooseOptimalDevice(const NNmodel &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize, 
+int chooseOptimalDevice(const ModelSpec &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize, 
                         const CodeGenerator::CUDA::Backend::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
@@ -476,7 +476,7 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const NNmodel &model, const filesystem::path &outputPath, int localHostID, 
+Backend createBackend(const ModelSpec &model, const filesystem::path &outputPath, int localHostID, 
                       const Backend::Preferences &preferences)
 {
     if(preferences.autoChooseDevice) {

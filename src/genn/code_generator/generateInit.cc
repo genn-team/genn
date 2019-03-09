@@ -218,7 +218,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const NNmodel &model, const BackendBase &backend)
+void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
 

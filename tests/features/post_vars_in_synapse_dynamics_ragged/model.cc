@@ -39,7 +39,7 @@ public:
 
 IMPLEMENT_MODEL(WeightUpdateModel);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(0.1);
     model.setName("post_vars_in_synapse_dynamics_ragged");

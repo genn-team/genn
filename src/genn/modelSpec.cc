@@ -29,11 +29,11 @@
 #include "code_generator/codeGenUtils.h"
 
 // ------------------------------------------------------------------------
-// NNmodel
+// ModelSpec
 // ------------------------------------------------------------------------
-// class NNmodel for specifying a neuronal network model
+// class ModelSpec for specifying a neuronal network model
 
-NNmodel::NNmodel()
+ModelSpec::ModelSpec()
     : m_TimePrecision(TimePrecision::DEFAULT), m_DefaultVarLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_ShouldMergePostsynapticModels(false)
 {
@@ -43,16 +43,16 @@ NNmodel::NNmodel()
     setSeed(0);
 }
 
-NNmodel::~NNmodel() 
+ModelSpec::~ModelSpec() 
 {
 }
 
-void NNmodel::setName(const std::string &inname)
+void ModelSpec::setName(const std::string &inname)
 {
     name= inname;
 }
 
-bool NNmodel::zeroCopyInUse() const
+bool ModelSpec::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
     if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
@@ -71,13 +71,13 @@ bool NNmodel::zeroCopyInUse() const
     return false;
 }
 
-size_t NNmodel::getNumPreSynapseResetRequiredGroups() const
+size_t ModelSpec::getNumPreSynapseResetRequiredGroups() const
 {
     return std::count_if(getLocalSynapseGroups().cbegin(), getLocalSynapseGroups().cend(),
                          [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
 }
 
-std::string NNmodel::getTimePrecision() const
+std::string ModelSpec::getTimePrecision() const
 {
     // If time precision is set to match model precision
     if(m_TimePrecision == TimePrecision::DEFAULT) {
@@ -92,7 +92,7 @@ std::string NNmodel::getTimePrecision() const
     }
 }
 
-std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
+std::string ModelSpec::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
 #ifdef MPI_ENABLE
     int localHostID = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
@@ -102,18 +102,18 @@ std::string NNmodel::getGeneratedCodePath(const std::string &path, const std::st
 #endif
     }
 /*
-bool NNmodel::isDeviceInitRequired(int localHostID) const
+bool ModelSpec::isDeviceInitRequired(int localHostID) const
 {
     // If any local neuron groups require device initialisation, return true
     if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
-        [](const NNmodel::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
+        [](const ModelSpec::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
     {
         return true;
     }
 
     // If any remote neuron groups with local outputs require their spike variables to be initialised on device
     if(std::any_of(std::begin(m_RemoteNeuronGroups), std::end(m_RemoteNeuronGroups),
-        [localHostID](const NNmodel::NeuronGroupValueType &n)
+        [localHostID](const ModelSpec::NeuronGroupValueType &n)
         {
             return (n.second.hasOutputToHost(localHostID) && (n.second.getSpikeVarMode() & VarInit::DEVICE));
         }))
@@ -124,7 +124,7 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
 
     // If any local synapse groups require device initialisation, return true
     if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
+        [](const ModelSpec::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
     {
         return true;
     }
@@ -132,14 +132,14 @@ bool NNmodel::isDeviceInitRequired(int localHostID) const
     return false;
 }
 
-bool NNmodel::isDeviceSparseInitRequired() const
+bool ModelSpec::isDeviceSparseInitRequired() const
 {
     // Return true if any of the synapse groups require device sparse initialisation
     return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
+        [](const ModelSpec::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
 }*/
 
-unsigned int NNmodel::getNumLocalNeurons() const
+unsigned int ModelSpec::getNumLocalNeurons() const
 {
     // Return sum of local neuron group sizes
     return std::accumulate(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(), 0,
@@ -149,7 +149,7 @@ unsigned int NNmodel::getNumLocalNeurons() const
                            });
 }
 
-unsigned int NNmodel::getNumRemoteNeurons() const
+unsigned int ModelSpec::getNumRemoteNeurons() const
 {
     // Return sum of local remote neuron group sizes
     return std::accumulate(m_RemoteNeuronGroups.cbegin(), m_RemoteNeuronGroups.cend(), 0,
@@ -159,7 +159,7 @@ unsigned int NNmodel::getNumRemoteNeurons() const
                            });
 }
 
-const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
+const NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name) const
 {
     // If a matching local neuron group is found, return it
     auto localNeuronGroup = m_LocalNeuronGroups.find(name);
@@ -179,7 +179,7 @@ const NeuronGroup *NNmodel::findNeuronGroup(const std::string &name) const
     }
 }
 
-NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
+NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name)
 {
     // If a matching local neuron group is found, return it
     auto localNeuronGroup = m_LocalNeuronGroups.find(name);
@@ -198,7 +198,7 @@ NeuronGroup *NNmodel::findNeuronGroup(const std::string &name)
     }
 }
 
-const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
+const SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name) const
 {
     // If a matching local synapse group is found, return it
     auto localSynapseGroup = m_LocalSynapseGroups.find(name);
@@ -218,7 +218,7 @@ const SynapseGroup *NNmodel::findSynapseGroup(const std::string &name) const
     }
 }
 
-SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
+SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
 {
     // If a matching local synapse group is found, return it
     auto localSynapseGroup = m_LocalSynapseGroups.find(name);
@@ -242,7 +242,7 @@ SynapseGroup *NNmodel::findSynapseGroup(const std::string &name)
 /*! \brief This function attempts to find an existing current source */
 //--------------------------------------------------------------------------
 
-const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
+const CurrentSource *ModelSpec::findCurrentSource(const std::string &name) const
 {
     // If a matching local current source is found, return it
     auto localCurrentSource = m_LocalCurrentSources.find(name);
@@ -262,7 +262,7 @@ const CurrentSource *NNmodel::findCurrentSource(const std::string &name) const
     }
 }
 
-CurrentSource *NNmodel::findCurrentSource(const std::string &name)
+CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 {
     // If a matching local current source is found, return it
     auto localCurrentSource = m_LocalCurrentSources.find(name);
@@ -286,7 +286,7 @@ CurrentSource *NNmodel::findCurrentSource(const std::string &name)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setDT(double newDT /**<  */)
+void ModelSpec::setDT(double newDT /**<  */)
 {
     dt = newDT;
 }
@@ -297,7 +297,7 @@ void NNmodel::setDT(double newDT /**<  */)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setPrecision(FloatType floattype /**<  */)
+void ModelSpec::setPrecision(FloatType floattype /**<  */)
 {
     switch (floattype) {
     case GENN_FLOAT:
@@ -314,7 +314,7 @@ void NNmodel::setPrecision(FloatType floattype /**<  */)
     }
 }
 
-void NNmodel::setTimePrecision(TimePrecision timePrecision)
+void ModelSpec::setTimePrecision(TimePrecision timePrecision)
 {
     m_TimePrecision = timePrecision;
 }
@@ -324,7 +324,7 @@ void NNmodel::setTimePrecision(TimePrecision timePrecision)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setTiming(bool theTiming /**<  */)
+void ModelSpec::setTiming(bool theTiming /**<  */)
 {
     timing= theTiming;
 }
@@ -335,12 +335,12 @@ void NNmodel::setTiming(bool theTiming /**<  */)
  */
 //--------------------------------------------------------------------------
 
-void NNmodel::setSeed(unsigned int inseed /*!< the new seed  */)
+void ModelSpec::setSeed(unsigned int inseed /*!< the new seed  */)
 {
     seed= inseed;
 }
 
-std::string NNmodel::scalarExpr(const double val) const
+std::string ModelSpec::scalarExpr(const double val) const
 {
     std::string tmp;
     float fval= (float) val;
@@ -353,7 +353,7 @@ std::string NNmodel::scalarExpr(const double val) const
     return tmp;
 }
 
-void NNmodel::finalize()
+void ModelSpec::finalize()
 {
     // Loop through neuron populations and their outgoing synapse populations
     for(auto &n : m_LocalNeuronGroups) {

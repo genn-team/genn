@@ -43,7 +43,7 @@ public:
 
 IMPLEMENT_MODEL(WeightUpdateModel);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(0.1);
     model.setName("neuron_support_code_sim");

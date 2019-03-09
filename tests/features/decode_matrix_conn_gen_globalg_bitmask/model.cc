@@ -49,7 +49,7 @@ public:
 IMPLEMENT_MODEL(Neuron);
 
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(0.1);
     model.setName("decode_matrix_conn_gen_globalg_bitmask");

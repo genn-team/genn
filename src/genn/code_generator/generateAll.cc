@@ -19,7 +19,7 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::vector<std::string> CodeGenerator::generateAll(const NNmodel &model, const BackendBase &backend, const filesystem::path &outputPath)
+std::vector<std::string> CodeGenerator::generateAll(const ModelSpec &model, const BackendBase &backend, const filesystem::path &outputPath)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);

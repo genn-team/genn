@@ -42,7 +42,7 @@ public:
 
 IMPLEMENT_MODEL(WeightUpdateModel);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(0.1);
     model.setName("post_vars_in_post_learn_ragged");

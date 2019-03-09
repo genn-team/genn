@@ -113,7 +113,7 @@ MyIzhikevichVariableNoise::VarValues IzhInh_ini(
 WeightUpdateModels::StaticPulse::VarValues SynIzh_ini(
     uninitialisedVar());
 
-void modelDefinition(NNmodel &model) 
+void modelDefinition(ModelSpec &model) 
 {
     initGeNN();
 

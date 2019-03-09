@@ -79,7 +79,7 @@ MyHH::VarValues myHH_ini(
  */
 //--------------------------------------------------------------------------
 
-void modelDefinition(NNmodel &model) 
+void modelDefinition(ModelSpec &model) 
 {
   initGeNN();
 

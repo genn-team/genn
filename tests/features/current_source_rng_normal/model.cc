@@ -24,7 +24,7 @@ public:
 IMPLEMENT_MODEL(Neuron);
 
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     CurrentSourceModels::GaussianNoise::ParamValues paramVals(
         0.0,        // 2 - mean

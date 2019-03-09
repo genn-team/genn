@@ -51,7 +51,7 @@ IMPLEMENT_MODEL(WeightUpdateModelSpikeEvent);
 /*--------------------------------------------------------------------------
  This function defines the Schmuker_2014_classifier model
 -------------------------------------------------------------------------- */
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
 
     cout << "GeNN building model with " << NUM_VR << " x VRs" << endl;

@@ -31,7 +31,7 @@ public:
 };
 IMPLEMENT_MODEL(MyIzhikevich);
 
-void modelDefinition(NNmodel &model) 
+void modelDefinition(ModelSpec &model) 
 {
     initGeNN();
 

@@ -54,7 +54,7 @@ public:
 
 IMPLEMENT_MODEL(WeightUpdateModel);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(1.0);
     model.setName("pre_wu_vars_in_post_learn");

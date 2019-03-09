@@ -1,7 +1,7 @@
 #pragma once
 
 // Forward declarations
-class NNmodel;
+class ModelSpec;
 
 namespace CodeGenerator
 {
@@ -15,5 +15,5 @@ class CodeStream;
 namespace CodeGenerator
 {
 void generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                    const NNmodel &model, const BackendBase &backend, int localHostID);
+                    const ModelSpec &model, const BackendBase &backend, int localHostID);
 }

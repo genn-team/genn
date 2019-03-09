@@ -56,7 +56,7 @@ public:
 
 IMPLEMENT_MODEL(WeightUpdateModel);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(1.0);
     model.setName("post_wu_vars_in_synapse_dynamics");

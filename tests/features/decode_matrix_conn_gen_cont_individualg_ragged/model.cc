@@ -76,7 +76,7 @@ public:
 IMPLEMENT_MODEL(Continuous);
 
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(1.0);
     model.setName("decode_matrix_conn_gen_cont_individualg_ragged");

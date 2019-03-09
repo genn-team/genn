@@ -25,7 +25,7 @@
 #include <string>
 
 // Forward declarations
-class NNmodel;
+class ModelSpec;
 
 //--------------------------------------------------------------------------
 /*!
@@ -35,6 +35,6 @@ class NNmodel;
   including: MPI send and receive functions.
 */
 //--------------------------------------------------------------------------
-void genMPI(const NNmodel &model,   //!< Model description
+void genMPI(const ModelSpec &model,   //!< Model description
             const std::string &path,     //!< Path for code generation
             int localHostID);       //!< ID of local host

@@ -5,7 +5,7 @@
 #include <vector>
 
 // Forward declarations
-class NNmodel;
+class ModelSpec;
 
 namespace CodeGenerator
 {

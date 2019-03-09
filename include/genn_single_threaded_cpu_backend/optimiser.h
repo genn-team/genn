@@ -12,7 +12,7 @@ namespace SingleThreadedCPU
 {
 namespace Optimiser
 {
-Backend createBackend(const NNmodel &, const filesystem::path &, int localHostID,
+Backend createBackend(const ModelSpec &, const filesystem::path &, int localHostID,
                       const Backend::Preferences &preferences)
 {
     Backend backend(localHostID, preferences);

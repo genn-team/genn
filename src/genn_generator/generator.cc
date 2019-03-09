@@ -54,7 +54,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
     const filesystem::path targetPath(argv[1]);
 
     // Create model
-    NNmodel model;
+    ModelSpec model;
     modelDefinition(model);
     
     // Finalize model

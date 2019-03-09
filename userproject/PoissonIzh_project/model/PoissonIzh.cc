@@ -43,7 +43,7 @@ WeightUpdateModels::StaticPulse::VarValues mySyn_ini(
 );
 
 
-void modelDefinition(NNmodel &model) 
+void modelDefinition(ModelSpec &model) 
 {
     initGeNN();
 

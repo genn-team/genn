@@ -12,7 +12,7 @@
 
 // Forward declarations
 class NeuronGroup;
-class NNmodel;
+class ModelSpec;
 class SynapseGroup;
 
 namespace CodeGenerator
@@ -67,12 +67,12 @@ public:
     //--------------------------------------------------------------------------
     // Declared virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const = 0;
-    virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const = 0;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpec &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const = 0;
 
-    virtual void genInit(CodeStream &os, const NNmodel &model,
+    virtual void genInit(CodeStream &os, const ModelSpec &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
@@ -80,7 +80,7 @@ public:
     virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
     virtual void genDefinitionsInternalPreamble(CodeStream &os) const = 0;
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
-    virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const = 0;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpec &model) const = 0;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -100,7 +100,7 @@ public:
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const = 0;
 
-    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const = 0;
+    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpec &model) const = 0;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                   const std::string &name, size_t count) const = 0;
 
@@ -116,7 +116,7 @@ public:
 
     virtual std::string getVarPrefix() const{ return ""; }
 
-    virtual bool isGlobalRNGRequired(const NNmodel &model) const = 0;
+    virtual bool isGlobalRNGRequired(const ModelSpec &model) const = 0;
 
     //--------------------------------------------------------------------------
     // Public API

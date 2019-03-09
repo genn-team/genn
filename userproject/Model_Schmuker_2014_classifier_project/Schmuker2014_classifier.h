@@ -31,7 +31,7 @@ class Schmuker2014_classifier
  public:
     double d_maxRandomNumber; //number used to scale correcly scale poission neuron firing probabilities
 
-    NNmodel model;
+    ModelSpec model;
     uint64_t *inputRates; //dataset (2D array) of required poisson neuron firing rates that represent the input data to the network
     unsigned int inputRatesSize; //cache the size of the input data, this is used at multiple times
     float * vrData; //2D array of vectors in feature space that will act as the virtual receptor (VR) points

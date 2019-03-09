@@ -17,7 +17,7 @@
 namespace
 {
 void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroup &sg,
-                               const CodeGenerator::Substitutions &baseSubs, const NNmodel &model, const CodeGenerator::BackendBase &backend)
+                               const CodeGenerator::Substitutions &baseSubs, const ModelSpec &model, const CodeGenerator::BackendBase &backend)
 {
     using namespace CodeGenerator;
     const auto *wu = sg.getWUModel();
@@ -61,7 +61,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const NNmodel &model, const BackendBase &backend)
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpec &model, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;

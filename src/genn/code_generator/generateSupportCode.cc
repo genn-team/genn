@@ -13,7 +13,7 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSupportCode(CodeStream &os, const NNmodel &model)
+void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpec &model)
 {
     os << "#pragma once" << std::endl;
     os << std::endl;

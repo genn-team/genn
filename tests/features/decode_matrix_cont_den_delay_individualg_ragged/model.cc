@@ -53,7 +53,7 @@ public:
 IMPLEMENT_MODEL(ContinuousDendriticDelay);
 
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setDT(1.0);
     model.setName("decode_matrix_cont_den_delay_individualg_ragged");

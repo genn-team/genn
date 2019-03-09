@@ -101,7 +101,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -199,7 +199,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupS
 
         // If any neuron groups emit spike events
         if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-            [](const NNmodel::NeuronGroupValueType &n){ return n.second.isSpikeEventRequired(); }))
+            [](const ModelSpec::NeuronGroupValueType &n){ return n.second.isSpikeEventRequired(); }))
         {
             os << "__shared__ volatile unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelNeuronUpdate] << "];" << std::endl;
             os << "__shared__ volatile unsigned int shPosSpkEvnt;" << std::endl;
@@ -215,7 +215,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupS
 
         // If any neuron groups emit true spikes
         if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-            [](const NNmodel::NeuronGroupValueType &n){ return !n.second.getNeuronModel()->getThresholdConditionCode().empty(); }))
+            [](const ModelSpec::NeuronGroupValueType &n){ return !n.second.getNeuronModel()->getThresholdConditionCode().empty(); }))
         {
             os << "__shared__ volatile unsigned int shSpk[" << m_KernelBlockSizes[KernelNeuronUpdate] << "];" << std::endl;
             os << "__shared__ volatile unsigned int shPosSpk;" << std::endl;
@@ -360,7 +360,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupS
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
                                SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
@@ -426,14 +426,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
         // We need shLg if any synapse groups accumulate into shared memory
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [this](const NNmodel::SynapseGroupValueType &s){ return this->shouldAccumulateInSharedMemory(s.second); }))
+            [this](const ModelSpec::SynapseGroupValueType &s){ return this->shouldAccumulateInSharedMemory(s.second); }))
         {
             os << "__shared__ " << model.getPrecision() << " shLg[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
         }
         
         // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [&model](const NNmodel::SynapseGroupValueType &s)
+            [&model](const ModelSpec::SynapseGroupValueType &s)
             {
                 return (s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
                         && (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
@@ -443,7 +443,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         }
 
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [&model](const NNmodel::SynapseGroupValueType &s)
+            [&model](const ModelSpec::SynapseGroupValueType &s)
             { 
                 return (s.second.isTrueSpikeRequired() || !s.second.getWUModel()->getLearnPostCode().empty());
             }))
@@ -452,7 +452,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
         }
         
         if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [](const NNmodel::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired()); }))
+            [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired()); }))
         {
             os << "__shared__ unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
         }
@@ -548,7 +548,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     // If any synapse groups require postsynaptic learning
     size_t idPostsynapticStart = 0;
     if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-        [](const NNmodel::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
+        [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
     {
         os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
         for (const auto &p : postsynapticKernelParameters) {
@@ -564,7 +564,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPostsynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
             os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPostsynapticUpdate] << "];" << std::endl;
             if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-                [&model](const NNmodel::SynapseGroupValueType &s)
+                [&model](const ModelSpec::SynapseGroupValueType &s)
                 {
                     return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty());
                 }))
@@ -654,7 +654,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
 
     size_t idSynapseDynamicsStart = 0;
     if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-        [](const NNmodel::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
+        [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
     {
         os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
         for (const auto &p : synapseDynamicsKernelParameters) {
@@ -770,7 +770,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const NNmodel &model,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const NNmodel &model,
+void Backend::genInit(CodeStream &os, const ModelSpec &model,
                       NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                       SynapseGroupHandler sgSparseInitHandler) const
@@ -956,7 +956,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
     if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-        [](const NNmodel::SynapseGroupValueType &s) { return s.second.isSparseInitRequired(); })) 
+        [](const ModelSpec::SynapseGroupValueType &s) { return s.second.isSparseInitRequired(); })) 
     {
         os << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
@@ -971,7 +971,7 @@ void Backend::genInit(CodeStream &os, const NNmodel &model,
             // **TODO** check actually required
             os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelInitializeSparse] << "];" << std::endl;
             if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-                           [](const NNmodel::SynapseGroupValueType &s) { return s.second.isSparseConnectivityInitRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
+                           [](const ModelSpec::SynapseGroupValueType &s) { return s.second.isSparseConnectivityInitRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
             {
                 os << "__shared__ unsigned int shRowStart[" << m_KernelBlockSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
             }
@@ -1386,7 +1386,7 @@ void Backend::genRunnerPreamble(CodeStream &os) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpec &model) const
 {
     // Get chosen device's PCI bus ID
     char pciBusID[32];
@@ -1547,7 +1547,7 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpec &) const
 {
     // Create a single Philox4_32_10 RNG
     genVariableDefinition(definitions, definitionsInternal, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
@@ -1651,12 +1651,12 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalRNGRequired(const NNmodel &model) const
+bool Backend::isGlobalRNGRequired(const ModelSpec &model) const
 {
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
     if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-        [](const NNmodel::NeuronGroupValueType &n)
+        [](const ModelSpec::NeuronGroupValueType &n)
         {
             return n.second.isInitRNGRequired();
         }))
@@ -1666,7 +1666,7 @@ bool Backend::isGlobalRNGRequired(const NNmodel &model) const
 
     // If any synapse groups require an RNG for weight update model initialisation, return true
     if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-        [](const NNmodel::SynapseGroupValueType &s)
+        [](const ModelSpec::SynapseGroupValueType &s)
         {
             return s.second.isWUInitRNGRequired();
         }))
@@ -1817,7 +1817,7 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool sp
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                           SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
@@ -1907,7 +1907,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, 
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
      // Get suffix based on type of events

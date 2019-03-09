@@ -75,13 +75,13 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const NNmodel &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const NNmodel &model,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpec &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const override;
 
-    virtual void genInit(CodeStream &os, const NNmodel &model,
+    virtual void genInit(CodeStream &os, const ModelSpec &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
@@ -89,7 +89,7 @@ public:
     virtual void genDefinitionsPreamble(CodeStream &os) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os) const override;
     virtual void genRunnerPreamble(CodeStream &os) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const NNmodel &model) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpec &model) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -121,7 +121,7 @@ public:
         genCurrentSpikePull(os, ng, true);
     }
 
-    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const NNmodel &model) const override;
+    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpec &model) const override;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                   const std::string &name, size_t count) const override;
 
@@ -137,7 +137,7 @@ public:
 
     virtual std::string getVarPrefix() const override{ return "dd_"; }
 
-    virtual bool isGlobalRNGRequired(const NNmodel &model) const override;
+    virtual bool isGlobalRNGRequired(const ModelSpec &model) const override;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -219,9 +219,9 @@ private:
     void genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const;
 
-    void genPresynapticUpdatePreSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+    void genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
-    void genPresynapticUpdatePostSpan(CodeStream &os, const NNmodel &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+    void genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;

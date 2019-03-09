@@ -136,7 +136,7 @@ PostsynapticModels::ExpCond::ParamValues postExpDNDN(
  */
 //--------------------------------------------------------------------------
 
-void modelDefinition(NNmodel &model) 
+void modelDefinition(ModelSpec &model) 
 {
     initGeNN();
 

@@ -57,7 +57,7 @@ public:
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setSeed(12345);
     model.setDT(0.1);

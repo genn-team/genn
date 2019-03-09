@@ -1,7 +1,7 @@
 #pragma once
 
 // Forward declarations
-class NNmodel;
+class ModelSpec;
 
 namespace CodeGenerator
 {
@@ -13,5 +13,5 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSupportCode(CodeStream &os, const NNmodel &model);
+void generateSupportCode(CodeStream &os, const ModelSpec &model);
 }

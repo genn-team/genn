@@ -44,7 +44,7 @@ public:
 IMPLEMENT_MODEL(WeightUpdateModel);
 
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     model.setName("pre_vars_in_sim_code_event");
 

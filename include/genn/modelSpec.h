@@ -17,7 +17,7 @@
 /*! \file modelSpec.h
 
 \brief Header file that contains the class (struct) definition of neuronModel for 
-defining a neuron model and the class definition of NNmodel for defining a neuronal network model. 
+defining a neuron model and the class definition of ModelSpec for defining a neuronal network model. 
 Part of the code generation and generated code sections.
 */
 //--------------------------------------------------------------------------
@@ -89,11 +89,11 @@ inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
 }
 
 /*===============================================================
-//! \brief class NNmodel for specifying a neuronal network model.
+//! \brief class ModelSpec for specifying a neuronal network model.
 //
 ================================================================*/
 
-class NNmodel
+class ModelSpec
 {
 public:
     // Typedefines
@@ -102,8 +102,8 @@ public:
     typedef std::map<std::string, SynapseGroup>::value_type SynapseGroupValueType;
     typedef std::map<std::string, std::pair<unsigned int, unsigned int>>::value_type SynapseGroupSubsetValueType;
 
-    NNmodel();
-    ~NNmodel();
+    ModelSpec();
+    ~ModelSpec();
 
     // PUBLIC MODEL FUNCTIONS
     //=======================
@@ -507,3 +507,6 @@ private:
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     bool m_ShouldMergePostsynapticModels; 
 };
+
+// Typedefine NNmodel for backward compatibility
+typedef ModelSpec NNmodel;
