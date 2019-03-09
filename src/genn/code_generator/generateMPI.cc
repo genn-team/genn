@@ -19,7 +19,7 @@
 */
 //--------------------------------------------------------------------------
 
-#include "generateMPI.h"
+#include "code_generator/generateMPI.h"
 
 // Standard C++ includes
 #include <fstream>
