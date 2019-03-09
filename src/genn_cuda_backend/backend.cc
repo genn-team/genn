@@ -794,10 +794,11 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
         os << std::endl;
     }
 
+    // Build map of extra global parameters for init kernel
     std::map<std::string, std::string> initKernelParameters;
     for(const auto &s : model.getLocalSynapseGroups()) {
-        const auto *initSparseConnectivitySnippet = s.getConnectivityInitialiser().getSnippet();
-        updateExtraGlobalParams("initSparseConn", "", connectivityInit.getSnippet()->getExtraGlobalParams(), initKernelParameters, 
+        const auto *initSparseConnectivitySnippet = s.second.getConnectivityInitialiser().getSnippet();
+        updateExtraGlobalParams("initSparseConn", "", initSparseConnectivitySnippet->getExtraGlobalParams(), initKernelParameters, 
                                 {initSparseConnectivitySnippet->getRowBuildCode()});
     }
     
