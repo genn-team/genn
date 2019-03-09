@@ -794,9 +794,16 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
         os << std::endl;
     }
 
+    std::map<std::string, std::string> initKernelParameters;
+    for(const auto &s : model.getLocalSynapseGroups()) {
+        const auto *initSparseConnectivitySnippet = s.getConnectivityInitialiser().getSnippet();
+        updateExtraGlobalParams("initSparseConn", "", connectivityInit.getSnippet()->getExtraGlobalParams(), initKernelParameters, 
+                                {initSparseConnectivitySnippet->getRowBuildCode()});
+    }
+    
     // init kernel header
     os << "extern \"C\" __global__ void " << KernelNames[KernelInitialize] << "(";
-    for(const auto &p : model.getInitKernelParameters()) {
+    for(const auto &p : initKernelParameters) {
         os << p.second << " " << p.first << ", ";
     }
     os << "unsigned long long deviceRNGSeed)";
@@ -1159,7 +1166,7 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
         if(idInitStart > 0) {
             genKernelDimensions(os, KernelInitialize, idInitStart);
             os << KernelNames[KernelInitialize] << "<<<grid, threads>>>(";
-            for(const auto &p : model.getInitKernelParameters()) {
+            for(const auto &p : initKernelParameters) {
                 os << p.first << ", ";
             }
             os << "deviceRNGSeed);" << std::endl;

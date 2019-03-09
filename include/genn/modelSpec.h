@@ -164,10 +164,6 @@ public:
     // **YUCK** this really shouldn't be public
     void finalize();
 
-    // PUBLIC INITIALISATION FUNCTIONS
-    //================================
-    const std::map<std::string, std::string> &getInitKernelParameters() const{ return m_InitKernelParameters; }
-
     // PUBLIC NEURON FUNCTIONS
     //========================
     //! Get std::map containing local named NeuronGroup objects in model
@@ -476,9 +472,6 @@ private:
 
     //!< Named remote current sources
     std::map<std::string, CurrentSource> m_RemoteCurrentSources;
-
-    // Kernel members
-    std::map<std::string, std::string> m_InitKernelParameters;
 
      // Model members
     std::string name;               //!< Name of the neuronal newtwork model

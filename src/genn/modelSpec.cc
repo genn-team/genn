@@ -362,26 +362,6 @@ void ModelSpec::finalize()
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
         }
-
-        // Make extra global parameter lists
-        s.second.addExtraGlobalConnectivityInitialiserParams(m_InitKernelParameters);
-        //s.second.addExtraGlobalNeuronParams(neuronKernelParameters);
-
-        // If this synapse group has either ragged or bitmask connectivity which is initialised
-        // using a connectivity snippet AND has individual synaptic variables
-        /*if(((s.second.getMatrixType() & SynapseMatrixConnectivity::RAGGED)
-            || (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
-            && !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()
-            && s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
-        {
-            // Loop through variables and check that they are initialised in the same place as the sparse connectivity
-            auto wuVars = s.second.getWUModel()->getVars();
-            for (size_t k= 0, l= wuVars.size(); k < l; k++) {
-                if((s.second.getSparseConnectivityVarMode() & VarInit::HOST) != (s.second.getWUVarMode(k) & VarInit::HOST)) {
-                    gennError("Weight update mode variables must be initialised in same place as sparse connectivity variable '" + wuVars[k].first + "' in population '" + s.first + "' is not");
-                }
-            }
-        }*/
     }
 
     // CURRENT SOURCES
@@ -395,11 +375,5 @@ void ModelSpec::finalize()
         if(!n.second.getInSyn().empty()) {
             n.second.mergeIncomingPSM(m_ShouldMergePostsynapticModels);
         }
-    }
-
-    // CURRENT SOURCES
-    for(auto &cs : m_LocalCurrentSources) {
-        // Initialize derived parameters
-        cs.second.initDerivedParams(dt);
     }
 }
