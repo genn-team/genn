@@ -159,26 +159,6 @@ unsigned int ModelSpec::getNumRemoteNeurons() const
                            });
 }
 
-const NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name) const
-{
-    // If a matching local neuron group is found, return it
-    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
-    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
-        return &localNeuronGroup->second;
-    }
-
-    // Otherwise, if a matching remote neuron group is found, return it
-    auto remoteNeuronGroup = m_RemoteNeuronGroups.find(name);
-    if(remoteNeuronGroup != m_RemoteNeuronGroups.cend()) {
-        return &remoteNeuronGroup->second;
-
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("neuron group " + name + " not found, aborting ...");
-    }
-}
-
 NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name)
 {
     // If a matching local neuron group is found, return it
@@ -195,26 +175,6 @@ NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name)
     // Otherwise, error
     else {
         throw std::runtime_error("neuron group " + name + " not found, aborting ...");
-    }
-}
-
-const SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name) const
-{
-    // If a matching local synapse group is found, return it
-    auto localSynapseGroup = m_LocalSynapseGroups.find(name);
-    if(localSynapseGroup != m_LocalSynapseGroups.cend()) {
-        return &localSynapseGroup->second;
-    }
-
-    // Otherwise, if a matching remote synapse group is found, return it
-    auto remoteSynapseGroup = m_RemoteSynapseGroups.find(name);
-    if(remoteSynapseGroup != m_RemoteSynapseGroups.cend()) {
-        return &remoteSynapseGroup->second;
-
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
     }
 }
 
@@ -241,27 +201,6 @@ SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
 //--------------------------------------------------------------------------
 /*! \brief This function attempts to find an existing current source */
 //--------------------------------------------------------------------------
-
-const CurrentSource *ModelSpec::findCurrentSource(const std::string &name) const
-{
-    // If a matching local current source is found, return it
-    auto localCurrentSource = m_LocalCurrentSources.find(name);
-    if(localCurrentSource != m_LocalCurrentSources.cend()) {
-        return &localCurrentSource->second;
-    }
-
-    // Otherwise, if a matching remote current source is found, return it
-    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
-    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
-        return &remoteCurrentSource->second;
-
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("current source " + name + " not found, aborting ...");
-    }
-}
-
 CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 {
     // If a matching local current source is found, return it

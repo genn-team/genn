@@ -186,9 +186,6 @@ public:
     unsigned int getNumNeurons() const{ return getNumLocalNeurons() + getNumRemoteNeurons(); }
 
     //! Find a neuron group by name
-    const NeuronGroup *findNeuronGroup(const std::string &name) const;
-
-    //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name);
 
     //! Adds a new neuron group to the model using a neuron model managed by the user
@@ -257,9 +254,6 @@ public:
 
     //! Get std::map containing remote named SynapseGroup objects in model
     const std::map<std::string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
-
-    //! Find a synapse group by name
-    const SynapseGroup *findSynapseGroup(const std::string &name) const;
 
     //! Find a synapse group by name
     SynapseGroup *findSynapseGroup(const std::string &name);    
@@ -391,9 +385,6 @@ public:
 
     //! Get std::map containing remote named CurrentSource objects in model
     const std::map<std::string, CurrentSource> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
-
-    //! Find a current source by name
-    const CurrentSource *findCurrentSource(const std::string &name) const;
 
     //! Find a current source by name
     CurrentSource *findCurrentSource(const std::string &name);
