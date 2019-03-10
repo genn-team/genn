@@ -821,7 +821,7 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Remote neuron groups" << std::endl;
-        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getRemoteNeuronGroupInternals(), idInitStart,
+        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
             [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [this](const NeuronGroupInternal &ng){ return ng.hasOutputToHost(m_LocalHostID); },
             [this, remoteNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
@@ -1753,7 +1753,7 @@ void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std:
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getVarSubstitution("id") << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
     // Is push required at all
     const bool pushRequired = spikeEvent ?
@@ -1789,7 +1789,7 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool sp
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
     // Is push required at all
     const bool pullRequired = spikeEvent ?
