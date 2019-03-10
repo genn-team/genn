@@ -6,7 +6,7 @@
 
 // GeNN includes
 #include "currentSource.h"
-#include "synapseGroup.h"
+#include "synapseGroupInternal.h"
 #include "gennUtils.h"
 
 //------------------------------------------------------------------------
@@ -32,7 +32,7 @@ void NeuronGroupInternal::updatePostVarQueues(const std::string &code)
 
 void NeuronGroupInternal::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
 {
-    m_SpikeEventCondition.insert(std::pair<std::string, std::string>(code, supportCodeNamespace));
+    m_SpikeEventCondition.emplace(code, supportCodeNamespace);
 }
 
 void NeuronGroupInternal::initDerivedParams(double dt)
@@ -47,25 +47,22 @@ void NeuronGroupInternal::initDerivedParams(double dt)
         m_DerivedParams.push_back(d.second(getParams(), dt));
     }
 
-    // Initialise derived parameters for variable initialisers
-    for(auto &v : getVarInitialisers()) {
-        v.initDerivedParams(dt);
-    }
+    initInitialiserDerivedParams(dt);
 }
 
 void NeuronGroupInternal::mergeIncomingPSM(bool merge)
 {
     // Create a copy of this neuron groups incoming synapse populations
-    std::vector<SynapseGroup*> inSyn = getInSyn();
+    std::vector<SynapseGroupInternal*> inSyn = getInSyn();
 
     // Loop through un-merged incoming synapse populations
     for(unsigned int i = 0; !inSyn.empty(); i++) {
         // Remove last element from vector
-        SynapseGroup *a = inSyn.back();
+        SynapseGroupInternal *a = inSyn.back();
         inSyn.pop_back();
 
         // Add A to vector of merged incoming synape populations - initially only merged with itself
-        m_MergedInSyn.emplace_back(a, std::vector<SynapseGroup*>{a});
+        m_MergedInSyn.emplace_back(a, std::vector<SynapseGroupInternal*>{a});
 
         // Continue if merging of postsynaptic models is disabled
         if(!merge) {
@@ -125,14 +122,14 @@ bool NeuronGroupInternal::isSpikeTimeRequired() const
 {
     // If any INCOMING synapse groups require POSTSYNAPTIC spike times, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-        [](SynapseGroup *sg){ return sg->getWUModel()->isPostSpikeTimeRequired(); }))
+        [](SynapseGroupInternal *sg){ return sg->getWUModel()->isPostSpikeTimeRequired(); }))
     {
         return true;
     }
 
     // If any OUTGOING synapse groups require PRESYNAPTIC spike times, return true
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-        [](SynapseGroup *sg){ return sg->getWUModel()->isPreSpikeTimeRequired(); }))
+        [](SynapseGroupInternal *sg){ return sg->getWUModel()->isPreSpikeTimeRequired(); }))
     {
         return true;
     }
@@ -144,14 +141,14 @@ bool NeuronGroupInternal::isTrueSpikeRequired() const
 {
     // If any OUTGOING synapse groups require true spikes, return true
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-        [](SynapseGroup *sg){ return sg->isTrueSpikeRequired(); }))
+        [](SynapseGroupInternal *sg){ return sg->isTrueSpikeRequired(); }))
     {
         return true;
     }
 
     // If any INCOMING synapse groups require postsynaptic learning, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-        [](SynapseGroup *sg){ return !sg->getWUModel()->getLearnPostCode().empty(); }))
+        [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getLearnPostCode().empty(); }))
     {
         return true;
     }
@@ -163,7 +160,7 @@ bool NeuronGroupInternal::isSpikeEventRequired() const
 {
      // Spike like events are required if any OUTGOING synapse groups require spike like events
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroup *sg){ return sg->isSpikeEventRequired(); });
+                       [](SynapseGroupInternal *sg){ return sg->isSpikeEventRequired(); });
 }
 
 bool NeuronGroupInternal::isVarQueueRequired(const std::string &var) const
@@ -206,7 +203,7 @@ bool NeuronGroupInternal::isSimRNGRequired() const
     // Return true if any of the incoming synapse groups require an RNG in their postsynaptic model
     // **NOTE** these are included as they are simulated in the neuron kernel/function
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroup *sg)
+                       [](const SynapseGroupInternal *sg)
                        {
                            return (Utils::isRNGRequired(sg->getPSModel()->getApplyInputCode()) ||
                                    Utils::isRNGRequired(sg->getPSModel()->getDecayCode()));
@@ -230,14 +227,14 @@ bool NeuronGroupInternal::isInitRNGRequired() const
     // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroup *sg){ return sg->isPSInitRNGRequired(); });
+                       [](const SynapseGroupInternal *sg){ return sg->isPSInitRNGRequired(); });
 }
 
 bool NeuronGroupInternal::hasOutputToHost(int targetHostID) const
 {
     // Return true if any of the outgoing synapse groups have target populations on specified host ID
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [targetHostID](SynapseGroup *sg)
+                       [targetHostID](SynapseGroupInternal *sg)
                        {
                            return (sg->getTrgNeuronGroup()->getClusterHostID() == targetHostID);
                        });

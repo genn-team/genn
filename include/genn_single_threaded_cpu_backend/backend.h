@@ -56,7 +56,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroup &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
                                            const Substitutions &kernelSubs, Handler handler) const override;
 
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const override;
@@ -89,7 +89,7 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+    void genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
     void genEmitSpike(CodeStream &os, const NeuronGroupInternal &ng, const Substitutions &subs, bool trueSpike) const;

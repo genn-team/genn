@@ -563,7 +563,7 @@ void Backend::genVariableInit(CodeStream &os, VarLocation, size_t count, const s
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroup &sg,
+void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroupInternal &sg,
                                         const Substitutions &kernelSubs, Handler handler) const
 {
     // **TODO** loops like this should be generated like CUDA threads
@@ -734,7 +734,7 @@ bool Backend::isGlobalRNGRequired(const ModelSpec &model) const
     return false;
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                    SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events

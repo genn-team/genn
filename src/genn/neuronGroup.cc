@@ -30,3 +30,11 @@ bool NeuronGroup::isZeroCopyEnabled() const
 
     return false;
 }
+
+void NeuronGroup::initInitialiserDerivedParams(double dt)
+{
+    // Initialise derived parameters for variable initialisers
+    for(auto &v : m_VarInitialisers) {
+        v.initDerivedParams(dt);
+    }
+}

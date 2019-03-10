@@ -24,7 +24,7 @@ Part of the code generation and generated code sections.
 #pragma once
 
 #include "neuronGroupInternal.h"
-#include "synapseGroup.h"
+#include "synapseGroupInternal.h"
 #include "currentSource.h"
 
 #include <map>
@@ -99,8 +99,7 @@ public:
     // Typedefines
     //=======================
     typedef std::map<std::string, NeuronGroupInternal>::value_type NeuronGroupValueType;
-    typedef std::map<std::string, SynapseGroup>::value_type SynapseGroupValueType;
-    typedef std::map<std::string, std::pair<unsigned int, unsigned int>>::value_type SynapseGroupSubsetValueType;
+    typedef std::map<std::string, SynapseGroupInternal>::value_type SynapseGroupValueType;
 
     ModelSpec();
     ~ModelSpec();
@@ -246,10 +245,10 @@ public:
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     //! Get std::map containing local named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroup> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
+    const std::map<std::string, SynapseGroupInternal> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
 
     //! Get std::map containing remote named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroup> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
+    const std::map<std::string, SynapseGroupInternal> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
 
     //! Find a synapse group by name
     SynapseGroup *findSynapseGroup(const std::string &name);    
@@ -468,10 +467,10 @@ private:
     std::map<std::string, NeuronGroupInternal> m_RemoteNeuronGroups;
 
     //!< Named local synapse groups
-    std::map<std::string, SynapseGroup> m_LocalSynapseGroups;
+    std::map<std::string, SynapseGroupInternal> m_LocalSynapseGroups;
 
     //!< Named remote synapse groups
-    std::map<std::string, SynapseGroup> m_RemoteSynapseGroups;
+    std::map<std::string, SynapseGroupInternal> m_RemoteSynapseGroups;
 
     //!< Named local current sources
     std::map<std::string, CurrentSource> m_LocalCurrentSources;

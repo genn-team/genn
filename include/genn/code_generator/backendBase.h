@@ -13,7 +13,7 @@
 // Forward declarations
 class NeuronGroupInternal;
 class ModelSpec;
-class SynapseGroup;
+class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
@@ -37,7 +37,7 @@ public:
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
     typedef GroupHandler<NeuronGroupInternal> NeuronGroupHandler;
-    typedef GroupHandler<SynapseGroup> SynapseGroupHandler;
+    typedef GroupHandler<SynapseGroupInternal> SynapseGroupHandler;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
@@ -90,7 +90,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroup &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
                                            const Substitutions &kernelSubs, Handler handler) const = 0;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;

@@ -28,7 +28,7 @@ void applyVarInitSnippetSubstitutions(std::string &code, const Models::VarInit &
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
 }
 //--------------------------------------------------------------------------
-void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroup &sg)
+void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroupInternal &sg)
 {
     using namespace CodeGenerator;
 
@@ -183,7 +183,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                      const CodeGenerator::Substitutions &popSubs, const SynapseGroup &sg, const std::string &ftype)
+                      const CodeGenerator::Substitutions &popSubs, const SynapseGroupInternal &sg, const std::string &ftype)
 {
     using namespace CodeGenerator;
 
@@ -328,7 +328,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             genInitSpikes(os, backend, popSubs, ng, false);
         },
         // Dense syanptic matrix variable initialisation
-        [&backend, &model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
         {
             // Loop through rows
             os << "for(unsigned int i = 0; i < " << sg.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
@@ -340,7 +340,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             }
         },
         // Sparse synaptic matrix connectivity initialisation
-        [&model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+        [&model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
         {
             popSubs.addVarSubstitution("num_post", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
             popSubs.addFuncSubstitution("endRow", 0, "break");
@@ -367,7 +367,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             }
         },
         // Sparse synaptic matrix var initialisation
-        [&backend, &model](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
         {
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         });

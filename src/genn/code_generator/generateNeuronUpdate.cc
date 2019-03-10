@@ -40,7 +40,7 @@ void applyNeuronModelSubstitutions(std::string &code, const NeuronGroupInternal 
     name_substitutions(code, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
 }
 //--------------------------------------------------------------------------
-void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroup *sg)
+void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroupInternal *sg)
 {
     using namespace CodeGenerator;
 
@@ -302,14 +302,14 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpec &model,
                 if(ng.isDelayRequired()) {
                     // Are there any outgoing synapse groups with axonal delay and presynaptic WUM variables?
                     const bool preVars = std::any_of(ng.getOutSyn().cbegin(), ng.getOutSyn().cend(),
-                                                    [](const SynapseGroup *sg)
+                                                    [](const SynapseGroupInternal *sg)
                                                     {
                                                         return (sg->getDelaySteps() != NO_DELAY) && !sg->getWUModel()->getPreVars().empty();
                                                     });
 
                     // Are there any incoming synapse groups with back-propagation delay and postsynaptic WUM variables?
                     const bool postVars = std::any_of(ng.getInSyn().cbegin(), ng.getInSyn().cend(),
-                                                    [](const SynapseGroup *sg)
+                                                    [](const SynapseGroupInternal *sg)
                                                     {
                                                         return (sg->getBackPropDelaySteps() != NO_DELAY) && !sg->getWUModel()->getPostVars().empty();
                                                     });

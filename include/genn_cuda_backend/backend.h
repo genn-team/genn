@@ -99,7 +99,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroup &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
                                            const Substitutions &kernelSubs, Handler handler) const override;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
@@ -149,9 +149,9 @@ public:
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
-    static size_t getNumPresynapticUpdateThreads(const SynapseGroup &sg);
-    static size_t getNumPostsynapticUpdateThreads(const SynapseGroup &sg);
-    static size_t getNumSynapseDynamicsThreads(const SynapseGroup &sg);
+    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg);
+    static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
+    static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
 
     //--------------------------------------------------------------------------
     // Constants
@@ -219,16 +219,16 @@ private:
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
 
-    void genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+    void genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
-    void genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+    void genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpec &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                       SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
-    bool shouldAccumulateInLinSyn(const SynapseGroup &sg) const;
+    bool shouldAccumulateInLinSyn(const SynapseGroupInternal &sg) const;
 
-    bool shouldAccumulateInSharedMemory(const SynapseGroup &sg) const;
+    bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const;
 
     std::string getFloatAtomicAdd(const std::string &ftype) const;
 

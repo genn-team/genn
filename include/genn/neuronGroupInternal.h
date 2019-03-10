@@ -13,7 +13,7 @@
 
 // Forward declarations
 class CurrentSource;
-class SynapseGroup;
+class SynapseGroupInternal;
 
 //------------------------------------------------------------------------
 // NeuronGroupInternal
@@ -46,8 +46,8 @@ public:
 
     void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
 
-    void addInSyn(SynapseGroup *synapseGroup){ m_InSyn.push_back(synapseGroup); }
-    void addOutSyn(SynapseGroup *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
+    void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
+    void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
     void initDerivedParams(double dt);
  
@@ -63,14 +63,14 @@ public:
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
     
     //! Gets pointers to all synapse groups which provide input to this neuron group
-    const std::vector<SynapseGroup*> &getInSyn() const{ return m_InSyn; }
-    const std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> &getMergedInSyn() const{ return m_MergedInSyn; }
+    const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
+    const std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>> &getMergedInSyn() const{ return m_MergedInSyn; }
 
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
 
     //! Gets pointers to all synapse groups emanating from this neuron group
-    const std::vector<SynapseGroup*> &getOutSyn() const{ return m_OutSyn; }
+    const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
 
     bool isSpikeTimeRequired() const;
     bool isTrueSpikeRequired() const;
@@ -111,9 +111,9 @@ private:
     //------------------------------------------------------------------------
     std::vector<CurrentSource*> m_CurrentSources;
 
-    std::vector<SynapseGroup*> m_InSyn;
-    std::vector<SynapseGroup*> m_OutSyn;
-    std::vector<std::pair<SynapseGroup*, std::vector<SynapseGroup*>>> m_MergedInSyn;
+    std::vector<SynapseGroupInternal*> m_InSyn;
+    std::vector<SynapseGroupInternal*> m_OutSyn;
+    std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>> m_MergedInSyn;
     std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     

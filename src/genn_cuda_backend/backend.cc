@@ -54,7 +54,7 @@ void updateExtraGlobalParams(const std::string &varSuffix, const std::string &co
     }
 }
 //--------------------------------------------------------------------------
-void updateSynapseGroupExtraGlobalParams(const SynapseGroup &sg, std::map<std::string, std::string> &kernelParameters,
+void updateSynapseGroupExtraGlobalParams(const SynapseGroupInternal &sg, std::map<std::string, std::string> &kernelParameters,
                                          const std::vector<std::string> &codeStrings)
 {
     // Synapse kernel
@@ -458,9 +458,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
         }
         
         // Parallelise over synapse groups
-        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
-            [this](const SynapseGroup &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
-            [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
+        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
+            [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
+            [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
             {
                 // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                 if(sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -573,10 +573,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
             }
 
             // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
-            genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
-                [this](const SynapseGroup &sg){ return Utils::padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
-                [](const SynapseGroup &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
-                [postLearnHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
+            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
+                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
+                [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
+                [postLearnHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -669,10 +669,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
             kernelSubs.addVarSubstitution("t", "t");
 
             // Parallelise over synapse groups whose weight update models have code for synapse dynamics
-            genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
-                [this](const SynapseGroup &sg){ return Utils::padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
-                [](const SynapseGroup &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
-                [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs)
+            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
+                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
+                [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
+                [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getSrcNeuronGroup()->isDelayRequired()) {
@@ -870,10 +870,10 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with dense connectivity" << std::endl;
-        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
-            [this](const SynapseGroup &sg){ return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroup &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
-            [sgDenseInitHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
+            [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [](const SynapseGroupInternal &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
+            [sgDenseInitHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing postsynaptic neurons" << std::endl;
                 os << "if(" << popSubs.getVarSubstitution("id") << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
@@ -898,10 +898,10 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
-            [this](const SynapseGroup &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroup &sg){ return sg.isSparseConnectivityInitRequired(); },
-            [sgSparseConnectHandler](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
+            [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
+            [sgSparseConnectHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
@@ -985,10 +985,10 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
             }
 
             // Initialise weight update variables for synapse groups with dense connectivity
-            genParallelGroup<SynapseGroup>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
-                [this](const SynapseGroup &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
-                [](const SynapseGroup &sg){ return sg.isSparseInitRequired(); },
-                [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroup &sg, Substitutions &popSubs)
+            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
+                [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
+                [](const SynapseGroupInternal &sg){ return sg.isSparseInitRequired(); },
+                [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
                 {
                     // If this post synapse requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
@@ -1509,7 +1509,7 @@ void Backend::genVariableInit(CodeStream &os, VarLocation, size_t, const std::st
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroup &sg,
+void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroupInternal &sg,
                                         const Substitutions &kernelSubs, Handler handler) const
 {
     // Pre and postsynaptic ID should already be provided via parallelism
@@ -1710,7 +1710,7 @@ std::string Backend::getNVCCFlags() const
     return nvccFlags;
 }
 //--------------------------------------------------------------------------
-size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroup &sg)
+size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
 {
      if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
@@ -1727,7 +1727,7 @@ size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroup &sg)
     }
 }
 //--------------------------------------------------------------------------
-size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroup &sg)
+size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg)
 {
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxSourceConnections();
@@ -1737,7 +1737,7 @@ size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroup &sg)
     }
 }
 //--------------------------------------------------------------------------
-size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroup &sg)
+size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 {
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
@@ -1825,7 +1825,7 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                           SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
@@ -1915,7 +1915,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
+void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpec &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
      // Get suffix based on type of events
@@ -2065,13 +2065,13 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     }
 }
 //--------------------------------------------------------------------------
-bool Backend::shouldAccumulateInLinSyn(const SynapseGroup &sg) const
+bool Backend::shouldAccumulateInLinSyn(const SynapseGroupInternal &sg) const
 {
     // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield (where each thread represents an individual neuron)
     return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
 }
 //--------------------------------------------------------------------------
-bool Backend::shouldAccumulateInSharedMemory(const SynapseGroup &sg) const
+bool Backend::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const
 {
     // If parallelism is presynaptic i.e. atomics are required and device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)

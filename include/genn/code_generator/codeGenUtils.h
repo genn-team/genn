@@ -13,7 +13,7 @@
 
 // Forward declarations
 class ModelSpec;
-class SynapseGroup;
+class SynapseGroupInternal;
 
 //--------------------------------------------------------------------------
 // CodeGenerator
@@ -242,7 +242,7 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
 
 void preNeuronSubstitutionsInSynapticCode(
     std::string &wCode, //!< the code string to work on
-    const SynapseGroup &sg,
+    const SynapseGroupInternal &sg,
     const std::string &offset,
     const std::string &axonalDelayOffset,
     const std::string &postIdx,
@@ -252,7 +252,7 @@ void preNeuronSubstitutionsInSynapticCode(
 
 void postNeuronSubstitutionsInSynapticCode(
     std::string &wCode, //!< the code string to work on
-    const SynapseGroup &sg,
+    const SynapseGroupInternal &sg,
     const std::string &offset,
     const std::string &backPropDelayOffset,
     const std::string &preIdx,
@@ -267,7 +267,7 @@ void postNeuronSubstitutionsInSynapticCode(
 //-------------------------------------------------------------------------
 void neuronSubstitutionsInSynapticCode(
     std::string &wCode,                      //!< the code string to work on
-    const SynapseGroup &sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const SynapseGroupInternal &sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
     const std::string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const std::string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     const std::string &devPrefix,            //!< device prefix, "dd_" for GPU, nothing for CPU

@@ -10,10 +10,6 @@
 #include "neuronModels.h"
 #include "variableMode.h"
 
-// Forward declarations
-class CurrentSource;
-class SynapseGroup;
-
 //------------------------------------------------------------------------
 // NeuronGroup
 //------------------------------------------------------------------------
@@ -86,7 +82,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    std::vector<Models::VarInit> &getVarInitialisers(){ return m_VarInitialisers; }
+    void initInitialiserDerivedParams(double dt);
    
 private:
     //------------------------------------------------------------------------
