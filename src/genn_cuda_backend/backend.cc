@@ -366,7 +366,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
 {
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
-    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups.cend(),
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                    [](const ModelSpec::SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); }))
     {
         // pre synapse reset kernel header
