@@ -132,12 +132,6 @@ public:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
-    //! Return number of synapse groups which require a presynaptic reset kernel to be run
-    size_t getNumPreSynapseResetRequiredGroups() const;
-
-    //! Is there reset logic to be run before the synapse kernel i.e. for dendritic delays
-    bool isPreSynapseResetRequired() const{ return getNumPreSynapseResetRequiredGroups() > 0; }
-
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
 

@@ -71,12 +71,6 @@ bool ModelSpec::zeroCopyInUse() const
     return false;
 }
 
-size_t ModelSpec::getNumPreSynapseResetRequiredGroups() const
-{
-    return std::count_if(getLocalSynapseGroups().cbegin(), getLocalSynapseGroups().cend(),
-                         [](const SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); });
-}
-
 std::string ModelSpec::getTimePrecision() const
 {
     // If time precision is set to match model precision

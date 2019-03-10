@@ -1,6 +1,7 @@
 #include "optimiser.h"
 
 // Standard C++ includes
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <numeric>
@@ -96,6 +97,7 @@ void calcGroupSizes(const ModelSpec &model, std::vector<size_t> (&groupSizes)[Co
     }
 
     // Loop through synapse groups
+    size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getLocalSynapseGroups()) {
         groupSizes[Backend::KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second));
 
@@ -118,11 +120,16 @@ void calcGroupSizes(const ModelSpec &model, std::vector<size_t> (&groupSizes)[Co
                 groupSizes[Backend::KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
             }
         }
+        
+        // If this synapse group requires dendritic delay, it requires a pre-synapse reset
+        if(s.second.isDendriticDelayRequired()) {
+            numPreSynapseResetGroups++;
+        }
     }
 
     // Add group sizes for reset kernels
     groupSizes[Backend::KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
-    groupSizes[Backend::KernelPreSynapseReset].push_back(model.getNumPreSynapseResetRequiredGroups());
+    groupSizes[Backend::KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpec &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize, 

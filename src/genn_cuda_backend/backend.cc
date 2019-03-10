@@ -364,9 +364,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
                                SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
-    // If a reset kernel is required to be run before the synapse kernel
+    // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
-    if(model.isPreSynapseResetRequired())
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups.cend(),
+                   [](const ModelSpec::SynapseGroupValueType &s){ return s.second.isDendriticDelayRequired(); }))
     {
         // pre synapse reset kernel header
         os << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
