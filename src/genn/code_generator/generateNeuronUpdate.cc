@@ -22,7 +22,7 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void applyNeuronModelSubstitutions(std::string &code, const NeuronGroup &ng,
+void applyNeuronModelSubstitutions(std::string &code, const NeuronGroupInternal &ng,
                                    const std::string &varSuffix = "", const std::string &varExt = "")
 {
     using namespace CodeGenerator;
@@ -77,7 +77,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpec &model,
     // Neuron update kernel
     backend.genNeuronUpdate(os, model,
         // Sim handler
-        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs,
+        [&backend, &model](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs,
                            BackendBase::NeuronGroupHandler genEmitTrueSpike, BackendBase::NeuronGroupHandler genEmitSpikeLikeEvent)
         {
             const NeuronModels::Base *nm = ng.getNeuronModel();
@@ -388,7 +388,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpec &model,
             }
         },
         // WU var update handler
-        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
         {
             // Loop through outgoing synaptic populations
             for(const auto *sg : ng.getOutSyn()) {

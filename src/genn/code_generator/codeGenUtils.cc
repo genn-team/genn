@@ -148,7 +148,7 @@ void doFinal(std::string &code, unsigned int i, const std::string &type, unsigne
 
 void neuronSubstitutionsInSynapticCode(
     std::string &wCode, //!< the code string to work on
-    const NeuronGroup *ng,
+    const NeuronGroupInternal *ng,
     const std::string &offset,
     const std::string &delayOffset,
     const std::string &idx,

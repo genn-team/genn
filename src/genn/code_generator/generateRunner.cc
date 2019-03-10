@@ -44,7 +44,7 @@ void writeTypeRange(CodeGenerator::CodeStream &os, const std::string &precision,
     os << std::endl;
 }
 //-------------------------------------------------------------------------
-void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroup &ng, bool trueSpike)
+void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
 {
     const bool delayRequired = trueSpike
         ? (ng.isDelayRequired() && ng.isTrueSpikeRequired())

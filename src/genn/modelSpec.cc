@@ -159,25 +159,6 @@ unsigned int ModelSpec::getNumRemoteNeurons() const
                            });
 }
 
-NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name)
-{
-    // If a matching local neuron group is found, return it
-    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
-    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
-        return &localNeuronGroup->second;
-    }
-
-    // Otherwise, if a matching remote neuron group is found, return it
-    auto remoteNeuronGroup = m_RemoteNeuronGroups.find(name);
-    if(remoteNeuronGroup != m_RemoteNeuronGroups.cend()) {
-        return &remoteNeuronGroup->second;
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("neuron group " + name + " not found, aborting ...");
-    }
-}
-
 SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
 {
     // If a matching local synapse group is found, return it
@@ -375,5 +356,25 @@ void ModelSpec::finalize()
         if(!n.second.getInSyn().empty()) {
             n.second.mergeIncomingPSM(m_ShouldMergePostsynapticModels);
         }
+    }
+}
+
+
+NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
+{
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
+    }
+
+    // Otherwise, if a matching remote neuron group is found, return it
+    auto remoteNeuronGroup = m_RemoteNeuronGroups.find(name);
+    if(remoteNeuronGroup != m_RemoteNeuronGroups.cend()) {
+        return &remoteNeuronGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("neuron group " + name + " not found, aborting ...");
     }
 }

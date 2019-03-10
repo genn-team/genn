@@ -23,7 +23,7 @@ Part of the code generation and generated code sections.
 //--------------------------------------------------------------------------
 #pragma once
 
-#include "neuronGroup.h"
+#include "neuronGroupInternal.h"
 #include "synapseGroup.h"
 #include "currentSource.h"
 
@@ -98,7 +98,7 @@ class ModelSpec
 public:
     // Typedefines
     //=======================
-    typedef std::map<std::string, NeuronGroup>::value_type NeuronGroupValueType;
+    typedef std::map<std::string, NeuronGroupInternal>::value_type NeuronGroupValueType;
     typedef std::map<std::string, SynapseGroup>::value_type SynapseGroupValueType;
     typedef std::map<std::string, std::pair<unsigned int, unsigned int>>::value_type SynapseGroupSubsetValueType;
 
@@ -167,10 +167,10 @@ public:
     // PUBLIC NEURON FUNCTIONS
     //========================
     //! Get std::map containing local named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroup> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
+    const std::map<std::string, NeuronGroupInternal> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
 
     //! Get std::map containing remote named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroup> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
+    const std::map<std::string, NeuronGroupInternal> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
 
     //! How many neurons are simulated locally in this model
     unsigned int getNumLocalNeurons() const;
@@ -182,7 +182,7 @@ public:
     unsigned int getNumNeurons() const{ return getNumLocalNeurons() + getNumRemoteNeurons(); }
 
     //! Find a neuron group by name
-    NeuronGroup *findNeuronGroup(const std::string &name);
+    NeuronGroup *findNeuronGroup(const std::string &name){ return static_cast<NeuronGroup*>(findNeuronGroupInternal(name)); }
 
     //! Adds a new neuron group to the model using a neuron model managed by the user
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
@@ -278,8 +278,8 @@ public:
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         // Get source and target neuron groups
-        auto srcNeuronGrp = findNeuronGroup(src);
-        auto trgNeuronGrp = findNeuronGroup(trg);
+        auto srcNeuronGrp = findNeuronGroupInternal(src);
+        auto trgNeuronGrp = findNeuronGroupInternal(trg);
 
 #ifdef MPI_ENABLE
         // Get host ID of target neuron group
@@ -399,7 +399,7 @@ public:
                                     const typename CurrentSourceModel::ParamValues &paramValues,
                                     const typename CurrentSourceModel::VarValues &varInitialisers)
     {
-        auto targetGroup = findNeuronGroup(targetNeuronGroupName);
+        auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
 
 #ifdef MPI_ENABLE
         // Get host ID of target neuron group
@@ -453,13 +453,19 @@ public:
 
 private:
     //--------------------------------------------------------------------------
+    // Private methods
+    //--------------------------------------------------------------------------
+    //! Find a neuron group by name
+    NeuronGroupInternal *findNeuronGroupInternal(const std::string &name);
+    
+    //--------------------------------------------------------------------------
     // Private members
     //--------------------------------------------------------------------------
     //!< Named local neuron groups
-    std::map<std::string, NeuronGroup> m_LocalNeuronGroups;
+    std::map<std::string, NeuronGroupInternal> m_LocalNeuronGroups;
 
     //!< Named remote neuron groups
-    std::map<std::string, NeuronGroup> m_RemoteNeuronGroups;
+    std::map<std::string, NeuronGroupInternal> m_RemoteNeuronGroups;
 
     //!< Named local synapse groups
     std::map<std::string, SynapseGroup> m_LocalSynapseGroups;

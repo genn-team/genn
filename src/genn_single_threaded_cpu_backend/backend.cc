@@ -87,7 +87,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGrou
 
                     simHandler(os, n.second, popSubs,
                         // Emit true spikes
-                        [this, wuVarUpdateHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
+                        [this, wuVarUpdateHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &subs)
                         {
                             // Insert code to emit true spikes
                             genEmitSpike(os, ng, subs, true);
@@ -96,7 +96,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGrou
                             wuVarUpdateHandler(os, ng, subs);
                         },
                         // Emit spike-like events
-                        [this](CodeStream &os, const NeuronGroup &ng, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &subs)
                         {
                             // Insert code to emit spike-like events
                             genEmitSpike(os, ng, subs, false);
@@ -597,19 +597,19 @@ void Backend::genVariablePull(CodeStream&, const std::string&, const std::string
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroupInternal&) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroupInternal&) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroup&) const
+void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInternal&) const
 {
 }
 //--------------------------------------------------------------------------
@@ -824,7 +824,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, bool trueSpike) const
+void Backend::genEmitSpike(CodeStream &os, const NeuronGroupInternal &ng, const Substitutions &subs, bool trueSpike) const
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
     const bool delayRequired = trueSpike ? (ng.isDelayRequired() && ng.isTrueSpikeRequired()) : ng.isDelayRequired();

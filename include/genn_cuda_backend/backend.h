@@ -104,19 +104,19 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const override
+    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const override
     {
         genCurrentSpikePush(os, ng, false);
     }
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const override
+    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const override
     {
         genCurrentSpikePull(os, ng, false);
     }
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const override
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const override
     {
         genCurrentSpikePush(os, ng, true);
     }
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const override
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const override
     {
         genCurrentSpikePull(os, ng, true);
     }
@@ -216,8 +216,8 @@ private:
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
 
-    void genCurrentSpikePush(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const;
-    void genCurrentSpikePull(CodeStream &os, const NeuronGroup &ng, bool spikeEvent) const;
+    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
+    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
 
     void genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;

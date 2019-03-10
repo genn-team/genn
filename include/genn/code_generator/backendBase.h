@@ -11,7 +11,7 @@
 #include "variableMode.h"
 
 // Forward declarations
-class NeuronGroup;
+class NeuronGroupInternal;
 class ModelSpec;
 class SynapseGroup;
 
@@ -36,12 +36,12 @@ public:
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
-    typedef GroupHandler<NeuronGroup> NeuronGroupHandler;
+    typedef GroupHandler<NeuronGroupInternal> NeuronGroupHandler;
     typedef GroupHandler<SynapseGroup> SynapseGroupHandler;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
-    typedef std::function <void(CodeStream &, const NeuronGroup &, Substitutions&,
+    typedef std::function <void(CodeStream &, const NeuronGroupInternal &, Substitutions&,
                                 NeuronGroupHandler, NeuronGroupHandler)> NeuronGroupSimHandler;
     
     //--------------------------------------------------------------------------
@@ -95,10 +95,10 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const = 0;
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const = 0;
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const = 0;
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const = 0;
+    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
+    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
 
     virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpec &model) const = 0;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,

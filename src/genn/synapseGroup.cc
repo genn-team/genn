@@ -6,7 +6,7 @@
 #include <iostream>
 
 // GeNN includes
-#include "neuronGroup.h"
+#include "neuronGroupInternal.h"
 #include "gennUtils.h"
 
 //----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ std::vector<double> getConstInitVals(const std::vector<Models::VarInit> &varInit
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                            const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
-                           NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
+                           NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
                            VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation)
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),

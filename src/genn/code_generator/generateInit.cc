@@ -43,7 +43,7 @@ void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseG
 }
 //--------------------------------------------------------------------------
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                       const CodeGenerator::Substitutions &popSubs, const NeuronGroup &ng, bool spikeEvent)
+                       const CodeGenerator::Substitutions &popSubs, const NeuronGroupInternal &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
@@ -81,7 +81,7 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
 }
 //--------------------------------------------------------------------------
 void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                   const CodeGenerator::Substitutions &popSubs, const NeuronGroup &ng, bool spikeEvent)
+                   const CodeGenerator::Substitutions &popSubs, const NeuronGroupInternal &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
@@ -224,7 +224,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
 
     backend.genInit(os, model,
         // Local neuron group initialisation
-        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
         {
             // Initialise spike counts
             genInitSpikeCount(os, backend, popSubs, ng, false);
@@ -321,7 +321,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             }
         },
         // Remote neuron group initialisation
-        [&backend, &model](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
         {
             // Initialise spike counts and spikes
             genInitSpikeCount(os, backend, popSubs, ng, false);

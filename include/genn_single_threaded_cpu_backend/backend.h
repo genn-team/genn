@@ -59,10 +59,10 @@ public:
     virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroup &sg,
                                            const Substitutions &kernelSubs, Handler handler) const override;
 
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroup &ng) const override;
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroup &ng) const override;
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroup &ng) const override;
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroup &ng) const override;
+    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const override;
+    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const override;
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const override;
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const override;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
@@ -92,7 +92,7 @@ private:
     void genPresynapticUpdate(CodeStream &os, const SynapseGroup &sg, const Substitutions &popSubs, bool trueSpike,
                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
 
-    void genEmitSpike(CodeStream &os, const NeuronGroup &ng, const Substitutions &subs, bool trueSpike) const;
+    void genEmitSpike(CodeStream &os, const NeuronGroupInternal &ng, const Substitutions &subs, bool trueSpike) const;
 
   
     //--------------------------------------------------------------------------

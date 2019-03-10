@@ -231,9 +231,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGrou
         os << "__syncthreads();" << std::endl;
 
         // Parallelise over neuron groups
-        genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
-            [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
-            [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
+            [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
+            [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
                 // If axonal delays are required
                 if (ng.isDelayRequired()) {
@@ -256,12 +256,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGrou
                     CodeStream::Scope b(os);
                     simHandler(os, ng, popSubs,
                         // Emit true spikes
-                        [this](CodeStream &os, const NeuronGroup &, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronGroupInternal &, Substitutions &subs)
                         {
                             genEmitSpike(os, subs, "");
                         },
                         // Emit spike-like events
-                        [this](CodeStream &os, const NeuronGroup &, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronGroupInternal &, Substitutions &subs)
                         {
                             genEmitSpike(os, subs, "Evnt");
                         });
@@ -821,10 +821,10 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Remote neuron groups" << std::endl;
-        genParallelGroup<NeuronGroup>(os, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
-            [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroup &ng){ return ng.hasOutputToHost(m_LocalHostID); },
-            [this, remoteNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getRemoteNeuronGroupInternals(), idInitStart,
+            [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const NeuronGroupInternal &ng){ return ng.hasOutputToHost(m_LocalHostID); },
+            [this, remoteNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;
                 os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
@@ -838,10 +838,10 @@ void Backend::genInit(CodeStream &os, const ModelSpec &model,
    
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
-        genParallelGroup<NeuronGroup>(os, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
-            [this](const NeuronGroup &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroup &){ return true; },
-            [this, &model, localNGHandler](CodeStream &os, const NeuronGroup &ng, Substitutions &popSubs)
+        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
+            [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const NeuronGroupInternal &){ return true; },
+            [this, &model, localNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;
                 os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";

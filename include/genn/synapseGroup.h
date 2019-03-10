@@ -14,7 +14,7 @@
 #include "variableMode.h"
 
 // Forward declarations
-class NeuronGroup;
+class NeuronGroupInternal;
 
 //------------------------------------------------------------------------
 // SynapseGroup
@@ -25,7 +25,7 @@ public:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
-                 NeuronGroup *srcNeuronGroup, NeuronGroup *trgNeuronGroup,
+                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation);
     SynapseGroup(const SynapseGroup&) = delete;
@@ -43,8 +43,8 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    NeuronGroup *getSrcNeuronGroup(){ return m_SrcNeuronGroup; }
-    NeuronGroup *getTrgNeuronGroup(){ return m_TrgNeuronGroup; }
+    NeuronGroupInternal *getSrcNeuronGroup(){ return m_SrcNeuronGroup; }
+    NeuronGroupInternal *getTrgNeuronGroup(){ return m_TrgNeuronGroup; }
 
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
@@ -123,8 +123,8 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    const NeuronGroup *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
-    const NeuronGroup *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
+    const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
+    const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
     int getClusterHostID() const;
     int getClusterDeviceID() const;
@@ -260,10 +260,10 @@ private:
     SynapseMatrixType m_MatrixType;
 
     //!< Pointer to presynaptic neuron group
-    NeuronGroup *m_SrcNeuronGroup;
+    NeuronGroupInternal *m_SrcNeuronGroup;
 
     //!< Pointer to postsynaptic neuron group
-    NeuronGroup *m_TrgNeuronGroup;
+    NeuronGroupInternal *m_TrgNeuronGroup;
 
     //!< Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
