@@ -41,7 +41,7 @@ public:
     VarLocation getVarLocation(const std::string &varName) const;
 
     //! Get variable location for current source model state variable
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation[index]; }
+    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,

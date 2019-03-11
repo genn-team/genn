@@ -189,7 +189,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 
     const auto vars = sg.getWUModel()->getVars();
     for (size_t k = 0; k < vars.size(); k++) {
-        const auto &varInit = sg.getWUVarInitialisers()[k];
+        const auto &varInit = sg.getWUVarInitialisers().at(k);
         const VarLocation varLoc = sg.getWUVarLocation(k);
 
         // If this variable has any initialisation code
@@ -257,7 +257,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             // Initialise neuron variables
             genInitNeuronVarCode(os, backend, popSubs, ng.getNeuronModel()->getVars(), ng.getNumNeurons(), ng.getNumDelaySlots(),
                                  ng.getName(),  model.getPrecision(),
-                                 [&ng](size_t i){ return ng.getVarInitialisers()[i]; },
+                                 [&ng](size_t i){ return ng.getVarInitialisers().at(i); },
                                  [&ng](size_t i){ return ng.getVarLocation(i); },
                                  [&ng](size_t i){ return ng.isVarQueueRequired(i); });
 
@@ -290,7 +290,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
                 // If postsynaptic model variables should be individual
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), ng.getNumNeurons(), sg->getName(), model.getPrecision(),
-                                         [sg](size_t i){ return sg->getPSVarInitialisers()[i]; },
+                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
                                          [sg](size_t i){ return sg->getPSVarLocation(i); });
                 }
             }
@@ -298,7 +298,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             // Loop through incoming synaptic populations
             for(const auto *s : ng.getInSyn()) {
                 genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPostVars(), ng.getNumNeurons(), s->getTrgNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
-                                     [&s](size_t i){ return s->getWUPostVarInitialisers()[i]; },
+                                     [&s](size_t i){ return s->getWUPostVarInitialisers().at(i); },
                                      [&s](size_t i){ return s->getWUPostVarLocation(i); },
                                      [&s](size_t){ return (s->getBackPropDelaySteps() != NO_DELAY); });
             }
@@ -307,7 +307,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             for(const auto *s : ng.getOutSyn()) {
                 // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
                 genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPreVars(), ng.getNumNeurons(), s->getSrcNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
-                                     [&s](size_t i){ return s->getWUPreVarInitialisers()[i]; },
+                                     [&s](size_t i){ return s->getWUPreVarInitialisers().at(i); },
                                      [&s](size_t i){ return s->getWUPreVarLocation(i); },
                                      [&s](size_t){ return (s->getDelaySteps() != NO_DELAY); });
             }
@@ -316,7 +316,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const B
             os << "// current source variables" << std::endl;
             for (auto const *cs : ng.getCurrentSources()) {
                 genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), ng.getNumNeurons(), cs->getName(), model.getPrecision(),
-                                     [cs](size_t i){ return cs->getVarInitialisers()[i]; },
+                                     [cs](size_t i){ return cs->getVarInitialisers().at(i); },
                                      [cs](size_t i){ return cs->getVarLocation(i); });
             }
         },

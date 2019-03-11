@@ -125,32 +125,30 @@ public:
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;
-    bool isWUVarZeroCopyEnabled(const std::string &var) const{ return (getWUVarLocation(var) & VarLocation::ZERO_COPY); }
-    bool isPSVarZeroCopyEnabled(const std::string &var) const{ return (getPSVarLocation(var) & VarLocation::ZERO_COPY); }
-
+ 
     //! Get variable mode used by weight update model per-synapse state variable
     VarLocation getWUVarLocation(const std::string &var) const;
 
     //! Get variable mode used by weight update model per-synapse state variable
-    VarLocation getWUVarLocation(size_t index) const{ return m_WUVarLocation[index]; }
+    VarLocation getWUVarLocation(size_t index) const{ return m_WUVarLocation.at(index); }
 
     //! Get variable mode used by weight update model presynaptic state variable
     VarLocation getWUPreVarLocation(const std::string &var) const;
 
     //! Get variable mode used by weight update model presynaptic state variable
-    VarLocation getWUPreVarLocation(size_t index) const{ return m_WUPreVarLocation[index]; }
+    VarLocation getWUPreVarLocation(size_t index) const{ return m_WUPreVarLocation.at(index); }
 
     //! Get variable mode used by weight update model postsynaptic state variable
     VarLocation getWUPostVarLocation(const std::string &var) const;
 
     //! Get variable mode used by weight update model postsynaptic state variable
-    VarLocation getWUPostVarLocation(size_t index) const{ return m_WUPostVarLocation[index]; }
+    VarLocation getWUPostVarLocation(size_t index) const{ return m_WUPostVarLocation.at(index); }
 
     //! Get variable mode used by postsynaptic model state variable
     VarLocation getPSVarLocation(const std::string &var) const;
 
     //! Get variable mode used by postsynaptic model state variable
-    VarLocation getPSVarLocation(size_t index) const{ return m_PSVarLocation[index]; }
+    VarLocation getPSVarLocation(size_t index) const{ return m_PSVarLocation.at(index); }
 
 protected:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
