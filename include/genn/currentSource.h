@@ -16,13 +16,7 @@
 class CurrentSource
 {
 public:
-    CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                VarLocation defaultVarLocation) 
-    :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_VarLocation(varInitialisers.size(), defaultVarLocation)
-    {
-    }
+
     CurrentSource(const CurrentSource&) = delete;
     CurrentSource() = delete;
 
@@ -31,8 +25,6 @@ public:
     //------------------------------------------------------------------------
     //! Set location of neuron model state variable
     void setVarLocation(const std::string &varName, VarLocation loc);
-
-    void initDerivedParams(double dt);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -43,7 +35,6 @@ public:
     const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
 
     const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for current source model state variable
@@ -52,19 +43,19 @@ public:
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(size_t index) const{ return m_VarLocation[index]; }
 
-    //! Does this current source require any initialisation code to be run
-    bool isInitCodeRequired() const;
+protected:
+    CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
+                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                VarLocation defaultVarLocation)
+    :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
+        m_VarLocation(varInitialisers.size(), defaultVarLocation)
+    {
+    }
 
-    //! Does this current source require an RNG to simulate
-    bool isSimRNGRequired() const;
-
-    //! Does this current source group require an RNG for it's init code
-    bool isInitRNGRequired() const;
-
-    //! Can this current source run on the CPU?
-    /*! If we are running in CPU_ONLY mode this is always true,
-        but some GPU functionality will prevent models being run on both CPU and GPU. */
-    bool canRunOnCPU() const;
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    void initInitialiserDerivedParams(double dt);
 
 private:
     //------------------------------------------------------------------------
@@ -74,7 +65,6 @@ private:
 
     const CurrentSourceModels::Base *m_CurrentSourceModel;
     std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory

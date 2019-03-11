@@ -40,46 +40,6 @@ std::vector<double> getConstInitVals(const std::vector<Models::VarInit> &varInit
 // ------------------------------------------------------------------------
 // SynapseGroup
 // ------------------------------------------------------------------------
-SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
-                           NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
-                           const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
-                           VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation)
-    :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
-        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
-        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
-        m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
-        m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
-        m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation),
-        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation)
-{
-    // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
-    auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
-    if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
-        m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
-                                                m_ConnectivityInitialiser.getParams());
-    }
-    // Otherwise, default to the size of the target population
-    else {
-        m_MaxConnections = trgNeuronGroup->getNumNeurons();
-    }
-
-    // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
-    auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
-    if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
-        m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
-                                                      m_ConnectivityInitialiser.getParams());
-    }
-    // Otherwise, default to the size of the source population
-    else {
-        m_MaxSourceConnections = srcNeuronGroup->getNumNeurons();
-    }
-}
-
 void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc)
 {
     m_WUVarLocation[getWUModel()->getVarIndex(varName)] = loc;
@@ -222,6 +182,46 @@ VarLocation SynapseGroup::getWUPostVarLocation(const std::string &var) const
 VarLocation SynapseGroup::getPSVarLocation(const std::string &var) const
 {
     return m_WUVarLocation[getPSModel()->getVarIndex(var)];
+}
+
+SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
+                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
+                           NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
+                           const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                           VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation)
+    :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
+        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
+        m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
+        m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
+        m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
+        m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
+        m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation),
+        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation)
+{
+    // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+    auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
+    if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+        m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                m_ConnectivityInitialiser.getParams());
+    }
+    // Otherwise, default to the size of the target population
+    else {
+        m_MaxConnections = trgNeuronGroup->getNumNeurons();
+    }
+
+    // If connectivitity initialisation snippet provides a function to calculate row length, call it
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+    auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
+    if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+        m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                      m_ConnectivityInitialiser.getParams());
+    }
+    // Otherwise, default to the size of the source population
+    else {
+        m_MaxSourceConnections = srcNeuronGroup->getNumNeurons();
+    }
 }
 
 void SynapseGroup::initInitialiserDerivedParams(double dt)

@@ -12,7 +12,7 @@
 #include "variableMode.h"
 
 // Forward declarations
-class CurrentSource;
+class CurrentSourceInternal;
 class SynapseGroupInternal;
 
 //------------------------------------------------------------------------
@@ -55,7 +55,7 @@ public:
     void mergeIncomingPSM(bool merge);
 
     //! add input current source
-    void injectCurrent(CurrentSource *source);
+    void injectCurrent(CurrentSourceInternal *source);
     
     //------------------------------------------------------------------------
     // Public const methods
@@ -67,7 +67,7 @@ public:
     const std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>> &getMergedInSyn() const{ return m_MergedInSyn; }
 
     //! Gets pointers to all current sources which provide input to this neuron group
-    const std::vector<CurrentSource*> &getCurrentSources() const { return m_CurrentSources; }
+    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
 
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
@@ -109,7 +109,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<CurrentSource*> m_CurrentSources;
+    std::vector<CurrentSourceInternal*> m_CurrentSources;
 
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;

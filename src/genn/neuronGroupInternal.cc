@@ -5,7 +5,7 @@
 #include <cmath>
 
 // GeNN includes
-#include "currentSource.h"
+#include "currentSourceInternal.h"
 #include "synapseGroupInternal.h"
 #include "gennUtils.h"
 
@@ -195,7 +195,7 @@ bool NeuronGroupInternal::isSimRNGRequired() const
 
     // Return true if any current sources require an RNG for simulation
     if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
-        [](const CurrentSource *cs){ return cs->isSimRNGRequired(); }))
+        [](const CurrentSourceInternal *cs){ return cs->isSimRNGRequired(); }))
     {
         return true;
     }
@@ -219,7 +219,7 @@ bool NeuronGroupInternal::isInitRNGRequired() const
 
     // Return true if any current sources require an RNG for initialisation
     if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
-        [](const CurrentSource *cs){ return cs->isInitRNGRequired(); }))
+        [](const CurrentSourceInternal *cs){ return cs->isInitRNGRequired(); }))
     {
         return true;
     }
@@ -255,7 +255,7 @@ std::string NeuronGroupInternal::getPrevQueueOffset(const std::string &devPrefix
     return "(((" + devPrefix + "spkQuePtr" + getName() + " + " + std::to_string(getNumDelaySlots() - 1) + ") % " + std::to_string(getNumDelaySlots()) + ") * " + std::to_string(getNumNeurons()) + ")";
 }
 
-void NeuronGroupInternal::injectCurrent(CurrentSource *src)
+void NeuronGroupInternal::injectCurrent(CurrentSourceInternal *src)
 {
     m_CurrentSources.push_back(src);
 }

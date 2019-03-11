@@ -25,7 +25,7 @@ Part of the code generation and generated code sections.
 
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
-#include "currentSource.h"
+#include "currentSourceInternal.h"
 
 #include <map>
 #include <set>
@@ -370,10 +370,10 @@ public:
     //================================
 
     //! Get std::map containing local named CurrentSource objects in model
-    const std::map<std::string, CurrentSource> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
+    const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
     //! Get std::map containing remote named CurrentSource objects in model
-    const std::map<std::string, CurrentSource> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
+    const std::map<std::string, CurrentSourceInternal> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
 
     //! Find a current source by name
     CurrentSource *findCurrentSource(const std::string &name);
@@ -467,10 +467,10 @@ private:
     std::map<std::string, SynapseGroupInternal> m_RemoteSynapseGroups;
 
     //!< Named local current sources
-    std::map<std::string, CurrentSource> m_LocalCurrentSources;
+    std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
 
     //!< Named remote current sources
-    std::map<std::string, CurrentSource> m_RemoteCurrentSources;
+    std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
 
      // Model members
     std::string name;               //!< Name of the neuronal newtwork model

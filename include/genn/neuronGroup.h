@@ -16,15 +16,6 @@
 class NeuronGroup
 {
 public:
-    NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                VarLocation defaultVarLocation, int hostID, int deviceID) :
-        m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-        m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_HostID(hostID), m_DeviceID(deviceID)
-    {
-    }
     NeuronGroup(const NeuronGroup&) = delete;
     NeuronGroup() = delete;
 
@@ -79,6 +70,16 @@ public:
     VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
     
 protected:
+    NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
+                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                VarLocation defaultVarLocation, int hostID, int deviceID) :
+        m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
+        m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+        m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+        m_HostID(hostID), m_DeviceID(deviceID)
+    {
+    }
+
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------

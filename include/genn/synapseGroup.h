@@ -22,12 +22,6 @@ class NeuronGroupInternal;
 class SynapseGroup
 {
 public:
-    SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
-                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
-                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
-                 const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
-                 VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation);
     SynapseGroup(const SynapseGroup&) = delete;
     SynapseGroup() = delete;
 
@@ -159,6 +153,13 @@ public:
     VarLocation getPSVarLocation(size_t index) const{ return m_PSVarLocation[index]; }
 
 protected:
+    SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
+                 const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                 const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
+                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
+                 const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                 VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation);
+
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
