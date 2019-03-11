@@ -29,6 +29,7 @@ public:
     using NeuronGroup::getMergedInSyn;
     using NeuronGroup::getOutSyn;
     using NeuronGroup::getCurrentSources;
+    using NeuronGroup::getDerivedParams;
     using NeuronGroup::getSpikeEventCondition;
     using NeuronGroup::isParamRequiredBySpikeEventCondition;
     using NeuronGroup::getCurrentQueueOffset;

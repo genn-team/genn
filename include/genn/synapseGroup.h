@@ -117,7 +117,6 @@ public:
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
-    const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::vector<Models::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
@@ -126,7 +125,6 @@ public:
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
     const std::vector<double> &getPSParams() const{ return m_PSParams; }
-    const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
     const std::vector<Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
@@ -216,6 +214,9 @@ protected:
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
+
+    const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
+    const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
 
     //!< Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */

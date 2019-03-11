@@ -26,6 +26,8 @@ public:
     
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
+    using SynapseGroup::getWUDerivedParams;
+    using SynapseGroup::getPSDerivedParams;
     using SynapseGroup::setEventThresholdReTestRequired;
     using SynapseGroup::setPSModelMergeTarget;
     using SynapseGroup::initDerivedParams;

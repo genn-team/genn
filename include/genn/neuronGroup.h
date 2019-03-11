@@ -50,7 +50,6 @@ public:
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
     const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     int getClusterHostID() const{ return m_HostID; }
@@ -141,6 +140,8 @@ protected:
 
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
+
+    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
 
     const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
