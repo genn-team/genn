@@ -25,7 +25,7 @@
 #include <string>
 
 // Forward declarations
-class ModelSpec;
+class ModelSpecInternal;
 
 //--------------------------------------------------------------------------
 /*!
@@ -35,6 +35,6 @@ class ModelSpec;
   including: MPI send and receive functions.
 */
 //--------------------------------------------------------------------------
-void genMPI(const ModelSpec &model,   //!< Model description
+void genMPI(const ModelSpecInternal &model,   //!< Model description
             const std::string &path,     //!< Path for code generation
             int localHostID);       //!< ID of local host

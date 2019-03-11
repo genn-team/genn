@@ -12,7 +12,7 @@
 #include "variableMode.h"
 
 // Forward declarations
-class ModelSpec;
+class ModelSpecInternal;
 class SynapseGroupInternal;
 
 //--------------------------------------------------------------------------

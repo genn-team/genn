@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
         networkName = networkName.substr(0, networkName.find_last_of("."));
 
         // The neuron model
-        ModelSpec model;
+        ModelSpecInternal model;
         model.setDT(dt);
         model.setName(networkName);
 

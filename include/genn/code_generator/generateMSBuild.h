@@ -3,7 +3,7 @@
 #include <vector>
 
 // Forward declarations
-class ModelSpec;
+class ModelSpecInternal;
 
 namespace CodeGenerator
 {

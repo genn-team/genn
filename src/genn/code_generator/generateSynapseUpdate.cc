@@ -4,7 +4,7 @@
 #include <string>
 
 // GeNN includes
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -17,7 +17,7 @@
 namespace
 {
 void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroupInternal &sg,
-                               const CodeGenerator::Substitutions &baseSubs, const ModelSpec &model, const CodeGenerator::BackendBase &backend)
+                               const CodeGenerator::Substitutions &baseSubs, const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
 {
     using namespace CodeGenerator;
     const auto *wu = sg.getWUModel();
@@ -61,7 +61,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpec &model, const BackendBase &backend)
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;

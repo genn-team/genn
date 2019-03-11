@@ -5,7 +5,7 @@
 #include <string>
 
 // GeNN includes
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator
 #include "code_generator/codeStream.h"
@@ -118,7 +118,7 @@ void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const ModelSpec &model,
+void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const ModelSpecInternal &model,
                                    const BackendBase &backend, int localHostID)
 {
     // Write definitions preamble

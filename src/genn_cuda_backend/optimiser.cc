@@ -20,7 +20,7 @@
 #include "path.h"
 
 // GeNN includes
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/generateAll.h"
@@ -82,7 +82,7 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const ModelSpec &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::Backend::KernelMax])
+void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::Backend::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -132,7 +132,7 @@ void calcGroupSizes(const ModelSpec &model, std::vector<size_t> (&groupSizes)[Co
     groupSizes[Backend::KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpec &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize, 
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize,
                                            const CodeGenerator::CUDA::Backend::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
@@ -358,7 +358,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpec &model,
     return kernelsToOptimise;
 }
 //--------------------------------------------------------------------------
-int chooseOptimalDevice(const ModelSpec &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize, 
+int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize,
                         const CodeGenerator::CUDA::Backend::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
@@ -483,7 +483,7 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpec &model, const filesystem::path &outputPath, int localHostID, 
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
                       const Backend::Preferences &preferences)
 {
     if(preferences.autoChooseDevice) {

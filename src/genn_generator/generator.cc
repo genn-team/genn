@@ -12,7 +12,7 @@
 #include "path.h"
 
 // GeNN includes
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/generateAll.h"
@@ -37,7 +37,6 @@ CodeGenerator::BACKEND_NAMESPACE::Backend::Preferences GENN_PREFERENCES;
 
 int main(int argc,     //!< number of arguments; expected to be 2
          char *argv[]) //!< Arguments; expected to contain the target directory for code generation.
-    
 {
     // Initialise log channels, appending all to console
     // **TODO** de-crud standard logger
@@ -54,8 +53,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
     const filesystem::path targetPath(argv[1]);
 
     // Create model
-    ModelSpec model;
-    modelDefinition(model);
+    // **NOTE** casting to external-facing model to hide model's internals
+    ModelSpecInternal model;
+    modelDefinition(static_cast<ModelSpec&>(std::ref(model)));
     
     // Finalize model
     model.finalize();

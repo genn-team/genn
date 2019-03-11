@@ -23,10 +23,7 @@ Part of the code generation and generated code sections.
 //--------------------------------------------------------------------------
 #pragma once
 
-#include "neuronGroupInternal.h"
-#include "synapseGroupInternal.h"
-#include "currentSourceInternal.h"
-
+// Standard C++ includes
 #include <map>
 #include <set>
 #include <string>
@@ -34,6 +31,12 @@ Part of the code generation and generated code sections.
 #ifdef MPI_ENABLE
 #include <mpi.h>
 #endif
+
+// GeNN includes
+#include "neuronGroupInternal.h"
+#include "synapseGroupInternal.h"
+#include "currentSourceInternal.h"
+
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -126,12 +129,6 @@ public:
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
 
-    //! Get the string literal that should be used to represent a value in the model's floating-point type
-    std::string scalarExpr(const double) const;
-
-    //! Are any variables in any populations in this model using zero-copy memory?
-    bool zeroCopyInUse() const;
-
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return name; }
 
@@ -150,21 +147,8 @@ public:
     //! Are timers and timing commands enabled
     bool isTimingEnabled() const{ return timing; }
 
-    //! Generate path for generated code
-    std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
-
-    //! Finalise model
-    // **YUCK** this really shouldn't be public
-    void finalize();
-
     // PUBLIC NEURON FUNCTIONS
     //========================
-    //! Get std::map containing local named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroupInternal> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
-
-    //! Get std::map containing remote named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroupInternal> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
-
     //! How many neurons are simulated locally in this model
     unsigned int getNumLocalNeurons() const;
 
@@ -238,12 +222,6 @@ public:
 
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
-    //! Get std::map containing local named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroupInternal> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
-
-    //! Get std::map containing remote named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroupInternal> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
-
     //! Find a synapse group by name
     SynapseGroup *findSynapseGroup(const std::string &name);    
 
@@ -368,13 +346,6 @@ public:
 
     // PUBLIC CURRENT SOURCE FUNCTIONS
     //================================
-
-    //! Get std::map containing local named CurrentSource objects in model
-    const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
-
-    //! Get std::map containing remote named CurrentSource objects in model
-    const std::map<std::string, CurrentSourceInternal> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
-
     //! Find a current source by name
     CurrentSource *findCurrentSource(const std::string &name);
 
@@ -443,6 +414,42 @@ public:
                                 targetNeuronGroupName, paramValues, varInitialisers);
     }
 
+protected:
+    //--------------------------------------------------------------------------
+    // Protected methods
+    //--------------------------------------------------------------------------
+    //! Finalise model
+    void finalize();
+
+    //--------------------------------------------------------------------------
+    // Protected const methods
+    //--------------------------------------------------------------------------
+    //! Generate path for generated code
+    std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
+
+    //! Get the string literal that should be used to represent a value in the model's floating-point type
+    std::string scalarExpr(const double) const;
+
+    //! Are any variables in any populations in this model using zero-copy memory?
+    bool zeroCopyInUse() const;
+
+    //! Get std::map containing local named NeuronGroup objects in model
+    const std::map<std::string, NeuronGroupInternal> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
+
+    //! Get std::map containing remote named NeuronGroup objects in model
+    const std::map<std::string, NeuronGroupInternal> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
+
+    //! Get std::map containing local named SynapseGroup objects in model
+    const std::map<std::string, SynapseGroupInternal> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
+
+    //! Get std::map containing remote named SynapseGroup objects in model
+    const std::map<std::string, SynapseGroupInternal> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
+
+    //! Get std::map containing local named CurrentSource objects in model
+    const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
+
+    //! Get std::map containing remote named CurrentSource objects in model
+    const std::map<std::string, CurrentSourceInternal> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
 
 private:
     //--------------------------------------------------------------------------

@@ -4,7 +4,7 @@
 #include <string>
 
 // GeNN includes
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -13,7 +13,7 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpec &model)
+void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecInternal &model)
 {
     os << "#pragma once" << std::endl;
     os << std::endl;

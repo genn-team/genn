@@ -9,7 +9,7 @@
 
 // GeNN includes
 #include "models.h"
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -68,7 +68,7 @@ void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroupIn
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpec &model, const BackendBase &backend)
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;

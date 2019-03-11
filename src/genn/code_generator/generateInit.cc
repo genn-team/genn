@@ -5,7 +5,7 @@
 
 // GeNN includes
 #include "models.h"
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -218,7 +218,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const ModelSpec &model, const BackendBase &backend)
+void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
 

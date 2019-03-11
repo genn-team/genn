@@ -52,25 +52,6 @@ void ModelSpec::setName(const std::string &inname)
     name= inname;
 }
 
-bool ModelSpec::zeroCopyInUse() const
-{
-    // If any neuron groups use zero copy return true
-    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
-        [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
-    {
-        return true;
-    }
-
-    // If any synapse groups use zero copy return true
-    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
-        [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
-    {
-        return true;
-    }
-
-    return false;
-}
-
 std::string ModelSpec::getTimePrecision() const
 {
     // If time precision is set to match model precision
@@ -85,53 +66,6 @@ std::string ModelSpec::getTimePrecision() const
         return "double";
     }
 }
-
-std::string ModelSpec::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
-#ifdef MPI_ENABLE
-    int localHostID = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
-    return path + "/" + getName() + "_" + std::to_string(localHostID) + "_CODE/" + filename;
-#else
-    return path + "/" + getName() + "_CODE/" + filename;
-#endif
-    }
-/*
-bool ModelSpec::isDeviceInitRequired(int localHostID) const
-{
-    // If any local neuron groups require device initialisation, return true
-    if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
-        [](const ModelSpec::NeuronGroupValueType &n){ return n.second.isDeviceInitRequired(); }))
-    {
-        return true;
-    }
-
-    // If any remote neuron groups with local outputs require their spike variables to be initialised on device
-    if(std::any_of(std::begin(m_RemoteNeuronGroups), std::end(m_RemoteNeuronGroups),
-        [localHostID](const ModelSpec::NeuronGroupValueType &n)
-        {
-            return (n.second.hasOutputToHost(localHostID) && (n.second.getSpikeVarMode() & VarInit::DEVICE));
-        }))
-    {
-        return true;
-    }
-
-
-    // If any local synapse groups require device initialisation, return true
-    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const ModelSpec::SynapseGroupValueType &s){ return s.second.isDeviceInitRequired(); }))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool ModelSpec::isDeviceSparseInitRequired() const
-{
-    // Return true if any of the synapse groups require device sparse initialisation
-    return std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
-        [](const ModelSpec::SynapseGroupValueType &s) { return s.second.isDeviceSparseInitRequired(); });
-}*/
 
 unsigned int ModelSpec::getNumLocalNeurons() const
 {
@@ -195,11 +129,11 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
         throw std::runtime_error("current source " + name + " not found, aborting ...");
     }
 }
+
 //--------------------------------------------------------------------------
 /*! \brief This function sets the integration time step DT of the model
  */
 //--------------------------------------------------------------------------
-
 void ModelSpec::setDT(double newDT /**<  */)
 {
     dt = newDT;
@@ -210,7 +144,6 @@ void ModelSpec::setDT(double newDT /**<  */)
 /*! \brief This function sets the numerical precision of floating type variables. By default, it is GENN_GENN_FLOAT.
  */
 //--------------------------------------------------------------------------
-
 void ModelSpec::setPrecision(FloatType floattype /**<  */)
 {
     switch (floattype) {
@@ -237,7 +170,6 @@ void ModelSpec::setTimePrecision(TimePrecision timePrecision)
 /*! \brief This function sets a flag to determine whether timers and timing commands are to be included in generated code.
  */
 //--------------------------------------------------------------------------
-
 void ModelSpec::setTiming(bool theTiming /**<  */)
 {
     timing= theTiming;
@@ -248,23 +180,9 @@ void ModelSpec::setTiming(bool theTiming /**<  */)
 /*! \brief This function sets the random seed. If the passed argument is > 0, automatic seeding is disabled. If the argument is 0, the underlying seed is obtained from the time() function.
  */
 //--------------------------------------------------------------------------
-
 void ModelSpec::setSeed(unsigned int inseed /*!< the new seed  */)
 {
     seed= inseed;
-}
-
-std::string ModelSpec::scalarExpr(const double val) const
-{
-    std::string tmp;
-    float fval= (float) val;
-    if (ftype == "float") {
-        tmp= std::to_string(fval) + "f";
-    }
-    if (ftype == "double") {
-        tmp= std::to_string(val);
-    }
-    return tmp;
 }
 
 void ModelSpec::finalize()
@@ -353,6 +271,48 @@ void ModelSpec::finalize()
     }
 }
 
+std::string ModelSpec::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
+#ifdef MPI_ENABLE
+    int localHostID = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
+    return path + "/" + getName() + "_" + std::to_string(localHostID) + "_CODE/" + filename;
+#else
+    return path + "/" + getName() + "_CODE/" + filename;
+#endif
+}
+
+std::string ModelSpec::scalarExpr(const double val) const
+{
+    std::string tmp;
+    float fval= (float) val;
+    if (ftype == "float") {
+        tmp= std::to_string(fval) + "f";
+    }
+    if (ftype == "double") {
+        tmp= std::to_string(val);
+    }
+    return tmp;
+}
+
+
+bool ModelSpec::zeroCopyInUse() const
+{
+    // If any neuron groups use zero copy return true
+    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
+        [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
+    {
+        return true;
+    }
+
+    // If any synapse groups use zero copy return true
+    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
+        [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
 
 NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
 {

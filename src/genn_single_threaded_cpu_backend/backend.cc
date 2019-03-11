@@ -1,7 +1,7 @@
 #include "backend.h"
 
 // GeNN includes
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -29,7 +29,7 @@ namespace CodeGenerator
 {
 namespace SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
     os << "void updateNeurons(" << model.getTimePrecision() << " t)";
     {
@@ -108,7 +108,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGrou
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
@@ -280,7 +280,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpec &model,
+void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                       NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                       SynapseGroupHandler sgSparseInitHandler) const
@@ -519,7 +519,7 @@ void Backend::genRunnerPreamble(CodeStream &) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpec &) const
+void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpecInternal &) const
 {
 }
 //--------------------------------------------------------------------------
@@ -613,7 +613,7 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const ModelSpec &model) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const ModelSpecInternal &model) const
 {
     definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
@@ -708,7 +708,7 @@ void Backend::genMSBuildImportTarget(std::ostream&) const
 {
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalRNGRequired(const ModelSpec &model) const
+bool Backend::isGlobalRNGRequired(const ModelSpecInternal &model) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account

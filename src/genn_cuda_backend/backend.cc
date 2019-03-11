@@ -7,8 +7,8 @@
 #include <plog/Log.h>
 
 // GeNN includes
-#include "modelSpec.h"
 #include "gennUtils.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -101,7 +101,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -360,7 +360,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpec &model, NeuronGrou
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
@@ -771,7 +771,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpec &model,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpec &model,
+void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                       NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                       SynapseGroupHandler sgSparseInitHandler) const
@@ -1395,7 +1395,7 @@ void Backend::genRunnerPreamble(CodeStream &os) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpec &model) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const
 {
     // Get chosen device's PCI bus ID
     char pciBusID[32];
@@ -1556,7 +1556,7 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpec &) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &) const
 {
     // Create a single Philox4_32_10 RNG
     genVariableDefinition(definitions, definitionsInternal, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
@@ -1660,7 +1660,7 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalRNGRequired(const ModelSpec &model) const
+bool Backend::isGlobalRNGRequired(const ModelSpecInternal &model) const
 {
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
@@ -1826,7 +1826,7 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                           SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
@@ -1916,7 +1916,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpec &model
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpec &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
      // Get suffix based on type of events
