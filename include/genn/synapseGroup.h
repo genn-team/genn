@@ -108,9 +108,16 @@ public:
     int getClusterHostID() const;
     int getClusterDeviceID() const;
 
+    //! Does synapse group need to handle 'true' spikes
+    bool isTrueSpikeRequired() const;
+
+    //! Does synapse group need to handle spike-like events
+    bool isSpikeEventRequired() const;
+
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
+    const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::vector<Models::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
@@ -119,13 +126,14 @@ public:
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
     const std::vector<double> &getPSParams() const{ return m_PSParams; }
+    const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
     const std::vector<Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;
- 
+
     //! Get variable mode used by weight update model per-synapse state variable
     VarLocation getWUVarLocation(const std::string &var) const;
 
@@ -150,6 +158,36 @@ public:
     //! Get variable mode used by postsynaptic model state variable
     VarLocation getPSVarLocation(size_t index) const{ return m_PSVarLocation.at(index); }
 
+    //! Does this synapse group require dendritic delay?
+    bool isDendriticDelayRequired() const;
+
+    //! Does this synapse group require an RNG for it's postsynaptic init code?
+    bool isPSInitRNGRequired() const;
+
+    //! Does this synapse group require an RNG for it's weight update init code?
+    bool isWUInitRNGRequired() const;
+
+    //! Is device var init code required for any variables in this synapse group's postsynaptic model?
+    bool isPSVarInitRequired() const;
+
+    //! Is var init code required for any variables in this synapse group's weight update model?
+    bool isWUVarInitRequired() const;
+
+    //! Is var init code required for any presynaptic variables in this synapse group's weight update model
+    bool isWUPreVarInitRequired() const;
+
+    //! Is var init code required for any postsynaptic variables in this synapse group's weight update model
+    bool isWUPostVarInitRequired() const;
+
+    //! Is sparse connectivity initialisation code required for this synapse group?
+    bool isSparseConnectivityInitRequired() const;
+
+    //! Is any form of device initialisation required?
+    bool isInitRequired() const;
+
+    //! Is any form of sparse device initialisation required?
+    bool isSparseInitRequired() const;
+    
 protected:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
@@ -159,15 +197,43 @@ protected:
                  VarLocation defaultVarLocation, VarLocation defaultSparseConnectivityLocation);
 
     //------------------------------------------------------------------------
-    // Protected API
+    // Protected methods
+    //------------------------------------------------------------------------
+    NeuronGroupInternal *getSrcNeuronGroup(){ return m_SrcNeuronGroup; }
+    NeuronGroupInternal *getTrgNeuronGroup(){ return m_TrgNeuronGroup; }
+
+    void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
+
+    void setPSModelMergeTarget(const std::string &targetName)
+    {
+        m_PSModelTargetName = targetName;
+    }
+    
+    void initDerivedParams(double dt);
+
+    //------------------------------------------------------------------------
+    // Protected const methods
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
-    
-    NeuronGroupInternal *getSrcNeuronGroup(){ return m_SrcNeuronGroup; }
-    NeuronGroupInternal *getTrgNeuronGroup(){ return m_TrgNeuronGroup; }
-    
-    void initInitialiserDerivedParams(double dt);
+
+    //!< Does the event threshold needs to be retested in the synapse kernel?
+    /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
+    bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
+
+    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
+    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+
+    //! Get the expression to calculate the delay slot for accessing
+    //! Presynaptic neuron state variables, taking into account axonal delay
+    std::string getPresynapticAxonalDelaySlot(const std::string &devPrefix) const;
+
+    //! Get the expression to calculate the delay slot for accessing
+    //! Postsynaptic neuron state variables, taking into account back propagation delay
+    std::string getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const;
+
+    std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -202,6 +268,10 @@ private:
     //!< Pointer to postsynaptic neuron group
     NeuronGroupInternal *m_TrgNeuronGroup;
 
+    //!< Does the event threshold needs to be retested in the synapse kernel?
+    /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
+    bool m_EventThresholdReTestRequired;
+
     //!< Variable mode used for variables used to combine input from this synapse group
     VarLocation m_InSynLocation;
 
@@ -213,6 +283,9 @@ private:
 
     //!< Parameters of weight update model
     std::vector<double> m_WUParams;
+
+    //!< Derived parameters for weight update model
+    std::vector<double> m_WUDerivedParams;
 
     //!< Initialisers for weight update model per-synapse variables
     std::vector<Models::VarInit> m_WUVarInitialisers;
@@ -228,6 +301,9 @@ private:
 
     //!< Parameters of post synapse model
     std::vector<double> m_PSParams;
+
+    //!< Derived parameters for post synapse model
+    std::vector<double> m_PSDerivedParams;
 
     //!< Initialisers for post synapse model variables
     std::vector<Models::VarInit> m_PSVarInitialisers;
@@ -249,4 +325,8 @@ private:
 
     //!< Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
+
+    //! Name of the synapse group in which postsynaptic model is located
+    /*! This may not be the name of this group if it has been merged*/
+    std::string m_PSModelTargetName;
 };
