@@ -16,7 +16,6 @@
 class CurrentSource
 {
 public:
-
     CurrentSource(const CurrentSource&) = delete;
     CurrentSource() = delete;
 
@@ -45,8 +44,8 @@ public:
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                VarLocation defaultVarLocation)
+                  const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                  VarLocation defaultVarLocation)
     :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_VarLocation(varInitialisers.size(), defaultVarLocation)
     {
@@ -55,7 +54,21 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void initInitialiserDerivedParams(double dt);
+    void initDerivedParams(double dt);
+
+    //------------------------------------------------------------------------
+    // Protected const methods
+    //------------------------------------------------------------------------
+    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+
+    //! Does this current source require any initialisation code to be run
+    bool isInitCodeRequired() const;
+
+    //! Does this current source require an RNG to simulate
+    bool isSimRNGRequired() const;
+
+    //! Does this current source group require an RNG for it's init code
+    bool isInitRNGRequired() const;
 
 private:
     //------------------------------------------------------------------------
@@ -65,6 +78,7 @@ private:
 
     const CurrentSourceModels::Base *m_CurrentSourceModel;
     std::vector<double> m_Params;
+    std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     //!< Whether indidividual state variables of a neuron group should use zero-copied memory
