@@ -34,6 +34,11 @@ ifdef COVERAGE
     endif
 endif
 
+ifdef RELOCATABLE
+    GENN_PREFIX		:=$(GENN_PREFIX)_relocatable
+    CXXFLAGS		+=-fPIC
+endif
+
 ifdef DEBUG
     GENN_PREFIX		:=$(GENN_PREFIX)_debug
     CXXFLAGS		+=-g -O0 -DDEBUG
