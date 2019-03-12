@@ -31,8 +31,6 @@ public:
     using SynapseGroup::setEventThresholdReTestRequired;
     using SynapseGroup::setPSModelMergeTarget;
     using SynapseGroup::initDerivedParams;
-    using SynapseGroup::getSrcNeuronGroup;
-    using SynapseGroup::getTrgNeuronGroup;
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::isPSModelMerged;
