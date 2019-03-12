@@ -12,10 +12,8 @@ import numpy as np
 from . import genn_wrapper
 from . import model_preprocessor
 from .model_preprocessor import Variable
-from .genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
+#from .genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
-                          SynapseMatrixConnectivity_YALE,
-                          SynapseMatrixConnectivity_RAGGED,
                           SynapseMatrixConnectivity_BITMASK,
                           SynapseMatrixConnectivity_DENSE,
                           SynapseMatrixWeight_INDIVIDUAL,
@@ -243,14 +241,14 @@ class NeuronGroup(Group):
         if self.type == "SpikeSourceArray":
             self.is_spike_source_array = True
 
-    def add_to(self, nn_model, num_neurons):
-        """Add this NeuronGroup to the GeNN NNmodel
+    def add_to(self, model_spec, num_neurons):
+        """Add this NeuronGroup to the GeNN modelspec
 
         Args:
-        nn_model    --  GeNN NNmodel
+        model_spec  --  GeNN modelspec
         num_neurons --  int number of neurons
         """
-        add_fct = getattr(nn_model, "add_neuron_population_" + self.type)
+        add_fct = getattr(model_spec, "add_neuron_population_" + self.type)
 
         var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
         self.pop = add_fct(self.name, num_neurons, self.neuron,
@@ -330,7 +328,7 @@ class SynapseGroup(Group):
         """Number of synapses in group"""
         if self.is_dense:
             return self.trg.size * self.src.size
-        elif self.is_yale or self.is_ragged:
+        elif self.is_ragged:
             return self._num_synapses
 
     @property
@@ -338,8 +336,6 @@ class SynapseGroup(Group):
         """Size of each weight update variable"""
         if self.is_dense:
             return self.trg.size * self.src.size
-        elif self.is_yale:
-            return self._num_synapses
         elif self.is_ragged:
             return self.max_row_length * self.src.size
 
@@ -415,7 +411,7 @@ class SynapseGroup(Group):
     def get_var_values(self, var_name):
         var_view = self.vars[var_name].view
 
-        if self.is_dense or self.is_yale:
+        if self.is_dense:
             return np.copy(var_view)
         elif self.is_ragged:
             # Create range containing the index where each row starts in ind
@@ -446,14 +442,9 @@ class SynapseGroup(Group):
                                     "SynapseMatrixType_" + matrix_type)
 
     @property
-    def is_yale(self):
-        """Tests whether synaptic connectivity uses Yale format"""
-        return (self._matrix_type & SynapseMatrixConnectivity_YALE) != 0
-
-    @property
     def is_ragged(self):
         """Tests whether synaptic connectivity uses Ragged format"""
-        return (self._matrix_type & SynapseMatrixConnectivity_RAGGED) != 0
+        return (self._matrix_type & SynapseMatrixConnectivity_SPARSE) != 0
 
     @property
     def is_bitmask(self):
@@ -477,13 +468,13 @@ class SynapseGroup(Group):
         return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
 
     def set_sparse_connections(self, pre_indices, post_indices):
-        """Set yale or ragged foramt connections between two groups of neurons
+        """Set ragged foramt connections between two groups of neurons
 
         Args:
         pre_indices     --  ndarray of presynaptic indices
         post_indices    --  ndarray of postsynaptic indices
         """
-        if self.is_yale or self.is_ragged:
+        if self.is_ragged:
             # Lexically sort indices
             self.synapse_order = np.lexsort((post_indices, pre_indices))
 
@@ -501,24 +492,13 @@ class SynapseGroup(Group):
             # Set ind to sorted postsynaptic indices
             self.ind = post_indices[self.synapse_order]
 
-            # If format is yale
-            if self.is_yale:
-                # Calculate cumulative sium
-                self.indInG = np.cumsum(row_lengths, dtype=np.uint32)
-                self.indInG = np.insert(self.indInG, 0, 0)
+            # Cache the row lengths
+            self.row_lengths = row_lengths
 
-                # Check validity of data structure
-                assert len(self.indInG) == (self.src.size + 1)
-                assert self.indInG[-1] == self._num_synapses
-            # Otherwise if it's ragged
-            else:
-                # Cache the row lengths
-                self.row_lengths = row_lengths
-
-                assert len(self.row_lengths) == self.src.size
+            assert len(self.row_lengths) == self.src.size
         else:
             raise Exception("set_sparse_connections only supports"
-                            "ragged and yale format sparse connectivity")
+                            "ragged format sparse connectivity")
 
         self.connections_set = True
 
@@ -532,14 +512,14 @@ class SynapseGroup(Group):
         self.src = source
         self.trg = target
 
-    def add_to(self, nn_model, delay_steps):
+    def add_to(self, model_spec, delay_steps):
         """Add this SynapseGroup to the GeNN NNmodel
 
         Args:
-        nn_model -- GeNN NNmodel
+        model_spec -- GeNN ModelSpec
         """
         add_fct = getattr(
-            nn_model,
+            model_spec,
             ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
 
         wu_var_ini = model_preprocessor.var_space_to_vals(
@@ -614,20 +594,7 @@ class SynapseGroup(Group):
         if not self.is_dense and self.is_connectivity_init_required:
             # If data is available
             if self.connections_set:
-                if self.is_yale:
-                    # Allocate memory for Yale data structure
-                    slm.allocate_yale_proj(self.name, self.num_synapses)
-
-                    # Get pointers to yale data structure members
-                    ind = slm.assign_external_yale_ind(self.name,
-                                                       self.num_synapses)
-                    indInG = slm.assign_external_yale_ind_in_g(self.name,
-                                                               self.src.size)
-
-                    # Copy connection data in
-                    ind[:] = self.ind
-                    indInG[:] = self.indInG
-                elif self.is_ragged:
+                if self.is_ragged:
                     # Get pointers to ragged data structure members
                     ind = slm.assign_external_ragged_ind(
                         self.name, self.weight_update_var_size)
@@ -703,14 +670,10 @@ class SynapseGroup(Group):
     def _init_wum_var(self, var_data):
         # If initialisation is required
         if var_data.init_required:
-            # If connectivity is in Yale format, copy variables
-            # into view, sorting to match GeNN order
-            if self.is_yale:
-                var_data.view[:] = var_data.values[self.synapse_order]
-            # Otherwise, if connectivity is dense,
+            # If connectivity is dense,
             # copy variables  directly into view
             # **NOTE** we assume order is row-major
-            elif self.is_dense:
+            if self.is_dense:
                 var_data.view[:] = var_data.values
             elif self.is_ragged:
                 # Sort variable to match GeNN order

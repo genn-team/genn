@@ -4,7 +4,7 @@ and defines class Variable
 """
 import numpy as np
 from . import genn_wrapper
-from .genn_wrapper.NewModels import VarInit, VarInitVector
+from .genn_wrapper.Models import VarInit, VarInitVector
 from .genn_wrapper.StlContainers import DoubleVector
 
 

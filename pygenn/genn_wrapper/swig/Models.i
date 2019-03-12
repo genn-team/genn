@@ -11,11 +11,11 @@
   
 --------------------------------------------------------------------------*/
 
-%module(package="genn_wrapper",directors="1") NewModels // for inheritance in python
+%module(package="genn_wrapper",directors="1") Models // for inheritance in python
 %{
 
 // GeNN includes
-#include "newModels.h"
+#include "models.h"
 
 // PyGenn includes
 #include "customParamValues.h"
@@ -34,9 +34,9 @@
 %import "Snippet.i"
 %import "InitVarSnippet.i"
 
-%feature("director") NewModels::Base; // for inheritance in python
-%nodefaultctor NewModels::VarInit;
-%include "newModels.h"
+%feature("director") Models::Base; // for inheritance in python
+%nodefaultctor Models::VarInit;
+%include "models.h"
 
 %nodefaultctor CustomValues::VarValues;
 %include "customVarValues.h"
@@ -44,10 +44,10 @@
 %include "customParamValues.h"
 
 %template(CustomVarValues) CustomValues::VarValues::VarValues<double>;
-%template(CustomVarValues) CustomValues::VarValues::VarValues<NewModels::VarInit>;
+%template(CustomVarValues) CustomValues::VarValues::VarValues<Models::VarInit>;
 
 // ignore vector(size) contructor & resize, otherwise compiler will complain about
 // missing default ctor in VarInit
-%ignore std::vector<NewModels::VarInit>::vector(size_type);
-%ignore std::vector<NewModels::VarInit>::resize;
-%template(VarInitVector) std::vector<NewModels::VarInit>;
+%ignore std::vector<Models::VarInit>::vector(size_type);
+%ignore std::vector<Models::VarInit>::resize;
+%template(VarInitVector) std::vector<Models::VarInit>;

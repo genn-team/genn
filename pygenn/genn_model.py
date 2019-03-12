@@ -48,16 +48,16 @@ from six import iteritems, itervalues
 # pygenn imports
 from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModel as slm
-from .genn_wrapper.NewModels import VarInit
+from .genn_wrapper.Models import VarInit
 from .genn_wrapper.InitSparseConnectivitySnippet import Init
 from .genn_wrapper.Snippet import make_dpf
 from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf
 from .genn_wrapper.StlContainers import (StringPair, StringStringDoublePairPair,
-                                        StringDPFPair, StringDoublePair,
-                                        StringPairVector, StringVector,
-                                        StringDPFPairVector,
-                                        StringStringDoublePairPairVector)
-from .genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_DEVICE
+                                         StringDPFPair, StringDoublePair,
+                                         StringPairVector, StringVector,
+                                         StringDPFPairVector,
+                                         StringStringDoublePairPairVector)
+from .genn_wrapper import VarLocation_HOST_DEVICE
 from .genn_groups import NeuronGroup, SynapseGroup, CurrentSource
 from .model_preprocessor import prepare_snippet
 
@@ -101,14 +101,13 @@ class GeNNModel(object):
 
         self._built = False
         self._loaded = False
-        self._localhost = genn_wrapper.initMPI_pygenn()
 
         self.use_cpu = cpu
-        self.default_var_mode =\
-            genn_wrapper.VarMode_LOC_HOST_DEVICE_INIT_DEVICE
-        genn_wrapper.GeNNPreferences.cvar.debugCode = enable_debug
-        self._model = genn_wrapper.NNmodel()
+        #genn_wrapper.GeNNPreferences.cvar.debugCode = enable_debug
+        self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
+
+        self.default_var_location = genn_wrapper.VarLocation_HOST_DEVICE
         self.model_name = model_name
         self.neuron_populations = {}
         self.synapse_populations = {}
@@ -131,30 +130,32 @@ class GeNNModel(object):
                 self._use_cpu = cpu
 
     @property
-    def default_var_mode(self):
-        """Default variable mode - defines how and
+    def default_var_location(self):
+        """Default variable location - defines
         where state variables are initialised"""
-        return genn_wrapper.GeNNPreferences.cvar.defaultVarMode
+        assert False
+        #return self._model.get_default
 
-    @default_var_mode.setter
-    def default_var_mode(self, mode):
+    @default_var_location.setter
+    def default_var_location(self, location):
         if self._built:
             raise Exception("GeNN model already built")
 
-        genn_wrapper.set_default_var_mode(mode)
+        self._model.set_default_var_location(location)
 
     @property
-    def default_sparse_connectivity_mode(self):
-        """Default sparse connectivity mode - how and where
+    def default_sparse_connectivity_location(location):
+        """Default sparse connectivity mode - where
         connectivity is initialised"""
-        return genn_wrapper.GeNNPreferences.cvar.defaultSparseConnectivityMode
+        assert False
+        #return genn_wrapper.GeNNPreferences.cvar.defaultSparseConnectivityMode
 
-    @default_sparse_connectivity_mode.setter
-    def default_sparse_connectivity_mode(self, mode):
+    @default_sparse_connectivity_location.setter
+    def default_sparse_connectivity_location(self, location):
         if self._built:
             raise Exception("GeNN model already built")
 
-        genn_wrapper.set_default_sparse_connectivity_mode(mode)
+        self._model.set_default_sparse_connectivity_location(location)
 
     @property
     def model_name(self):
@@ -333,9 +334,8 @@ class GeNNModel(object):
             raise Exception("GeNN model already built")
         self._path_to_model = path_to_model
 
-        self._model.finalize()
-        genn_wrapper.generate_model_runner_pygenn(
-            self._model, self._path_to_model, self._localhost)
+        genn_wrapper.generate_model_runner_pygenn(self._model,
+                                                  self._path_to_model)
 
         check_call(["make", "-C", path.join(path_to_model,
                                             self.model_name + "_CODE")])

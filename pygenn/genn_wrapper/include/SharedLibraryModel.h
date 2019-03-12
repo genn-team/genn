@@ -10,8 +10,6 @@
 #include <utility>
 #include <unordered_map>
 #include <bitset>
-#include "sparseProjection.h"
-#include "utils.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -40,9 +38,8 @@ public:
     typedef std::unordered_map< std::string, PopulationIO > PopIOMap;
 
 
-    SharedLibraryModel() : m_Library(nullptr), m_AllocateMem(nullptr),
-        m_Initialize(nullptr), m_InitializeModel(nullptr),
-        m_StepTimeGPU(nullptr), m_StepTimeCPU(nullptr)
+    SharedLibraryModel()
+    :   m_Library(nullptr), m_AllocateMem(nullptr), m_Initialize(nullptr), m_InitializeSparse(nullptr), m_StepTime(nullptr)
     {
     }
 
@@ -84,10 +81,9 @@ public:
         if(m_Library != nullptr) {
             m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
             m_Initialize = (VoidFunction)getSymbol("initialize");
-            m_InitializeModel = (VoidFunction)getSymbol("init" + modelName);
+            m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
 
-            m_StepTimeCPU = (VoidFunction)getSymbol("stepTimeCPU", true);
-            m_StepTimeGPU = (VoidFunction)getSymbol("stepTimeGPU", true);
+            m_StepTime = (VoidFunction)getSymbol("stepTime", true);
 
             m_ExitGeNN = (VoidFunction)getSymbol("exitGeNN");
 
@@ -209,38 +205,6 @@ public:
       *varPtr = static_cast<T*>( getSymbol( varName ) );
       *n1 = 1;
     }
-    
-    void assignExternalYaleInd(const std::string &popName, const int nConn,
-                               unsigned int **varPtr, int* n1)
-    {
-        auto sparsePop = static_cast<SparseProjection*>(getSymbol( "C" + popName));
-        *varPtr = sparsePop->ind;
-        *n1 = nConn;
-    }
-
-    void assignExternalYaleIndInG(const std::string &popName, const int nPre,
-                                  unsigned int **varPtr, int* n1)
-    {
-        auto sparsePop = static_cast<SparseProjection*>(getSymbol( "C" + popName));
-        *varPtr = sparsePop->indInG;
-        *n1 = nPre + 1;
-    }
-
-    void assignExternalRaggedInd(const std::string &popName, const int nPaddedConn,
-                                 unsigned int **varPtr, int* n1)
-    {
-        auto raggedPop = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
-        *varPtr = raggedPop->ind;
-        *n1 = nPaddedConn;
-    }
-
-    void assignExternalRaggedRowLength(const std::string &popName, const int nPre,
-                                       unsigned int **varPtr, int* n1)
-    {
-        auto raggedPop = static_cast<RaggedProjection<unsigned int>*>( getSymbol( "C" + popName ) );
-        *varPtr = raggedPop->rowLength;
-        *n1 = nPre;
-    }
 
     void *getSymbol(const std::string &symbolName, bool allowMissing = false)
     {
@@ -264,13 +228,7 @@ public:
         m_AllocateMem();
     }
 
-    void allocateYaleProj( const std::string &popName, unsigned int nConn )
-    {
-        typedef void(*UIntFct)(unsigned int);
-        ((UIntFct) getSymbol( "allocate" + popName ))( nConn );
-    }
-
-    void allocateExtraGlobalParam( const std::string &popName,
+   /* void allocateExtraGlobalParam( const std::string &popName,
                                    const std::string &paramName,
                                    const int size )
     {
@@ -291,26 +249,21 @@ public:
 #else
         free(*egp);
 #endif
-    }
+    }*/
 
     void initialize()
     {
         m_Initialize();
     }
 
-    void initializeModel()
+    void initializeSparse()
     {
-        m_InitializeModel();
+        m_InitializeSparse();
     }
 
-    void stepTimeGPU()
+    void stepTime()
     {
-        m_StepTimeGPU();
-    }
-
-    void stepTimeCPU()
-    {
-        m_StepTimeCPU();
+        m_StepTime();
     }
 
     void exitGeNN()
@@ -330,9 +283,8 @@ private:
 
     VoidFunction m_AllocateMem;
     VoidFunction m_Initialize;
-    VoidFunction m_InitializeModel;
-    VoidFunction m_StepTimeGPU;
-    VoidFunction m_StepTimeCPU;
+    VoidFunction m_InitializeSparse;
+    VoidFunction m_StepTime;
     VoidFunction m_ExitGeNN;
     
     PopIOMap m_PopulationsIO;
