@@ -19,21 +19,15 @@
 **/*_CODE
 
 # Ignore generator executables
-**/generateALL
-**/generateALL.exe
-**/generateALL_COVERAGE
-**/generateALL_COVERAGE.exe
-**/generateALL_CPU_ONLY
-**/generateALL_CPU_ONLY.exe
-**/generateALL_CPU_ONLY_COVERAGE
-**/generateALL_CPU_ONLY_COVERAGE.exe
-
-# Ignore CUDA junk
-**/sm_version.mk
+**/generator
+**/generator.exe
+**/generator_coverage
+**/generator_coverage.exe
+**/generator_debug
+**/generator_debug.exe
 
 # Ignore test output
-msg
+msg_*
 
 # Ignore LCOV output
-coverage.txt
-code_coverage_report
+genn*coverage.txt
