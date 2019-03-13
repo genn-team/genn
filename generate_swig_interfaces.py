@@ -420,13 +420,16 @@ def generateBackend(swigPath, folder, namespace):
     with SwigModuleGenerator(namespace + "Backend", os.path.join(swigPath, namespace + "Backend.i")) as mg:
         mg.addAutoGenWarning()
         mg.addSwigModuleHeadline()
-        mg.write("#pragma once\n")
-        #mg.write("%nodefaultctor CodeGenerator::" + namespace + "::Backend;\n")
+        mg.addSwigEnableUnderCaseConvert()
+
         with SwigAsIsScope(mg):
             mg.addCppInclude('"optimiser.h"')
             mg.write("using namespace CodeGenerator::" + namespace + ";\n")
-        #mg.write('%feature("valuewrapper") CodeGenerator::' + namespace + '::Backend;\n')
-        mg.addSwigIgnore( 'Backend' )
+
+        mg.addSwigIgnore("BackendBase")
+        mg.addSwigInclude('"code_generator/backendBase.h"')
+
+        mg.addSwigIgnore("Backend")
         mg.addSwigInclude('"backend.h"')
         mg.addSwigInclude('"optimiser.h"')
 
