@@ -3,9 +3,11 @@ import numpy as np
 import os
 import sys
 
+from copy import deepcopy
 from platform import system
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
+from six import iteritems
 
 from generate_swig_interfaces import generateConfigs
 
@@ -46,22 +48,17 @@ extra_compile_args = ["-std=c++11"]
 library_dirs = [os.path.join(genn_path, "lib")]
 libraries = ["genn_relocatable"]
 
-# Link against single-threaded CPU backend
-backend_libraries = ["genn_single_threaded_cpu_backend_relocatable"]
+# By default build single-threaded CPU backend
+backends = [("genn_single_threaded_cpu_backend", "SingleThreadedCPU", {})]
 
-# If CUDA was found
+# If CUDA was found, add backend configuration
 if cuda_installed:
-    # Link against CUDA and CUDA backend for GeNN
-    backend_libraries.extend(["cuda", "cudart", "genn_cuda_backend_relocatable"])
-    
-    # Add CUDA include and library path
-    include_dirs.append(os.path.join(cuda_path, "include"))
-    if mac_os_x:
-        backend_libraries.append(os.path.join(cuda_path, "lib"))
-    else:
-        backend_libraries.append(os.path.join(cuda_path, "lib64"))
+    backends.append(("genn_cuda_backend", "CUDA",
+                     {"libraries": ["cuda", "cudart"],
+                      "include_dirs": [os.path.join(cuda_path, "include")],
+                      "library_dirs": [os.path.join(cuda_path, "lib") if mac_os_x else os.path.join(cuda_path, "lib64")]}))
 
-
+# Build dictionary of kwargs to apply to all modules
 extension_kwargs = {
     "swig_opts": swig_opts,
     "include_dirs": include_dirs,
@@ -77,8 +74,9 @@ if mac_os_x:
                                            for l in library_dirs]
 
 # Before building extension, generate auto-generated parts of genn_wrapper
-generateConfigs(genn_path)
+generateConfigs(genn_path, backends)
 
+# Create main GeNNWrapper extension containing all of LibGeNN and base classes for implementing custom models in Python
 genn_wrapper = Extension('_genn_wrapper', [
     "pygenn/genn_wrapper/generated/genn_wrapper.i",
     "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc",
@@ -89,6 +87,41 @@ genn_wrapper = Extension('_genn_wrapper', [
     "pygenn/genn_wrapper/generated/weightUpdateModelsCustom.cc"],
     **extension_kwargs)
 
+# Create list of extension modules required to wrap other namespaces of libGeNN
+ext_modules = [genn_wrapper,
+               Extension('_Snippet', ["pygenn/genn_wrapper/swig/Snippet.i"], **extension_kwargs),
+               Extension('_Models', ["pygenn/genn_wrapper/swig/Models.i"], **extension_kwargs),
+               Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),
+               Extension('_SharedLibraryModel', ["pygenn/genn_wrapper/generated/SharedLibraryModel.i"], **extension_kwargs),
+               Extension('_InitVarSnippet', ["pygenn/genn_wrapper/generated/InitVarSnippet.i", "pygenn/genn_wrapper/generated/initVarSnippetCustom.cc"], **extension_kwargs),
+               Extension('_InitSparseConnectivitySnippet', ["pygenn/genn_wrapper/generated/InitSparseConnectivitySnippet.i", "pygenn/genn_wrapper/generated/initSparseConnectivitySnippetCustom.cc"], **extension_kwargs),
+               Extension('_NeuronModels', ["pygenn/genn_wrapper/generated/NeuronModels.i", "pygenn/genn_wrapper/generated/neuronModelsCustom.cc"], **extension_kwargs),
+               Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/postsynapticModelsCustom.cc"], **extension_kwargs),
+               Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/weightUpdateModelsCustom.cc"], **extension_kwargs),
+               Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **extension_kwargs)]
+
+# Loop through namespaces of supported backends
+for filename, namespace, kwargs in backends:
+    # Take a copy of the standard extension kwargs
+    backend_extension_kwargs = deepcopy(extension_kwargs)
+
+    # Extend any settings specified by backend
+    for n, v in iteritems(kwargs):
+        backend_extension_kwargs[n].extend(v)
+
+    # Add relocatable version of backend library to libraries
+    # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
+    backend_extension_kwargs["libraries"].insert(0, filename + "_relocatable")
+
+    # Add backend include directory to both SWIG and C++ compiler options
+    backend_include_dir = os.path.join(genn_path, "include", filename)
+    backend_extension_kwargs["include_dirs"].append(backend_include_dir)
+    backend_extension_kwargs["swig_opts"].append("-I" + backend_include_dir)
+
+    # Add extension to list
+    ext_modules.append(Extension("_" + namespace + "Backend", ["pygenn/genn_wrapper/generated/" + namespace + "Backend.i"],
+                                 **backend_extension_kwargs))
+
 setup(name = "pygenn",
       version = "0.2",
       packages = find_packages(),
@@ -97,17 +130,7 @@ setup(name = "pygenn",
       author="University of Sussex",
       description="Python interface to the GeNN simulator",
       ext_package="pygenn.genn_wrapper",
-      ext_modules=[genn_wrapper,
-                   Extension('_Snippet', ["pygenn/genn_wrapper/swig/Snippet.i"], **extension_kwargs),
-                   Extension('_Models', ["pygenn/genn_wrapper/swig/Models.i"], **extension_kwargs),
-                   Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),
-                   Extension('_SharedLibraryModel', ["pygenn/genn_wrapper/generated/SharedLibraryModel.i"], **extension_kwargs),
-                   Extension('_InitVarSnippet', ["pygenn/genn_wrapper/generated/InitVarSnippet.i", "pygenn/genn_wrapper/generated/initVarSnippetCustom.cc"], **extension_kwargs),
-                   Extension('_InitSparseConnectivitySnippet', ["pygenn/genn_wrapper/generated/InitSparseConnectivitySnippet.i", "pygenn/genn_wrapper/generated/initSparseConnectivitySnippetCustom.cc"], **extension_kwargs),
-                   Extension('_NeuronModels', ["pygenn/genn_wrapper/generated/NeuronModels.i", "pygenn/genn_wrapper/generated/neuronModelsCustom.cc"], **extension_kwargs),
-                   Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/postsynapticModelsCustom.cc"], **extension_kwargs),
-                   Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/weightUpdateModelsCustom.cc"], **extension_kwargs),
-                   Extension('_CurrentSourceModels', ["pygenn/genn_wrapper/generated/CurrentSourceModels.i", "pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc"], **extension_kwargs)],
+      ext_modules=ext_modules,
 
     # Requirements
     install_requires=["numpy>1.6, < 1.15", "six"],

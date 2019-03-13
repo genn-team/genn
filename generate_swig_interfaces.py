@@ -388,7 +388,7 @@ def generateStlContainersInterface( swigPath ):
             mg.addSwigTemplate( 'std::vector<{}>'.format(npDType), camelDT )
 
 
-def generateCustomModelDeclImpls( swigPath ):
+def generateCustomModelDeclImpls(swigPath):
     '''Generates headers/sources with *::Custom classes'''
     models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET, SPARSEINITSNIPPET]
     for model in models:
@@ -415,20 +415,39 @@ def generateCustomModelDeclImpls( swigPath ):
             else:
                 mg.write('IMPLEMENT_SNIPPET({}::Custom);\n'.format(nSpace))
 
+def generateBackend(swigPath, folder, namespace):
+    # Create SWIG module
+    with SwigModuleGenerator(namespace + "Backend", os.path.join(swigPath, namespace + "Backend.i")) as mg:
+        mg.addAutoGenWarning()
+        mg.addSwigModuleHeadline()
+        mg.write("#pragma once\n")
+        #mg.write("%nodefaultctor CodeGenerator::" + namespace + "::Backend;\n")
+        with SwigAsIsScope(mg):
+            mg.addCppInclude('"optimiser.h"')
+            mg.write("using namespace CodeGenerator::" + namespace + ";\n")
+        #mg.write('%feature("valuewrapper") CodeGenerator::' + namespace + '::Backend;\n')
+        mg.addSwigIgnore( 'Backend' )
+        mg.addSwigInclude('"backend.h"')
+        mg.addSwigInclude('"optimiser.h"')
 
-def generateConfigs( gennPath ):
-    swigPath = os.path.join( gennPath, 'pygenn', 'genn_wrapper', 'generated' )
-    includePath = os.path.join( gennPath, 'include', 'genn' )
+
+def generateConfigs(gennPath, backends):
+    swigPath = os.path.join(gennPath, 'pygenn', 'genn_wrapper', 'generated')
+    includePath = os.path.join(gennPath, 'include', 'genn')
     
     # Create output path if it doesn't exist
     if not os.path.exists(swigPath):
         os.makedirs(swigPath)
 
     # Generates SWIG interfaces
-    generateStlContainersInterface( swigPath )
-    generateCustomModelDeclImpls( swigPath )
-    generateSharedLibraryModelInterface( swigPath )
+    generateStlContainersInterface(swigPath)
+    generateCustomModelDeclImpls(swigPath)
+    generateSharedLibraryModelInterface(swigPath)
     
+    # Generate SWIG interfaces for all supported backends
+    for (f, n, _) in backends:
+        generateBackend(swigPath, f, n)
+
     # open header files with models and instantiate SwigModuleGenerators
     with open( os.path.join( includePath, NEURONMODELS + ".h" ), 'r' ) as neuronModels_h, \
             open( os.path.join( includePath, POSTSYNMODELS + ".h" ), 'r' ) as postsynModels_h, \
@@ -488,7 +507,7 @@ def generateConfigs( gennPath ):
                 for (int device = 0; device < deviceCount; device++) {
                     CHECK_CUDA_ERRORS(cudaSetDevice(device));
                     CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
-                }
+                }neuronSmg
             #endif // CPU_ONLY
             ''' )
         """
