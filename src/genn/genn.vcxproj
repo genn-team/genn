@@ -16,15 +16,14 @@
     <ClCompile Include="code_generator\generateAll.cc" />
     <ClCompile Include="code_generator\generateInit.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
+    <ClCompile Include="code_generator\generateMPI.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateNeuronUpdate.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
-    <ClCompile Include="code_generator\tempSubstitutions.cc" />
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
-    <ClCompile Include="generateMPI.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="modelSpec.cc" />
