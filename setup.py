@@ -125,14 +125,13 @@ for filename, namespace, kwargs in backends:
 setup(name = "pygenn",
       version = "0.2",
       packages = find_packages(),
-
       url="https://github.com/genn-team/genn",
       author="University of Sussex",
       description="Python interface to the GeNN simulator",
       ext_package="pygenn.genn_wrapper",
       ext_modules=ext_modules,
 
-    # Requirements
-    install_requires=["numpy>1.6, < 1.15", "six"],
-    zip_safe=False,  # Partly for performance reasons
+      # Requirements
+      install_requires=["numpy>1.6, < 1.15", "six"],
+      zip_safe=False,  # Partly for performance reasons
 )
