@@ -22,12 +22,30 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Backend
+// CodeGenerator::CUDA::Preferences
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
 namespace CUDA
 {
+struct Preferences : public PreferencesBase
+{
+    //! Should PTX assembler information be displayed for each CUDA kernel during compilation
+    bool showPtxInfo = false;
+
+    //! Should block size optimisation be performed?
+    bool optimiseBlockSize = true;
+
+    //! Should GPU device be chosen automatically?
+    bool autoChooseDevice = true;
+
+    //! NVCC compiler options for all GPU code
+    std::string userNvccFlags = "";
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::CUDA::Backend
+//--------------------------------------------------------------------------
 class Backend : public BackendBase
 {
 public:
@@ -47,24 +65,6 @@ public:
         KernelMax
     };
     
-    //--------------------------------------------------------------------------
-    // Preferences
-    //--------------------------------------------------------------------------
-    struct Preferences : public BackendBase::Preferences
-    {
-        //! Should PTX assembler information be displayed for each CUDA kernel during compilation
-        bool showPtxInfo = false; 
-      
-        //! Should block size optimisation be performed?
-        bool optimiseBlockSize = true; 
-        
-        //! Should GPU device be chosen automatically?
-        bool autoChooseDevice = true;
-
-        //! NVCC compiler options for all GPU code
-        std::string userNvccFlags = ""; 
-    };
-
     //--------------------------------------------------------------------------
     // Type definitions
     //--------------------------------------------------------------------------

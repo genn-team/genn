@@ -13,7 +13,7 @@ namespace SingleThreadedCPU
 namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &, const filesystem::path &, int localHostID,
-                      const Backend::Preferences &preferences)
+                      const Preferences &preferences)
 {
     Backend backend(localHostID, preferences);
     return std::move(backend);

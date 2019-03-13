@@ -133,7 +133,7 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize,
-                                           const CodeGenerator::CUDA::Backend::Preferences &preferences, const filesystem::path &outputPath)
+                                           const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -359,7 +359,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
 }
 //--------------------------------------------------------------------------
 int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize,
-                        const CodeGenerator::CUDA::Backend::Preferences &preferences, const filesystem::path &outputPath)
+                        const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -484,7 +484,7 @@ namespace CUDA
 namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
-                      const Backend::Preferences &preferences)
+                      const Preferences &preferences)
 {
     if(preferences.autoChooseDevice) {
         // Choose optimal device

@@ -13,7 +13,7 @@ namespace CUDA
 namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
-                      const Backend::Preferences &preferences);
+                      const Preferences &preferences);
 }   // namespace Optimiser
 }   // namespace CUDA
 }   // namespace CodeGenerator

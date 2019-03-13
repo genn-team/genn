@@ -30,7 +30,7 @@ enum Log
 };
 
 // Declare global GeNN preferences
-CodeGenerator::BACKEND_NAMESPACE::Backend::Preferences GENN_PREFERENCES;
+CodeGenerator::BACKEND_NAMESPACE::Preferences GENN_PREFERENCES;
 
 // Include model
 #include MODEL

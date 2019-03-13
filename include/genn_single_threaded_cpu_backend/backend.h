@@ -15,12 +15,19 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Backend
+// CodeGenerator::SingleThreadedCPU::Preferences
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
 namespace SingleThreadedCPU
 {
+struct Preferences : public PreferencesBase
+{
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Backend
+//--------------------------------------------------------------------------
 class Backend : public BackendBase
 {
 public:
@@ -99,7 +106,7 @@ private:
     // Members
     //--------------------------------------------------------------------------
     const int m_LocalHostID;
-    const BackendBase::Preferences m_Preferences;
+    const Preferences m_Preferences;
 };
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator
