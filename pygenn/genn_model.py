@@ -39,12 +39,16 @@ Example:
             Vs[i,:] = v_view
 """
 # python imports
+from collections import OrderedDict
+from importlib import import_module
 from os import path
 from subprocess import check_call   # to call make
 from textwrap import dedent
+
 # 3rd party imports
 import numpy as np
 from six import iteritems, itervalues
+
 # pygenn imports
 from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModel as slm
@@ -61,6 +65,21 @@ from .genn_wrapper import VarLocation_HOST_DEVICE
 from .genn_groups import NeuronGroup, SynapseGroup, CurrentSource
 from .model_preprocessor import prepare_snippet
 
+# Loop through backends in preferential order
+backend_modules = OrderedDict()
+for b in ["CUDA", "SingleThreadedCPU"]:
+    # Try and import
+    try:
+        m = import_module(".genn_wrapper." + b + "Backend", "pygenn")
+    # Ignore failed imports - likely due to non-supported backends
+    except ImportError as ex:
+        pass
+    # Raise any other errors
+    except:
+        raise
+    # Otherwise add to (ordered) dictionary
+    else:
+        backend_modules[b] = m
 
 class GeNNModel(object):
 
@@ -69,16 +88,15 @@ class GeNNModel(object):
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 enable_debug=False, cpu=None):
+                 enable_debug=False, backend=None):
         """Init GeNNModel
         Keyword args:
         precision       --  string precision as string ("float", "double"
                             or "long double"). defaults to float.
         model_name      --  string name of the model. Defaults to "GeNNModel".
         enable_debug    --  boolean enable debug mode. Disabled by default.
-        cpu             --  boolean whether GeNN should use CPU.
-                            Defaults to None to defer to whether
-                            module was built without GPU support.
+        backend         --  string specifying name of backend module to use
+                            Defaults to None to pick 'best' backend for your system
         """
         precision = "float" if precision is not None else precision
         self._scalar = precision
@@ -101,9 +119,7 @@ class GeNNModel(object):
 
         self._built = False
         self._loaded = False
-
-        self.use_cpu = cpu
-        #genn_wrapper.GeNNPreferences.cvar.debugCode = enable_debug
+        self.use_backend = backend
         self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
 
@@ -115,19 +131,22 @@ class GeNNModel(object):
         self.dT = 0.1
 
     @property
-    def use_cpu(self):
-        return self._use_cpu
+    def use_backend(self):
+        return self._backend_name
 
-    @use_cpu.setter
-    def use_cpu(self, cpu):
-        if cpu is None:
-            self._use_cpu = genn_wrapper.is_cpu_only()
+    @use_backend.setter
+    def use_backend(self, backend):
+        # If no backend is specified
+        if backend is None:
+            # Check we have managed to import any bagenn_wrapperckends
+            assert len(backend_modules) > 0
+
+            # Set name to first (i.e. best) backend and lookup module from dictionary
+            self._backend_name = next(iter(backend_modules))
+            self._backend_module = backend_modules[self._backend_name]
         else:
-            if genn_wrapper.is_cpu_only() and cpu == False:
-                raise ValueError("PyGeNN is built in CPU only mode. "
-                                 "GeNNModels cannot be simulated on GPU.")
-            else:
-                self._use_cpu = cpu
+            self._backend_name = backend
+            self._backend_module = backend_modules[backend]
 
     @property
     def default_var_location(self):
@@ -334,9 +353,16 @@ class GeNNModel(object):
             raise Exception("GeNN model already built")
         self._path_to_model = path_to_model
 
-        genn_wrapper.generate_model_runner_pygenn(self._model,
-                                                  self._path_to_model)
+        # Create suitable preferences object for backend
+        preferences = self._backend_module.Preferences()
 
+        # Create a suitable backend
+        backend = self._backend_module.create_backend(self._model, self._path_to_model, 0, preferences);
+
+        # Generate code
+        genn_wrapper.generate_model_runner_pygenn(self._model, backend, self._path_to_model, 0)
+
+        # Build code
         check_call(["make", "-C", path.join(path_to_model,
                                             self.model_name + "_CODE")])
 
