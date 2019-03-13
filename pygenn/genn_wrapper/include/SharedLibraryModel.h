@@ -39,7 +39,8 @@ public:
 
 
     SharedLibraryModel()
-    :   m_Library(nullptr), m_AllocateMem(nullptr), m_Initialize(nullptr), m_InitializeSparse(nullptr), m_StepTime(nullptr)
+    :   m_Library(nullptr), m_AllocateMem(nullptr), m_FreeMem(nullptr),
+        m_Initialize(nullptr), m_InitializeSparse(nullptr), m_StepTime(nullptr)
     {
     }
 
@@ -55,7 +56,7 @@ public:
         // Close model library if loaded successfully
         if(m_Library)
         {
-            exitGeNN();
+            freeMem();
 #ifdef _WIN32
             FreeLibrary(m_Library);
 #else
@@ -80,12 +81,12 @@ public:
         // If it fails throw
         if(m_Library != nullptr) {
             m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
+            m_FreeMem = (VoidFunction)getSymbol("freeMem");
+
             m_Initialize = (VoidFunction)getSymbol("initialize");
             m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
 
-            m_StepTime = (VoidFunction)getSymbol("stepTime", true);
-
-            m_ExitGeNN = (VoidFunction)getSymbol("exitGeNN");
+            m_StepTime = (VoidFunction)getSymbol("stepTime");
 
             return true;
         }
@@ -100,57 +101,22 @@ public:
 
     }
 
-    // Retrive symbols to pull/push from/to the device from shared model
-    // and store them in a map for fast lookup
-    void initIO( const std::string &popName,
-                 const std::bitset<5> &availableDTypes ) // the bits are indexed backwards
-    {
-#ifndef CPU_ONLY
-      std::array< std::string, 5 > dataTypes = {
-        "State",
-        "Spikes",
-        "SpikeEvents",
-        "CurrentSpikes",
-        "CurrentSpikeEvents" 
-      };
-      VoidIOFuncs pushers;
-      VoidIOFuncs pullers;
-      for ( size_t i = 0; i < dataTypes.size(); ++i )
-      {
-        if (availableDTypes.test(i)){
-          pullers[i] = (VoidFunction)getSymbol( "pull" + popName + dataTypes[i] + "FromDevice" );
-          pushers[i] = (VoidFunction)getSymbol( "push" + popName + dataTypes[i] + "ToDevice" );
-        }
-        else
-        {
-          // SynapseGroups and CurrentSources only have states. Throw if attempted to pull/push anything but state
-          pullers[i] = []{ throw std::runtime_error("You cannot pull from this population"); };
-          pushers[i] = []{ throw std::runtime_error("You cannot push to this population"); };
-        }
-      }
-
-      m_PopulationsIO.emplace( std::piecewise_construct,
-                             std::forward_as_tuple( popName ),
-                             std::forward_as_tuple( pullers, pushers ) );
-#endif
-    }
-
     void initNeuronPopIO( const std::string &popName )
     {
-      // the bits are indexed backwards
-      initIO( popName, std::bitset<5>("11111") );
+        // the bits are indexed backwards and spike events are optional
+        initIO(popName, std::bitset<5>("11111"), std::bitset<5>("10100"));
     }
     
     void initSynapsePopIO( const std::string &popName )
     {
-      // the bits are indexed backwards
-      initIO( popName, std::bitset<5>("00001") );
+        // the bits are indexed backwards
+        initIO(popName, std::bitset<5>("00001"), std::bitset<5>("00000"));
     }
 
     void initCurrentSourceIO( const std::string &csName )
     {
-      // the bits are indexed backwards
-      initIO( csName, std::bitset<5>("00001") );
+        // the bits are indexed backwards
+        initIO(csName, std::bitset<5>("00001"), std::bitset<5>("00000"));
     }
     
     void pullStateFromDevice( const std::string &popName )
@@ -191,8 +157,8 @@ public:
                                      const int varSize,
                                      T** varPtr, int* n1 )
     {
-      *varPtr = *( static_cast<T**>( getSymbol( varName ) ) );
-      *n1 = varSize;
+        *varPtr = *( static_cast<T**>( getSymbol( varName ) ) );
+        *n1 = varSize;
     }
     
     // Assign symbol from shared model to the provided pointer.
@@ -206,29 +172,18 @@ public:
       *n1 = 1;
     }
 
-    void *getSymbol(const std::string &symbolName, bool allowMissing = false)
-    {
-#ifdef _WIN32
-        void *symbol = GetProcAddress(m_Library, symbolName.c_str());
-#else
-        void *symbol = dlsym(m_Library, symbolName.c_str());
-#endif
-
-        // If this symbol isn't allowed to be missing but it is, raise exception
-        if(!allowMissing && symbol == nullptr) {
-            throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
-        }
-
-        return symbol;
-    }
-
-
     void allocateMem()
     {
         m_AllocateMem();
     }
 
-   /* void allocateExtraGlobalParam( const std::string &popName,
+    void freeMem()
+    {
+        m_FreeMem();
+    }
+
+   /* **TODO** the backend should generate these functions for EGP variables with * in
+    * void allocateExtraGlobalParam( const std::string &popName,
                                    const std::string &paramName,
                                    const int size )
     {
@@ -266,12 +221,80 @@ public:
         m_StepTime();
     }
 
-    void exitGeNN()
+private:
+    //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr)
     {
-        m_ExitGeNN();
+#ifdef _WIN32
+        void *symbol = GetProcAddress(m_Library, symbolName.c_str());
+#else
+        void *symbol = dlsym(m_Library, symbolName.c_str());
+#endif
+
+        // If this symbol's missing
+        if(symbol == nullptr) {
+            // If this isn't allowed, throw error
+            if(!allowMissing) {
+                throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
+            }
+            // Otherwise, return default
+            else {
+                return defaultSymbol;
+            }
+        }
+        // Otherwise, return symbol
+        else {
+            return symbol;
+        }
     }
 
-private:
+    // Retrive symbols to pull/push from/to the device from shared model
+    // and store them in a map for fast lookup
+    void initIO(const std::string &popName,
+                const std::bitset<5> &availableDTypes,
+                const std::bitset<5> &optionalDTypes) // the bits are indexed backwards
+    {
+        const std::array<std::string, 5> dataTypes = {
+            "State",
+            "Spikes",
+            "SpikeEvents",
+            "CurrentSpikes",
+            "CurrentSpikeEvents"
+        };
+        VoidIOFuncs pushers;
+        VoidIOFuncs pullers;
+        for(size_t i = 0; i < dataTypes.size(); i++) {
+            if (availableDTypes.test(i)) {
+                pullers[i] = (VoidFunction)getSymbol( "pull" + popName + dataTypes[i] + "FromDevice", optionalDTypes.test(i), (void*)&handleInvalidPull);
+                pushers[i] = (VoidFunction)getSymbol( "push" + popName + dataTypes[i] + "ToDevice", optionalDTypes.test(i), (void*)&handleInvalidPush);
+            }
+            else {
+                // SynapseGroups and CurrentSources only have states. Throw if attempted to pull/push anything but state
+                pullers[i] = &handleInvalidPull;
+                pushers[i] = &handleInvalidPush;
+            }
+        }
+
+        m_PopulationsIO.emplace(std::piecewise_construct,
+                                std::forward_as_tuple(popName),
+                                std::forward_as_tuple(pullers, pushers));
+    }
+
+    //----------------------------------------------------------------------------
+    // Static methods
+    //----------------------------------------------------------------------------
+    static void handleInvalidPull()
+    {
+        throw std::runtime_error("You cannot pull from this population");
+    }
+
+    static void handleInvalidPush()
+    {
+        throw std::runtime_error("You cannot push to this population");
+    }
+
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
@@ -282,10 +305,10 @@ private:
 #endif
 
     VoidFunction m_AllocateMem;
+    VoidFunction m_FreeMem;
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
-    VoidFunction m_ExitGeNN;
     
     PopIOMap m_PopulationsIO;
 };

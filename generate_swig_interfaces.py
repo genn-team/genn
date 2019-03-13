@@ -438,9 +438,13 @@ def generateBackend(swigPath, folder, namespace):
 
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
-            mg.write('void create_backend(const ModelSpecInternal &model, const std::string &outputPath, int localHostID, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
+            mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &outputPath, int localHostID, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
                      '{\n'
-                     '  Optimiser::createBackend(model, filesystem::path(outputPath), localHostID, preferences);\n'
+                     '  return Optimiser::createBackend(model, filesystem::path(outputPath), localHostID, preferences);\n'
+                     '}\n\n'
+                     'void delete_backend(CodeGenerator::' + namespace + '::Backend *backend)\n'
+                     '{\n'
+                     '  delete backend;\n'
                      '}\n')
 
 
@@ -505,16 +509,13 @@ def generateConfigs(gennPath, backends):
         # define and wrap two functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
-            void generate_model_runner_pygenn( ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &path, int localHostID ) {
+            void generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &path, int localHostID) {
                 const filesystem::path targetPath(path);
-
-                // Finalise model
-                model.finalize();
 
                 // Generate output path
                 const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
 
-                // Generate code
+                // Generate code, returning list of module names that must be build
                 const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
 
             #ifdef _WIN32
