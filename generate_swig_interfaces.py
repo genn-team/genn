@@ -33,7 +33,6 @@ Attrbutes:
     WUPDATEMODELS -- common name of WeightUpdateModels header and interface files without extention
     CURRSOURCEMODELS -- common name of CurrentSourceModels header and interface files without extention
     INITVARSNIPPET -- common name of InitVarSnippet header and interface files without extention
-    NNMODEL -- common name of NNmodel header and interface files without extention
     MAIN_MODULE -- name of the main SWIG module
 """
 import os  # to work with paths nicely
@@ -47,7 +46,6 @@ WUPDATEMODELS = 'weightUpdateModels'
 CURRSOURCEMODELS = 'currentSourceModels'
 INITVARSNIPPET = 'initVarSnippet'
 SPARSEINITSNIPPET = 'initSparseConnectivitySnippet'
-NNMODEL = 'modelSpec'
 MAIN_MODULE = 'genn_wrapper'
 
 # Scope classes should be used with 'with' statement. They write code in the
@@ -424,14 +422,26 @@ def generateBackend(swigPath, folder, namespace):
 
         with SwigAsIsScope(mg):
             mg.addCppInclude('"optimiser.h"')
+            mg.addCppInclude('"path.h"')
             mg.write("using namespace CodeGenerator::" + namespace + ";\n")
 
+        # Parse backend base, ignore BackendBase itself to get PreferencesBase definition
         mg.addSwigIgnore("BackendBase")
         mg.addSwigInclude('"code_generator/backendBase.h"')
 
+        # Parse backend, ignore Backend itself to get PreferencesBase definition
         mg.addSwigIgnore("Backend")
         mg.addSwigInclude('"backend.h"')
-        mg.addSwigInclude('"optimiser.h"')
+
+        # Import stl containers so as to support std::string
+        mg.addSwigImport( '"StlContainers.i"' )
+
+        # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
+        with SwigInlineScope(mg):
+            mg.write('void create_backend(const ModelSpecInternal &model, const std::string &outputPath, int localHostID, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
+                     '{\n'
+                     '  Optimiser::createBackend(model, filesystem::path(outputPath), localHostID, preferences);\n'
+                     '}\n')
 
 
 def generateConfigs(gennPath, backends):
@@ -482,7 +492,7 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"neuronGroup.h"' )
             pygennSmg.addCppInclude( '"synapseGroup.h"' )
             pygennSmg.addCppInclude( '"currentSource.h"' )
-            pygennSmg.addCppInclude( '"' + NNMODEL + '.h"' )
+            pygennSmg.addCppInclude( '"modelSpec.h"' )
             for header in (NEURONMODELS, POSTSYNMODELS,
                            WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET, SPARSEINITSNIPPET):
                 pygennSmg.addCppInclude( '"' + header + 'Custom.h"' )
@@ -492,28 +502,6 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"path.h"' )
         pygennSmg.addSwigImport( '"StlContainers.i"' )
 
-        # do initialization when module is loaded
-        """
-        with SwigInitScope( pygennSmg ):
-            pygennSmg.write( '''
-            initGeNN();
-            GENN_PREFERENCES::buildSharedLibrary = true;\n
-            GENN_PREFERENCES::autoInitSparseVars = true;\n
-            #ifdef DEBUG
-                GENN_PREFERENCES::optimizeCode = false;
-                GENN_PREFERENCES::debugCode = true;
-            #endif // DEBUG
-
-            #ifndef CPU_ONLY
-                CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-                deviceProp = new cudaDeviceProp[deviceCount];
-                for (int device = 0; device < deviceCount; device++) {
-                    CHECK_CUDA_ERRORS(cudaSetDevice(device));
-                    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&(deviceProp[device]), device));
-                }neuronSmg
-            #endif // CPU_ONLY
-            ''' )
-        """
         # define and wrap two functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
@@ -633,7 +621,8 @@ def generateConfigs(gennPath, backends):
         pygennSmg.addSwigIgnore( 'init_var()' )
 
 
-        pygennSmg.addSwigInclude( '"' + NNMODEL + '.h"' )
+        pygennSmg.addSwigInclude( '"modelSpec.h"' )
+        pygennSmg.addSwigInclude( '"modelSpecInternal.h"' )
 
         # the next three for-loop create template specializations to add
         # various populations to NNmodel
@@ -689,8 +678,8 @@ if __name__ == '__main__':
         print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, CURRSOURCEMODELS + '.h' ) ) )
         exit(1)
 
-    if not os.path.isfile( os.path.join(includePath, NNMODEL + '.h' ) ):
-        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, NNMODEL + '.h' ) ) )
+    if not os.path.isfile( os.path.join(includePath, 'modelSpec.h' ) ):
+        print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, 'modelSpec.h' ) ) )
         exit(1)
 
     generateConfigs( gennPath )
