@@ -254,11 +254,6 @@ class NeuronGroup(Group):
         self.pop = add_fct(self.name, num_neurons, self.neuron,
                            self.params, var_ini)
 
-        for var_name, var in iteritems(self.vars):
-            if var.init_required:
-                self.pop.set_var_mode(var_name,
-                                      VarMode_LOC_HOST_DEVICE_INIT_HOST)
-
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
 
@@ -548,35 +543,6 @@ class SynapseGroup(Group):
                            wu_post_var_ini, self.postsyn, self.ps_params,
                            ps_var_ini, connect_init)
 
-        # Mark all weight update model state variables
-        # that require initialising on host
-        for var_name, var in iteritems(self.vars):
-            if var.init_required:
-                self.pop.set_wuvar_mode(var_name,
-                                        VarMode_LOC_HOST_DEVICE_INIT_HOST)
-
-
-        # Mark all weight update model presynaptic state
-        # variables that require initialising on host
-        for var_name, var in iteritems(self.pre_vars):
-            if var.init_required:
-                self.pop.set_wupre_var_mode(var_name,
-                                            VarMode_LOC_HOST_DEVICE_INIT_HOST)
-
-        # Mark all weight update model postsynaptic state
-        # variables that require initialising on host
-        for var_name, var in iteritems(self.post_vars):
-            if var.init_required:
-                self.pop.wu_post_var_names(var_name,
-                                           VarMode_LOC_HOST_DEVICE_INIT_HOST)
-
-        # Mark all postsynaptic model state variables
-        # that require initialising on host
-        for var_name, var in iteritems(self.psm_vars):
-            if var.init_required:
-                self.pop.set_psvar_mode(var_name,
-                                        VarMode_LOC_HOST_DEVICE_INIT_HOST)
-
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
 
@@ -596,10 +562,11 @@ class SynapseGroup(Group):
             if self.connections_set:
                 if self.is_ragged:
                     # Get pointers to ragged data structure members
-                    ind = slm.assign_external_ragged_ind(
-                        self.name, self.weight_update_var_size)
-                    row_length = slm.assign_external_ragged_row_length(
-                        self.name, self.src.size)
+                    ind = self._assign_external_pointer(
+                        slm, scalar, "ind", self.weight_update_var_size,
+                        "unsigned int")
+                    row_length = self._assign_external_pointer(
+                        slm, scalar, "rowLength", self.src.size, "unsigned int")
 
                     # Copy in row length
                     row_length[:] = self.row_lengths
@@ -745,11 +712,6 @@ class CurrentSource(Group):
             self.current_source_model, self.vars)
         self.pop = add_fct(self.name, self.current_source_model, pop.name,
                            self.params, var_ini)
-
-        for var_name, var in iteritems(self.vars):
-            if var.init_required:
-                self.pop.set_var_mode(var_name,
-                                      VarMode_LOC_HOST_DEVICE_INIT_HOST)
 
     def add_extra_global_param(self, param_name, param_values):
         """Add extra global parameter
