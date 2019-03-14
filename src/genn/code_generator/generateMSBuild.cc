@@ -10,7 +10,7 @@
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend, const std::string &projectGUID,
-                                    const std::vector<std::string> &moduleNames)
+    const std::vector<std::string> &moduleNames)
 {
     // Generate header and targets for release and debug builds
     os << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
@@ -25,9 +25,11 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend
     os << "\t\t\t<Platform>x64</Platform>" << std::endl;
     os << "\t\t</ProjectConfiguration>" << std::endl;
     os << "\t</ItemGroup>" << std::endl;
-   
+
     os << "\t<PropertyGroup Label=\"Globals\">" << std::endl;
-    os << "\t\t<ProjectGuid>{" << projectGUID << "}</ProjectGuid>" << std::endl;
+    if (!projectGUID.empty()) {
+        os << "\t\t<ProjectGuid>{" << projectGUID << "}</ProjectGuid>" << std::endl;
+    }
     os << "\t\t<RootNamespace>runner</RootNamespace>" << std::endl;
     os << "\t</PropertyGroup>" << std::endl;
 
