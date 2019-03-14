@@ -21,6 +21,7 @@ cuda_installed = os.path.exists(cuda_path)
 
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
+windows = system() == "Windows"
 
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
@@ -44,19 +45,27 @@ if sys.version_info > (3, 0):
     swig_opts.append("-py3")
 
 # By default link against libGeNN (relocatable version)
-extra_compile_args = ["-std=c++11"]
+extra_compile_args = [] if windows else ["-std=c++11"]
 library_dirs = [os.path.join(genn_path, "lib")]
-libraries = ["genn_relocatable"]
+libraries = ["genn_Release"] if windows else ["genn_relocatable"]
 
 # By default build single-threaded CPU backend
 backends = [("genn_single_threaded_cpu_backend", "SingleThreadedCPU", {})]
 
 # If CUDA was found, add backend configuration
 if cuda_installed:
+    
+    if mac_os_x:
+        cuda_library_dirs = os.path.join(cuda_path, "lib") 
+    elif windows:
+        cuda_library_dirs = os.path.join(cuda_path, "lib", "x64") 
+    else:
+        cuda_library_dirs = os.path.join(cuda_path, "lib64")
+    
     backends.append(("genn_cuda_backend", "CUDA",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
-                      "library_dirs": [os.path.join(cuda_path, "lib") if mac_os_x else os.path.join(cuda_path, "lib64")]}))
+                      "library_dirs": [cuda_library_dirs]}))
 
 # Build dictionary of kwargs to apply to all modules
 extension_kwargs = {
@@ -64,9 +73,11 @@ extension_kwargs = {
     "include_dirs": include_dirs,
     "libraries": libraries,
     "library_dirs": library_dirs + [genn_wrapper_path],
-    "runtime_library_dirs": library_dirs,
     "extra_compile_args" : extra_compile_args}
 
+if not windows:
+    extension_kwargs["runtime_library_dirs"] = extension_kwargs
+    
 # **HACK** on Mac OSX, "runtime_library_dirs" 
 # doesn't actually work so add rpath manually instead
 if mac_os_x:
@@ -111,7 +122,10 @@ for filename, namespace, kwargs in backends:
 
     # Add relocatable version of backend library to libraries
     # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
-    backend_extension_kwargs["libraries"].insert(0, filename + "_relocatable")
+    if windows:
+        backend_extension_kwargs["libraries"].insert(0, filename + "_Release")
+    else:
+        backend_extension_kwargs["libraries"].insert(0, filename + "_relocatable")
 
     # Add backend include directory to both SWIG and C++ compiler options
     backend_include_dir = os.path.join(genn_path, "include", filename)

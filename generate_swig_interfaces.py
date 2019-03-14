@@ -419,7 +419,8 @@ def generateBackend(swigPath, folder, namespace):
         mg.addAutoGenWarning()
         mg.addSwigModuleHeadline()
         mg.addSwigEnableUnderCaseConvert()
-
+        mg.addSwigInclude('<exception.i>')
+        
         with SwigAsIsScope(mg):
             mg.addCppInclude('"optimiser.h"')
             mg.addCppInclude('"path.h"')
@@ -436,6 +437,22 @@ def generateBackend(swigPath, folder, namespace):
         # Import stl containers so as to support std::string
         mg.addSwigImport( '"StlContainers.i"' )
 
+        # Include SWIG exception handling library
+        mg.addSwigInclude('<exception.i>')
+        
+        mg.write('''
+        %exception create_backend{
+            try 
+            {
+                $action
+            } 
+            SWIG_CATCH_STDEXCEPT
+            catch (...) {
+                SWIG_exception(SWIG_UnknownError, "Unknown exception");
+            }
+        }
+        ''')
+        
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
             mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &outputPath, int localHostID, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
@@ -505,21 +522,32 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"code_generator/generateMSBuild.h"' )
             pygennSmg.addCppInclude( '"path.h"' )
         pygennSmg.addSwigImport( '"StlContainers.i"' )
+        
+        # Include logging library
+        with SwigAsIsScope(pygennSmg):
+            pygennSmg.addCppInclude('<plog/Log.h>')
+            pygennSmg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
+
+        # do initialization when module is loaded
+        with SwigInitScope( pygennSmg ):
+            pygennSmg.write( '''
+            plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+            plog::init(plog::debug, &consoleAppender);
+            ''' )
 
         # define and wrap two functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
             void generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &path, int localHostID) {
-                const filesystem::path targetPath(path);
-
-                // Generate output path
-                const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
+                const filesystem::path outputPath(path);
 
                 // Generate code, returning list of module names that must be build
                 const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
 
             #ifdef _WIN32
-                #error Windows currently not supported
+                // Create MSBuild project to compile and link all generated modules
+                std::ofstream makefile((outputPath / "runner.vcxproj").str());
+                CodeGenerator::generateMSBuild(makefile, backend, "", moduleNames);
             #else
                 // Create makefile to compile and link all generated modules
                 std::ofstream makefile((outputPath / "Makefile").str());

@@ -42,6 +42,7 @@ Example:
 from collections import OrderedDict
 from importlib import import_module
 from os import path
+from platform import system
 from subprocess import check_call   # to call make
 from textwrap import dedent
 
@@ -352,7 +353,10 @@ class GeNNModel(object):
         if self._built:
             raise Exception("GeNN model already built")
         self._path_to_model = path_to_model
-
+        
+        # Create output path
+        output_path = path.join(path_to_model, self.model_name + "_CODE")
+        
         # Finalize model
         self._model.finalize()
 
@@ -360,17 +364,20 @@ class GeNNModel(object):
         preferences = self._backend_module.Preferences()
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, self._path_to_model, 0, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path, 0, preferences);
 
         # Generate code
-        genn_wrapper.generate_code(self._model, backend, self._path_to_model, 0)
+        genn_wrapper.generate_code(self._model, backend, output_path, 0)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
         self._backend_module.delete_backend(backend)
 
         # Build code
-        check_call(["make", "-C", path.join(path_to_model,
-                                            self.model_name + "_CODE")])
+        if system() == "Windows":
+            check_call(["msbuild", "/p:Configuration=Release", 
+                        path.join(output_path, "runner.vcxproj")])
+        else:
+            check_call(["make", "-C", output_path])
 
         self._built = True
 
