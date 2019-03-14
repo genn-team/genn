@@ -20,6 +20,7 @@
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateNeuronUpdate.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
+    <ClCompile Include="code_generator\generateSupportCode.cc" />
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
