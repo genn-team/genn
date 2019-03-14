@@ -549,7 +549,9 @@ def create_custom_neuron_class(class_name, param_names=None,
                                sim_code=None, threshold_condition_code=None,
                                reset_code=None, support_code=None,
                                extra_global_params=None,
-                               additional_input_vars=None, custom_body=None):
+                               additional_input_vars=None,
+                               is_auto_refractory_required=None,
+                               custom_body=None):
 
     """This helper function creates a custom NeuronModel class.
 
@@ -613,6 +615,10 @@ def create_custom_neuron_class(class_name, param_names=None,
             lambda self: StringStringDoublePairPairVector(
                 [StringStringDoublePairPair(a[0], StringDoublePair(a[1], a[2]))
                  for a in additional_input_vars])
+
+    if is_auto_refractory_required is not None:
+        body["is_auto_refractory_required"] =\
+            lambda self: is_auto_refractory_required
 
     if custom_body is not None:
         body.update(custom_body)
