@@ -524,16 +524,16 @@ def generateConfigs(gennPath, backends):
         pygennSmg.addSwigImport( '"StlContainers.i"' )
         
         # Include logging library
-        with SwigAsIsScope(pygennSmg):
-            pygennSmg.addCppInclude('<plog/Log.h>')
-            pygennSmg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
+        #with SwigAsIsScope(pygennSmg):
+        #    pygennSmg.addCppInclude('<plog/Log.h>')
+        #    pygennSmg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
 
         # do initialization when module is loaded
-        with SwigInitScope( pygennSmg ):
-            pygennSmg.write( '''
-            plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-            plog::init(plog::debug, &consoleAppender);
-            ''' )
+        #with SwigInitScope( pygennSmg ):
+        #    pygennSmg.write( '''
+        #    plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+        #    plog::init(plog::debug, &consoleAppender);
+         #   ''' )
 
         # define and wrap two functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
