@@ -11,10 +11,8 @@ from six import iteritems
 
 from generate_swig_interfaces import generateConfigs
 
-# Get CUDA path, either default or from environment variable
-cuda_path = (os.environ["CUDA_PATH"]
-             if "CUDA_PATH" in os.environ
-             else "/usr/local/cuda")
+# Get CUDA path from environment variable - setting this up is a required CUDA post-install step
+cuda_path = os.environ["CUDA_PATH"]
 
 # Is CUDA installed?
 cuda_installed = os.path.exists(cuda_path)
