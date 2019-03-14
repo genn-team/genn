@@ -80,7 +80,7 @@ extension_kwargs = {
 # doesn't actually work so add rpath manually instead
 #if mac_os_x:
 #    extension_kwargs["extra_link_args"] = ["-Wl,-rpath," + l
-                                           for l in library_dirs]
+#                                           for l in library_dirs]
 
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path, backends)
