@@ -44,7 +44,7 @@
   <PropertyGroup>
     <OutDir>..\..\lib\</OutDir>
     <IntDir>..\..\$(Platform)\$(Configuration)\single_threaded_cpu_backend\</IntDir>
-    <TargetName>single_threaded_cpu_backend_$(Configuration)</TargetName>
+    <TargetName>genn_single_threaded_cpu_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

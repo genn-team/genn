@@ -44,7 +44,7 @@
   <PropertyGroup>
     <OutDir>..\..\lib\</OutDir>
     <IntDir>..\..\$(Platform)\$(Configuration)\cuda_backend\</IntDir>
-    <TargetName>cuda_backend_$(Configuration)</TargetName>
+    <TargetName>genn_cuda_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
