@@ -52,18 +52,18 @@ backends = [("genn_single_threaded_cpu_backend", "SingleThreadedCPU", {})]
 
 # If CUDA was found, add backend configuration
 if cuda_installed:
-    
+    # Get CUDA library directory
     if mac_os_x:
-        cuda_library_dirs = os.path.join(cuda_path, "lib") 
+        cuda_library_dir = os.path.join(cuda_path, "lib")
     elif windows:
-        cuda_library_dirs = os.path.join(cuda_path, "lib", "x64") 
+        cuda_library_dir = os.path.join(cuda_path, "lib", "x64")
     else:
-        cuda_library_dirs = os.path.join(cuda_path, "lib64")
+        cuda_library_dir = os.path.join(cuda_path, "lib64")
     
     backends.append(("genn_cuda_backend", "CUDA",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
-                      "library_dirs": [cuda_library_dirs]}))
+                      "library_dirs": [cuda_library_dir]}))
 
 # Build dictionary of kwargs to apply to all modules
 extension_kwargs = {
@@ -73,13 +73,13 @@ extension_kwargs = {
     "library_dirs": library_dirs + [genn_wrapper_path],
     "extra_compile_args" : extra_compile_args}
 
-if not windows:
-    extension_kwargs["runtime_library_dirs"] = extension_kwargs
+#if not windows:
+#    extension_kwargs["runtime_library_dirs"] = extension_kwargs
     
 # **HACK** on Mac OSX, "runtime_library_dirs" 
 # doesn't actually work so add rpath manually instead
-if mac_os_x:
-    extension_kwargs["extra_link_args"] = ["-Wl,-rpath," + l
+#if mac_os_x:
+#    extension_kwargs["extra_link_args"] = ["-Wl,-rpath," + l
                                            for l in library_dirs]
 
 # Before building extension, generate auto-generated parts of genn_wrapper
