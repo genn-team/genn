@@ -226,7 +226,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                         // If node is a mac, re-label libraries
                         if("mac" in nodeLabel) {
-                            sh "find pygenn/genn_wrapper -name \"libgenn*.dylib\" -exec sh -c 'install_name_tool -id \"@loader_path/$(basename \$1)\" \$1' x {} \\;";
+                            sh "find pygenn/genn_wrapper -name \"libgenn*.dylib\" -exec sh -c 'install_name_tool -id \"@loader_path/\$(basename \$1)\" \$1' x {} \\;";
                         }
 
                         // Create virtualenv, install numpy and make Python wheel
