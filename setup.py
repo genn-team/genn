@@ -46,7 +46,8 @@ extension_kwargs = {
     "swig_opts": swig_opts,
     "include_dirs": include_dirs,
     "library_dirs": [genn_wrapper_path],
-    "extra_compile_args" : [] if windows else ["-std=c++11"]}
+    "extra_compile_args" : [] if windows else ["-std=c++11"],
+    "extra_link_args": []}
 
 # Always package LibGeNN
 package_data = ["genn_wrapper/*genn_dynamic.*"]
@@ -57,14 +58,9 @@ genn_extension_kwargs["libraries"] =  ["genn_Release"] if windows else ["genn_dy
 genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
 genn_extension_kwargs["swig_opts"].append("-I" + genn_include)
 
-# **HACK** on Mac OSX, "runtime_library_dirs"
-# doesn't actually work so add rpath manually instead
-if mac_os_x:
-    genn_extension_kwargs["extra_link_args"] = ["-Wl,-rpath," + l
-                                                for l in library_dirs]
-# Conversely, on Linux, we want to add extension directory i.e. $ORIGIN to runtime
+# On Linux, we want to add extension directory i.e. $ORIGIN to runtime
 # directories so libGeNN and backends can be found wherever package is installed
-elif linux:
+if linux:
     genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
 
 # By default build single-threaded CPU backend
@@ -81,10 +77,12 @@ if cuda_installed:
         cuda_library_dir = os.path.join(cuda_path, "lib64")
 
     # Add backend
+    # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("genn_cuda_backend", "CUDA",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
-                      "library_dirs": [cuda_library_dir]}))
+                      "library_dirs": [cuda_library_dir],
+                      "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if mac_os_x else []}))
 
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path, backends)
