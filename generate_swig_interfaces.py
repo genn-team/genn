@@ -36,6 +36,7 @@ Attrbutes:
     MAIN_MODULE -- name of the main SWIG module
 """
 import os  # to work with paths nicely
+from itertools import product
 from string import Template # for better text substitutions
 from argparse import ArgumentParser # to parse command line args
 
@@ -240,17 +241,7 @@ namespace ${NAMESPACE}
 {
 class Custom : public Base
 {
-private:
-    static ${NAMESPACE}::Custom *s_Instance;
 public:
-    static const ${NAMESPACE}::Custom *getInstance()
-    {
-        if ( s_Instance == NULL )
-        {
-            s_Instance = new ${NAMESPACE}::Custom;
-        }
-        return s_Instance;
-    }
     typedef CustomValues::ParamValues ParamValues;
     ${varValuesTypedef}
     static CustomValues::ParamValues* makeParamValues( const std::vector< double > & vals )
@@ -390,11 +381,7 @@ def generateCustomModelDeclImpls(swigPath):
     '''Generates headers/sources with *::Custom classes'''
     models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS, INITVARSNIPPET, SPARSEINITSNIPPET]
     for model in models:
-        nSpace = model[:]
-        if model.startswith('new'):
-            nSpace = nSpace[3:]
-        else:
-            nSpace = nSpace[0].upper() + nSpace[1:]
+        nSpace = model[0].upper() + model[1:]
         with SwigModuleGenerator( 'decl',
                 os.path.join( swigPath, model + 'Custom.h' ) ) as mg:
             mg.addAutoGenWarning()
@@ -408,10 +395,6 @@ def generateCustomModelDeclImpls(swigPath):
                 os.path.join( swigPath, model + 'Custom.cc' ) ) as mg:
             mg.addAutoGenWarning()
             mg.addCppInclude( '"' + model + 'Custom.h"' )
-            if model != INITVARSNIPPET and model != SPARSEINITSNIPPET:
-                mg.write('IMPLEMENT_MODEL({}::Custom);\n'.format(nSpace))
-            else:
-                mg.write('IMPLEMENT_SNIPPET({}::Custom);\n'.format(nSpace))
 
 def generateBackend(swigPath, folder, namespace):
     # Create SWIG module
@@ -522,18 +505,6 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"code_generator/generateMSBuild.h"' )
             pygennSmg.addCppInclude( '"path.h"' )
         pygennSmg.addSwigImport( '"StlContainers.i"' )
-        
-        # Include logging library
-        #with SwigAsIsScope(pygennSmg):
-        #    pygennSmg.addCppInclude('<plog/Log.h>')
-        #    pygennSmg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
-
-        # do initialization when module is loaded
-        #with SwigInitScope( pygennSmg ):
-        #    pygennSmg.write( '''
-        #    plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        #    plog::init(plog::debug, &consoleAppender);
-         #   ''' )
 
         # define and wrap two functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
@@ -653,25 +624,44 @@ def generateConfigs(gennPath, backends):
         pygennSmg.addSwigInclude( '"modelSpec.h"' )
         pygennSmg.addSwigInclude( '"modelSpecInternal.h"' )
 
-        # the next three for-loop create template specializations to add
-        # various populations to NNmodel
+        # Loop through neuron models
         for n_model in mgs[0].models:
+            # Ignore the overloads of the functions which automatically get an instance from class name
+            ignore_base = 'ModelSpec::addNeuronPopulation<NeuronModels::{0}>(std::string const &,unsigned int,NeuronModels::{0}::ParamValues const &,NeuronModels::{0}::VarValues const &'.format(n_model)
+            pygennSmg.addSwigIgnore(ignore_base + ")")
+            pygennSmg.addSwigIgnore(ignore_base + ",int)")
+            pygennSmg.addSwigIgnore(ignore_base + ",int,int)")
+
+            # Add template expansion
             pygennSmg.addSwigTemplate(
-                'ModelSpec::addNeuronPopulation<{}::{}>'.format( mgs[0].name, n_model ),
+                'ModelSpec::addNeuronPopulation<NeuronModels::{}>'.format(n_model ),
                 'add_neuron_population_{}'.format( n_model ) )
 
-        for ps_model in mgs[1].models:
-            for wu_model in mgs[2].models:
+        # Loop through all combinations of postsynaptic and weight update models
+        for ps_model, wu_model in product(mgs[1].models, mgs[2].models):
+            # Ignore the overloads of the functions which automatically get instances from class names
+            ignore_base = "ModelSpec::addSynapsePopulation<WeightUpdateModels::{0},PostsynapticModels::{1}>(std::string const &,SynapseMatrixType,unsigned int,std::string const &,std::string const &,WeightUpdateModels::{0}::ParamValues const &,WeightUpdateModels::{0}::VarValues const &".format(
+                wu_model, ps_model)
+            ignore_wum_pre_post = "WeightUpdateModels::{0}::PreVarValues const &,WeightUpdateModels::{0}::PostVarValues const &".format(wu_model)
+            ignore_psm = "PostsynapticModels::{0}::ParamValues const &,PostsynapticModels::{0}::VarValues const &".format(ps_model)
+            ignore_connectivity = "InitSparseConnectivitySnippet::Init const &"
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_psm + ")")
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_psm + "," + ignore_connectivity + ")")
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_wum_pre_post + "," + ignore_psm + ")")
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_wum_pre_post + "," + ignore_psm + "," + ignore_connectivity + ")")
 
-                pygennSmg.addSwigTemplate(
-                    'ModelSpec::addSynapsePopulation<{}::{}, {}::{}>'.format(
-                        mgs[2].name, wu_model, mgs[1].name, ps_model ),
-                    'add_synapse_population_{}_{}'.format( wu_model, ps_model ) )
+            # Add template expansion
+            pygennSmg.addSwigTemplate(
+                'ModelSpec::addSynapsePopulation<WeightUpdateModels::{0}, PostsynapticModels::{1}>'.format(
+                    wu_model, ps_model),
+                'add_synapse_population_{}_{}'.format(wu_model, ps_model))
 
         for cs_model in mgs[3].models:
+            # Ignore the overload of the function which automatically gets instance from class name
+            pygennSmg.addSwigIgnore("ModelSpec::addCurrentSource<CurrentSourceModels::{0}>(std::string const &,std::string const &,CurrentSourceModels::{0}::ParamValues const &,CurrentSourceModels::{0}::VarValues const &)".format(cs_model))
             pygennSmg.addSwigTemplate(
-                'ModelSpec::addCurrentSource<{}::{}>'.format( mgs[3].name, cs_model ),
-                'add_current_source_{}'.format( cs_model ) )
+                'ModelSpec::addCurrentSource<CurrentSourceModels::{}>'.format(cs_model),
+                'add_current_source_{}'.format(cs_model))
 
         pygennSmg.write( '\n// wrap variableMode.h.\n' )
         pygennSmg.addSwigIgnore( 'operator&' )
