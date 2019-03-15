@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+// GeNN includes
+#include "gennExport.h"
+
 //----------------------------------------------------------------------------
 // CodeGenerator::CodeStream
 //----------------------------------------------------------------------------
@@ -13,7 +16,7 @@
 /*! Based heavily on: https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class */
 namespace CodeGenerator
 {
-class CodeStream : public std::ostream
+class GENN_EXPORT CodeStream : public std::ostream
 {
 private:
     //------------------------------------------------------------------------
@@ -104,7 +107,7 @@ public:
         //------------------------------------------------------------------------
         // Static members
         //------------------------------------------------------------------------
-        static unsigned int s_NextLevel;
+        GENN_EXPORT static unsigned int s_NextLevel;
 
         //------------------------------------------------------------------------
         // Members
@@ -130,8 +133,8 @@ private:
     //------------------------------------------------------------------------
     // Friends
     //------------------------------------------------------------------------
-    friend std::ostream&  operator << (std::ostream& s, const OB &ob);
-    friend std::ostream&  operator << (std::ostream& s, const CB &cb);
+    GENN_EXPORT friend std::ostream&  operator << (std::ostream& s, const OB &ob);
+    GENN_EXPORT friend std::ostream&  operator << (std::ostream& s, const CB &cb);
 
     //------------------------------------------------------------------------
     // Members
@@ -143,8 +146,8 @@ private:
 //------------------------------------------------------------------------
 // Operators
 //------------------------------------------------------------------------
-std::ostream& operator << (std::ostream& s, const CodeStream::OB &ob);
-std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb);
+GENN_EXPORT std::ostream& operator << (std::ostream& s, const CodeStream::OB &ob);
+GENN_EXPORT std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb);
 }   // namespace CodeGenerator;
 
 

@@ -33,6 +33,7 @@ Part of the code generation and generated code sections.
 #endif
 
 // GeNN includes
+#include "gennExport.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 #include "currentSourceInternal.h"
@@ -95,8 +96,7 @@ inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
 //! \brief class ModelSpec for specifying a neuronal network model.
 //
 ================================================================*/
-
-class ModelSpec
+class GENN_EXPORT ModelSpec
 {
 public:
     // Typedefines
@@ -105,6 +105,8 @@ public:
     typedef std::map<std::string, SynapseGroupInternal>::value_type SynapseGroupValueType;
 
     ModelSpec();
+    ModelSpec(const ModelSpec&) = delete;
+    ModelSpec &operator=(const ModelSpec &) = delete;
     ~ModelSpec();
 
     // PUBLIC MODEL FUNCTIONS

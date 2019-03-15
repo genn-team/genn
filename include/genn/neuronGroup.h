@@ -7,6 +7,7 @@
 #include <vector>
 
 // GeNN includes
+#include "gennExport.h"
 #include "neuronModels.h"
 #include "variableMode.h"
 
@@ -17,7 +18,7 @@ class SynapseGroupInternal;
 //------------------------------------------------------------------------
 // NeuronGroup
 //------------------------------------------------------------------------
-class NeuronGroup
+class GENN_EXPORT NeuronGroup
 {
 public:
     NeuronGroup(const NeuronGroup&) = delete;

@@ -7,6 +7,7 @@
 #include <vector>
 
 // GeNN includes
+#include "gennExport.h"
 #include "initSparseConnectivitySnippet.h"
 #include "postsynapticModels.h"
 #include "weightUpdateModels.h"
@@ -19,7 +20,7 @@ class NeuronGroupInternal;
 //------------------------------------------------------------------------
 // SynapseGroup
 //------------------------------------------------------------------------
-class SynapseGroup
+class GENN_EXPORT SynapseGroup
 {
 public:
     SynapseGroup(const SynapseGroup&) = delete;

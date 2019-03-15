@@ -9,6 +9,7 @@
 #include <cmath>
 
 // GeNN includes
+#include "gennExport.h"
 #include "models.h"
 
 //----------------------------------------------------------------------------

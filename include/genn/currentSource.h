@@ -8,12 +8,13 @@
 
 // GeNN includes
 #include "currentSourceModels.h"
+#include "gennExport.h"
 #include "variableMode.h"
 
 //------------------------------------------------------------------------
 // CurrentSource
 //------------------------------------------------------------------------
-class CurrentSource
+class GENN_EXPORT CurrentSource
 {
 public:
     CurrentSource(const CurrentSource&) = delete;
