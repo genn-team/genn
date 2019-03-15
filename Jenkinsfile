@@ -149,17 +149,17 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if("cpu_only" in nodeLabel) {
                                 runTestArguments += " -c";
                             }
-                            
+
                             // Run tests
                             def uniqueMsg = "msg_" + env.NODE_NAME;
                             def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
-                            
+
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
-                            
+
                             // Archive output
                             archive uniqueMsg;
                             
@@ -207,6 +207,51 @@ for(b = 0; b < builderNodes.size(); b++) {
                         else {
                             echo uniqueCoverage + " doesn't exist!";
                         }
+                    }
+                }
+
+                buildStep("Building Python wheels (" + env.NODE_NAME + ")") {
+                    dir("genn") {
+                        // Build set of dynamic libraries
+                        echo "Creating dynamic libraries";
+                        def uniqueMakeDynamic = "make_dynamic_" + env.NODE_NAME + ".txt";
+                        makeCommand = "make DYNAMIC=1 LIBRARY_DIRECTORY=$PWD/pygenn/genn_wrapper 1>> \"" + uniqueMakeDynamic + "\" 2>> \"" + uniqueMakeDynamic + "\"";
+                        def makeStatusCode = sh script:makeCommand, returnStatus:true
+                        if(makeStatusCode != 0) {
+                            setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
+                        }
+
+                        // Archive build message
+                        archive uniqueMakeDynamic
+
+                        // If node is a mac, re-label libraries
+                        if("mac" in nodeLabel) {
+                            sh "for f in pygenn/genn_wrapper/libgenn*.dylib; do install_name_tool -id \"@loader_path/$(basename $f)\" $f; done";
+                        }
+
+                        // Create virtualenv, install numpy and make Python wheel
+                        def uniqueWheel = "wheel_" + env.NODE_NAME + ".txt";
+                        echo "Creating Python wheels";
+                        script = """
+                        virtualenv virtualenv
+                        ../virtualenv/bin/activate
+
+                        pip install "numpy>1.6, < 1.15"
+
+                        python setup.py clean --all
+                        python setup.py bdist_wheel -D . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
+                        python setup.py bdist_wheel -D . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
+                        """
+                        def wheelStatusCode = sh script:script, returnStatus:true
+                        if(wheelStatusCode != 0) {
+                            setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
+                        }
+
+                        // Archive wheel message
+                        archive uniqueWheel
+
+                        // Archive wheel itself
+                        archive "*.whl"
                     }
                 }
             }
