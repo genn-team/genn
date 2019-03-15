@@ -89,21 +89,10 @@ if cuda_installed:
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path, backends)
 
-# Create main GeNNWrapper extension containing all of LibGeNN and base classes for implementing custom models in Python
-genn_wrapper = Extension('_genn_wrapper', [
-    "pygenn/genn_wrapper/generated/genn_wrapper.i"],
-    #"pygenn/genn_wrapper/generated/currentSourceModelsCustom.cc",
-    #"pygenn/genn_wrapper/generated/initSparseConnectivitySnippetCustom.cc",
-    #"pygenn/genn_wrapper/generated/initVarSnippetCustom.cc",
-    #"pygenn/genn_wrapper/generated/neuronModelsCustom.cc",
-    #"pygenn/genn_wrapper/generated/postsynapticModelsCustom.cc",
-    #"pygenn/genn_wrapper/generated/weightUpdateModelsCustom.cc"],
-    **genn_extension_kwargs)
-
 # Create list of extension modules required to wrap utilities and various libGeNN namespaces
-ext_modules = [genn_wrapper,
-               Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),
+ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),
                Extension('_SharedLibraryModel', ["pygenn/genn_wrapper/generated/SharedLibraryModel.i"], **extension_kwargs),
+               Extension('_genn_wrapper', ["pygenn/genn_wrapper/generated/genn_wrapper.i"], **genn_extension_kwargs),
                Extension('_Snippet', ["pygenn/genn_wrapper/swig/Snippet.i"], **genn_extension_kwargs),
                Extension('_Models', ["pygenn/genn_wrapper/swig/Models.i"], **genn_extension_kwargs),
                Extension('_InitVarSnippet', ["pygenn/genn_wrapper/generated/InitVarSnippet.i", "pygenn/genn_wrapper/generated/initVarSnippetCustom.cc"], **genn_extension_kwargs),
