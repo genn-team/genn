@@ -215,7 +215,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // Build set of dynamic libraries
                         echo "Creating dynamic libraries";
                         def uniqueMakeDynamic = "make_dynamic_" + env.NODE_NAME + ".txt";
-                        makeCommand = "make DYNAMIC=1 LIBRARY_DIRECTORY=$PWD/pygenn/genn_wrapper 1>> \"" + uniqueMakeDynamic + "\" 2>> \"" + uniqueMakeDynamic + "\"";
+                        makeCommand = "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMakeDynamic + "\" 2>> \"" + uniqueMakeDynamic + "\"";
                         def makeStatusCode = sh script:makeCommand, returnStatus:true
                         if(makeStatusCode != 0) {
                             setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
