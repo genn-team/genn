@@ -226,7 +226,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                         // If node is a mac, re-label libraries
                         if("mac" in nodeLabel) {
-                            sh "for f in pygenn/genn_wrapper/libgenn*.dylib; do install_name_tool -id \"@loader_path/\$(basename \$f)\" \$f; done";
+                            sh "find pygenn/genn_wrapper -name \"libgenn*.dylib\" -exec sh -c 'install_name_tool -id \"@loader_path/$(basename \$1)\" \$1' x {} \\;";
                         }
 
                         // Create virtualenv, install numpy and make Python wheel
@@ -239,8 +239,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                         pip install "numpy>1.6, < 1.15"
 
                         python setup.py clean --all
-                        python setup.py bdist_wheel -D . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
-                        python setup.py bdist_wheel -D . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
+                        python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
+                        python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
                         """
                         def wheelStatusCode = sh script:script, returnStatus:true
                         if(wheelStatusCode != 0) {
