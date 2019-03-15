@@ -11,10 +11,10 @@ from setuptools.command.build_ext import build_ext
 from generate_swig_interfaces import generateConfigs
 
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
-cuda_path = os.environ["CUDA_PATH"]
+cuda_path = os.environ.get("CUDA_PATH")
 
 # Is CUDA installed?
-cuda_installed = os.path.exists(cuda_path)
+cuda_installed = cuda_path is not None and os.path.exists(cuda_path)
 
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
