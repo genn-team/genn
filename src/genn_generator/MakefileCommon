@@ -20,12 +20,12 @@ endif
 CXXFLAGS		+=$(patsubst %,-I%,$(subst :, ,$(BUILD_MODEL_INCLUDE)))
 
 # Add compiler and linker flags to link libGeNN and correct backend; and to configure generator to use backend
-LDFLAGS			+= -L$(GENN_DIR)/lib -lgenn$(GENN_PREFIX) -lgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX) 
+LDFLAGS			+= -L$(LIBRARY_DIRECTORY) -lgenn$(GENN_PREFIX) -lgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX) 
 CXXFLAGS		+= -I$(GENN_DIR)/include/genn_$(BACKEND_NAME)_backend -DMODEL=\"$(MODEL)\" -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
 
 # Determine full path to generator and backend
 GENERATOR		:=$(GENERATOR_PATH)/generator$(GENN_PREFIX)
-BACKEND			:=$(GENN_DIR)/lib/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
+BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
 
 .PHONY: all clean libgenn backend
 
@@ -40,10 +40,10 @@ $(GENERATOR): generator.cc generator.d libgenn backend
 generator.d: ;
 
 libgenn:
-	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn; fi;
+	if [ -w $(LIBRARY_DIRECTORY) ]; then $(MAKE) -C $(GENN_DIR)/src/genn; fi;
 
 backend:
-	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend; fi;
+	if [ -w $(LIBRARY_DIRECTORY) ]; then $(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend; fi;
 
 clean:
 	rm -f generator.d $(GENERATOR)

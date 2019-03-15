@@ -5,7 +5,7 @@ include ../MakefileCommon
 CXXFLAGS		+=-I$(GENN_DIR)/include/genn_single_threaded_cpu_backend
 
 # Add prefix to object directory and library name
-BACKEND			:=$(GENN_DIR)/lib/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).a
+BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)
 
 # Build objecs in sub-directory
 OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn_single_threaded_cpu_backend
@@ -21,9 +21,21 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 all: $(BACKEND)
 
+ifdef DYNAMIC
+ifeq ($(DARWIN),DARWIN)
+$(BACKEND): $(OBJECTS)
+	mkdir -p $(@D)
+	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGS) -o $@ $(OBJECTS)
+else
+$(BACKEND): $(OBJECTS)
+	mkdir -p $(@D)
+	$(CXX) -shared $(CXXFLAGS) -o $@ $(OBJECTS)
+endif
+else
 $(BACKEND): $(OBJECTS)
 	mkdir -p $(@D)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
+endif
 
 -include $(DEPS)
 

@@ -17,9 +17,21 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 all: $(LIBGENN)
 
+ifdef DYNAMIC
+ifeq ($(DARWIN),DARWIN)
+$(LIBGENN): $(OBJECTS)
+	mkdir -p $(@D)
+	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGS) -o $@ $(OBJECTS)
+else
+$(LIBGENN): $(OBJECTS)
+	mkdir -p $(@D)
+	$(CXX) -shared $(CXXFLAGS) -o $@ $(OBJECTS)
+endif
+else
 $(LIBGENN): $(OBJECTS)
 	mkdir -p $(@D)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
+endif
 
 -include $(DEPS)
 

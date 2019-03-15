@@ -8,7 +8,7 @@ ifdef CUDA_PATH
 endif
 
 # Build list of libraries
-BACKEND_LIBS		:=$(BACKENDS:%=$(GENN_DIR)/lib/libgenn_%_backend$(GENN_PREFIX).a)
+BACKEND_LIBS		:=$(BACKENDS:%=$(LIBRARY_DIRECTORY)/libgenn_%_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION))
 
 # Default install location
 PREFIX 			:= /usr/local
@@ -25,11 +25,11 @@ install: $(LIBGENN) $(BACKEND_LIBS)
 	@mkdir -p $(PREFIX)/src/genn
 	@mkdir -p $(PREFIX)/src/genn_generator
 	@# Deploy libraries and headers
-	@cp -f $(GENN_DIR)/lib/*.a $(PREFIX)/lib
+	@cp -f $(LIBRARY_DIRECTORY)/*.a $(PREFIX)/lib
 	@cp -rf $(GENN_DIR)/include/* $(PREFIX)/include
 	@# Deploy minimal set of Makefiles for building generator
 	@cp -r $(GENN_DIR)/src/genn/MakefileCommon $(PREFIX)/src/genn
-	@# Deploy genn_generator source and shell script
+	@# Deploy genn_generator source and shell scriptlibgenn
 	@cp -r $(GENN_DIR)/src/genn_generator/Makefile* $(PREFIX)/src/genn_generator
 	@cp -r $(GENN_DIR)/src/genn_generator/generator.cc $(PREFIX)/src/genn_generator
 	@cp -r $(GENN_DIR)/bin/genn-buildmodel.sh $(PREFIX)/bin

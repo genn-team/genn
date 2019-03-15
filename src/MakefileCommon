@@ -1,49 +1,57 @@
 # Determine whether OS is Darwin i.e. Mac OS X and whether the kernel is 32 or 64 bit
-OS_SIZE			:=$(shell getconf LONG_BIT)
-OS_UPPER		:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
-DARWIN			:=$(strip $(findstring DARWIN,$(OS_UPPER)))
+OS_SIZE				:=$(shell getconf LONG_BIT)
+OS_UPPER			:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+DARWIN				:=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
 # Get directory of this makefile i.e. GeNN directory (means make can be invoked else where)
-GENN_DIR 		:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../)
+GENN_DIR 			:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../)
 
 # Set standard compiler and archiver flags
-CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn -I$(GENN_DIR)/include/genn/third_party
-ARFLAGS			:=-rcs
+CXXFLAGS 			+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn -I$(GENN_DIR)/include/genn/third_party
+ARFLAGS				:=-rcs
 
 # On Mac OS X, use Clang++ rather than GC++
 ifeq ($(DARWIN),DARWIN)
-    CXX			:=clang++
+    CXX				:=clang++
 endif
 
 # Setup compiler based on configuration
 ifdef MPI_ENABLE
-    GENN_PREFIX		:=$(GENN_PREFIX)_mpi
-    CXXFLAGS		+=-DMPI_ENABLE
-    CXX			:=mpiCC
+    GENN_PREFIX			:=$(GENN_PREFIX)_mpi
+    CXXFLAGS			+=-DMPI_ENABLE
+    CXX				:=mpiCC
 endif
 
 ifdef COVERAGE
-    GENN_PREFIX		:=$(GENN_PREFIX)_coverage
+    GENN_PREFIX			:=$(GENN_PREFIX)_coverage
     
     # Use clang's source-based coverage on OS X
     ifeq ($(DARWIN),DARWIN)
-        CXXFLAGS	+=-O0 -fprofile-instr-generate -fcoverage-mapping
+        CXXFLAGS		+=-O0 -fprofile-instr-generate -fcoverage-mapping
     # And use gcov on Linux
     else
-        CXXFLAGS	+=-O0 --coverage
+        CXXFLAGS		+=-O0 --coverage
     endif
 endif
 
-ifdef RELOCATABLE
-    GENN_PREFIX		:=$(GENN_PREFIX)_relocatable
-    CXXFLAGS		+=-fPIC
+ifdef DYNAMIC
+    GENN_PREFIX			:=$(GENN_PREFIX)_dynamic
+    CXXFLAGS			+=-fPIC
+    ifeq ($(DARWIN),DARWIN)
+        LIBRARY_EXTENSION	:=dylib
+    else
+	LIBRARY_EXTENSION	:=so
+    endif
+else
+    LIBRARY_EXTENSION		:=a
 endif
 
 ifdef DEBUG
-    GENN_PREFIX		:=$(GENN_PREFIX)_debug
-    CXXFLAGS		+=-g -O0 -DDEBUG
+    GENN_PREFIX			:=$(GENN_PREFIX)_debug
+    CXXFLAGS			+=-g -O0 -DDEBUG
 endif 
 
 # Add prefix to object directory and library name
-OBJECT_DIRECTORY	:=$(GENN_DIR)/obj$(GENN_PREFIX)
-LIBGENN			:=$(GENN_DIR)/lib/libgenn$(GENN_PREFIX).a
+OBJECT_DIRECTORY		?=$(GENN_DIR)/obj$(GENN_PREFIX)
+LIBRARY_DIRECTORY		?=$(GENN_DIR)/lib
+LIBGENN				:=$(LIBRARY_DIRECTORY)/libgenn$(GENN_PREFIX).$(LIBRARY_EXTENSION)

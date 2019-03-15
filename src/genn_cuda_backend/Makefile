@@ -1,15 +1,16 @@
 # Include common makefile
 include ../MakefileCommon
 
-# If CUDA path isn't set, default to standard path for (at least Ubuntu) Linux systems
-# **NOTE** setting CUDA_PATH is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
-CUDA_PATH		?=/usr/local/cuda
+# Check that CUDA path is set
+ifndef CUDA_PATH
+    $(error Environment variable CUDA_PATH must be defined - this is a required post-installation action when installing CUDA)
+endif
 
 # Add backend and CUDA include directories to compiler flags
 CXXFLAGS		+=-I$(GENN_DIR)/include/genn_cuda_backend -I"$(CUDA_PATH)/include"
 
 # Add prefix to object directory and library name
-BACKEND			:=$(GENN_DIR)/lib/libgenn_cuda_backend$(GENN_PREFIX).a
+BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_cuda_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)
 
 # Build objecs in sub-directory
 OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn_cuda_backend
@@ -25,9 +26,21 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 all: $(BACKEND)
 
+ifdef DYNAMIC
+ifeq ($(DARWIN),DARWIN)
+$(BACKEND): $(OBJECTS)
+	mkdir -p $(@D)
+	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGS) -o $@ $(OBJECTS)
+else
+$(BACKEND): $(OBJECTS)
+	mkdir -p $(@D)
+	$(CXX) -shared $(CXXFLAGS) -o $@ $(OBJECTS)
+endif
+else
 $(BACKEND): $(OBJECTS)
 	mkdir -p $(@D)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
+endif
 
 -include $(DEPS)
 
