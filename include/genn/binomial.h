@@ -1,3 +1,6 @@
 #pragma once
 
-unsigned int binomialInverseCDF(double cdf, unsigned int n, double p);
+// GeNN includes
+#include "gennExport.h"
+
+GENN_EXPORT unsigned int binomialInverseCDF(double cdf, unsigned int n, double p);

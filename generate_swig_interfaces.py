@@ -409,6 +409,10 @@ def generateBackend(swigPath, folder, namespace):
             mg.addCppInclude('"path.h"')
             mg.write("using namespace CodeGenerator::" + namespace + ";\n")
 
+        # Include genn and backend export headers so BACKEND_EXPORT and GENN_EXPORT macros can be correctly parsed
+        mg.addSwigInclude( '"backendExport.h"' )
+        mg.addSwigInclude( '"gennExport.h"' )
+        
         # Parse backend base, ignore BackendBase itself to get PreferencesBase definition
         mg.addSwigIgnore("BackendBase")
         mg.addSwigInclude('"code_generator/backendBase.h"')
@@ -505,7 +509,10 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"code_generator/generateMSBuild.h"' )
             pygennSmg.addCppInclude( '"path.h"' )
         pygennSmg.addSwigImport( '"StlContainers.i"' )
-
+        
+        # Include genn export header so GENN_EXPORT macros can be correctly parsed
+        pygennSmg.addSwigInclude( '"gennExport.h"' )
+        
         # define and wrap two functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
@@ -544,7 +551,10 @@ def generateConfigs(gennPath, backends):
                 if not is_snippet:
                     mg.addCppInclude( '"initVarSnippetCustom.h"' )
                     mg.addCppInclude( '"customVarValues.h"' )
-
+            
+            # Include genn export header so GENN_EXPORT macros can be correctly parsed
+            mg.addSwigInclude( '"gennExport.h"' )
+            
             if is_snippet:
                 mg.addSwigImport( '"Snippet.i"' )
             else:
@@ -607,7 +617,7 @@ def generateConfigs(gennPath, backends):
 
         # wrap NeuronGroup, SynapseGroup and CurrentSource
         pygennSmg.addSwigEnableUnderCaseConvert()
-
+        
         pygennSmg.addSwigInclude( '"neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"synapseGroup.h"' )
         pygennSmg.addSwigInclude( '"currentSource.h"' )
@@ -619,8 +629,7 @@ def generateConfigs(gennPath, backends):
         # wrap modelSpec.h
         pygennSmg.addSwigIgnore( 'init_connectivity()' )
         pygennSmg.addSwigIgnore( 'init_var()' )
-
-
+        
         pygennSmg.addSwigInclude( '"modelSpec.h"' )
         pygennSmg.addSwigInclude( '"modelSpecInternal.h"' )
 

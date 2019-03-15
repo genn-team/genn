@@ -8,6 +8,7 @@
 
 // GeNN includes
 #include "codeStream.h"
+#include "gennExport.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -44,7 +45,7 @@ struct PreferencesBase
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-class BackendBase
+class GENN_EXPORT BackendBase
 {
 public:
     //--------------------------------------------------------------------------

@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+// GeNN includes
+#include "gennExport.h"
+
 // Forward declarations
 class ModelSpecInternal;
 
@@ -22,5 +25,5 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-    std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, const filesystem::path &outputPath);
+    GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, const filesystem::path &outputPath);
 }

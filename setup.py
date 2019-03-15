@@ -46,7 +46,7 @@ extension_kwargs = {
     "swig_opts": swig_opts,
     "include_dirs": include_dirs,
     "library_dirs": [genn_wrapper_path],
-    "extra_compile_args" : [] if windows else ["-std=c++11"],
+    "extra_compile_args" : ["/wd\"4251\""] if windows else ["-std=c++11"],
     "extra_link_args": []}
 
 # Always package LibGeNN
@@ -54,9 +54,10 @@ package_data = ["genn_wrapper/*genn_dynamic.*"]
 
 # Copy dictionary and add libGeNN to apply to all modules that link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
-genn_extension_kwargs["libraries"] =  ["genn_Release"] if windows else ["genn_dynamic"]
+genn_extension_kwargs["libraries"] =  ["genn_Release_DLL"] if windows else ["genn_dynamic"]
 genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
 genn_extension_kwargs["swig_opts"].append("-I" + genn_include)
+genn_extension_kwargs["define_macros"] = [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]
 
 # On Linux, we want to add extension directory i.e. $ORIGIN to runtime
 # directories so libGeNN and backends can be found wherever package is installed
@@ -112,8 +113,8 @@ for filename, namespace, kwargs in backends:
     # Add relocatable version of backend library to libraries
     # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
     if windows:
-        backend_extension_kwargs["libraries"].insert(0, filename + "_Release")
-        package_data.append("genn_wrapper/" + filename + "_Release.*")
+        backend_extension_kwargs["libraries"].insert(0, filename + "_Release_DLL")
+        package_data.append("genn_wrapper/" + filename + "_Release_DLL.*")
     else:
         backend_extension_kwargs["libraries"].insert(0, filename + "_dynamic")
         package_data.append("genn_wrapper/lib" + filename + "_dynamic.*")

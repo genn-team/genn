@@ -2,6 +2,9 @@
 #include <string>
 #include <vector>
 
+// GeNN includes
+#include "gennExport.h"
+
 // Forward declarations
 class ModelSpecInternal;
 
@@ -15,6 +18,6 @@ class BackendBase;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateMSBuild(std::ostream &os, const BackendBase &backend, const std::string &projectGUID,
-                     const std::vector<std::string> &moduleNames);
+void GENN_EXPORT generateMSBuild(std::ostream &os, const BackendBase &backend, const std::string &projectGUID,
+                                 const std::vector<std::string> &moduleNames);
 }

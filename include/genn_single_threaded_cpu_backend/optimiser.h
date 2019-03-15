@@ -1,5 +1,8 @@
 #pragma once
 
+// GeNN includes
+#include "backendExport.h"
+
 // Single-threaded CPU backend includes
 #include "backend.h"
 
@@ -12,12 +15,8 @@ namespace SingleThreadedCPU
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecInternal &, const filesystem::path &, int localHostID,
-                      const Preferences &preferences)
-{
-    Backend backend(localHostID, preferences);
-    return std::move(backend);
-}
+BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &, const filesystem::path &, int localHostID,
+                                     const Preferences &preferences);
 }
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="backend.cc" />
+    <ClCompile Include="optimiser.cc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C21}</ProjectGuid>
@@ -56,6 +57,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\include\genn;..\..\include\genn\third_party;..\..\include\genn_single_threaded_cpu_backend</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

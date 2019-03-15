@@ -10,6 +10,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+// GeNN includes
+#include "backendExport.h"
+
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 #include "code_generator/codeStream.h"
@@ -46,7 +49,7 @@ struct Preferences : public PreferencesBase
 //--------------------------------------------------------------------------
 // CodeGenerator::CUDA::Backend
 //--------------------------------------------------------------------------
-class Backend : public BackendBase
+class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
     //--------------------------------------------------------------------------

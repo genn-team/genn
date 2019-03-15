@@ -5,12 +5,15 @@
 #include <string>
 #include <vector>
 
+// GeNN includes
+#include "gennExport.h"
+
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
 #define DECLARE_SNIPPET(TYPE, NUM_PARAMS)               \
 private:                                                \
-    static TYPE *s_Instance;                            \
+    GENN_EXPORT static TYPE *s_Instance;                \
 public:                                                 \
     static const TYPE *getInstance()                    \
     {                                                   \
@@ -102,7 +105,7 @@ public:
 // Snippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all code snippets
-class Base
+class GENN_EXPORT Base
 {
 public:
     virtual ~Base()

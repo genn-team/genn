@@ -81,6 +81,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\include\genn;..\..\include\genn\third_party</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

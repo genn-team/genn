@@ -5,6 +5,9 @@
 #include <map>
 #include <string>
 
+// GeNN includes
+#include "backendExport.h"
+
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 
@@ -28,7 +31,7 @@ struct Preferences : public PreferencesBase
 //--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
-class Backend : public BackendBase
+class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
     Backend(int localHostID, const Preferences &preferences)
