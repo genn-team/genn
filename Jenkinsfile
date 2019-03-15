@@ -234,7 +234,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Creating Python wheels";
                         script = """
                         virtualenv virtualenv
-                        ../virtualenv/bin/activate
+                        . virtualenv/bin/activate
 
                         pip install "numpy>1.6, < 1.15"
 
