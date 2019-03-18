@@ -55,6 +55,10 @@ public:
             // If we should synchronise on stop, insert call
             if(m_SynchroniseOnStop) {
                 m_CodeStream << "cudaEventSynchronize(" << m_Name << "Stop);" << std::endl;
+
+                m_CodeStream << "float tmp;" << std::endl;
+                m_CodeStream << "cudaEventElapsedTime(&tmp, " << m_Name << "Start, " << m_Name << "Stop);" << std::endl;
+                m_CodeStream << m_Name << "Time += tmp / 1000.0;" << std::endl;
             }
         }
     }
@@ -68,7 +72,6 @@ private:
     const bool m_TimingEnabled;
     const bool m_SynchroniseOnStop;
 };
-
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
 {
@@ -1224,9 +1227,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 }
                 os << "deviceRNGSeed);" << std::endl;
             }
-
-            // Update timer
-            genUpdateTimer(os, "init");
         }
     }
     os << std::endl;
@@ -1247,9 +1247,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
                 os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
             }
-
-            // Update timer
-            genUpdateTimer(os, "initSparse");
         }
     }
 }
@@ -1668,7 +1665,10 @@ void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream
     free << "cudaEventDestroy(" << name << "Stop);" << std::endl;
 
     if(updateInStepTime) {
-        genUpdateTimer(stepTimeFinalise, name);
+        CodeGenerator::CodeStream::Scope b(stepTimeFinalise);
+        stepTimeFinalise << "float tmp;" << std::endl;
+        stepTimeFinalise << "cudaEventElapsedTime(&tmp, " << name << "Start, " << name << "Stop);" << std::endl;
+        stepTimeFinalise << name << "Time += tmp / 1000.0;" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -2164,14 +2164,6 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
         os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
     }
-}
-//--------------------------------------------------------------------------
-void Backend::genUpdateTimer(CodeStream &os, const std::string &name) const
-{
-    CodeStream::Scope b(os);
-    os << "float tmp;" << std::endl;
-    os << "cudaEventElapsedTime(&tmp, " << name << "Start, " << name << "Stop);" << std::endl;
-    os << name << "Time += tmp / 1000.0;" << std::endl;
 }
 //--------------------------------------------------------------------------
 bool Backend::shouldAccumulateInLinSyn(const SynapseGroupInternal &sg) const

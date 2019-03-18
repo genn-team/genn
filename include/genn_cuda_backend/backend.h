@@ -232,8 +232,6 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
-    void genUpdateTimer(CodeStream &os, const std::string &name) const;
-
     bool shouldAccumulateInLinSyn(const SynapseGroupInternal &sg) const;
 
     bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const;
