@@ -873,12 +873,12 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &s
 void Backend::genEmitSpike(CodeStream &os, const NeuronGroupInternal &ng, const Substitutions &subs, bool trueSpike) const
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
-    const bool delayRequired = trueSpike ? (ng.isDelayRequired() && ng.isTrueSpikeRequired()) : ng.isDelayRequired();
-    const std::string queueOffset = delayRequired ? "writeDelayOffset + " : "";
+    const bool spikeDelayRequired = trueSpike ? (ng.isDelayRequired() && ng.isTrueSpikeRequired()) : ng.isDelayRequired();
+    const std::string spikeQueueOffset = spikeDelayRequired ? "writeDelayOffset + " : "";
 
     const std::string suffix = trueSpike ? "" : "Evnt";
-    os << "glbSpk" << suffix << ng.getName() << "[" << queueOffset << "glbSpkCnt" << suffix << ng.getName();
-    if(delayRequired) { // WITH DELAY
+    os << "glbSpk" << suffix << ng.getName() << "[" << spikeQueueOffset << "glbSpkCnt" << suffix << ng.getName();
+    if(spikeDelayRequired) { // WITH DELAY
         os << "[spkQuePtr" << ng.getName() << "]++]";
     }
     else { // NO DELAY
@@ -888,6 +888,7 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronGroupInternal &ng, const 
 
     // Reset spike time if this is a true spike and spike time is required
     if(trueSpike && ng.isSpikeTimeRequired()) {
+        const std::string queueOffset = ng.isDelayRequired() ? "writeDelayOffset + " : "";
         os << "sT" << ng.getName() << "[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
     }
 }
