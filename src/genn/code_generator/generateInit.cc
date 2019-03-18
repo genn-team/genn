@@ -39,7 +39,7 @@ void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseG
     ExtraGlobalParamNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
     value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
-    name_substitutions(code, "initSparseConn", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
+    name_substitutions(code, "", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, "initSparseConn" + sg.getName());
 }
 //--------------------------------------------------------------------------
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,

@@ -846,7 +846,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     std::map<std::string, std::string> initKernelParameters;
     for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *initSparseConnectivitySnippet = s.second.getConnectivityInitialiser().getSnippet();
-        updateExtraGlobalParams("initSparseConn", "", initSparseConnectivitySnippet->getExtraGlobalParams(), initKernelParameters, 
+        updateExtraGlobalParams("initSparseConn" + s.first, "", initSparseConnectivitySnippet->getExtraGlobalParams(), initKernelParameters,
                                 {initSparseConnectivitySnippet->getRowBuildCode()});
     }
     

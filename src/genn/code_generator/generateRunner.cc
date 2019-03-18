@@ -580,8 +580,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         }
 
         for(auto const &p : s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
-            definitionsVar << "extern " << p.second << " initSparseConn" << p.first + s.first << ";" << std::endl;
-            runnerVarDecl << p.second << " initSparseConn" << p.first + s.first << ";" << std::endl;
+            definitionsVar << "extern " << p.second << " " << p.first + "initSparseConn" + s.first << ";" << std::endl;
+            runnerVarDecl << p.second << " " << p.first + "initSparseConn" + s.first << ";" << std::endl;
         }
     }
     allVarStreams << std::endl;
