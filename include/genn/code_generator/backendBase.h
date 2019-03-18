@@ -83,6 +83,7 @@ public:
     virtual void genDefinitionsInternalPreamble(CodeStream &os) const = 0;
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -105,6 +106,8 @@ public:
     virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const = 0;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                   const std::string &name, size_t count) const = 0;
+    virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                          CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
     virtual void genMakefileLinkRule(std::ostream &os) const = 0;
@@ -139,10 +142,10 @@ public:
         genVariableFree(free, name, loc);
     }
 
-    void genScalar(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const std::string &type, const std::string &name) const
+    void genScalar(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const std::string &type, const std::string &name, VarLocation loc) const
     {
-        genVariableDefinition(definitions, definitionsInternal, type, name, VarLocation::HOST_DEVICE);
-        genVariableImplementation(runner, type, name, VarLocation::HOST_DEVICE);
+        genVariableDefinition(definitions, definitionsInternal, type, name, loc);
+        genVariableImplementation(runner, type, name, loc);
     }
 
     void genVariable(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,

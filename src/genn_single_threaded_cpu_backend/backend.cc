@@ -523,6 +523,10 @@ void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpecInternal &) co
 {
 }
 //--------------------------------------------------------------------------
+void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecInternal &) const
+{
+}
+//--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, const std::string &type, const std::string &name, VarLocation) const
 {
     definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
@@ -631,6 +635,11 @@ void Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStr
                                const std::string&, size_t) const
 {
     // No need for population RNGs for single-threaded CPU
+}
+//--------------------------------------------------------------------------
+void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
+{
+    // Timing single-threaded CPU backends don't require any additional state
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const

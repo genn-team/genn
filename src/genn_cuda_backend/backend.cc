@@ -30,6 +30,45 @@ const std::vector<CodeGenerator::FunctionTemplate> cudaFunctions = {
     {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
     {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
 };
+
+//--------------------------------------------------------------------------
+// Timer
+//--------------------------------------------------------------------------
+class Timer
+{
+public:
+    Timer(CodeGenerator::CodeStream &codeStream, const std::string &name, bool timingEnabled, bool synchroniseOnStop = false)
+    :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled), m_SynchroniseOnStop(synchroniseOnStop)
+    {
+        // Record start event
+        if(m_TimingEnabled) {
+            m_CodeStream << "cudaEventRecord(" << m_Name << "Start);" << std::endl;
+        }
+    }
+
+    ~Timer()
+    {
+        // Record stop event
+        if(m_TimingEnabled) {
+            m_CodeStream << "cudaEventRecord(" << m_Name << "Stop);" << std::endl;
+        }
+
+        // If we should synchronise on stop, insert call
+        if(m_SynchroniseOnStop) {
+            m_CodeStream << "cudaEventSynchronize(" << m_Name << "Stop);" << std::endl;
+        }
+    }
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    CodeGenerator::CodeStream &m_CodeStream;
+    const std::string m_Name;
+    const bool m_TimingEnabled;
+    const bool m_SynchroniseOnStop;
+};
+
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
 {
@@ -350,6 +389,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         }
         if(idStart > 0) {
             CodeStream::Scope b(os);
+            Timer t(os, "neuronUpdate", model.isTimingEnabled());
+
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : neuronKernelParameters) {
@@ -739,6 +780,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         // Launch synapse dynamics kernel if required
         if(idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
+            Timer t(os, "synapseDynamicsUpdateTime", model.isTimingEnabled());
+
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
             os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : synapseDynamicsKernelParameters) {
@@ -750,6 +793,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         // Launch presynaptic update kernel
         if(idPresynapticStart > 0) {
             CodeStream::Scope b(os);
+            Timer t(os, "presynapticUpdate", model.isTimingEnabled());
+
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
             os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : presynapticKernelParameters) {
@@ -761,6 +806,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         // Launch postsynaptic update kernel
         if(idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
+            Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
+
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
             os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : postsynapticKernelParameters) {
@@ -1166,12 +1213,20 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 //
         // If there are any initialisation threads
         if(idInitStart > 0) {
-            genKernelDimensions(os, KernelInitialize, idInitStart);
-            os << KernelNames[KernelInitialize] << "<<<grid, threads>>>(";
-            for(const auto &p : initKernelParameters) {
-                os << p.first << ", ";
+            CodeStream::Scope b(os);
+            {
+                Timer t(os, "init", model.isTimingEnabled(), true);
+
+                genKernelDimensions(os, KernelInitialize, idInitStart);
+                os << KernelNames[KernelInitialize] << "<<<grid, threads>>>(";
+                for(const auto &p : initKernelParameters) {
+                    os << p.first << ", ";
+                }
+                os << "deviceRNGSeed);" << std::endl;
             }
-            os << "deviceRNGSeed);" << std::endl;
+
+            // Update timer
+            genUpdateTimer(os, "init");
         }
     }
     os << std::endl;
@@ -1185,8 +1240,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
         // If there are any sparse initialisation threads
         if(idSparseInitStart > 0) {
-            genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
-            os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
+            CodeStream::Scope b(os);
+            {
+                Timer t(os, "initSparse", model.isTimingEnabled(), true);
+
+                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
+                os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
+            }
+
+            // Update timer
+            genUpdateTimer(os, "initSparse");
         }
     }
 }
@@ -1419,6 +1482,19 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &mo
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const
+{
+    // Synchronise if zero-copy is in use
+    if(model.zeroCopyInUse()) {
+        os << "cudaDeviceSynchronize();" << std::endl;
+    }
+
+    // If timing is enabled, synchronise last event
+    if(model.isTimingEnabled()) {
+        os << "cudaEventSynchronize(neuronUpdateStop);" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const
 {
     if(loc & VarLocation::HOST) {
@@ -1570,6 +1646,30 @@ void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsI
 {
     // Create an array or XORWOW RNGs
     genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);
+}
+//--------------------------------------------------------------------------
+void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                       CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const
+{
+    // Define CUDA start and stop events in internal defintions (as they use CUDA-specific types)
+    definitionsInternal << "EXPORT_VAR cudaEvent_t " << name << "Start;" << std::endl;
+    definitionsInternal << "EXPORT_VAR cudaEvent_t " << name << "Stop;" << std::endl;
+
+    // Implement start and stop event variables
+    runner << "cudaEvent_t " << name << "Start;" << std::endl;
+    runner << "cudaEvent_t " << name << "Stop;" << std::endl;
+
+    // Create start and stop events in allocations
+    allocations << "cudaEventCreate(&" << name << "Start);" << std::endl;
+    allocations << "cudaEventCreate(&" << name << "Stop);" << std::endl;
+
+    // Destroy start and stop events in allocations
+    free << "cudaEventDestroy(" << name << "Start);" << std::endl;
+    free << "cudaEventDestroy(" << name << "Stop);" << std::endl;
+
+    if(updateInStepTime) {
+        genUpdateTimer(stepTimeFinalise, name);
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
@@ -2064,6 +2164,14 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
         os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genUpdateTimer(CodeStream &os, const std::string &name) const
+{
+    CodeStream::Scope b(os);
+    os << "float tmp;" << std::endl;
+    os << "cudaEventElapsedTime(&tmp, " << name << "Start, " << name << "Stop);" << std::endl;
+    os << name << "Time += tmp / 1000.0;" << std::endl;
 }
 //--------------------------------------------------------------------------
 bool Backend::shouldAccumulateInLinSyn(const SynapseGroupInternal &sg) const

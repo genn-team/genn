@@ -174,6 +174,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     std::stringstream runnerVarFreeStream;
     std::stringstream runnerPushFuncStream;
     std::stringstream runnerPullFuncStream;
+    std::stringstream runnerStepTimeFinaliseStream;
     std::stringstream definitionsVarStream;
     std::stringstream definitionsFuncStream;
     CodeStream runnerVarDecl(runnerVarDeclStream);
@@ -181,6 +182,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     CodeStream runnerVarFree(runnerVarFreeStream);
     CodeStream runnerPushFunc(runnerPushFuncStream);
     CodeStream runnerPullFunc(runnerPullFuncStream);
+    CodeStream runnerStepTimeFinalise(runnerStepTimeFinaliseStream);
     CodeStream definitionsVar(definitionsVarStream);
     CodeStream definitionsFunc(definitionsFuncStream);
 
@@ -194,7 +196,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// global variables" << std::endl;
-    allVarStreams << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
 
     // Define and declare time variables
     definitionsVar << "EXPORT_VAR unsigned long long iT;" << std::endl;
@@ -206,13 +208,71 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     if(backend.isGlobalRNGRequired(model)) {
         backend.genGlobalRNG(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, model);
     }
-
-    //---------------------------------
-    // REMOTE NEURON GROUPS
-    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    allVarStreams << "// remote neuron groups" << std::endl;
     allVarStreams << std::endl;
 
+    // Generate preamble for the final stage of time step
+    // **NOTE** this is done now as there can be timing logic here
+    backend.genStepTimeFinalisePreamble(runnerStepTimeFinalise, model);
+
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    allVarStreams << "// timers" << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+
+    // Generate scalars to store total elapsed time
+    // **NOTE** we ALWAYS generate these so usercode doesn't require #ifdefs around timing code
+    backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "double", "neuronUpdateTime", VarLocation::HOST);
+    backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "double", "initTime", VarLocation::HOST);
+    backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "double", "presynapticUpdateTime", VarLocation::HOST);
+    backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "double", "postsynapticUpdateTime", VarLocation::HOST);
+    backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "double", "synapseDynamicsTime", VarLocation::HOST);
+    backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "double", "initSparseTime", VarLocation::HOST);
+
+    // If timing is actually enabled
+    if(model.isTimingEnabled()) {
+        // Create neuron timer
+        backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                         runnerStepTimeFinalise, "neuronUpdate", true);
+
+        // Create init timer
+        backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                         runnerStepTimeFinalise, "init", false);
+
+        // If there's any synapse groups
+        if(!model.getLocalSynapseGroups().empty()) {
+            // Add presynaptic update timer
+            backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "presynapticUpdate", true);
+
+            // If any synapse groups have weight update models with postsynaptic learning, add a timer
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                           [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
+            {
+                backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 runnerStepTimeFinalise, "postsynapticUpdate", true);
+            }
+
+            // If any synapse groups have weight update models with synapse dynamics, add a timer
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                           [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
+            {
+                backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 runnerStepTimeFinalise, "synapseDynamics", true);
+            }
+
+            // If any synapse groups require sparse initialisation, add a timer
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                        [](const ModelSpec::SynapseGroupValueType &s) { return s.second.isSparseInitRequired(); }))
+            {
+                backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 runnerStepTimeFinalise, "initSparse", false);
+            }
+        }
+        allVarStreams << std::endl;
+    }
+
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    allVarStreams << "// remote neuron groups" << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     // Loop through remote neuron groups
     for(const auto &n : model.getRemoteNeuronGroups()) {
         // Write macro so whether a neuron group is remote or not can be determined at compile time
@@ -245,12 +305,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     }
     allVarStreams << std::endl;
 
-    //---------------------------------
-    // LOCAL NEURON VARIABLES
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// local neuron groups" << std::endl;
-    allVarStreams << std::endl;
-
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Write convenience macros to access spikes
         writeSpikeMacros(definitionsVar, n.second, true);
@@ -300,7 +357,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
 
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
-            backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "unsigned int", "spkQuePtr" + n.first);
+            backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "unsigned int", "spkQuePtr" + n.first, VarLocation::HOST_DEVICE);
         }
 
         // If neuron group needs to record its spike times
@@ -313,7 +370,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         if(n.second.isSimRNGRequired()) {
             backend.genPopulationRNG(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, "rng" + n.first, n.second.getNumNeurons());
         }
-
+    //----------------------------------
+    // SYNAPSE VARIABLE
         // Neuron state variables
         const auto neuronModel = n.second.getNeuronModel();
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first + "State", true,
@@ -360,11 +418,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     }
     allVarStreams << std::endl;
 
-    //----------------------------------
-    // POSTSYNAPTIC VARIABLES
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// postsynaptic variables" << std::endl;
-    allVarStreams << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Loop through merged incoming synaptic populations
         // **NOTE** because of merging we need to loop through postsynaptic models in this
@@ -377,7 +433,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             if (sg->isDendriticDelayRequired()) {
                 backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayLocation(),
                                  sg->getMaxDendriticDelayTimesteps() * sg->getTrgNeuronGroup()->getNumNeurons());
-                backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "unsigned int", "denDelayPtr" + sg->getPSModelTargetName());
+                backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), VarLocation::HOST_DEVICE);
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
@@ -395,11 +451,9 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     }
     allVarStreams << std::endl;
 
-    //----------------------------------
-    // SYNAPSE CONNECTIVITY
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// synapse connectivity" << std::endl;
-    allVarStreams << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &s : model.getLocalSynapseGroups()) {
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first + "Connectivity", true,
             [&]()
@@ -450,12 +504,11 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                 }
             });
     }
+    allVarStreams << std::endl;
 
-    //----------------------------------
-    // SYNAPSE VARIABLE
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// synapse variables" << std::endl;
-    allVarStreams << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
@@ -543,12 +596,14 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     // Write push function declarations to runner
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << "// copying things to device" << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPushFuncStream.str();
     runner << std::endl;
 
     // Write pull function declarations to runner
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << "// copying things from device" << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPullFuncStream.str();
     runner << std::endl;
 
@@ -666,11 +721,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         runner << "iT++;" << std::endl;
         runner << "t = iT*DT;" << std::endl;
 
-        // Synchronise if zero-copy is in use
-        // **TODO** move to backend
-        if(model.zeroCopyInUse()) {
-            runner << "cudaDeviceSynchronize();" << std::endl;
-        }
+        // Write step time finalize logic to runner
+        runner << runnerStepTimeFinaliseStream.str();
     }
     runner << std::endl;
 
