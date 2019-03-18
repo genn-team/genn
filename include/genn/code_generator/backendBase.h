@@ -38,7 +38,7 @@ struct PreferencesBase
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
-    //!< NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
+    //! NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
     std::string userNvccFlagsGNU = "";
 };
 
@@ -56,7 +56,10 @@ public:
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
+    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified NeuronGroup to.
     typedef GroupHandler<NeuronGroupInternal> NeuronGroupHandler;
+
+    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
     typedef GroupHandler<SynapseGroupInternal> SynapseGroupHandler;
 
     //! Callback function type for generation neuron group simulation code
@@ -69,7 +72,28 @@ public:
     //--------------------------------------------------------------------------
     // Declared virtuals
     //--------------------------------------------------------------------------
+    //! Generate platform-specific function to update the state of all neurons
+    /*! \param os                       CodeStream to write function to
+        \param model                    model to generate code for
+        \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
+        \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const = 0;
+
+    //! Generate platform-specific function to update the state of all synapses
+    /*! \param os CodeStream to write function to
+        \param model model to generate code for
+        \param wumThreshHandler         callback to write platform-independent code to update an individual NeuronGroup
+        \param wumSimHandler            callback to write platform-independent code to process presynaptic spikes.
+                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                        to callback via Substitutions.
+        \param wumEventHandler          callback to write platform-independent code to process presynaptic spike-like events.
+                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                        to callback via Substitutions.
+        \param postLearnHandler         callback to write platform-independent code to process postsynaptic spikes.
+                                        "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
+        \param synapseDynamicsHandler   callback to write platform-independent code to update time-driven synapse dynamics.
+                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                        to callback via Substitutions.*/
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const = 0;
@@ -79,10 +103,22 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
+    //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
+    /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/
     virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
+
+    //! Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.
+    /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
     virtual void genDefinitionsInternalPreamble(CodeStream &os) const = 0;
+
+
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
+
+    //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
+    //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+
+    //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -109,18 +145,35 @@ public:
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 
+    //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
+
+    //! The GNU make build system will populate a variable called ``$(OBJECTS)`` with a list of objects to link.
+    //! This function should generate a GNU make rule to build these objects into a shared library.
     virtual void genMakefileLinkRule(std::ostream &os) const = 0;
+
+    //! The GNU make build system uses 'pattern rules' (https://www.gnu.org/software/make/manual/html_node/Pattern-Intro.html) to build backend modules into objects.
+    //! This function should generate a GNU make pattern rule capable of building each module (i.e. compiling .cc file $< into .o file $@).
     virtual void genMakefileCompileRule(std::ostream &os) const = 0;
 
+    //! In MSBuild, 'properties' are used to configure global project settings e.g. whether the MSBuild project builds a static or dynamic library
+    //! This function can be used to add additional XML properties to this section.
+    /*! see https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-properties for more information. */
     virtual void genMSBuildConfigProperties(std::ostream &os) const = 0;
     virtual void genMSBuildImportProps(std::ostream &os) const = 0;
+
+    //! In MSBuild, the 'item definitions' are used to override the default properties of 'items' such as ``<ClCompile>`` or ``<Link>``.
+    //! This function should generate XML to correctly configure the 'items' required to build the generated code, taking into account ``$(Configuration)`` etc.
+    /*! see https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-items#item-definitions for more information. */
     virtual void genMSBuildItemDefinitions(std::ostream &os) const = 0;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
 
+    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
+    //! This function returns this prefix so it can be used in otherwise platform-independent code.
     virtual std::string getVarPrefix() const{ return ""; }
 
+    //! Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?
     virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const = 0;
     virtual bool isSynRemapRequired() const = 0;
     virtual bool isPostsynapticRemapRequired() const = 0;
@@ -128,6 +181,7 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
+    //! Helper function to generate matching push and pull functions for a variable
     void genVariablePushPull(CodeStream &push, CodeStream &pull,
                              const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
     {
@@ -135,6 +189,7 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
+    //! Helper function to generate matching definition, declaration, allocation and free code for an array
     void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                   const std::string &type, const std::string &name, VarLocation loc, size_t count) const
     {
@@ -144,12 +199,14 @@ public:
         genVariableFree(free, name, loc);
     }
 
+    //! Helper function to generate matching definition and declaration code for a scalar variable
     void genScalar(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const std::string &type, const std::string &name, VarLocation loc) const
     {
         genVariableDefinition(definitions, definitionsInternal, type, name, loc);
         genVariableImplementation(runner, type, name, loc);
     }
 
+    //! Helper function to generate matching definition, declaration, allocation, free, push and pull code for a state variable
     void genVariable(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                      CodeStream &push, CodeStream &pull,
                      const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
