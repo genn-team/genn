@@ -107,11 +107,11 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
                     os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
                     {
                         CodeStream::Scope b(os);
-                        os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs.getVarSubstitution("id") + "] = 0;" << std::endl;
+                        os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = 0;" << std::endl;
                     }
                 }
                 else {
-                    os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[" << varSubs.getVarSubstitution("id") << "] = 0;" << std::endl;
+                    os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[" << varSubs["id"] << "] = 0;" << std::endl;
                 }
             });
     }
@@ -154,11 +154,11 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
                         {
                             CodeStream::Scope b(os);
-                            os << backend.getVarPrefix() << vars[k].first << popName << "[(d * " << count << ") + " + varSubs.getVarSubstitution("id") + "] = initVal;" << std::endl;
+                            os << backend.getVarPrefix() << vars[k].first << popName << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
                         }
                     }
                     else {
-                        varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + popName + "[" + varSubs.getVarSubstitution("id") + "]");
+                        varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + popName + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
                         applyVarInitSnippetSubstitutions(code, varInit);
@@ -201,7 +201,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[" + varSubs.getVarSubstitution("id_syn") +  "]");
+                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[" + varSubs["id_syn"] +  "]");
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.apply(code);
@@ -245,11 +245,11 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                             os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                os << backend.getVarPrefix() << "sT" << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs.getVarSubstitution("id") + "] = -TIME_MAX;" << std::endl;
+                                os << backend.getVarPrefix() << "sT" << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
                             }
                         }
                         else {
-                            os << backend.getVarPrefix() << "sT" << ng.getName() << "[" << varSubs.getVarSubstitution("id") << "] = -TIME_MAX;" << std::endl;
+                            os << backend.getVarPrefix() << "sT" << ng.getName() << "[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
                         }
                     });
             }
@@ -270,7 +270,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 backend.genVariableInit(os, sg->getInSynLocation(), ng.getNumNeurons(), "id", popSubs,
                     [&backend, &model, sg] (CodeStream &os, Substitutions &varSubs)
                     {
-                        os << backend.getVarPrefix() << "inSyn" << sg->getPSModelTargetName() << "[" << varSubs.getVarSubstitution("id") << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << backend.getVarPrefix() << "inSyn" << sg->getPSModelTargetName() << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                     });
 
                 // If dendritic delays are required
@@ -281,7 +281,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                             os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                const std::string denDelayIndex = "(d * " + std::to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + " + varSubs.getVarSubstitution("id");
+                                const std::string denDelayIndex = "(d * " + std::to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + " + varSubs["id"];
                                 os << backend.getVarPrefix() << "denDelay" << sg->getPSModelTargetName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         });

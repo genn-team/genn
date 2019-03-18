@@ -568,7 +568,7 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
 {
     // **TODO** loops like this should be generated like CUDA threads
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        os << "for (unsigned j = 0; j < rowLength" << sg.getName() << "[" << kernelSubs.getVarSubstitution("id_pre") << "]; j++)";
+        os << "for (unsigned j = 0; j < rowLength" << sg.getName() << "[" << kernelSubs["id_pre"] << "]; j++)";
     }
     else {
         os << "for (unsigned j = 0; j < " << sg.getTrgNeuronGroup()->getNumNeurons() << "; j++)";
@@ -578,11 +578,11 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
 
         Substitutions varSubs(&kernelSubs);
         if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getMaxConnections()) + ") + j");
-            varSubs.addVarSubstitution("id_post", "ind" + sg.getName() + "[(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getMaxConnections()) + ") + j]");
+            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getMaxConnections()) + ") + j");
+            varSubs.addVarSubstitution("id_post", "ind" + sg.getName() + "[(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getMaxConnections()) + ") + j]");
         }
         else {
-            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + j");
+            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + j");
             varSubs.addVarSubstitution("id_post", "j");
         }
         handler(os, varSubs);
@@ -838,11 +838,11 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronGroupInternal &ng, const 
     else { // NO DELAY
         os << "[0]++]";
     }
-    os << " = " << subs.getVarSubstitution("id") << ";" << std::endl;
+    os << " = " << subs["id"] << ";" << std::endl;
 
     // Reset spike time if this is a true spike and spike time is required
     if(trueSpike && ng.isSpikeTimeRequired()) {
-        os << "sT" << ng.getName() << "[" << queueOffset << subs.getVarSubstitution("id") << "] = " << subs.getVarSubstitution("t") << ";" << std::endl;
+        os << "sT" << ng.getName() << "[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
     }
 }
 }   // namespace SingleThreadedCPU

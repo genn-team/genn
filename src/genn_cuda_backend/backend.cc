@@ -247,11 +247,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
 
                 // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
                 if(ng.isSimRNGRequired()) {
-                    popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs.getVarSubstitution("id") + "]");
+                    popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs["id"] + "]");
                 }
 
                 // Call handler to generate generic neuron code
-                os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
+                os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
                     simHandler(os, ng, popSubs,
@@ -478,10 +478,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 if (shouldAccumulateInLinSyn(sg)) {
                     os << "// only do this for existing neurons" << std::endl;
                     os << model.getPrecision() << " linSyn;" << std::endl;
-                    os << "if(" << popSubs.getVarSubstitution("id") << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "linSyn = dd_inSyn" << sg.getName() << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                        os << "linSyn = dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "];" << std::endl;
                     }
                 }
                 // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
@@ -526,10 +526,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 // If we have been accumulating into a register, write value back to global memory
                 if (shouldAccumulateInLinSyn(sg)) {
                     os << "// only do this for existing neurons" << std::endl;
-                    os << "if (" << popSubs.getVarSubstitution("id") << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_inSyn" << sg.getName() << "[" << popSubs.getVarSubstitution("id") << "] = linSyn;" << std::endl;
+                        os << "dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "] = linSyn;" << std::endl;
                     }
                 }
                 // Otherwise, if we have been accumulating into shared memory, write value back to global memory
@@ -617,7 +617,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                         os << "__syncthreads();" << std::endl;
                         os << "// only work on existing neurons" << std::endl;
-                        os << "if (" << popSubs.getVarSubstitution("id") << " < " << sg.getMaxSourceConnections() << ")";
+                        os << "if (" << popSubs["id"] << " < " << sg.getMaxSourceConnections() << ")";
                         {
                             CodeStream::Scope b(os);
                             os << "// loop through all incoming spikes for learning" << std::endl;
@@ -627,14 +627,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                                 Substitutions synSubs(&popSubs);
                                 if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    os << "if (" << popSubs.getVarSubstitution("id") << " < shColLength[j])" << CodeStream::OB(1540);
-                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+                                    os << "if (" << popSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
+                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs["id"] << ";" << std::endl;
                                     os << "const unsigned int ipre = dd_remap" + sg.getName() + "[synAddress] / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", "ipre");
                                 }
                                 else {
-                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " << popSubs.getVarSubstitution("id") << ";" << std::endl;
-                                    synSubs.addVarSubstitution("id_pre", synSubs.getVarSubstitution("id"));
+                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " << popSubs["id"] << ";" << std::endl;
+                                    synSubs.addVarSubstitution("id_pre", synSubs["id"]);
                                 }
 
                                 synSubs.addVarSubstitution("id_post", "shSpk[j]");
@@ -688,35 +688,35 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     Substitutions synSubs(&popSubs);
 
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << "if (" << popSubs.getVarSubstitution("id") << " < dd_synRemap" << sg.getName() << "[0])";
+                        os << "if (" << popSubs["id"] << " < dd_synRemap" << sg.getName() << "[0])";
                     }
                     else {
-                        os << "if (" << popSubs.getVarSubstitution("id") << " < " << sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                        os << "if (" << popSubs["id"] << " < " << sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                     }
                     {
                         CodeStream::Scope b(os);
 
                         if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             // Determine synapse and presynaptic indices for this thread
-                            os << "const unsigned int s = dd_synRemap" << sg.getName() << "[1 + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
+                            os << "const unsigned int s = dd_synRemap" << sg.getName() << "[1 + " << popSubs["id"] << "];" << std::endl;
 
                             synSubs.addVarSubstitution("id_pre", "s / " + std::to_string(sg.getMaxConnections()));
                             synSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[s]");
                             synSubs.addVarSubstitution("id_syn", "s");
                         }
                         else {
-                            synSubs.addVarSubstitution("id_pre", popSubs.getVarSubstitution("id") + " / " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
-                            synSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id") + " % " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
-                            synSubs.addVarSubstitution("id_syn", popSubs.getVarSubstitution("id"));
+                            synSubs.addVarSubstitution("id_pre", popSubs["id"] + " / " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+                            synSubs.addVarSubstitution("id_post", popSubs["id"] + " % " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+                            synSubs.addVarSubstitution("id_syn", popSubs["id"]);
                         }
 
                         // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                         if(sg.isDendriticDelayRequired()) {
-                            synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs.getVarSubstitution("id_post") + "], $(0))");
+                            synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
                         }
                         // Otherwise
                         else {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs.getVarSubstitution("id_post") + "], $(0))");
+                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
                         }
 
                         synapseDynamicsHandler(os, sg, synSubs);
@@ -828,7 +828,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             [this, remoteNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
+                os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
 
@@ -845,12 +845,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << popSubs.getVarSubstitution("id") << " < " << ng.getNumNeurons() << ")";
+                os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
                     // If this neuron is going to require a simulation RNG, initialise one using GLOBAL thread id for sequence
                     if(ng.isSimRNGRequired()) {
-                        os << "curand_init(deviceRNGSeed, id, 0, &dd_rng" << ng.getName() << "[" << popSubs.getVarSubstitution("id") << "]);" << std::endl;
+                        os << "curand_init(deviceRNGSeed, id, 0, &dd_rng" << ng.getName() << "[" << popSubs["id"] << "]);" << std::endl;
                     }
 
                     // If this neuron requires an RNG for initialisation,
@@ -877,7 +877,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             [sgDenseInitHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing postsynaptic neurons" << std::endl;
-                os << "if(" << popSubs.getVarSubstitution("id") << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(os);
                     // If this post synapse requires an RNG for initialisation,
@@ -891,7 +891,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         popSubs.addVarSubstitution("rng", "&initRNG");
                     }
 
-                    popSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id"));
+                    popSubs.addVarSubstitution("id_post", popSubs["id"]);
                     sgDenseInitHandler(os, sg, popSubs);
                 }
             });
@@ -908,7 +908,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
 
                 os << "// only do this for existing presynaptic neurons" << std::endl;
-                os << "if(" << popSubs.getVarSubstitution("id") << " < " << numSrcNeurons << ")";
+                os << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
                 {
                     CodeStream::Scope b(os);
                     // If this connectivity requires an RNG for initialisation,
@@ -928,10 +928,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         os << "// Calculate indices" << std::endl;
                         const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
                         if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                            os << "const uint64_t rowStartGID = " << popSubs.getVarSubstitution("id") << " * " << numTrgNeurons << "ull;" << std::endl;
+                            os << "const uint64_t rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << "ull;" << std::endl;
                         }
                         else {
-                            os << "const unsigned int rowStartGID = " << popSubs.getVarSubstitution("id") << " * " << numTrgNeurons << ";" << std::endl;
+                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << ";" << std::endl;
                         }
 
                         // Build function template to set correct bit in bitmask
@@ -940,7 +940,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     }
                     // Otherwise, if synapse group has ragged connectivity
                     else if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        const std::string rowLength = "dd_rowLength" + sg.getName() + "[" + popSubs.getVarSubstitution("id") + "]";
+                        const std::string rowLength = "dd_rowLength" + sg.getName() + "[" + popSubs["id"] + "]";
                         const std::string ind = "dd_ind" + sg.getName();
 
                         // Zero row length
@@ -948,13 +948,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                         // Build function template to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    ind + "[(" + popSubs.getVarSubstitution("id") + " * " + std::to_string(sg.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)");
+                                                    ind + "[(" + popSubs["id"] + " * " + std::to_string(sg.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)");
                     }
                     else {
                         assert(false);
                     }
 
-                    popSubs.addVarSubstitution("id_pre", popSubs.getVarSubstitution("id"));
+                    popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                     sgSparseConnectHandler(os, sg, popSubs);
                 }
             });
@@ -1002,7 +1002,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         popSubs.addVarSubstitution("rng", "&initRNG");
                     }
 
-                    os << "unsigned int idx = " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+                    os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
 
                     // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
                     const unsigned int numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
@@ -1067,7 +1067,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                             CodeStream::Scope b(os);
 
                             // If there is a synapse for this thread to initialise
-                            os << "if(" << popSubs.getVarSubstitution("id") << " < shRowLength[i])";
+                            os << "if(" << popSubs["id"] << " < shRowLength[i])";
                             {
                                 CodeStream::Scope b(os);
 
@@ -1101,7 +1101,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                                     // If synapse dynamics are required, copy idx into syn remap structure
                                     if(!sg.getWUModel()->getSynapseDynamicsCode().empty()) {
                                         CodeStream::Scope b(os);
-                                        os << "dd_synRemap" << sg.getName() << "[shRowStart[i] + " + popSubs.getVarSubstitution("id") + " + 1] = idx;" << std::endl;
+                                        os << "dd_synRemap" << sg.getName() << "[shRowStart[i] + " + popSubs["id"] + " + 1] = idx;" << std::endl;
                                     }
                                 }
                             }
@@ -1493,7 +1493,7 @@ void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitution
     Substitutions varSubs(&kernelSubs);
 
     // If this is first thread in group
-    os << "if(" << varSubs.getVarSubstitution("id") << " == 0)";
+    os << "if(" << varSubs["id"] << " == 0)";
     {
         CodeStream::Scope b(os);
         handler(os, varSubs);
@@ -1519,10 +1519,10 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
 
     Substitutions varSubs(&kernelSubs);
      if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getMaxConnections()) + ") + " + kernelSubs.getVarSubstitution("id"));
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getMaxConnections()) + ") + " + kernelSubs["id"]);
     }
     else {
-        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs.getVarSubstitution("id_pre") + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + " + kernelSubs.getVarSubstitution("id"));
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + " + kernelSubs["id"]);
     }
     handler(os, varSubs);
 }
@@ -1751,7 +1751,7 @@ size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
-    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs.getVarSubstitution("id") << ";" << std::endl;
+    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
@@ -1833,7 +1833,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpecInterna
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
 
-    os << "if (" << popSubs.getVarSubstitution("id") << " < " ;
+    os << "if (" << popSubs["id"] << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
         os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot])";
     }
@@ -1849,11 +1849,11 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpecInterna
 
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << popSubs.getVarSubstitution("id") << "];" << std::endl;
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << popSubs["id"] << "];" << std::endl;
         }
         else {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[" << popSubs.getVarSubstitution("id") << "];" << std::endl;
+            os << "[" << popSubs["id"] << "];" << std::endl;
         }
 
         if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1956,16 +1956,16 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpecIntern
         {
             CodeStream::Scope b(os);
             os << "// only work on existing neurons" << std::endl;
-            os << "if (" << popSubs.getVarSubstitution("id") << " < " << sg.getMaxConnections() << ")";
+            os << "if (" << popSubs["id"] << " < " << sg.getMaxConnections() << ")";
             {
                 CodeStream::Scope b(os);
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     const size_t maxSynapses = (size_t)sg.getTrgNeuronGroup()->getNumNeurons() * (size_t)sg.getSrcNeuronGroup()->getNumNeurons();
                     if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                        os << "const uint64_t gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << popSubs.getVarSubstitution("id") << ");" << std::endl;
+                        os << "const uint64_t gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << popSubs["id"] << ");" << std::endl;
                     }
                     else {
-                        os << "const unsigned int gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << popSubs.getVarSubstitution("id") << ");" << std::endl;
+                        os << "const unsigned int gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << popSubs["id"] << ");" << std::endl;
                     }
                 }
 
@@ -1999,32 +1999,32 @@ void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpecIntern
                     os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
                     os << "const unsigned int npost = shRowLength[j];" << std::endl;
                     
-                    os << "if (" << popSubs.getVarSubstitution("id") << " < npost)" << CodeStream::OB(140);
-                    os << "synAddress += " << popSubs.getVarSubstitution("id") << ";" << std::endl;
+                    os << "if (" << popSubs["id"] << " < npost)" << CodeStream::OB(140);
+                    os << "synAddress += " << popSubs["id"] << ";" << std::endl;
                     os << "const unsigned int ipost = dd_ind" << sg.getName() << "[synAddress];" << std::endl;
 
                     synSubs.addVarSubstitution("id_post", "ipost");
                 }
                 else { // DENSE
-                    os << "unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " + popSubs.getVarSubstitution("id") + ";" << std::endl;
+                    os << "unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " + popSubs["id"] + ";" << std::endl;
 
-                    synSubs.addVarSubstitution("id_post", popSubs.getVarSubstitution("id"));
+                    synSubs.addVarSubstitution("id_post", popSubs["id"]);
                 }
                 synSubs.addVarSubstitution("id_syn", "synAddress");
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs.getVarSubstitution("id_post") + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
                 }
                 // Otherwise
                 else {
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                         if (shouldAccumulateInSharedMemory(sg)) {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs.getVarSubstitution("id_post") + "] += $(0)");
+                            synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs["id_post"] + "] += $(0)");
                         }
                         else {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs.getVarSubstitution("id_post") + "], $(0))");
+                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
                         }
                     }
                     else {

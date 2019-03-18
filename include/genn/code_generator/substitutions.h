@@ -81,6 +81,14 @@ public:
         applyVars(code);
     }
 
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    const std::string operator[] (const std::string &source) const
+    {
+        return getVarSubstitution(source);
+    }
+
 private:
     //--------------------------------------------------------------------------
     // Private API
