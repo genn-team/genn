@@ -524,7 +524,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                                 os << "// Increment column length corresponding to this postsynaptic neuron" << std::endl;
                                 os << "colLength" << s.first << "[postIndex]++;" << std::endl;
                                 os << "// Add remapping entry" << std::endl;
-                                os << "rempopSubsap" << s.first << "[colMajorIndex] = rowMajorIndex;" << std::endl;
+                                os << "remap" << s.first << "[colMajorIndex] = rowMajorIndex;" << std::endl;
                             }
                         }
                     }
