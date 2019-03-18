@@ -243,6 +243,11 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "presynapticUpdate", true);
 
+            // Add sparse initialisation timer
+            // **NOTE** this may not be required but it's not super-important
+            backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "initSparse", false);
+
             // If any synapse groups have weight update models with postsynaptic learning, add a timer
             if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
@@ -257,14 +262,6 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             {
                 backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                  runnerStepTimeFinalise, "synapseDynamics", true);
-            }
-
-            // If any synapse groups require sparse initialisation, add a timer
-            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-                        [](const ModelSpec::SynapseGroupValueType &s) { return s.second.isSparseInitRequired(); }))
-            {
-                backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 runnerStepTimeFinalise, "initSparse", false);
             }
         }
         allVarStreams << std::endl;
@@ -353,6 +350,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                     backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second);
                     backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second);
                 });
+        }
+    }
         }
 
         // If neuron group has axonal delays
@@ -482,24 +481,24 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                                         "unsigned int", "ind" + s.first, varLoc, autoInitialized, size);
 
                     // **TODO** remap is not always required
-                    if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+                    if(backend.isSynRemapRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
                         // Allocate synRemap
                         // **THINK** this is over-allocating
-                        backend.genVariable(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                            "unsigned int", "synRemap" + s.first, varLoc, autoInitialized, size + 1);
+                        backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                         "unsigned int", "synRemap" + s.first, VarLocation::DEVICE, size + 1);
                     }
 
                     // **TODO** remap is not always required
-                    if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+                    if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
                         const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
 
                         // Allocate column lengths
-                        backend.genVariable(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                            "unsigned int", "colLength" + s.first, varLoc, autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
+                        backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                         "unsigned int", "colLength" + s.first, VarLocation::DEVICE, s.second.getTrgNeuronGroup()->getNumNeurons());
 
                         // Allocate remap
-                        backend.genVariable(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc,
-                                            "unsigned int", "remap" + s.first, varLoc, autoInitialized, postSize);
+                        backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                         "unsigned int", "remap" + s.first, VarLocation::DEVICE, postSize);
                     }
                 }
             });

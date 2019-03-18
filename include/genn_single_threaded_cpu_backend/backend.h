@@ -97,6 +97,8 @@ public:
     virtual std::string getVarPrefix() const override{ return ""; }
 
     virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const override;
+    virtual bool isSynRemapRequired() const override{ return false; }
+    virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
 private:
     //--------------------------------------------------------------------------

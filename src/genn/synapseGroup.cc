@@ -283,23 +283,6 @@ bool SynapseGroup::isInitRequired() const
     }
 }
 
-bool SynapseGroup::isSparseInitRequired() const
-{
-    // If the synaptic connectivity is sparse and some synaptic variables should be initialised on device, return true
-    if((getMatrixType() & SynapseMatrixConnectivity::SPARSE) && isWUVarInitRequired()) {
-        return true;
-    }
-
-    // If sparse connectivity is initialised on device and the synapse group required either synapse dynamics or postsynaptic learning, return true
-    if(isSparseConnectivityInitRequired() &&
-        (!getWUModel()->getSynapseDynamicsCode().empty() || !getWUModel()->getLearnPostCode().empty()))
-    {
-        return true;
-    }
-
-    return false;
-}
-
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                            const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,

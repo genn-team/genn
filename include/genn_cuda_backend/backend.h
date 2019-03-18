@@ -144,6 +144,8 @@ public:
     virtual std::string getVarPrefix() const override{ return "dd_"; }
 
     virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const override;
+    virtual bool isSynRemapRequired() const override{ return true; }
+    virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
     //--------------------------------------------------------------------------
     // Public API

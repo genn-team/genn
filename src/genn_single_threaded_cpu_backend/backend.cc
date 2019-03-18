@@ -481,17 +481,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
         for(const auto &s : model.getLocalSynapseGroups()) {
-            if (s.second.isSparseInitRequired()) {
+            // If synapse group has sparse connectivity and either has variables that require initialising
+            // or has postsynaptic learning, meaning that reverse lookup structures need building
+            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                && (s.second.isWUVarInitRequired() || !s.second.getWUModel()->getLearnPostCode().empty()))
+            {
                 CodeStream::Scope b(os);
-
-                // If synapse dynamics are required, setup references and pointers into synRemap array
-                if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-                    os << "unsigned int &synRemapCount = synRemap" << s.first << "[0];" << std::endl;
-                    os << "unsigned int *synRemap = &synRemap" << s.first << "[1];" << std::endl;
-
-                    os << "synRemapCount  = 0;" << std::endl;
-                }
-
                 // If postsynaptic learning is required, initially zero column lengths
                 if (!s.second.getWUModel()->getLearnPostCode().empty()) {
                     os << "// Zero column lengths" << std::endl;
@@ -504,24 +499,19 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     CodeStream::Scope b(os);
 
                     // Generate sparse initialisation code
-                    if(s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                    if(s.second.isWUVarInitRequired()) {
                         Substitutions popSubs(&funcSubs);
                         popSubs.addVarSubstitution("id_pre", "i");
                         popSubs.addVarSubstitution("row_len", "rowLength" + s.first + "[i]");
                         sgSparseInitHandler(os, s.second, popSubs);
                     }
 
-                    // If synapse dynamics or postsynaptic learning are required
-                    if(!s.second.getWUModel()->getSynapseDynamicsCode().empty() || !s.second.getWUModel()->getLearnPostCode().empty()) {
+                    // If postsynaptic learning is required
+                    if(!s.second.getWUModel()->getLearnPostCode().empty()) {
                         os << "// Loop through synapses in corresponding matrix row" << std::endl;
                         os << "for(unsigned int j = 0; j < rowLength" << s.first << "[i]; j++)" << std::endl;
                         {
                             CodeStream::Scope b(os);
-
-                            // If synapse dynamics are required, calculate remap entry for synapse
-                            if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-                                os << "synRemap[synRemapCount++] = (i * " << s.second.getMaxConnections() << ") + j;" << std::endl;
-                            }
 
                             // If postsynaptic learning is required, calculate column length and remapping
                             if(!s.second.getWUModel()->getLearnPostCode().empty()) {
@@ -534,7 +524,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                                 os << "// Increment column length corresponding to this postsynaptic neuron" << std::endl;
                                 os << "colLength" << s.first << "[postIndex]++;" << std::endl;
                                 os << "// Add remapping entry" << std::endl;
-                                os << "remap" << s.first << "[colMajorIndex] = rowMajorIndex;" << std::endl;
+                                os << "rempopSubsap" << s.first << "[colMajorIndex] = rowMajorIndex;" << std::endl;
                             }
                         }
                     }

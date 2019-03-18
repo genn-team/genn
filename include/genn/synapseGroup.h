@@ -184,8 +184,6 @@ public:
     //! Is any form of device initialisation required?
     bool isInitRequired() const;
 
-    //! Is any form of sparse device initialisation required?
-    bool isSparseInitRequired() const;
     
 protected:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,

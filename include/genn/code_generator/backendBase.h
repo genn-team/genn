@@ -122,6 +122,8 @@ public:
     virtual std::string getVarPrefix() const{ return ""; }
 
     virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const = 0;
+    virtual bool isSynRemapRequired() const = 0;
+    virtual bool isPostsynapticRemapRequired() const = 0;
 
     //--------------------------------------------------------------------------
     // Public API
