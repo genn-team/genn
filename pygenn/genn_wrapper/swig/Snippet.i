@@ -21,6 +21,7 @@
 %import "StlContainers.i"
 
 %feature("director") Snippet::Base; // for inheritance in python
+%include "gennExport.h"
 %include "snippet.h"
 
 // helper class for callbacks

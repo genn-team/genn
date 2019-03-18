@@ -34,6 +34,7 @@
 %import "Snippet.i"
 %import "InitVarSnippet.i"
 
+%include "gennExport.h"
 %feature("director") Models::Base; // for inheritance in python
 %nodefaultctor Models::VarInit;
 %include "models.h"
