@@ -51,11 +51,11 @@ public:
         // Record stop event
         if(m_TimingEnabled) {
             m_CodeStream << "cudaEventRecord(" << m_Name << "Stop);" << std::endl;
-        }
 
-        // If we should synchronise on stop, insert call
-        if(m_SynchroniseOnStop) {
-            m_CodeStream << "cudaEventSynchronize(" << m_Name << "Stop);" << std::endl;
+            // If we should synchronise on stop, insert call
+            if(m_SynchroniseOnStop) {
+                m_CodeStream << "cudaEventSynchronize(" << m_Name << "Stop);" << std::endl;
+            }
         }
     }
 
