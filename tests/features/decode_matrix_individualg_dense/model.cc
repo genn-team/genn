@@ -31,7 +31,7 @@ void modelDefinition(ModelSpec &model)
     model.setName("decode_matrix_individualg_dense");
 
     // Static synapse parameters
-    WeightUpdateModels::StaticPulse::VarValues staticSynapseInit(1.0);    // 0 - Wij (nA)
+    WeightUpdateModels::StaticPulse::VarValues staticSynapseInit(uninitialisedVar());    // 0 - Wij (nA)
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
     model.addNeuronPopulation<Neuron>("Post", 4, {}, Neuron::VarValues(0.0));

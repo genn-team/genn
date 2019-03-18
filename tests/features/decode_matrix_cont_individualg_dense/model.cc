@@ -59,7 +59,7 @@ void modelDefinition(ModelSpec &model)
     model.setName("decode_matrix_cont_individualg_dense");
 
     // Continuous synapse parameters
-    Continuous::VarValues staticSynapseInit(1.0);    // 0 - Wij (nA)
+    Continuous::VarValues staticSynapseInit(uninitialisedVar());    // 0 - Wij (nA)
 
     model.addNeuronPopulation<PreNeuron>("Pre", 10, {}, PreNeuron::VarValues(0.0));
     model.addNeuronPopulation<PostNeuron>("Post", 4, {}, PostNeuron::VarValues(0.0));
