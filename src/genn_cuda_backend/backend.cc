@@ -672,12 +672,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                 Substitutions synSubs(&popSubs);
                                 if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     os << "if (" << popSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
-                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs["id"] << ";" << std::endl;
-                                    os << "const unsigned int ipre = dd_remap" + sg.getName() + "[synAddress] / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
+                                    os << "const unsigned int synAddress = dd_remap" + sg.getName() + "[(shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs["id"] << "];" << std::endl;
+                                    os << "const unsigned int ipre = synAddress / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", "ipre");
                                 }
                                 else {
-                                    os << "const unsigned int synAddress = (shSpk[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " << popSubs["id"] << ";" << std::endl;
+                                    os << "const unsigned int synAddress = (" << popSubs["id"] << " * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + shSpk[j];" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", synSubs["id"]);
                                 }
 
