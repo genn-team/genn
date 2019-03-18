@@ -351,8 +351,6 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                     backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second);
                 });
         }
-    }
-        }
 
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
