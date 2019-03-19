@@ -1106,9 +1106,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                                     os << "shRowStart[i + 1] = rowStart;" << std::endl;
                                 }
 
-                                // If this is the first thread block and the last block of rows,
+                                // If this is the first thread block of the first block in the group AND the last block of rows,
                                 // write the total cumulative sum to the first entry of the remap structure
-                                os << "if(blockIdx.x == 0 && (r == " << numBlocks - 1 << "))";
+                                os << "if(" << popSubs["id"] << " == 0 && (r == " << numBlocks - 1 << "))";
                                 {
                                     CodeStream::Scope b(os);
                                     os << "dd_synRemap" << sg.getName() << "[0] = shRowStart[numRowsInBlock];" << std::endl;
