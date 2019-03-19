@@ -1084,6 +1084,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                         // If this synapse group has synapse dynamics
                         if(!sg.getWUModel()->getSynapseDynamicsCode().empty()) {
+                            os << "__syncthreads();" << std::endl;
+
                             // Use first thread to generate cumulative sum
                             os << "if (threadIdx.x == 0)";
                             {
