@@ -259,7 +259,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
     for(auto &k : kernelsToOptimise) {
         LOGD << "Kernel '" << Backend::KernelNames[k.first] << "':";
 
-        // Get required number of registers and shared memory bytes for this kernel
+        // Get required number of registers per thread and shared memory bytes for this kernel
         // **NOTE** register requirements are assumed to remain constant as they're vector-width
         const size_t reqNumRegs = (size_t)krnlNumRegs[0][k.first];
         const size_t reqSharedMemBytes[2] = {(size_t)krnlSharedSizeBytes[0][k.first], (size_t)krnlSharedSizeBytes[1][k.first]};
@@ -301,8 +301,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
                 // Calculate number of registers per block and pad with register allocation granularity
                 const size_t paddedNumRegPerBlock = Utils::padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
 
-                // Update limit based on maximum registers per block
-                // **NOTE** this doesn't quite make sense either
+                // Update limit based on maximum registers available on SM
                 smBlockLimit = std::min(smBlockLimit, deviceProps.regsPerBlock / paddedNumRegPerBlock);
             }
             // Otherwise, if register allocation is per-warp
@@ -310,13 +309,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
                 // Caculate number of registers per warp and pad with register allocation granularity
                 const size_t paddedNumRegPerWarp = Utils::padSize(reqNumRegs * warpSize, regAllocGran);
 
-                // **JAMES** number of warps per SM given the register limit and; the register and warp allocation granularity
-                // **THINK** I don't understand this
-                //blockLimit = floor(deviceProps.regsPerBlock / (paddedNumRegPerWarp * warpAllocGran)*warpAllocGran;
+                // Determine how many warps can therefore be simultaneously run on SM
+                const size_t paddedNumWarpsPerSM = Utils::padSize(deviceProps.regsPerBlock / paddedNumRegPerWarp, warpAllocGran);
 
-                //**JAMES** given the number of warps you can fit per SM, how many blocks fit
-                // **NOTE** this doesn't quite make sense either
-                //smBlockLimit = std::min(smBlockLimit, blockLimit / blockWarps);
+                // Update limit based on the number of warps required
+                smBlockLimit = std::min(smBlockLimit, paddedNumWarpsPerSM / blockWarps);
             }
             LOGD << "\t\tSM block limit corrected for registers:" << smBlockLimit;
 
