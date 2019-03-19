@@ -1,7 +1,6 @@
 #!/bin/bash
 # By default no flags are passed to genn-buildmodel.sh or make
 BUILD_FLAGS=""
-MAKE_FLAGS=""
 REPORT=0
 
 # Parse command line arguments
@@ -9,7 +8,6 @@ OPTIND=1
 while getopts "crd" opt; do
     case "$opt" in
     c)  BUILD_FLAGS="-c"
-        MAKE_FLAGS="CPU_ONLY=1"
         ;;
     r) REPORT=1
         ;;
@@ -58,23 +56,20 @@ for f in features/* ; do
 done;
 
 
-# # Run unit tests
-# pushd unit
-#
-# # Reset coverage  before running test
-# reset_coverage
-# 
+# Run unit tests
+pushd unit
+
+# Reset coverage  before running test
+reset_coverage
+ 
 # # Clean and build
-# make clean all COVERAGE=1 $MAKE_FLAGS 1>>../msg 2>>../msg 
-# 
-# # Run tests
-# ./test --gtest_output="xml:test_results_unit.xml"
-# 
-# # Update coverage after test
-# update_coverage coverage_unit
-# 
-# # Pop unit tests directory
-# popd
+make clean all COVERAGE=1
+
+# Run tests
+./test --gtest_output="xml:test_results_unit.xml"
+
+# Pop unit tests directory
+popd
 # 
 # # Run SpineML tests
 # pushd spineml
@@ -104,6 +99,17 @@ if [[ "$(uname)" = "Darwin" ]]; then
         fi
     done
     
+    # Add unit tests profiling data to lists
+    if [[ -f "unit/default.profraw" && -f "unit/test_coverage" ]]; then
+            LLVM_PROFRAW_FILES+="unit/default.profraw "
+            
+            if [ -z "$LLVM_TEST_EXECUTABLES" ]; then
+                LLVM_TEST_EXECUTABLES+="unit/test_coverage "
+            else
+                LLVM_TEST_EXECUTABLES+="-object unit/test_coverage "
+            fi
+        fi
+        
     # Merge coverage
     xcrun llvm-profdata merge -sparse $LLVM_PROFRAW_FILES -o coverage.profdata
     
