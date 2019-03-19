@@ -46,6 +46,7 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(ModelSpec &model)
 {
+    model.setDT(0.1);
     model.setName("pre_vars_in_sim_code_event");
 
     model.addNeuronPopulation<Neuron>("pre", 10, {}, Neuron::VarValues(0.0, uninitialisedVar()));
