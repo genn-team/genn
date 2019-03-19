@@ -59,10 +59,7 @@ done;
 # Run unit tests
 pushd unit
 
-# Reset coverage  before running test
-reset_coverage
- 
-# # Clean and build
+# Clean and build
 make clean all COVERAGE=1
 
 # Run tests
