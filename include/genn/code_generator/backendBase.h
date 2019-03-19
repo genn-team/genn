@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+// PLOG includes
+#include <plog/Severity.h>
+
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
@@ -40,6 +43,9 @@ struct PreferencesBase
 
     //! NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
     std::string userNvccFlagsGNU = "";
+
+    //! Logging level to use for code generation
+    plog::Severity logLevel = plog::info;
 };
 
 //--------------------------------------------------------------------------

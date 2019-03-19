@@ -4,6 +4,7 @@
 #ifdef _WIN32
 #include <Objbase.h>
 #endif
+
 // PLOG includes
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
@@ -22,13 +23,6 @@
 // Include backend
 #include "optimiser.h"
 
-enum Log
-{
-    LogDefault,
-    LogBackend,
-    LogOptimiser,
-};
-
 // Declare global GeNN preferences
 CodeGenerator::BACKEND_NAMESPACE::Preferences GENN_PREFERENCES;
 
@@ -40,15 +34,8 @@ int main(int argc,     //!< number of arguments; expected to be 2
 {
     try
     {
-        // Initialise log channels, appending all to console
-        // **TODO** de-crud standard logger
-        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init<LogDefault>(plog::info, &consoleAppender);
-        plog::init<LogBackend>(plog::info, &consoleAppender);
-        plog::init<LogOptimiser>(plog::info, &consoleAppender);
-        
         if (argc != 2) {
-            LOGE << "usage: generator <target dir>";
+            std::cerr << "usage: generator <target dir>";
             return EXIT_FAILURE;
         }
         
@@ -59,6 +46,10 @@ int main(int argc,     //!< number of arguments; expected to be 2
         ModelSpecInternal model;
         modelDefinition(static_cast<ModelSpec&>(std::ref(model)));
         
+        // Initialise logging, appending all to console
+        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+        plog::init(GENN_PREFERENCES.logLevel, &consoleAppender);
+
         // Finalize model
         model.finalize();
 
