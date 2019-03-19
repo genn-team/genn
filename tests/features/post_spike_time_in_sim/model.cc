@@ -32,6 +32,7 @@ public:
     DECLARE_MODEL(PostNeuron, 0, 0);
 
     SET_THRESHOLD_CONDITION_CODE("$(t) >= (scalar)$(id) && fmodf($(t) - (scalar)$(id), 10.0f)< 1e-4");
+    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
 IMPLEMENT_MODEL(PostNeuron);
