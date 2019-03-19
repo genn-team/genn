@@ -8,8 +8,10 @@
 // Google test includes
 #include "gtest/gtest.h"
 
-// GeNN includes
-#include "codeGenUtils.h"
+// GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
+
+using namespace CodeGenerator;
 
 // Test based on original issue found in https://github.com/brian-team/brian2genn/pull/60 to make sure that ensureFtype doesn't break functions it shouldn't
 TEST(EnsureMathFunctionFtype, ISinF) {
