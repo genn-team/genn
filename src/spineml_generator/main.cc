@@ -22,7 +22,7 @@
 #include <plog/Appenders/ConsoleAppender.h>
 
 // GeNN includes
-#include "modelSpec.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/generateAll.h"
@@ -516,7 +516,7 @@ int main(int argc, char *argv[])
 
         // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
         const int localHostID = 0;
-        CodeGenerator::BACKEND_NAMESPACE::Backend::Preferences preferences;
+        CodeGenerator::BACKEND_NAMESPACE::Preferences preferences;
         
         // Create backend
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, codePath, localHostID, preferences);
