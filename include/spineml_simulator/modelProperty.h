@@ -89,8 +89,8 @@ private:
 class ValueList : public Base
 {
 public:
-    ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
-              const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices);
+    ValueList(const pugi::xml_node &node, const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices,
+              scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API

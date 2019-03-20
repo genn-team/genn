@@ -25,7 +25,7 @@ void SpineMLSimulator::ModelProperty::Base::pushToDevice() const
 //------------------------------------------------------------------------
 void SpineMLSimulator::ModelProperty::Base::pullFromDevice() const
 {
-    m_PushFunc();
+    m_PullFunc();
 }
 
 //------------------------------------------------------------------------
@@ -60,9 +60,8 @@ void SpineMLSimulator::ModelProperty::Fixed::setValue(scalar value)
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::ValueList
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node,
-                                                      scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size,
-                                                      const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices)
+SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node, const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices,
+                                                      scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
     : Base(hostStateVar, pushFunc, pullFunc, size)
 {
     // Allocate vector
@@ -247,9 +246,8 @@ std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelPr
     if(valueChild) {
         // If this property is intialised with a list of values - create a value list model property to manually
         if(strcmp(valueChild.name(), valueListName.c_str()) == 0) {
-            return std::unique_ptr<Base>(new ValueList(valueChild,
-                                                       hostStateVar, pushFunc, pullFunc, size,
-                                                       basePath, remapIndices));
+            return std::unique_ptr<Base>(new ValueList(valueChild, basePath, remapIndices,
+                                                       hostStateVar, pushFunc, pullFunc, size));
         }
         // Otherwise if we can skip property types that GeNN can initialise
         else if(skipGeNNInitialised) {

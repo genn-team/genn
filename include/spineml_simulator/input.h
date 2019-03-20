@@ -72,10 +72,11 @@ private:
 class SpikeBase : public Base
 {
 protected:
+    typedef void (*PushCurrentSpikesFunc)();
+
     SpikeBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-              unsigned int popSize, unsigned int *spikeQueuePtr,
-              unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-              unsigned int *hostSpikes, unsigned int *deviceSpikes);
+              unsigned int popSize, unsigned int *spikeQueuePtr, unsigned int *hostSpikeCount, unsigned int *hostSpikes,
+              PushCurrentSpikesFunc pushCurrentSpikes);
 
     //----------------------------------------------------------------------------
     // Protected API
@@ -100,10 +101,8 @@ private:
 
     unsigned int *m_SpikeQueuePtr;
     unsigned int *m_HostSpikeCount;
-    unsigned int *m_DeviceSpikeCount;
-
     unsigned int *m_HostSpikes;
-    unsigned int *m_DeviceSpikes;
+    PushCurrentSpikesFunc m_PushCurrentSpikes;
 };
 
 //----------------------------------------------------------------------------
@@ -119,9 +118,8 @@ public:
 
 protected:
     InterSpikeIntervalBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                           unsigned int popSize, unsigned int *spikeQueuePtr,
-                           unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-                           unsigned int *hostSpikes, unsigned int *deviceSpikes);
+                           unsigned int popSize, unsigned int *spikeQueuePtr, unsigned int *hostSpikeCount, unsigned int *hostSpikes,
+                           PushCurrentSpikesFunc pushCurrentSpikes);
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -142,9 +140,8 @@ class RegularSpikeRate : public InterSpikeIntervalBase
 {
 public:
     RegularSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                     unsigned int popSize, unsigned int *spikeQueuePtr,
-                     unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-                     unsigned int *hostSpikes, unsigned int *deviceSpikes);
+                     unsigned int popSize, unsigned int *spikeQueuePtr, unsigned int *hostSpikeCount, unsigned int *hostSpikes,
+                     PushCurrentSpikesFunc pushCurrentSpikes);
 
 protected:
     //----------------------------------------------------------------------------
@@ -160,9 +157,8 @@ class PoissonSpikeRate : public InterSpikeIntervalBase
 {
 public:
     PoissonSpikeRate(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-                     unsigned int popSize, unsigned int *spikeQueuePtr,
-                     unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-                     unsigned int *hostSpikes, unsigned int *deviceSpikes);
+                     unsigned int popSize, unsigned int *spikeQueuePtr, unsigned int *hostSpikeCount, unsigned int *hostSpikes,
+                     PushCurrentSpikesFunc pushCurrentSpikes);
 
 protected:
     //----------------------------------------------------------------------------
@@ -184,9 +180,8 @@ class SpikeTime : public SpikeBase
 {
 public:
     SpikeTime(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
-              unsigned int popSize, unsigned int *spikeQueuePtr,
-              unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-              unsigned int *hostSpikes, unsigned int *deviceSpikes);
+              unsigned int popSize, unsigned int *spikeQueuePtr, unsigned int *hostSpikeCount, unsigned int *hostSpikes,
+              PushCurrentSpikesFunc pushCurrentSpikes);
 
     //----------------------------------------------------------------------------
     // SpikeBase virtuals

@@ -79,19 +79,17 @@ void *getLibrarySymbol(LIBRARY_HANDLE modelLibrary, const char *name, bool allow
 }
 //----------------------------------------------------------------------------
 template <typename T>
-std::pair<T*, T*> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &hostStateVarName)
+std::tuple<T*, ModelProperty::Base::PushFunc, ModelProperty::Base::PullFunc> getStateVar(LIBRARY_HANDLE modelLibrary, const std::string &stateVarName)
 {
     // Get host statevar
-    T *hostStateVar = (T*)getLibrarySymbol(modelLibrary, hostStateVarName.c_str(), true);
+    T *hostStateVar = (T*)getLibrarySymbol(modelLibrary, stateVarName.c_str(), true);
 
-#ifdef CPU_ONLY
-    T *deviceStateVar = nullptr;
-#else
-    std::string deviceStateVarName = "d_" + hostStateVarName;
-    T *deviceStateVar = (T*)getLibrarySymbol(modelLibrary, deviceStateVarName.c_str(), true);
-#endif
+    // Get push and pull functions
+    auto pushFunc = (ModelProperty::Base::PushFunc)getLibrarySymbol(modelLibrary, ("push" + stateVarName + "ToDevice").c_str(), true);
+    auto pullFunc = (ModelProperty::Base::PullFunc)getLibrarySymbol(modelLibrary, ("pull" + stateVarName + "FromDevice").c_str(), true);
 
-    return std::make_pair(hostStateVar, deviceStateVar);
+    // Return in tuple
+    return std::make_tuple(hostStateVar, pushFunc, pullFunc);
 }
 //----------------------------------------------------------------------------
 void closeLibrary(LIBRARY_HANDLE modelLibrary)
@@ -160,46 +158,22 @@ bool isEventReceivePort(const std::string &targetName, const std::string &portNa
     return false;
 }
 //----------------------------------------------------------------------------
-std::tuple<unsigned int*, unsigned int*, unsigned int*, unsigned int*, unsigned int*> getNeuronPopSpikeVars(LIBRARY_HANDLE modelLibrary, const std::string &popName)
+std::tuple<unsigned int*, unsigned int*, unsigned int*, VoidFunction, VoidFunction> getNeuronPopSpikeVars(LIBRARY_HANDLE modelLibrary, const std::string &popName)
 {
     // Get pointers to spike counts in model library
-    unsigned int **hostSpikeCount;
-    unsigned int **deviceSpikeCount;
-    std::tie(hostSpikeCount, deviceSpikeCount) = getStateVar<unsigned int*>(modelLibrary, "glbSpkCnt" + popName);
-#ifdef CPU_ONLY
-    if(hostSpikeCount == nullptr) {
-#else
-    if(hostSpikeCount == nullptr || deviceSpikeCount == nullptr) {
-#endif
-        throw std::runtime_error("Cannot find spike count variable for population:" + popName);
-    }
+    unsigned int **hostSpikeCount = (unsigned int **)getLibrarySymbol(modelLibrary, ("glbSpkCnt" + popName).c_str());
+    unsigned int **hostSpikes = (unsigned int **)getLibrarySymbol(modelLibrary, ("glbSpk" + popName).c_str());
 
-    // Get pointers to spike counts in model library
-    unsigned int **hostSpikes;
-    unsigned int **deviceSpikes;
-    std::tie(hostSpikes, deviceSpikes) = getStateVar<unsigned int*>(modelLibrary, "glbSpk" + popName);
-#ifdef CPU_ONLY
-    if(hostSpikes == nullptr) {
-#else
-    if(hostSpikes == nullptr || deviceSpikes == nullptr) {
-#endif
-        throw std::runtime_error("Cannot find spike variable for population:" + popName);
-    }
+    // Get push and pull functions
+    auto pushFunc = (VoidFunction)getLibrarySymbol(modelLibrary, ("push" + popName + "CurrentSpikesToDevice").c_str());
+    auto pullFunc = (VoidFunction)getLibrarySymbol(modelLibrary, ("pull" + popName + "CurrentSpikesFromDevice").c_str());
 
     // Get spike queue
     // **NOTE** neuron populations without any outgoing synapses with delay won't have one so it can be missing
     unsigned int *spikeQueuePtr = (unsigned int*)getLibrarySymbol(modelLibrary, ("spkQuePtr" + popName).c_str(), true);
 
     // Return pointers in tutple
-#ifdef CPU_ONLY
-    return std::make_tuple(*hostSpikeCount, nullptr,
-                           *hostSpikes, nullptr,
-                           spikeQueuePtr);
-#else
-    return std::make_tuple(*hostSpikeCount, *deviceSpikeCount,
-                           *hostSpikes, *deviceSpikes,
-                           spikeQueuePtr);
-#endif
+    return std::make_tuple(*hostSpikeCount, *hostSpikes, spikeQueuePtr, pushFunc, pullFunc);
 }
 //----------------------------------------------------------------------------
 void addEventPorts(const filesystem::path &basePath, const pugi::xml_node &node,
@@ -284,8 +258,9 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
 
         // Get pointers to state vars in model library
         scalar **hostStateVar;
-        scalar **deviceStateVar;
-        std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
+        ModelProperty::Base::PushFunc pushFunc;
+        ModelProperty::Base::PullFunc pullFunc;
+        std::tie(hostStateVar, pushFunc, pullFunc) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
 
         // If it's found
         // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
@@ -312,25 +287,17 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
             // If property is overriden then the value types will be in 'UL:' namespace otherwise root
             const std::string valueNamespace = overridenParam ? "UL:" : "";
 
-#ifdef CPU_ONLY
-            std::cout << "\t\tState variable found host pointer:" << *hostStateVar << std::endl;
-
-            // Create model property object
-            componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param, *hostStateVar, nullptr, popSize,
-                                                                skipGeNNInitialised, basePath, valueNamespace, remapIndices)));
-#else
-            if(deviceStateVar == nullptr) {
-                throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
+            if(pushFunc == nullptr || pullFunc == nullptr) {
+                throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
             }
 
-            std::cout << "\t\tState variable found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
+            std::cout << "\t\tState variable found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc << std::endl;
 
             // Create model property object
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param, *hostStateVar, *deviceStateVar, popSize,
+                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param,
+                                                                *hostStateVar, pushFunc, pullFunc, popSize,
                                                                 skipGeNNInitialised, basePath, valueNamespace, remapIndices)));
-#endif
         }
     }
 
@@ -370,30 +337,24 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
         if(componentProperties.find(paramName) == componentProperties.end()) {
             // Get pointers to state vars in model library
             scalar **hostStateVar;
-            scalar **deviceStateVar;
-            std::tie(hostStateVar, deviceStateVar) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
+            ModelProperty::Base::PushFunc pushFunc;
+            ModelProperty::Base::PullFunc pullFunc;
+            std::tie(hostStateVar, pushFunc, pullFunc) = getStateVar<scalar*>(modelLibrary, paramName + geNNPopName);
 
             // If it's found
             // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
             if(hostStateVar != nullptr) {
                 std::cout << "\t" << paramName << std::endl;
-#ifdef CPU_ONLY
-                std::cout << "\t\t" << portType << " found host pointer:" << *hostStateVar << std::endl;
 
-                // Create model property object
-                componentProperties.insert(
-                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(*hostStateVar, nullptr, popSize))));
-#else
-                if(deviceStateVar == nullptr) {
-                    throw std::runtime_error("Cannot find device-side state variable for property:" + paramName);
+                if(pushFunc == nullptr || pullFunc == nullptr) {
+                    throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
                 }
 
-                std::cout << "\t\t" << portType << " found host pointer:" << *hostStateVar << ", device pointer:" << *deviceStateVar << std::endl;
+                std::cout << "\t\t" << portType << " found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc << std::endl;
 
                 // Create model property object
                 componentProperties.insert(
-                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(*hostStateVar, *deviceStateVar, popSize))));
-#endif
+                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(*hostStateVar, pushFunc, pullFunc, popSize))));
             }
         }
     }
@@ -424,11 +385,11 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
     if(isEventReceivePort(target, port, componentURLs, componentEventPorts)) {
         // Get host and device (if applicable) pointers to spike counts, spikes and queue
         unsigned int *hostSpikeCount;
-        unsigned int *deviceSpikeCount;
         unsigned int *hostSpikes;
-        unsigned int *deviceSpikes;
         unsigned int *spikeQueuePtr;
-        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(
+        VoidFunction pushFunc;
+        VoidFunction pullFunc;
+        std::tie(hostSpikeCount, hostSpikes, spikeQueuePtr, pushFunc, pullFunc) = getNeuronPopSpikeVars(
             modelLibrary, SpineMLUtils::getSafeName(target));
 
         // If this input has a rate distribution
@@ -437,16 +398,14 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
             if(strcmp(rateDistribution.value(), "regular") == 0) {
                 return std::unique_ptr<Input::Base>(
                     new Input::RegularSpikeRate(dt, node, std::move(inputValue),
-                                                targetSize->second, spikeQueuePtr,
-                                                hostSpikeCount, deviceSpikeCount,
-                                                hostSpikes, deviceSpikes));
+                                                targetSize->second, spikeQueuePtr, hostSpikeCount, hostSpikes,
+                                                pushFunc));
             }
             else if(strcmp(rateDistribution.value(), "poisson") == 0) {
                 return std::unique_ptr<Input::Base>(
                     new Input::PoissonSpikeRate(dt, node, std::move(inputValue),
-                                                targetSize->second, spikeQueuePtr,
-                                                hostSpikeCount, deviceSpikeCount,
-                                                hostSpikes, deviceSpikes));
+                                                targetSize->second, spikeQueuePtr, hostSpikeCount, hostSpikes,
+                                                pushFunc));
             }
             else {
                 throw std::runtime_error("Unsupport spike rate distribution '" + std::string(rateDistribution.value()) + "'");
@@ -456,9 +415,8 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
         else {
             return std::unique_ptr<Input::Base>(
                 new Input::SpikeTime(dt, node, std::move(inputValue),
-                                     targetSize->second, spikeQueuePtr,
-                                     hostSpikeCount, deviceSpikeCount,
-                                     hostSpikes, deviceSpikes));
+                                     targetSize->second, spikeQueuePtr, hostSpikeCount, hostSpikes,
+                                     pushFunc));
         }
     }
     // Otherwise we assume it's an analogue receive port
@@ -510,18 +468,17 @@ std::unique_ptr<LogOutput::Base> createLogOutput(const pugi::xml_node &node, LIB
 
         // Get host and device (if applicable) pointers to spike counts, spikes and queue
         unsigned int *hostSpikeCount;
-        unsigned int *deviceSpikeCount;
         unsigned int *hostSpikes;
-        unsigned int *deviceSpikes;
         unsigned int *spikeQueuePtr;
-        std::tie(hostSpikeCount, deviceSpikeCount, hostSpikes, deviceSpikes, spikeQueuePtr) = getNeuronPopSpikeVars(
+        VoidFunction pushFunc;
+        VoidFunction pullFunc;
+        std::tie(hostSpikeCount, hostSpikes, spikeQueuePtr, pushFunc, pullFunc) = getNeuronPopSpikeVars(
             modelLibrary, SpineMLUtils::getSafeName(target));
 
         // Create event logger
         return std::unique_ptr<LogOutput::Base>(new LogOutput::Event(node, dt, numTimeSteps, port, targetSize->second,
                                                                      logPath, spikeQueuePtr,
-                                                                     hostSpikeCount, deviceSpikeCount,
-                                                                     hostSpikes, deviceSpikes));
+                                                                     hostSpikeCount, hostSpikes, pullFunc));
     }
     // Otherwise we assume it's an analogue send port
     else {
@@ -640,19 +597,13 @@ int main(int argc, char *argv[])
 
         // Load statically-named symbols from library
         VoidFunction initialize = (VoidFunction)getLibrarySymbol(modelLibrary, "initialize");
+        VoidFunction initializeSparse = (VoidFunction)getLibrarySymbol(modelLibrary, "initializeSparse");
         VoidFunction allocateMem = (VoidFunction)getLibrarySymbol(modelLibrary, "allocateMem");
-#ifdef CPU_ONLY
-        VoidFunction stepTimeCPU = (VoidFunction)getLibrarySymbol(modelLibrary, "stepTimeCPU");
-#else
-        VoidFunction stepTimeGPU = (VoidFunction)getLibrarySymbol(modelLibrary, "stepTimeGPU");
-#endif // CPU_ONLY
+        VoidFunction stepTime = (VoidFunction)getLibrarySymbol(modelLibrary, "stepTime");
 
         // Search for internal time counter
         // **NOTE** this is only used for checking timesteps are configured correctly
         float *simulationTime = (float*)getLibrarySymbol(modelLibrary, "t");
-
-        // Search for network initialization function
-        VoidFunction initializeNetwork = (VoidFunction)getLibrarySymbol(modelLibrary, ("init" + networkName).c_str());
 
         // Call library function to allocate memory
         {
@@ -790,8 +741,8 @@ int main(int argc, char *argv[])
 
         // Call library function to perform final initialize
         {
-            Timer t("Init network:");
-            initializeNetwork();
+            Timer t("Initialize sparse:");
+            initializeSparse();
         }
 
         auto simulation = experiment.child("Simulation");
@@ -853,11 +804,7 @@ int main(int argc, char *argv[])
             // Advance time
             {
                 TimerAccumulate t(simulateMs);
-#ifdef CPU_ONLY
-                stepTimeCPU();
-#else
-                stepTimeGPU();
-#endif
+                stepTime();
             }
 
             // If this is the first timestep
