@@ -63,7 +63,7 @@ pushd unit
 make clean all COVERAGE=1
 
 # Run tests
-./test --gtest_output="xml:test_results_unit.xml"
+./test_coverage --gtest_output="xml:test_results_unit.xml"
 
 # Pop unit tests directory
 popd
