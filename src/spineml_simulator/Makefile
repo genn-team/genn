@@ -16,7 +16,7 @@ OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
 DEPS			:=$(OBJECTS:.o=.d)
 
 # Add compiler and linker flags to link libGeNN and correct backend; and to configure generator to use backend
-LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_common$(GENN_PREFIX)
+LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_common$(GENN_PREFIX) -ldl
 
 .PHONY: all clean spineml_common
 
