@@ -20,28 +20,26 @@
 //------------------------------------------------------------------------
 void SpineMLSimulator::ModelProperty::Base::pushToDevice() const
 {
-#ifndef CPU_ONLY
-    CHECK_CUDA_ERRORS(cudaMemcpy(m_DeviceStateVar, m_HostStateVar, m_Size * sizeof(scalar), cudaMemcpyHostToDevice));
-#endif  // CPU_ONLY
+    m_PushFunc(false);
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::ModelProperty::Base::pullFromDevice() const
 {
-#ifndef CPU_ONLY
-    CHECK_CUDA_ERRORS(cudaMemcpy(m_HostStateVar, m_DeviceStateVar, m_Size * sizeof(scalar), cudaMemcpyDeviceToHost));
-#endif  // CPU_ONLY
+    m_PushFunc();
 }
 
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::Fixed
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::Fixed::Fixed(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
-    : Fixed(node.attribute("value").as_double(), hostStateVar, deviceStateVar, size)
+SpineMLSimulator::ModelProperty::Fixed::Fixed(const pugi::xml_node &node,
+                                              scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
+    : Fixed(node.attribute("value").as_double(), hostStateVar, pushFunc, pullFunc, size)
 {
 }
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::Fixed::Fixed(double value, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
-    : Base(hostStateVar, deviceStateVar, size)
+SpineMLSimulator::ModelProperty::Fixed::Fixed(double value,
+                                              scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
+    : Base(hostStateVar, pushFunc, pullFunc, size)
 {
     setValue(value);
     std::cout << "\t\t\tFixed value:" << m_Value << std::endl;
@@ -62,9 +60,10 @@ void SpineMLSimulator::ModelProperty::Fixed::setValue(scalar value)
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::ValueList
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
+SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node,
+                                                      scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size,
                                                       const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices)
-    : Base(hostStateVar, deviceStateVar, size)
+    : Base(hostStateVar, pushFunc, pullFunc, size)
 {
     // Allocate vector
     std::vector<scalar> values(size);
@@ -138,8 +137,9 @@ void SpineMLSimulator::ModelProperty::ValueList::setValue(const std::vector<scal
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::UniformDistribution
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::UniformDistribution::UniformDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
-    : Base(hostStateVar, deviceStateVar, size)
+SpineMLSimulator::ModelProperty::UniformDistribution::UniformDistribution(const pugi::xml_node &node,
+                                                                          scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
+    : Base(hostStateVar, pushFunc, pullFunc, size)
 {
     setValue(node.attribute("minimum").as_double(), node.attribute("maximum").as_double());
     std::cout << "\t\t\tMin value:" << m_Distribution.min() << ", Max value:" << m_Distribution.max() << std::endl;
@@ -168,8 +168,9 @@ void SpineMLSimulator::ModelProperty::UniformDistribution::setValue(scalar min, 
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::NormalDistribution
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::NormalDistribution::NormalDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
-    : Base(hostStateVar, deviceStateVar, size)
+SpineMLSimulator::ModelProperty::NormalDistribution::NormalDistribution(const pugi::xml_node &node,
+                                                                        scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
+    : Base(hostStateVar, pushFunc, pullFunc, size)
 {
     setValue(node.attribute("mean").as_double(), node.attribute("variance").as_double());
     std::cout << "\t\t\tMean:" << m_Distribution.mean() << ", Variance:" << m_Distribution.stddev() * m_Distribution.stddev() << std::endl;
@@ -198,8 +199,9 @@ void SpineMLSimulator::ModelProperty::NormalDistribution::setValue(scalar mean, 
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::ExponentialDistribution
 //------------------------------------------------------------------------
-SpineMLSimulator::ModelProperty::ExponentialDistribution::ExponentialDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
-    : Base(hostStateVar, deviceStateVar, size)
+SpineMLSimulator::ModelProperty::ExponentialDistribution::ExponentialDistribution(const pugi::xml_node &node,
+                                                                                  scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
+    : Base(hostStateVar, pushFunc, pullFunc, size)
 {
     setValue(node.attribute("mean").as_double());
     std::cout << "\t\t\tLambda:" << m_Distribution.lambda() << std::endl;
@@ -228,7 +230,8 @@ void SpineMLSimulator::ModelProperty::ExponentialDistribution::setValue(scalar l
 //----------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty
 //----------------------------------------------------------------------------
-std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar,
+std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelProperty::create(const pugi::xml_node &node,
+                                                                                               scalar *hostStateVar, Base::PushFunc pushFunc, Base::PullFunc pullFunc,
                                                                                                unsigned int size, bool skipGeNNInitialised, const filesystem::path &basePath,
                                                                                                const std::string &valueNamespace, const std::vector<unsigned int> *remapIndices)
 {
@@ -244,7 +247,8 @@ std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelPr
     if(valueChild) {
         // If this property is intialised with a list of values - create a value list model property to manually
         if(strcmp(valueChild.name(), valueListName.c_str()) == 0) {
-            return std::unique_ptr<Base>(new ValueList(valueChild, hostStateVar, deviceStateVar, size,
+            return std::unique_ptr<Base>(new ValueList(valueChild,
+                                                       hostStateVar, pushFunc, pullFunc, size,
                                                        basePath, remapIndices));
         }
         // Otherwise if we can skip property types that GeNN can initialise
@@ -255,30 +259,34 @@ std::unique_ptr<SpineMLSimulator::ModelProperty::Base> SpineMLSimulator::ModelPr
                 strcmp(valueChild.name(), normalDistribution.c_str()) == 0 ||
                 strcmp(valueChild.name(), poissonDistributionName.c_str()) == 0)
             {
-                return std::unique_ptr<Base>(new Base(hostStateVar, deviceStateVar, size));
+                return std::unique_ptr<Base>(new Base(hostStateVar, pushFunc, pullFunc, size));
             }
         }
         // Otherwise, if we can't skip property types supported by GeNN i.e. when we are overriding model properties
         else if(!skipGeNNInitialised) {
             if(strcmp(valueChild.name(), fixedValueName.c_str()) == 0) {
-                return std::unique_ptr<Base>(new Fixed(valueChild, hostStateVar, deviceStateVar, size));
+                return std::unique_ptr<Base>(new Fixed(valueChild,
+                                                       hostStateVar, pushFunc, pullFunc, size));
             }
             else if(strcmp(valueChild.name(), uniformDistributionName.c_str()) == 0) {
-                return std::unique_ptr<Base>(new UniformDistribution(valueChild, hostStateVar, deviceStateVar, size));
+                return std::unique_ptr<Base>(new UniformDistribution(valueChild,
+                                                                     hostStateVar, pushFunc, pullFunc, size));
             }
             else if(strcmp(valueChild.name(), normalDistribution.c_str()) == 0) {
-                return std::unique_ptr<Base>(new NormalDistribution(valueChild, hostStateVar, deviceStateVar, size));
+                return std::unique_ptr<Base>(new NormalDistribution(valueChild,
+                                                                    hostStateVar, pushFunc, pullFunc, size));
             }
             // **NOTE** Poisson distribution isn't actually one - it is the exponential
             // distribution (which models the inter-event-interval of a Poisson PROCESS)
             else if(strcmp(valueChild.name(), poissonDistributionName.c_str()) == 0) {
-                return std::unique_ptr<Base>(new ExponentialDistribution(valueChild, hostStateVar, deviceStateVar, size));
+                return std::unique_ptr<Base>(new ExponentialDistribution(valueChild,
+                                                                         hostStateVar, pushFunc, pullFunc, size));
             }
         }
         throw std::runtime_error("Unsupported type '" + std::string(valueChild.name()) + "' for property '" + std::string(node.attribute("name").value()) + "'");
     }
     // Otherwise assume that GeNN has initialised variable to something sensible and add standard model property
     else {
-        return std::unique_ptr<Base>(new Base(hostStateVar, deviceStateVar, size));
+        return std::unique_ptr<Base>(new Base(hostStateVar, pushFunc, pullFunc, size));
     }
 }

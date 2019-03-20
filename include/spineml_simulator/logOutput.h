@@ -160,8 +160,8 @@ public:
     Event(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
           const std::string &port, unsigned int popSize,
           const filesystem::path &logPath, unsigned int *spikeQueuePtr,
-          unsigned int *hostSpikeCount, unsigned int *deviceSpikeCount,
-          unsigned int *hostSpikes, unsigned int *deviceSpikes);
+          unsigned int *hostSpikeCount, unsigned int *hostSpikes,
+          ModelProperty::Base::PullFunc pullCurrentSpikesFunc);
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -179,10 +179,9 @@ private:
 
     unsigned int *m_SpikeQueuePtr;
     unsigned int *m_HostSpikeCount;
-    unsigned int *m_DeviceSpikeCount;
-
     unsigned int *m_HostSpikes;
-    unsigned int *m_DeviceSpikes;
+
+    ModelProperty::Base::PullFunc m_PullCurrentSpikesFunc;
 
     std::set<unsigned int> m_Indices;
 };

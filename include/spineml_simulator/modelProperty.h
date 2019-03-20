@@ -27,8 +27,11 @@ namespace ModelProperty
 class Base
 {
 public:
-    Base(scalar *hostStateVar, scalar *deviceStateVar, unsigned int size)
-        : m_HostStateVar(hostStateVar), m_DeviceStateVar(deviceStateVar), m_Size(size)
+    typedef void (*PushFunc)(bool);
+    typedef void (*PullFunc)(void);
+
+    Base(scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
+        : m_HostStateVar(hostStateVar), m_PushFunc(pushFunc), m_PullFunc(pullFunc), m_Size(size)
     {
     }
     virtual ~Base(){}
@@ -52,7 +55,8 @@ private:
     // Private members
     //------------------------------------------------------------------------
     scalar *m_HostStateVar;
-    scalar *m_DeviceStateVar;
+    PushFunc m_PushFunc;
+    PullFunc m_PullFunc;
     unsigned int m_Size;
 };
 
@@ -62,8 +66,10 @@ private:
 class Fixed : public Base
 {
 public:
-    Fixed(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
-    Fixed(double value, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+    Fixed(const pugi::xml_node &node,
+          scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
+    Fixed(double value,
+          scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -104,7 +110,8 @@ private:
 class UniformDistribution : public Base
 {
 public:
-    UniformDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+    UniformDistribution(const pugi::xml_node &node,
+                        scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -125,7 +132,8 @@ private:
 class NormalDistribution : public Base
 {
 public:
-    NormalDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+    NormalDistribution(const pugi::xml_node &node,
+                       scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -146,7 +154,8 @@ private:
 class ExponentialDistribution : public Base
 {
 public:
-    ExponentialDistribution(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size);
+    ExponentialDistribution(const pugi::xml_node &node,
+                            scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -164,7 +173,8 @@ private:
 //----------------------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------------------
-std::unique_ptr<Base> create(const pugi::xml_node &node, scalar *hostStateVar, scalar *deviceStateVar, unsigned int size,
+std::unique_ptr<Base> create(const pugi::xml_node &node,
+                             scalar *hostStateVar, Base::PushFunc pushFunc, Base::PullFunc pullFunc, unsigned int size,
                              bool skipGeNNInitialised, const filesystem::path &basePath,
                              const std::string &valueNamespace, const std::vector<unsigned int> *remapIndices);
 
