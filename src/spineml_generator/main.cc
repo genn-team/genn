@@ -523,7 +523,7 @@ int main(int argc, char *argv[])
         // **NOTE** scope requiredso it gets closed before being built
         {
             std::ofstream makefile((codePath / "runner.vcxproj").str());
-            CodeGenerator::generateMSBuild(makefile, backend, moduleNames);
+            CodeGenerator::generateMSBuild(makefile, backend, "", moduleNames);
         }
 
         // Generate command to build using msbuild
