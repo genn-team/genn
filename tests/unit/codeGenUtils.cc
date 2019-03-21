@@ -101,4 +101,4 @@ INSTANTIATE_TEST_CASE_P(DoubleValues,
                         ::testing::Values(std::numeric_limits<double>::min(),
                                           std::numeric_limits<double>::max(),
                                           1.0,
-                                          -1.0));
+                                          -1.0),);
