@@ -249,7 +249,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                 }
 
                 buildStep("Archiving output (" + env.NODE_NAME + ")") {
-                    archive "msg_" + env.NODE_NAME + ".txt";
+                    dir("genn") {
+                        archive "msg_" + env.NODE_NAME + ".txt";
+                    }
                 }
             }
         }
