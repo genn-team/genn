@@ -2,16 +2,13 @@
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
+    ["cuda10", "linux", "x86_64"] as Set,
     ["cuda9", "linux", "x86_64"] as Set,
     ["cuda8", "linux", "x86_64"] as Set,
     ["cuda7", "linux", "x86_64"] as Set, 
     ["cuda6", "linux", "x86_64"] as Set, 
     ["cpu_only", "linux", "x86_64"] as Set,
-    ["cuda9", "linux", "x86"] as Set,
-    ["cuda8", "linux", "x86"] as Set,
-    ["cuda7", "linux", "x86"] as Set, 
-    ["cuda6", "linux", "x86"] as Set, 
-    ["cpu_only", "linux", "x86"] as Set,
+    ["cuda10", "mac"] as Set,
     ["cuda9", "mac"] as Set,
     ["cuda8", "mac"] as Set,
     ["cuda7", "mac"] as Set, 
