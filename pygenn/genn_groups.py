@@ -270,8 +270,6 @@ class NeuronGroup(Group):
         slm --      SharedLibraryModel instance for acccessing variables
         scalar --   String specifying "scalar" type
         """
-
-        slm.init_neuron_pop_io(self.name)
         self.spikes = self._assign_external_pointer(
             slm, scalar, "glbSpk", self.size * self.delay_slots, "unsigned int")
         self.spike_count = self._assign_external_pointer(
@@ -553,8 +551,6 @@ class SynapseGroup(Group):
         self._add_extra_global_param(param_name, param_values, self.w_update)
 
     def load(self, slm, scalar):
-        slm.init_synapse_pop_io(self.name)
-
         # If synapse population has non-dense connectivity which
         # requires initialising manually
         if not self.is_dense and self.is_connectivity_init_required:
@@ -724,8 +720,6 @@ class CurrentSource(Group):
                                      self.current_source_model)
 
     def load(self, slm, scalar):
-        slm.init_current_source_io(self.name)
-
         # Load current source variables
         self._load_vars(slm, scalar)
 

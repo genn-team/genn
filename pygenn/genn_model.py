@@ -471,26 +471,54 @@ class GeNNModel(object):
 
         self._slm.pull_current_spikes_from_device(pop_name)
 
+    def pull_connectivity_from_device(self, pop_name):
+        """Pull connectivity from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
+
+        self._slm.pull_connectivity_from_device(pop_name)
+
+    def pull_var_from_device(self, pop_name, var_name):
+        """Pull variable from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
+
+        self._slm.pull_var_from_device(pop_name, var_name)
+
     def push_state_to_device(self, pop_name):
         """Push state to the device for a given population"""
         if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pulling")
+            raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_state_to_device(pop_name)
 
     def push_spikes_to_device(self, pop_name):
-        """Push spikes from the device for a given population"""
+        """Push spikes to the device for a given population"""
         if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pulling")
+            raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_spikes_to_device(pop_name)
 
-    def push_current_spikes_from_device(self, pop_name):
-        """Push spikes from the device for a given population"""
+    def push_current_spikes_to_device(self, pop_name):
+        """Push current spikes to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_current_spikes_to_device(pop_name)
+
+    def push_connectivity_to_device(self, pop_name):
+        """Push connectivity to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_connectivity_to_device(pop_name)
+
+    def push_var_to_device(self, pop_name, var_name):
+        """Push variable to the device for a given population"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        self._slm.push_current_spikes_to_device(pop_name)
+        self._slm.push_var_from_device(pop_name, var_name)
 
     def end(self):
         """Free memory"""
