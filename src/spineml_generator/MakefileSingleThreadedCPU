@@ -1,6 +1,7 @@
 # Configure for single-threaded CPU backend
-BACKEND_NAME        :=single_threaded_cpu
-BACKEND_NAMESPACE   :=SingleThreadedCPU
+BACKEND_NAME		:=single_threaded_cpu
+BACKEND_NAMESPACE	:=SingleThreadedCPU
+GENERATOR_NAME		:=spineml_generator_single_threaded_cpu
 
 # Include common makefile
 include MakefileCommon

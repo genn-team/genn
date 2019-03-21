@@ -8,14 +8,17 @@ endif
 ifndef BACKEND_NAMESPACE
     $(error Environment variable BACKEND_NAMESPACE must be defined)
 endif
+ifndef GENERATOR_NAME
+    $(error Environment variable GENERATOR_NAME  must be defined)
+endif
 
 # Add SpineML generator include directories to compiler flags
 CXXFLAGS		+=-I$(GENN_DIR)/include/spineml_common -I$(GENN_DIR)/include/spineml_generator
 
 # Determine full path to generator and backend
-SPINEML_GENERATOR	:=$(GENN_DIR)/bin/spineml_generator$(GENN_PREFIX)
+SPINEML_GENERATOR	:=$(GENN_DIR)/bin/$(GENERATOR_NAME)$(GENN_PREFIX)
 BACKEND			:=$(GENN_DIR)/lib/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml_generator
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/$(GENERATOR_NAME)
 
 # Find source files
 SOURCES			:=$(wildcard *.cc)
