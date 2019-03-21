@@ -4,18 +4,28 @@ import hudson.tasks.test.AbstractTestResultAction
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
-    ["cuda10", "linux", "x86_64"] as Set,
-    ["cuda9", "linux", "x86_64"] as Set,
-    ["cuda8", "linux", "x86_64"] as Set,
-    ["cuda7", "linux", "x86_64"] as Set, 
-    ["cuda6", "linux", "x86_64"] as Set, 
-    ["cpu_only", "linux", "x86_64"] as Set,
-    ["cuda10", "mac", "x86_64"] as Set,
-    ["cuda9", "mac"] as Set,
-    ["cuda8", "mac"] as Set,
-    ["cuda7", "mac"] as Set, 
-    ["cuda6", "mac"] as Set, 
-    ["cpu_only", "mac"] as Set] 
+    ["cuda10", "linux", "x86_64", "python27"] as Set,
+    ["cuda9", "linux", "x86_64", "python27"] as Set,
+    ["cuda8", "linux", "x86_64", "python27"] as Set,
+    ["cpu_only", "linux", "x86_64", "python27"] as Set,
+    ["cuda9", "linux", "x86", "python27"] as Set,
+    ["cuda8", "linux", "x86", "python27"] as Set,
+    ["cpu_only", "linux", "x86", "python27"] as Set,
+    ["cuda10", "mac", "python27"] as Set,
+    ["cuda9", "mac", "python27"] as Set,
+    ["cuda8", "mac", "python27"] as Set,
+    ["cpu_only", "mac", "python27"] as Set,
+    ["cuda10", "linux", "x86_64", "python3"] as Set,
+    ["cuda9", "linux", "x86_64", "python3"] as Set,
+    ["cuda8", "linux", "x86_64", "python3"] as Set,
+    ["cpu_only", "linux", "x86_64", "python3"] as Set,
+    ["cuda9", "linux", "x86", "python3"] as Set,
+    ["cuda8", "linux", "x86", "python3"] as Set,
+    ["cpu_only", "linux", "x86", "python3"] as Set,
+    ["cuda10", "mac", "python3"] as Set,
+    ["cuda9", "mac", "python3"] as Set,
+    ["cuda8", "mac", "python3"] as Set,
+    ["cpu_only", "mac", "python3"] as Set]
 
 //--------------------------------------------------------------------------
 // Helper functions
@@ -68,8 +78,6 @@ for(b in desiredBuilds) {
     for(n in availableNodes) {
         // If, after subtracting this node's labels, all build properties are satisfied
         if((b - n.value).size() == 0) {
-            print "${n.key} -> ${b}";
-            
             // Add node's name to list of builders and remove it from dictionary of available nodes
             // **YUCK** for some reason tuples aren't serializable so need to add an arraylist
             builderNodes.add([n.key, n.value])
@@ -236,13 +244,29 @@ for(b = 0; b < builderNodes.size(); b++) {
                         pip install "numpy>1.6, < 1.15"
 
                         python setup.py clean --all
+                        rm *.whl
                         python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
                         python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
                         """
+
                         def wheelStatusCode = sh script:script, returnStatus:true
                         if(wheelStatusCode != 0) {
                             setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                         }
+
+                        // If node isn't CPU only
+                        if(!nodeLabel.contains("cpu_only")) {
+                            // Loop through node labels
+                            for(l in nodeLabel) {
+                                // If label starts with CUDA
+                                if(l.startsWith("cuda")) {
+                                    // Rename wheel with cuda version prefix
+                                    sh "find . -name \"*.whl\" -exec sh -c 'mv \$1 " + l + "-\$1' x {} \\;";
+                                    break;
+                                }
+                            }
+                        }
+
 
                         // Archive wheel message
                         archive uniqueWheel
