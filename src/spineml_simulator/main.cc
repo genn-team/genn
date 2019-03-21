@@ -584,7 +584,7 @@ int main(int argc, char *argv[])
 
         // Attempt to load model library
 #ifdef _WIN32
-        auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "runner.dll";
+        auto libraryPath = outputPath / "run" / "runner_Release.dll";
         LOGI << "Experiment using model library:" << libraryPath;
         modelLibrary = LoadLibrary(libraryPath.str().c_str());
 #else
