@@ -244,9 +244,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                         pip install "numpy>1.6, < 1.15"
 
                         python setup.py clean --all
-
-                        rm -f *.whl
-
                         python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
                         python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
                         """
