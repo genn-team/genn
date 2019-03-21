@@ -92,7 +92,7 @@ public:
     void pullStateFromDevice(const std::string &popName)
     {
         // Get push and pull state functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "State");
+        const auto pushPull = getPopPushPullFunction(popName + "State");
         if(pushPull.second == nullptr) {
             throw std::runtime_error("You cannot pull state from population '" + popName + "'");
         }
@@ -104,7 +104,7 @@ public:
     void pullSpikesFromDevice(const std::string &popName)
     {
         // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "Spikes");
+        const auto pushPull = getPopPushPullFunction(popName + "Spikes");
         if(pushPull.second == nullptr) {
             throw std::runtime_error("You cannot pull spikes from population '" + popName + "'");
         }
@@ -116,7 +116,7 @@ public:
     void pullCurrentSpikesFromDevice(const std::string &popName)
     {
         // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "CurrentSpikes");
+        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikes");
         if(pushPull.second == nullptr) {
             throw std::runtime_error("You cannot pull current spikes from population '" + popName + "'");
         }
@@ -128,7 +128,7 @@ public:
     void pullConnectivityFromDevice(const std::string &popName)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "Connectivity");
+        const auto pushPull = getPopPushPullFunction(popName + "Connectivity");
         if(pushPull.second == nullptr) {
             throw std::runtime_error("You cannot pull connectivity from population '" + popName + "'");
         }
@@ -140,7 +140,7 @@ public:
     void pullVarFromDevice(const std::string &popName, const std::string &varName)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, varName);
+        const auto pushPull = getPopPushPullFunction(varName + popName);
         if(pushPull.second == nullptr) {
             throw std::runtime_error("You cannot pull var '" + varName + "' from population '" + popName + "'");
         }
@@ -152,7 +152,7 @@ public:
     void pushStateToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
         // Get push and pull state functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "State");
+        const auto pushPull = getPopPushPullFunction(popName + "State");
         if(pushPull.first == nullptr) {
             throw std::runtime_error("You cannot push state to population '" + popName + "'");
         }
@@ -164,7 +164,7 @@ public:
     void pushSpikesToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
         // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "Spikes");
+        const auto pushPull = getPopPushPullFunction(popName + "Spikes");
         if(pushPull.first == nullptr) {
             throw std::runtime_error("You cannot push spikes to population '" + popName + "'");
         }
@@ -176,7 +176,7 @@ public:
     void pushCurrentSpikesToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
         // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "CurrentSpikes");
+        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikes");
         if(pushPull.first == nullptr) {
             throw std::runtime_error("You cannot push current spikes to population '" + popName + "'");
         }
@@ -188,7 +188,7 @@ public:
     void pushConnectivityToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, "Connectivity");
+        const auto pushPull = getPopPushPullFunction(popName + "Connectivity");
         if(pushPull.first == nullptr) {
             throw std::runtime_error("You cannot push connectivity to population '" + popName + "'");
         }
@@ -200,7 +200,7 @@ public:
     void pushVarToDevice(const std::string &popName, const std::string &varName, bool uninitialisedOnly = false)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName, varName);
+        const auto pushPull = getPopPushPullFunction(varName + popName);
         if(pushPull.first == nullptr) {
             throw std::runtime_error("You cannot push var '" + varName + "' to population '" + popName + "'");
         }
@@ -294,26 +294,22 @@ private:
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
-    PushPullFunc getPopPushPullFunction(const std::string &popName, const std::string &varName)
+    PushPullFunc getPopPushPullFunction(const std::string &description)
     {
-        // Get map of variables associated with population
-        // **NOTE** this may CREATE this map
-        auto &popVars = m_PopulationsIO[popName];
-
-        // If var is found, return associated push and pull functions
-        const auto popVar = popVars.find(varName);
-        if(popVar != popVars.end()) {
+        // If description is found, return associated push and pull functions
+        const auto popVar = m_PopulationVars.find(description);
+        if(popVar != m_PopulationVars.end()) {
             return popVar->second;
         }
         else {
             // Get symbols for push and pull functions
-            auto pushFunc = (PushFunction)getSymbol("push" + popName + varName + "ToDevice", true);
-            auto pullFunc = (PullFunction)getSymbol("pull" + popName + varName + "FromDevice", true);
+            auto pushFunc = (PushFunction)getSymbol("push" + description + "ToDevice", true);
+            auto pullFunc = (PullFunction)getSymbol("pull" + description + "FromDevice", true);
 
             // Add to map
-            auto newPopVar = popVars.emplace(std::piecewise_construct,
-                                             std::forward_as_tuple(varName),
-                                             std::forward_as_tuple(pushFunc, pullFunc));
+            auto newPopVar = m_PopulationVars.emplace(std::piecewise_construct,
+                                                      std::forward_as_tuple(description),
+                                                      std::forward_as_tuple(pushFunc, pullFunc));
 
             // Return newly added push and pull functions
             return newPopVar.first->second;
@@ -360,5 +356,5 @@ private:
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
     
-    std::unordered_map<std::string, std::unordered_map<std::string, PushPullFunc>> m_PopulationsIO;
+    std::unordered_map<std::string, PushPullFunc> m_PopulationVars;;
 };
