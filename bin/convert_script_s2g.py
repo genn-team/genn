@@ -40,35 +40,32 @@ parser.add_argument("-t", help="Time varying current options")
 args = parser.parse_args()
 
 if args.w:
-    print "Passed working directory: " + args.w
+    print("Passed working directory: " + args.w)
 else:
-    print "Working directory not used"
+    print("Working directory not used")
     #exit(0)
 
 if args.m:
-    print "Using model directory: " + args.m
+    print("Using model directory: " + args.m)
 else:
-    print "Model directory required"
+    print("Model directory required")
     exit(0)
 
 if args.o:
-    print "Using output directory: " + args.o
+    print("Using output directory: " + args.o)
 else:
     print "Output directory required"
     exit(0)
 
 if args.e is not None:
-    print "Using experiment index: " + str(args.e)
+    print("Using experiment index: " + str(args.e))
 else:
-    print "Experiment index required"
+    print("Experiment index required")
     exit(0)
 
 # check we have a GENN_PATH
-genn_path = os.environ.get("GENN_PATH")
-if genn_path is None:
-    print "GENN_PATH not set"
-    exit(0)
-print "GENN_PATH is " + genn_path
+genn_path = os.path.dirname(os.path.abspath(os.path.join(__file__, "..")))
+print("GENN_PATH is " + genn_path)
 
 # we need to check that the directories exists and if not create them
 #mkdir_p(args.w)
@@ -87,7 +84,7 @@ ns_lnl = {'sml_lnl': 'http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer'}
 el_tree = ET.parse(os.path.join(in_dir, "experiment" + str(args.e) + ".xml"))
 el_root = el_tree.getroot()
 model_file_name = el_root.find("sml_el:Experiment",ns_el).find("sml_el:Model",ns_el).get("network_layer_url")
-print "Using model file: " + model_file_name
+print("Using model file: " + model_file_name)
 
 # extract component file names from model files
 nl_tree = ET.parse(os.path.join(in_dir, model_file_name))
@@ -106,7 +103,7 @@ for pop in nl_root.iterfind("sml_lnl:Population",ns_lnl):
 # remove duplicates by converting to a set and back to a list
 components = list(set(components))
 for component in components:
-    print "Using component file:" + component
+    print("Using component file:" + component)
 
 if os.path.isdir(args.m) and os.path.isdir(out_dir):
     for component in components:
@@ -118,7 +115,7 @@ if os.path.isdir(args.m) and os.path.isdir(out_dir):
     for file_name in file_names:
         shutil.copy(os.path.join(in_dir,file_name), out_dir)
 else:
-    print "Model directory does not exist!"
+    print("Model directory does not exist!")
     exit(0)
 
 # check for experiment, model and component changes
@@ -138,9 +135,9 @@ else:
     recompile = True
 
 if recompile is True:
-    print "Recompiling model..."
+    print("Recompiling model...")
 else:
-    print "Model has not changed - no recompile required"
+    print("Model has not changed - no recompile required")
 
 # copy the new version over
 if not os.path.isdir(os.path.join(out_dir, "prev")):
@@ -162,9 +159,9 @@ if os.name == "nt":
     if os.path.isfile("C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcbuildtools.bat"):
         prog = '"C:\\Program Files (x86)\\Microsoft Visual C++ Build Tools\\vcbuildtools.bat" amd64'
     if prog == "":
-        print "Windows build config script not found"
+        print("Windows build config script not found")
         exit(0)
-    print "Windows build batch = " + prog
+    print("Windows build batch = " + prog)
 else:
     prog = "echo NIX"
     print "On Linux / OSX"
@@ -174,27 +171,31 @@ cpu_only = (os.environ.get("GENN_SPINEML_CPU_ONLY") is not None)
 
 # Determine names of executables
 generate_executable = "generateSpineML"
-simulate_executable = "simulateSpineML"
+#simulate_executable = "simulateSpineML"
 if cpu_only:
     generate_executable += "_CPU_ONLY"
-    simulate_executable += "_CPU_ONLY"
+
 
 # check if GeNN initial compile complete
 if os.name == "nt":
-    config = "Release_CPU_ONLY" if cpu_only else "Release"
-    if not os.path.isfile(os.path.join(genn_path,"spineml","generator",generate_executable + ".exe")):
-        print "Compiling Generate tool"
+    generate_executable = "spineml_generator_Release"
+    if not cpu_only:
+        generate_executable += "_CUDA"
+
+    if not os.path.isfile(os.path.join(genn_path,"bin",generate_executable + ".exe")):
+        config = "Release" if cpu_only else "Release_CUDA"
+        print("Compiling Generate tool")
         os.system(prog + "&& cd " + os.path.join(genn_path,"spineml","generator") + "&&" + "msbuild /p:Configuration=" + config)
-    if not os.path.isfile(os.path.join(genn_path,"spineml","simulator",simulate_executable + ".exe")):
-        print "Compiling Simulate tool"
-        os.system(prog + "&& cd " + os.path.join(genn_path,"spineml","simulator") + "&&" + "msbuild /p:Configuration=" + config)
+    if not os.path.isfile(os.path.join(genn_path,"bin","spineml_simulator_Release.exe")):
+        print("Compiling Simulate tool")
+        os.system(prog + "&& cd " + os.path.join(genn_path,"src","spineml_simulator") + "&&" + "msbuild /p:Configuration=Release")
 else:
-    if not os.path.isfile(os.path.join(genn_path,"spineml","generator",generate_executable)):
-        print "Compiling Generate tool"
-        os.system("cd " + os.path.join(genn_path,"spineml","generator") + " && make")
-    if not os.path.isfile(os.path.join(genn_path,"spineml","simulator",simulate_executable)):
-        print "Compiling Simulate tool"
-        os.system("cd " + os.path.join(genn_path,"spineml","simulator") + " && make")
+    if not os.path.isfile(os.path.join(genn_path,"bin", "spineml_generator")):
+        print("Compiling Generate tool")
+        os.system("cd " + os.path.join(genn_path,"src", "spineml_generator") + " && make")
+    if not os.path.isfile(os.path.join(genn_path,"bin", "spineml_simulator")):
+        print("Compiling Simulate tool")
+        os.system("cd " + os.path.join(genn_path,"src", "spineml_simulator") + " && make")
 
 # Recompile if needed
 if recompile is True:
@@ -202,9 +203,9 @@ if recompile is True:
     f.write('*Compiling...')
     f.close()
     #os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator","generateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
-    os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator",generate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
+    os.system(prog + "&&" + os.path.join(genn_path,"bin",generate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
 
 f = open(os.path.join(out_dir,"time.txt"),'w')
 f.write('*Running...')
 f.close()
-os.system(prog + "&&" + os.path.join(genn_path,"spineml","simulator",simulate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
+os.system(prog + "&&" + os.path.join(genn_path,"bin",simulate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
