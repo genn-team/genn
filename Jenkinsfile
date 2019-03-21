@@ -260,7 +260,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 // If label starts with CUDA
                                 if(l.startsWith("cuda")) {
                                     // Rename wheel with cuda version prefix
-                                    sh "find . -name \"*.whl\" -exec sh -c 'mv \$1 " + l + "-\$1' x {} \\;";
+                                    sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
                                     break;
                                 }
                             }
