@@ -28,16 +28,6 @@ template<typename scalar = float>
 class SharedLibraryModel
 {
 public:
-    //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    typedef void (*VoidFunction)(void);
-
-    typedef std::array< VoidFunction, 5 > VoidIOFuncs;
-    typedef std::tuple< VoidIOFuncs, VoidIOFuncs > PopulationIO;
-    typedef std::unordered_map< std::string, PopulationIO > PopIOMap;
-
-
     SharedLibraryModel()
     :   m_Library(nullptr), m_AllocateMem(nullptr), m_FreeMem(nullptr),
         m_Initialize(nullptr), m_InitializeSparse(nullptr), m_StepTime(nullptr)
@@ -54,8 +44,7 @@ public:
     ~SharedLibraryModel()
     {
         // Close model library if loaded successfully
-        if(m_Library)
-        {
+        if(m_Library) {
             freeMem();
 #ifdef _WIN32
             FreeLibrary(m_Library);
@@ -98,55 +87,126 @@ public:
 #endif
             return false;
         }
-
     }
 
-    void initNeuronPopIO( const std::string &popName )
+    void pullStateFromDevice(const std::string &popName)
     {
-        // the bits are indexed backwards and spike events are optional
-        initIO(popName, std::bitset<5>("11111"), std::bitset<5>("10100"));
+        // Get push and pull state functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "State");
+        if(pushPull.second == nullptr) {
+            throw std::runtime_error("You cannot pull state from population '" + popName + "'");
+        }
+
+        // Call pull
+        pushPull.second();
     }
     
-    void initSynapsePopIO( const std::string &popName )
+    void pullSpikesFromDevice(const std::string &popName)
     {
-        // the bits are indexed backwards
-        initIO(popName, std::bitset<5>("00001"), std::bitset<5>("00000"));
+        // Get push and pull spikes functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "Spikes");
+        if(pushPull.second == nullptr) {
+            throw std::runtime_error("You cannot pull spikes from population '" + popName + "'");
+        }
+
+        // Call pull
+        pushPull.second();
+    }
+    
+    void pullCurrentSpikesFromDevice(const std::string &popName)
+    {
+        // Get push and pull spikes functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "CurrentSpikes");
+        if(pushPull.second == nullptr) {
+            throw std::runtime_error("You cannot pull current spikes from population '" + popName + "'");
+        }
+
+        // Call pull
+        pushPull.second();
     }
 
-    void initCurrentSourceIO( const std::string &csName )
+    void pullConnectivityFromDevice(const std::string &popName)
     {
-        // the bits are indexed backwards
-        initIO(csName, std::bitset<5>("00001"), std::bitset<5>("00000"));
-    }
-    
-    void pullStateFromDevice( const std::string &popName )
-    {
-        auto tmpPop = m_PopulationsIO.at( popName );
-        std::get<0>( std::get<0>( tmpPop ) )();
-    }
-    
-    void pullSpikesFromDevice( const std::string &popName )
-    {
-        auto tmpPop = m_PopulationsIO.at( popName );
-        std::get<1>( std::get<0>( tmpPop ) )();
-    }
-    
-    void pullCurrentSpikesFromDevice( const std::string &popName )
-    {
-        auto tmpPop = m_PopulationsIO.at( popName );
-        std::get<3>( std::get<0>( tmpPop ) )();
+        // Get push and pull connectivity functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "Connectivity");
+        if(pushPull.second == nullptr) {
+            throw std::runtime_error("You cannot pull connectivity from population '" + popName + "'");
+        }
+
+        // Call pull
+        pushPull.second();
     }
 
-    void pushStateToDevice( const std::string &popName )
+    void pullVarFromDevice(const std::string &popName, const std::string &varName)
     {
-        auto tmpPop = m_PopulationsIO.at( popName );
-        std::get<0>( std::get<1>( tmpPop ) )();
+        // Get push and pull connectivity functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, varName);
+        if(pushPull.second == nullptr) {
+            throw std::runtime_error("You cannot pull var '" + varName + "' from population '" + popName + "'");
+        }
+
+        // Call pull
+        pushPull.second();
     }
-    
-    void pushSpikesToDevice( const std::string &popName )
+
+    void pushStateToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
-        auto tmpPop = m_PopulationsIO.at( popName );
-        std::get<1>( std::get<1>( tmpPop ) )();
+        // Get push and pull state functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "State");
+        if(pushPull.first == nullptr) {
+            throw std::runtime_error("You cannot push state to population '" + popName + "'");
+        }
+
+        // Call push
+        pushPull.first(uninitialisedOnly);
+    }
+
+    void pushSpikesToDevice(const std::string &popName, bool uninitialisedOnly = false)
+    {
+        // Get push and pull spikes functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "Spikes");
+        if(pushPull.first == nullptr) {
+            throw std::runtime_error("You cannot push spikes to population '" + popName + "'");
+        }
+
+        // Call push
+        pushPull.first(uninitialisedOnly);
+    }
+
+    void pushCurrentSpikesToDevice(const std::string &popName, bool uninitialisedOnly = false)
+    {
+        // Get push and pull spikes functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "CurrentSpikes");
+        if(pushPull.first == nullptr) {
+            throw std::runtime_error("You cannot push current spikes to population '" + popName + "'");
+        }
+
+        // Call push
+        pushPull.first(uninitialisedOnly);
+    }
+
+    void pushConnectivityToDevice(const std::string &popName, bool uninitialisedOnly = false)
+    {
+        // Get push and pull connectivity functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, "Connectivity");
+        if(pushPull.first == nullptr) {
+            throw std::runtime_error("You cannot push connectivity to population '" + popName + "'");
+        }
+
+        // Call push
+        pushPull.first(uninitialisedOnly);
+    }
+
+    void pushVarToDevice(const std::string &popName, const std::string &varName, bool uninitialisedOnly = false)
+    {
+        // Get push and pull connectivity functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName, varName);
+        if(pushPull.first == nullptr) {
+            throw std::runtime_error("You cannot push var '" + varName + "' to population '" + popName + "'");
+        }
+
+        // Call push
+        pushPull.first(uninitialisedOnly);
     }
 
     // Assign symbol from shared model to the provided pointer.
@@ -223,8 +283,43 @@ public:
 
 private:
     //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef void (*VoidFunction)(void);
+    typedef void (*PushFunction)(bool);
+    typedef void (*PullFunction)(void);
+
+    typedef std::pair<PushFunction, PullFunction> PushPullFunc;
+
+    //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
+    PushPullFunc getPopPushPullFunction(const std::string &popName, const std::string &varName)
+    {
+        // Get map of variables associated with population
+        // **NOTE** this may CREATE this map
+        auto &popVars = m_PopulationsIO[popName];
+
+        // If var is found, return associated push and pull functions
+        const auto popVar = popVars.find(varName);
+        if(popVar != popVars.end()) {
+            return popVar->second;
+        }
+        else {
+            // Get symbols for push and pull functions
+            auto pushFunc = (PushFunction)getSymbol("push" + popName + varName + "ToDevice", true);
+            auto pullFunc = (PullFunction)getSymbol("pull" + popName + varName + "FromDevice", true);
+
+            // Add to map
+            auto newPopVar = popVars.emplace(std::piecewise_construct,
+                                             std::forward_as_tuple(varName),
+                                             std::forward_as_tuple(pushFunc, pullFunc));
+
+            // Return newly added push and pull functions
+            return newPopVar.first->second;
+        }
+    }
+
     void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr)
     {
 #ifdef _WIN32
@@ -244,55 +339,10 @@ private:
                 return defaultSymbol;
             }
         }
-        // Otherwise, return symbol
+        // Otherwise, return symbolPopulationFuncs
         else {
             return symbol;
         }
-    }
-
-    // Retrive symbols to pull/push from/to the device from shared model
-    // and store them in a map for fast lookup
-    void initIO(const std::string &popName,
-                const std::bitset<5> &availableDTypes,
-                const std::bitset<5> &optionalDTypes) // the bits are indexed backwards
-    {
-        const std::array<std::string, 5> dataTypes = {
-            "State",
-            "Spikes",
-            "SpikeEvents",
-            "CurrentSpikes",
-            "CurrentSpikeEvents"
-        };
-        VoidIOFuncs pushers;
-        VoidIOFuncs pullers;
-        for(size_t i = 0; i < dataTypes.size(); i++) {
-            if (availableDTypes.test(i)) {
-                pullers[i] = (VoidFunction)getSymbol( "pull" + popName + dataTypes[i] + "FromDevice", optionalDTypes.test(i), (void*)&handleInvalidPull);
-                pushers[i] = (VoidFunction)getSymbol( "push" + popName + dataTypes[i] + "ToDevice", optionalDTypes.test(i), (void*)&handleInvalidPush);
-            }
-            else {
-                // SynapseGroups and CurrentSources only have states. Throw if attempted to pull/push anything but state
-                pullers[i] = &handleInvalidPull;
-                pushers[i] = &handleInvalidPush;
-            }
-        }
-
-        m_PopulationsIO.emplace(std::piecewise_construct,
-                                std::forward_as_tuple(popName),
-                                std::forward_as_tuple(pullers, pushers));
-    }
-
-    //----------------------------------------------------------------------------
-    // Static methods
-    //----------------------------------------------------------------------------
-    static void handleInvalidPull()
-    {
-        throw std::runtime_error("You cannot pull from this population");
-    }
-
-    static void handleInvalidPush()
-    {
-        throw std::runtime_error("You cannot push to this population");
     }
 
     //----------------------------------------------------------------------------
@@ -310,5 +360,5 @@ private:
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
     
-    PopIOMap m_PopulationsIO;
+    std::unordered_map<std::string, std::unordered_map<std::string, PushPullFunc>> m_PopulationsIO;
 };
