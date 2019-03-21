@@ -5,6 +5,10 @@
 #include <iostream>
 #include <string>
 
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 //------------------------------------------------------------------------
 // SpineMLSimulator::Timer
 //------------------------------------------------------------------------
@@ -19,7 +23,7 @@ public:
 
     ~Timer()
     {
-        std::cout << m_Title << get() << std::endl;
+        LOGI << m_Title << get() << std::endl;
     }
 
     //------------------------------------------------------------------------

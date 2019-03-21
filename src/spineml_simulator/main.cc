@@ -27,6 +27,10 @@ extern "C"
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 // SpineMLCommon includes
 #include "spineMLUtils.h"
 
@@ -265,7 +269,7 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
         // If it's found
         // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
         if(hostStateVar != nullptr) {
-            std::cout << "\t" << paramName << std::endl;
+            LOGD << "\t" << paramName;
 
             // If any properties are overriden
             pugi::xml_node overridenParam;
@@ -276,7 +280,7 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
                 if((overridenParam = overridenProperties.node().select_node("UL:Property[@name=$name]",
                                                                             &propertyNameVars).node()))
                 {
-                    std::cout << "\t\tOverriden in experiment" << std::endl;
+                    LOGD << "\t\tOverriden in experiment";
                 }
             }
 
@@ -291,7 +295,7 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
                 throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
             }
 
-            std::cout << "\t\tState variable found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc << std::endl;
+            LOGD << "\t\tState variable found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc;
 
             // Create model property object
             componentProperties.insert(
@@ -344,13 +348,13 @@ void addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_nod
             // If it's found
             // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
             if(hostStateVar != nullptr) {
-                std::cout << "\t" << paramName << std::endl;
+                LOGD << "\t" << paramName;
 
                 if(pushFunc == nullptr || pullFunc == nullptr) {
                     throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
                 }
 
-                std::cout << "\t\t" << portType << " found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc << std::endl;
+                LOGD << "\t\t" << portType << " found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc;
 
                 // Create model property object
                 componentProperties.insert(
@@ -369,7 +373,7 @@ std::unique_ptr<Input::Base> createInput(const pugi::xml_node &node, LIBRARY_HAN
 
     // Get name of target
     std::string target = node.attribute("target").value();
-    std::cout << "Input targetting '" << target << "'" << std::endl;
+    LOGI << "Input targetting '" << target << "'";
 
     // Find size of target population
     auto targetSize = componentSizes.find(target);
@@ -520,6 +524,10 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Expected experiment XML file passed as arguments");
         }
 
+        // Initialise log channels, appending all to console
+        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+        plog::init(plog::info, &consoleAppender);
+
 #ifdef _WIN32
         // Startup WinSock 2
         WSADATA wsaData;
@@ -538,7 +546,7 @@ int main(int argc, char *argv[])
         // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
         const auto outputPath = (argc > 2) ? filesystem::path(argv[2]).make_absolute() : basePath.parent_path();
 
-        std::cout << "Output path:" << outputPath.str() << std::endl;
+        LOGI << "Output path:" << outputPath.str();
 
         // Load experiment document
         pugi::xml_document experimentDoc;
@@ -567,7 +575,7 @@ int main(int argc, char *argv[])
 
         // Build path to network from URL in model
         auto networkPath = basePath / model.attribute("network_layer_url").value();
-        std::cout << "Experiment using model:" << networkPath << std::endl;
+        LOGI << "Experiment using model:" << networkPath;
 
         // Get the filename of the network and remove extension
         // to get something usable as a network name
@@ -577,11 +585,11 @@ int main(int argc, char *argv[])
         // Attempt to load model library
 #ifdef _WIN32
         auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "runner.dll";
-        std::cout << "Experiment using model library:" << libraryPath  << std::endl;
+        LOGI << "Experiment using model library:" << libraryPath;
         modelLibrary = LoadLibrary(libraryPath.str().c_str());
 #else
         auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "librunner.so";
-        std::cout << "Experiment using model library:" << libraryPath  << std::endl;
+        LOGI << "Experiment using model library:" << libraryPath;
         modelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
 #endif
         
@@ -646,8 +654,7 @@ int main(int argc, char *argv[])
             // Read basic population properties
             const char *popName = neuron.attribute("name").value();
             const unsigned int popSize = neuron.attribute("size").as_int();
-            std::cout << "Population '" << popName << "' consisting of ";
-            std::cout << popSize << " neurons" << std::endl;
+            LOGI << "Population '" << popName << "' consisting of " << popSize << " neurons";
 
             // Add neuron population properties to dictionary
             auto geNNPopName = SpineMLUtils::getSafeName(popName);
@@ -672,7 +679,7 @@ int main(int argc, char *argv[])
                 std::string srcPort = input.attribute("src_port").value();
                 std::string dstPort = input.attribute("dst_port").value();
 
-                std::cout << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")" << std::endl;
+                LOGI << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")";
 
                 std::string geNNSynPopName = SpineMLUtils::getSafeName(srcPopName) + "_" + srcPort + "_" + SpineMLUtils::getSafeName(popName) + "_"  + dstPort;
 
@@ -697,7 +704,7 @@ int main(int argc, char *argv[])
                 // Loop through synapse children
                 // **NOTE** multiple projections between the same two populations of neurons are implemented in this way
                 for(auto synapse : projection.children("LL:Synapse")) {
-                    std::cout << "Projection from population:" << popName << "->" << trgPopName << std::endl;
+                    LOGI << "Projection from population:" << popName << "->" << trgPopName;
 
                     // Get weight update
                     auto weightUpdate = synapse.child("LL:WeightUpdate");
@@ -757,7 +764,7 @@ int main(int argc, char *argv[])
 
         // Read integration timestep
         const double dt = eulerIntegration.attribute("dt").as_double(0.1);
-        std::cout << "DT = " << dt << "ms" << std::endl;
+        LOGI << "DT = " << dt << "ms";
         
         // Read duration from simulation and convert to timesteps
         const double durationMs = simulation.attribute("duration").as_double() * 1000.0;
@@ -783,7 +790,7 @@ int main(int argc, char *argv[])
                                          componentURLs, componentEventPorts));
         }
 
-        std::cout << "Simulating for " << numTimeSteps << " " << dt << "ms timesteps" << std::endl;
+        LOGI << "Simulating for " << numTimeSteps << " " << dt << "ms timesteps";
 
         // Loop through time
         double inputMs = 0.0;
@@ -829,7 +836,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        std::cout << "Applying input: " << inputMs << "ms, simulating:" << simulateMs << "ms, logging:" << logMs << "ms" << std::endl;
+        LOGI << "Applying input: " << inputMs << "ms, simulating:" << simulateMs << "ms, logging:" << logMs << "ms" << std::endl;
     }
     catch(const std::exception &exception)
     {

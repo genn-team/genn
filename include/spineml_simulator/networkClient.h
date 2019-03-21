@@ -17,6 +17,10 @@
     #include <unistd.h>
 #endif
 
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 //----------------------------------------------------------------------------
 // SpineMLSimulator::NetworkClient
 //----------------------------------------------------------------------------
@@ -100,7 +104,7 @@ private:
 
         // Send request
         if(::send(m_Socket, reinterpret_cast<const char*>(&data), sizeof(Type), sendFlags) < 0) {
-            std::cerr << "Unable to send request" << std::endl;
+            LOGE << "Unable to send request";
             return false;
         }
 
@@ -109,7 +113,7 @@ private:
 
         // Receive handshake response
         if(::recv(m_Socket, reinterpret_cast<char*>(&response), sizeof(Response), MSG_WAITALL) < 1) {
-            std::cerr << "Unable to receive response" << std::endl;
+            LOGE << "Unable to receive response";
             return false;
         }
 

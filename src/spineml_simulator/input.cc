@@ -10,6 +10,10 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 // SpineML simulator includes
 #include "inputValue.h"
 #include "modelProperty.h"
@@ -37,7 +41,7 @@ SpineMLSimulator::Input::Base::Base(double dt, const pugi::xml_node &node, std::
         m_EndTimeStep = m_StartTimeStep + (unsigned int)std::ceil(durationAttr.as_double() / dt);
     }
 
-    std::cout << "\tStart timestep:" << m_StartTimeStep << ", end timestep:" << m_EndTimeStep << std::endl;
+    LOGD << "\tStart timestep:" << m_StartTimeStep << ", end timestep:" << m_EndTimeStep;
 }
 //----------------------------------------------------------------------------
 void SpineMLSimulator::Input::Base::updateValues(double dt, unsigned int timestep,
@@ -146,7 +150,7 @@ SpineMLSimulator::Input::RegularSpikeRate::RegularSpikeRate(double dt, const pug
                                                             PushCurrentSpikesFunc pushCurrentSpikes)
 : InterSpikeIntervalBase(dt, node, std::move(value), popSize, spikeQueuePtr, hostSpikeCount, hostSpikes, pushCurrentSpikes)
 {
-    std::cout << "\tRegular spike rate" << std::endl;
+    LOGD << "\tRegular spike rate";
 }
 //----------------------------------------------------------------------------
 double SpineMLSimulator::Input::RegularSpikeRate::getTimeToSpike(double isiMs)
@@ -162,13 +166,13 @@ SpineMLSimulator::Input::PoissonSpikeRate::PoissonSpikeRate(double dt, const pug
                                                             PushCurrentSpikesFunc pushCurrentSpikes)
 : InterSpikeIntervalBase(dt, node, std::move(value), popSize, spikeQueuePtr, hostSpikeCount, hostSpikes, pushCurrentSpikes)
 {
-    std::cout << "\tPoisson spike rate" << std::endl;
+    LOGD << "\tPoisson spike rate";
 
     // Seed RNG if required
     auto seed = node.attribute("rate_seed");
     if(seed) {
         m_RandomGenerator.seed(seed.as_uint());
-        std::cout << "\tSeed:" << seed.as_uint() << std::endl;
+        LOGD << "\tSeed:" << seed.as_uint();
     }
 }
 //----------------------------------------------------------------------------
@@ -186,7 +190,7 @@ SpineMLSimulator::Input::SpikeTime::SpikeTime(double dt, const pugi::xml_node &n
                                               PushCurrentSpikesFunc pushCurrentSpikes)
 : SpikeBase(dt, node, std::move(value), popSize, spikeQueuePtr, hostSpikeCount, hostSpikes, pushCurrentSpikes)
 {
-    std::cout << "\tSpike time" << std::endl;
+    LOGD << "\tSpike time";
 }
 //----------------------------------------------------------------------------
 void SpineMLSimulator::Input::SpikeTime::apply(double dt, unsigned int timestep)

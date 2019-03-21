@@ -6,6 +6,10 @@
 // Standard C includes
 #include <cstring>
 
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 //----------------------------------------------------------------------------
 // SpineMLSimulator::NetworkClient
 //----------------------------------------------------------------------------
@@ -37,7 +41,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     // Create socket
     m_Socket = socket(AF_INET, SOCK_STREAM, 0);
     if(m_Socket < 0) {
-        std::cerr << "Unable to create socket" << std::endl;
+        LOGE << "Unable to create socket";
         return false;
     }
 
@@ -45,7 +49,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     // **THINK** should we?
     const int disableNagle = 1;
     if(setsockopt(m_Socket, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&disableNagle), sizeof(int)) < 0) {
-        std::cerr << "Unable to set socket options" << std::endl;
+        LOGE << "Unable to set socket options";
         return false;
 }
     
@@ -58,7 +62,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
 
    // Connect socket
    if (::connect(m_Socket, reinterpret_cast<sockaddr*>(&destAddress), sizeof(destAddress)) < 0) {
-        std::cerr << "Unable to connect to " << hostname << ":" << port << std::endl;
+        LOGE << "Unable to connect to " << hostname << ":" << port;
         return false;
     }
 
@@ -69,7 +73,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     }
     // Check response is a hello
     if(handshakeResponse != Response::Hello) {
-        std::cerr << "Invalid handshake response:" << static_cast<int>(handshakeResponse) << std::endl;
+        LOGE << "Invalid handshake response:" << static_cast<int>(handshakeResponse);
         return false;
     }
 
@@ -80,7 +84,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     }
     // Check it's not an abort
     if(dataTypeResponse == Response::Abort) {
-        std::cerr << "Remote host aborted" << std::endl;
+        LOGE << "Remote host aborted";
         return false;
     }
 
@@ -91,7 +95,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     }
     // Check it's not an abort
     if(sizeResponse == Response::Abort) {
-        std::cerr << "Remote host aborted" << std::endl;
+        LOGE << "Remote host aborted";
         return false;
     }
 
@@ -102,7 +106,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     }
     // Check it's not an abort
     if(connectionNameResponse == Response::Abort) {
-        std::cerr << "Remote host aborted" << std::endl;
+        LOGE << "Remote host aborted";
         return false;
     }
 
@@ -121,7 +125,7 @@ bool SpineMLSimulator::NetworkClient::receive(std::vector<double> &buffer)
     while (totalReceivedBytes < bufferSizeBytes) {
         const int receivedBytes = ::recv(m_Socket, bufferBytes + totalReceivedBytes, bufferSizeBytes, MSG_WAITALL);
         if(receivedBytes < 1) {
-            std::cerr << "Error reading from socket" << std::endl;
+            LOGE << "Error reading from socket";
             return false;
         }
 
@@ -134,7 +138,7 @@ bool SpineMLSimulator::NetworkClient::receive(std::vector<double> &buffer)
     // Send response
     const Response response = Response::Received;
     if (::send(m_Socket, reinterpret_cast<const char*>(&response), sizeof(Response), sendFlags) < 1) {
-        std::cerr << "Error writing to socket" << std::endl;
+        LOGE << "Error writing to socket";
         return false;
     }
 
@@ -158,7 +162,7 @@ bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
     while (totalSentBytes < bufferSizeBytes) {
         const int sentBytes = ::send(m_Socket, bufferBytes + totalSentBytes, bufferSizeBytes, sendFlags);
         if(sentBytes < 1) {
-            std::cerr << "Error writing to socket" << std::endl;
+            LOGE << "Error writing to socket";
             return false;
         }
 
@@ -171,13 +175,13 @@ bool SpineMLSimulator::NetworkClient::send(const std::vector<double> &buffer)
     // Read response
     Response response;
     if (::recv(m_Socket, reinterpret_cast<char*>(&response), sizeof(Response), MSG_WAITALL) < 1) {
-        std::cerr << "Unable to receive response" << std::endl;
+        LOGE << "Unable to receive response";
         return false;
     }
 
     // If response is an abort - error
     if (response == Response::Abort) {
-        std::cerr << "Remote host aborted" << std::endl;
+        LOGE << "Remote host aborted";
         return false;
     }
     // Otherwise - success!
@@ -194,13 +198,13 @@ bool SpineMLSimulator::NetworkClient::sendRequestReadResponse(const std::string 
     // Send string length
     const int stringLength = data.size();
     if(::send(m_Socket, reinterpret_cast<const char*>(&stringLength), sizeof(int), sendFlags) < 0) {
-        std::cerr << "Unable to send size" << std::endl;
+        LOGE << "Unable to send size";
         return false;
     }
 
     // Send string
     if(::send(m_Socket, data.c_str(), stringLength, sendFlags) < 0) {
-        std::cerr << "Unable to send string" << std::endl;
+        LOGE << "Unable to send string";
         return false;
     }
 
@@ -209,7 +213,7 @@ bool SpineMLSimulator::NetworkClient::sendRequestReadResponse(const std::string 
 
     // Receive handshake response
     if(::recv(m_Socket, reinterpret_cast<char*>(&response), sizeof(Response), MSG_WAITALL) < 1) {
-        std::cerr << "Unable to receive response" << std::endl;
+        LOGE << "Unable to receive response";
         return false;
     }
 

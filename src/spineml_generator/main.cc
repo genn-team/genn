@@ -52,11 +52,6 @@ using namespace SpineMLGenerator;
 //----------------------------------------------------------------------------
 namespace
 {
-enum Log
-{
-    LogDefault,
-   
-};
 // Helper function to either find existing model that provides desired parameters or create new one
 template<typename Param, typename Model, typename ...Args>
 const Model &getCreateModel(const Param &params, std::map<Param, Model> &models, Args... args)
@@ -210,9 +205,8 @@ int main(int argc, char *argv[])
         }
 
         // Initialise log channels, appending all to console
-        // **TODO** de-crud standard logger
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init<LogDefault>(plog::info, &consoleAppender);
+        plog::init(plog::info, &consoleAppender);
         
         // Use filesystem library to get parent path of the network XML file
         const auto experimentPath = filesystem::path(argv[1]).make_absolute();

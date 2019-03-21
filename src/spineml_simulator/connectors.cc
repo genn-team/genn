@@ -19,6 +19,10 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 //------------------------------------------------------------------------
 // Anonymous namespace
 //------------------------------------------------------------------------
@@ -36,8 +40,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
         binaryFile.attribute("num_connections").as_uint() :
         std::distance(connections.begin(), connections.end());
 
-    // Zero all indInG
-    // **NOTE** these are initially used to store row lengths
+    // Zero row lengths
     std::fill_n(rowLength, numPre, 0);
     
     // If connectivity is specified using a binary file
@@ -115,7 +118,7 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
                   return (tempIndices[a] < tempIndices[b]);
               });*/
 
-    std::cout << "\tList connector with " << numConnections << " sparse synapses" << std::endl;
+    LOGD << "\tList connector with " << numConnections << " sparse synapses";
 
     return numConnections;
 }
