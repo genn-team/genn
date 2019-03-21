@@ -506,7 +506,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                     const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
 
                     // Maximum row length constant
-                    definitionsVar << "extern const unsigned int maxRowLength" << s.first << ";" << std::endl;
+                    definitionsVar << "EXPORT_VAR const unsigned int maxRowLength" << s.first << ";" << std::endl;
                     runnerVarDecl << "const unsigned int maxRowLength" << s.first << " = " << s.second.getMaxConnections() << ";" << std::endl;
 
                     // Row lengths
