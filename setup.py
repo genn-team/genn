@@ -50,7 +50,7 @@ extension_kwargs = {
     "extra_link_args": []}
 
 # Always package LibGeNN
-package_data = ["genn_wrapper/*genn_dynamic.*"]
+package_data = ["genn_wrapper/genn_Release_DLL.*"] if windows else ["genn_wrapper/libgenn_dynamic.*"]
 
 # Copy dictionary and add libGeNN to apply to all modules that link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
