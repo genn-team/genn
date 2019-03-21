@@ -1,7 +1,5 @@
 #!groovy​
 
-import hudson.tasks.test.AbstractTestResultAction
-
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
     ["cuda10", "linux", "x86_64", "python27"] as Set,
@@ -156,7 +154,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
 
                             // Run tests
-                            def uniqueMsg = "msg_" + env.NODE_NAME;
+                            def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                             def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
@@ -164,9 +162,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if(runTestsStatus != 0) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
-
-                            // Archive output
-                            archive uniqueMsg;
                             
                             // Run 'next-generation' warning plugin on results
                             if("mac" in nodeLabel) {
@@ -183,18 +178,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                     dir("genn/tests") {
                         // Process JUnit test output
                         junit "**/test_results*.xml";
-                        
-                        // Get test results from current build
-                        AbstractTestResultAction testResultAction = currentBuild.rawBuild.getAction(AbstractTestResultAction.class)
-                        if (testResultAction != null) {
-                            // If all tests haven't been run, fail build
-                            if(testResultAction.totalCount != 59) {
-                                setBuildStatus("Gathering test results (" + env.NODE_NAME + ")", "FAILURE");
-                            }
-                        }
-                        else {
-                            echo "Test result action doesn't exist";
-                        }
                     }
                 }
                 
@@ -203,9 +186,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // If coverage was emitted
                         def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
                         if(fileExists(uniqueCoverage)) {
-                            // Archive it
-                            archive uniqueCoverage;
-                            
                             // Upload to code cov
                             sh "curl -s https://codecov.io/bash | bash -s - -n " + env.NODE_NAME + " -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
                         }
@@ -217,17 +197,15 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Building Python wheels (" + env.NODE_NAME + ")") {
                     dir("genn") {
+                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
+
                         // Build set of dynamic libraries
                         echo "Creating dynamic libraries";
-                        def uniqueMakeDynamic = "make_dynamic_" + env.NODE_NAME + ".txt";
-                        makeCommand = "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMakeDynamic + "\" 2>> \"" + uniqueMakeDynamic + "\"";
+                        makeCommand = "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
                         def makeStatusCode = sh script:makeCommand, returnStatus:true
                         if(makeStatusCode != 0) {
                             setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                         }
-
-                        // Archive build message
-                        archive uniqueMakeDynamic
 
                         // If node is a mac, re-label libraries
                         if("mac" in nodeLabel) {
@@ -235,17 +213,16 @@ for(b = 0; b < builderNodes.size(); b++) {
                         }
 
                         // Create virtualenv, install numpy and make Python wheel
-                        def uniqueWheel = "wheel_" + env.NODE_NAME + ".txt";
                         echo "Creating Python wheels";
                         script = """
                         virtualenv virtualenv
                         . virtualenv/bin/activate
 
-                        pip install "numpy>1.6, < 1.15"
+                        pip install "numpy>1.6, <1.15"
 
                         python setup.py clean --all
-                        python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
-                        python setup.py bdist_wheel -d . 1>> "${uniqueWheel}" 2>> "${uniqueWheel}"
+                        python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
+                        python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
                         """
 
                         def wheelStatusCode = sh script:script, returnStatus:true
@@ -266,13 +243,13 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
                         }
 
-
-                        // Archive wheel message
-                        archive uniqueWheel
-
                         // Archive wheel itself
                         archive "*.whl"
                     }
+                }
+
+                buildStep("Archiving output (" + env.NODE_NAME + ")") {
+                    archive "msg_" + env.NODE_NAME + ".txt";
                 }
             }
         }
