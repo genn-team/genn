@@ -75,8 +75,8 @@ int main(int argc,     //!< number of arguments; expected to be 2
         const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
 
 #ifdef _WIN32
-        // If project GUID file doesn't exist
-        const filesystem::path projectGUIDFilename = outputPath / "guid.txt";
+        // If runner GUID file doesn't exist
+        const filesystem::path projectGUIDFilename = targetPath / "runner_guid.txt";
         std::string projectGUIDString;
         if(!projectGUIDFilename.exists()) {
             // Create a new GUID for project
