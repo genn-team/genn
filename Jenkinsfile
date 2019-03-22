@@ -142,7 +142,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             else {
                                 // Use bitadmin to download file 
                                 // **NOTE** priority and dynamicness are necessary to make bitsadmin work with github
-                                bat "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.0.tar.gz " + pwd() + "\release-1.8.0.tar.gz"
+                                bat "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.0.tar.gz " + pwd() + "\\release-1.8.0.tar.gz"
                                 
                                 // Unarchive it
                                 // **NOTE** bizarelly, while it doesn't have a zip command, Windows has a seemingly functional tar
