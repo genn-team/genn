@@ -10,14 +10,14 @@ IF [%1]==[] (
 REM If this argument is specifying an include directory
 IF [%1]==[-i] (
     REM Perform additional shift to one at end of loop to skip over both 
-    SET INCLUDE_DIRS=!INCLUDE_DIRS! %2
+    SET "INCLUDE_DIRS=!INCLUDE_DIRS!;%2"
     SHIFT
 ) ELSE (
     REM If no project name is yet set
     IF "%PROJECT_NAME%"=="" (
-        SET PROJECT_NAME=%1
+        SET "PROJECT_NAME=%1"
     ) ELSE (
-        SET SOURCE_FILES=!SOURCE_FILES! %1
+        SET "SOURCE_FILES=!SOURCE_FILES! %1"
     )
 )
 
@@ -86,12 +86,7 @@ FOR %%S IN (%SOURCE_FILES%) DO (
 @ECHO       ^<FunctionLevelLinking Condition="'$(Configuration)'=='Release'"^>true^</FunctionLevelLinking^>>> %PROJECT_FILE%
 @ECHO       ^<IntrinsicFunctions Condition="'$(Configuration)'=='Release'"^>true^</IntrinsicFunctions^>>> %PROJECT_FILE%
 @ECHO       ^<SDLCheck^>true^</SDLCheck^>>> %PROJECT_FILE%
-@ECHO|SET /p string="       <AdditionalIncludeDirectories>">> %PROJECT_FILE%
-@ECHO|SET /p string="%CODE_DIRECTORY%">> %PROJECT_FILE%
-FOR %%I IN (%INCLUDE_DIRS%) DO (
-    @ECHO|SET /p string=";%%I">> %PROJECT_FILE%
-)
-@ECHO ^</AdditionalIncludeDirectories^>>> %PROJECT_FILE%
+@ECHO       ^<AdditionalIncludeDirectories^>%CODE_DIRECTORY%%INCLUDE_DIRS%^</AdditionalIncludeDirectories^>>> %PROJECT_FILE%
 @ECHO     ^</ClCompile^>>> %PROJECT_FILE%
 @ECHO     ^<Link^>>> %PROJECT_FILE%
 @ECHO       ^<GenerateDebugInformation^>true^</GenerateDebugInformation^>>> %PROJECT_FILE%
