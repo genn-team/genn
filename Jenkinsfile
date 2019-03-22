@@ -201,7 +201,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                 }
                 
                 buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
-                    dir("genn/tests") 
+                    dir("genn/tests") {
                         if(isUnix()) {
                             // If coverage was emitted
                             def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
