@@ -2,6 +2,7 @@
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
+    ["windows"] as Set,
     ["cuda10", "linux", "x86_64", "python27"] as Set,
     ["cuda9", "linux", "x86_64", "python27"] as Set,
     ["cuda8", "linux", "x86_64", "python27"] as Set,
@@ -108,7 +109,12 @@ for(b = 0; b < builderNodes.size(); b++) {
                     echo "Checking out GeNN";
 
                     // Deleting existing checked out version of GeNN
-                    sh "rm -rf genn";
+                    if(isUnix()) {
+                        sh "rm -rf genn";
+                    }
+                    else {
+                        sh "rmdir /S genn";
+                    }
                     
                     dir("genn") {
                         // Checkout GeNN into it
@@ -124,13 +130,21 @@ for(b = 0; b < builderNodes.size(); b++) {
                         if(!fileExists("googletest-release-1.8.0")) {
                             echo "Downloading google test framework";
                             
-                            // Download it
-                            // **NOTE** wget is not standard on mac
-                            //sh "wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz";
-                            sh 'curl -OL "https://github.com/google/googletest/archive/release-1.8.0.tar.gz" -o "release-1.8.0.tar.gz"'
-                
-                            // Unarchive it
-                            sh "tar -zxvf release-1.8.0.tar.gz";
+                            if(isUnix()) {
+                                // Download it
+                                // **NOTE** wget is not standard on mac
+                                //sh "wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz";
+                                sh 'curl -OL "https://github.com/google/googletest/archive/release-1.8.0.tar.gz" -o "release-1.8.0.tar.gz"'
+                            }
+                            else {
+                                // Use bitadmin to download file 
+                                // **NOTE** priority and dynamicness are necessary to make bitsadmin work with github
+                                sh "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.0.tar.gz " + pwd() + "\release-1.8.0.tar.gz"
+                            }
+                            
+                             // Unarchive it
+                             // **NOTE** bizarelly, while it doesn't have a zip command, Windows has a seemingly functional tar
+                             sh "tar -zxvf release-1.8.0.tar.gz";
                         }
                     } catch (Exception e) {
                         setBuildStatus(installationStageName, "FAILURE");
