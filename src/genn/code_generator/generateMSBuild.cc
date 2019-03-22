@@ -41,7 +41,6 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend
     os << "\t\t<ConfigurationType>DynamicLibrary</ConfigurationType>" << std::endl;
     os << "\t\t<UseDebugLibraries Condition=\"'$(Configuration)'=='Release'\">false</UseDebugLibraries>" << std::endl;
     os << "\t\t<UseDebugLibraries Condition=\"'$(Configuration)'=='Debug'\">true</UseDebugLibraries>" << std::endl;
-    os << "\t\t<WholeProgramOptimization Condition=\"'$(Configuration)'=='Release'\">true</WholeProgramOptimization>" << std::endl;
     os << "\t\t<CharacterSet>MultiByte</CharacterSet>" << std::endl;
     os << "\t\t<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>" << std::endl;
     backend.genMSBuildConfigProperties(os);
