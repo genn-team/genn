@@ -1,11 +1,5 @@
 ECHO OFF
-
-REM Read project name and hence code directory from first command line argument
-SET PROJECT_NAME=%1
-SET PROJECT_FILE=%PROJECT_NAME%.vcxproj
-SET SOLUTION_FILE=%PROJECT_NAME%.sln
-SET CODE_DIRECTORY=%PROJECT_NAME%_CODE
-SET RUNNER_GUID_FILE=%CODE_DIRECTORY%\guid.txt
+SETLOCAL ENABLEDELAYEDEXPANSION
 
 REM Create a new GUID for user project
 FOR /f %%i IN ('uuidgen -c') DO SET USER_GUID=%%i
@@ -13,15 +7,35 @@ FOR /f %%i IN ('uuidgen -c') DO SET USER_GUID=%%i
 REM Read GUID from file in code directory
 FOR /f %%i IN (%RUNNER_GUID_FILE%) DO SET RUNNER_GUID=%%i
 
-REM throw project name parameter away
-SHIFT
-SET SOURCE_FILES=%1
 :loop
+REM If there are no more arguments, exit loop
+IF [%1]==[] (
+    GOTO afterloop
+)
+
+REM If this argument is specifying an include directory
+IF [%1]==[-i] (
+    REM Perform additional shift to one at end of loop to skip over both 
+    SET INCLUDE_DIRS=!INCLUDE_DIRS! %2
+    SHIFT
+) ELSE (
+    REM If no project name is yet set
+    IF "%PROJECT_NAME%"=="" (
+        SET PROJECT_NAME=%1
+    ) ELSE (
+        SET SOURCE_FILES=!SOURCE_FILES! %1
+    )
+)
+
+REM Shift out processed argument
 SHIFT
-IF [%1]==[] GOTO afterloop
-SET SOURCE_FILES=%SOURCE_FILES% %1
-goto loop
+GOTO loop
 :afterloop
+
+SET PROJECT_FILE=%PROJECT_NAME%.vcxproj
+SET SOLUTION_FILE=%PROJECT_NAME%.sln
+SET CODE_DIRECTORY=%PROJECT_NAME%_CODE
+SET RUNNER_GUID_FILE=%CODE_DIRECTORY%\guid.txt
 
 REM Write out MSBuild project
 @ECHO ^<?xml version="1.0" encoding="utf-8"?^> > %PROJECT_FILE%
@@ -40,22 +54,16 @@ REM Write out MSBuild project
 @ECHO     ^<ProjectGuid^>{%USER_GUID%}^</ProjectGuid^> >> %PROJECT_FILE%
 @ECHO   ^</PropertyGroup^> >> %PROJECT_FILE%
 @ECHO   ^<ItemGroup^> >> %PROJECT_FILE%
-FOR %%U IN (%SOURCE_FILES%) DO (
-    @ECHO     ^<ClCompile Include="%%U" /^> >> %PROJECT_FILE%
+FOR %%S IN (%SOURCE_FILES%) DO (
+    @ECHO     ^<ClCompile Include="%%S" /^> >> %PROJECT_FILE%
 )
 @ECHO   ^</ItemGroup^> >> %PROJECT_FILE%
 @ECHO   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" /^> >> %PROJECT_FILE%
-@ECHO   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration"^> >> %PROJECT_FILE%
+@ECHO   ^<PropertyGroup Label="Configuration"^> >> %PROJECT_FILE%
 @ECHO     ^<ConfigurationType^>Application^</ConfigurationType^> >> %PROJECT_FILE%
-@ECHO     ^<UseDebugLibraries^>true^</UseDebugLibraries^> >> %PROJECT_FILE%
+@ECHO     ^<UseDebugLibraries  Condition="'$(Configuration)'=='Debug'"^>true^</UseDebugLibraries^> >> %PROJECT_FILE%
 @ECHO     ^<PlatformToolset^>$(DefaultPlatformToolset)^</PlatformToolset^> >> %PROJECT_FILE%
-@ECHO     ^<CharacterSet^>MultiByte^</CharacterSet^> >> %PROJECT_FILE%
-@ECHO   ^</PropertyGroup^> >> %PROJECT_FILE%
-@ECHO   ^<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration"^> >> %PROJECT_FILE%
-@ECHO     ^<ConfigurationType^>Application^</ConfigurationType^> >> %PROJECT_FILE%
-@ECHO     ^<UseDebugLibraries^>false^</UseDebugLibraries^> >> %PROJECT_FILE%
-@ECHO     ^<PlatformToolset^>$(DefaultPlatformToolset)^</PlatformToolset^> >> %PROJECT_FILE%
-@ECHO     ^<WholeProgramOptimization^>true^</WholeProgramOptimization^> >> %PROJECT_FILE%
+@ECHO     ^<WholeProgramOptimization Condition="'$(Configuration)'=='Release'"^>true^</WholeProgramOptimization^> >> %PROJECT_FILE%
 @ECHO     ^<CharacterSet^>MultiByte^</CharacterSet^> >> %PROJECT_FILE%
 @ECHO   ^</PropertyGroup^> >> %PROJECT_FILE%
 @ECHO   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" /^> >> %PROJECT_FILE%
@@ -70,34 +78,27 @@ FOR %%U IN (%SOURCE_FILES%) DO (
 @ECHO     ^<IntDir^>$(Platform)\$(Configuration)\^</IntDir^> >> %PROJECT_FILE%
 @ECHO     ^<TargetName^>$(ProjectName)_$(Configuration)^</TargetName^> >> %PROJECT_FILE%
 @ECHO   ^</PropertyGroup^> >> %PROJECT_FILE%
-@ECHO   ^<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"^> >> %PROJECT_FILE%
+@ECHO   ^<ItemDefinitionGroup^> >> %PROJECT_FILE%
 @ECHO     ^<ClCompile^> >> %PROJECT_FILE%
 @ECHO       ^<WarningLevel^>Level3^</WarningLevel^> >> %PROJECT_FILE%
+@ECHO       ^<Optimization Condition="'$(Configuration)'=='Release'"^>MaxSpeed^</Optimization^> >> %PROJECT_FILE%
 @ECHO       ^<Optimization^>Disabled^</Optimization^> >> %PROJECT_FILE%
+@ECHO       ^<FunctionLevelLinking Condition="'$(Configuration)'=='Release'"^>true^</FunctionLevelLinking^> >> %PROJECT_FILE%
+@ECHO       ^<IntrinsicFunctions Condition="'$(Configuration)'=='Release'"^>true^</IntrinsicFunctions^> >> %PROJECT_FILE%
 @ECHO       ^<SDLCheck^>true^</SDLCheck^> >> %PROJECT_FILE%
-@ECHO       ^<AdditionalIncludeDirectories^>%CODE_DIRECTORY%^</AdditionalIncludeDirectories^> >> %PROJECT_FILE%
+@ECHO|SET /p string="       <AdditionalIncludeDirectories>" >> %PROJECT_FILE%
+@ECHO|SET /p string="%CODE_DIRECTORY%" >> %PROJECT_FILE%
+FOR %%I IN (%INCLUDE_DIRS%) DO (
+    @ECHO|SET /p string=";%%I" >> %PROJECT_FILE%
+)
+@ECHO ^</AdditionalIncludeDirectories^> >> %PROJECT_FILE%
 @ECHO     ^</ClCompile^> >> %PROJECT_FILE%
 @ECHO     ^<Link^> >> %PROJECT_FILE%
 @ECHO       ^<GenerateDebugInformation^>true^</GenerateDebugInformation^> >> %PROJECT_FILE%
-@ECHO       ^<AdditionalDependencies^>runner_Debug.lib^;%%(AdditionalDependencies)^</AdditionalDependencies^> >> %PROJECT_FILE%
-@ECHO       ^<AdditionalLibraryDirectories^>.^;%%(AdditionalLibraryDirectories)^</AdditionalLibraryDirectories^> >> %PROJECT_FILE%
-@ECHO     ^</Link^> >> %PROJECT_FILE%
-@ECHO   ^</ItemDefinitionGroup^> >> %PROJECT_FILE%
-@ECHO   ^<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'"^> >> %PROJECT_FILE%
-@ECHO     ^<ClCompile^> >> %PROJECT_FILE%
-@ECHO       ^<WarningLevel^>Level3^</WarningLevel^> >> %PROJECT_FILE%
-@ECHO       ^<Optimization^>MaxSpeed^</Optimization^> >> %PROJECT_FILE%
-@ECHO       ^<FunctionLevelLinking^>true^</FunctionLevelLinking^> >> %PROJECT_FILE%
-@ECHO       ^<IntrinsicFunctions^>true^</IntrinsicFunctions^> >> %PROJECT_FILE%
-@ECHO       ^<SDLCheck^>true^</SDLCheck^> >> %PROJECT_FILE%
-@ECHO       ^<AdditionalIncludeDirectories^>%CODE_DIRECTORY%^</AdditionalIncludeDirectories^> >> %PROJECT_FILE%
-@ECHO     ^</ClCompile^> >> %PROJECT_FILE%
-@ECHO     ^<Link^> >> %PROJECT_FILE%
-@ECHO       ^<GenerateDebugInformation^>true^</GenerateDebugInformation^> >> %PROJECT_FILE%
-@ECHO       ^<EnableCOMDATFolding^>true^</EnableCOMDATFolding^> >> %PROJECT_FILE%
-@ECHO       ^<OptimizeReferences^>true^</OptimizeReferences^> >> %PROJECT_FILE%
-@ECHO       ^<AdditionalDependencies^>runner_Release.lib^;%%(AdditionalDependencies)^</AdditionalDependencies^> >> %PROJECT_FILE%
-@ECHO       ^<AdditionalLibraryDirectories^>.^;%%(AdditionalLibraryDirectories)^</AdditionalLibraryDirectories^> >> %PROJECT_FILE%
+@ECHO       ^<EnableCOMDATFolding Condition="'$(Configuration)'=='Release'"^>true^</EnableCOMDATFolding^> >> %PROJECT_FILE%
+@ECHO       ^<OptimizeReferences Condition="'$(Configuration)'=='Release'"^>true^</OptimizeReferences^> >> %PROJECT_FILE%
+@ECHO       ^<AdditionalDependencies Condition="'$(Configuration)'=='Release'"^>runner_Release.lib^;%%(AdditionalDependencies)^</AdditionalDependencies^> >> %PROJECT_FILE%
+@ECHO       ^<AdditionalDependencies Condition="'$(Configuration)'=='Debug'"^>runner_Debug.lib^;%%(AdditionalDependencies)^</AdditionalDependencies^> >> %PROJECT_FILE%
 @ECHO     ^</Link^> >> %PROJECT_FILE%
 @ECHO   ^</ItemDefinitionGroup^> >> %PROJECT_FILE%
 @ECHO   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /^> >> %PROJECT_FILE%
