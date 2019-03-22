@@ -1,12 +1,6 @@
 ECHO OFF
 SETLOCAL ENABLEDELAYEDEXPANSION
 
-REM Create a new GUID for user project
-FOR /f %%i IN ('uuidgen -c') DO SET USER_GUID=%%i
-
-REM Read GUID from file in code directory
-FOR /f %%i IN (%RUNNER_GUID_FILE%) DO SET RUNNER_GUID=%%i
-
 :loop
 REM If there are no more arguments, exit loop
 IF [%1]==[] (
@@ -36,6 +30,12 @@ SET PROJECT_FILE=%PROJECT_NAME%.vcxproj
 SET SOLUTION_FILE=%PROJECT_NAME%.sln
 SET CODE_DIRECTORY=%PROJECT_NAME%_CODE
 SET RUNNER_GUID_FILE=%CODE_DIRECTORY%\guid.txt
+
+REM Create a new GUID for user project
+FOR /f %%i IN ('uuidgen -c') DO SET USER_GUID=%%i
+
+REM Read GUID from file in code directory
+FOR /f %%i IN (%RUNNER_GUID_FILE%) DO SET RUNNER_GUID=%%i
 
 REM Write out MSBuild project
 @ECHO ^<?xml version="1.0" encoding="utf-8"?^> > %PROJECT_FILE%
