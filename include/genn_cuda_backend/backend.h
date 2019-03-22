@@ -106,8 +106,8 @@ public:
     virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
                                            const Substitutions &kernelSubs, Handler handler) const override;
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, bool autoInitialized, size_t count) const override;
+    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, size_t count) const override;
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const override
     {
         genCurrentSpikePush(os, ng, false);

@@ -79,15 +79,6 @@ bool isSparseInitRequired(const SynapseGroupInternal &sg)
             && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
 }
 //--------------------------------------------------------------------------
-bool canPushPullVar(VarLocation loc)
-{
-    // A variable can be pushed and pulled if it is located
-    // on both host and device and doesn't use zero-copy memory
-    return ((loc & VarLocation::HOST) &&
-            (loc & VarLocation::DEVICE) &&
-            !(loc & VarLocation::ZERO_COPY));
-}
-//--------------------------------------------------------------------------
 void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Models::Base::StringPairVec &extraGlobalParameters,
                              std::map<std::string, std::string> &kernelParameters, const std::vector<std::string> &codeStrings)
 {
@@ -1601,33 +1592,27 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
+void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, bool autoInitialized, size_t count) const
 {
-    // If variable can be pushed or pulled
-    if(canPushPullVar(loc)) {
-        // If variable is initialised on device, only copy if uninitialisedOnly isn't set
-        if(autoInitialized) {
-            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
-        }
+    // Only copy if uninitialisedOnly isn't set
+    if(autoInitialized) {
+        os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
+    }
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
-        os << ", " << name;
-        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
+    os << ", " << name;
+    os << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
 
-        if(autoInitialized) {
-            os << CodeStream::CB(1101);
-        }
+    if(autoInitialized) {
+        os << CodeStream::CB(1101);
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, size_t count) const
 {
-    // If variable can be pushed or pulled
-    if(canPushPullVar(loc)) {
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
-        os << ", d_"  << name;
-        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
-    }
+    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
+    os << ", d_"  << name;
+    os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &) const
@@ -1857,11 +1842,6 @@ void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std:
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
-    // Is push required at all
-    const bool pushRequired = spikeEvent ?
-        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventLocation()))
-        : canPushPullVar(ng.getSpikeLocation());
-
     // Is delay required
     const bool delayRequired = spikeEvent ?
         ng.isDelayRequired() :
@@ -1870,34 +1850,27 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
     const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
     const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
 
-    if(pushRequired) {
-        if (delayRequired) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
-            os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
-            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
-            os << ", " << spikePrefix << ng.getName();
-            os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-        }
-        else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
-            os << ", " << spikeCntPrefix << ng.getName();
-            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
-            os << ", " << spikePrefix << ng.getName();
-            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-        }
+    if (delayRequired) {
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
+        os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+        os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
+        os << ", " << spikePrefix << ng.getName();
+        os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+    }
+    else {
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
+        os << ", " << spikeCntPrefix << ng.getName();
+        os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
+        os << ", " << spikePrefix << ng.getName();
+        os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
-    // Is push required at all
-    const bool pullRequired = spikeEvent ?
-        (ng.isSpikeEventRequired() && canPushPullVar(ng.getSpikeEventLocation()))
-        : canPushPullVar(ng.getSpikeLocation());
-
     // Is delay required
     const bool delayRequired = spikeEvent ?
         ng.isDelayRequired() :
@@ -1906,24 +1879,22 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
     const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
     const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
 
-    if(pullRequired) {
-        if (delayRequired) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
-            os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
-            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+    if (delayRequired) {
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+        os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+        os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
 
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-        }
-        else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
-            os << ", d_" << spikeCntPrefix << ng.getName();
-            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
-            os << ", d_" << spikePrefix << ng.getName();
-            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-        }
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+    }
+    else {
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
+        os << ", d_" << spikeCntPrefix << ng.getName();
+        os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
+        os << ", d_" << spikePrefix << ng.getName();
+        os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------

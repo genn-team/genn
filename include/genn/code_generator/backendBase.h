@@ -138,8 +138,8 @@ public:
     virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
                                            const Substitutions &kernelSubs, Handler handler) const = 0;
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
+    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, bool autoInitialized, size_t count) const = 0;
+    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, size_t count) const = 0;
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
@@ -189,10 +189,10 @@ public:
     //--------------------------------------------------------------------------
     //! Helper function to generate matching push and pull functions for a variable
     void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
+                             const std::string &type, const std::string &name, bool autoInitialized, size_t count) const
     {
-        genVariablePush(push, type, name, loc, autoInitialized, count);
-        genVariablePull(pull, type, name, loc, count);
+        genVariablePush(push, type, name, autoInitialized, count);
+        genVariablePull(pull, type, name, count);
     }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
@@ -210,15 +210,6 @@ public:
     {
         genVariableDefinition(definitions, definitionsInternal, type, name, loc);
         genVariableImplementation(runner, type, name, loc);
-    }
-
-    //! Helper function to generate matching definition, declaration, allocation, free, push and pull code for a state variable
-    void genVariable(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                     CodeStream &push, CodeStream &pull,
-                     const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
-    {
-        genArray(definitions, definitionsInternal, runner, allocations, free, type, name, loc, count);
-        genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
     }
 
 protected:

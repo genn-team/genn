@@ -630,11 +630,11 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
+void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, bool, size_t) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
+void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, size_t) const
 {
 }
 //--------------------------------------------------------------------------
