@@ -12,6 +12,12 @@
 **/*.gcda
 **/*.gcno
 
+# Ignore visual studio crap
+**/*.idb
+**/*.ipdb
+**/*.iobj
+**/*.tlog
+
 # Ignore xml test output
 **/*.xml
 
@@ -19,12 +25,13 @@
 **/*_CODE
 
 # Ignore generator executables
-**/generator
-**/generator.exe
-**/generator_coverage
-**/generator_coverage.exe
-**/generator_debug
-**/generator_debug.exe
+**/generator*
+**/generator*.exe
+
+# Ignore windows runners
+**/runner_*.lib
+**/runner_*.exp
+**/runner_*.dll
 
 # Ignore test output
 msg_*
