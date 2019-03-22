@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "decode_matrix_den_delay_individualg_dense", "decode_matrix_den_delay_individualg_dense.vcxproj", "{B92DCD91-C356-4DD9-8F68-26D890348FDD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B2A10F28-9FF5-4C26-998D-FFE625A59A91} = {B2A10F28-9FF5-4C26-998D-FFE625A59A91}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "decode_matrix_den_delay_individualg_dense_CODE\runner.vcxproj", "{B2A10F28-9FF5-4C26-998D-FFE625A59A91}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B92DCD91-C356-4DD9-8F68-26D890348FDD}.Debug|x64.ActiveCfg = Debug|x64
+		{B92DCD91-C356-4DD9-8F68-26D890348FDD}.Debug|x64.Build.0 = Debug|x64
+		{B92DCD91-C356-4DD9-8F68-26D890348FDD}.Release|x64.ActiveCfg = Release|x64
+		{B92DCD91-C356-4DD9-8F68-26D890348FDD}.Release|x64.Build.0 = Release|x64
+		{B2A10F28-9FF5-4C26-998D-FFE625A59A91}.Debug|x64.ActiveCfg = Debug|x64
+		{B2A10F28-9FF5-4C26-998D-FFE625A59A91}.Debug|x64.Build.0 = Debug|x64
+		{B2A10F28-9FF5-4C26-998D-FFE625A59A91}.Release|x64.ActiveCfg = Release|x64
+		{B2A10F28-9FF5-4C26-998D-FFE625A59A91}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
