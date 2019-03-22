@@ -60,7 +60,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <OutDir>$(GeneratePath)\</OutDir>
-    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)\generator\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
