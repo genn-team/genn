@@ -113,7 +113,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         sh "rm -rf genn";
                     }
                     else {
-                        sh script:"rmdir /S /Q genn", returnStatus:true;
+                        bat script:"rmdir /S /Q genn", returnStatus:true;
                     }
                     
                     dir("genn") {
@@ -135,16 +135,21 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 // **NOTE** wget is not standard on mac
                                 //sh "wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz";
                                 sh 'curl -OL "https://github.com/google/googletest/archive/release-1.8.0.tar.gz" -o "release-1.8.0.tar.gz"'
+                                
+                                // Unarchive it
+                                sh "tar -zxvf release-1.8.0.tar.gz";
                             }
                             else {
                                 // Use bitadmin to download file 
                                 // **NOTE** priority and dynamicness are necessary to make bitsadmin work with github
-                                sh "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.0.tar.gz " + pwd() + "\release-1.8.0.tar.gz"
+                                bat "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.0.tar.gz " + pwd() + "\release-1.8.0.tar.gz"
+                                
+                                // Unarchive it
+                                // **NOTE** bizarelly, while it doesn't have a zip command, Windows has a seemingly functional tar
+                                bat "tar -zxvf release-1.8.0.tar.gz";
                             }
                             
-                             // Unarchive it
-                             // **NOTE** bizarelly, while it doesn't have a zip command, Windows has a seemingly functional tar
-                             sh "tar -zxvf release-1.8.0.tar.gz";
+                             
                         }
                     } catch (Exception e) {
                         setBuildStatus(installationStageName, "FAILURE");
@@ -196,15 +201,17 @@ for(b = 0; b < builderNodes.size(); b++) {
                 }
                 
                 buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
-                    dir("genn/tests") {
-                        // If coverage was emitted
-                        def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
-                        if(fileExists(uniqueCoverage)) {
-                            // Upload to code cov
-                            sh "curl -s https://codecov.io/bash | bash -s - -n " + env.NODE_NAME + " -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
-                        }
-                        else {
-                            echo uniqueCoverage + " doesn't exist!";
+                    dir("genn/tests") 
+                        if(isUnix()) {
+                            // If coverage was emitted
+                            def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
+                            if(fileExists(uniqueCoverage)) {
+                                // Upload to code cov
+                                sh "curl -s https://codecov.io/bash | bash -s - -n " + env.NODE_NAME + " -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                            }
+                            else {
+                                echo uniqueCoverage + " doesn't exist!";
+                            }
                         }
                     }
                 }
