@@ -1,4 +1,4 @@
-CXXFLAGS +=-std=c++11 -Wall -Wpedantic -Wextra -I $(GTEST_DIR) -isystem $(GTEST_DIR)/include -DMODEL_NAME=$(subst _CODE,,$(SIM_CODE)) -DDEFINITIONS_HEADER='"$(SIM_CODE)/definitions.h"'
+CXXFLAGS +=-std=c++11 -Wall -Wpedantic -Wextra -I $(GTEST_DIR) -isystem $(GTEST_DIR)/include
 
 .PHONY: all clean generated_code
 

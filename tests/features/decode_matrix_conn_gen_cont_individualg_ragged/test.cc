@@ -11,7 +11,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include DEFINITIONS_HEADER
+#include "decode_matrix_conn_gen_cont_individualg_ragged_CODE/definitions.h"
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
