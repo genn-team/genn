@@ -173,7 +173,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
 
                             // Run tests
-                            def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
+                            // **NOTE** uniqueMsg is in genn directory, NOT tests directory
+                            def uniqueMsg = "../msg_" + env.NODE_NAME + ".txt";
                             def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
@@ -222,7 +223,11 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                         // Build set of dynamic libraries
                         echo "Creating dynamic libraries";
-                        makeCommand = "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
+                        makeCommand = ""
+                        if("dev_toolset" in nodeLabel) {
+                            makeCommand += ". /opt/rh/devtoolset-6/enable\n"
+                        }
+                        makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
                         def makeStatusCode = sh script:makeCommand, returnStatus:true
                         if(makeStatusCode != 0) {
                             setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
