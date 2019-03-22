@@ -130,11 +130,14 @@ for(b = 0; b < builderNodes.size(); b++) {
                         if(!fileExists("googletest-release-1.8.1")) {
                             echo "Downloading google test framework";
                             
+                            // Download it
+                            httpRequest url:"https://github.com/google/googletest/archive/release-1.8.1.tar.gz", outputFile :"release-1.8.1.tar.gz";
+                            
                             if(isUnix()) {
                                 // Download it
                                 // **NOTE** wget is not standard on mac
                                 //sh "wget https://github.com/google/googletest/archive/release-1.8.1.tar.gz";
-                                sh 'curl -OL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz" -o "release-1.8.1.tar.gz"'
+                                //sh 'curl -OL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz" -o "release-1.8.1.tar.gz"'
                                 
                                 // Unarchive it
                                 sh "tar -zxvf release-1.8.1.tar.gz";
@@ -142,7 +145,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             else {
                                 // Use bitadmin to download file 
                                 // **NOTE** priority and dynamicness are necessary to make bitsadmin work with github
-                                bat "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.1.tar.gz " + pwd() + "\\release-1.8.1.tar.gz"
+                                //bat "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.1.tar.gz " + pwd() + "\\release-1.8.1.tar.gz"
                                 
                                 // Unarchive it
                                 // **NOTE** bizarelly, while it doesn't have a zip command, Windows has a seemingly functional tar
