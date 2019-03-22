@@ -113,7 +113,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         sh "rm -rf genn";
                     }
                     else {
-                        sh "rmdir /S genn";
+                        sh script:"rmdir /S /Q genn", returnStatus:true;
                     }
                     
                     dir("genn") {
