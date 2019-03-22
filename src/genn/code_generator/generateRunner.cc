@@ -527,21 +527,16 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// synapse connectivity" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    std::vector<std::string> connectivityPushPullFunctions;
     for(const auto &s : model.getLocalSynapseGroups()) {
         const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-            backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             "uint32_t", "gp" + s.first, s.second.getSparseConnectivityLocation(), gpSize);
+            genVariable(backend, definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                        runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.first,
+                        s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
 
-            // Generate bitmask push and pull function
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(), s.first + "Connectivity",
-                [&]()
-                {
-                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "uint32_t", "gp" + s.first, autoInitialized, gpSize);
-                });
         }
         else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             const VarLocation varLoc = s.second.getSparseConnectivityLocation();
@@ -581,7 +576,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             }
 
             // Generate push and pull functions for sparse connectivity 
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(), s.first + "Connectivity",
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(), s.first + "Connectivity", connectivityPushPullFunctions,
                 [&]()
                 {
                      // Row lengths
@@ -729,10 +724,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     runner << "void copyConnectivityToDevice(bool uninitialisedOnly)";
     {
         CodeStream::Scope b(runner);
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            if(canPushPullVar(s.second.getSparseConnectivityLocation())) {
-                runner << "push" << s.first << "ConnectivityToDevice(uninitialisedOnly);" << std::endl;
-            }
+        for(const auto &func : connectivityPushPullFunctions) {
+            runner << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
         }
     }
     runner << std::endl;
