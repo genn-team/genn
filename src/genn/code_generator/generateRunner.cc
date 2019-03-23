@@ -461,7 +461,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first, neuronStatePushPullFunctions);
 
         for(auto const &v : neuronModel->getExtraGlobalParams()) {
-            definitionsVar << "extern " << v.second << " " << v.first + n.first << ";" << std::endl;
+            definitionsVar << "EXPORT_VAR " << v.second << " " << v.first + n.first << ";" << std::endl;
             runnerVarDecl << v.second << " " <<  v.first << n.first << ";" << std::endl;
         }
 
@@ -484,7 +484,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName(), currentSourceStatePushPullFunctions);
 
             for(auto const &v : csModel->getExtraGlobalParams()) {
-                definitionsVar << "extern " << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
+                definitionsVar << "EXPORT_VAR " << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
                 runnerVarDecl << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
             }
         }
@@ -517,7 +517,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             }
 
             for(auto const &v : sg->getPSModel()->getExtraGlobalParams()) {
-                definitionsVar << "extern " << v.second << " " <<  v.first << sg->getPSModelTargetName() << ";" << std::endl;
+                definitionsVar << "EXPORT_VAR " << v.second << " " <<  v.first << sg->getPSModelTargetName() << ";" << std::endl;
                 runnerVarDecl << v.second << " " <<  v.first << sg->getPSModelTargetName() << ";" << std::endl;
             }
         }
@@ -559,7 +559,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                 // Allocate synRemap
                 // **THINK** this is over-allocating
                 backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "synRemap" + s.first, VarLocation::DEVICE, size + 1);
+                                 "unsigned int", "synRemap" + s.first, VarLocation::DEVICE, size + 1);
             }
 
             // **TODO** remap is not always required
@@ -668,12 +668,12 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first, synapseGroupStatePushPullFunctions);
 
         for(const auto &v : wu->getExtraGlobalParams()) {
-            definitionsVar << "extern " << v.second << " " << v.first + s.first << ";" << std::endl;
+            definitionsVar << "EXPORT_VAR " << v.second << " " << v.first + s.first << ";" << std::endl;
             runnerVarDecl << v.second << " " <<  v.first << s.first << ";" << std::endl;
         }
 
         for(auto const &p : s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
-            definitionsVar << "extern " << p.second << " " << p.first + "initSparseConn" + s.first << ";" << std::endl;
+            definitionsVar << "EXPORT_VAR " << p.second << " " << p.first + "initSparseConn" + s.first << ";" << std::endl;
             runnerVarDecl << p.second << " " << p.first + "initSparseConn" + s.first << ";" << std::endl;
         }
     }
