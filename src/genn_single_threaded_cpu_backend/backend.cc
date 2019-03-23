@@ -543,6 +543,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << std::endl;
     os << "// Standard C includes" << std::endl;
     os << "#include <cmath>" << std::endl;
+    os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
 }
 //--------------------------------------------------------------------------

@@ -1249,6 +1249,9 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "#include <string>" << std::endl;
     os << "#include <stdexcept>" << std::endl;
     os << std::endl;
+    os << "// Standard C includes" << std::endl;
+    os << "#include <cstdint>" << std::endl;
+    os << std::endl;
     os << "// Forward declare cuRAND structures" << std::endl;
     os << "struct curandStatePhilox4_32_10;" << std::endl;
     os << "struct curandStateXORWOW;" << std::endl;
@@ -1731,6 +1734,7 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<TargetMachinePlatform>64</TargetMachinePlatform>" << std::endl;
     os << "\t\t\t<GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>" << std::endl;
     os << "\t\t\t<CodeGeneration>compute_" << virtualArchitecture <<",sm_" << architecture << "</CodeGeneration>" << std::endl;
+    os << "\t\t\t<FastMath>" << (m_Preferences.optimizeCode ? "true" : "false") << "</FastMath>" << std::endl;
     os << "\t\t</CudaCompile>" << std::endl;
 }
 //--------------------------------------------------------------------------
