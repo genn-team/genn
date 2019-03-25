@@ -131,18 +131,10 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Downloading google test framework";
                             
                             // Download it
-                            httpRequest url:"https://github.com/google/googletest/archive/release-1.8.1.tar.gz", outputFile :"release-1.8.1.tar.gz";
+                            httpRequest url:"https://github.com/google/googletest/archive/release-1.8.1.zip", outputFile :"release-1.8.1.zip";
                             
                             // Unarchive it
-                            // **NOTE** bizarely, while it doesn't have a zip command, Windows has a seemingly functional tar
-                            if(isUnix()) {
-                                sh "tar -zxvf release-1.8.1.tar.gz";
-                            }
-                            else {
-                                bat "tar -zxvf release-1.8.1.tar.gz";
-                            }
-                            
-                             
+                            unzip "release-1.8.1.zip";
                         }
                     } catch (Exception e) {
                         setBuildStatus(installationStageName, "FAILURE");
