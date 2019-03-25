@@ -1,5 +1,36 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v4.0.0
+====
+This release is the result of a second round of fairly major refactoring which we hope will make GeNN easier to use and allow it to be extended more easily in future.
+However, especially if you have been using GeNN 2.XX syntax, it breaks backward compatibility.
+
+User Side Changes
+----
+1. Totally new build system - ``make install`` can be used to install GeNN to a system location on Linux and Mac and Windows projects work much better in the Visual Studio IDE.
+2. Python interface - All features of GeNN are now exposed to Python through the ``::pygenn`` module.
+3. No need to call ``initGeNN()`` at start and ``model.finalize()`` at end of all models.
+4. Initialisation system simplified - if you specify a value or initialiser for a variable or sparse connectivity, 
+   it will be initialised by your chosen backend. If you mark it as uninitialised, it is up to you to initialize it 
+   in user code between the calls to ``initialize()`` and ``initializeSparse()`` (where it will be copied to device).
+5. ``genn-create-user-project`` helper scripts to create Makefiles or MSBuild projects for building user code
+6. Postsynaptic models can now have Extra Global Parameters.
+7. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``InitVarSnippet::Gamma``.
+
+Breaking changes
+----
+1. Yale-format sparse matrices are no longer supported.
+2. GeNN 2.X syntax for implementing neuron and synapse models is no longer supported,
+3. ``GENN_PREFERENCES`` is no longer a namespace - it's a global struct so members need to be accessed with . rather than ::.
+4. ``NeuronGroup``, ``SynapseGroup``, ``CurrentSource`` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't <i>supposed</i> to call but could. 
+   These have now all been made protected and are exposed to GeNN internals using derived classes (``NeuronGroupInternal``, ``SynapseGroupInternal``, ``CurrentSourceInternal``, ``ModelSpecInternal``) that make them public using ``using`` directives.
+5. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
+   
+Bug fixes:
+----
+1. Devices with Streaming Multiprocessor version 2.1 (compute capability 2.0) now work correctly in Windows.
+2. Seeding of on-device RNGs now works correctly.
+
 Release Notes for GeNN v3.2.0
 ====
 This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for networks with more sophisticated models of synaptic plasticity and delay as well as including several other small features, optimisations and bug fixes for certain system configurations. This release supports GCC >= 4.9.1 on Linux, Visual Studio >= 2013 on Windows and recent versions of Clang on Mac OS X.
