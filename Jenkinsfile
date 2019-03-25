@@ -181,8 +181,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
                             def uniqueMsg = "../msg_" + env.NODE_NAME + ".txt";
                             def runTestsCommand = """
-                            %VC_VARS_BAT%
-                            run_tests.bat > "${uniqueMsg}";
+                            CALL %VC_VARS_BAT%
+                            CALL run_tests.bat > "${uniqueMsg}";
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
                             
