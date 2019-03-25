@@ -14,5 +14,5 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend);
+void generateNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend, bool standaloneModules);
 }

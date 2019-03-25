@@ -14,5 +14,5 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateInit(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend);
+void generateInit(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend, bool standaloneModules);
 }

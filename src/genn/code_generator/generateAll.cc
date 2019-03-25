@@ -19,7 +19,8 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend, const filesystem::path &outputPath)
+std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+                                                    const filesystem::path &outputPath, bool standaloneModules)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -43,12 +44,19 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     CodeStream runner(runnerStream);
 
     // Generate modules
-    generateNeuronUpdate(neuronUpdate, model, backend);
-    generateSynapseUpdate(synapseUpdate, model, backend);
-    generateInit(init, model, backend);
+    generateNeuronUpdate(neuronUpdate, model, backend, standaloneModules);
+    generateSynapseUpdate(synapseUpdate, model, backend, standaloneModules);
+    generateInit(init, model, backend, standaloneModules);
     generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
     generateSupportCode(supportCode, model);
 
     // Return names of generated modules
-    return {"neuronUpdate", "synapseUpdate", "init", "runner"};
+    // **NOTE** when we are building standalone modules runner is included in each model
+    if(standaloneModules) {
+        return {"neuronUpdate", "synapseUpdate", "init"};
+    }
+    else {
+        return {"neuronUpdate", "synapseUpdate", "init", "runner"};
+
+    }
 }

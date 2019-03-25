@@ -218,9 +218,15 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend)
+void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
+                                 bool standaloneModules)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
+    if(standaloneModules) {
+        os << "#include \"runner.cc\"" << std::endl;
+    }
+    else {
+        os << "#include \"definitionsInternal.h\"" << std::endl;
+    }
 
     backend.genInit(os, model,
         // Local neuron group initialisation

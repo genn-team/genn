@@ -181,7 +181,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
         Backend backend(blockSize, preferences, 0, deviceID);
 
         // Generate code
-        const auto moduleNames = generateAll(model, backend, outputPath);
+        const auto moduleNames = generateAll(model, backend, outputPath, true);
 
         // Set context
         // **NOTE** CUDA calls in code generation seem to lose driver context

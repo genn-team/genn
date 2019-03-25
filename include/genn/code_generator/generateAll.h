@@ -25,5 +25,5 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-    GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, const filesystem::path &outputPath);
+    GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, const filesystem::path &outputPath, bool standaloneModules=false);
 }
