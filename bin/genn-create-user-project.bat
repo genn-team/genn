@@ -34,8 +34,14 @@ SET RUNNER_GUID_FILE=runner_guid.txt
 REM Create a new GUID for user project
 FOR /f %%i IN ('uuidgen -c') DO SET USER_GUID=%%i
 
-REM Read GUID from file in code directory
-FOR /f %%i IN (%RUNNER_GUID_FILE%) DO SET RUNNER_GUID=%%i
+REM If runner GUID exists, read it from file
+IF EXIST %RUNNER_GUID_FILE% (
+    FOR /f %%i IN (%RUNNER_GUID_FILE%) DO SET RUNNER_GUID=%%i
+REM Otherwise generate a new GUID and write it to file
+) ELSE (
+    FOR /f %%i IN ('uuidgen -c') DO SET RUNNER_GUID=%%i
+    @ECHO !RUNNER_GUID! > %RUNNER_GUID_FILE%
+)
 
 REM Write out MSBuild project
 @ECHO ^<?xml version="1.0" encoding="utf-8"?^>> %PROJECT_FILE%
