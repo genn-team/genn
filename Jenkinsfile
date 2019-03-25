@@ -133,22 +133,12 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // Download it
                             httpRequest url:"https://github.com/google/googletest/archive/release-1.8.1.tar.gz", outputFile :"release-1.8.1.tar.gz";
                             
+                            // Unarchive it
+                            // **NOTE** bizarely, while it doesn't have a zip command, Windows has a seemingly functional tar
                             if(isUnix()) {
-                                // Download it
-                                // **NOTE** wget is not standard on mac
-                                //sh "wget https://github.com/google/googletest/archive/release-1.8.1.tar.gz";
-                                //sh 'curl -OL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz" -o "release-1.8.1.tar.gz"'
-                                
-                                // Unarchive it
                                 sh "tar -zxvf release-1.8.1.tar.gz";
                             }
                             else {
-                                // Use bitadmin to download file 
-                                // **NOTE** priority and dynamicness are necessary to make bitsadmin work with github
-                                //bat "bitsadmin /Transfer gtest /Dynamic /priority FOREGROUND https://github.com/google/googletest/archive/release-1.8.1.tar.gz " + pwd() + "\\release-1.8.1.tar.gz"
-                                
-                                // Unarchive it
-                                // **NOTE** bizarelly, while it doesn't have a zip command, Windows has a seemingly functional tar
                                 bat "tar -zxvf release-1.8.1.tar.gz";
                             }
                             
@@ -161,8 +151,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                 
                 buildStep("Running tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
-                    if (isUnix()) {
-                        dir("genn/tests") {
+                    dir("genn/tests") {
+                        if (isUnix()) {
                             // **YUCK** if dev_toolset is in node label - add flag to enable newer GCC using dev_toolset (CentOS)
                             def runTestArguments = "";
                             if("dev_toolset" in nodeLabel) {
@@ -194,7 +184,22 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
                             }
                         }
-                    } 
+                        else {
+                            // Run tests
+                            // **NOTE** uniqueMsg is in genn directory, NOT tests directory
+                            def uniqueMsg = "../msg_" + env.NODE_NAME + ".txt";
+                            def runTestsCommand = "run_tests.bat > \"" + uniqueMsg + "\"";
+                            def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
+                            
+                            // If tests failed, set failure status
+                            if(runTestsStatus != 0) {
+                                setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
+                            }
+                            
+                            // Run 'next-generation' warning plugin on results
+                            recordIssues enabledForFailure: true, tool: msbuild(pattern: uniqueMsg);
+                        }
+                    }
                 }
                 
                 buildStep("Gathering test results (" + env.NODE_NAME + ")") {
@@ -222,58 +227,60 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Building Python wheels (" + env.NODE_NAME + ")") {
                     dir("genn") {
-                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
+                        if(isUnix()) {
+                            def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
 
-                        // Build set of dynamic libraries
-                        echo "Creating dynamic libraries";
-                        makeCommand = ""
-                        if("dev_toolset" in nodeLabel) {
-                            makeCommand += ". /opt/rh/devtoolset-6/enable\n"
-                        }
-                        makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
-                        def makeStatusCode = sh script:makeCommand, returnStatus:true
-                        if(makeStatusCode != 0) {
-                            setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                        }
+                            // Build set of dynamic libraries
+                            echo "Creating dynamic libraries";
+                            makeCommand = ""
+                            if("dev_toolset" in nodeLabel) {
+                                makeCommand += ". /opt/rh/devtoolset-6/enable\n"
+                            }
+                            makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
+                            def makeStatusCode = sh script:makeCommand, returnStatus:true
+                            if(makeStatusCode != 0) {
+                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
+                            }
 
-                        // If node is a mac, re-label libraries
-                        if("mac" in nodeLabel) {
-                            sh "find pygenn/genn_wrapper -name \"libgenn*.dylib\" -exec sh -c 'install_name_tool -id \"@loader_path/\$(basename \$1)\" \$1' x {} \\;";
-                        }
+                            // If node is a mac, re-label libraries
+                            if("mac" in nodeLabel) {
+                                sh "find pygenn/genn_wrapper -name \"libgenn*.dylib\" -exec sh -c 'install_name_tool -id \"@loader_path/\$(basename \$1)\" \$1' x {} \\;";
+                            }
 
-                        // Create virtualenv, install numpy and make Python wheel
-                        echo "Creating Python wheels";
-                        script = """
-                        virtualenv virtualenv
-                        . virtualenv/bin/activate
+                            // Create virtualenv, install numpy and make Python wheel
+                            echo "Creating Python wheels";
+                            script = """
+                            virtualenv virtualenv
+                            . virtualenv/bin/activate
 
-                        pip install "numpy>1.6, <1.15"
+                            pip install "numpy>1.6, <1.15"
 
-                        python setup.py clean --all
-                        python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
-                        python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
-                        """
+                            python setup.py clean --all
+                            python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
+                            python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
+                            """
 
-                        def wheelStatusCode = sh script:script, returnStatus:true
-                        if(wheelStatusCode != 0) {
-                            setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                        }
+                            def wheelStatusCode = sh script:script, returnStatus:true
+                            if(wheelStatusCode != 0) {
+                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
+                            }
 
-                        // If node isn't CPU only
-                        if(!nodeLabel.contains("cpu_only")) {
-                            // Loop through node labels
-                            for(l in nodeLabel) {
-                                // If label starts with CUDA
-                                if(l.startsWith("cuda")) {
-                                    // Rename wheel with cuda version prefix
-                                    sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
-                                    break;
+                            // If node isn't CPU only
+                            if(!nodeLabel.contains("cpu_only")) {
+                                // Loop through node labels
+                                for(l in nodeLabel) {
+                                    // If label starts with CUDA
+                                    if(l.startsWith("cuda")) {
+                                        // Rename wheel with cuda version prefix
+                                        sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
+                                        break;
+                                    }
                                 }
                             }
-                        }
 
-                        // Archive wheel itself
-                        archive "*.whl"
+                            // Archive wheel itself
+                            archive "*.whl"
+                        }
                     }
                 }
 
