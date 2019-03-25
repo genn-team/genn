@@ -197,7 +197,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
                             
                             // Run 'next-generation' warning plugin on results
-                            recordIssues enabledForFailure: true, tool: msbuild(pattern: uniqueMsg);
+                            recordIssues enabledForFailure: true, tool: msBuild(pattern: uniqueMsg);
                         }
                     }
                 }
