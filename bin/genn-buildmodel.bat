@@ -1,5 +1,6 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
+SET GENN_PATH=%~DP0
 goto :genn_begin
 
 :genn_help
@@ -47,10 +48,6 @@ if defined OPT (
 
 rem :: command options logic
 if defined -h goto :genn_help
-if not defined GENN_PATH (
-    echo genn-buildmodel.bat: error 1: GENN_PATH is not defined
-    goto :eof
-)
 if not defined MODEL (
     echo genn-buildmodel.bat: error 2: no model file given
     goto :eof
@@ -85,7 +82,7 @@ if defined -d (
 
 
 rem :: build backend
-msbuild "%GENN_PATH%\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true && (
+msbuild "%GENN_PATH%..\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true && (
 	echo Successfully built GeNN
 ) || (
 	echo Unable to build GeNN
@@ -94,7 +91,7 @@ msbuild "%GENN_PATH%\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildPro
 
 
 rem :: build generator
-msbuild "%GENN_PATH%\src\genn_generator\generator.vcxproj" %MACROS%&& (
+msbuild "%GENN_PATH%..\src\genn_generator\generator.vcxproj" %MACROS%&& (
 	echo Successfully built code generator
 ) || (
 	echo Unable to build code generator
