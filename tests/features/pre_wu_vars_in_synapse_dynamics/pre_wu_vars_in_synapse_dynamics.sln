@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pre_wu_vars_in_synapse_dynamics", "pre_wu_vars_in_synapse_dynamics.vcxproj", "{C8DE1497-00FD-4D79-8204-0D00BED201E3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{96C090ED-0B28-43EE-9AF9-A3853606F197} = {96C090ED-0B28-43EE-9AF9-A3853606F197}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "pre_wu_vars_in_synapse_dynamics_CODE\runner.vcxproj", "{96C090ED-0B28-43EE-9AF9-A3853606F197}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8DE1497-00FD-4D79-8204-0D00BED201E3}.Debug|x64.ActiveCfg = Debug|x64
+		{C8DE1497-00FD-4D79-8204-0D00BED201E3}.Debug|x64.Build.0 = Debug|x64
+		{C8DE1497-00FD-4D79-8204-0D00BED201E3}.Release|x64.ActiveCfg = Release|x64
+		{C8DE1497-00FD-4D79-8204-0D00BED201E3}.Release|x64.Build.0 = Release|x64
+		{96C090ED-0B28-43EE-9AF9-A3853606F197}.Debug|x64.ActiveCfg = Debug|x64
+		{96C090ED-0B28-43EE-9AF9-A3853606F197}.Debug|x64.Build.0 = Debug|x64
+		{96C090ED-0B28-43EE-9AF9-A3853606F197}.Release|x64.ActiveCfg = Release|x64
+		{96C090ED-0B28-43EE-9AF9-A3853606F197}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
