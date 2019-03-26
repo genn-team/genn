@@ -179,7 +179,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         else {
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            def uniqueMsg = "../msg_" + env.NODE_NAME + ".txt";
+                            def uniqueMsg = "..\\msg_" + env.NODE_NAME + ".txt";
                             def runTestsCommand = """
                             CALL %VC_VARS_BAT%
                             CALL run_tests.bat > "${uniqueMsg}" 2>&1;
