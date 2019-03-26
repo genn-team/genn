@@ -332,9 +332,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         CodeStream::Scope b(os);
         Substitutions funcSubs(cpuFunctions);
 
-        // Generate test for GLIBC test
-        genGLIBCBugTest(os);
-
         Timer t(os, "init", model.isTimingEnabled());
 
         // If model requires a host RNG

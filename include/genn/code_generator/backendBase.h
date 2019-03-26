@@ -211,23 +211,5 @@ public:
         genVariableDefinition(definitions, definitionsInternal, type, name, loc);
         genVariableImplementation(runner, type, name, loc);
     }
-
-protected:
-    //--------------------------------------------------------------------------
-    // Protected API
-    //--------------------------------------------------------------------------
-    void genGLIBCBugTest(CodeStream &os) const
-    {
-        // **NOTE** if we are using GCC on x86_64, bugs in some version of glibc can cause bad performance issues.
-        // Best solution involves setting LD_BIND_NOW=1 so check whether this has been applied
-        os << "#if defined(__GNUG__) && !defined(__clang__) && defined(__x86_64__) && __GLIBC__ == 2 && (__GLIBC_MINOR__ == 23 || __GLIBC_MINOR__ == 24)" << std::endl;
-        os << "if(std::getenv(\"LD_BIND_NOW\") == NULL)";
-        {
-            CodeStream::Scope b(os);
-            os << "std::cerr << \"Warning: a bug has been found in glibc 2.23 or glibc 2.24 (https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) \";" << std::endl;
-            os << "std::cerr << \"which results in poor CPU maths performance. We recommend setting the environment variable LD_BIND_NOW=1 to work around this issue.\" << std::endl;" << std::endl;
-        }
-        os << "#endif" << std::endl;
-    }
 };
 }   // namespace CodeGenerator

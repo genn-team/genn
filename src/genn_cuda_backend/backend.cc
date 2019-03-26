@@ -1165,9 +1165,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     {
         CodeStream::Scope b(os);
 
-        // Generate test for GLIBC test
-        genGLIBCBugTest(os);
-
         os << "unsigned long long deviceRNGSeed = 0;" << std::endl;
 
         // If on-device global RNG is required
