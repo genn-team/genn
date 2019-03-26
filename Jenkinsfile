@@ -182,7 +182,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             def uniqueMsg = "../msg_" + env.NODE_NAME + ".txt";
                             def runTestsCommand = """
                             CALL %VC_VARS_BAT%
-                            CALL run_tests.bat > "${uniqueMsg} 2>&1";
+                            CALL run_tests.bat > "${uniqueMsg}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
                             
