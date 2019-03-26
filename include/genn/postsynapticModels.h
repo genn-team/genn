@@ -36,7 +36,27 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::ExpConductance
+// PostsynapticModels::ExpCurr
+//----------------------------------------------------------------------------
+//! Exponential decay with synaptic input treated as a current value.
+class ExpCurr : public Base
+{
+public:
+    DECLARE_MODEL(ExpCurr, 1, 0);
+
+    SET_DECAY_CODE("$(inSyn) *= $(expDecay);");
+
+    SET_CURRENT_CONVERTER_CODE("$(init) * $(inSyn)");
+
+    SET_PARAM_NAMES({"tau"});
+
+    SET_DERIVED_PARAMS({
+        {"expDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
+        {"init", [](const std::vector<double> &pars, double dt){ return (pars[0] * (1.0 - std::exp(-dt / pars[0]))) * (1.0 / dt); }}});
+};
+
+//----------------------------------------------------------------------------
+// PostsynapticModels::ExpCond
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a conductance value.
 /*! This model has no variables and two parameters:

@@ -7,6 +7,9 @@
 #include <tuple>
 #include <vector>
 
+// Standard C includes
+#include <cmath>
+
 // GeNN includes
 #include "models.h"
 
@@ -198,6 +201,48 @@ public:
     SET_PARAM_NAMES({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"}, {"a", "scalar"},
              {"b", "scalar"}, {"c", "scalar"}, {"d", "scalar"}});
+};
+
+//----------------------------------------------------------------------------
+// NeuronModels::LIF
+//----------------------------------------------------------------------------
+class LIF : public Base
+{
+public:
+    DECLARE_MODEL(LIF, 7, 2);
+
+    SET_SIM_CODE(
+        "if ($(RefracTime) <= 0.0) {\n"
+        "  scalar alpha = (($(Isyn) + $(Ioffset)) * $(Rmembrane)) + $(Vrest);\n"
+        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "}\n"
+        "else {\n"
+        "  $(RefracTime) -= DT;\n"
+        "}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+
+    SET_RESET_CODE(
+        "$(V) = $(Vreset);\n"
+        "$(RefracTime) = $(TauRefrac);\n");
+
+    SET_PARAM_NAMES({
+        "C",          // Membrane capacitance
+        "TauM",       // Membrane time constant [ms]
+        "Vrest",      // Resting membrane potential [mV]
+        "Vreset",     // Reset voltage [mV]
+        "Vthresh",    // Spiking threshold [mV]
+        "Ioffset",    // Offset current
+        "TauRefrac"});
+
+    SET_DERIVED_PARAMS({
+        {"ExpTC", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
+        {"Rmembrane", [](const std::vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
 //----------------------------------------------------------------------------
