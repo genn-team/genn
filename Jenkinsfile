@@ -143,6 +143,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                 
                 buildStep("Running tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
+                    def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                     dir("genn/tests") {
                         if (isUnix()) {
                             // **YUCK** if dev_toolset is in node label - add flag to enable newer GCC using dev_toolset (CentOS)
@@ -159,8 +160,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            def uniqueMsg = "../msg_" + env.NODE_NAME + ".txt";
-                            def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
+                            def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
                             // If tests failed, set failure status
@@ -168,21 +168,13 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
                             
-                            // Run 'next-generation' warning plugin on results
-                            if("mac" in nodeLabel) {
-                                recordIssues enabledForFailure: true, tool: clang(pattern: uniqueMsg);
-                            }
-                            else {
-                                recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
-                            }
                         }
                         else {
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            def uniqueMsg = "..\\msg_" + env.NODE_NAME + ".txt";
                             def runTestsCommand = """
                             CALL %VC_VARS_BAT%
-                            CALL run_tests.bat > "${uniqueMsg}" 2>&1;
+                            CALL run_tests.bat > "..\\${uniqueMsg}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
                             
@@ -190,9 +182,18 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if(runTestsStatus != 0) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
-                            
-                            // Run 'next-generation' warning plugin on results
+                        }
+                    }
+                    dir("genn") {
+                        // Run 'next-generation' warning plugin on results
+                        if("mac" in nodeLabel) {
+                            recordIssues enabledForFailure: true, tool: clang(pattern: uniqueMsg);
+                        }
+                        else if("windows" in nodeLabel){
                             recordIssues enabledForFailure: true, tool: msBuild(pattern: uniqueMsg);
+                        }
+                        else {
+                            recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
                         }
                     }
                 }
