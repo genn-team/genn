@@ -314,10 +314,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                                     if(isUnix()) {
                                         sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
                                     }
-                                    // **TODO**
-                                    /*else {
-
-                                    }*/
+                                    else {
+                                        bat "FOR /f \"tokens=*\" %%w IN ('DIR /b *.whl') DO REN \"%%w\" \"" + l + "-%%w\"";
+                                    }
 
                                     break;
                                 }
