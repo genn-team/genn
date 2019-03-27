@@ -1420,7 +1420,7 @@ void Backend::genRunnerPreamble(CodeStream &os) const
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
     // Setting /Ehs SHOULD solve this but CUDA rules don't give this option and it's not clear it gets through to the compiler anyway
-    os << "#pragma warning(disable: 4297);" << std::endl;
+    os << "#pragma warning(disable: 4297)" << std::endl;
 #endif
 
     // **TODO** move these into a header file shipped with GeNN and copied into generated code along with non-uniform RNGs
