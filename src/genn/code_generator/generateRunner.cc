@@ -153,18 +153,19 @@ void genStatePushPull(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator:
     runnerPullFunc << std::endl;
 }
 //-------------------------------------------------------------------------
-void genVariable(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitions, CodeGenerator::CodeStream &definitionsInternal,
-                 CodeGenerator::CodeStream &runner, CodeGenerator::CodeStream &allocations, CodeGenerator::CodeStream &free,
+void genVariable(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &definitionsFunc,
+                 CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &runner,
+                 CodeGenerator::CodeStream &allocations, CodeGenerator::CodeStream &free,
                  CodeGenerator::CodeStream &push, CodeGenerator::CodeStream &pull,
                  const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count,
                  std::vector<std::string> &statePushPullFunction)
 {
     // Generate variables
-    backend.genArray(definitions, definitionsInternal, runner, allocations, free,
+    backend.genArray(definitionsVar, definitionsInternal, runner, allocations, free,
                      type, name, loc, count);
 
     // Generate push and pull functions
-    genVarPushPullScope(definitions, push, pull, loc, name, statePushPullFunction,
+    genVarPushPullScope(definitionsFunc, push, pull, loc, name, statePushPullFunction,
         [&]()
         {
             backend.genVariablePushPull(push, pull, type, name, autoInitialized, count);
@@ -452,7 +453,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         for(size_t i = 0; i < vars.size(); i++) {
             const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
             const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
-            genVariable(backend, definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                         runnerPushFunc, runnerPullFunc, vars[i].second, vars[i].first + n.first,
                         n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
         }
@@ -475,7 +476,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             std::vector<std::string> currentSourceStatePushPullFunctions;
             for(size_t i = 0; i < csVars.size(); i++) {
                 const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
-                genVariable(backend, definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                             runnerPushFunc, runnerPullFunc, csVars[i].second, csVars[i].first + cs->getName(),
                             cs->getVarLocation(i), autoInitialized, n.second.getNumNeurons(), currentSourceStatePushPullFunctions);
             }
@@ -533,7 +534,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-            genVariable(backend, definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                         runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.first,
                         s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
 
@@ -608,7 +609,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             const auto wuVars = wu->getVars();
             for(size_t i = 0; i < wuVars.size(); i++) {
                 const bool autoInitialized = !s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty();
-                genVariable(backend, definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                             runnerPushFunc, runnerPullFunc, wuVars[i].second, wuVars[i].first + s.first,
                             s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
             }
@@ -621,7 +622,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         const auto wuPreVars = wu->getPreVars();
         for(size_t i = 0; i < wuPreVars.size(); i++) {
             const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
-            genVariable(backend, definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                         runnerPushFunc, runnerPullFunc, wuPreVars[i].second, wuPreVars[i].first + s.first,
                         s.second.getWUPreVarLocation(i), autoInitialized, preSize, synapseGroupStatePushPullFunctions);
         }
@@ -633,7 +634,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         const auto wuPostVars = wu->getPostVars();
         for(size_t i = 0; i < wuPostVars.size(); i++) {
             const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
-            genVariable(backend, definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                         runnerPushFunc, runnerPullFunc, wuPostVars[i].second, wuPostVars[i].first + s.first,
                         s.second.getWUPostVarLocation(i), autoInitialized, postSize, synapseGroupStatePushPullFunctions);
         }
