@@ -39,41 +39,40 @@ public:
     // Public methods
     //------------------------------------------------------------------------
     //! Set location of weight update model state variable
-    /*! This is ignored for simulations on harware with a single memory space */
+    /*! This is ignored for simulations on hardware with a single memory space */
     void setWUVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of weight update model presynaptic state variable
-    /*! This is ignored for simulations on harware with a single memory space */
+    /*! This is ignored for simulations on hardware with a single memory space */
     void setWUPreVarLocation(const std::string &varName, VarLocation loc);
     
     //! Set location of weight update model postsynaptic state variable
-    /*! This is ignored for simulations on harware with a single memory space */
+    /*! This is ignored for simulations on hardware with a single memory space */
     void setWUPostVarLocation(const std::string &varName, VarLocation loc);
     
     //! Set location of weight update model extra global parameter
-    /*! This is ignored for simulations on harware with a single memory space
+    /*! This is ignored for simulations on hardware with a single memory space
         and only applies to extra global parameters which are pointers. */
     void setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set location of postsynaptic model state variable
-    /*! This is ignored for simulations on harware with a single memory space */
+    /*! This is ignored for simulations on hardware with a single memory space */
     void setPSVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of postsynaptic model extra global parameter
-    /*! This is ignored for simulations on harware with a single memory space
+    /*! This is ignored for simulations on hardware with a single memory space
         and only applies to extra global parameters which are pointers. */
     void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set location of variables used to combine input from this synapse group
-    /*! This is ignored for simulations on harware with a single memory space */
+    /*! This is ignored for simulations on hardware with a single memory space */
     void setInSynVarLocation(VarLocation loc) { m_InSynLocation = loc; }
 
     //! Set variable mode used for sparse connectivity
-    /*! ThisThis is ignored for simulations on harware with a single memory space */
+    /*! This is ignored for simulations on hardware with a single memory space */
     void setSparseConnectivityLocation(VarLocation loc){ m_SparseConnectivityLocation = loc; }
 
     //! Set variable mode used for this synapse group's dendritic delay buffers
-    /*! This is ignored for simulations on harware with a single memory space */
     void setDendriticDelayLocation(VarLocation loc) { m_DendriticDelayLocation = loc; }
 
     //! Sets the maximum number of target neurons any source neurons can connect to
