@@ -579,10 +579,8 @@ def generateConfigs(gennPath, backends):
                     else:
                         nspace_model_name, num_params, num_vars = line.split( '(' )[1].split( ')' )[0].split( ',' )
 
-                    if mg.name == 'NeuronModels' or is_snippet:
-                        model_name = nspace_model_name.split( '::' )[1]
-                    else:
-                        model_name = nspace_model_name
+                    nspace_model_name_comps = nspace_model_name.split( '::' )
+                    model_name = nspace_model_name_comps[-1]
 
                     mg.models.append( model_name )
 
