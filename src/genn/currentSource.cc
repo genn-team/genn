@@ -14,12 +14,26 @@ void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getCurrentSourceModel()->getVarIndex(varName)] = loc;
 }
-
+//----------------------------------------------------------------------------
+void CurrentSource::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
+{
+    const size_t extraGlobalParamIndex = getCurrentSourceModel()->getExtraGlobalParamIndex(paramName);
+    if(getCurrentSourceModel()->getExtraGlobalParams()[extraGlobalParamIndex].second.back() != '*') {
+        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+    }
+    m_ExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+}
+//----------------------------------------------------------------------------
 VarLocation CurrentSource::getVarLocation(const std::string &varName) const
 {
     return m_VarLocation[getCurrentSourceModel()->getVarIndex(varName)];
 }
-
+//----------------------------------------------------------------------------
+VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varName) const
+{
+    return m_ExtraGlobalParamLocation[getCurrentSourceModel()->getExtraGlobalParamIndex(varName)];
+}
+//----------------------------------------------------------------------------
 void CurrentSource::initDerivedParams(double dt)
 {
     auto derivedParams = getCurrentSourceModel()->getDerivedParams();
@@ -37,7 +51,7 @@ void CurrentSource::initDerivedParams(double dt)
         v.initDerivedParams(dt);
     }
 }
-
+//----------------------------------------------------------------------------
 bool CurrentSource::isInitCodeRequired() const
 {
     // Return true if any of the variables initialisers have any code
@@ -47,7 +61,7 @@ bool CurrentSource::isInitCodeRequired() const
                            return !v.getSnippet()->getCode().empty();
                        });
 }
-
+//----------------------------------------------------------------------------
 bool CurrentSource::isSimRNGRequired() const
 {
     // Returns true if any parts of the current source code require an RNG
@@ -57,7 +71,7 @@ bool CurrentSource::isSimRNGRequired() const
 
     return false;
 }
-
+//----------------------------------------------------------------------------
 bool CurrentSource::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true

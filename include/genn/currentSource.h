@@ -23,8 +23,13 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of neuron model state variable
+    //! Set location of current source state variable
     void setVarLocation(const std::string &varName, VarLocation loc);
+
+    //! Set location of extra global parameter
+    /*! This is ignored for simulations on hardware with a single memory space
+        and only applies to extra global parameters which are pointers. */
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -43,12 +48,21 @@ public:
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
 
+    //! Get location of neuron model extra global parameter by name
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;
+
+    //! Get location of neuron model extra global parameter by omdex
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
+
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                   const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                   VarLocation defaultVarLocation)
     :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_VarLocation(varInitialisers.size(), defaultVarLocation)
+        m_VarLocation(varInitialisers.size(), defaultVarLocation),
+        m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultVarLocation)
     {
     }
 
@@ -82,6 +96,9 @@ private:
     std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
-    //!< Whether indidividual state variables of a neuron group should use zero-copied memory
+    //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
+
+    //! Location of individual state variables
+    std::vector<VarLocation> m_ExtraGlobalParamLocation;
 };
