@@ -1,12 +1,8 @@
 #pragma once
 
 // Standard C++ includes
-#include <algorithm>
 #include <string>
 #include <vector>
-
-// Standard C includes
-#include <cassert>
 
 // GeNN includes
 #include "snippet.h"
@@ -149,27 +145,13 @@ public:
     //! Find the index of a named variable
     size_t getVarIndex(const std::string &varName) const
     {
-        return getVarIndex(varName, getVars());
+        return getStringPairVecIndex(varName, getVars());
     }
 
-    //! Find the index of a named extra gloval parameter
+    //! Find the index of a named extra global parameter
     size_t getExtraGlobalParamIndex(const std::string &paramName) const
     {
-        return getVarIndex(paramName, getExtraGlobalParams());
-    }
-
-protected:
-    //------------------------------------------------------------------------
-    // Protected static helpers
-    //------------------------------------------------------------------------
-    static size_t getVarIndex(const std::string &varName, const StringPairVec &vars)
-    {
-        auto varIter = std::find_if(vars.begin(), vars.end(),
-            [varName](const StringPairVec::value_type &v){ return (v.first == varName); });
-        assert(varIter != vars.end());
-
-        // Return flag corresponding to variable
-        return distance(vars.begin(), varIter);
+        return getStringPairVecIndex(paramName, getExtraGlobalParams());
     }
 };
 } // Models

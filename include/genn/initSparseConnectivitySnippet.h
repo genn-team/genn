@@ -52,6 +52,15 @@ public:
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the connection initialisation snippet
     virtual StringPairVec getExtraGlobalParams() const{ return {}; }
+
+    //------------------------------------------------------------------------
+    // Public methods
+    //------------------------------------------------------------------------
+    //! Find the index of a named extra global parameter
+    size_t getExtraGlobalParamIndex(const std::string &paramName) const
+    {
+        return getStringPairVecIndex(paramName, getExtraGlobalParams());
+    }
 };
 
 //----------------------------------------------------------------------------

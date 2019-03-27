@@ -111,13 +111,13 @@ public:
     //! Find the index of a named presynaptic variable
     size_t getPreVarIndex(const std::string &varName) const
     {
-        return getVarIndex(varName, getPreVars());
+        return getStringPairVecIndex(varName, getPreVars());
     }
 
     //! Find the index of a named postsynaptic variable
     size_t getPostVarIndex(const std::string &varName) const
     {
-        return getVarIndex(varName, getPostVars());
+        return getStringPairVecIndex(varName, getPostVars());
     }
 
 };

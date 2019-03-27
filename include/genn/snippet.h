@@ -1,9 +1,13 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <functional>
 #include <string>
 #include <vector>
+
+// Standard C includes
+#include <cassert>
 
 // GeNN includes
 #include "gennExport.h"
@@ -130,6 +134,21 @@ public:
     //! Gets names of derived model parameters and the function objects to call to
     //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const{ return {}; }
+
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected static helpers
+    //------------------------------------------------------------------------
+    static size_t getStringPairVecIndex(const std::string &varName, const StringPairVec &vars)
+    {
+        auto varIter = std::find_if(vars.begin(), vars.end(),
+            [varName](const StringPairVec::value_type &v){ return (v.first == varName); });
+        assert(varIter != vars.end());
+
+        // Return flag corresponding to variable
+        return distance(vars.begin(), varIter);
+    }
 };
 
 //----------------------------------------------------------------------------
