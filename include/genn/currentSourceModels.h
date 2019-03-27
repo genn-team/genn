@@ -16,7 +16,6 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_INJECTION_CODE(INJECTION_CODE) virtual std::string getInjectionCode() const override{ return INJECTION_CODE; }
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // CurrentSourceModels::Base
@@ -32,9 +31,6 @@ public:
     //----------------------------------------------------------------------------
     //! Gets the code that defines current injected each timestep 
     virtual std::string getInjectionCode() const{ return ""; }
-
-    //! Gets names and types (as strings) of additional parameters
-    virtual Models::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------

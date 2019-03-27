@@ -27,8 +27,6 @@
 #define SET_PRE_VARS(...) virtual StringPairVec getPreVars() const override{ return __VA_ARGS__; }
 #define SET_POST_VARS(...) virtual StringPairVec getPostVars() const override{ return __VA_ARGS__; }
 
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
-
 #define SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) virtual bool isPreSpikeTimeRequired() const override{ return PRE_SPIKE_TIME_REQUIRED; }
 #define SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) virtual bool isPostSpikeTimeRequired() const override{ return POST_SPIKE_TIME_REQUIRED; }
 
@@ -100,10 +98,6 @@ public:
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses going to the same postsynaptic neuron
     virtual StringPairVec getPostVars() const{ return {}; }
-
-    //! Gets names and types (as strings) of additional
-    //! per-population parameters for the weight update model.
-    virtual StringPairVec getExtraGlobalParams() const{ return {}; }
 
     //! Whether presynaptic spike times are needed or not
     virtual bool isPreSpikeTimeRequired() const{ return false; }

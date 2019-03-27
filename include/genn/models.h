@@ -24,6 +24,7 @@
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
 #define SET_VARS(...) virtual StringPairVec getVars() const override{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // Models::VarInit
@@ -138,6 +139,10 @@ public:
     //! Gets names and types (as strings) of model variables
     virtual StringPairVec getVars() const{ return {}; }
 
+    //! Gets names and types (as strings) of additional
+    //! per-population parameters for the weight update model.
+    virtual StringPairVec getExtraGlobalParams() const{ return {}; }
+
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -145,6 +150,12 @@ public:
     size_t getVarIndex(const std::string &varName) const
     {
         return getVarIndex(varName, getVars());
+    }
+
+    //! Find the index of a named extra gloval parameter
+    size_t getExtraGlobalParamIndex(const std::string &paramName) const
+    {
+        return getVarIndex(paramName, getExtraGlobalParams());
     }
 
 protected:

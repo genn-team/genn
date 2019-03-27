@@ -29,10 +29,6 @@ public:
     virtual std::string getDecayCode() const{ return ""; }
     virtual std::string getApplyInputCode() const{ return ""; }
     virtual std::string getSupportCode() const{ return ""; }
-
-    //! Gets names and types (as strings) of additional
-    //! per-population parameters for the weight update model.
-    virtual Models::Base::StringPairVec getExtraGlobalParams() const{ return {}; }
 };
 
 //----------------------------------------------------------------------------
