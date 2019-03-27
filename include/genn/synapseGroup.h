@@ -64,6 +64,11 @@ public:
         and only applies to extra global parameters which are pointers. */
     void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
+    //! Set location of sparse connectivity initialiser extra global parameter
+    /*! This is ignored for simulations on hardware with a single memory space
+        and only applies to extra global parameters which are pointers. */
+    void setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
     //! Set location of variables used to combine input from this synapse group
     /*! This is ignored for simulations on hardware with a single memory space */
     void setInSynVarLocation(VarLocation loc) { m_InSynLocation = loc; }
@@ -142,29 +147,53 @@ public:
 
     bool isZeroCopyEnabled() const;
 
-    //! Get variable mode used by weight update model per-synapse state variable
+    //! Get location of weight update model per-synapse state variable by name
     VarLocation getWUVarLocation(const std::string &var) const;
 
-    //! Get variable mode used by weight update model per-synapse state variable
+    //! Get location of weight update model per-synapse state variable by index
     VarLocation getWUVarLocation(size_t index) const{ return m_WUVarLocation.at(index); }
 
-    //! Get variable mode used by weight update model presynaptic state variable
+    //! Get location of weight update model presynaptic state variable by name
     VarLocation getWUPreVarLocation(const std::string &var) const;
 
-    //! Get variable mode used by weight update model presynaptic state variable
+    //! Get location of weight update model presynaptic state variable by index
     VarLocation getWUPreVarLocation(size_t index) const{ return m_WUPreVarLocation.at(index); }
 
-    //! Get variable mode used by weight update model postsynaptic state variable
+    //! Get location of weight update model postsynaptic state variable by name
     VarLocation getWUPostVarLocation(const std::string &var) const;
 
-    //! Get variable mode used by weight update model postsynaptic state variable
+    //! Get location of weight update model postsynaptic state variable by index
     VarLocation getWUPostVarLocation(size_t index) const{ return m_WUPostVarLocation.at(index); }
 
-    //! Get variable mode used by postsynaptic model state variable
+    //! Get location of weight update model extra global parameter by name
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const;
+
+    //! Get location of  weight update model extra global parameter by index
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getWUExtraGlobalParamLocation(size_t index) const{ return m_WUExtraGlobalParamLocation.at(index); }
+
+    //! Get location of postsynaptic model state variable
     VarLocation getPSVarLocation(const std::string &var) const;
 
-    //! Get variable mode used by postsynaptic model state variable
+    //! Get location of postsynaptic model state variable
     VarLocation getPSVarLocation(size_t index) const{ return m_PSVarLocation.at(index); }
+
+    //! Get location of postsynaptic model extra global parameter by name
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getPSExtraGlobalParamLocation(const std::string &paramName) const;
+
+    //! Get location of postsynaptic model extra global parameter by index
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getPSExtraGlobalParamLocation(size_t index) const{ return m_PSExtraGlobalParamLocation.at(index); }
+
+    //! Get location of sparse connectivity initialiser extra global parameter by name
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const;
+
+    //! Get location of sparse connectivity initialiser extra global parameter by index
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getSparseConnectivityExtraGlobalParamLocation(size_t index) const{ return m_ConnectivityExtraGlobalParamLocation.at(index); }
 
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
@@ -340,6 +369,9 @@ private:
 
     //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
+
+    //! Location of connectivity initialiser extra global parameters
+    std::vector<VarLocation> m_ConnectivityExtraGlobalParamLocation;
 
     //! Name of the synapse group in which postsynaptic model is located
     /*! This may not be the name of this group if it has been merged*/

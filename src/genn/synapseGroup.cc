@@ -78,6 +78,15 @@ void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, V
     m_PSExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
+{
+    const size_t extraGlobalParamIndex = m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName);
+    if(m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].second.back() != '*') {
+        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+    }
+    m_ConnectivityExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
     if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -207,9 +216,24 @@ VarLocation SynapseGroup::getWUPostVarLocation(const std::string &var) const
     return m_WUVarLocation[getWUModel()->getPostVarIndex(var)];
 }
 //----------------------------------------------------------------------------
+VarLocation SynapseGroup::getWUExtraGlobalParamLocation(const std::string &paramName) const
+{
+    return m_WUExtraGlobalParamLocation[getWUModel()->getExtraGlobalParamIndex(paramName)];
+}
+//----------------------------------------------------------------------------
 VarLocation SynapseGroup::getPSVarLocation(const std::string &var) const
 {
     return m_WUVarLocation[getPSModel()->getVarIndex(var)];
+}
+//----------------------------------------------------------------------------
+VarLocation SynapseGroup::getPSExtraGlobalParamLocation(const std::string &paramName) const
+{
+    return m_PSExtraGlobalParamLocation[getPSModel()->getExtraGlobalParamIndex(paramName)];
+}
+//----------------------------------------------------------------------------
+VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const
+{
+    return m_ConnectivityExtraGlobalParamLocation[m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isDendriticDelayRequired() const
@@ -316,7 +340,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultVarLocation),
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultVarLocation),
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
-        m_PSModelTargetName(name)
+        m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultVarLocation), m_PSModelTargetName(name)
 {
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
     // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
