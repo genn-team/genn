@@ -179,7 +179,7 @@ std::tuple<double, double, double> chiSquaredTest(const std::vector<double> &bin
         throw std::runtime_error("Bin count mismatch");
     }
 
-    const double df = bins.size() - 1 - knstrn;
+    const double df = (double)(bins.size() - 1 - knstrn);
     double chsq = 0.0;
 
     for(unsigned int j = 0; j < bins.size(); j++) {
@@ -257,7 +257,7 @@ std::tuple<double, double> kolmogorovSmirnovTest(std::vector<double> &data, F cd
     // Sort data
     std::sort(data.begin(), data.end());
 
-    const double en = data.size();
+    const double en = (double)data.size();
     double d = 0.0;
     double fo = 0.0;
 

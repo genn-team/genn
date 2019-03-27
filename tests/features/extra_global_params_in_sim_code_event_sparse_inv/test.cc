@@ -75,7 +75,7 @@ public:
                 // for all pre-synaptic neurons
                 for (int j = 0; j < 10; j++) {
                     float newX;
-                    float evntT = t-2*DT-d*DT+5e-5;
+                    float evntT = t-2*DT-d*DT+5e-5f;
                     if(updateFn(d, j, t, evntT, (evntT < theSwap), newX)) {
                         x[d][j] = newX;
                     }
