@@ -11,8 +11,8 @@ class CurrentSourceInternal : public CurrentSource
 public:
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                           const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                          VarLocation defaultVarLocation)
-    :   CurrentSource(name, currentSourceModel, params, varInitialisers, defaultVarLocation)
+                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+    :   CurrentSource(name, currentSourceModel, params, varInitialisers, defaultExtraGlobalParamLocation, defaultVarLocation)
     {
     }
 

@@ -27,20 +27,30 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
+std::string m_Precision;
 
+    //! Type of floating point variables used to store time
+    TimePrecision m_TimePrecision;
+
+    //! The integration time step of the model
+    double m_DT;
+
+    //! Whether timing code should be inserted into model
+    bool m_TimingEnabled;
+
+    //! RNG seed
+    unsigned int m_Seed;
 // ------------------------------------------------------------------------
 // ModelSpec
 // ------------------------------------------------------------------------
 // class ModelSpec for specifying a neuronal network model
 
 ModelSpec::ModelSpec()
-    : m_TimePrecision(TimePrecision::DEFAULT), m_DefaultVarLocation(VarLocation::HOST_DEVICE),
+:   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
+    m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_ShouldMergePostsynapticModels(false)
 {
-    setDT(0.5);
     setPrecision(GENN_FLOAT);
-    setTiming(false);
-    setSeed(0);
 }
 
 ModelSpec::~ModelSpec() 

@@ -59,10 +59,10 @@ public:
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                   const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                  VarLocation defaultVarLocation)
+                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultVarLocation)
+        m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
     {
     }
 

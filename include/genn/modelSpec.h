@@ -131,7 +131,11 @@ public:
 
     //! What is the default location for model state variables?
     /*! Historically, everything was allocated on both the host AND device */
-    void setDefaultVarLocation(VarLocation loc){ m_DefaultVarLocation = loc; } 
+    void setDefaultVarLocation(VarLocation loc){ m_DefaultVarLocation = loc; }
+
+    //! What is the default location for model extra global parameters?
+    /*! Historically, this was just left up to the user to handle*/
+    void setDefaultExtraGlobalParamLocation(VarLocation loc){ m_DefaultExtraGlobalParamLocation = loc; }
 
     //! What is the default location for sparse synaptic connectivity? 
     /*! Historically, everything was allocated on both the host AND device */
@@ -205,7 +209,7 @@ public:
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, size, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers(), 
-                                  m_DefaultVarLocation, hostID, deviceID));
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, hostID, deviceID));
 
         if(!result.second)
         {
@@ -287,7 +291,7 @@ public:
                                   wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp,
-                                  connectivityInitialiser, m_DefaultVarLocation, m_DefaultSparseConnectivityLocation));
+                                  connectivityInitialiser, m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, m_DefaultSparseConnectivityLocation));
 
         if(!result.second)
         {
@@ -397,7 +401,7 @@ public:
             std::forward_as_tuple(currentSourceName),
             std::forward_as_tuple(currentSourceName, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers(),
-                                  m_DefaultVarLocation));
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second)
         {
@@ -510,7 +514,10 @@ private:
     unsigned int m_Seed;
 
     //! What is the default location for model state variables? Historically, everything was allocated on both host AND device
-    VarLocation m_DefaultVarLocation;  
+    VarLocation m_DefaultVarLocation;
+
+    //! What is the default location for model extra global parameters? Historically, this was just left up to the user to handle
+    VarLocation m_DefaultExtraGlobalParamLocation;
 
     //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
     VarLocation m_DefaultSparseConnectivityLocation; 
