@@ -17,12 +17,26 @@ void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getNeuronModel()->getVarIndex(varName)] = loc;
 }
-
+//----------------------------------------------------------------------------
+void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
+{
+    const size_t extraGlobalParamIndex = getNeuronModel()->getExtraGlobalParamIndex(paramName);
+    if(getNeuronModel()->getExtraGlobalParams()[extraGlobalParamIndex].second.back() != '*') {
+        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+    }
+    m_ExtraGlobalParamLocation[getNeuronModel()->getExtraGlobalParamIndex(paramName)] = loc;
+}
+//----------------------------------------------------------------------------
 VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
 {
     return m_VarLocation[getNeuronModel()->getVarIndex(varName)];
 }
-
+//----------------------------------------------------------------------------
+VarLocation NeuronGroup::getExtraGlobalParamLocation(const std::string &paramName) const
+{
+    return m_ExtraGlobalParamLocation[getNeuronModel()->getExtraGlobalParamIndex(paramName)];
+}
+//----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeTimeRequired() const
 {
     // If any INCOMING synapse groups require POSTSYNAPTIC spike times, return true
@@ -41,7 +55,7 @@ bool NeuronGroup::isSpikeTimeRequired() const
 
     return false;
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::isTrueSpikeRequired() const
 {
     // If any OUTGOING synapse groups require true spikes, return true
@@ -60,20 +74,20 @@ bool NeuronGroup::isTrueSpikeRequired() const
 
     return false;
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeEventRequired() const
 {
      // Spike like events are required if any OUTGOING synapse groups require spike like events
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
                        [](SynapseGroupInternal *sg){ return sg->isSpikeEventRequired(); });
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
     // Return flag corresponding to variable
     return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
@@ -90,7 +104,7 @@ bool NeuronGroup::isZeroCopyEnabled() const
 
     return false;
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::isSimRNGRequired() const
 {
     // Returns true if any parts of the neuron code require an RNG
@@ -117,7 +131,7 @@ bool NeuronGroup::isSimRNGRequired() const
                                    Utils::isRNGRequired(sg->getPSModel()->getDecayCode()));
                        });
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
@@ -137,7 +151,7 @@ bool NeuronGroup::isInitRNGRequired() const
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroupInternal *sg){ return sg->isPSInitRNGRequired(); });
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::hasOutputToHost(int targetHostID) const
 {
     // Return true if any of the outgoing synapse groups have target populations on specified host ID
@@ -148,12 +162,12 @@ bool NeuronGroup::hasOutputToHost(int targetHostID) const
                        });
 
 }
-
+//----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 {
     m_CurrentSources.push_back(src);
 }
-
+//----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 {
     if (requiredDelay >= getNumDelaySlots())
@@ -161,18 +175,17 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
         m_NumDelaySlots = requiredDelay + 1;
     }
 }
-
+//----------------------------------------------------------------------------
 void NeuronGroup::updatePreVarQueues(const std::string &code)
 {
     updateVarQueues(code, "_pre");
 }
-
+//----------------------------------------------------------------------------
 void NeuronGroup::updatePostVarQueues(const std::string &code)
 {
     updateVarQueues(code, "_post");
 }
-
-
+//----------------------------------------------------------------------------
 void NeuronGroup::initDerivedParams(double dt)
 {
     auto derivedParams = getNeuronModel()->getDerivedParams();
@@ -190,7 +203,7 @@ void NeuronGroup::initDerivedParams(double dt)
         v.initDerivedParams(dt);
     }
 }
-
+//----------------------------------------------------------------------------
 void NeuronGroup::mergeIncomingPSM(bool merge)
 {
     // Create a copy of this neuron groups incoming synapse populations
@@ -258,12 +271,12 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         }
     }
 }
-
+//----------------------------------------------------------------------------
 void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
 {
     m_SpikeEventCondition.insert(std::pair<std::string, std::string>(code, supportCodeNamespace));
 }
-
+//----------------------------------------------------------------------------
 bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const
 {
     // Loop through event conditions
@@ -277,21 +290,21 @@ bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamef
 
     return false;
 }
-
+//----------------------------------------------------------------------------
 std::string NeuronGroup::getCurrentQueueOffset(const std::string &devPrefix) const
 {
     assert(isDelayRequired());
 
     return "(" + devPrefix + "spkQuePtr" + getName() + " * " + std::to_string(getNumNeurons()) + ")";
 }
-
+//----------------------------------------------------------------------------
 std::string NeuronGroup::getPrevQueueOffset(const std::string &devPrefix) const
 {
     assert(isDelayRequired());
 
     return "(((" + devPrefix + "spkQuePtr" + getName() + " + " + std::to_string(getNumDelaySlots() - 1) + ") % " + std::to_string(getNumDelaySlots()) + ") * " + std::to_string(getNumNeurons()) + ")";
 }
-
+//----------------------------------------------------------------------------
 void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
 {
     // Loop through variables

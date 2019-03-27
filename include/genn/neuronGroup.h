@@ -27,17 +27,21 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set variable mode used for variables containing this neuron group's output spikes
+    //! Set location of this neuron group's output spikes
     void setSpikeLocation(VarLocation loc) { m_SpikeLocation = loc; }
 
-     //! Set variable mode used for variables containing this neuron group's output spike events
+     //! Set location of this neuron group's output spike events
     void setSpikeEventLocation(VarLocation loc) { m_SpikeEventLocation = loc; }
 
-    //! Set variable mode used for variables containing this neuron group's output spike times
+    //! Set location of this neuron group's output spike times
     void setSpikeTimeLocation(VarLocation loc) { m_SpikeTimeLocation = loc; }
 
-    //! Set variable mode of neuron model state variable
+    //! Set variable location of neuron model state variable
     void setVarLocation(const std::string &varName, VarLocation loc);
+
+    //! Set location of neuron model extra global parameter
+    /*! This only applies to extra global parameters which are pointers*/
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -68,20 +72,28 @@ public:
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
     bool isZeroCopyEnabled() const;
 
-    //! Get variable mode used for variables containing this neuron group's output spikes
+    //! Get location of this neuron group's output spikes
     VarLocation getSpikeLocation() const{ return m_SpikeLocation; }
 
-    //! Get variable mode used for variables containing this neuron group's output spike events
+    //! Get location of this neuron group's output spike events
     VarLocation getSpikeEventLocation() const{ return m_SpikeEventLocation; }
 
-    //! Get variable mode used for variables containing this neuron group's output spike times
+    //! Get location of this neuron group's output spike times
     VarLocation getSpikeTimeLocation() const{ return m_SpikeTimeLocation; }
 
-    //! Get variable mode used by neuron model state variable
+    //! Get location of neuron model state variable by name
     VarLocation getVarLocation(const std::string &varName) const;
 
-    //! Get variable mode used by neuron model state variable
+    //! Get location of neuron model state variable by index
     VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
+
+    //! Get location of neuron model extra global parameter by name
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;
+
+    //! Get location of neuron model extra global parameter by omdex
+    /*! This is only used by extra global parameters which are pointers*/
+    VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
 
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
@@ -100,7 +112,7 @@ protected:
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
         m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_HostID(hostID), m_DeviceID(deviceID) 
+        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultVarLocation), m_HostID(hostID), m_DeviceID(deviceID)
     {
     }
 
@@ -165,12 +177,12 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::string m_Name;
+    const std::string m_Name;
 
-    unsigned int m_NumNeurons;
+    const unsigned int m_NumNeurons;
 
     const NeuronModels::Base *m_NeuronModel;
-    std::vector<double> m_Params;
+    const std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
@@ -180,24 +192,27 @@ private:
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSources;
 
-    //!< Vector specifying which variables require queues
+    //! Vector specifying which variables require queues
     std::vector<bool> m_VarQueueRequired;
 
-    //!< Whether spikes from neuron group should use zero-copied memory
+    //! Whether spikes from neuron group should use zero-copied memory
     VarLocation m_SpikeLocation;
 
-    //!< Whether spike-like events from neuron group should use zero-copied memory
+    //! Whether spike-like events from neuron group should use zero-copied memory
     VarLocation m_SpikeEventLocation;
 
-    //!< Whether spike times from neuron group should use zero-copied memory
+    //! Whether spike times from neuron group should use zero-copied memory
     VarLocation m_SpikeTimeLocation;
 
-    //!< Whether indidividual state variables of a neuron group should use zero-copied memory
+    //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
 
-    //!< The ID of the cluster node which the neuron groups are computed on
-    int m_HostID;
+    //! Location of individual state variables
+    std::vector<VarLocation> m_ExtraGlobalParamLocation;
 
-    //!< The ID of the CUDA device which the neuron groups are comnputed on
-    int m_DeviceID;
+    //! The ID of the cluster node which the neuron groups are computed on
+    const int m_HostID;
+
+    //! The ID of the CUDA device which the neuron groups are comnputed on
+    const int m_DeviceID;
 };
