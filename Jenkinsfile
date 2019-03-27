@@ -179,7 +179,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
                             def runTestsCommand = """
                             CALL %VC_VARS_BAT%
-                            CALL run_tests.bat > "..\\${uniqueMsg}" 2>&1;
+                            CALL run_tests.bat >> "..\\${uniqueMsg}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
                             
@@ -271,7 +271,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating dynamic libraries";
                             msbuildCommand = """
                             CALL %VC_VARS_BAT%
-                            msbuild genn.sln /p:Configuration=Release_DLL /t:cuda > "${uniqueMsg}" 2>&1
+                            msbuild genn.sln /p:Configuration=Release_DLL /t:cuda >> "${uniqueMsg}" 2>&1
                             """;
                             def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true
                             if(msbuildStatusCode != 0) {
@@ -294,8 +294,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                             pip install numpy
 
                             python setup.py clean --all
-                            python setup.py bdist_wheel -d . > "${uniqueMsg}" 2>&1
-                            python setup.py bdist_wheel -d . > "${uniqueMsg}" 2>&1
+                            python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
+                            python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             """
 
                             def wheelStatusCode = sh script:script, returnStatus:true
