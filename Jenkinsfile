@@ -285,12 +285,12 @@ for(b = 0; b < builderNodes.size(); b++) {
                             script = """
                             CALL %VC_VARS_BAT%
                             REM CALL %ANACONDA_ACTIVATE_BAT%
-                            CALL "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Anaconda3_64\Scripts\activate.bat" "c:\Program Files (x86)\Microsoft Visual Studio\Shared\Anaconda3_64"
+                            CALL "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\Anaconda3_64\\Scripts\\activate.bat" "c:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Anaconda3_64"
 
                             conda install -y swig
 
                             virtualenv virtualenv
-                            pushd virtualenv\Scripts
+                            pushd virtualenv\\Scripts
                             call activate
                             popd
 
