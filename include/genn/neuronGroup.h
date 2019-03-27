@@ -28,19 +28,24 @@ public:
     // Public methods
     //------------------------------------------------------------------------
     //! Set location of this neuron group's output spikes
+    /*! This is ignored for simulations on harware with a single memory space */
     void setSpikeLocation(VarLocation loc) { m_SpikeLocation = loc; }
 
      //! Set location of this neuron group's output spike events
+     /*! This is ignored for simulations on harware with a single memory space */
     void setSpikeEventLocation(VarLocation loc) { m_SpikeEventLocation = loc; }
 
     //! Set location of this neuron group's output spike times
+    /*! This is ignored for simulations on harware with a single memory space */
     void setSpikeTimeLocation(VarLocation loc) { m_SpikeTimeLocation = loc; }
 
     //! Set variable location of neuron model state variable
+    /*! This is ignored for simulations on harware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of neuron model extra global parameter
-    /*! This only applies to extra global parameters which are pointers*/
+    /*! This is ignored for simulations on harware with a single memory space
+        and only applies to extra global parameters which are pointers. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //------------------------------------------------------------------------

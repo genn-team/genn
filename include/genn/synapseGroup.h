@@ -50,9 +50,19 @@ public:
     /*! This is ignored for simulations on harware with a single memory space */
     void setWUPostVarLocation(const std::string &varName, VarLocation loc);
     
+    //! Set location of weight update model extra global parameter
+    /*! This is ignored for simulations on harware with a single memory space
+        and only applies to extra global parameters which are pointers. */
+    void setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
     //! Set location of postsynaptic model state variable
     /*! This is ignored for simulations on harware with a single memory space */
     void setPSVarLocation(const std::string &varName, VarLocation loc);
+
+    //! Set location of postsynaptic model extra global parameter
+    /*! This is ignored for simulations on harware with a single memory space
+        and only applies to extra global parameters which are pointers. */
+    void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set location of variables used to combine input from this synapse group
     /*! This is ignored for simulations on harware with a single memory space */
@@ -238,92 +248,98 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    //!< Name of the synapse group
-    std::string m_Name;
+    //! Name of the synapse group
+    const std::string m_Name;
 
-    //!< Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron, or for every presynaptic neuron.
+    //! Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron, or for every presynaptic neuron.
     SpanType m_SpanType;
 
-    //!< Global synaptic conductance delay for the group (in time steps)
+    //! Global synaptic conductance delay for the group (in time steps)
     unsigned int m_DelaySteps;
 
-    //!< Global backpropagation delay for postsynaptic spikes to synapse (in time
+    //! Global backpropagation delay for postsynaptic spikes to synapse (in time
     unsigned int m_BackPropDelaySteps;
 
-    //!< Maximum number of target neurons any source neuron can connect to
+    //! Maximum number of target neurons any source neuron can connect to
     unsigned int m_MaxConnections;
     
-    //!< Maximum number of source neurons any target neuron can connect to
+    //! Maximum number of source neurons any target neuron can connect to
     unsigned int m_MaxSourceConnections;
 
-    //!< Maximum dendritic delay timesteps supported for synapses in this population
+    //! Maximum dendritic delay timesteps supported for synapses in this population
     unsigned int m_MaxDendriticDelayTimesteps;
     
-    //!< Connectivity type of synapses
-    SynapseMatrixType m_MatrixType;
+    //! Connectivity type of synapses
+    const SynapseMatrixType m_MatrixType;
 
-    //!< Pointer to presynaptic neuron group
-    NeuronGroupInternal *m_SrcNeuronGroup;
+    //! Pointer to presynaptic neuron group
+    NeuronGroupInternal * const m_SrcNeuronGroup;
 
-    //!< Pointer to postsynaptic neuron group
-    NeuronGroupInternal *m_TrgNeuronGroup;
+    //! Pointer to postsynaptic neuron group
+    NeuronGroupInternal * const m_TrgNeuronGroup;
 
-    //!< Does the event threshold needs to be retested in the synapse kernel?
+    //! Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool m_EventThresholdReTestRequired;
 
-    //!< Variable mode used for variables used to combine input from this synapse group
+    //! Variable mode used for variables used to combine input from this synapse group
     VarLocation m_InSynLocation;
 
-    //!< Variable mode used for this synapse group's dendritic delay buffers
+    //! Variable mode used for this synapse group's dendritic delay buffers
     VarLocation m_DendriticDelayLocation;
 
-    //!< Weight update model type
+    //! Weight update model type
     const WeightUpdateModels::Base *m_WUModel;
 
-    //!< Parameters of weight update model
-    std::vector<double> m_WUParams;
+    //! Parameters of weight update model
+    const std::vector<double> m_WUParams;
 
-    //!< Derived parameters for weight update model
+    //! Derived parameters for weight update model
     std::vector<double> m_WUDerivedParams;
 
-    //!< Initialisers for weight update model per-synapse variables
+    //! Initialisers for weight update model per-synapse variables
     std::vector<Models::VarInit> m_WUVarInitialisers;
 
-    //!< Initialisers for weight update model per-presynaptic neuron variables
+    //! Initialisers for weight update model per-presynaptic neuron variables
     std::vector<Models::VarInit> m_WUPreVarInitialisers;
 
-    //!< Initialisers for weight update model post-presynaptic neuron variables
+    //! Initialisers for weight update model post-presynaptic neuron variables
     std::vector<Models::VarInit> m_WUPostVarInitialisers;
     
-    //!< Post synapse update model type
+    //! Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
 
-    //!< Parameters of post synapse model
-    std::vector<double> m_PSParams;
+    //! Parameters of post synapse model
+    const std::vector<double> m_PSParams;
 
-    //!< Derived parameters for post synapse model
+    //! Derived parameters for post synapse model
     std::vector<double> m_PSDerivedParams;
 
-    //!< Initialisers for post synapse model variables
+    //! Initialisers for post synapse model variables
     std::vector<Models::VarInit> m_PSVarInitialisers;
 
-    //!< Location of individual per-synapse state variables 
+    //! Location of individual per-synapse state variables
     std::vector<VarLocation> m_WUVarLocation;
 
-    //!< Location of individual presynaptic state variables
+    //! Location of individual presynaptic state variables
     std::vector<VarLocation> m_WUPreVarLocation;
 
-    //!< Location of individual postsynaptic state variables
+    //! Location of individual postsynaptic state variables
     std::vector<VarLocation> m_WUPostVarLocation;
 
-    //!< Whether indidividual state variables of post synapse should use zero-copied memory
+    //! Location of weight update model extra global parameters
+    std::vector<VarLocation> m_WUExtraGlobalParamLocation;
+
+    //! Whether indidividual state variables of post synapse should use zero-copied memory
     std::vector<VarLocation> m_PSVarLocation;
 
-    //!< Initialiser used for creating sparse connectivity
+    //! Location of postsynaptic model extra global parameters
+    std::vector<VarLocation> m_PSExtraGlobalParamLocation;
+
+    //! Initialiser used for creating sparse connectivity
     InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
 
-    //!< Location of sparse connectivity
+    //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
 
     //! Name of the synapse group in which postsynaptic model is located
