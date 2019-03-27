@@ -284,12 +284,15 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating Python wheels";
                             script = """
                             CALL %VC_VARS_BAT%
-                            CALL %ANACONDA_ACTIVATE_BAT%
+                            REM CALL %ANACONDA_ACTIVATE_BAT%
+                            CALL "C:\Program Files (x86)\Microsoft Visual Studio\Shared\Anaconda3_64\Scripts\activate.bat" "c:\Program Files (x86)\Microsoft Visual Studio\Shared\Anaconda3_64"
 
                             conda install -y swig
 
                             virtualenv virtualenv
-                            . virtualenv/bin/activate
+                            pushd virtualenv\Scripts
+                            call activate
+                            popd
 
                             pip install numpy
 
