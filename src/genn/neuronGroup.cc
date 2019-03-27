@@ -24,7 +24,7 @@ void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarL
     if(getNeuronModel()->getExtraGlobalParams()[extraGlobalParamIndex].second.back() != '*') {
         throw std::runtime_error("Only extra global parameters with a pointer type have a location");
     }
-    m_ExtraGlobalParamLocation[getNeuronModel()->getExtraGlobalParamIndex(paramName)] = loc;
+    m_ExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
 }
 //----------------------------------------------------------------------------
 VarLocation NeuronGroup::getVarLocation(const std::string &varName) const

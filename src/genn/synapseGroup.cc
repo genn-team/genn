@@ -57,7 +57,11 @@ void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation 
 //----------------------------------------------------------------------------
 void SynapseGroup::setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    m_WUExtraGlobalParamLocation[getWUModel()->getExtraGlobalParamIndex(paramName)] = loc;
+    const size_t extraGlobalParamIndex = getWUModel()->getExtraGlobalParamIndex(paramName);
+    if(getWUModel()->getExtraGlobalParams()[extraGlobalParamIndex].second.back() != '*') {
+        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+    }
+    m_WUExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
@@ -67,7 +71,11 @@ void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
 //----------------------------------------------------------------------------
 void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    m_PSExtraGlobalParamLocation[getPSModel()->getExtraGlobalParamIndex(paramName)] = loc;
+    const size_t extraGlobalParamIndex = getPSModel()->getExtraGlobalParamIndex(paramName);
+    if(getPSModel()->getExtraGlobalParams()[extraGlobalParamIndex].second.back() != '*') {
+        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+    }
+    m_PSExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
