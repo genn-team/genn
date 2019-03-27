@@ -284,7 +284,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating Python wheels";
                             script = """
                             CALL %VC_VARS_BAT%
-                            CALL %ANACONDA_DIR%\scripts\activate.bat %ANACONDA_DIR
+                            CALL %ANACONDA_ACTIVATE_BAT%
 
                             conda install -y swig
 
