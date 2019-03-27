@@ -228,9 +228,8 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Building Python wheels (" + env.NODE_NAME + ")") {
                     dir("genn") {
+                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                         if(isUnix()) {
-                            def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
-
                             // Build set of dynamic libraries
                             echo "Creating dynamic libraries";
                             makeCommand = ""
@@ -251,10 +250,11 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // Create virtualenv, install numpy and make Python wheel
                             echo "Creating Python wheels";
                             script = """
+                            rm -rf virtualenv
                             virtualenv virtualenv
                             . virtualenv/bin/activate
 
-                            pip install "numpy>1.6, <1.15"
+                            pip install numpy
 
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
@@ -265,23 +265,67 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if(wheelStatusCode != 0) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                             }
-
-                            // If node isn't CPU only
-                            if(!nodeLabel.contains("cpu_only")) {
-                                // Loop through node labels
-                                for(l in nodeLabel) {
-                                    // If label starts with CUDA
-                                    if(l.startsWith("cuda")) {
-                                        // Rename wheel with cuda version prefix
-                                        sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
-                                        break;
-                                    }
-                                }
+                        }
+                        else {
+                            // Build set of dynamic libraries
+                            echo "Creating dynamic libraries";
+                            msbuildCommand = """
+                            CALL %VC_VARS_BAT%
+                            msbuild genn.sln /p:Configuration=Release_DLL /t:cuda > "${uniqueMsg}" 2>&1
+                            """;
+                            def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true
+                            if(msbuildStatusCode != 0) {
+                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                             }
 
-                            // Archive wheel itself
-                            archive "*.whl"
+                            // Remove existing virtualenv
+                            bat script:"rmdir /S /Q virtualenv", returnStatus:true;
+
+                            echo "Creating Python wheels";
+                            script = """
+                            CALL %VC_VARS_BAT%
+                            CALL %ANACONDA_DIR%\scripts\activate.bat %ANACONDA_DIR
+
+                            conda install -y swig
+
+                            virtualenv virtualenv
+                            . virtualenv/bin/activate
+
+                            pip install numpy
+
+                            python setup.py clean --all
+                            python setup.py bdist_wheel -d . > "${uniqueMsg}" 2>&1
+                            python setup.py bdist_wheel -d . > "${uniqueMsg}" 2>&1
+                            """
+
+                            def wheelStatusCode = sh script:script, returnStatus:true
+                            if(wheelStatusCode != 0) {
+                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
+                            }
                         }
+
+                        // If node isn't CPU only
+                        if(!nodeLabel.contains("cpu_only")) {
+                            // Loop through node labels
+                            for(l in nodeLabel) {
+                                // If label starts with CUDA
+                                if(l.startsWith("cuda")) {
+                                    // Rename wheel with cuda version prefix
+                                    if(isUnix()) {
+                                        sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
+                                    }
+                                    // **TODO**
+                                    /*else {
+
+                                    }*/
+
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Archive wheel itself
+                        archive "*.whl"
                     }
                 }
 
