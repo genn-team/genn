@@ -298,7 +298,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             """
 
-                            def wheelStatusCode = sh script:script, returnStatus:true
+                            def wheelStatusCode = bat script:script, returnStatus:true
                             if(wheelStatusCode != 0) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                             }
