@@ -47,11 +47,6 @@ ModelSpec::~ModelSpec()
 {
 }
 
-void ModelSpec::setName(const std::string &inname)
-{
-    name= inname;
-}
-
 std::string ModelSpec::getTimePrecision() const
 {
     // If time precision is set to match model precision
@@ -131,16 +126,6 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 }
 
 //--------------------------------------------------------------------------
-/*! \brief This function sets the integration time step DT of the model
- */
-//--------------------------------------------------------------------------
-void ModelSpec::setDT(double newDT /**<  */)
-{
-    dt = newDT;
-}
-
-
-//--------------------------------------------------------------------------
 /*! \brief This function sets the numerical precision of floating type variables. By default, it is GENN_GENN_FLOAT.
  */
 //--------------------------------------------------------------------------
@@ -148,42 +133,19 @@ void ModelSpec::setPrecision(FloatType floattype /**<  */)
 {
     switch (floattype) {
     case GENN_FLOAT:
-        ftype = "float";
+        m_Precision = "float";
         break;
     case GENN_DOUBLE:
-        ftype = "double"; // not supported by compute capability < 1.3
+        m_Precision = "double"; // not supported by compute capability < 1.3
         break;
     case GENN_LONG_DOUBLE:
-        ftype = "long double"; // not supported by CUDA at the moment.
+        m_Precision = "long double"; // not supported by CUDA at the moment.
         break;
     default:
         throw std::runtime_error("Unrecognised floating-point type.");
     }
 }
 
-void ModelSpec::setTimePrecision(TimePrecision timePrecision)
-{
-    m_TimePrecision = timePrecision;
-}
-
-//--------------------------------------------------------------------------
-/*! \brief This function sets a flag to determine whether timers and timing commands are to be included in generated code.
- */
-//--------------------------------------------------------------------------
-void ModelSpec::setTiming(bool theTiming /**<  */)
-{
-    timing= theTiming;
-}
-
-
-//--------------------------------------------------------------------------
-/*! \brief This function sets the random seed. If the passed argument is > 0, automatic seeding is disabled. If the argument is 0, the underlying seed is obtained from the time() function.
- */
-//--------------------------------------------------------------------------
-void ModelSpec::setSeed(unsigned int inseed /*!< the new seed  */)
-{
-    seed= inseed;
-}
 
 void ModelSpec::finalize()
 {
@@ -230,7 +192,7 @@ void ModelSpec::finalize()
     // NEURON GROUPS
     for(auto &n : m_LocalNeuronGroups) {
         // Initialize derived parameters
-        n.second.initDerivedParams(dt);
+        n.second.initDerivedParams(m_DT);
     }
 
     // SYNAPSE groups
@@ -238,7 +200,7 @@ void ModelSpec::finalize()
         const auto *wu = s.second.getWUModel();
 
         // Initialize derived parameters
-        s.second.initDerivedParams(dt);
+        s.second.initDerivedParams(m_DT);
 
         if (!wu->getSimCode().empty()) {
             // analyze which neuron variables need queues
@@ -260,7 +222,7 @@ void ModelSpec::finalize()
     // CURRENT SOURCES
     for(auto &cs : m_LocalCurrentSources) {
         // Initialize derived parameters
-        cs.second.initDerivedParams(dt);
+        cs.second.initDerivedParams(m_DT);
     }
 
     // Merge incoming postsynaptic models
@@ -281,17 +243,17 @@ std::string ModelSpec::getGeneratedCodePath(const std::string &path, const std::
 #endif
 }
 
-std::string ModelSpec::scalarExpr(const double val) const
+std::string ModelSpec::scalarExpr(double val) const
 {
-    std::string tmp;
-    float fval= (float) val;
-    if (ftype == "float") {
-        tmp= std::to_string(fval) + "f";
+    if (m_Precision == "float") {
+        return std::to_string((float)val) + "f";
     }
-    if (ftype == "double") {
-        tmp= std::to_string(val);
+    else if (m_Precision == "double") {
+        return std::to_string(val);
     }
-    return tmp;
+    else {
+        throw std::runtime_error("Unrecognised floating-point type.");
+    }
 }
 
 

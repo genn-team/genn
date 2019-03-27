@@ -111,15 +111,25 @@ public:
 
     // PUBLIC MODEL FUNCTIONS
     //=======================
-    void setName(const std::string&); //!< Method to set the neuronal network model name
+    //! Method to set the neuronal network model name
+    void setName(const std::string &name){ m_Name = name; }
 
-    void setPrecision(FloatType); //!< Set numerical precision for floating point
-    void setTimePrecision(TimePrecision timePrecision); //!< Set numerical precision for time
-    void setDT(double); //!< Set the integration step size of the model
-    void setTiming(bool); //!< Set whether timers and timing commands are to be included
-    void setSeed(unsigned int); //!< Set the random seed (disables automatic seeding if argument not 0).
+    //! Set numerical precision for floating point
+    void setPrecision(FloatType);
 
-    //!< What is the default location for model state variables? 
+    //! Set numerical precision for time
+    void setTimePrecision(TimePrecision timePrecision){ m_TimePrecision = timePrecision; }
+
+    //! Set the integration step size of the model
+    void setDT(double dt){ m_DT = dt; }
+
+    //! Set whether timers and timing commands are to be included
+    void setTiming(bool timingEnabled){ m_TimingEnabled = timingEnabled; }
+
+    //! Set the random seed (disables automatic seeding if argument not 0).
+    void setSeed(unsigned int rngSeed){ m_Seed = rngSeed; }
+
+    //! What is the default location for model state variables?
     /*! Historically, everything was allocated on both the host AND device */
     void setDefaultVarLocation(VarLocation loc){ m_DefaultVarLocation = loc; } 
 
@@ -127,27 +137,27 @@ public:
     /*! Historically, everything was allocated on both the host AND device */
     void setDefaultSparseConnectivityLocation(VarLocation loc){ m_DefaultSparseConnectivityLocation = loc; }
 
-    //!< Should compatible postsynaptic models and dendritic delay buffers be merged? 
+    //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
 
     //! Gets the name of the neuronal network model
-    const std::string &getName() const{ return name; }
+    const std::string &getName() const{ return m_Name; }
 
     //! Gets the floating point numerical precision
-    const std::string &getPrecision() const{ return ftype; }
+    const std::string &getPrecision() const{ return m_Precision; }
 
     //! Gets the floating point numerical precision used to represent time
     std::string getTimePrecision() const;
 
     //! Gets the model integration step size
-    double getDT() const { return dt; }
+    double getDT() const { return m_DT; }
 
     //! Get the random seed
-    unsigned int getSeed() const { return seed; }
+    unsigned int getSeed() const { return m_Seed; }
 
     //! Are timers and timing commands enabled
-    bool isTimingEnabled() const{ return timing; }
+    bool isTimingEnabled() const{ return m_TimingEnabled; }
 
     // PUBLIC NEURON FUNCTIONS
     //========================
@@ -430,7 +440,7 @@ protected:
     std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
 
     //! Get the string literal that should be used to represent a value in the model's floating-point type
-    std::string scalarExpr(const double) const;
+    std::string scalarExpr(double) const;
 
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
@@ -463,39 +473,49 @@ private:
     //--------------------------------------------------------------------------
     // Private members
     //--------------------------------------------------------------------------
-    //!< Named local neuron groups
+    //! Named local neuron groups
     std::map<std::string, NeuronGroupInternal> m_LocalNeuronGroups;
 
-    //!< Named remote neuron groups
+    //! Named remote neuron groups
     std::map<std::string, NeuronGroupInternal> m_RemoteNeuronGroups;
 
-    //!< Named local synapse groups
+    //! Named local synapse groups
     std::map<std::string, SynapseGroupInternal> m_LocalSynapseGroups;
 
-    //!< Named remote synapse groups
+    //! Named remote synapse groups
     std::map<std::string, SynapseGroupInternal> m_RemoteSynapseGroups;
 
-    //!< Named local current sources
+    //! Named local current sources
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
 
-    //!< Named remote current sources
+    //! Named remote current sources
     std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
 
-     // Model members
-    std::string name;               //!< Name of the neuronal newtwork model
-    std::string ftype;              //!< Type of floating point variables (float, double, ...; default: float)
-    TimePrecision m_TimePrecision;  //!< Type of floating point variables used to store time
-    double dt;                      //!< The integration time step of the model
-    bool timing;
-    unsigned int seed;
+    //! Name of the neuronal newtwork model
+    std::string m_Name;
 
-    //!< What is the default location for model state variables? Historically, everything was allocated on both host AND device
+    //! Type of floating point variables (float, double, ...; default: float)
+    std::string m_Precision;
+
+    //! Type of floating point variables used to store time
+    TimePrecision m_TimePrecision;
+
+    //! The integration time step of the model
+    double m_DT;
+
+    //! Whether timing code should be inserted into model
+    bool m_TimingEnabled;
+
+    //! RNG seed
+    unsigned int m_Seed;
+
+    //! What is the default location for model state variables? Historically, everything was allocated on both host AND device
     VarLocation m_DefaultVarLocation;  
 
     //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
     VarLocation m_DefaultSparseConnectivityLocation; 
 
-    //!< Should compatible postsynaptic models and dendritic delay buffers be merged? 
+    //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     bool m_ShouldMergePostsynapticModels; 
 };
