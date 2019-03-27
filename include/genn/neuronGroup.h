@@ -212,7 +212,7 @@ private:
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
 
-    //! Location of individual state variables
+    //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
 
     //! The ID of the cluster node which the neuron groups are computed on
