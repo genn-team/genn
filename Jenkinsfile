@@ -285,9 +285,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                             script = """
                             CALL %VC_VARS_BAT%
                             CALL %ANACONDA_ACTIVATE_BAT%
-                            REM CALL ""C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Anaconda3_64\\Scripts\\activate.bat" "c:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Anaconda3_64""
-
-                            conda install -y swig
+                            
+                            CALL conda install -y swig
 
                             virtualenv virtualenv
                             pushd virtualenv\\Scripts
