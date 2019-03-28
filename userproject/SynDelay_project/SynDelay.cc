@@ -11,38 +11,15 @@
 
 #include "modelSpec.h"
 
-class MyIzhikevich : public NeuronModels::Izhikevich
-{
-public:
-    DECLARE_MODEL(MyIzhikevich, 5, 2);
-
-    SET_SIM_CODE(
-        "if ($(V) >= 30.0) {\n"
-        "    $(V)=$(c);\n"
-        "    $(U)+=$(d);\n"
-        "}\n"
-        "$(V) += 0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT; //at two times for numerical stability\n"
-        "$(V) += 0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(I0)+$(Isyn))*DT;\n"
-        "$(U) += $(a)*($(b)*$(V)-$(U))*DT;\n"
-        "if ($(V) > 30.0) {   //keep this to not confuse users with unrealistiv voltage values \n"
-        "    $(V) = 30.0;\n"
-        "}\n");
-    SET_PARAM_NAMES({"a", "b", "c", "d", "I0"});
-};
-IMPLEMENT_MODEL(MyIzhikevich);
 
 void modelDefinition(ModelSpec &model) 
 {
-    initGeNN();
-
 #ifdef DEBUG
-    GENN_PREFERENCES::debugCode = true;
+    GENN_PREFERENCES.debugCode = true;
 #else
-    GENN_PREFERENCES::optimizeCode = true;
+    GENN_PREFERENCES.optimizeCode = true;
 #endif // DEBUG
 
-    // By default we want to initialise variables on device
-    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
 
     model.setName("SynDelay");
     model.setDT(1.0);
@@ -50,14 +27,13 @@ void modelDefinition(ModelSpec &model)
     
     // INPUT NEURONS
     //==============
-    MyIzhikevich::ParamValues input_p( // Izhikevich parameters - tonic spiking
+    NeuronModels::Izhikevich::ParamValues input_p( // Izhikevich parameters - tonic spiking
         0.02,  // 0 - a
         0.2,   // 1 - b
         -65,   // 2 - c
-        6,      // 3 - d
-        4.0);   // 4 - I0 (input current)
+        6);     // 3 - d
 
-    MyIzhikevich::VarValues input_ini( // Izhikevich variables - tonic spiking
+    NeuronModels::Izhikevich::VarValues input_ini( // Izhikevich variables - tonic spiking
         -65,   // 0 - V
         -20);  // 1 - U
 
@@ -65,7 +41,14 @@ void modelDefinition(ModelSpec &model)
         1.0,            // 0 - tau_S: decay time constant for S [ms]
         0.0);            // 1 - Erev: Reversal potential
 
-    model.addNeuronPopulation<MyIzhikevich>("Input", 500, input_p, input_ini);
+     CurrentSourceModels::DC::ParamValues input_current_p(
+        4.0);  // 0 - magnitude
+
+
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Input", 500, input_p, input_ini);
+    model.addCurrentSource<CurrentSourceModels::DC>("InputCurrentSource", "Input",
+                                                    input_current_p, {});
+
 
     // INTERNEURONS
     //=============
@@ -128,7 +111,4 @@ void modelDefinition(ModelSpec &model)
                                                                                                "Inter", "Output",
                                                                                                {}, interOutput_ini,
                                                                                                {}, {});
-
-
-    model.finalize();
 }

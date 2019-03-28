@@ -9,13 +9,12 @@
 //  
 //--------------------------------------------------------------------------
 
-#include <cstdlib>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 
-using namespace std;
-
-#include "hr_time.h"
+#include "../include/spike_recorder.h"
+#include "../include/timer.h"
 
 #include "SynDelay_CODE/definitions.h"
 
@@ -29,87 +28,57 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
-    {
-        cerr << "usage: SynDelaySim <GPU = 1, CPU = 0> <output label>" << endl;
+    if (argc != 2) {
+        std::cerr << "usage: SynDelaySim <output label>" << std::endl;
         return EXIT_FAILURE;
     }
-
-    const bool usingGPU = (atoi(argv[1]) == 1);
-#ifdef CPU_ONLY
-    if (usingGPU)
-    {
-        cerr << "Cannot use GPU in a CPU_ONLY binary." << endl;
-        cerr << "Recompile without CPU_ONLY to run a GPU simulation." << endl;
-        return EXIT_FAILURE;
-    }
-#endif // CPU_ONLY
 
     allocateMem();
     initialize();
-    initSynDelay();
+    initializeSparse();
 
-    CStopWatch timer;
-    string outLabel = argv[2];
-    ofstream fileTime;
-    ofstream fileV;
-    ofstream fileStInput;
-    ofstream fileStInter;
-    ofstream fileStOutput;
-    fileTime.open((outLabel + "_time").c_str(), ios::out | ios::app);
-    fileV.open((outLabel + "_Vm").c_str(), ios::out | ios::trunc);
-    fileStInput.open((outLabel + "_input_st").c_str(), ios::out | ios::trunc);
-    fileStInter.open((outLabel + "_inter_st").c_str(), ios::out | ios::trunc);
-    fileStOutput.open((outLabel + "_output_st").c_str(), ios::out | ios::trunc);
-    cout << "# DT " << DT << endl;
-    cout << "# TOTAL_TIME " << TOTAL_TIME << endl;
-    cout << "# REPORT_TIME " << REPORT_TIME << endl;
-    cout << "# begin simulating on " << (atoi(argv[1]) ? "GPU" : "CPU") << endl;
-    timer.startTimer();
-    for (int i = 0; i < (TOTAL_TIME / DT); i++)
-    {
-        if (usingGPU)
-        {
-#ifndef CPU_ONLY
-            stepTimeGPU();
-            copyStateFromDevice();
-            pullInputCurrentSpikesFromDevice();
-#endif // CPU_ONLY
-        }
-        else
-        {
-            stepTimeCPU();
-        }
+    //CStopWatch timer;
+    std::string outLabel = argv[1];
+    std::ofstream fileTime;
+    std::ofstream fileV;
+    fileTime.open((outLabel + "_time").c_str(), std::ios::out | std::ios::app);
+    fileV.open((outLabel + "_Vm").c_str(), std::ios::out | std::ios::trunc);
+
+    SpikeRecorderDelay inputSpikes(outLabel + "_input_st", 500, spkQuePtrInput, glbSpkCntInput, glbSpkInput);
+    SpikeRecorder interSpikes(outLabel + "_inter_st", glbSpkCntInter, glbSpkInter);
+    SpikeRecorder outputSpikes(outLabel + "_output_st", glbSpkCntOutput, glbSpkOutput);
+
+    std::cout << "# DT " << DT << std::endl;
+    std::cout << "# TOTAL_TIME " << TOTAL_TIME << std::endl;
+    std::cout << "# REPORT_TIME " << REPORT_TIME << std::endl;
+    //timer.startTimer();
+    while(t < TOTAL_TIME) {
+        stepTime();
+
+        copyStateFromDevice();
+        pullInputCurrentSpikesFromDevice();
+        pullInterCurrentSpikesFromDevice();
+        pullOutputCurrentSpikesFromDevice();
 
         fileV << t
                 << " " << VInput[0]
                 << " " << VInter[0]
                 << " " << VOutput[0]
-                << endl;
+                << std::endl;
 
-        for (int i= 0; i < glbSpkCntInput[spkQuePtrInput]; i++) {
-            fileStInput << t << " " << glbSpkInput[glbSpkShiftInput+i] << endl;
-        }
-        for (int i= 0; i < glbSpkCntInter[0]; i++) {
-            fileStInter << t << " " << glbSpkInter[i] << endl;
-        }
-        for (int i= 0; i < glbSpkCntOutput[0]; i++) {
-            fileStOutput << t << " " << glbSpkOutput[i] << endl;
-        }
+        inputSpikes.record(t);
+        interSpikes.record(t);
+        outputSpikes.record(t);
 
-        if ((int) t % (int) REPORT_TIME == 0)
-        {
-            cout << "time " << t << endl;
+        if(fmod(t, REPORT_TIME) < 1e-3f) {
+            std::cout << "time " << t << std::endl;
         }
     }
-    timer.stopTimer();
-    cout << "# done in " << timer.getElapsedTime() << " seconds" << endl;
-    fileTime << timer.getElapsedTime() << endl;
+    //timer.stopTimer();
+    //std::cout << "# done in " << timer.getElapsedTime() << " seconds" << std::endl;
+    //fileTime << timer.getElapsedTime() << std::endl;
     fileTime.close();
     fileV.close();
-    fileStInput.close();
-    fileStInter.close();
-    fileStOutput.close();
 
     freeMem();
 
