@@ -1,2 +1,7 @@
 # Ignore code directories
 **/*_CODE
+
+# Ignore output data
+**/*_st
+**/*_time
+**/*_Vm
