@@ -37,47 +37,45 @@ int main(int argc, char *argv[])
     initialize();
     initializeSparse();
 
-    //CStopWatch timer;
-    std::string outLabel = argv[1];
-    std::ofstream fileTime;
+    const std::string outLabel = argv[1];
     std::ofstream fileV;
-    fileTime.open((outLabel + "_time").c_str(), std::ios::out | std::ios::app);
     fileV.open((outLabel + "_Vm").c_str(), std::ios::out | std::ios::trunc);
 
-    SpikeRecorderDelay inputSpikes(outLabel + "_input_st", 500, spkQuePtrInput, glbSpkCntInput, glbSpkInput);
-    SpikeRecorder interSpikes(outLabel + "_inter_st", glbSpkCntInter, glbSpkInter);
-    SpikeRecorder outputSpikes(outLabel + "_output_st", glbSpkCntOutput, glbSpkOutput);
+    {
+        SpikeRecorderDelay inputSpikes(outLabel + "_input_st", 500, spkQuePtrInput, glbSpkCntInput, glbSpkInput);
+        SpikeRecorder interSpikes(outLabel + "_inter_st", glbSpkCntInter, glbSpkInter);
+        SpikeRecorder outputSpikes(outLabel + "_output_st", glbSpkCntOutput, glbSpkOutput);
 
-    std::cout << "# DT " << DT << std::endl;
-    std::cout << "# TOTAL_TIME " << TOTAL_TIME << std::endl;
-    std::cout << "# REPORT_TIME " << REPORT_TIME << std::endl;
-    //timer.startTimer();
-    while(t < TOTAL_TIME) {
-        stepTime();
+        std::cout << "# DT " << DT << std::endl;
+        std::cout << "# TOTAL_TIME " << TOTAL_TIME << std::endl;
+        std::cout << "# REPORT_TIME " << REPORT_TIME << std::endl;
 
-        copyStateFromDevice();
-        pullInputCurrentSpikesFromDevice();
-        pullInterCurrentSpikesFromDevice();
-        pullOutputCurrentSpikesFromDevice();
+        Timer timer("# done in ", outLabel + "_time");
 
-        fileV << t
-                << " " << VInput[0]
-                << " " << VInter[0]
-                << " " << VOutput[0]
-                << std::endl;
+        while(t < TOTAL_TIME) {
+            stepTime();
 
-        inputSpikes.record(t);
-        interSpikes.record(t);
-        outputSpikes.record(t);
+            copyStateFromDevice();
+            pullInputCurrentSpikesFromDevice();
+            pullInterCurrentSpikesFromDevice();
+            pullOutputCurrentSpikesFromDevice();
 
-        if(fmod(t, REPORT_TIME) < 1e-3f) {
-            std::cout << "time " << t << std::endl;
+            fileV << t
+                    << " " << VInput[0]
+                    << " " << VInter[0]
+                    << " " << VOutput[0]
+                    << std::endl;
+
+            inputSpikes.record(t);
+            interSpikes.record(t);
+            outputSpikes.record(t);
+
+            if(fmod(t, REPORT_TIME) < 1e-3f) {
+                std::cout << "time " << t << std::endl;
+            }
         }
     }
-    //timer.stopTimer();
-    //std::cout << "# done in " << timer.getElapsedTime() << " seconds" << std::endl;
-    //fileTime << timer.getElapsedTime() << std::endl;
-    fileTime.close();
+
     fileV.close();
 
     freeMem();
