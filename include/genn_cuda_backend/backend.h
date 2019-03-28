@@ -100,6 +100,12 @@ public:
     virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
+    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+     virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name) const override;
+    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name) const override;
+
     virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;

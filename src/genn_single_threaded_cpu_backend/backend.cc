@@ -1,6 +1,7 @@
 #include "backend.h"
 
 // GeNN includes
+#include "gennUtils.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -580,6 +581,33 @@ void Backend::genVariableAllocation(CodeStream &os, const std::string &type, con
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
 {
     os << "delete[] " << name << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation) const
+{
+    definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    genVariableImplementation(os, type, name, loc);
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+{
+    // Get underlying type
+    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
+    const std::string underlyingType = Utils::getUnderlyingType(type);
+
+    os << name << " = new " << underlyingType << "[count];" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &) const
+{
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &) const
+{
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const

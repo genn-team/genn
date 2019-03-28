@@ -73,12 +73,23 @@ private:
     const bool m_SynchroniseOnStop;
 };
 
+
+void gennExtraGlobalParamPass(CodeGenerator::CodeStream &os, const std::map<std::string, std::string>::value_type &p)
+{
+    if(Utils::isTypePointer(p.second)) {
+        os << "d_" << p.first << ", ";
+    }
+    else {
+        os << p.first << ", ";
+    }
+}
+//-----------------------------------------------------------------------
 bool isSparseInitRequired(const SynapseGroupInternal &sg)
 {
     return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
             && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
 }
-//--------------------------------------------------------------------------
+//-----------------------------------------------------------------------
 void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Models::Base::StringPairVec &extraGlobalParameters,
                              std::map<std::string, std::string> &kernelParameters, const std::vector<std::string> &codeStrings)
 {
@@ -394,7 +405,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : neuronKernelParameters) {
-                os << p.first << ", ";
+                gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
         }
@@ -785,7 +796,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
             os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : synapseDynamicsKernelParameters) {
-                os << p.first << ", ";
+                gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
         }
@@ -798,7 +809,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
             os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : presynapticKernelParameters) {
-                os << p.first << ", ";
+                gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
         }
@@ -811,7 +822,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
             os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(";
             for(const auto &p : postsynapticKernelParameters) {
-                os << p.first << ", ";
+                gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
         }
@@ -846,7 +857,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     std::map<std::string, std::string> initKernelParameters;
     for(const auto &s : model.getLocalSynapseGroups()) {
         const auto *initSparseConnectivitySnippet = s.second.getConnectivityInitialiser().getSnippet();
-        updateExtraGlobalParams("initSparseConn" + s.first, "", initSparseConnectivitySnippet->getExtraGlobalParams(), initKernelParameters,
+        updateExtraGlobalParams(s.first, "", initSparseConnectivitySnippet->getExtraGlobalParams(), initKernelParameters,
                                 {initSparseConnectivitySnippet->getRowBuildCode()});
     }
     
@@ -1212,7 +1223,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 genKernelDimensions(os, KernelInitialize, idInitStart);
                 os << KernelNames[KernelInitialize] << "<<<grid, threads>>>(";
                 for(const auto &p : initKernelParameters) {
-                    os << p.first << ", ";
+                    gennExtraGlobalParamPass(os, p);
                 }
                 os << "deviceRNGSeed);" << std::endl;
             }
@@ -1497,7 +1508,7 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
     }
     if(loc & VarLocation::DEVICE) {
         // If the type is a pointer type we need a host and a device pointer
-        if(type.back() == '*') {
+        if(::Utils::isTypePointer(type)) {
             definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
             definitionsInternal << "EXPORT_VAR __device__ " << type << " dd_" << name << ";" << std::endl;
         }
@@ -1515,7 +1526,7 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
     }
     if(loc & VarLocation::DEVICE) {
         // If the type is a pointer type we need a host and a device pointer
-        if(type.back() == '*') {
+        if(::Utils::isTypePointer(type)) {
             os << type << " d_" << name << ";" << std::endl;
             os << "__device__ " << type << " dd_" << name << ";" << std::endl;
         }
@@ -1529,7 +1540,6 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
 void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
     if(loc & VarLocation::HOST) {
-        // **NOTE** because we want out memory to be pinned for faster copying to GPU, DON'T use host code generator
         const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
         os << "cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << ");" << std::endl;
     }
@@ -1557,6 +1567,70 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
     if(loc & VarLocation::DEVICE) {
         os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    if(loc & VarLocation::HOST) {
+        definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+    }
+    if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+        definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    if(loc & VarLocation::HOST) {
+        os << type << " " << name << ";" << std::endl;
+    }
+    if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+        os << type << " d_" << name << ";" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    // Get underlying type
+    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
+    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+
+    if(loc & VarLocation::HOST) {
+        const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+        os << "cudaHostAlloc(&" << name << ", count * sizeof(" << underlyingType << "), " << flags << ");" << std::endl;
+    }
+
+    // If variable is present on device at all
+    if(loc & VarLocation::DEVICE) {
+        if(loc & VarLocation::ZERO_COPY) {
+            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)&d_" << name << ", (void*)" << name << ", 0));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", count * sizeof(" << underlyingType << ")));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name) const
+{
+    // Get underlying type
+    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
+    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+
+    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
+    os << ", " << name;
+    os << ", count * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name) const
+{
+    // Get underlying type
+    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
+    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+
+    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
+    os << ", d_"  << name;
+    os << ", count * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const

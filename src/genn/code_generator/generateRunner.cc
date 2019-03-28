@@ -5,13 +5,14 @@
 #include <string>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
-#include "code_generator/codeGenUtils.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -171,6 +172,57 @@ void genVariable(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeS
             backend.genVariablePushPull(push, pull, type, name, autoInitialized, count);
         });
 }
+//-------------------------------------------------------------------------
+void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &definitionsFunc,
+                         CodeGenerator::CodeStream &runner, CodeGenerator::CodeStream &extraGlobalParam, const std::string &type, const std::string &name, VarLocation loc)
+{
+    // Generate variables
+    backend.genExtraGlobalParamDefinition(definitionsVar, type, name, loc);
+    backend.genExtraGlobalParamImplementation(runner, type, name, loc);
+
+    // If type is a pointer
+    if(Utils::isTypePointer(type)) {
+        // Write definitions for functions to allocate and free extra global param
+        definitionsFunc << "EXPORT_FUNC void allocate" << name << "(unsigned int count);" << std::endl;
+        definitionsFunc << "EXPORT_FUNC void free" << name << "();" << std::endl;
+
+        // Write allocation function
+        extraGlobalParam << "void allocate" << name << "(unsigned int count)";
+        {
+            CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+            backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
+        }
+
+        // Write free function
+        extraGlobalParam << "void free" << name << "()";
+        {
+            CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+            backend.genVariableFree(extraGlobalParam, name, loc);
+        }
+
+        // If variable can be pushed and pulled
+        if(canPushPullVar(loc)) {
+            // Write definitions for push and pull functions
+            definitionsFunc << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int count);" << std::endl;
+            definitionsFunc << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int count);" << std::endl;
+
+            // Write push function
+            extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
+            {
+                CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+                backend.genExtraGlobalParamPush(extraGlobalParam, type, name);
+            }
+
+            // Write pull function
+            extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
+            {
+                CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+                backend.genExtraGlobalParamPull(extraGlobalParam, type, name);
+            }
+        }
+
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -230,6 +282,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     std::stringstream runnerVarDeclStream;
     std::stringstream runnerVarAllocStream;
     std::stringstream runnerVarFreeStream;
+    std::stringstream runnerExtraGlobalParamFuncStream;
     std::stringstream runnerPushFuncStream;
     std::stringstream runnerPullFuncStream;
     std::stringstream runnerStepTimeFinaliseStream;
@@ -238,6 +291,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     CodeStream runnerVarDecl(runnerVarDeclStream);
     CodeStream runnerVarAlloc(runnerVarAllocStream);
     CodeStream runnerVarFree(runnerVarFreeStream);
+    CodeStream runnerExtraGlobalParamFunc(runnerExtraGlobalParamFuncStream);
     CodeStream runnerPushFunc(runnerPushFuncStream);
     CodeStream runnerPullFunc(runnerPullFuncStream);
     CodeStream runnerStepTimeFinalise(runnerStepTimeFinaliseStream);
@@ -461,9 +515,10 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         // Add helper function to push and pull entire neuron state
         genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first, neuronStatePushPullFunctions);
 
-        for(auto const &v : neuronModel->getExtraGlobalParams()) {
-            definitionsVar << "EXPORT_VAR " << v.second << " " << v.first + n.first << ";" << std::endl;
-            runnerVarDecl << v.second << " " <<  v.first << n.first << ";" << std::endl;
+        const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
+        for(size_t i = 0; i < extraGlobalParams.size(); i++) {
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                extraGlobalParams[i].second, extraGlobalParams[i].first + n.first, n.second.getExtraGlobalParamLocation(i));
         }
 
         if(!n.second.getCurrentSources().empty()) {
@@ -484,9 +539,10 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             // Add helper function to push and pull entire current source state
             genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName(), currentSourceStatePushPullFunctions);
 
-            for(auto const &v : csModel->getExtraGlobalParams()) {
-                definitionsVar << "EXPORT_VAR " << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
-                runnerVarDecl << v.second << " " <<  v.first << cs->getName() << ";" << std::endl;
+            const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
+            for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                    csExtraGlobalParams[i].second, csExtraGlobalParams[i].first + cs->getName(), cs->getExtraGlobalParamLocation(i));
             }
         }
     }
@@ -515,11 +571,6 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                     backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, v.second, v.first + sg->getPSModelTargetName(), sg->getPSVarLocation(v.first),
                                      sg->getTrgNeuronGroup()->getNumNeurons());
                 }
-            }
-
-            for(auto const &v : sg->getPSModel()->getExtraGlobalParams()) {
-                definitionsVar << "EXPORT_VAR " << v.second << " " <<  v.first << sg->getPSModelTargetName() << ";" << std::endl;
-                runnerVarDecl << v.second << " " <<  v.first << sg->getPSModelTargetName() << ";" << std::endl;
             }
         }
     }
@@ -668,14 +719,23 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         // Add helper function to push and pull entire synapse group state
         genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first, synapseGroupStatePushPullFunctions);
 
-        for(const auto &v : wu->getExtraGlobalParams()) {
-            definitionsVar << "EXPORT_VAR " << v.second << " " << v.first + s.first << ";" << std::endl;
-            runnerVarDecl << v.second << " " <<  v.first << s.first << ";" << std::endl;
+        const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
+        for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                psmExtraGlobalParams[i].second, psmExtraGlobalParams[i].first + s.first, s.second.getPSExtraGlobalParamLocation(i));
         }
 
-        for(auto const &p : s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams()) {
-            definitionsVar << "EXPORT_VAR " << p.second << " " << p.first + "initSparseConn" + s.first << ";" << std::endl;
-            runnerVarDecl << p.second << " " << p.first + "initSparseConn" + s.first << ";" << std::endl;
+        const auto wuExtraGlobalParams = wu->getExtraGlobalParams();
+        for(size_t i = 0; i < wuExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                wuExtraGlobalParams[i].second, wuExtraGlobalParams[i].first + s.first, s.second.getWUExtraGlobalParamLocation(i));
+        }
+
+        const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
+        for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                sparseConnExtraGlobalParams[i].second, sparseConnExtraGlobalParams[i].first + s.first,
+                                s.second.getSparseConnectivityExtraGlobalParamLocation(i));
         }
     }
     allVarStreams << std::endl;
@@ -687,17 +747,24 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     // Write variable declarations to runner
     runner << runnerVarDeclStream.str();
 
+    // Write extra global parameter functions to runner
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << "// extra global params" << std::endl;
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << runnerExtraGlobalParamFuncStream.str();
+    runner << std::endl;
+
     // Write push function declarations to runner
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << "// copying things to device" << std::endl;
-    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPushFuncStream.str();
     runner << std::endl;
 
     // Write pull function declarations to runner
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << "// copying things from device" << std::endl;
-    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPullFuncStream.str();
     runner << std::endl;
 

@@ -64,4 +64,18 @@ bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
                            return isRNGRequired(varInit.getSnippet()->getCode());
                        });
 }
+//--------------------------------------------------------------------------
+bool isTypePointer(const std::string &type)
+{
+    return (type.back() == '*');
+}
+//--------------------------------------------------------------------------
+std::string getUnderlyingType(const std::string &type)
+{
+    // Check that type is a pointer type
+    assert(isTypePointer(type));
+
+    // Return string without last character
+    return type.substr(0, type.length() - 1);
+}
 }   // namespace utils
