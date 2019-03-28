@@ -177,7 +177,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         else {
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            /*def runTestsCommand = """
+                            def runTestsCommand = """
                             CALL %VC_VARS_BAT%
                             CALL run_tests.bat >> "..\\${uniqueMsg}" 2>&1;
                             """;
@@ -186,19 +186,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
-                            }*/
-                        }
-                    }
-                    dir("genn") {
-                        // Run 'next-generation' warning plugin on results
-                        if("mac" in nodeLabel) {
-                            recordIssues enabledForFailure: true, tool: clang(pattern: uniqueMsg);
-                        }
-                        else if("windows" in nodeLabel){
-                            recordIssues enabledForFailure: true, tool: msBuild(pattern: uniqueMsg);
-                        }
-                        else {
-                            recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
+                            }
                         }
                     }
                 }
@@ -340,7 +328,19 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Archiving output (" + env.NODE_NAME + ")") {
                     dir("genn") {
-                        archive "msg_" + env.NODE_NAME + ".txt";
+                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
+
+                        // Run 'next-generation' warning plugin on results
+                        if("mac" in nodeLabel) {
+                            recordIssues enabledForFailure: true, tool: clang(pattern: uniqueMsg);
+                        }
+                        else if("windows" in nodeLabel){
+                            recordIssues enabledForFailure: true, tool: msBuild(pattern: uniqueMsg);
+                        }
+                        else {
+                            recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
+                        }
+                        archive uniqueMsg;
                     }
                 }
             }
