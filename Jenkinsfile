@@ -295,7 +295,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             pip install numpy
 
-                            copy /Y lib\genn*Release_DLL.* pygenn\genn_wrapper
+                            copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
                             
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
