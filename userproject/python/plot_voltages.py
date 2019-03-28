@@ -28,7 +28,7 @@ def plot(filename, time_range, neuron_range):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print "Usage: plot_voltages.py filename [min_time max_time] [min_neuron max_neuron]"
+        print("Usage: plot_voltages.py filename [min_time max_time] [min_neuron max_neuron]")
     else:
         # Parse time range
         time_range = None
