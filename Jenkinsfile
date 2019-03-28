@@ -177,7 +177,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         else {
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            def runTestsCommand = """
+                            /*def runTestsCommand = """
                             CALL %VC_VARS_BAT%
                             CALL run_tests.bat >> "..\\${uniqueMsg}" 2>&1;
                             """;
@@ -186,7 +186,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
-                            }
+                            }*/
                         }
                     }
                     dir("genn") {
@@ -295,6 +295,8 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             pip install numpy
 
+                            copy /Y lib\genn*Release_DLL.* pygenn\genn_wrapper
+                            
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
