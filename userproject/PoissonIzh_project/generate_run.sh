@@ -11,7 +11,8 @@ generate_runner_help () {
 # Run command line parser
 source ../include/parse_command_line.sh
 
-echo "$#"
+# Check remaining parameter count
+if [[ $# != 5 ]]; then generate_runner_help; exit; fi
 
 # Read remaing parameters
 NPOISSON="$1"

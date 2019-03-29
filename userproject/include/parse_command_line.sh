@@ -6,11 +6,6 @@ generate_runner_flags_help () {
     echo "-c            use CPU only backend"
 }
 
-generate_runner_error () { # $1=line, $2=code, $3=message
-    echo "generate_runner.sh:$1: error $2: $3"
-    exit "$2"
-}
-
 # Parse flags
 GENERATOR_MAKEFILE="MakefileCUDA"
 FTYPE="FLOAT"

@@ -11,6 +11,9 @@ generate_runner_help () {
 # Run command line parser
 source ../include/parse_command_line.sh
 
+# Check remaining parameter count
+if [[ $# != 2 ]]; then generate_runner_help; exit; fi
+
 # Read remaing parameters
 NC1="$1"
 OUTDIR="$2"
