@@ -51,3 +51,38 @@ private:
     const std::string m_Message;
     const std::string m_Filename;
 };
+
+
+//------------------------------------------------------------------------
+// TimerAccumulate
+//------------------------------------------------------------------------
+//! A timer which adds its elapsed time to an accumulator variable on destruction
+class TimerAccumulate
+{
+public:
+    TimerAccumulate(double &accumulator) : m_Start(std::chrono::high_resolution_clock::now()), m_Accumulator(accumulator)
+    {}
+
+    ~TimerAccumulate()
+    {
+        m_Accumulator += get();
+    }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Get the elapsed time since this object was created
+    double get() const
+    {
+        auto now = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = now - m_Start;
+        return duration.count();
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_Start;
+    double &m_Accumulator;
+};

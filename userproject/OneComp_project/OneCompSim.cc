@@ -38,8 +38,6 @@ int main(int argc, char *argv[])
     std::cerr << "# REPORT_TIME " << REPORT_TIME << std::endl;
     std::cerr << "# TOTAL_TIME " << TOTAL_TIME << std::endl;
 
-    FILE *osf= fopen((outLabel + "_v").c_str(),"w");
-
     //-----------------------------------------------------------------
     // build the neuronal circuitry
     allocateMem();

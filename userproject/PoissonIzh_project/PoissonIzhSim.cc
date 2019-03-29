@@ -10,165 +10,85 @@
    initial version: 2002-09-26
   
 --------------------------------------------------------------------------*/
+#include <cmath>
+#include <iostream>
+#include <fstream>
 
-#include "PoissonIzh-model.h"
-
-// GeNN includes
-#include "hr_time.h"
+#include "../include/timer.h"
 
 #include "PoissonIzh_CODE/definitions.h"
 
 #include "sizes.h"
 
 // other stuff:
-#define T_REPORT_TME 1000.0
-#define SYN_OUT_TME 2000.0
+#define REPORT_TIME 1000.0
+#define SYN_OUT_TIME 2000.0
 
-#define TOTAL_TME 5000
+#define TOTAL_TIME 5000
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
-    {
-        fprintf(stderr, "usage: PoissonIzh_sim <basename> <CPU=0, GPU=1> \n");
-        return 1;
+    if (argc != 2) {
+        std::cerr << "usage: PoissonIzhSim <basename>" << std::endl;
+        return EXIT_FAILURE;
     }
 
-    int which= atoi(argv[2]);
+    const std::string outLabel = argv[1];
+
+    /*int which= atoi(argv[2]);
     string OutDir = string(argv[1]) +"_output";
     string name;
     name= OutDir+ "/"+ argv[1] + ".time";
-    FILE *timef= fopen(name.c_str(),"w");
+    FILE *timef= fopen(name.c_str(),"w");*/
 
-    CStopWatch timer;
-    timer.startTimer();
-    fprintf(stderr, "# DT %f \n", DT);
-    fprintf(stderr, "# T_REPORT_TME %f \n", T_REPORT_TME);
-    fprintf(stderr, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
-    fprintf(stderr, "# TOTAL_TME %d \n", TOTAL_TME);
+    //CStopWatch timer;
+    //timer.startTimer();
+    std::cerr << "# DT " << DT << std::endl;
+    std::cerr << "# REPORT_TIME " << REPORT_TIME << std::endl;
+    std::cerr << "# SYN_OUT_TIME " << SYN_OUT_TIME << std::endl;
+    std::cerr << "# TOTAL_TIME " << TOTAL_TIME << std::endl;
 
-    name= OutDir+ "/" + argv[1] + ".out.Vm";
-    FILE *osf= fopen(name.c_str(),"w");
     //-----------------------------------------------------------------
     // build the neuronal circuitry
-    classol PNIzhNN;
+    allocateMem();
+    initialize();
+    initializeSparse();
 
-    /*/SPARSE CONNECTIVITY
+    std::cerr << "# neuronal circuitry built, start computation ..."  << std::endl;
 
-    name= OutDir+ "/gPoissonIzh";
-    fprintf(stderr, "# reading PN-Izh1 synapses from file %s", name.c_str());
-    FILE *f= fopen(name.c_str(),"rb");
-    name= OutDir+ toString("/gPoissonIzh_info");
-    FILE *f_info= fopen(name.c_str(),"rb");
-    name= OutDir+ toString("/gPoissonIzh_postIndInG");
-    FILE *f_postIndInG= fopen(name.c_str(),"rb");
-    name= OutDir+ toString("/gPoissonIzh_postind");
-    FILE *f_postind= fopen(name.c_str(),"rb");
-
-    fread(&gPNIzh1.connN,sizeof(unsigned int),1,f_info);
-    fprintf(stderr, "read %u times %d bytes \n", gPNIzh1.connN,sizeof(float));
-    allocateAllSparseArrays();
-
-    PNIzhNN.read_sparsesyns_par("PN", gPNIzh1, f_postind,f_postIndInG,f);
-    fclose(f);
-    fclose(f_info);
-    fclose(f_postIndInG);
-    fclose(f_postind);
-    initializeAllSparseArrays();
-    //SPARSE CONNECTIVITY END */
-
-    //DENSE CONNECTIVITY
-
-    name= OutDir+ "/gPoissonIzh_nonopt";
-    cout << "# reading PN-Izh1 synapses from file "<< name << endl;
-    FILE *f= fopen(name.c_str(),"rb");
-    PNIzhNN.read_PNIzh1syns(gPNIzh1 , f);
-    fclose(f);
-    //DENSE CONNECTIVITY END
-
-    PNIzhNN.init(which);         // this includes copying g's for the GPU version
-
-    fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
-
-    //------------------------------------------------------------------
-    // output general parameters to output file and start the simulation
-
-    fprintf(stderr, "# We are running with fixed time step %f \n", DT);
-    fprintf(stderr, "# initial wait time execution ... \n");
-
-    t= 0.0;
-    int done= 0;
-    double last_t_report=  t;
-    while (!done)
+    unsigned int sumPN = 0;
+    unsigned int sumIzh1 = 0;
+    double elapsedTime = 0.0;
     {
-//    if (which == GPU) PNIzhNN.getSpikeNumbersFromGPU();
+        //AnalogueRecorder<scalar> izhVoltage(outLabel + "_Vm", VIzh1, _NIzh);
+        TimerAccumulate timer(elapsedTime);
 
-        PNIzhNN.run(DT, which); // run next batch
+        while(t < TOTAL_TIME) {
+            stepTime();
 
-        if (which == 1) {
-#ifndef CPU_ONLY
-            //PNIzhNN.getSpikeNumbersFromGPU();
-            PNIzhNN.getSpikesFromGPU();
-            pullIzh1StateFromDevice();
-            pullPNStateFromDevice();
-#endif
+            pullVIzh1FromDevice();
+            pullPNCurrentSpikesFromDevice();
+            pullIzh1CurrentSpikesFromDevice();
+
+            // Sum spikes
+            sumPN += glbSpkCntPN[0];
+            sumIzh1 += glbSpkCntIzh1[0];
+
+            // Record voltages
+            //izhVoltage.record(t);
+
+            if(fmod(t, REPORT_TIME) < 1e-3f) {
+                std::cout << "time " << t << std::endl;
+            }
+
         }
-
-        PNIzhNN.sum_spikes();
-
-        //    PNIzhNN.output_spikes(os, which);
-        //   PNIzhNN.output_state(os, which);  // while outputting the current one ...
-        fprintf(osf, "%f ", t);
-        for(int i=0;i<10;i++) {
-            fprintf(osf, "%f ", float(VIzh1[i]));
-
-        }
-        fprintf(osf, "\n");
-        //      cudaThreadSynchronize();
-
-        // report progress
-        if (t - last_t_report >= T_REPORT_TME)
-        {
-            fprintf(stderr, "time %f \n", t);
-            last_t_report= t;
-            //PNIzhNN.output_state(os);
-        }
-        // output synapses occasionally
-        // if (synwrite) {
-        //   lastsynwrite= synwriteT;
-        //   name= toString(argv[1]) + toString(".") + toString((int) synwriteT);
-        //   name+= toString(".syn");
-        //   f= fopen(name.c_str(),"w");
-        //   PNIzhNN.write_kcdnsyns(f);
-        //   fclose(f);
-        //   synwrite= 0;
-        // }
-        // if (t - lastsynwrite >= SYN_OUT_TME) {
-        //   PNIzhNN.get_kcdnsyns();
-        //   synwrite= 1;
-        //   synwriteT= t;
-        // }
-        done= (t >= TOTAL_TME);
     }
-    //  PNIzhNN.output_state(os);
-    //    if (which == GPU) PNIzhNN.getSpikeNumbersFromGPU();
-    //    if (which == GPU) PNIzhNN.getSpikesFromGPU();
-    //    PNIzhNN.output_spikes(os, which);
-    // if (synwrite) {
-    //   lastsynwrite= t;
-    //   name= toString(argv[1]) + toString(".") + toString((int) t);
-    //   name+= toString(".syn");
-    //   f= fopen(name.c_str());
-    //   PNIzhNN.write_kcdnsyns(f);
-    // fclose(f);
-    //   synwrite= 0;
-    // }
 
-    timer.stopTimer();
-    cerr << "Output files are created under the current directory." << endl;
-    float elapsedTime= timer.getElapsedTime();
-    fprintf(timef, "%d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
-    fprintf(stdout, "%d Poisson spikes evoked spikes on %d Izhikevich neurons in %f seconds.\n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
+    //timer.stopTimer();
+    //cerr << "Output files are created under the current directory." << endl;
+    //float elapsedTime= timer.getElapsedTime();
+    //fprintf(timef, "%d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
+    std::cout << sumPN << " Poisson spikes evoked spikes on " << sumIzh1 << " Izhikevich neurons in " << elapsedTime << " seconds." << std::endl;
 
     return 0;
 }
