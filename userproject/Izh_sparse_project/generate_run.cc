@@ -79,7 +79,7 @@ CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) \
   int nTotal = atoi(argv[2]);
   int nExc = ceil((float) 4 * nTotal / 5);
   int nInh = nTotal - nExc;
-  int nConn = atoi(argv[3]);
+  int _ = atoi(argv[3]);
   float gscale = atof(argv[4]);
   string outDir = toString(argv[5]) + "_output";  
   string outDir_g = "inputfiles";  
