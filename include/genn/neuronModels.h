@@ -57,10 +57,6 @@ public:
     //! the 'apply input code' of (potentially) multiple postsynaptic input models can apply input
     virtual Models::Base::NameTypeValVec getAdditionalInputVars() const{ return {}; }
 
-    //! Is this neuron model the internal Poisson model (which requires a number of special cases)
-    //! \private
-    virtual bool isPoisson() const{ return false; }
-
     //! Does this model require auto-refractory logic?
     virtual bool isAutoRefractoryRequired() const{ return true; }
 };
@@ -291,26 +287,25 @@ public:
 /*! Poisson neurons have constant membrane potential (\c Vrest) unless they are
     activated randomly to the \c Vspike value if (t- \c SpikeTime ) > \c trefract.
 
-    It has 3 variables:
+    It has 2 variables:
 
-    - \c V - Membrane potential
-    - \c Seed - Seed for random number generation
-    - \c SpikeTime - Time at which the neuron spiked for the last time
+    - \c V - Membrane potential (mV)
+    - \c SpikeTime - Time at which the neuron spiked for the last time (ms)
 
     and 4 parameters:
 
-    - \c therate - Firing rate
-    - \c trefract - Refractory period
+    - \c trefract - Refractory period (ms)
+    - \c tspike - duration of spike (ms)
     - \c Vspike - Membrane potential at spike (mV)
     - \c Vrest - Membrane potential at rest (mV)
 
-    \note The initial values array for the `Poisson` type needs three entries
-    for `V`, `Seed` and `SpikeTime` and the parameter array needs four entries for
+    \note The initial values array for the `Poisson` type needs two entries
+    for `V`, and `SpikeTime` and the parameter array needs four entries for
     `therate`, `trefract`, `Vspike` and `Vrest`,  *in that order*.
 
     \note Internally, GeNN uses a linear approximation for the probability
     of firing a spike in a given time step of size `DT`, i.e. the
-    probability of firing is `therate` times `DT`: \f$ p = \lambda \Delta t
+    probability of firing is \lambda times `DT`: \f$ p = \lambda \Delta t
     \f$. This approximation is usually very good, especially for typical,
     quite small time steps and moderate firing rates. However, it is worth
     noting that the approximation becomes poor for very high firing rates
@@ -321,39 +316,27 @@ public:
     manifests itself in that small changes in the firing rate do not seem
     to have an effect on the behaviour of the Poisson neurons because the
     numbers are so small that only if the random number is identical 0 a
-    spike will be triggered.
-
-    \note GeNN uses a separate random number generator for each Poisson neuron.
-    The seeds (and later states) of these random number generators are stored in the `seed` variable.
-    GeNN allocates memory for these seeds/states in the generated `allocateMem()` function.
-    It is, however, currently the responsibility of the user to fill the array of seeds with actual random seeds.
-    Not doing so carries the risk that all random number generators are seeded with the same seed ("0")
-    and produce the same random numbers across neurons at each given time step.
-    When using the GPU, `seed` also must be copied to the GPU after having been initialized.*/
+    spike will be triggered.*/
 class Poisson : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::Poisson, 4, 3);
+    DECLARE_MODEL(NeuronModels::Poisson, 4, 2);
 
     SET_SIM_CODE(
-        "uint64_t theRnd;\n"
-        "if ($(V) > $(Vrest)) {\n"
-        "   $(V)= $(Vrest);\n"
+        "if(($(t) - $(spikeTime)) > $(tspike) && $(V) > $(Vrest)){\n"
+        "   $(V) = $(Vrest);\n"
         "}"
-        "else if ($(t) - $(spikeTime) > ($(trefract))) {\n"
-        "   MYRAND($(seed),theRnd);\n"
-        "   if (theRnd < *($(rates)+$(offset)+$(id))) {\n"
-        "       $(V)= $(Vspike);\n"
-        "       $(spikeTime)= $(t);\n"
+        "else if(($(t) - $(spikeTime)) > $(trefract)){\n"
+        "   if($(gennrand_uint64) < $(rates)[$(offset) + $(id)]){\n"
+        "       $(V) = $(Vspike);\n"
+        "       $(spikeTime) = $(t);\n"
         "   }\n"
         "}\n");
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(Vspike)");
 
-    SET_PARAM_NAMES({"therate", "trefract", "Vspike", "Vrest"});
-    SET_VARS({{"V", "scalar"}, {"seed", "uint64_t"}, {"spikeTime", "scalar"}});
-    SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t *"}, {"offset", "unsigned int"}});
-
-    virtual bool isPoisson() const override{ return true; }
+    SET_PARAM_NAMES({"trefract", "tspike", "Vspike", "Vrest"});
+    SET_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
+    SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t*"}, {"offset", "unsigned int"}});
 };
 
 //----------------------------------------------------------------------------
