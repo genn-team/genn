@@ -31,12 +31,6 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    // Parse command line - override to add extra parameters - remember to call superclass afterwards!
-    virtual int parseCommandLine(int argc, char **argv)
-    {
-        CLI11_PARSE(m_App, argc, argv);
-    }
-
     // Write sizes header - override to write extra parameters - remember to call superclass first!
     virtual void writeSizes(std::ofstream &sizes) const
     {
@@ -48,7 +42,18 @@ public:
         sizes << "#define _FTYPE " << "GENN_" << upperCaseScalarType << std::endl;
     }
 
+    //------------------------------------------------------------------------
     // Public API
+    //------------------------------------------------------------------------
+    int getExitCode(const CLI::ParseError &e) {
+        return m_App.exit(e);
+    }
+
+    void parseCommandLine(int argc, char **argv)
+    {
+        m_App.parse(argc, argv);
+    }
+
     int buildAndRun() const
     {
         // build it
@@ -93,9 +98,15 @@ public:
     }
 
 protected:
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
     CLI::App &getApp(){ return m_App; }
 
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
     std::string getBuildCommandUnix() const
     {
         std::string cmd = "cd model && genn-buildmodel.sh ";
@@ -160,7 +171,9 @@ private:
         }
     }
 
+    //------------------------------------------------------------------------
     // Members
+    //------------------------------------------------------------------------
     CLI::App m_App;
     bool m_Debug;
     bool m_CPUOnly;
