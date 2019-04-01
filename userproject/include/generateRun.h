@@ -9,6 +9,12 @@
 // Standard C includes
 #include <cstdlib>
 
+
+// Windows includes
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 // CLI11 includes
 #include "CLI11.hpp"
 
@@ -25,7 +31,7 @@ public:
         m_App.add_flag("--debug", m_Debug, "Whether to run in a debugger");
         m_App.add_flag("--cpu-only", m_CPUOnly, "Whether to build against single-threaded CPU backend");
         m_App.add_set("--ftype", m_ScalarType, {"float", "double"}, "What floating point type to use", true);
-        m_App.add_option("outdir", m_OutDir, "Output directory", true)->required();
+        m_App.add_option("outdir", m_OutDir, "Output directory")->required();
     }
 
     //------------------------------------------------------------------------
