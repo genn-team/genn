@@ -54,7 +54,7 @@ public:
         m_App.parse(argc, argv);
     }
 
-    int buildAndRun() const
+    int buildAndRun(std::initializer_list<std::string> runParams = {}) const
     {
         // build it
 #ifdef _WIN32
@@ -71,7 +71,7 @@ public:
             return EXIT_FAILURE;
         }
 
-  // create output directory
+        // create output directory
 #ifdef _WIN32
         _mkdir(m_OutDir.c_str());
 #else // UNIX
@@ -83,10 +83,18 @@ public:
         // run it!
         std::cout << "running test..." << std::endl;
 #ifdef _WIN32
-        const std::string runCmd = getRunCommandWindows();
+        std::string runCmd = getRunCommandWindows();
 #else // UNIX
-        const std::string runCmd = getRunCommandUnix();
+        std::string runCmd = getRunCommandUnix();
 #endif
+        // Add out directory parameter
+        runCmd + " " + m_OutDir;
+
+        // Add additional parameters
+        for(const auto &p: runParams) {
+            runCmd + " " + p;
+        }
+
         const int runRetVal = system(runCmd.c_str());
         if (runRetVal != 0){
             std::cerr << "ERROR: Following call failed with status " << runRetVal << ":" << std::endl << runCmd << std::endl;
@@ -154,20 +162,20 @@ private:
     {
         // **TODO** cpu-only debugger
         if (m_Debug) {
-            return "cd model && cuda-gdb -tui --args " + m_ProjectName + " " + m_OutDir;
+            return "cd model && gdb -tui --args " + m_ProjectName;
         }
         else {
-            return "cd model && ./" + m_ProjectName + " " + m_OutDir;
+            return "cd model && ./" + m_ProjectName;
         }
     }
 
     std::string getRunCommandWindows() const
     {
         if (m_Debug) {
-            return "cd model && devenv /debugexe " + m_ProjectName + "_Debug.exe " + m_OutDir;
+            return "cd model && devenv /debugexe " + m_ProjectName + "_Debug.exe";
         }
         else {
-            return "cd model && " + m_ProjectName + "_Release.exe " + m_OutDir;
+            return "cd model && " + m_ProjectName + "_Release.exe";
         }
     }
 
