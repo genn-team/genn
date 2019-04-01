@@ -31,7 +31,7 @@ struct FunctionTemplate
     // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
     FunctionTemplate operator = (const FunctionTemplate &o)
     {
-        return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
+        return FunctionTemplate{o.genericName, o.numArguments, o.functionTemplate};
     }
 
     //! Generic name used to refer to function in user code
@@ -41,10 +41,7 @@ struct FunctionTemplate
     const unsigned int numArguments;
 
     //! The function template (for use with ::functionSubstitute) used when model uses double precision
-    const std::string doublePrecisionTemplate;
-
-    //! The function template (for use with ::functionSubstitute) used when model uses single precision
-    const std::string singlePrecisionTemplate;
+    const std::string functionTemplate;
 };
 
 //--------------------------------------------------------------------------
@@ -220,12 +217,6 @@ inline void value_substitutions(std::string &code, const std::vector<std::string
 {
     value_substitutions(code, names.cbegin(), names.cend(), values, ext);
 }
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of function substitutions in code snipped
-//--------------------------------------------------------------------------
-void functionSubstitutions(std::string &code, const std::string &ftype,
-                           const std::vector<FunctionTemplate> functions);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).

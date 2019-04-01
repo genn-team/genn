@@ -24,11 +24,18 @@
 namespace
 {
 const std::vector<CodeGenerator::FunctionTemplate> cudaFunctions = {
-    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
-    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
-    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
+    {"gennrand_uniform", 0, "curand_uniform($(rng))"},
+    {"gennrand_uniform_double", 0, "curand_uniform_double($(rng))"},
+    {"gennrand_normal", 0, "curand_normal($(rng))"},
+    {"gennrand_normal_double", 0, "curand_normal_double($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))"},
+    {"gennrand_exponential_double", 0, "exponentialDistDouble($(rng))"},
+    {"gennrand_log_normal", 2, "curand_log_normal_float($(rng), $(0), $(1))"},
+    {"gennrand_log_normal_double", 2, "curand_log_normal_double($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDistFloat($(rng), $(0))"},
+    {"gennrand_gamma_double", 1, "gammaDistDouble($(rng), $(0))"},
+    {"gennrand_uint32", 0, "curand($(rng)"},
+    {"gennrand_uint64", 0, "(((uint64_t)curand($(rng))) << 32 | curand($(rng)))"}
 };
 
 //--------------------------------------------------------------------------
