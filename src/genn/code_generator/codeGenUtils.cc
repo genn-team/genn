@@ -375,19 +375,6 @@ void functionSubstitute(std::string &code, const std::string &funcName,
 }
 
 //--------------------------------------------------------------------------
-//! \brief This function performs a list of function substitutions in code snipped
-//--------------------------------------------------------------------------
-void functionSubstitutions(std::string &code, const std::string &ftype,
-                           const std::vector<FunctionTemplate> functions)
-{
-    // Substitute generic GeNN random functions for desired destination type
-    for(const auto &f : functions) {
-        const std::string &funcTemplate = (ftype == "double") ? f.doublePrecisionTemplate : f.singlePrecisionTemplate;
-        functionSubstitute(code, f.genericName, f.numArguments, funcTemplate);
-    }
-}
-
-//--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
  */
 //--------------------------------------------------------------------------
@@ -526,11 +513,6 @@ void preNeuronSubstitutionsInSynapticCode(
     const std::string &preVarSuffix)     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 {
     // presynaptic neuron variables, parameters, and global parameters
-    const auto *srcNeuronModel = sg.getSrcNeuronGroup()->getNeuronModel();
-    if (srcNeuronModel->isPoisson()) {
-        substitute(wCode, "$(V_pre)", std::to_string(sg.getSrcNeuronGroup()->getParams()[2]));
-    }
-
     ::neuronSubstitutionsInSynapticCode(wCode, sg.getSrcNeuronGroup(), offset, axonalDelayOffset, preIdx, "_pre", devPrefix, preVarPrefix, preVarSuffix);
 }
 
