@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generate_poisson_izh_runner
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generate_one_comp_runner", "OneComp_project\generate_one_comp_runner.vcxproj", "{12F3A353-262D-4954-A9D9-F9E1F919D38B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generate_mbody1_runner", "MBody1_project\generate_mbody1_runner.vcxproj", "{66ED1BD2-790A-4A5B-9058-7C59E1694A5A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,10 @@ Global
 		{12F3A353-262D-4954-A9D9-F9E1F919D38B}.Debug|x64.Build.0 = Debug|x64
 		{12F3A353-262D-4954-A9D9-F9E1F919D38B}.Release|x64.ActiveCfg = Release|x64
 		{12F3A353-262D-4954-A9D9-F9E1F919D38B}.Release|x64.Build.0 = Release|x64
+		{66ED1BD2-790A-4A5B-9058-7C59E1694A5A}.Debug|x64.ActiveCfg = Debug|x64
+		{66ED1BD2-790A-4A5B-9058-7C59E1694A5A}.Debug|x64.Build.0 = Debug|x64
+		{66ED1BD2-790A-4A5B-9058-7C59E1694A5A}.Release|x64.ActiveCfg = Release|x64
+		{66ED1BD2-790A-4A5B-9058-7C59E1694A5A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
