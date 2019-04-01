@@ -82,14 +82,13 @@ void modelDefinition(ModelSpec &model)
 
 
     NeuronModels::Poisson::ParamValues myPOI_p(
-        0.1,    // 0 - firing rate
-        2.5,    // 1 - refratory period
+        2.5,    // 0 - refratory period
+        1.0,    // 1 - spike duration
         20.0,   // 2 - Vspike
         -60.0); // 3 - Vrest
 
     NeuronModels::Poisson::VarValues myPOI_ini(
         -60.0,  // 0 - V
-        0,      // 1 - seed
         -10.0); // 2 - SpikeTime
 
     NeuronModels::TraubMiles::ParamValues stdTM_p(
@@ -144,10 +143,10 @@ void modelDefinition(ModelSpec &model)
         50.0);  // 1 - Vslope: Activation slope of graded release
 
     WeightUpdateModels::StaticGraded::VarValues myLHIKC_ini(
-        1.0/_NLHI); // 0 - g: initial synaptic conductance
+        1.0 / _NLHI); // 0 - g: initial synaptic conductance
 
     PostsynapticModels::ExpCond::ParamValues postExpLHIKC(
-        1.5, //3.0, // 0 - tau_S: decay time constant for S [ms]
+        1.5,        // 0 - tau_S: decay time constant for S [ms]
         -92.0);     // 1 - Erev: Reversal potential
 
     WeightUpdateModels::PiecewiseSTDP::ParamValues myKCDN_p(
@@ -168,8 +167,8 @@ void modelDefinition(ModelSpec &model)
         1e-20);                                                                     // 2 - min
 
     WeightUpdateModels::PiecewiseSTDP::VarValues myKCDN_ini(
-        initVar<GaussianMin>(myKCDN_p), // 0 - g: synaptic conductance
-        uninitialisedVar());            // 1 - graw: raw synaptic conductance
+        initVar<GaussianMin>(myKCDN_gsyn_p),    // 0 - g: synaptic conductance
+        uninitialisedVar());                    // 1 - graw: raw synaptic conductance
 
     PostsynapticModels::ExpCond::ParamValues postExpKCDN(
         5.0,    // 0 - tau_S: decay time constant for S [ms]
@@ -180,7 +179,7 @@ void modelDefinition(ModelSpec &model)
         50.0);  // 1 - Vslope: Activation slope of graded release
 
     WeightUpdateModels::StaticGraded::VarValues myDNDN_ini(
-        5.0/_NLB);  // 0 - g: synaptic conductance
+        5.0 / _NDN);  // 0 - g: synaptic conductance
 
     PostsynapticModels::ExpCond::ParamValues postExpDNDN(
         2.5,    // 0 - tau_S: decay time constant for S [ms]
@@ -191,7 +190,7 @@ void modelDefinition(ModelSpec &model)
     model.addNeuronPopulation<NeuronModels::Poisson>("PN", _NAL, myPOI_p, myPOI_ini);
     model.addNeuronPopulation<NeuronModels::TraubMiles>("KC", _NKC, stdTM_p, stdTM_ini);
     model.addNeuronPopulation<NeuronModels::TraubMiles>("LHI", _NLHI, stdTM_p, stdTM_ini);
-    model.addNeuronPopulation<NeuronModels::TraubMiles>("DN", _NLB, stdTM_p, stdTM_ini);
+    model.addNeuronPopulation<NeuronModels::TraubMiles>("DN", _NDN, stdTM_p, stdTM_ini);
 
 #ifdef DELAYED_SYNAPSES
     const unsigned int kcDNDelaySteps = 5;

@@ -34,10 +34,9 @@ public:
     // Write sizes header - override to write extra parameters - remember to call superclass first!
     virtual void writeSizes(std::ofstream &sizes) const
     {
-        std::cout << "written:" << m_ScalarType << std::endl;
         std::string upperCaseScalarType;
         std::transform(m_ScalarType.begin(), m_ScalarType.end(), std::back_inserter(upperCaseScalarType), ::toupper);
-        std::cout << "uppered:" << upperCaseScalarType << std::endl;
+
         sizes << "#pragma once" << std::endl;
         sizes << "#define _FTYPE " << "GENN_" << upperCaseScalarType << std::endl;
     }
