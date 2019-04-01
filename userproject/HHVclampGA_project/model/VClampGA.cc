@@ -17,22 +17,51 @@
 \brief Main entry point for the GeNN project demonstrating realtime fitting of a neuron with a GA running mostly on the GPU. 
 */
 //--------------------------------------------------------------------------
-
-#include "modelSpec.h"
-#include "hr_time.h"
-#include "stringUtils.h"
-#include "utils.h" // for CHECK_CUDA_ERRORS
+#include <iostream>
+#include <random>
 
 #include "HHVClamp_CODE/definitions.h"
 
-#include "randomGen.h"
-#include "gauss.h"
-
 #include "helper.h"
 
-//#define DEBUG_PROCREATE
 #include "GA.h"
 
+namespace
+{
+const double limit[7][2]= {{1.0, 200.0}, // gNa
+                           {0.0, 100.0}, // ENa
+                           {1.0, 100.0}, // gKd
+                           {-100.0, -20.0}, // EKd
+                           {1.0, 50.0}, // gleak
+                           {-100.0, -20.0}, // Eleak
+                           {1e-1, 10.0}}; // C
+
+void truevar_init()
+{
+    for (int n= 0; n < NPOP; n++) {
+        VHH[n]= initialHHValues[0];
+        mHH[n]= initialHHValues[1];
+        hHH[n]= initialHHValues[2];
+        nHH[n]= initialHHValues[3];
+        errHH[n]= 0.0;
+    }
+
+    pushVHHToDevice();
+    pushmHHToDevice();
+    pushhHHToDevice();
+    pushnHHToDevice();
+    pusherrHHToDevice();
+
+}
+
+void truevar_initexpHH()
+{
+    Vexp= initialHHValues[0];
+    mexp= initialHHValues[1];
+    hexp= initialHHValues[2];
+    nexp= initialHHValues[3];
+}
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 /*! \brief This function is the entry point for running the project
@@ -41,34 +70,40 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4)
+    if (argc != 3)
     {
-        fprintf(stderr, "usage: VClampGA <basename> <CPU=0, GPU=1> <protocol> \n");
+        fprintf(stderr, "usage: VClampGA <basename> <protocol> \n");
         return 1;
     }
-    int which= atoi(argv[2]);
-    int protocol= atoi(argv[3]);
-    string OutDir = toString(argv[1]) +"_output";
-    string name;
-    name= OutDir+ "/"+ toString(argv[1]) + toString(".time");
-    FILE *timef= fopen(name.c_str(),"a");
-
+    int protocol= atoi(argv[2]);
+    std::string OutDir = std::string(argv[1]) +"_output";
+    std::string name;
+    FILE *timef= fopen((OutDir+ "/"+ argv[1] + ".time").c_str(),"a");
     write_para();
+    FILE *osf= fopen((OutDir+ "/"+ argv[1] + ".out.I").c_str(),"w");
+    FILE *osb= fopen((OutDir+ "/"+ argv[1] + ".out.best").c_str(),"w");
 
-    name= OutDir+ "/"+ toString(argv[1]) + toString(".out.I");
-    FILE *osf= fopen(name.c_str(),"w");
-    name= OutDir+ "/"+ toString(argv[1]) + toString(".out.best");
-    FILE *osb= fopen(name.c_str(),"w");
+    std::mt19937 rng;
+    std::uniform_real_distribution<double> uniform(0.0, 1.0);
 
     //-----------------------------------------------------------------
     // build the neuronal circuitry
     allocateMem();
     initialize();
 
-    randomGen R;
-    randomGauss RG;
-    var_init_fullrange(R); // initialize uniformly on large range
-    initexpHH();
+
+    for (int n= 0; n < NPOP; n++) {
+        gNaHH[n]= limit[0][0]+uniform(rng)*(limit[0][1]-limit[0][0]); // uniform in allowed interval
+        ENaHH[n]= limit[1][0]+uniform(rng)*(limit[1][1]-limit[1][0]); // uniform in allowed interval
+        gKHH[n]= limit[2][0]+uniform(rng)*(limit[2][1]-limit[2][0]); // uniform in allowed interval
+        EKHH[n]= limit[3][0]+uniform(rng)*(limit[3][1]-limit[3][0]); // uniform in allowed interval
+        glHH[n]= limit[4][0]+uniform(rng)*(limit[4][1]-limit[4][0]); // uniform in allowed interval
+        ElHH[n]= limit[5][0]+uniform(rng)*(limit[5][1]-limit[5][0]); // uniform in allowed interval
+        CHH[n]= limit[6][0]+uniform(rng)*(limit[6][1]-limit[6][0]); // uniform in allowed interval
+    }
+
+
+    initializeSparse();
     fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
 
     double *theExp_p[7];
@@ -85,45 +120,30 @@ int main(int argc, char *argv[])
 
     fprintf(stderr, "# We are running with fixed time step %f \n", DT);
 
-    int done= 0, sn;
-    unsigned int VSize= NPOP*sizeof(scalar);
     double oldt;
     inputSpec I;
     initI(I);
     stepVGHH= I.baseV;
-    int iTN= (int) (I.t/DT);
-    CStopWatch timer;
-    timer.startTimer();
-    t= 0.0;
-    while (!done)
-    {
+    const int iTN= (int) (I.t/DT);
+    //CStopWatch timer;
+    //timer.startTimer();
+    while (t < TOTALT) {
         truevar_init();
         truevar_initexpHH();
-        sn= 0;
+        int sn= 0;
         for (int i= 0; i < iTN; i++) {
             oldt= t;
-            runexpHH(t);
-            if (which == GPU) {
-#ifndef CPU_ONLY
-                stepTimeGPU();
-#endif
-            }
-            else {
-                stepTimeCPU();
-            }
+            runexpHH();
+            stepTime();
             fprintf(osf,"%f %f \n", t, stepVGHH);
             if ((sn < I.N) && (oldt < I.st[sn]) && (t >= I.st[sn])) {
                 stepVGHH= I.V[sn];
                 sn++;
             }
         }
-#ifndef CPU_ONLY
-        if (which == GPU) {
-            CHECK_CUDA_ERRORS(cudaMemcpy(errHH, d_errHH, VSize, cudaMemcpyDeviceToHost));
-        }
-    #endif
+        pullerrHHFromDevice();
         fprintf(osb, "%f %f %f %f %f %f %f %f ", t, gNaexp, ENaexp, gKexp, EKexp, glexp, Elexp, Cexp);
-        procreatePop(osb, RG);
+        procreatePop(osb, rng);
         if (protocol >= 0) {
             if (protocol < 7) {
                 if (protocol%2 == 0) {
@@ -136,21 +156,20 @@ int main(int argc, char *argv[])
                 for (int pn= 0; pn < 7; pn++) {
                     double fac;
                     if (pn%2 == 0) {
-                        fac= 1+0.005*RG.n();
+                        fac= 1+0.005*uniform(rng);
                         *(theExp_p[pn])*= fac;
                     }
                     else {
-                        fac= 0.04*RG.n();
+                        fac= 0.04*uniform(rng);
                         *(theExp_p[pn])+= fac;
                     }
                 }
             }
         }
-        cerr << "% " << t << endl;
-        done= (t >= TOTALT);
+        std::cerr << "% " << t << std::endl;
     }
-    timer.stopTimer();
-    fprintf(timef,"%f \n",timer.getElapsedTime());
+    //timer.stopTimer();
+    //fprintf(timef,"%f \n",timer.getElapsedTime());
     // close files
     fclose(osf);
     fclose(timef);

@@ -12,18 +12,23 @@
 --------------------------------------------------------------------------*/
 #pragma once
 
+#include <ostream>
 #include <vector>
+
+#include <cassert>
+#include <cmath>
 
 #include "HHNeuronParameters.h"
 #include "HHVClampParameters.h"
 
-typedef struct {
+struct inputSpec
+{
     double t;
     double baseV;
     int N;
-    vector<double> st;
-    vector<double> V;
-} inputSpec;
+    std::vector<double> st;
+    std::vector<double> V;
+};
 
 double sigGNa= 0.1;
 double sigENa= 10.0;
@@ -33,7 +38,7 @@ double sigGl= 0.1;
 double sigEl= 10.0;
 double sigC= 0.1;
 
-ostream &operator<<(ostream &os, inputSpec &I)
+std::ostream &operator<<(std::ostream &os, inputSpec &I)
 {
     os << " " << I.t << "  ";
     os << " " << I.baseV << "    ";
@@ -50,83 +55,6 @@ void write_para()
   fprintf(stderr, "# DT %f \n", DT);
 }
 
-const double limit[7][2]= {{1.0, 200.0}, // gNa
-                           {0.0, 100.0}, // ENa
-                           {1.0, 100.0}, // gKd
-                           {-100.0, -20.0}, // EKd
-                           {1.0, 50.0}, // gleak
-                           {-100.0, -20.0}, // Eleak
-                           {1e-1, 10.0}}; // C
-
-
-void single_var_init_fullrange(int n, randomGen &R)
-{
-    gNaHH[n]= limit[0][0]+R.n()*(limit[0][1]-limit[0][0]); // uniform in allowed interval
-    ENaHH[n]= limit[1][0]+R.n()*(limit[1][1]-limit[1][0]); // uniform in allowed interval
-    gKHH[n]= limit[2][0]+R.n()*(limit[2][1]-limit[2][0]); // uniform in allowed interval
-    EKHH[n]= limit[3][0]+R.n()*(limit[3][1]-limit[3][0]); // uniform in allowed interval
-    glHH[n]= limit[4][0]+R.n()*(limit[4][1]-limit[4][0]); // uniform in allowed interval
-    ElHH[n]= limit[5][0]+R.n()*(limit[5][1]-limit[5][0]); // uniform in allowed interval
-    CHH[n]= limit[6][0]+R.n()*(limit[6][1]-limit[6][0]); // uniform in allowed interval
-}
-
-void single_var_reinit(int n, double fac, randomGauss &RG)
-{
-    gNaHH[n]*= (1.0+fac*sigGNa*RG.n()); // multiplicative Gaussian noise
-    ENaHH[n]+= fac*sigENa*RG.n(); // additive Gaussian noise
-    gKHH[n]*= (1.0+fac*sigGK*RG.n()); // multiplicative Gaussian noise
-    EKHH[n]+= fac*sigEK*RG.n(); // additive Gaussian noise
-    glHH[n]*= (1.0+fac*sigGl*RG.n()); // multiplicative Gaussian noise
-    ElHH[n]+= fac*sigEl*RG.n(); // additive Gaussian noise
-    CHH[n]*= (1.0+fac*sigC*RG.n()); // multiplicative Gaussian noise
-}
-
-void copy_var(int src, int trg)
-{
-    gNaHH[trg]= gNaHH[src];
-    ENaHH[trg]= ENaHH[src];
-    gKHH[trg]= gKHH[src];
-    EKHH[trg]=EKHH[src];
-    glHH[trg]= glHH[src];
-    ElHH[trg]= ElHH[src];
-    CHH[trg]= CHH[src];
-}
-
-void var_init_fullrange(randomGen &R)
-{
-    for (int n= 0; n < NPOP; n++) {
-        single_var_init_fullrange(n, R);
-    }
-#ifndef CPU_ONLY
-    copyStateToDevice();
-#endif
-}
- 
-void var_reinit(double fac, randomGauss &RG)
-{
-    // add noise to the parameters
-    for (int n= 0; n < NPOP; n++) {
-        single_var_reinit(n, fac, RG);
-    }
-#ifndef CPU_ONLY
-    copyStateToDevice();
-#endif
-}
-
-void truevar_init()
-{
-    for (int n= 0; n < NPOP; n++) {
-        VHH[n]= initialHHValues[0];
-        mHH[n]= initialHHValues[1];
-        hHH[n]= initialHHValues[2];
-        nHH[n]= initialHHValues[3];
-        errHH[n]= 0.0;
-    }
-#ifndef CPU_ONLY
-    copyStateToDevice();
-#endif  
-}
-
 
 double Vexp;
 double mexp;
@@ -140,31 +68,8 @@ double glexp;
 double Elexp;
 double Cexp;
 
-void initexpHH()
-{
-    Vexp= initialHHValues[0];
-    mexp= initialHHValues[1];
-    hexp= initialHHValues[2];
-    nexp= initialHHValues[3];
-    gNaexp= initialHHValues[4];
-    ENaexp= initialHHValues[5];
-    gKexp= initialHHValues[6];
-    EKexp= initialHHValues[7];
-    glexp= initialHHValues[8];
-    Elexp= initialHHValues[9];
-    Cexp= initialHHValues[10];
-}
 
-void truevar_initexpHH()
-{
-    Vexp= initialHHValues[0];
-    mexp= initialHHValues[1];
-    hexp= initialHHValues[2];
-    nexp= initialHHValues[3];
-}
-
-
-void runexpHH(float t)
+void runexpHH()
 {
     // calculate membrane potential
     double Imem;

@@ -81,20 +81,15 @@ MyHH::VarValues myHH_ini(
 
 void modelDefinition(ModelSpec &model) 
 {
-  initGeNN();
-
 #ifdef DEBUG
-  GENN_PREFERENCES::debugCode = true;
+    GENN_PREFERENCES.debugCode = true;
 #else
-  GENN_PREFERENCES::optimizeCode = true;
+    GENN_PREFERENCES.optimizeCode = true;
 #endif // DEBUG
 
-  model.setName("HHVClamp");
-  model.setDT(0.25);
-  model.setPrecision(GENN_FLOAT);
-#ifdef fixGPU
-  model.setGPUDevice(fixGPU);
-#endif
-  model.addNeuronPopulation<MyHH>("HH", NPOP, {}, myHH_ini);
-  model.finalize();
+    model.setName("HHVClamp");
+    model.setDT(0.25);
+    model.setPrecision(_FTYPE);
+
+    model.addNeuronPopulation<MyHH>("HH", NPOP, {}, myHH_ini);
 }
