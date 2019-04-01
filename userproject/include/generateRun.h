@@ -154,20 +154,20 @@ private:
     {
         // **TODO** cpu-only debugger
         if (m_Debug) {
-            return "cd model && cuda-gdb -tui --args OneComp " + m_OutDir;
+            return "cd model && cuda-gdb -tui --args " + m_ProjectName + " " + m_OutDir;
         }
         else {
-            return "cd model && ./OneComp " + m_OutDir;
+            return "cd model && ./" + m_ProjectName + " " + m_OutDir;
         }
     }
 
     std::string getRunCommandWindows() const
     {
         if (m_Debug) {
-            return "cd model && devenv /debugexe OneComp_Debug.exe " + m_OutDir;
+            return "cd model && devenv /debugexe " + m_ProjectName + "_Debug.exe " + m_OutDir;
         }
         else {
-            return "cd model && OneComp_Release.exe " + m_OutDir;
+            return "cd model && " + m_ProjectName + "_Release.exe " + m_OutDir;
         }
     }
 
