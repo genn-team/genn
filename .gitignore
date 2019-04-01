@@ -15,10 +15,12 @@
 **/*.sdf
 **/*.vcxproj.user
 **/*.opensdf
+**/x64
+**/.vs
+**/*.ipdb
+**/*.iobj
 
 /lib
 /documentation/
 /build/
 /pygenn.egg-info/
-/x64/
-/.vs/

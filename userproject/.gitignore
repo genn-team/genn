@@ -15,9 +15,5 @@
 
 
 # Visual studio intermediate directories and files
-**/x64
-**/.vs
 **/runner_Release.*
 **/runner_Debug.*
-**/*.ipdb
-**/*.iobj

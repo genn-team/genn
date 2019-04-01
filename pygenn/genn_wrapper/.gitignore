@@ -8,3 +8,7 @@
 # Ignore libraries
 *.so
 *.py
+*.pyd
+*.lib
+*.exp
+*.dll
