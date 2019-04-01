@@ -41,7 +41,7 @@ void modelDefinition(ModelSpec &model)
     model.setName("OneComp");
     model.setDT(1.0);
 
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NC1, exIzh_p, exIzh_ini);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NN, exIzh_p, exIzh_ini);
     model.addCurrentSource<CurrentSourceModels::DC>("Curr1", "Izh1",
                                                     exIzh_curr_p, {});
     model.setPrecision(_FTYPE);

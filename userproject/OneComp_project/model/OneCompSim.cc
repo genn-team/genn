@@ -14,8 +14,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "../include/analogue_recorder.h"
-#include "../include/timer.h"
+// Userproject includes
+#include "analogue_recorder.h"
+#include "timer.h"
 
 #include "OneComp_CODE/definitions.h"
 
@@ -47,7 +48,7 @@ int main(int argc, char *argv[])
     std::cerr << "# neuronal circuitry built, start computation ..." << std::endl;
 
     {
-        AnalogueRecorder<scalar> izhVoltage(outLabel + "_Vm", VIzh1, _NC1);
+        AnalogueRecorder<scalar> izhVoltage(outLabel + "_Vm", VIzh1, _NN);
         Timer timer("# done in ", outLabel + "_time");
 
         while(t < TOTAL_TIME) {
