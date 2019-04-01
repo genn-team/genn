@@ -14,7 +14,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "../include/timer.h"
+// Userproject includes
+#include "timer.h"
 
 #include "PoissonIzh_CODE/definitions.h"
 
