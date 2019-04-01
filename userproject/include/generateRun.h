@@ -93,11 +93,11 @@ public:
         std::string runCmd = getRunCommandUnix();
 #endif
         // Add out directory parameter
-        runCmd + " " + m_OutDir;
+        runCmd += (" " + m_OutDir);
 
         // Add additional parameters
         for(const auto &p: runParams) {
-            runCmd + " " + p;
+            runCmd += (" " + p);
         }
 
         const int runRetVal = system(runCmd.c_str());
