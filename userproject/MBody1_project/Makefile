@@ -1,12 +1,15 @@
-GENERATED_CODE_DIR	:=MBody1_CODE
-CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra
+CXXFLAGS+=-std=c++11 -I../include -MMD -MP
 
-.PHONY: all clean generated_code
+.PHONY: all clean
 
-all: MBody1
+all: generate_run
 
-MBody1: MBody1Sim.cc generated_code
-	$(CXX) $(CXXFLAGS)  MBody1Sim.cc -o MBody1 -L$(GENERATED_CODE_DIR) -lrunner -Wl,-rpath=$(GENERATED_CODE_DIR)
+-include generate_run.d
 
-generated_code:
-	$(MAKE) -C $(GENERATED_CODE_DIR)
+generate_run: generate_run.cc generate_run.d
+	$(CXX) generate_run.cc $(CXXFLAGS) -o generate_run
+
+%.d: ;
+
+clean:
+	rm -f generate_run generate_run.d
