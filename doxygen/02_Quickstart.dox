@@ -140,23 +140,14 @@ In more detail, the GeNN workflow consists of:
    in conjunction with the user-provided model description `model/MBody1.cc`.
    It then executes the GeNN code generator to generate the complete model
    simulation code for the model.
-3. Provide a build script to compile the generated model simulation and the user side code into a simulator executable (in the case of the MBody1 example this consists of two files ``classol_sim.cc`` and ``map_classol.cc``).
-    On Linux or Mac this typically consists of a GNU makefile:
+3. Provide a build script to compile the generated model simulation and the user side code into a simulator executable (in the case of the MBody1 example this consists the file ``MBody1Sim.cc``).
+    On Linux or Mac a suitable GNU makefile can be created by running:
     \code
-    EXECUTABLE      := classol_sim
-    SOURCES         := classol_sim.cc map_classol.cc
-    include $(GENN_PATH)/userproject/include/makefile_common_gnu.mk
+    genn-create-user-project.sh MBody1 MBody1Sim.cc
     \endcode
-    And on Windows an MSBuild script:
+    And on Windows an MSBuild project can be created by running:
     \code
-    <?xml version="1.0" encoding="utf-8"?>
-    <Project DefaultTargets="Build"  xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Import Project="MBody1_CODE\generated_code.props" />    
-    <ItemGroup>
-        <ClCompile Include="classol_sim.cc" />
-        <ClCompile Include="map_classol.cc" />
-    </ItemGroup>
-    </Project>
+    genn-create-user-project.bat MBody1 MBody1Sim.cc
     \endcode
 4. Compile the simulator executable by invoking GNU make on Linux or Mac:
    \code
@@ -164,19 +155,11 @@ In more detail, the GeNN workflow consists of:
    \endcode
    or MSbuild on Windows:
    \code
-   msbuild MBody1.vcxproj /p:Configuration=Release
-   \endcode
-   If you don't have an NVIDIA GPU and are running GeNN in CPU_ONLY mode, you should compile the simulator by passing the following options to GNU make on Linux or Mac:
-   \code
-   make clean all CPU_ONLY=1
-   \endcode
-   or, on Windows, by selecting a CPU_ONLY MSBuild configuration:
-   \code
-   msbuild MBody1.vcxproj /p:Configuration=Release_CPU_ONLY
+   msbuild MBody1.sln /t:MBody1 /p:Configuration=Release
    \endcode
     
 5. Finally, run the resulting stand-alone simulator executable. In the
-   MBody1 example, this is called `classol_sim` on Linux and `MBody1.exe` on Windows.
+   MBody1 example, this is called `MBody1` on Linux and `MBody1.exe` on Windows.
 
 \section ownmodel Defining a New Model in GeNN
 According to the work flow outlined above, there are several steps to be
@@ -241,11 +224,10 @@ completed to define a neuronal network model.
    Manual\endlink.
 	
 3. The programmer defines their own "user-side" modeling code similar to
-   the code in `userproject/MBody1_project/model/map_classol.*` and
-   `userproject/MBody1_project/model/classol_sim.*`. In this code,
+   the code in `userproject/MBody1_project/model/MBody1Sim.cc`. In this code,
 
-   a) They define the connectivity matrices between neuron groups. (In
-      the MBody1 example those are read from files). Refer to the \ref subsect34 section for the required format of
+   a) They manually define the connectivity matrices between neuron groups. 
+      Refer to the \ref subsect34 section for the required format of
       connectivity matrices for dense or sparse connectivities.
 
    b) They define input patterns (e.g. for Poisson neurons like in the
@@ -256,21 +238,8 @@ completed to define a neuronal network model.
       applied homogeneously to every individual neuron or synapse in each
       of the neuron or synapse groups. 
 
-   c) They use `stepTimeGPU(...);` to run one time step on the GPU or
-      `stepTimeCPU(...);` to run one on the CPU.
-      \note
-      Both GPU and CPU versions are always compiled, unless `-c` is used with genn-buildmodel to build a CPU-only model or the model uses features not supported by the CPU simulator.
-      However, mixing CPU and GPU execution does not make too much
-      sense. Among other things, The CPU version uses the same host side
-      memory where to results from the GPU version are copied, which would
-      lead to collisions between what is calculated on the CPU and on the
-      GPU (see next point). However, in certain circumstances, expert users
-      may want to split the calculation and calculate parts (e.g. neurons)
-      on the GPU and parts (e.g. synapses) on the CPU. In such cases the
-      fundamental kernel and function calls contained in `stepTimeXXX` need
-      to be used and appropriate copies of the data from the CPU to the
-      GPU and vice versa need to be performed.
-
+   c) They use `stepTime();` to run one time step on either the CPU or GPU depending on the options passed to genn-buildmodel.
+    
    d) They use functions like `copyStateFromDevice()` etc to transfer the
       results from GPU calculations to the main memory of the host computer
       for further processing.

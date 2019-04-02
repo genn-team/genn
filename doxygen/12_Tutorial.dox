@@ -34,12 +34,6 @@ In order to allow GeNN to better optimise the generated code we also provide a f
 In this case each row always contains only one synapse but, when more complex connectivity is used, the number of neurons in the pre and postsynaptic population as well as any parameters used to configure the snippet can be accessed from this function.
 \note When defining GeNN code strings, the \$(VariableName) syntax is used to refer to variables provided by GeNN and the \$(FunctionName, Parameter1,...) syntax is used to call functions provided by GeNN.
 
-Because we want to use the GPU to run this initialisation code we, once again, need to override some options:
-\code
-GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_DEVICE_INIT_DEVICE;
-\endcode
-The ``defaultSparseConnectivityMode`` option controls sparse connectivity will be initialised. The ``VarMode::LOC_DEVICE_INIT_DEVICE`` setting means that initialisation will be performed on the GPU and no host memory is allocated to store a copy of the connectivity. This setting should generally be the default for new models, but section \ref sect_sparse_connect_init_modes outlines the full range of options and shows how you can control this at for each connection.
-
 \section addSynapse Adding Synaptic connections
 Now we need additional initial values and parameters for the synapse and post-synaptic models. We will use the standard WeightUpdateModels::StaticPulse weight update model and PostsynapticModels::ExpCond post-synaptic model. They need the following initial variables and parameters:
 \code
@@ -76,10 +70,6 @@ The addSynapsePopulation parameters are
 \arg connectivityInitialiser snippet and any paramaters (in this case there are none) used to initialise the synapse population's sparse connectivity.
 
 Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself. 
-As always, the `modelDefinition` function ends on 
-\code
-  model.finalize();
-\endcode 
 At this point our model definition file `tenHHRingModel.cc` should look like this
 \code
 // Model definition file tenHHRing.cc
@@ -98,12 +88,7 @@ IMPLEMENT_SNIPPET(Ring);
 
 void modelDefinition(NNmodel &model)
 {
-    // Settings
-    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
-    GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_DEVICE_INIT_DEVICE;
-    
     // definition of tenHHRing
-    initGeNN();
     model.setDT(0.1);
     model.setName("tenHHRing");
 
@@ -137,8 +122,6 @@ void modelDefinition(NNmodel &model)
         {}, s_ini,
         ps_p, {},
         initConnectivity<Ring>());
-        
-    model.finalize();
 }
 \endcode
 
@@ -157,9 +140,9 @@ Now we can open the `tenHHRingSimulation.cc` file and update the file name of th
 
 Additionally, we need to add a call to a second initialisation function to ``main()`` after we call `initialize()`:
 \code
-inittenHHRing();
+initializeSparse();
 \endcode
-This initializes any variables associated with the sparse connectivity we have added.
+This initializes any variables associated with the sparse connectivity we have added (and will also copy any manually initialised variables to the GPU).
 Finally, after adjusting the GNUmakefile or MSBuild script to point to ``tenHHRingSimulation.cc`` rather than ``tenHHSimulation.cc``, we can build and run our new simulator in the same way we did in \ref Tutorial1.
 However, even after all our hard work, if we plot the content of the first column against the subsequent 10 columns of `tenHHexample.V.dat` it looks very similar to the plot we obtained at the end of \ref Tutorial1.
 \image html tenHHRingexample1.png
@@ -203,9 +186,7 @@ and finally inject a spike in the first timestep (in the same way that the `t` v
 if(iT == 0) {
     spikeCount_Stim = 1;
     spike_Stim[0] = 0;
-#ifndef CPU_ONLY
-    pushStimSpikesToDevice();
-#endif
+    pushStimCurrentSpikesToDevice();
 }
 \endcode
 \note
@@ -242,11 +223,7 @@ IMPLEMENT_SNIPPET(FirstToFirst);
 
 void modelDefinition(NNmodel &model)
 {
-    GENN_PREFERENCES::defaultVarMode = VarMode::LOC_HOST_DEVICE_INIT_DEVICE;
-    GENN_PREFERENCES::defaultSparseConnectivityMode = VarMode::LOC_DEVICE_INIT_DEVICE;
-
     // definition of tenHHRing
-    initGeNN();
     model.setDT(0.1);
     model.setName("tenHHRing");
 
@@ -288,7 +265,6 @@ void modelDefinition(NNmodel &model)
         {}, s_ini,
         ps_p, {},
         initConnectivity<FirstToFirst>());
-    model.finalize();
 }
 \endcode
 
@@ -305,24 +281,19 @@ int main()
 {
     allocateMem();
     initialize();
-    inittenHHRing();
+    initializeSparse();
 
     ofstream os("tenHHRing_output.V.dat");
     while(t < 200.0f) {
         if(iT == 0) {
             glbSpkStim[0] = 0;
             glbSpkCntStim[0] = 1;
-#ifndef CPU_ONLY
-            pushStimSpikesToDevice();
-#endif
+            pushStimCurrentSpikesToDevice();
         }
-#ifdef CPU_ONLY
-        stepTimeCPU();
-#else
-        stepTimeGPU();
 
-        pullPop1StateFromDevice();
-#endif
+        stepTimeU();
+        pullVPop1FromDevice();
+
         os << t << " ";
         for (int j= 0; j < 10; j++) {
             os << VPop1[j] << " ";

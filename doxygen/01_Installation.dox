@@ -44,29 +44,22 @@ While GeNN models are normally simulated using CUDA on NVIDIA GPUs, if you want 
 location. Otherwise enter the directory where you downloaded the Git
 repository.
 
-(ii) Define the environment variable "GENN_PATH" to point to the main
-     GeNN directory, e.g. if you extracted/downloaded GeNN to
-     $HOME/GeNN, then you can add "export GENN_PATH=$HOME/GeNN"
-     to your login script (e.g. `.profile` or `.bashrc`. If you are using
+(ii) Add GeNN's "bin" directory to your path, e.g. if you are running Linux or Mac OS X and extracted/downloaded GeNN to
+     $HOME/GeNN, then you can add:
+      \code
+      export PATH=$PATH:$HOME/GeNN/bin
+      \endcode
+       to your login script (e.g. `.profile` or `.bashrc`. If you are using
      WINDOWS, the path should be a windows path as it will be
      interpreted by the Visual C++ compiler `cl`, and environment
      variables are best set using `SETX` in a Windows cmd window.
      To do so, open a Windows cmd window by typing `cmd` in the search
      field of the start menu, followed by the `enter` key.
-     In the `cmd` window type
-     \code
-     setx GENN_PATH "C:\Users\me\GeNN"
-     \endcode
-     where `C:\Users\me\GeNN` is the path to your GeNN directory.
-
-(iii) Add $GENN_PATH/lib/bin to your PATH variable, e.g.
+     In the `cmd` window type:
       \code
-      export PATH=$PATH:$GENN_PATH/lib/bin
-      \endcode
-      in your login script, or in windows,
-      \code
-      setx PATH "%GENN_PATH%\lib\bin;%PATH%"
+      setx PATH "C:\Users\me\GeNN\bin;%PATH%"
       \endcode 
+      where `C:\Users\me\GeNN` is the path to your GeNN directory.
 
 (iv) Install the C++ compiler on the machine, if not already present.
      For Windows, download Microsoft Visual Studio Community Edition from
@@ -116,10 +109,6 @@ environment already set up by navigating to Start - All Programs -
 Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may wish to
 create a shortcut for this tool on the desktop, for convenience.
 
-\section testInstall Testing Your Installation
-
-To test your installation, follow the example in the
-\link Quickstart Quickstart section\endlink.
 
 -----
 \link Installation Top\endlink | \link Quickstart Next\endlink
