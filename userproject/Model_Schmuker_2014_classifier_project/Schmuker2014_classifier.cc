@@ -24,31 +24,21 @@
 #include <cstring>
 #include <time.h>
 
+#include "sizes.h"
 #include "Schmuker2014_classifier.h"
 #include "Schmuker_2014_classifier_CODE/definitions.h"
-#include "stringUtils.h"
-#ifndef DEVICE_MEM_ALLOCATED_ON_DEVICE
-#include "sparseUtils.h"
-#endif
 
 
 //--------------------------------------------------------------------------
+const unsigned int  Schmuker2014_classifier::timestepsPerRecording = RECORDING_TIME_MS / DT;
 
 Schmuker2014_classifier::Schmuker2014_classifier():
-correctClass(0),winningClass(0),vrData(NULL),inputRatesSize(0),clearedDownDevice(false)
+correctClass(0),winningClass(0),vrData(NULL),inputRatesCount(0),clearedDownDevice(false)
 {
-
-    d_maxRandomNumber = pow(2.0, (double) sizeof(uint64_t)*8-16); //work this out only once
-    modelDefinition(model);
-
-
     //convenience vars
-    auto *rn = model.findNeuronGroup("RN");
-    auto *pn = model.findNeuronGroup("PN");
-    auto *an = model.findNeuronGroup("AN");
-    countRN  = rn->getNumNeurons(); //size of receptor neurons RN population ( =  size of input )
-    countPN  = pn->getNumNeurons(); //size of projection neurons PN population
-    countAN  = an->getNumNeurons(); //size of association neurons AN population
+    countRN  = CLUST_SIZE_RN; //size of receptor neurons RN population ( =  size of input )
+    countPN  = CLUST_SIZE_PN; //size of projection neurons PN population
+    countAN  = CLUST_SIZE_AN; //size of association neurons AN population
     //  timestepsPerRecording = RECORDING_TIME_MS / DT ; // = num timesteps contained in each data recording
 
 
@@ -67,7 +57,6 @@ Schmuker2014_classifier::~Schmuker2014_classifier()
     fclose(log);
 
     // free all user arrays created on the heap
-    free(inputRates);
     free(vrData);
     free(sampleDistance);
     free(classLabel);
@@ -97,9 +86,6 @@ void Schmuker2014_classifier::startLog()
   -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::resetDevice()
 {
-    CHECK_CUDA_ERRORS(cudaDeviceSynchronize());    // Wait for any GPU work to complete
-    CHECK_CUDA_ERRORS(cudaDeviceReset());
-    CHECK_CUDA_ERRORS(cudaDeviceSynchronize());    // Wait for the reset
 }
 
 /*--------------------------------------------------------------------------
@@ -126,9 +112,7 @@ void Schmuker2014_classifier::populateDeviceMemory()
     printf( "populating data on the device, e.g. synapse weight arrays..\n");
 
     //the sparse arrays have their own copy fn for some reason
-    initializeAllSparseArrays();
-
-    copyStateToDevice();
+    initializeSparse();
 
 
     printf( "..complete.\n");
@@ -140,10 +124,9 @@ void Schmuker2014_classifier::populateDeviceMemory()
  -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::clearDownDevice()
 {
-    // clean up memory allocated outside the model
-    CHECK_CUDA_ERRORS(cudaFree((void*)d_inputRates));
+    freefiringProbRN();
 
-    resetDevice();
+    //resetDevice();
     clearedDownDevice = true;
 
 }
@@ -154,9 +137,7 @@ void Schmuker2014_classifier::clearDownDevice()
 
 void Schmuker2014_classifier::update_input_data_on_device()
 {
-
-    // update device memory with set of input data
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_inputRates, inputRates, inputRatesSize, cudaMemcpyHostToDevice));
+    pushfiringProbRNToDevice(inputRatesCount);
 
 }
 
@@ -166,7 +147,7 @@ void Schmuker2014_classifier::update_input_data_on_device()
   NB: This should move to the device code.
 --------------------------------------------------------------------------*/
 
-uint64_t  Schmuker2014_classifier::convertToRateCode(float inputRateHz)
+float  Schmuker2014_classifier::convertToRateCode(float inputRateHz)
 {
 
     /*
@@ -181,9 +162,7 @@ uint64_t  Schmuker2014_classifier::convertToRateCode(float inputRateHz)
 
     if (prob > 1.0)  prob = 1.0;
 
-    uint64_t rateCode = (uint64_t) (prob*d_maxRandomNumber);
-
-    return rateCode;
+    return (float)prob;
 
 }
 
@@ -344,21 +323,21 @@ get the set of input rate data for the recording
 -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::generate_or_load_inputrates_dataset(unsigned int recordingIdx)
 {
-    string cacheFilename = cacheDir + divi + "InputRates_created_from_recording_no._" + toString(recordingIdx) +  "_with_" + toString(NUM_VR) + "_VRs" + ".cache";
+    string cacheFilename = cacheDir + divi + "InputRates_created_from_recording_no._" + to_string(recordingIdx) +  "_with_" + to_string(NUM_VR) + "_VRs" + ".cache";
     FILE *f= fopen(cacheFilename.c_str(),"r");
     if (f==NULL)  {
         //file doesn't exist
         generate_inputrates_dataset(recordingIdx);
         //write inputRates to cache file
         FILE *f= fopen(cacheFilename.c_str(),"w");
-        fwrite(inputRates,inputRatesSize ,1,f);
+        fwrite(firingProbRN,inputRatesCount * sizeof(scalar) ,1,f);
         fclose(f);
         printf( "Input rates for recording %d written to cache file.\n", recordingIdx);
         //checkContents("Input Rates written to cache",inputRates,countRN*5,countRN,data_type_uint,0);
 
     } else { //cached version exists
         //load inputrates from cache file
-        size_t dataRead = fread(inputRates,inputRatesSize ,1,f);
+        size_t dataRead = fread(firingProbRN,inputRatesCount * sizeof(scalar),1,f);
         fclose(f);
         //printf( "Input rates for recording %d loaded from cache file.\n", recordingIdx);
         //checkContents("Input Rates " + toString(recordingIdx),inputRates,countRN,countRN,data_type_uint,0);
@@ -403,7 +382,7 @@ Knows how to build the individual filenames used for the sensor data
 -------------------------------------------------------------------------- */
 string Schmuker2014_classifier::getRecordingFilename(UINT recordingIdx)
 {
-    return this->recordingsDir + divi + this->datasetName + " SensorRecording" + toString(recordingIdx) +  ".csv";
+    return this->recordingsDir + divi + this->datasetName + " SensorRecording" + to_string(recordingIdx) +  ".csv";
 }
 
 /* --------------------------------------------------------------------------
@@ -431,7 +410,7 @@ get a handle to the specified sensor recording file
 -------------------------------------------------------------------------- */
 FILE * Schmuker2014_classifier::openRecordingFile(UINT recordingIdx)
 {
-    string recordingFilename = recordingsDir + divi + datasetName + " SensorRecording" + toString(recordingIdx) +  ".data";
+    string recordingFilename = recordingsDir + divi + datasetName + " SensorRecording" + std::to_string(recordingIdx) +  ".data";
     FILE *f= fopen(recordingFilename.c_str(),"r");
     if (f==NULL)  {
         //file doesn't exist or cant read
@@ -460,12 +439,12 @@ void Schmuker2014_classifier::addInputRate(float * samplePoint,UINT timeStep)
         float rateHz  = param_MIN_FIRING_RATE_HZ + vrResponse * (float)(param_MAX_FIRING_RATE_HZ - param_MIN_FIRING_RATE_HZ);
 
         //convert Hz to proprietary rate code used on the device ( this code should move to device code)
-        uint64_t rateCode  = convertToRateCode(rateHz);
+        float rateCode  = convertToRateCode(rateHz);
 
 
         //fill in a clusters worth with the same rate (one VR excites one cluster in RN)
         for (UINT i=0; i < CLUST_SIZE_RN; i++) {
-            inputRates[inputRatesDataOffset + vr*CLUST_SIZE_RN + i] = rateCode;
+            firingProbRN[inputRatesDataOffset + vr*CLUST_SIZE_RN + i] = rateCode;
         }
     }
 }
@@ -640,15 +619,11 @@ void Schmuker2014_classifier::run(float runtimeMs, string filename_rasterPlot,bo
 
         offsetRN = timestep * countRN ; //units = num of unsigned ints
 
-#ifdef FLAG_RUN_ON_CPU
         //step simulation by one timestep on CPU
-        stepTimeCPU();
-#else
-        //step simulation by one timestep on GPU
-        stepTimeGPU();
+        stepTime();
+
         getSpikesFromGPU(); //need these to calculate winning class etc (and for raster plots)
-        //cudaDeviceSynchronize();
-#endif
+
 
         //uncomment this to divert other state data into raster file
         //copyStateFromDevice();
@@ -692,10 +667,9 @@ void Schmuker2014_classifier::run(float runtimeMs, string filename_rasterPlot,bo
 
 void Schmuker2014_classifier::getSpikesFromGPU()
 {
-#ifndef DEVICE_MEM_ALLOCATED_ON_DEVICE
-    copySpikeNFromDevice(); //GeNN 1.0 does this as part of copySpikesFromDevice();
-#endif
-    copySpikesFromDevice();
+    pullRNCurrentSpikesFromDevice();
+    pullPNCurrentSpikesFromDevice();
+    pullANCurrentSpikesFromDevice();
 }
 
 /*--------------------------------------------------------------------------
@@ -744,14 +718,7 @@ void Schmuker2014_classifier::updateWeights_PN_AN()
   -------------------------------------------------------------------------- */
 void Schmuker2014_classifier::updateWeights_PN_AN_on_device()
 {
-#ifdef DEVICE_MEM_ALLOCATED_ON_DEVICE
-    void *d_ptrPNAN;
-    cudaGetSymbolAddress(&d_ptrPNAN, d_gPNAN);
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_ptrPNAN, gPNAN, countPNAN*sizeof(float), cudaMemcpyHostToDevice));
-#else
-    //New version. device mem allocated using cudaMalloc from the host side
-    CHECK_CUDA_ERRORS(cudaMemcpy(d_gPNAN, gPNAN, countPNAN*sizeof(float), cudaMemcpyHostToDevice));
-#endif
+    pushgPNANToDevice();
 }
 
 
@@ -831,18 +798,10 @@ void Schmuker2014_classifier::initialiseWeights_WTA_AN_AN()
 void Schmuker2014_classifier::initialiseInputData()
 {
     //allocate storage for the set of input data (rates) to be processed
-    this->inputRatesSize = countRN * sizeof(uint64_t) * timestepsPerRecording;
+    inputRatesCount = countRN * timestepsPerRecording;
 
-    //allocate memory on the CPU to hold the current input dataset
-    inputRates = new uint64_t[timestepsPerRecording * countRN];
+    allocatefiringProbRN(inputRatesCount);
 
-    //allocate corresponding memory on the GPU device to hold the input dataset
-    CHECK_CUDA_ERRORS(cudaMalloc((void**) &d_inputRates, inputRatesSize));
-#ifdef FLAG_RUN_ON_CPU
-    ratesRN= inputRates;
-#else
-    ratesRN= d_inputRates;
-#endif
 
     printf("Memory allocated for input rates on CPU and GPU.\n");
 }

@@ -10,6 +10,9 @@
 #include "experiment.h"
 #include <time.h>
 #include <algorithm> //for std:find
+#include <vector>
+
+#include <cmath>
 
 //for stat command (file info interrgation
 #include <sys/types.h>
@@ -59,18 +62,18 @@ bool createDirectory(string path) {
 /*-----------------------------------------------------------------
 Utilities to get the average and stdDev from a vector of floats
 -----------------------------------------------------------------*/
-float getAverage(vector<float> &v)
+float getAverage(std::vector<float> &v)
 {
     float total = 0.0f;
-    for (vector<float>::iterator it = v.begin(); it != v.end(); ++it)
+    for (auto it = v.begin(); it != v.end(); ++it)
         total += *it;
     return total / v.size();
 }
 
-float getStdDev(vector<float> &v, float avg)
+float getStdDev(std::vector<float> &v, float avg)
 {
     float totalDiffSquared = 0.0f;
-    for (vector<float>::iterator it = v.begin(); it != v.end(); ++it) {
+    for (auto it = v.begin(); it != v.end(); ++it) {
         float diff = (avg - *it);
         totalDiffSquared += diff*diff;
     }
@@ -100,7 +103,7 @@ Uses a timestamp plus network parameters used to create an id string unique to t
 
 string getUniqueRunId()
 {
-    string timestamp = toString(time (NULL));
+    string timestamp = to_string(time (NULL));
     string id = timestamp +
             "_" + classifier.datasetName;
     return id;
@@ -114,7 +117,7 @@ void outputRunParameters()
 {
     string paramFilename = classifier.outputDir + divi + classifier.uniqueRunId + "_Run_Parameters.txt";
     FILE * file = fopen(paramFilename.c_str(),"w");
-    fprintf(file,"DATASET_NAME\t\t%s\n",toString(DATASET_NAME).c_str());
+    fprintf(file,"DATASET_NAME\t\t%s\n",DATASET_NAME);
     fprintf(file,"DT\t\t%f\n",DT);
     fprintf(file,"NUM_VR\t\t%d\n",NUM_VR);
     fprintf(file,"NUM_FEATURES\t\t%d\n",NUM_FEATURES);
@@ -171,7 +174,7 @@ bool applyInputToClassifier(UINT recordingIdx,bool usePlasticity)
     classifier.setCorrectClass(recordingIdx);
 
     //run the model for the duration of the recording, collecting the relevant spike sets on each timestep (if raster plot specified in FLAGS )
-    string filename_rasterPlot = classifier.datasetName + "_" + classifier.uniqueRunId +  "_Recording-" + toString(recordingIdx) + "_Class-" + toString(classifier.correctClass)  + "_Raster_plot_data.txt";
+    string filename_rasterPlot = classifier.datasetName + "_" + classifier.uniqueRunId +  "_Recording-" + to_string(recordingIdx) + "_Class-" + to_string(classifier.correctClass)  + "_Raster_plot_data.txt";
 
     /*
     cudaEvent_t start, stop;
@@ -205,9 +208,9 @@ bool applyInputToClassifier(UINT recordingIdx,bool usePlasticity)
 /*--------------------------------------------------------------------------
  Utility function to determine if a passed vector of ints contains the specified value
  -------------------------------------------------------------------------- */
-bool vectorContains(vector<int> &vec ,int lookingFor)
+bool vectorContains(std::vector<int> &vec ,int lookingFor)
 {
-    vector<int>::iterator it = find(vec.begin(), vec.end(), lookingFor);
+    std::vector<int>::iterator it = std::find(vec.begin(), vec.end(), lookingFor);
     return (it != vec.end());
 }
 
@@ -244,7 +247,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    string basename = toString(argv[1]);
+    string basename(argv[1]);
 
 
     //-----------------------------------------------------------------
@@ -287,9 +290,9 @@ int main(int argc, char *argv[])
     classifier.allocateHostAndDeviceMemory();
 
 
-      //seed the random number generator for creating random connections
-      srand(time(NULL));
-      //srand(222); //TODO reset
+    //seed the random number generator for creating random connections
+    srand(time(NULL));
+    //srand(222); //TODO reset
 
     //initialise the set of weights for the SPARSE 1:1 subcluster-subcluster synapses RN-PN (GeNN has no automatic function for what we need)
     classifier.initialiseWeights_SPARSE_RN_PN();
@@ -318,9 +321,9 @@ int main(int argc, char *argv[])
     classifier.populateDeviceMemory();
 
 
-      //re-seed the random number generator after device setup (which used srand in its own way)
-      srand(time(NULL));
-      //srand(222); //TODO reset
+    //re-seed the random number generator after device setup (which used srand in its own way)
+    srand(time(NULL));
+    //srand(222); //TODO reset
 
 
     outputRunParameters();
@@ -334,7 +337,7 @@ int main(int argc, char *argv[])
     unsigned int sizeTestingSet = TOTAL_RECORDINGS / N_FOLDING ; //e.g. 100 recordings into 5 = 20 recordings per bucket
 
     //set up a list of all the recording id's shuffled into a random order, this allows a simple linear split of the training and test data to achieve cross validation
-    vector<int> shuffledRecordings;
+    std::vector<int> shuffledRecordings;
     for (int i=0; i<TOTAL_RECORDINGS; i++ ) {//enter all recordings in order
         shuffledRecordings.push_back(i);
     }
@@ -370,7 +373,7 @@ int main(int argc, char *argv[])
     for (int paramIndex = 0; paramIndex < sizeof(paramValues)/sizeof(paramValues[0]); paramIndex++) {
 
         //Apply next param value
-        Parameter param = {paramName,toString(paramValues[paramIndex])};
+        Parameter param = {paramName,to_string(paramValues[paramIndex])};
         //classifier.param_SPIKING_ACTIVITY_THRESHOLD_HZ = paramValues[paramIndex];
         //classifier.param_WEIGHT_DELTA_PN_AN = paramValues[paramIndex];
         classifier.param_PLASTICITY_INTERVAL_MS = paramValues[paramIndex];
@@ -389,7 +392,7 @@ int main(int argc, char *argv[])
         int totalTestScore = 0;
         int totalTestCount = 0;
 
-        vector<float> vecFoldingResults;//holder for the result of each folding, will be averaged/stdDev at the end of cross validation
+        std::vector<float> vecFoldingResults;//holder for the result of each folding, will be averaged/stdDev at the end of cross validation
 
         for (int folding = 0; folding < N_FOLDING; folding++) {
 
@@ -414,7 +417,7 @@ int main(int argc, char *argv[])
             //Repeat the training set X times, for more exposure to early observations
             for (int rpt = 0; rpt < REPEAT_LEARNING_SET ; rpt++) {
 
-                timer.startTimer();
+                //timer.startTimer();
 
                 //for each recording in the training set
                 for (int i=0; i<TOTAL_RECORDINGS; i++ ) {
@@ -435,8 +438,8 @@ int main(int argc, char *argv[])
                     }
 
                 }//end of recordings
-                timer.stopTimer();
-                printf( "Presented %u recordings for training in time:%f\n",TOTAL_RECORDINGS-sizeTestingSet, timer.getElapsedTime());
+                //timer.stopTimer();
+                //printf( "Presented %u recordings for training in time:%f\n",TOTAL_RECORDINGS-sizeTestingSet, timer.getElapsedTime());
             } //end repeats
 
 

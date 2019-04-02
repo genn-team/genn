@@ -18,9 +18,6 @@ See "A neuromorphic network for generic multivariate data classification, Michae
 */
 //--------------------------------------------------------------------------
 
-
-#include "Model_Schmuker_2014_classifier.cc"
-
 //--------------------------------------------------------------------------
 /*! \brief This class cpontains the methods for running the Schmuker_2014_classifier example model.
  */
@@ -29,11 +26,7 @@ See "A neuromorphic network for generic multivariate data classification, Michae
 class Schmuker2014_classifier
 {
  public:
-    double d_maxRandomNumber; //number used to scale correcly scale poission neuron firing probabilities
-
-    ModelSpec model;
-    uint64_t *inputRates; //dataset (2D array) of required poisson neuron firing rates that represent the input data to the network
-    unsigned int inputRatesSize; //cache the size of the input data, this is used at multiple times
+    unsigned int inputRatesCount; //cache the size of the input data, this is used at multiple times
     float * vrData; //2D array of vectors in feature space that will act as the virtual receptor (VR) points
     unsigned int *classLabel; //array holding set of classes labelling the recordings, indexed by recordingIdx
     unsigned int *individualSpikeCountPN;  //stores total of  spikes on every PN neuron during the run time. Needed for the plasticity rule.
@@ -49,7 +42,7 @@ class Schmuker2014_classifier
     //------------------------------------------------------------------------
     //convenience holders for getting population sizes
     unsigned int countRN, countPN, countAN, countPNAN;
-    static const unsigned int  timestepsPerRecording = RECORDING_TIME_MS / DT ; // = num timesteps contained in each data recording;
+    static const unsigned int  timestepsPerRecording ; // = num timesteps contained in each data recording;
 
     //cached max and min values generated from data set used for scaling VR responses
     float * sampleDistance;  //array of 2 floats 0 = max, 1 = min
@@ -121,7 +114,7 @@ class Schmuker2014_classifier
     void loadClassLabels();
 
     void addInputRate(float * samplePoint,UINT timeStep);
-    uint64_t convertToRateCode(float inputRateHz) ;
+    float convertToRateCode(float inputRateHz) ;
     float calculateVrResponse(float * samplePoint, float * vrPoint);
 
     void setMaxMinSampleDistances();

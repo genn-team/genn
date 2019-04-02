@@ -76,16 +76,10 @@ Data and extra network dimensions (see also Model file)
 
 using namespace std;
 #include <cassert>
-#include "hr_time.h"
-#include "utils.h" // for CHECK_CUDA_ERRORS
-//#include <cuda_runtime.h>
 
 /*--------------------------------------------------------------------------
 global variables
 --------------------------------------------------------------------------*/
-
-CStopWatch timer;
-
 
 //--------------------------------------------------------------------------
 #include "Schmuker2014_classifier.cc"

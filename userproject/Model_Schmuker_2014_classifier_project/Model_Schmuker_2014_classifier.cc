@@ -9,24 +9,8 @@
 This file contains the network model definition for the "Schmuker_2014_classifier" model.
 
 -------------------------------------------------------------------------- */
+#include "sizes.h"
 
-//network sizes and parameters
-#define DT 0.5 // Integration time step
-#define NUM_VR 10 //number of VR generated to map the input space
-#define NUM_FEATURES 4 //dimensionality of data set
-#define NUM_CLASSES 3 //number of classes to be classified
-#define NETWORK_SCALE 10 //single parameter to scale size of populations up and down
-//#define CLUST_SIZE_AN  NETWORK_SCALE * 8 //output cluster size
-//#define CLUST_SIZE_PN  NETWORK_SCALE * 7 //projection neuron cluster size
-#define CLUST_SIZE_AN  (NETWORK_SCALE * 6) //output cluster size
-#define CLUST_SIZE_PN  (NETWORK_SCALE * 6) //projection neuron cluster size
-#define CLUST_SIZE_RN  (NETWORK_SCALE * 6) //receptor neuron cluster size
-
-//Synapse time constants in ms (controls how fast arriving charge drains out of synapse into post-syn. neuron)
-#define SYNAPSE_TAU_RNPN 1.0
-#define SYNAPSE_TAU_PNPN 5.5
-#define SYNAPSE_TAU_PNAN 1.0
-#define SYNAPSE_TAU_ANAN 8.0
 
 #include "modelSpec.h"
 #include <iostream>
@@ -55,10 +39,8 @@ void modelDefinition(ModelSpec &model)
 {
 
     cout << "GeNN building model with " << NUM_VR << " x VRs" << endl;
-    initGeNN();
     model.setPrecision(GENN_FLOAT);
     model.setName("Schmuker_2014_classifier");
-
 
     /*--------------------------------------------------------------------------*/
   
@@ -68,17 +50,15 @@ void modelDefinition(ModelSpec &model)
      RN receptor neuron Population. Clusters of Poisson neurons take rate level input from set of VR
     -------------------------------------------------------------------------- */
     NeuronModels::Poisson::ParamValues poissonRN_params(
-        0.1,        // 0 - firing rate
-        2.5,        // 1 - refractory period
+        2.5,        // 0 - refractory period
+        0.5,        // 1 - spike time
         20.0,       // 2 - Vspike
-        -60.0       // 3 - Vrest
-    );
+        -60.0);     // 3 - Vrest
 
     NeuronModels::Poisson::VarValues poissonRN_ini( //initial values for the neron variables
         -60.0,       // 0 - V
-        0,           // 1 - seed
-        -10.0        // 2 - SpikeTime
-    );
+        -10.0);      // 1 - SpikeTime
+
     int countRN = NUM_VR * CLUST_SIZE_RN;
     model.addNeuronPopulation<NeuronModels::Poisson>("RN", countRN, poissonRN_params,  poissonRN_ini);
   
@@ -191,8 +171,6 @@ void modelDefinition(ModelSpec &model)
                                                                                          synapsesWTA_AvgInhibitory_params, initialConductanceValue,
                                                                                          postExpSynapsePopn_ANAN, {});
 
-    //initializing learning parameters to start
-    model.finalize();
 }
 
 /*--------------------------------------------------------------------------
