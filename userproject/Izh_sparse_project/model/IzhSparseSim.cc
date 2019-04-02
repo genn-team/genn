@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
     }
 
     const std::string outLabel = argv[1];
+    const std::string outDir = "../" + outLabel + "_output";
 
     /*string OutDir = string(argv[1]) + "_output";
     string name;
@@ -113,8 +114,8 @@ int main(int argc, char *argv[])
     fprintf(stdout, "# We are running with fixed time step %f \n", DT);
     fprintf(stdout, "# initial wait time execution ... \n");
 
-    SpikeRecorder excSpikes(outLabel + "_exc_st", glbSpkCntPExc, glbSpkPExc);
-    SpikeRecorder inhSpikes(outLabel + "_inh_st", glbSpkCntPInh, glbSpkPInh);
+    SpikeRecorder excSpikes(outDir + "/" + outLabel + "_exc_st", glbSpkCntPExc, glbSpkPExc);
+    SpikeRecorder inhSpikes(outDir + "/" + outLabel + "_inh_st", glbSpkCntPInh, glbSpkPInh);
 
     while(t < TOTAL_TIME) {
         stepTime();

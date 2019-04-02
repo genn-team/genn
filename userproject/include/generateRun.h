@@ -31,7 +31,7 @@ public:
         m_App.add_flag("--debug", m_Debug, "Whether to run in a debugger");
         m_App.add_flag("--cpu-only", m_CPUOnly, "Whether to build against single-threaded CPU backend");
         m_App.add_set("--ftype", m_ScalarType, {"float", "double"}, "What floating point type to use", true);
-        m_App.add_option("outdir", m_OutDir, "Output directory")->required();
+        m_App.add_option("experimentName", m_ExperimentName, "Experiment name")->required();
     }
 
     //------------------------------------------------------------------------
@@ -68,7 +68,6 @@ public:
         const std::string buildCmd = getBuildCommandUnix();
 #endif
 
-        std::cout << buildCmd << std::endl;
         const int buildRetVal = system(buildCmd.c_str());
         if (buildRetVal != 0){
             std::cerr << "ERROR: Following call failed with status " << buildRetVal << ":" << std::endl << buildCmd << std::endl;
@@ -78,9 +77,9 @@ public:
 
         // create output directory
 #ifdef _WIN32
-        _mkdir(m_OutDir.c_str());
+        _mkdir(getOutDir().c_str());
 #else // UNIX
-        if (mkdir(m_OutDir.c_str(), S_IRWXU | S_IRWXG | S_IXOTH) == -1) {
+        if (mkdir(getOutDir().c_str(), S_IRWXU | S_IRWXG | S_IXOTH) == -1) {
             std::cerr << "Directory cannot be created. It may exist already." << std::endl;
         }
 #endif
@@ -93,7 +92,7 @@ public:
         std::string runCmd = getRunCommandUnix();
 #endif
         // Add out directory parameter
-        runCmd += (" " + m_OutDir);
+        runCmd += (" " + m_ExperimentName);
 
         // Add additional parameters
         for(const auto &p: runParams) {
@@ -115,6 +114,9 @@ protected:
     // Protected API
     //------------------------------------------------------------------------
     CLI::App &getApp(){ return m_App; }
+
+    std::string getOutDir() const{ return m_ExperimentName + "_output"; }
+    const std::string &getExperimentName() const{ return m_ExperimentName; }
 
 private:
     //------------------------------------------------------------------------
@@ -191,6 +193,6 @@ private:
     bool m_Debug;
     bool m_CPUOnly;
     std::string m_ScalarType;
-    std::string m_OutDir;
+    std::string m_ExperimentName;
     const std::string m_ProjectName;
 };
