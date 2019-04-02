@@ -6,6 +6,8 @@ GeNN was created by Thomas Nowotny.
 
 GeNN is currently maintained and developed by James Knight.
 
+Current sources and PyGeNN were first implemented by Anton Komissarov.
+
 Izhikevich model and sparse connectivity by Esin Yavuz.
 
 Block size optimisations, delayed synapses and page-locked memory by James Turner.
@@ -18,7 +20,6 @@ Example projects were provided by Alan Diamond, James Turner, Esin Yavuz and Tho
 
 MPI support was largely developed by Mengchi Zhang.
 
-Current sources were implemented by Anton Komissarov.
 <br />
 
 

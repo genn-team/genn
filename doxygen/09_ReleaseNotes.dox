@@ -8,7 +8,7 @@ However, especially if you have been using GeNN 2.XX syntax, it breaks backward 
 User Side Changes
 ----
 1. Totally new build system - ``make install`` can be used to install GeNN to a system location on Linux and Mac and Windows projects work much better in the Visual Studio IDE.
-2. Python interface - All features of GeNN are now exposed to Python through the ``::pygenn`` module.
+2. Python interface - All features of GeNN are now exposed to Python through the ``::pygenn`` module (see \ref PyGeNN for more details)..
 3. No need to call ``initGeNN()`` at start and ``model.finalize()`` at end of all models.
 4. Initialisation system simplified - if you specify a value or initialiser for a variable or sparse connectivity, 
    it will be initialised by your chosen backend. If you mark it as uninitialised, it is up to you to initialize it 
@@ -16,6 +16,8 @@ User Side Changes
 5. ``genn-create-user-project`` helper scripts to create Makefiles or MSBuild projects for building user code
 6. Postsynaptic models can now have Extra Global Parameters.
 7. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``InitVarSnippet::Gamma``.
+8. State variables can now be pushed and pulled individually using the `pull<var name><neuron or synapse name>FromDevice()` and `push<var name><neuron or synapse name>ToDevice()` functions.
+9. Management of extra global parameter arrays has been somewhat automated. **TODO**
 
 Breaking changes
 ----
@@ -400,7 +402,7 @@ Please refer to the [full documentation](http://genn-team.github.io/genn/documen
 
 
 -----
-\link brian2genn Previous\endlink | \link ReleaseNotes Top\endlink | \link UserManual Next\endlink
+\link PyGeNN Previous\endlink | \link ReleaseNotes Top\endlink | \link UserManual Next\endlink
 
 */
 //-------------------------------------------------------------------------
