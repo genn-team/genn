@@ -61,6 +61,21 @@ public:
 
     int buildAndRun(std::initializer_list<std::string> runParams = {}) const
     {
+        // create output directory
+#ifdef _WIN32
+        _mkdir(getOutDir().c_str());
+#else // UNIX
+        if (mkdir(getOutDir().c_str(), S_IRWXU | S_IRWXG | S_IXOTH) == -1) {
+            std::cerr << "Directory cannot be created. It may exist already." << std::endl;
+        }
+#endif
+
+        // Run any additional tools
+        const int runToolsRetVal = runTools();
+        if(runToolsRetVal != EXIT_SUCCESS) {
+            return runToolsRetVal;
+        }
+
         // build it
 #ifdef _WIN32
         const std::string buildCmd = getBuildCommandWindows();
@@ -74,15 +89,6 @@ public:
             std::cerr << "Exiting..." << std::endl;
             return EXIT_FAILURE;
         }
-
-        // create output directory
-#ifdef _WIN32
-        _mkdir(getOutDir().c_str());
-#else // UNIX
-        if (mkdir(getOutDir().c_str(), S_IRWXU | S_IRWXG | S_IXOTH) == -1) {
-            std::cerr << "Directory cannot be created. It may exist already." << std::endl;
-        }
-#endif
 
         // run it!
         std::cout << "running test..." << std::endl;
@@ -110,6 +116,13 @@ public:
     }
 
 protected:
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    virtual int runTools() const
+    {
+    }
+
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
