@@ -303,20 +303,13 @@ public:
     for `V`, and `SpikeTime` and the parameter array needs four entries for
     `therate`, `trefract`, `Vspike` and `Vrest`,  *in that order*.
 
-    \note Internally, GeNN uses a linear approximation for the probability
+    \note This model uses a linear approximation for the probability
     of firing a spike in a given time step of size `DT`, i.e. the
     probability of firing is \lambda times `DT`: \f$ p = \lambda \Delta t
     \f$. This approximation is usually very good, especially for typical,
     quite small time steps and moderate firing rates. However, it is worth
     noting that the approximation becomes poor for very high firing rates
-    and large time steps. An unrelated problem may occur with very low
-    firing rates and small time steps. In that case it can occur that the
-    firing probability is so small that the granularity of the 64 bit
-    integer based random number generator begins to show. The effect
-    manifests itself in that small changes in the firing rate do not seem
-    to have an effect on the behaviour of the Poisson neurons because the
-    numbers are so small that only if the random number is identical 0 a
-    spike will be triggered.*/
+    and large time steps.*/
 class Poisson : public Base
 {
 public:
@@ -327,7 +320,7 @@ public:
         "   $(V) = $(Vrest);\n"
         "}"
         "else if(($(t) - $(spikeTime)) > $(trefract)){\n"
-        "   if($(gennrand_uint64) < $(rates)[$(offset) + $(id)]){\n"
+        "   if($(gennrand_uniform) < $(firingProb)[$(offset) + $(id)]){\n"
         "       $(V) = $(Vspike);\n"
         "       $(spikeTime) = $(t);\n"
         "   }\n"
@@ -336,7 +329,7 @@ public:
 
     SET_PARAM_NAMES({"trefract", "tspike", "Vspike", "Vrest"});
     SET_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
-    SET_EXTRA_GLOBAL_PARAMS({{"rates", "uint64_t*"}, {"offset", "unsigned int"}});
+    SET_EXTRA_GLOBAL_PARAMS({{"firingProb", "scalar*"}, {"offset", "unsigned int"}});
 };
 
 //----------------------------------------------------------------------------
