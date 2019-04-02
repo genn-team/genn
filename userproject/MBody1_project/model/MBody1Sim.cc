@@ -17,12 +17,12 @@
 \brief Main entry point for the classol (CLASSification in OLfaction) model simulation. Provided as a part of the complete example of simulating the MBody1 mushroom body model. 
 */
 //--------------------------------------------------------------------------
+// Standard C includes
+#include <cmath>
 
-
-#include "hr_time.h"
-#include "modelSpec.h"
-
-#include "map_classol.h"
+// Userproject includes
+#include "spike_recorder.h"
+#include "timer.h"
 
 #include "sizes.h"
 
@@ -40,11 +40,7 @@
 // pattern goes off at 2 steps == 1 ms
 #define PATFTIME 1.5
 
-
 #define TOTAL_TME 5000.0
-
-
-
 
 //--------------------------------------------------------------------------
 /*! \brief This function is the entry point for running the simulation of the MBody1 model network.
@@ -54,111 +50,79 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
-    {
-        fprintf(stderr, "usage: classol_sim <basename> <CPU=0, GPU=1> \n");
-        return 1;
+    if (argc != 2) {
+        std::cerr << "usage: MBody1 <basename>" << std::endl;
+        return EXIT_FAILURE;
     }
-    int which= atoi(argv[2]);
-    string OutDir = string(argv[1]) +"_output";
-    string name;
-    name= OutDir+ "/"+ argv[1] + ".time";
-    FILE *timef= fopen(name.c_str(),"a");
+    const std::string outLabel = argv[1];
+    const std::string outDir = "../" + outLabel + "_output";
 
-    const int patSetTime= (int) (PAT_TIME/DT);
-    const int patFireTime= (int) (PATFTIME/DT);
-    fprintf(stdout, "# DT %f \n", DT);
-    fprintf(stdout, "# T_REPORT_TME %f \n", T_REPORT_TME);
-    fprintf(stdout, "# SYN_OUT_TME %f \n",  SYN_OUT_TME);
-    fprintf(stdout, "# PATFTIME %f \n", PATFTIME);
-    fprintf(stdout, "# patFireTime %d \n", patFireTime);
-    fprintf(stdout, "# PAT_TIME %f \n", PAT_TIME);
-    fprintf(stdout, "# patSetTime %d \n", patSetTime);
-    fprintf(stdout, "# TOTAL_TME %f \n", TOTAL_TME);
+    const unsigned long long patSetTimeSteps = (unsigned long long)(PAT_TIME / DT);
+    const unsigned long long patFireTimeSteps = (unsigned long long)(PATFTIME / DT);
+    const unsigned long long numPatterns = 100;
+    const scalar baseRateHz = 0.2f;
 
-    name= OutDir+ "/"+ argv[1] + ".out.Vm";
-    FILE *osf= fopen(name.c_str(),"w");
-    name= OutDir+ "/"+ argv[1] + ".out.st";
-    FILE *osf2= fopen(name.c_str(),"w");
-
-#ifdef TIMING
-    name= OutDir+ "/"+ argv[1] + ".timingprofile";
-    FILE *timeros= fopen(name.c_str(),"w");
-    double tme;
-#endif
+    std::cout << "# DT " <<  DT << std::endl;
+    std::cout << "# T_REPORT_TME " <<  T_REPORT_TME << std::endl;
+    std::cout << "# SYN_OUT_output_spikesTME" <<  SYN_OUT_TME << std::endl;
+    std::cout << "# PATFTIME " <<  PATFTIME << std::endl;
+    std::cout << "# patFireTimesteps " <<  patFireTimeSteps << std::endl;
+    std::cout << "# PAT_TIME " <<  PAT_TIME << std::endl;
+    std::cout << "# patSetTimesteps " <<  patSetTimeSteps << std::endl;
+    std::cout << "# TOTAL_TME " <<  TOTAL_TME << std::endl;
 
     //-----------------------------------------------------------------
     // build the neuronal circuitry
-    classol locust(patSetTime, patFireTime);
-    CStopWatch timer;
-#ifdef TIMING
-    timer.startTimer();
-#endif
+    allocateMem();
 
-    fprintf(stdout, "# reading PN-KC synapses ... \n");
-    name= OutDir+ "/"+ argv[1] + ".pnkc";
-    FILE *f= fopen(name.c_str(),"rb");
-    locust.read_pnkcsyns(f);
-    fclose(f);
+    initialize();
 
-#ifdef TIMING
-    timer.stopTimer();
-    tme= timer.getElapsedTime();
-    fprintf(timeros, "%% Reading PN-KC synapses: %f \n", tme);
-    timer.startTimer();
-#endif
+    // Pull initialised KCDN conductances from device and use to calculate gRawKCDN
+    pullgKCDNFromDevice();
+    std::transform(&gKCDN[0], &gKCDN[_NKC*_NDN], &gRawKCDN[0],
+                   [](scalar g)
+                   {
+                       const double tmp = (double)g / 0.015 * 2.0;
+                       return (scalar)(0.5 * log(tmp / (2.0 - tmp)) / 33.33 + 0.0075);
+                   });
 
-    fprintf(stdout, "# reading PN-LHI synapses ... \n");
-    name= OutDir+ "/"+ argv[1] + ".pnlhi";
-    f= fopen(name.c_str(), "rb");
-    locust.read_pnlhisyns(f);
-    fclose(f);
+    initializeSparse();
 
-#ifdef TIMING
-    timer.stopTimer();
-    tme= timer.getElapsedTime();
-    fprintf(timeros, "%% Reading PN-LHI synapses: %f \n", tme);
-    timer.startTimer();
-#endif
+    // Allocate extra extra global parameter for patterns
+    allocatefiringProbPN(_NAL * (1 + numPatterns));
 
-    fprintf(stdout, "# reading KC-DN synapses ... \n");
-    name= OutDir+ "/"+ argv[1] + ".kcdn";
-    f= fopen(name.c_str(), "rb");
-    locust.read_kcdnsyns(f);
+    // Fill first _NAL entries with baserate
+    const scalar baseFiringProb = (baseRateHz / 1000.0) * DT;
+    std::fill_n(&firingProbPN[0], _NAL, baseFiringProb);
 
-#ifdef TIMING
-    timer.stopTimer();
-    tme= timer.getElapsedTime();
-    fprintf(timeros, "%% Reading KC-DN synapses: %f \n", tme);
-    timer.startTimer();
-#endif
 
-    fprintf(stdout, "# reading input patterns ... \n");
-    name= OutDir+ "/"+ argv[1] + ".inpat";
-    f= fopen(name.c_str(), "rb");
-    locust.read_input_patterns(f);
-    fclose(f);
+    {
+        Timer a("%% Reading input patterns: ");
 
-#ifdef TIMING
-    timer.stopTimer();
-    tme= timer.getElapsedTime();
-    fprintf(timeros, "%% Reading input patterns: %f \n", tme);
-    timer.startTimer();
-#endif
+        // Open input pattern rates file
+        std::ifstream patternRatesFile(outDir + "/" + outLabel + ".inpat", std::ios::binary);
+        if(!patternRatesFile.good()) {
+            std::cerr << "Cannot open input patterns file" << std::endl;
+            return EXIT_FAILURE;
+        }
 
-    locust.generate_baserates();
-#ifndef CPU_ONLY
-    if (which == GPU) {
-        locust.allocate_device_mem_patterns();
+        // Read pattern rates from disk
+        std::vector<double> patternRates(_NAL * numPatterns);
+        patternRatesFile.read(reinterpret_cast<char*>(patternRates.data()), _NAL * numPatterns * sizeof(double));
+
+         // Check block was read succesfully
+        if((size_t)patternRatesFile.gcount() != (_NAL * numPatterns * sizeof(double))) {
+            std::cerr << "Unexpected end of patterns file" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // Transform each rate in hz into KHz and thus into mean spikes per timestep
+        std::transform(patternRates.cbegin(), patternRates.cend(), &firingProbPN[_NAL],
+                       [](double rateHz){ return (rateHz / 1000.0) * DT; });
     }
-#endif
-    locust.init(which);         // this includes copying g's for the GPU version
 
-#ifdef TIMING
-    timer.stopTimer();
-    tme= timer.getElapsedTime();
-    fprintf(timeros, "%% Initialisation: %f \n", tme);
-#endif
+    // Upload firing probabilities to GPU
+    pushfiringProbPNToDevice(_NAL * (1 + numPatterns));
 
     fprintf(stdout, "# neuronal circuitry built, start computation ... \n\n");
 
@@ -166,70 +130,69 @@ int main(int argc, char *argv[])
     // output general parameters to output file and start the simulation
 
     fprintf(stdout, "# We are running with fixed time step %f \n", DT);
-    t= 0.0;
-    iT= 0;
-    int done= 0;
-    float last_t_report=  t;
-    timer.startTimer();
+    //timer.startTimer();
+    SpikeRecorder pnSpikes(outDir + "/" + outLabel + ".pn.st", glbSpkCntPN, glbSpkPN);
+    SpikeRecorder lhiSpikes(outDir + "/" + outLabel + ".lhi.st", glbSpkCntLHI, glbSpkLHI);
 
-    while (!done)
-    {
-        if (which == GPU) {
-#ifndef CPU_ONLY
-            locust.runGPU(DT); // run next batch
-            //locust.getSpikeNumbersFromGPU();
-            locust.getSpikesFromGPU();
+#ifdef DELAYED_SYNAPSES
+    SpikeRecorderDelay kcSpikes(_NKC, spkQueuePtrKC, outDir + "/" + outLabel + ".kc.st", glbSpkCntKC, glbSpkKC);
+    SpikeRecorderDelay dnSpikes(_NDN, spkQueuePtrDN, outDir + "/" + outLabel + ".dn.st", glbSpkCntDN, glbSpkDN);
+#else
+    SpikeRecorder kcSpikes(outDir + "/" + outLabel + ".kc.st", glbSpkCntKC, glbSpkKC);
+    SpikeRecorder dnSpikes(outDir + "/" + outLabel + ".dn.st", glbSpkCntDN, glbSpkDN);
 #endif
-        }
-        else {
-            locust.runCPU(DT); // run next batch
-        }
 
-    #ifdef TIMING
-        fprintf(timeros, "%f %f %f \n", neuron_tme, synapse_tme, learning_tme);
-    #endif
-        locust.sum_spikes();
-        locust.output_spikes(osf2, which);
+    double simTime = 0.0;
+    {
+        TimerAccumulate a(simTime);
+
+        while(t < TOTAL_TME) {
+            if((iT % patSetTimeSteps) == 0) {
+                const unsigned int pno = (iT / patSetTimeSteps) % numPatterns;
+                offsetPN = (pno + 1) *_NAL;
+            }
+            if((iT % patSetTimeSteps) == patFireTimeSteps) {
+                offsetPN = 0;
+            }
+
+            stepTime();
+
+            pullPNCurrentSpikesFromDevice();
+            pullKCCurrentSpikesFromDevice();
+            pullLHICurrentSpikesFromDevice();
+            pullDNCurrentSpikesFromDevice();
+
+            // Record spikes
+            pnSpikes.record(t);
+            kcSpikes.record(t);
+            lhiSpikes.record(t);
+            dnSpikes.record(t);
 
         /*   fprintf(osf, "%f ", t);
-            for (int i= 0; i < 100; i++) {
-                fprintf(osf, "%f ", VDN[i]);
+                for (int i= 0; i < 100; i++) {
+                    fprintf(osf, "%f ", VDN[i]);
+                }
+                fprintf(osf,"\n");
+            */
+            // report progress
+            if(fmod(t, T_REPORT_TME) < 1e-3f) {
+                std::cout << "time " << t << std::endl;
             }
-            fprintf(osf,"\n");
-        */
-        // report progress
-        if (t - last_t_report >= T_REPORT_TME)
-        {
-            fprintf(stdout, "time %f \n", t);
-            last_t_report= t;
         }
-        done= (t >= TOTAL_TME);
     }
 
-    timer.stopTimer();
-#ifndef CPU_ONLY
-    if (which == GPU) {
-        pullDNStateFromDevice();
-    }
-#endif
-    cerr << "output files are created under the current directory." << endl;
-    const unsigned int numNeurons = _NAL + _NMB + _NLHI + _NLB;
-    fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, numNeurons, locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
-    fprintf(stdout, "GPU=%d, %u neurons, %u PN spikes, %u KC spikes, %u LHI spikes, %u DN spikes, simulation took %.4f secs, VDN[0]=%.2f DT=%.1f %.2f\n",which, numNeurons, locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
+//    timer.stopTimer();
 
-    fclose(osf);
-    fclose(osf2);
-    fclose(timef);
+    pullVDNFromDevice();
+    std::cerr << "output files are created under the current directory." << std::endl;
+    const unsigned int numNeurons = _NAL + _NKC + _NLHI + _NDN;
+    //fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, numNeurons, locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
+    std::cout << numNeurons << " neurons, " << pnSpikes.getSum() << " PN spikes, " << kcSpikes.getSum() << " KC spikes, " << lhiSpikes.getSum() << " LHI spikes, ";
+    std::cout << dnSpikes.getSum() << " DN spikes, " << "simulation took " << simTime << " secs, VDN[0]=" << VDN[0] << " DT=" << DT << std::endl;
 
-#ifdef TIMING
-    fclose(timeros);
-#endif
-
-#ifndef CPU_ONLY
-    if (which == GPU) {
-        locust.free_device_mem();
-    }
-#endif
+    // Free everything
+    freefiringProbPN();
+    freeMem();
 
     return 0;
 }

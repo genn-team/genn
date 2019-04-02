@@ -38,6 +38,31 @@ public:
         }
     }
 
+protected:
+    //------------------------------------------------------------------------
+    // GenerateRunBase virtuals
+    //------------------------------------------------------------------------
+    virtual int runTools() const override
+    {
+        // generate input patterns
+        std::string cmd = "../tools/gen_input_structured ";
+        cmd +=  std::to_string(m_NumAL);
+        cmd += " 10 10 0.1 0.05 1000.0 0.2 ";
+        cmd += getOutDir() + "/" + getExperimentName() + ".inpat 2>&1 ";
+#ifndef _WIN32
+        cmd += "|tee " + getOutDir() + "/" + getExperimentName() + ".inpat.msg";
+#endif // _WIN32
+
+        const int retval = system(cmd.c_str());
+        if (retval != 0){
+            std::cerr << "ERROR: Following call failed with status " << retval << ":" << std::endl << cmd << std::endl;
+            std::cerr << "Exiting..." << std::endl;
+            return retval;
+        }
+
+        return EXIT_SUCCESS;
+    }
+
 private:
     //------------------------------------------------------------------------
     // Members
