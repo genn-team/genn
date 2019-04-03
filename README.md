@@ -24,17 +24,17 @@ http://genn-team.github.io/genn/
     version of Visual Studio is not necessarily compatible with the latest 
     version of the CUDA toolkit.
 
-2. Ensure that the `CUDA_PATH` environment variable is defined, and
-    points to the location of the Nvidia CUDA toolkit installation and
+2. Ensure that the `CUDA_PATH` environment variable is defined and
+    points to the location of the Nvidia CUDA toolkit installation; and
     that the CUDA `bin` directory is included in the path. These can
     be checked by using: `ECHO %CUDA_PATH%` and `ECHO %PATH%` respectively 
-    (although they are usully set during CUDA installationon Windows systems). 
+    (although they are usully set automatically by the CUDA installer on Windows systems). 
     If not, correct this using:
     `SETX CUDA_PATH "[drive]\Program Files\NVIDIA GPU Computing
     Toolkit\CUDA[version]"` and `SETX PATH "%PATH%;%CUDA_PATH%`.
 
-3. Add the `bin` sub-directory of the directory in which GeNN is located to your %PATH% variable. For example,
-    use: `SETX PATH "c:\Users\me\GeNN\bin;%PATH%"`.
+3. Add the `bin` sub-directory of the directory in which GeNN is located to your `PATH` variable. For example,
+    if you extracted GeNN to `c:\Users\me\GeNN`, use: `SETX PATH "c:\Users\me\GeNN\bin;%PATH%"`.
 
 4. To access a developer command prompt, use the shortcut link in:
     start menu -\> all programs -\> Microsoft Visual Studio
@@ -51,7 +51,7 @@ restarted to initialise the variables set using the `SETX` command.
 
 (1) Unpack GeNN.zip in a convenient location, then download and install
     a compatible version of the Nvidia CUDA toolkit from:
-    https://developer.nvidia.com/cuda-downloads and install the GNU GCC
+    https://developer.nvidia.com/cuda-downloads and the GNU GCC
     compiler collection and GNU Make build environment if it is not
     already present on the system. Note that the latest versions of GCC
     / Clang / Linux are not necessarily compatible with the latest
@@ -60,11 +60,13 @@ restarted to initialise the variables set using the `SETX` command.
 (2) Ensure that the environment variable `CUDA_PATH` is set to the location of your
     Nvidia CUDA toolkit installation and that the CUDA binary directory is in your path.
     For example, if your CUDA toolkit was installed to `/usr/local/cuda`, you can use: 
-    `echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile 
-     echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile` 
+    ```
+    echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile 
+    echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
+    ```
 
 (3) Add GeNN's `bin` directory to your $PATH variable. For example, if you extracted GeNN to
-    `/home/me/genn`, youcan use: 
+    `/home/me/genn`, you can use: 
     `echo "export PATH=$PATH:/home/me/genn/bin" >> ~/.bash_profile`
 
 This completes the installation.
@@ -100,7 +102,7 @@ At the moment, the following example projects are provided with GeNN:
 
 In order to get a quick start and run one of the the provided example
 models, navigate to one of the example project directories in
-$GENN\_PATH/userproject/, and then follow the instructions in the
+the userproject sub-directory, and then follow the instructions in the
 README file contained within.
 
 ## SIMULATING A NEW MODEL
