@@ -124,12 +124,12 @@ int main(int argc, char *argv[])
     // Upload firing probabilities to GPU
     pushfiringProbPNToDevice(_NAL * (1 + numPatterns));
 
-    fprintf(stdout, "# neuronal circuitry built, start computation ... \n\n");
+    std::cout << "# neuronal circuitry built, start computation ... " << std::endl;
 
     //------------------------------------------------------------------
     // output general parameters to output file and start the simulation
 
-    fprintf(stdout, "# We are running with fixed time step %f \n", DT);
+    std::cout << "# We are running with fixed time step " << DT << std::endl;
     //timer.startTimer();
     SpikeRecorder pnSpikes(outDir + "/" + outLabel + ".pn.st", glbSpkCntPN, glbSpkPN);
     SpikeRecorder lhiSpikes(outDir + "/" + outLabel + ".lhi.st", glbSpkCntLHI, glbSpkLHI);
@@ -168,12 +168,6 @@ int main(int argc, char *argv[])
             lhiSpikes.record(t);
             dnSpikes.record(t);
 
-        /*   fprintf(osf, "%f ", t);
-                for (int i= 0; i < 100; i++) {
-                    fprintf(osf, "%f ", VDN[i]);
-                }
-                fprintf(osf,"\n");
-            */
             // report progress
             if(fmod(t, T_REPORT_TME) < 1e-3f) {
                 std::cout << "time " << t << std::endl;
