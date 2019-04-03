@@ -138,6 +138,9 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
     using namespace CodeGenerator;
     using namespace CUDA;
 
+    // Select device
+    cudaSetDevice(deviceID);
+
     // Calculate model group sizes
     std::vector<size_t> groupSizes[KernelMax];
     calcGroupSizes(model, groupSizes);
