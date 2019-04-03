@@ -1865,7 +1865,7 @@ std::string Backend::getNVCCFlags() const
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string nvccFlags = "-x cu -arch " + architecture;
 #ifndef _WIN32
-    nvccFlags += " -std=c++11 --compiler-options '-fPIC'";ss
+    nvccFlags += " -std=c++11 --compiler-options '-fPIC'";
 #endif
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
