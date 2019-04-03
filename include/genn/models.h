@@ -19,8 +19,8 @@
 
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
-#define SET_VARS(...) virtual StringPairVec getVars() const override{ return __VA_ARGS__; }
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
+#define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual VarVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // Models::VarInit
@@ -133,11 +133,11 @@ public:
     // Declared virtuals
     //------------------------------------------------------------------------
     //! Gets names and types (as strings) of model variables
-    virtual StringPairVec getVars() const{ return {}; }
+    virtual VarVec getVars() const{ return {}; }
 
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
-    virtual StringPairVec getExtraGlobalParams() const{ return {}; }
+    virtual VarVec getExtraGlobalParams() const{ return {}; }
 
     //------------------------------------------------------------------------
     // Public methods
@@ -145,13 +145,13 @@ public:
     //! Find the index of a named variable
     size_t getVarIndex(const std::string &varName) const
     {
-        return getStringPairVecIndex(varName, getVars());
+        return getVarVecIndex(varName, getVars());
     }
 
     //! Find the index of a named extra global parameter
     size_t getExtraGlobalParamIndex(const std::string &paramName) const
     {
-        return getStringPairVecIndex(paramName, getExtraGlobalParams());
+        return getVarVecIndex(paramName, getExtraGlobalParams());
     }
 };
 } // Models

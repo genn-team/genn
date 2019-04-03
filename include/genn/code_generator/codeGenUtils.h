@@ -45,40 +45,9 @@ struct FunctionTemplate
 };
 
 //--------------------------------------------------------------------------
-// PairKeyConstIter
-//--------------------------------------------------------------------------
-//! Custom iterator for iterating through the keys of containers containing pairs
-template<typename BaseIter>
-class PairKeyConstIter : public BaseIter
-{
-private:
-    //--------------------------------------------------------------------------
-    // Typedefines
-    //--------------------------------------------------------------------------
-    typedef typename BaseIter::value_type::first_type KeyType;
-
-public:
-    PairKeyConstIter() {}
-    PairKeyConstIter(BaseIter iter) : BaseIter(iter) {}
-
-    //--------------------------------------------------------------------------
-    // Operators
-    //--------------------------------------------------------------------------
-    const KeyType *operator->() const
-    {
-        return (const KeyType*) &(BaseIter::operator->( )->first);
-    }
-
-    const KeyType &operator*() const
-    {
-        return BaseIter::operator*().first;
-    }
-};
-
-//--------------------------------------------------------------------------
 // StructNameConstIter
 //--------------------------------------------------------------------------
-//! Custom iterator for iterating through the keys of containers containing pairs
+//! Custom iterator for iterating through the containers of structs with 'name' members
 template<typename BaseIter>
 class StructNameConstIter : public BaseIter
 {
@@ -100,13 +69,14 @@ public:
         return BaseIter::operator*().name;
     }
 };
+
 //----------------------------------------------------------------------------
 // NameIterCtx
 //----------------------------------------------------------------------------
 template<typename Container>
 struct NameIterCtx
 {
-    typedef PairKeyConstIter<typename Container::const_iterator> NameIter;
+    typedef StructNameConstIter<typename Container::const_iterator> NameIter;
 
     NameIterCtx(const Container &c) :
         container(c), nameBegin(std::begin(container)), nameEnd(std::end(container)){}
@@ -117,27 +87,11 @@ struct NameIterCtx
 };
 
 //----------------------------------------------------------------------------
-// NameIterCtx
-//----------------------------------------------------------------------------
-template<typename Container>
-struct NameIterCtx2
-{
-    typedef StructNameConstIter<typename Container::const_iterator> NameIter;
-
-    NameIterCtx2(const Container &c) :
-        container(c), nameBegin(std::begin(container)), nameEnd(std::end(container)){}
-
-    const Container container;
-    const NameIter nameBegin;
-    const NameIter nameEnd;
-};
-
-//----------------------------------------------------------------------------
 // Typedefines
 //----------------------------------------------------------------------------
-typedef NameIterCtx2<Models::Base::VarVec> VarNameIterCtx;
-typedef NameIterCtx2<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
-typedef NameIterCtx2<Models::Base::VarVec> ExtraGlobalParamNameIterCtx;
+typedef NameIterCtx<Models::Base::VarVec> VarNameIterCtx;
+typedef NameIterCtx<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
+typedef NameIterCtx<Models::Base::VarVec> ExtraGlobalParamNameIterCtx;
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates

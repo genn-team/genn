@@ -21,7 +21,7 @@
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual StringPairVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual VarVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base
@@ -51,7 +51,7 @@ public:
 
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the connection initialisation snippet
-    virtual StringPairVec getExtraGlobalParams() const{ return {}; }
+    virtual VarVec getExtraGlobalParams() const{ return {}; }
 
     //------------------------------------------------------------------------
     // Public methods
@@ -59,7 +59,7 @@ public:
     //! Find the index of a named extra global parameter
     size_t getExtraGlobalParamIndex(const std::string &paramName) const
     {
-        return getStringPairVecIndex(paramName, getExtraGlobalParams());
+        return getVarVecIndex(paramName, getExtraGlobalParams());
     }
 };
 

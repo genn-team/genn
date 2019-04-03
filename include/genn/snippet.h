@@ -144,7 +144,7 @@ public:
     //----------------------------------------------------------------------------
 
     typedef std::vector<std::string> StringVec;
-    typedef std::vector<std::pair<std::string, std::string>> StringPairVec;
+    typedef std::vector<Var> VarVec;
     typedef std::vector<std::pair<std::string, std::pair<std::string, double>>> NameTypeValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
 
@@ -163,10 +163,10 @@ protected:
     //------------------------------------------------------------------------
     // Protected static helpers
     //------------------------------------------------------------------------
-    static size_t getStringPairVecIndex(const std::string &varName, const StringPairVec &vars)
+    static size_t getVarVecIndex(const std::string &varName, const VarVec &vars)
     {
         auto varIter = std::find_if(vars.begin(), vars.end(),
-            [varName](const StringPairVec::value_type &v){ return (v.first == varName); });
+            [varName](const Var &v){ return (v.name == varName); });
         assert(varIter != vars.end());
 
         // Return flag corresponding to variable

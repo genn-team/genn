@@ -24,8 +24,8 @@
 #define SET_PRE_SPIKE_CODE(PRE_SPIKE_CODE) virtual std::string getPreSpikeCode() const override{ return PRE_SPIKE_CODE; }
 #define SET_POST_SPIKE_CODE(POST_SPIKE_CODE) virtual std::string getPostSpikeCode() const override{ return POST_SPIKE_CODE; }
 
-#define SET_PRE_VARS(...) virtual StringPairVec getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual StringPairVec getPostVars() const override{ return __VA_ARGS__; }
+#define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
 
 #define SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) virtual bool isPreSpikeTimeRequired() const override{ return PRE_SPIKE_TIME_REQUIRED; }
 #define SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) virtual bool isPostSpikeTimeRequired() const override{ return POST_SPIKE_TIME_REQUIRED; }
@@ -93,11 +93,11 @@ public:
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses coming from the same presynaptic neuron
-    virtual StringPairVec getPreVars() const{ return {}; }
+    virtual VarVec getPreVars() const{ return {}; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses going to the same postsynaptic neuron
-    virtual StringPairVec getPostVars() const{ return {}; }
+    virtual VarVec getPostVars() const{ return {}; }
 
     //! Whether presynaptic spike times are needed or not
     virtual bool isPreSpikeTimeRequired() const{ return false; }
@@ -111,13 +111,13 @@ public:
     //! Find the index of a named presynaptic variable
     size_t getPreVarIndex(const std::string &varName) const
     {
-        return getStringPairVecIndex(varName, getPreVars());
+        return getVarVecIndex(varName, getPreVars());
     }
 
     //! Find the index of a named postsynaptic variable
     size_t getPostVarIndex(const std::string &varName) const
     {
-        return getStringPairVecIndex(varName, getPostVars());
+        return getVarVecIndex(varName, getPostVars());
     }
 
 };
