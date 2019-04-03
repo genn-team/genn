@@ -4,9 +4,9 @@ class GenerateRun : public GenerateRunBase
 {
 public:
     GenerateRun()
-    :   GenerateRunBase("OneComp")
+    :   GenerateRunBase("OneComp"), m_NumNeurons(1)
     {
-        getApp().add_option("numNeurons", m_NumNeurons, "Number of neurons to simulate", true)->required();
+        getApp().add_option("-n,--num-neurons", m_NumNeurons, "Number of neurons to simulate", true);
     }
 
     //------------------------------------------------------------------------

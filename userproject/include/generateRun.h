@@ -26,11 +26,13 @@ class GenerateRunBase
 public:
     GenerateRunBase(const std::string &projectName)
     :   m_App{"Generate run application for '" + projectName + "' user project"},
-        m_Debug(false), m_CPUOnly(false), m_ScalarType("float"), m_ProjectName(projectName)
+        m_Debug(false), m_CPUOnly(false), m_Timing(false), m_ScalarType("float"), m_GPUDevice(-1), m_ProjectName(projectName)
     {
         m_App.add_flag("--debug", m_Debug, "Whether to run in a debugger");
-        m_App.add_flag("--cpu-only", m_CPUOnly, "Whether to build against single-threaded CPU backend");
+        auto *cpuOnly = m_App.add_flag("--cpu-only", m_CPUOnly, "Whether to build against single-threaded CPU backend");
+        m_App.add_flag("--timing", m_Timing, "Whether to use GeNN's timing mechanism to measure performance");
         m_App.add_set("--ftype", m_ScalarType, {"float", "double"}, "What floating point type to use", true);
+        m_App.add_option("--gpu-device", m_GPUDevice, "What GPU device ID to use (-1 = select automatically)", true)->excludes(cpuOnly);
         m_App.add_option("experimentName", m_ExperimentName, "Experiment name")->required();
     }
 
@@ -45,6 +47,11 @@ public:
 
         sizes << "#pragma once" << std::endl;
         sizes << "#define _FTYPE " << "GENN_" << upperCaseScalarType << std::endl;
+        sizes << "#define _TIMING " << m_Timing << std::endl;
+
+        if(m_GPUDevice != -1) {
+            sizes << "#define _GPU_DEVICE " << m_GPUDevice << std::endl;
+        }
     }
 
     //------------------------------------------------------------------------
@@ -121,6 +128,7 @@ protected:
     //------------------------------------------------------------------------
     virtual int runTools() const
     {
+        return EXIT_SUCCESS;
     }
 
     //------------------------------------------------------------------------
@@ -205,7 +213,9 @@ private:
     CLI::App m_App;
     bool m_Debug;
     bool m_CPUOnly;
+    bool m_Timing;
     std::string m_ScalarType;
+    int m_GPUDevice;
     std::string m_ExperimentName;
     const std::string m_ProjectName;
 };
