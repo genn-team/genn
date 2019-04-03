@@ -24,7 +24,8 @@
 #include "optimiser.h"
 
 // Declare global GeNN preferences
-CodeGenerator::BACKEND_NAMESPACE::Preferences GENN_PREFERENCES;
+using namespace CodeGenerator::BACKEND_NAMESPACE;
+Preferences GENN_PREFERENCES;
 
 // Include model
 #include MODEL
@@ -69,7 +70,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
         filesystem::create_directory(outputPath);
 
         // Create backend
-        auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, outputPath, localHostID, GENN_PREFERENCES);
+        auto backend = Optimiser::createBackend(model, outputPath, localHostID, GENN_PREFERENCES);
         
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
