@@ -5,11 +5,11 @@ Pulse-coupled Izhikevich network
 This example model is inspired by simple thalamo-cortical network of Izhikevich 
 with an excitatory and an inhibitory population of spiking neurons that are
 randomly connected. It creates a pulse-coupled network with 80% excitatory 20%
-inhibitory connections, each connecting to nConn neurons with sparse connectivity.
+inhibitory connections, each connecting to a fixed number of neurons with sparse connectivity.
 
 To compile it, navigate to genn/userproject/Izh_sparse_project and type:
 
-nmake /f WINmakefile
+msbuild generate_izh_sparse_runner.vcxproj /p:Configuration=Release
 
 for Windows users, or:
 
@@ -21,29 +21,28 @@ for Linux, Mac and other UNIX users.
 USAGE
 -----
 
-generate_run <0(CPU)/1(GPU)/n(GPU n-2)> <nNeurons> <nConn> <gScale> <outdir> <model name> <input factor>
+generate_run [OPTIONS] <outname> 
 
 Mandatory arguments:
-CPU/GPU: Choose whether to run the simulation on CPU (`0`), auto GPU (`1`), or GPU (n-2) (`n`).
-nNeurons: Number of neurons
-nConn: Number of connections per neuron
-gScale: General scaling of synaptic conductances
 outname: The base name of the output location and output files
-model name: The name of the model to execute, as provided this would be `Izh_sparse`
 
 Optional arguments:
-DEBUG=0 or DEBUG=1 (default 0): Whether to run in a debugger
-FTYPE=DOUBLE of FTYPE=FLOAT (default FLOAT): What floating point type to use
-REUSE=0 or REUSE=1 (default 0): Whether to reuse generated connectivity from an earlier run
-CPU_ONLY=0 or CPU_ONLY=1 (default 0): Whether to compile in (CUDA independent) "CPU only" mode.
+--debug: Builds a debug version of the simulation and attaches the debugger
+--cpu-only: Uses CPU rather than CUDA backend for GeNN
+--timing: Uses GeNN's timing mechanism to measure performance and displays it at the end of the simulation
+--ftype: Sets the floating point precision of the model to either float or double (defaults to float)
+--gpu-device: Sets which GPU device to use for the simulation (defaults to -1 which picks automatically)
+--num-neurons: Number of neurons (defaults to 10000)
+--num-connections: Number of connections per neuron (defaults to 1000)
+--gscale: General scaling of synaptic conductances (defaults to 1.0)
 
-An example invocation of generate_run is:
+An example invocation of generate_run using these defaults and recording results with a base name of `test' would be:
 
-generate_run.exe 1 10000 1000 1 outdir Izh_sparse 1.0
+generate_run.exe test
 
 for Windows users, or:
 
-./generate_run 1 10000 1000 1 outdir Izh_sparse 1.0
+./generate_run test
 
 for Linux, Mac and other UNIX users.
 
@@ -52,23 +51,15 @@ Izhikevich neurons, each making 1000 connections with other neurons, generating
 a mixed alpha and gamma regime. For larger input factor, there is more
 input current and more irregular activity, for smaller factors less
 and less and more sparse activity. The synapses are of a simple pulse-coupling
-type. The results of the simulation are saved in the directory `outdir_output`,
-debugging is switched off, and the connectivity is generated afresh (rather than
-being read from existing files).
+type. The results of the simulation are saved in the directory `outdir_output`.
 
-If connectivity were to be read from files, the connectivity files would have to
-be in the `inputfiles` sub-directory and be named according to the names of the
-synapse populations involved, e.g., `gIzh_sparse_ee` (\<variable name>=`g`
-\<model name>=`Izh_sparse` \<synapse population>=`_ee`). These name conventions
-are not part of the core GeNN definitions and it is the privilege (or burden)
-of the user to find their own in their own versions of `generate_run`.
+Another example of an invocation that runs the simulation using the CPU rather than GPU, 
+records timing information and doubles the number of neurons would be: 
 
-Another example of an invocation would be: 
-
-generate_run.exe 0 10000 1000 1 outdir Izh_sparse 1.0 FTYPE=DOUBLE DEBUG=0 CPU_ONLY=1
+generate_run.exe --cpu-only --timing --num_neurons=20000 test
 
 for Windows users, or:
 
-./generate_run 0 10000 1000 1 outdir Izh_sparse 1.0 FTYPE=DOUBLE DEBUG=0 CPU_ONLY=1
+./generate_run --cpu-only --timing --num_neurons=20000 test
 
 for Linux, Mac and other UNIX users.
