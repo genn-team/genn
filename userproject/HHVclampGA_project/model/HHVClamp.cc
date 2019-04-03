@@ -60,20 +60,6 @@ public:
 };
 IMPLEMENT_MODEL(MyHH);
 
-MyHH::VarValues myHH_ini(
-    initialHHValues[0],     // 0 - membrane potential E
-    initialHHValues[1],     // 1 - prob. for Na channel activation m
-    initialHHValues[2],     // 2 - prob. for not Na channel blocking h
-    initialHHValues[3],     // 3 - prob. for K channel activation n
-    initialHHValues[4],     // 4 - gNa: Na conductance in 1/(mOhms * cm^2)
-    initialHHValues[5],     // 5 - ENa: Na equi potential in mV
-    initialHHValues[6],     // 6 - gK: K conductance in 1/(mOhms * cm^2)
-    initialHHValues[7],     // 7 - EK: K equi potential in mV
-    initialHHValues[8],     // 8 - gl: leak conductance in 1/(mOhms * cm^2)
-    initialHHValues[9],     // 9 - El: leak equi potential in mV
-    initialHHValues[10],    // 10 - Cmem: membr. capacity density in muF/cm^2
-    initialHHValues[11]);   // 11 - error
-
 //--------------------------------------------------------------------------
 /*! \brief This function defines the HH model with variable parameters.
  */
@@ -90,6 +76,20 @@ void modelDefinition(ModelSpec &model)
     model.setName("HHVClamp");
     model.setDT(0.25);
     model.setPrecision(_FTYPE);
+
+    MyHH::VarValues myHH_ini(
+        initialHHValues[0],                                 // 0 - membrane potential E
+        initialHHValues[1],                                 // 1 - prob. for Na channel activation m
+        initialHHValues[2],                                 // 2 - prob. for not Na channel blocking h
+        initialHHValues[3],                                 // 3 - prob. for K channel activation n
+        initVar<InitVarSnippet::Uniform>({1.0, 200.0}),     // 4 - gNa: Na conductance in 1/(mOhms * cm^2)
+        initVar<InitVarSnippet::Uniform>({0.0, 100.0}),     // 5 - ENa: Na equi potential in mV
+        initVar<InitVarSnippet::Uniform>({1.0, 100.0}),     // 6 - gK: K conductance in 1/(mOhms * cm^2)
+        initVar<InitVarSnippet::Uniform>({-100.0, -20.0}),  // 7 - EK: K equi potential in mV
+        initVar<InitVarSnippet::Uniform>({1.0, 50.0}),      // 8 - gl: leak conductance in 1/(mOhms * cm^2)
+        initVar<InitVarSnippet::Uniform>({-100.0, -20.0}),  // 9 - El: leak equi potential in mV
+        initVar<InitVarSnippet::Uniform>({1e-1, 10.0}),     // 10 - Cmem: membr. capacity density in muF/cm^2
+        initialHHValues[11]);                               // 11 - error
 
     model.addNeuronPopulation<MyHH>("HH", NPOP, {}, myHH_ini);
 }

@@ -28,14 +28,6 @@
 
 namespace
 {
-const double limit[7][2]= {{1.0, 200.0}, // gNa
-                           {0.0, 100.0}, // ENa
-                           {1.0, 100.0}, // gKd
-                           {-100.0, -20.0}, // EKd
-                           {1.0, 50.0}, // gleak
-                           {-100.0, -20.0}, // Eleak
-                           {1e-1, 10.0}}; // C
-
 void truevar_init()
 {
     for (int n= 0; n < NPOP; n++) {
@@ -75,13 +67,13 @@ int main(int argc, char *argv[])
         fprintf(stderr, "usage: VClampGA <basename> <protocol> \n");
         return 1;
     }
-    int protocol= atoi(argv[2]);
-    std::string OutDir = std::string(argv[1]) +"_output";
-    std::string name;
-    FILE *timef= fopen((OutDir+ "/"+ argv[1] + ".time").c_str(),"a");
+    const int protocol= atoi(argv[2]);
+    const std::string outLabel = argv[1];
+    const std::string outDir = "../" + outLabel + "_output";
+
     write_para();
-    FILE *osf= fopen((OutDir+ "/"+ argv[1] + ".out.I").c_str(),"w");
-    FILE *osb= fopen((OutDir+ "/"+ argv[1] + ".out.best").c_str(),"w");
+    FILE *osf= fopen((outDir + "/"+ outLabel + ".out.I").c_str(),"w");
+    FILE *osb= fopen((outDir + "/"+ outLabel + ".out.best").c_str(),"w");
 
     std::mt19937 rng;
     std::uniform_real_distribution<double> uniform(0.0, 1.0);
@@ -90,22 +82,23 @@ int main(int argc, char *argv[])
     // build the neuronal circuitry
     allocateMem();
     initialize();
-
-
-    for (int n= 0; n < NPOP; n++) {
-        gNaHH[n]= limit[0][0]+uniform(rng)*(limit[0][1]-limit[0][0]); // uniform in allowed interval
-        ENaHH[n]= limit[1][0]+uniform(rng)*(limit[1][1]-limit[1][0]); // uniform in allowed interval
-        gKHH[n]= limit[2][0]+uniform(rng)*(limit[2][1]-limit[2][0]); // uniform in allowed interval
-        EKHH[n]= limit[3][0]+uniform(rng)*(limit[3][1]-limit[3][0]); // uniform in allowed interval
-        glHH[n]= limit[4][0]+uniform(rng)*(limit[4][1]-limit[4][0]); // uniform in allowed interval
-        ElHH[n]= limit[5][0]+uniform(rng)*(limit[5][1]-limit[5][0]); // uniform in allowed interval
-        CHH[n]= limit[6][0]+uniform(rng)*(limit[6][1]-limit[6][0]); // uniform in allowed interval
-    }
-
-
     initializeSparse();
     fprintf(stderr, "# neuronal circuitry built, start computation ... \n\n");
 
+    // Initialise model of HH cell simulated using CPU
+    Vexp = initialHHValues[0];
+    mexp = initialHHValues[1];
+    hexp = initialHHValues[2];
+    nexp = initialHHValues[3];
+    gNaexp = initialHHValues[4];
+    ENaexp = initialHHValues[5];
+    gKexp = initialHHValues[6];
+    EKexp = initialHHValues[7];
+    glexp = initialHHValues[8];
+    Elexp = initialHHValues[9];
+    Cexp = initialHHValues[10];
+
+    // Build array of pointers to HH cell parameters so they can be modified algorithmically
     double *theExp_p[7];
     theExp_p[0]= &gNaexp;
     theExp_p[1]= &ENaexp;
@@ -141,7 +134,7 @@ int main(int argc, char *argv[])
                 sn++;
             }
         }
-        pullerrHHFromDevice();
+        pullHHStateFromDevice();
         fprintf(osb, "%f %f %f %f %f %f %f %f ", t, gNaexp, ENaexp, gKexp, EKexp, glexp, Elexp, Cexp);
         procreatePop(osb, rng);
         if (protocol >= 0) {
@@ -172,7 +165,7 @@ int main(int argc, char *argv[])
     //fprintf(timef,"%f \n",timer.getElapsedTime());
     // close files
     fclose(osf);
-    fclose(timef);
+
     fclose(osb);
     return 0;
 }
