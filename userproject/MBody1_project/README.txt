@@ -14,7 +14,7 @@ executing the model.
 
 To compile it, navigate to genn/userproject/MBody1_project and type:
 
-msbuild generate_mbody1_runner.vcxproj /p:Configuration=Release
+msbuild ..\userproject.sln /t:generate_mbody1_runner /p:Configuration=Release
 
 for Windows users, or:
 
