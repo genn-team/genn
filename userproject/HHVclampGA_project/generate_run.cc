@@ -4,11 +4,11 @@ class GenerateRun : public GenerateRunBase
 {
 public:
     GenerateRun()
-    :   GenerateRunBase("HHVClamp")
+    :   GenerateRunBase("HHVClamp"), m_Protocol(-1), m_NumPops(12), m_TotalTime(200000.0)
     {
-        getApp().add_option("protocol", m_Protocol, "Protocol to run")->required();
-        getApp().add_option("numPops", m_NumPops, "Number of populations to simulate")->required();
-        getApp().add_option("totalTime", m_TotalTime, "Total time to simulate for")->required();
+        getApp().add_option("--protocol", m_Protocol, "Protocol to run", true);
+        getApp().add_option("--num-pops", m_NumPops, "Number of populations to simulate", true);
+        getApp().add_option("--total-time", m_TotalTime, "Total time to simulate for", true);
     }
 
     //------------------------------------------------------------------------

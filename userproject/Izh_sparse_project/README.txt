@@ -9,7 +9,7 @@ inhibitory connections, each connecting to a fixed number of neurons with sparse
 
 To compile it, navigate to genn/userproject/Izh_sparse_project and type:
 
-msbuild ..\userproject.sln /t:generate_izh_sparse_runner /p:Configuration=Release
+msbuild ..\userprojects.sln /t:generate_izh_sparse_runner /p:Configuration=Release
 
 for Windows users, or:
 

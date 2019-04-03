@@ -9,7 +9,7 @@ executes the model.
 
 To compile it, navigate to genn/userproject/PoissonIzh_project and type:
 
-msbuild ..\userproject.sln /t:generate_poisson_izh_runner /p:Configuration=Release
+msbuild ..\userprojects.sln /t:generate_poisson_izh_runner /p:Configuration=Release
 
 for Windows users, or:
 

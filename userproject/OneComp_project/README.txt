@@ -10,7 +10,7 @@ which compiles and executes the model.
 
 To compile it, navigate to genn/userproject/OneComp_project and type:
 
-msbuild ..\userproject.sln /t:generate_one_comp_runner /p:Configuration=Release
+msbuild ..\userprojects.sln /t:generate_one_comp_runner /p:Configuration=Release
 
 for Windows users, or:
 

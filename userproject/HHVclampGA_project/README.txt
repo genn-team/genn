@@ -11,7 +11,7 @@ protocol 0-6. For protocol 7 all 7 parameters undergo a random walk concurrently
 
 To compile it, navigate to genn/userproject/HHVclampGA_project and type:
 
-nmake /f WINmakefile
+msbuild ..\userproject.sln /t:generate_hhvclamp_runner /p:Configuration=Release
 
 for Windows users, or:
 
