@@ -116,14 +116,37 @@ public:
     {
     }
     
+    typedef std::function<double(const std::vector<double> &, double)> DerivedParamFunc;
+
+    // Structs
+    struct Var
+    {
+        std::string name;
+        std::string type;
+    };
+
+    struct ParamVal
+    {
+        std::string name;
+        std::string type;
+        double value;
+    };
+
+    struct DerivedParam
+    {
+        std::string name;
+        DerivedParamFunc func;
+    };
+
+
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::function<double(const std::vector<double> &, double)> DerivedParamFunc;
+
     typedef std::vector<std::string> StringVec;
     typedef std::vector<std::pair<std::string, std::string>> StringPairVec;
     typedef std::vector<std::pair<std::string, std::pair<std::string, double>>> NameTypeValVec;
-    typedef std::vector<std::pair<std::string, DerivedParamFunc>> DerivedParamVec;
+    typedef std::vector<DerivedParam> DerivedParamVec;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -182,7 +205,7 @@ public:
 
         // Loop through derived parameters
         for(const auto &d : derivedParams) {
-            m_DerivedParams.push_back(d.second(m_Params, dt));
+            m_DerivedParams.push_back(d.func(m_Params, dt));
         }
     }
 

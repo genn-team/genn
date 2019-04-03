@@ -195,7 +195,7 @@ void NeuronGroup::initDerivedParams(double dt)
 
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.second(m_Params, dt));
+        m_DerivedParams.push_back(d.func(m_Params, dt));
     }
 
     // Initialise derived parameters for variable initialisers

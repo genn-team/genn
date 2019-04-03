@@ -43,7 +43,7 @@ void CurrentSource::initDerivedParams(double dt)
 
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.second(getParams(), dt));
+        m_DerivedParams.push_back(d.func(getParams(), dt));
     }
 
     // Initialise derived parameters for variable initialisers

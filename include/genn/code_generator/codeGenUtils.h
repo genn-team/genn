@@ -64,24 +64,42 @@ public:
     //--------------------------------------------------------------------------
     // Operators
     //--------------------------------------------------------------------------
-    const KeyType *operator -> () const
+    const KeyType *operator->() const
     {
-        return (const KeyType *) &(BaseIter::operator -> ( )->first);
+        return (const KeyType*) &(BaseIter::operator->( )->first);
     }
 
-    const KeyType &operator * () const
+    const KeyType &operator*() const
     {
-        return BaseIter::operator * ( ).first;
+        return BaseIter::operator*().first;
     }
 };
 
-//! Helper function for creating a PairKeyConstIter from an iterator
+//--------------------------------------------------------------------------
+// StructNameConstIter
+//--------------------------------------------------------------------------
+//! Custom iterator for iterating through the keys of containers containing pairs
 template<typename BaseIter>
-inline PairKeyConstIter<BaseIter> GetPairKeyConstIter(BaseIter iter)
+class StructNameConstIter : public BaseIter
 {
-    return iter;
-}
+private:
+public:
+    StructNameConstIter() {}
+    StructNameConstIter(BaseIter iter) : BaseIter(iter) {}
 
+    //--------------------------------------------------------------------------
+    // Operators
+    //--------------------------------------------------------------------------
+    const std::string *operator->() const
+    {
+        return static_cast<const std::string*>(&BaseIter::operator->()->name);
+    }
+
+    const std::string &operator*() const
+    {
+        return BaseIter::operator*().name;
+    }
+};
 //----------------------------------------------------------------------------
 // NameIterCtx
 //----------------------------------------------------------------------------
@@ -99,10 +117,26 @@ struct NameIterCtx
 };
 
 //----------------------------------------------------------------------------
+// NameIterCtx
+//----------------------------------------------------------------------------
+template<typename Container>
+struct NameIterCtx2
+{
+    typedef StructNameConstIter<typename Container::const_iterator> NameIter;
+
+    NameIterCtx2(const Container &c) :
+        container(c), nameBegin(std::begin(container)), nameEnd(std::end(container)){}
+
+    const Container container;
+    const NameIter nameBegin;
+    const NameIter nameEnd;
+};
+
+//----------------------------------------------------------------------------
 // Typedefines
 //----------------------------------------------------------------------------
 typedef NameIterCtx<Models::Base::StringPairVec> VarNameIterCtx;
-typedef NameIterCtx<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
+typedef NameIterCtx2<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
 typedef NameIterCtx<Models::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
 
 //--------------------------------------------------------------------------

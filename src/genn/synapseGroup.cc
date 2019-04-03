@@ -381,12 +381,12 @@ void SynapseGroup::initDerivedParams(double dt)
 
     // Loop through WU derived parameters
     for(const auto &d : wuDerivedParams) {
-        m_WUDerivedParams.push_back(d.second(m_WUParams, dt));
+        m_WUDerivedParams.push_back(d.func(m_WUParams, dt));
     }
 
     // Loop through PSM derived parameters
     for(const auto &d : psDerivedParams) {
-        m_PSDerivedParams.push_back(d.second(m_PSParams, dt));
+        m_PSDerivedParams.push_back(d.func(m_PSParams, dt));
     }
 
     // Initialise derived parameters for WU variable initialisers
