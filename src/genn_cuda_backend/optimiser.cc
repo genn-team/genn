@@ -82,7 +82,7 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::Backend::KernelMax])
+void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -90,23 +90,23 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
     // Loop through neuron groups
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
-        groupSizes[Backend::KernelNeuronUpdate].push_back(n.second.getNumNeurons());
+        groupSizes[KernelNeuronUpdate].push_back(n.second.getNumNeurons());
 
         // Add number of neurons to initialisation kernel (all neuron groups at least require spike counts initialising)
-        groupSizes[Backend::KernelInitialize].push_back(n.second.getNumNeurons());
+        groupSizes[KernelInitialize].push_back(n.second.getNumNeurons());
     }
 
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getLocalSynapseGroups()) {
-        groupSizes[Backend::KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second));
+        groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second));
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[Backend::KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
+            groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
         }
 
         if (!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[Backend::KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
+            groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
         }
 
         // If synapse group has individual weights and needs device initialisation
@@ -114,10 +114,10 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
             const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
             if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupSizes[Backend::KernelInitializeSparse].push_back(numSrcNeurons);
+                groupSizes[KernelInitializeSparse].push_back(numSrcNeurons);
             }
             else {
-                groupSizes[Backend::KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
+                groupSizes[KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
             }
         }
         
@@ -128,18 +128,18 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
     }
 
     // Add group sizes for reset kernels
-    groupSizes[Backend::KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
-    groupSizes[Backend::KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
+    groupSizes[KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
+    groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize,
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
                                            const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
 
     // Calculate model group sizes
-    std::vector<size_t> groupSizes[Backend::KernelMax];
+    std::vector<size_t> groupSizes[KernelMax];
     calcGroupSizes(model, groupSizes);
 
     // Create CUDA drive API device and context for accessing kernel attributes
@@ -149,8 +149,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
     // Bitset to mark which kernels are present and array of their attributes for each repetition
-    int krnlSharedSizeBytes[2][Backend::KernelMax];
-    int krnlNumRegs[2][Backend::KernelMax];
+    int krnlSharedSizeBytes[2][KernelMax];
+    int krnlNumRegs[2][KernelMax];
 
     // Get CUDA_PATH environment variable
     // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
@@ -207,7 +207,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
             CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
 
             // Loop through kernels
-            for (unsigned int k = 0; k < Backend::KernelMax; k++) {
+            for (unsigned int k = 0; k < KernelMax; k++) {
                 // If function is found
                 CUfunction kern;
                 CUresult res = cuModuleGetFunction(&kern, module, Backend::KernelNames[k]);
@@ -355,7 +355,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
     return kernelsToOptimise;
 }
 //--------------------------------------------------------------------------
-int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Backend::KernelBlockSize &blockSize,
+int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
                         const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
@@ -369,7 +369,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Bac
     }
 
     // Loop through devices
-    typedef std::tuple<int, size_t, size_t, Backend::KernelBlockSize> Device;
+    typedef std::tuple<int, size_t, size_t, KernelBlockSize> Device;
     std::vector<Device> devices;
     devices.reserve(deviceCount);
     for(int d = 0; d < deviceCount; d++) {
@@ -379,7 +379,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Bac
         const int smVersion = (deviceProps.major * 10) + deviceProps.minor;
 
         // Optimise block size for this device
-        Backend::KernelBlockSize optimalBlockSize;
+        KernelBlockSize optimalBlockSize;
         const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences, outputPath);
 
         // Sum up occupancy of each kernel
@@ -483,23 +483,38 @@ namespace Optimiser
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
                       const Preferences &preferences)
 {
-    if(preferences.autoChooseDevice) {
+    // If optimal device should be chosen
+    if(preferences.deviceSelectMethod == DeviceSelect::OPTIMAL) {
+        // Assert that block size selection method is set to occupancy as these two processes are linked
+        assert(preferences.blockSizeSelectMethod == BlockSizeSelect::OCCUPANCY);
+
         // Choose optimal device
-        Backend::KernelBlockSize cudaBlockSize;
+        KernelBlockSize cudaBlockSize;
         const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
         return Backend(cudaBlockSize, preferences, localHostID, deviceID);
     }
+    // Otherwise
     else {
-        const int deviceID = chooseDeviceWithMostGlobalMemory();
-        
-        // Optimise block size
-        Backend::KernelBlockSize cudaBlockSize;
-        optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, outputPath);
-        
-        // Create backend
-        return Backend(cudaBlockSize, preferences, localHostID, deviceID);
+        // If we should select device with most memory, do so otherwise use manually selected device
+        const int deviceID = (preferences.deviceSelectMethod == DeviceSelect::MOST_MEMORY)
+            ? chooseDeviceWithMostGlobalMemory() : preferences.manualDeviceID;
+
+        // If we should pick kernel block sizes based on occupancy
+        if(preferences.blockSizeSelectMethod == BlockSizeSelect::OCCUPANCY) {
+            // Optimise block size
+            KernelBlockSize cudaBlockSize;
+            optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, outputPath);
+
+            // Create backend
+            return Backend(cudaBlockSize, preferences, localHostID, deviceID);
+        }
+        // Otherwise, create backend using manual block sizes specified in preferences
+        else {
+            return Backend(preferences.manualBlockSizes, preferences, localHostID, deviceID);
+        }
+
     }
 }
 }   // namespace Optimiser

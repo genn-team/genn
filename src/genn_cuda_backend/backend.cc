@@ -1870,7 +1870,7 @@ std::string Backend::getNVCCFlags() const
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
     if (m_Preferences.optimizeCode) {
-        nvccFlags += " -O3 -use_fast_math -Xcompiler \"-ffast-math\"";
+        nvccFlags += " -O3 -Xcompiler \"-ffast-math\"";
     }
     if (m_Preferences.debugCode) {
         nvccFlags += " -O0 -g -G";
