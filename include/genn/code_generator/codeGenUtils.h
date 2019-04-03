@@ -135,9 +135,9 @@ struct NameIterCtx2
 //----------------------------------------------------------------------------
 // Typedefines
 //----------------------------------------------------------------------------
-typedef NameIterCtx<Models::Base::StringPairVec> VarNameIterCtx;
+typedef NameIterCtx2<Models::Base::VarVec> VarNameIterCtx;
 typedef NameIterCtx2<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
-typedef NameIterCtx<Models::Base::StringPairVec> ExtraGlobalParamNameIterCtx;
+typedef NameIterCtx2<Models::Base::VarVec> ExtraGlobalParamNameIterCtx;
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates

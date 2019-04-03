@@ -87,7 +87,7 @@ public:
     virtual std::string getThresholdConditionCode() const{ return m_ThresholdConditionCode; }
 
     virtual Models::Base::StringVec getParamNames() const{ return m_ParamNames; }
-    virtual Models::Base::StringPairVec getVars() const{ return m_Vars; }
+    virtual Models::Base::VarVec getVars() const{ return m_Vars; }
     virtual Models::Base::NameTypeValVec getAdditionalInputVars() const{ return m_AdditionalInputVars; }
     virtual Models::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
 
@@ -111,7 +111,7 @@ private:
     // GeNN model data
     Models::Base::NameTypeValVec m_AdditionalInputVars;
     Models::Base::StringVec m_ParamNames;
-    Models::Base::StringPairVec m_Vars;
+    Models::Base::VarVec m_Vars;
     Models::Base::DerivedParamVec m_DerivedParams;
 
     unsigned int m_InitialRegimeID;

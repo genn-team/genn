@@ -54,7 +54,7 @@ public:
     virtual std::string getDecayCode() const{ return m_DecayCode; }
     virtual std::string getApplyInputCode() const{ return m_ApplyInputCode; }
     virtual Models::Base::StringVec getParamNames() const{ return m_ParamNames; }
-    virtual Models::Base::StringPairVec getVars() const{ return m_Vars; }
+    virtual Models::Base::VarVec getVars() const{ return m_Vars; }
     virtual Models::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
 
     //------------------------------------------------------------------------
@@ -78,7 +78,7 @@ private:
     std::string m_ApplyInputCode;
 
     Models::Base::StringVec m_ParamNames;
-    Models::Base::StringPairVec m_Vars;
+    Models::Base::VarVec m_Vars;
     Models::Base::DerivedParamVec m_DerivedParams;
 
     unsigned int m_InitialRegimeID;

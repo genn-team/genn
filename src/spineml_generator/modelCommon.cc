@@ -196,7 +196,7 @@ void SpineMLGenerator::wrapVariableNames(std::string &code, const std::string &v
     wrapAndReplaceVariableNames(code, variableName, variableName);
 }
 //----------------------------------------------------------------------------
-std::tuple<Models::Base::StringVec, Models::Base::StringPairVec> SpineMLGenerator::findModelVariables(
+std::tuple<Models::Base::StringVec, Models::Base::VarVec> SpineMLGenerator::findModelVariables(
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams, bool multipleRegimes)
 {
     // Starting with those the model needs to vary, create a set of genn variables
@@ -219,7 +219,7 @@ std::tuple<Models::Base::StringVec, Models::Base::StringPairVec> SpineMLGenerato
     }
 
     // Add all GeNN variables
-    Models::Base::StringPairVec vars;
+    Models::Base::VarVec vars;
     std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(vars),
                    [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
 
@@ -233,7 +233,7 @@ std::tuple<Models::Base::StringVec, Models::Base::StringPairVec> SpineMLGenerato
 }
 //----------------------------------------------------------------------------
 void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &paramNames,
-                                                const Models::Base::StringPairVec &vars,
+                                                const Models::Base::VarVec &vars,
                                                 const Models::Base::DerivedParamVec &derivedParams,
                                                 const std::vector<std::string*> &codeStrings)
 {
@@ -328,7 +328,7 @@ bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::stri
 }
 //----------------------------------------------------------------------------
 std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::string> &aliases,
-                                              const Models::Base::StringPairVec &vars,
+                                              const Models::Base::VarVec &vars,
                                               const std::string &sendPortName)
 {
     LOGD << "\t\tAnalogue send port:" << sendPortName;

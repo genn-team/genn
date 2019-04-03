@@ -209,12 +209,12 @@ void wrapVariableNames(std::string &code, const std::string &variableName);
 
 //!< Based on the set of parameter names which are deemed to be variable,
 //!< build vectors of variables and parameters to be used by GeNN model
-std::tuple<Models::Base::StringVec, Models::Base::StringPairVec> findModelVariables(
+std::tuple<Models::Base::StringVec, Models::Base::VarVec> findModelVariables(
     const pugi::xml_node &componentClass, const std::set<std::string> &variableParams,
     bool multipleRegimes);
 
 void substituteModelVariables(const Models::Base::StringVec &paramNames,
-                              const Models::Base::StringPairVec &vars,
+                              const Models::Base::VarVec &vars,
                               const Models::Base::DerivedParamVec &derivedParams,
                               const std::vector<std::string*> &codeStrings);
 
@@ -226,7 +226,7 @@ bool expandAliases(std::string &code, const std::map<std::string, std::string> &
 
 //! Return code to implement send port - will either return a variable directly or will expand an alias
 std::string getSendPortCode(const std::map<std::string, std::string> &aliases,
-                            const Models::Base::StringPairVec &vars,
+                            const Models::Base::VarVec &vars,
                             const std::string &sendPortName);
 
 }   // namespace SpineMLGenerator

@@ -97,16 +97,16 @@ bool isSparseInitRequired(const SynapseGroupInternal &sg)
             && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
 }
 //-----------------------------------------------------------------------
-void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Models::Base::StringPairVec &extraGlobalParameters,
+void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Models::Base::VarVec &extraGlobalParameters,
                              std::map<std::string, std::string> &kernelParameters, const std::vector<std::string> &codeStrings)
 {
     // Loop through list of global parameters
     for(const auto &p : extraGlobalParameters) {
         // If this parameter is used in any codestrings, add it to list of kernel parameters
         if(std::any_of(codeStrings.cbegin(), codeStrings.cend(),
-            [p, codeSuffix](const std::string &c){ return c.find("$(" + p.first + codeSuffix + ")") != std::string::npos; }))
+            [p, codeSuffix](const std::string &c){ return c.find("$(" + p.name + codeSuffix + ")") != std::string::npos; }))
         {
-            kernelParameters.emplace(p.first + varSuffix, p.second);
+            kernelParameters.emplace(p.name + varSuffix, p.type);
         }
     }
 }
