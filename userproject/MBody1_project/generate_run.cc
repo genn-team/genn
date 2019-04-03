@@ -45,7 +45,11 @@ protected:
     virtual int runTools() const override
     {
         // generate input patterns
+#ifdef _WIN32
+        std::string cmd = "..\\tools\\gen_input_structured.exe ";
+#else
         std::string cmd = "../tools/gen_input_structured ";
+#endif
         cmd +=  std::to_string(m_NumAL);
         cmd += " 10 10 0.1 0.05 1000.0 0.2 ";
         cmd += getOutDir() + "/" + getExperimentName() + ".inpat 2>&1 ";
