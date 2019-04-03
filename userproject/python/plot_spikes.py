@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-def plot(filename, time_range, neuron_range):
+def plot(filename, time_range, neuron_range, axis, yoffset=0):
     # Load data,  transposing each column into a seperate array
     data = np.loadtxt(filename, dtype=[("time", float), ("neuron", int)], unpack=True)
 
@@ -24,12 +24,7 @@ def plot(filename, time_range, neuron_range):
         data[1] = data[1][mask]
 
     # Plot spikes
-    fig, axis = plt.subplots()
-    axis.scatter(data[0], data[1], s=1)
-    axis.set_xlabel("Time [ms]")
-    axis.set_ylabel("Neuron number")
-    return fig, axis
-
+    return axis.scatter(data[0], data[1] + yoffset, s=1)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -46,5 +41,8 @@ if __name__ == '__main__':
             neuron_range = (int(sys.argv[4]), int(sys.argv[5]))
 
         # Plot and show figure
-        plot(sys.argv[1], time_range, neuron_range)
+        fig, axis = plt.subplots()
+        plot(sys.argv[1], time_range, neuron_range, axis)
+        axis.set_xlabel("Time [ms]")
+        axis.set_ylabel("Neuron number")
         plt.show()
