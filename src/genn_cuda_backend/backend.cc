@@ -1865,12 +1865,12 @@ std::string Backend::getNVCCFlags() const
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string nvccFlags = "-x cu -arch " + architecture;
 #ifndef _WIN32
-    nvccFlags += " -std=c++11 --compiler-options '-fPIC'";
+    nvccFlags += " -std=c++11 --compiler-options '-fPIC'";ss
 #endif
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
     if (m_Preferences.optimizeCode) {
-        nvccFlags += " -O3 -Xcompiler \"-ffast-math\"";
+        nvccFlags += " -O3 -use_fast_math";
     }
     if (m_Preferences.debugCode) {
         nvccFlags += " -O0 -g -G";
