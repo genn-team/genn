@@ -21,7 +21,7 @@ void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
 void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = getNeuronModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getNeuronModel()->getExtraGlobalParams()[extraGlobalParamIndex].second)) {
+    if(!Utils::isTypePointer(getNeuronModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
         throw std::runtime_error("Only extra global parameters with a pointer type have a location");
     }
     m_ExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
@@ -310,10 +310,8 @@ void NeuronGroup::updateVarQueues(const std::string &code, const std::string &su
     // Loop through variables
     const auto vars = getNeuronModel()->getVars();
     for(size_t i = 0; i < vars.size(); i++) {
-        const std::string &varName = vars[i].first;
-
         // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(varName + suffix) != std::string::npos) {
+        if (code.find(vars[i].name + suffix) != std::string::npos) {
             m_VarQueueRequired[i] = true;
         }
     }

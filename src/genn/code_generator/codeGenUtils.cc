@@ -164,10 +164,10 @@ void neuronSubstitutionsInSynapticCode(
     substitute(wCode, "$(sT" + sourceSuffix + ")",
                "(" + delayOffset + varPrefix + devPrefix+ "sT" + ng->getName() + "[" + offset + idx + "]" + varSuffix + ")");
     for(const auto &v : neuronModel->getVars()) {
-        const std::string varIdx = ng->isVarQueueRequired(v.first) ? offset + idx : idx;
+        const std::string varIdx = ng->isVarQueueRequired(v.name) ? offset + idx : idx;
 
-        substitute(wCode, "$(" + v.first + sourceSuffix + ")",
-                   varPrefix + devPrefix + v.first + ng->getName() + "[" + varIdx + "]" + varSuffix);
+        substitute(wCode, "$(" + v.name + sourceSuffix + ")",
+                   varPrefix + devPrefix + v.name + ng->getName() + "[" + varIdx + "]" + varSuffix);
     }
     value_substitutions(wCode, neuronModel->getParamNames(), ng->getParams(), sourceSuffix);
 

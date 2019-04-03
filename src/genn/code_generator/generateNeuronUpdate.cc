@@ -90,9 +90,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
             // Generate code to copy neuron state into local variable
             for(const auto &v : nm->getVars()) {
-                os << v.second << " l" << v.first << " = ";
-                os << backend.getVarPrefix() << v.first << ng.getName() << "[";
-                if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
+                os << v.type << " l" << v.name << " = ";
+                os << backend.getVarPrefix() << v.name << ng.getName() << "[";
+                if (ng.isVarQueueRequired(v.name) && ng.isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
                 os << popSubs["id"] << "];" << std::endl;
@@ -117,7 +117,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
             // Initialise any additional input variables supported by neuron model
             for (const auto &a : nm->getAdditionalInputVars()) {
-                os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                os << a.type << " " << a.name<< " = " << a.value << ";" << std::endl;
             }
 
             for (const auto &m : ng.getMergedInSyn()) {
@@ -144,8 +144,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     // **TODO** base behaviour from Models::Base
                     for (const auto &v : psm->getVars()) {
-                        os << v.second << " lps" << v.first << sg->getPSModelTargetName();
-                        os << " = " << backend.getVarPrefix() << v.first << sg->getPSModelTargetName() << "[" << popSubs["id"] << "];" << std::endl;
+                        os << v.type << " lps" << v.name << sg->getPSModelTargetName();
+                        os << " = " << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << popSubs["id"] << "];" << std::endl;
                     }
                 }
 
@@ -179,7 +179,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Read current source variables into registers
                 for(const auto &v : csm->getVars()) {
-                    os <<  v.second << " lcs" << v.first << " = " << backend.getVarPrefix() << v.first << cs->getName() << "[" << popSubs["id"] << "];" << std::endl;
+                    os <<  v.type << " lcs" << v.name << " = " << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "];" << std::endl;
                 }
 
                 Substitutions currSourceSubs(&popSubs);
@@ -204,7 +204,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Write updated variables back to global memory
                 for(const auto &v : csm->getVars()) {
-                    os << backend.getVarPrefix() << v.first << cs->getName() << "[" << popSubs["id"] << "] = lcs" << v.first << ";" << std::endl;
+                    os << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
                 }
             }
 
@@ -334,8 +334,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                         for(const auto *sg : ng.getOutSyn()) {
                             if(sg->getDelaySteps() != NO_DELAY) {
                                 for(const auto &v : sg->getWUModel()->getPreVars()) {
-                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
-                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
+                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
+                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
                                 }
                             }
                         }
@@ -345,8 +345,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                         for(const auto *sg : ng.getInSyn()) {
                             if(sg->getBackPropDelaySteps() != NO_DELAY) {
                                 for(const auto &v : sg->getWUModel()->getPostVars()) {
-                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
-                                    os << backend.getVarPrefix() << v.first << sg->getName() << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
+                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
+                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
                                 }
                             }
                         }
@@ -356,12 +356,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
             // store the defined parts of the neuron state into the global state variables dd_V etc
             for(const auto &v : nm->getVars()) {
-                os << backend.getVarPrefix() << v.first << ng.getName() << "[";
+                os << backend.getVarPrefix() << v.name << ng.getName() << "[";
 
-                if (ng.isVarQueueRequired(v.first) && ng.isDelayRequired()) {
+                if (ng.isVarQueueRequired(v.name) && ng.isDelayRequired()) {
                     os << "writeDelayOffset + ";
                 }
-                os << popSubs["id"] << "] = l" << v.first << ";" << std::endl;
+                os << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
             }
 
             for (const auto &m : ng.getMergedInSyn()) {
@@ -389,7 +389,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 os << backend.getVarPrefix() << "inSyn"  << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "] = linSyn" << sg->getPSModelTargetName() << ";" << std::endl;
                 for (const auto &v : psm->getVars()) {
-                    os << backend.getVarPrefix() << v.first << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "]" << " = lps" << v.first << sg->getPSModelTargetName() << ";" << std::endl;
+                    os << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << sg->getPSModelTargetName() << ";" << std::endl;
                 }
             }
         },
@@ -405,8 +405,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Fetch presynaptic variables from global memory
                     for(const auto &v : sg->getWUModel()->getPreVars()) {
-                        os << v.second << " l" << v.first << " = ";
-                        os << backend.getVarPrefix() << v.first << sg->getName() << "[";
+                        os << v.type << " l" << v.name << " = ";
+                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
                         if (sg->getDelaySteps() != NO_DELAY) {
                             os << "readDelayOffset + ";
                         }
@@ -437,11 +437,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Write back presynaptic variables into global memory
                     for(const auto &v : sg->getWUModel()->getPreVars()) {
-                        os << backend.getVarPrefix() << v.first << sg->getName() << "[";
+                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
                         if (sg->getDelaySteps() != NO_DELAY) {
                             os << "writeDelayOffset + ";
                         }
-                        os << popSubs["id"] <<  "] = l" << v.first << ";" << std::endl;
+                        os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -455,8 +455,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Fetch postsynaptic variables from global memory
                     for(const auto &v : sg->getWUModel()->getPostVars()) {
-                        os << v.second << " l" << v.first << " = ";
-                        os << backend.getVarPrefix() << v.first << sg->getName() << "[";
+                        os << v.type << " l" << v.name << " = ";
+                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
                         if (sg->getBackPropDelaySteps() != NO_DELAY) {
                             os << "readDelayOffset + ";
                         }
@@ -488,11 +488,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Write back presynaptic variables into global memory
                     for(const auto &v : sg->getWUModel()->getPostVars()) {
-                        os << backend.getVarPrefix() << v.first << sg->getName() << "[";
+                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
                         if (sg->getBackPropDelaySteps() != NO_DELAY) {
                             os << "writeDelayOffset + ";
                         }
-                        os << popSubs["id"] <<  "] = l" << v.first << ";" << std::endl;
+                        os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                     }
                 }
             }

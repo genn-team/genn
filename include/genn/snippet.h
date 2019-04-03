@@ -115,10 +115,11 @@ public:
     virtual ~Base()
     {
     }
-    
-    typedef std::function<double(const std::vector<double> &, double)> DerivedParamFunc;
 
+    //----------------------------------------------------------------------------
     // Structs
+    //----------------------------------------------------------------------------
+    //! A variable has a name and a type
     struct Var
     {
         std::string name;
@@ -132,20 +133,20 @@ public:
         double value;
     };
 
+    //! A derived parameter has a name and a function for obtaining its value
     struct DerivedParam
     {
         std::string name;
-        DerivedParamFunc func;
+        std::function<double(const std::vector<double> &, double)> func;
     };
 
 
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-
     typedef std::vector<std::string> StringVec;
     typedef std::vector<Var> VarVec;
-    typedef std::vector<std::pair<std::string, std::pair<std::string, double>>> NameTypeValVec;
+    typedef std::vector<ParamVal> ParamValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
 
     //----------------------------------------------------------------------------

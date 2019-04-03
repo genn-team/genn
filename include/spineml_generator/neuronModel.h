@@ -88,7 +88,7 @@ public:
 
     virtual Models::Base::StringVec getParamNames() const{ return m_ParamNames; }
     virtual Models::Base::VarVec getVars() const{ return m_Vars; }
-    virtual Models::Base::NameTypeValVec getAdditionalInputVars() const{ return m_AdditionalInputVars; }
+    virtual Models::Base::ParamValVec getAdditionalInputVars() const{ return m_AdditionalInputVars; }
     virtual Models::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
 
     //------------------------------------------------------------------------
@@ -109,7 +109,7 @@ private:
     std::string m_SendPortSpikeLikeEvent;
 
     // GeNN model data
-    Models::Base::NameTypeValVec m_AdditionalInputVars;
+    Models::Base::ParamValVec m_AdditionalInputVars;
     Models::Base::StringVec m_ParamNames;
     Models::Base::VarVec m_Vars;
     Models::Base::DerivedParamVec m_DerivedParams;

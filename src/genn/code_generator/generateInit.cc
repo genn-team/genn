@@ -119,7 +119,7 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
 //------------------------------------------------------------------------
 template<typename I, typename M, typename Q>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                          const Models::Base::StringPairVec &vars, size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
+                          const Models::Base::VarVec &vars, size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarLocation, Q isVarQueueRequired)
 {
     using namespace CodeGenerator;
@@ -140,7 +140,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
                         // Generate initial value into temporary variable
-                        os << vars[k].second << " initVal;" << std::endl;
+                        os << vars[k].type << " initVal;" << std::endl;
                         varSubs.addVarSubstitution("value", "initVal");
 
                         std::string code = varInit.getSnippet()->getCode();
@@ -154,11 +154,11 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
                         {
                             CodeStream::Scope b(os);
-                            os << backend.getVarPrefix() << vars[k].first << popName << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
+                            os << backend.getVarPrefix() << vars[k].name << popName << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
                         }
                     }
                     else {
-                        varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + popName + "[" + varSubs["id"] + "]");
+                        varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + popName + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
                         applyVarInitSnippetSubstitutions(code, varInit);
@@ -174,7 +174,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 //------------------------------------------------------------------------
 template<typename I, typename M>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                          const Models::Base::StringPairVec &vars, size_t count, const std::string &popName, const std::string &ftype,
+                          const Models::Base::VarVec &vars, size_t count, const std::string &popName, const std::string &ftype,
                           I getVarInitialiser, M getVarMode)
 {
     genInitNeuronVarCode(os, backend, popSubs, vars, count, 0, popName, ftype, getVarInitialiser, getVarMode,
@@ -201,7 +201,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].first + sg.getName() + "[" + varSubs["id_syn"] +  "]");
+                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.apply(code);
@@ -355,7 +355,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             const auto &connectInit = sg.getConnectivityInitialiser();
             os << "// Build sparse connectivity" << std::endl;
             for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-                os << a.second.first << " " << a.first << " = " << a.second.second << ";" << std::endl;
+                os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
             }
             os << "while(true)";
             {

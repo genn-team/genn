@@ -58,7 +58,7 @@ void SynapseGroup::setWUPostVarLocation(const std::string &varName, VarLocation 
 void SynapseGroup::setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = getWUModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getWUModel()->getExtraGlobalParams()[extraGlobalParamIndex].second)) {
+    if(!Utils::isTypePointer(getWUModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
         throw std::runtime_error("Only extra global parameters with a pointer type have a location");
     }
     m_WUExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
@@ -72,7 +72,7 @@ void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
 void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = getPSModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getPSModel()->getExtraGlobalParams()[extraGlobalParamIndex].second)) {
+    if(!Utils::isTypePointer(getPSModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
         throw std::runtime_error("Only extra global parameters with a pointer type have a location");
     }
     m_PSExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
@@ -81,7 +81,7 @@ void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, V
 void SynapseGroup::setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].second)) {
+    if(!Utils::isTypePointer(m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
         throw std::runtime_error("Only extra global parameters with a pointer type have a location");
     }
     m_ConnectivityExtraGlobalParamLocation[extraGlobalParamIndex] = loc;

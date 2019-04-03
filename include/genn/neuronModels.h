@@ -20,7 +20,7 @@
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string getThresholdConditionCode() const override{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string getResetCode() const override{ return RESET_CODE; }
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const override{ return SUPPORT_CODE; }
-#define SET_ADDITIONAL_INPUT_VARS(...) virtual NameTypeValVec getAdditionalInputVars() const override{ return __VA_ARGS__; }
+#define SET_ADDITIONAL_INPUT_VARS(...) virtual ParamValVec getAdditionalInputVars() const override{ return __VA_ARGS__; }
 #define SET_NEEDS_AUTO_REFRACTORY(AUTO_REFRACTORY_REQUIRED) virtual bool isAutoRefractoryRequired() const override{ return AUTO_REFRACTORY_REQUIRED; }
 
 //----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ public:
 
     //! Gets names, types (as strings) and initial values of local variables into which
     //! the 'apply input code' of (potentially) multiple postsynaptic input models can apply input
-    virtual Models::Base::NameTypeValVec getAdditionalInputVars() const{ return {}; }
+    virtual Models::Base::ParamValVec getAdditionalInputVars() const{ return {}; }
 
     //! Does this model require auto-refractory logic?
     virtual bool isAutoRefractoryRequired() const{ return true; }

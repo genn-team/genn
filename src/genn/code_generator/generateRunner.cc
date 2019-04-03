@@ -508,7 +508,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
             const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                        runnerPushFunc, runnerPullFunc, vars[i].second, vars[i].first + n.first,
+                        runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + n.first,
                         n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
         }
 
@@ -518,7 +518,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
         for(size_t i = 0; i < extraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                extraGlobalParams[i].second, extraGlobalParams[i].first + n.first, n.second.getExtraGlobalParamLocation(i));
+                                extraGlobalParams[i].type, extraGlobalParams[i].name + n.first, n.second.getExtraGlobalParamLocation(i));
         }
 
         if(!n.second.getCurrentSources().empty()) {
@@ -532,7 +532,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             for(size_t i = 0; i < csVars.size(); i++) {
                 const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
                 genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                            runnerPushFunc, runnerPullFunc, csVars[i].second, csVars[i].first + cs->getName(),
+                            runnerPushFunc, runnerPullFunc, csVars[i].type, csVars[i].name + cs->getName(),
                             cs->getVarLocation(i), autoInitialized, n.second.getNumNeurons(), currentSourceStatePushPullFunctions);
             }
 
@@ -542,7 +542,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
             for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
                 genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    csExtraGlobalParams[i].second, csExtraGlobalParams[i].first + cs->getName(), cs->getExtraGlobalParamLocation(i));
+                                    csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + cs->getName(), cs->getExtraGlobalParamLocation(i));
             }
         }
     }
@@ -568,8 +568,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 for(const auto &v : sg->getPSModel()->getVars()) {
-                    backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, v.second, v.first + sg->getPSModelTargetName(), sg->getPSVarLocation(v.first),
-                                     sg->getTrgNeuronGroup()->getNumNeurons());
+                    backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, v.type, v.name + sg->getPSModelTargetName(),
+                                     sg->getPSVarLocation(v.name), sg->getTrgNeuronGroup()->getNumNeurons());
                 }
             }
         }
@@ -661,7 +661,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             for(size_t i = 0; i < wuVars.size(); i++) {
                 const bool autoInitialized = !s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty();
                 genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                            runnerPushFunc, runnerPullFunc, wuVars[i].second, wuVars[i].first + s.first,
+                            runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.first,
                             s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
             }
         }
@@ -674,7 +674,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         for(size_t i = 0; i < wuPreVars.size(); i++) {
             const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                        runnerPushFunc, runnerPullFunc, wuPreVars[i].second, wuPreVars[i].first + s.first,
+                        runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.first,
                         s.second.getWUPreVarLocation(i), autoInitialized, preSize, synapseGroupStatePushPullFunctions);
         }
 
@@ -686,7 +686,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         for(size_t i = 0; i < wuPostVars.size(); i++) {
             const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                        runnerPushFunc, runnerPullFunc, wuPostVars[i].second, wuPostVars[i].first + s.first,
+                        runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.first,
                         s.second.getWUPostVarLocation(i), autoInitialized, postSize, synapseGroupStatePushPullFunctions);
         }
 
@@ -706,10 +706,10 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                 const auto psmVars = psm->getVars();
                 for(size_t i = 0; i < psmVars.size(); i++) {
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
-                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i), psmVars[i].first + s.first, synapseGroupStatePushPullFunctions,
+                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i), psmVars[i].name + s.first, synapseGroupStatePushPullFunctions,
                         [&]()
                         {
-                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].second, psmVars[i].first + s.first,
+                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.first,
                                                         autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
                         });
                 }
@@ -722,19 +722,19 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                psmExtraGlobalParams[i].second, psmExtraGlobalParams[i].first + s.first, s.second.getPSExtraGlobalParamLocation(i));
+                                psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.first, s.second.getPSExtraGlobalParamLocation(i));
         }
 
         const auto wuExtraGlobalParams = wu->getExtraGlobalParams();
         for(size_t i = 0; i < wuExtraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                wuExtraGlobalParams[i].second, wuExtraGlobalParams[i].first + s.first, s.second.getWUExtraGlobalParamLocation(i));
+                                wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.first, s.second.getWUExtraGlobalParamLocation(i));
         }
 
         const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
         for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                sparseConnExtraGlobalParams[i].second, sparseConnExtraGlobalParams[i].first + s.first,
+                                sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.first,
                                 s.second.getSparseConnectivityExtraGlobalParamLocation(i));
         }
     }
