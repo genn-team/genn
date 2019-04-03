@@ -4,12 +4,13 @@ class GenerateRun : public GenerateRunBase
 {
 public:
     GenerateRun()
-    :   GenerateRunBase("PoissonIzh")
+    :   GenerateRunBase("PoissonIzh"), m_NumPoisson(100), m_NumIzh(10), m_PConn(0.5), m_GScale(2.0), m_Sparse(false)
     {
-        getApp().add_option("numPoisson", m_NumPoisson, "Number of Poisson sources to simulate", true)->required();
-        getApp().add_option("numIzh", m_NumIzh, "Number of Izhikievich neurons to simulate", true)->required();
-        getApp().add_option("pConn", m_PConn, "Probability of connection between poisson source and neuron", true)->required();
-        getApp().add_option("gscale", m_GScale, "Scaling of synaptic conductances", true)->required();
+        getApp().add_option("--num-poisson", m_NumPoisson, "Number of Poisson sources to simulate", true);
+        getApp().add_option("--num-izh", m_NumIzh, "Number of Izhikievich neurons to simulate", true);
+        getApp().add_option("--pconn", m_PConn, "Probability of connection between poisson source and neuron", true);
+        getApp().add_option("--gscale", m_GScale, "Scaling of synaptic conductances", true);
+        getApp().add_flag("--sparse", m_Sparse, "Use sparse rather than dense connectivity");
     }
 
     //------------------------------------------------------------------------
@@ -24,6 +25,10 @@ public:
         sizes << "#define _NIzh " << m_NumIzh << std::endl;
         sizes << "#define _PConn " << m_PConn << std::endl;
         sizes << "#define _GScale " << m_GScale << std::endl;
+
+        if(m_Sparse) {
+            sizes << "#define _SPARSE_CONNECTIVITY" << std::endl;
+        }
     }
 
 private:
@@ -31,6 +36,7 @@ private:
     unsigned int m_NumIzh;
     double m_PConn;
     double m_GScale;
+    bool m_Sparse;
 };
 
 int main(int argc, char *argv[])

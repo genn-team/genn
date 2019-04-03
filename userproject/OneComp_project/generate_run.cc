@@ -6,7 +6,7 @@ public:
     GenerateRun()
     :   GenerateRunBase("OneComp"), m_NumNeurons(1)
     {
-        getApp().add_option("-n,--num-neurons", m_NumNeurons, "Number of neurons to simulate", true);
+        getApp().add_option("--num-neurons", m_NumNeurons, "Number of neurons to simulate", true);
     }
 
     //------------------------------------------------------------------------

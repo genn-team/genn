@@ -15,7 +15,7 @@
 #include <fstream>
 
 // Userproject includes
-#include "analogue_recorder.h"
+#include "analogueRecorder.h"
 #include "timer.h"
 
 #include "OneComp_CODE/definitions.h"
@@ -65,6 +65,11 @@ int main(int argc, char *argv[])
                 std::cout << "time " << t << std::endl;
             }
         }
+    }
+
+    if(_TIMING) {
+        std::cout << "Initialization time:" << initTime << "s" << std::endl;
+        std::cout << "Neuron update time:" << neuronUpdateTime << "s" << std::endl;
     }
 
     return EXIT_SUCCESS;

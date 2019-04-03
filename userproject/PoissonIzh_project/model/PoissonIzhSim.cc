@@ -35,15 +35,8 @@ int main(int argc, char *argv[])
     }
 
     const std::string outLabel = argv[1];
+    const std::string outDir = "../" + outLabel + "_output";
 
-    /*int which= atoi(argv[2]);
-    string OutDir = string(argv[1]) +"_output";
-    string name;
-    name= OutDir+ "/"+ argv[1] + ".time";
-    FILE *timef= fopen(name.c_str(),"w");*/
-
-    //CStopWatch timer;
-    //timer.startTimer();
     std::cerr << "# DT " << DT << std::endl;
     std::cerr << "# REPORT_TIME " << REPORT_TIME << std::endl;
     std::cerr << "# SYN_OUT_TIME " << SYN_OUT_TIME << std::endl;
@@ -85,11 +78,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    //timer.stopTimer();
-    //cerr << "Output files are created under the current directory." << endl;
-    //float elapsedTime= timer.getElapsedTime();
-    //fprintf(timef, "%d %d %f \n", PNIzhNN.sumPN, PNIzhNN.sumIzh1, elapsedTime);
     std::cout << sumPN << " Poisson spikes evoked spikes on " << sumIzh1 << " Izhikevich neurons in " << elapsedTime << " seconds." << std::endl;
 
+    if(_TIMING) {
+        std::cout << "Initialization time:" << initTime << "s" << std::endl;
+        std::cout << "Sparse initialization time:" << initSparseTime << "s" << std::endl;
+        std::cout << "Neuron update time:" << neuronUpdateTime << "s" << std::endl;
+        std::cout << "Presynaptic update time:" << presynapticUpdateTime << "s" << std::endl;
+    }
     return 0;
 }

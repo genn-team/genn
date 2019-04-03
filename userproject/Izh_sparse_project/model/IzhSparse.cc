@@ -84,6 +84,11 @@ void modelDefinition(ModelSpec &model)
     GENN_PREFERENCES.optimizeCode = true;
 #endif // DEBUG
 
+#ifdef _GPU_DEVICE
+    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+    GENN_PREFERENCES.manualDeviceID = _GPU_DEVICE;
+#endif
+
     // Parameters for gaussian noise current source - excitatory population
     CurrentSourceModels::GaussianNoise::ParamValues IzhExc_curr_par(
         0.0,                // 0 -Mean
@@ -199,4 +204,5 @@ void modelDefinition(ModelSpec &model)
         initConnectivity<FixedNumberPostWithReplacement>(Inh_conn_par));
 
     model.setPrecision(_FTYPE);
+    model.setTiming(_TIMING);
 }

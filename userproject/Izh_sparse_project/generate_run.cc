@@ -4,12 +4,12 @@ class GenerateRun : public GenerateRunBase
 {
 public:
     GenerateRun()
-    :   GenerateRunBase("IzhSparse")
+    :   GenerateRunBase("IzhSparse"), m_NumNeurons(10000), m_NumConnections(1000), m_GScale(1.0), m_InputFac(1.0)
     {
-        getApp().add_option("numNeurons", m_NumNeurons, "Number of neurons to simulate", true)->required();
-        getApp().add_option("numConnections", m_NumConnections, "Number of connections per neuron", true)->required();
-        getApp().add_option("gscale", m_GScale, "Scaling of synaptic conductances", true)->required();
-        getApp().add_option("inputFac", m_InputFac, "Input factor", true)->required();
+        getApp().add_option("--num-neurons", m_NumNeurons, "Number of neurons to simulate", true);
+        getApp().add_option("--num-connections", m_NumConnections, "Number of connections per neuron", true);
+        getApp().add_option("--gscale", m_GScale, "Scaling of synaptic conductances", true);
+        getApp().add_option("--input-fac", m_InputFac, "Input factor", true);
     }
 
     //------------------------------------------------------------------------

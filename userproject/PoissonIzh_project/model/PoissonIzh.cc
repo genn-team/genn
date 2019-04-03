@@ -43,6 +43,11 @@ void modelDefinition(ModelSpec &model)
     GENN_PREFERENCES.optimizeCode = true;
 #endif // DEBUG
 
+#ifdef _GPU_DEVICE
+    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+    GENN_PREFERENCES.manualDeviceID = _GPU_DEVICE;
+#endif
+
     // POISSON neuron parameters
     NeuronModels::PoissonNew::ParamValues myPOI_p(
         20.0);      // 0 - firing rate [hZ]
@@ -64,7 +69,35 @@ void modelDefinition(ModelSpec &model)
         -65,        //0 - V
         -20);       //1 - U
 
-    // Gaussiuan fixed probability var initialiser parameters
+
+
+    model.setName("PoissonIzh");
+    model.setDT(1.0);
+    model.addNeuronPopulation<NeuronModels::PoissonNew>("PN", _NPoisson, myPOI_p, myPOI_ini);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NIzh, exIzh_p, exIzh_ini);
+
+#ifdef _SPARSE_CONNECTIVITY
+    // Parameters to initialize connectivity to 0.5 chance of connection
+    InitSparseConnectivitySnippet::FixedProbability::ParamValues mySyn_connectivity_p(
+        _PConn); // 0 - prob
+
+    // Parameters to sample gsyns from normal distribution (gaussian)
+    InitVarSnippet::Normal::ParamValues mySyn_g_p(
+        100.0f / _NPoisson * _GScale,           // 0 - GSyn mean
+        100.0f / _NPoisson * _GScale / 15.0f);  // 1 - GSyn S.D.
+
+    // Initialise weights using snippet and parameterss
+    WeightUpdateModels::StaticPulse::VarValues mySyn_ini(
+        initVar<InitVarSnippet::Normal>(mySyn_g_p));
+
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "PNIzh1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "PN", "Izh1",
+        {}, mySyn_ini,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(mySyn_connectivity_p));
+#else
+    // Gaussian fixed probability var initialiser parameters
     GaussianFixedProbability::ParamValues mySyn_connectivity_p(
         _PConn,                                 // 0 -Probability of connection
         100.0f / _NPoisson * _GScale,           // 1 - GSyn mean
@@ -74,16 +107,14 @@ void modelDefinition(ModelSpec &model)
     WeightUpdateModels::StaticPulse::VarValues mySyn_ini(
         initVar<GaussianFixedProbability>(mySyn_connectivity_p));
 
-    model.setName("PoissonIzh");
-    model.setDT(1.0);
-    model.addNeuronPopulation<NeuronModels::PoissonNew>("PN", _NPoisson, myPOI_p, myPOI_ini);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", _NIzh, exIzh_p, exIzh_ini);
-
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "PNIzh1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "PN", "Izh1",
         {}, mySyn_ini,
         {}, {});
+#endif
+
     model.setSeed(1234);
     model.setPrecision(_FTYPE);
+    model.setTiming(_TIMING);
 }

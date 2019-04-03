@@ -22,6 +22,11 @@ void modelDefinition(ModelSpec &model)
     GENN_PREFERENCES.optimizeCode = true;
 #endif // DEBUG
 
+#ifdef _GPU_DEVICE
+    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+    GENN_PREFERENCES.manualDeviceID = _GPU_DEVICE;
+#endif
+
     // Izhikevich model parameters - tonic spiking
     NeuronModels::Izhikevich::ParamValues exIzh_p(
         0.02,       // 0 - a
@@ -45,4 +50,5 @@ void modelDefinition(ModelSpec &model)
     model.addCurrentSource<CurrentSourceModels::DC>("Curr1", "Izh1",
                                                     exIzh_curr_p, {});
     model.setPrecision(_FTYPE);
+    model.setTiming(_TIMING);
 }
