@@ -21,7 +21,7 @@
 #include <cmath>
 
 // Userproject includes
-#include "spike_recorder.h"
+#include "spikeRecorder.h"
 #include "timer.h"
 
 #include "sizes.h"
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     std::cout << "# DT " <<  DT << std::endl;
     std::cout << "# T_REPORT_TME " <<  T_REPORT_TME << std::endl;
-    std::cout << "# SYN_OUT_output_spikesTME" <<  SYN_OUT_TME << std::endl;
+    std::cout << "# SYN_OUT_TME " <<  SYN_OUT_TME << std::endl;
     std::cout << "# PATFTIME " <<  PATFTIME << std::endl;
     std::cout << "# patFireTimesteps " <<  patFireTimeSteps << std::endl;
     std::cout << "# PAT_TIME " <<  PAT_TIME << std::endl;
@@ -175,14 +175,21 @@ int main(int argc, char *argv[])
         }
     }
 
-//    timer.stopTimer();
 
     pullVDNFromDevice();
     std::cerr << "output files are created under the current directory." << std::endl;
+
     const unsigned int numNeurons = _NAL + _NKC + _NLHI + _NDN;
-    //fprintf(timef, "%d %u %u %u %u %u %.4f %.2f %.1f %.2f\n",which, numNeurons, locust.sumPN, locust.sumKC, locust.sumLHI, locust.sumDN, timer.getElapsedTime(),VDN[0], TOTAL_TME, DT);
     std::cout << numNeurons << " neurons, " << pnSpikes.getSum() << " PN spikes, " << kcSpikes.getSum() << " KC spikes, " << lhiSpikes.getSum() << " LHI spikes, ";
     std::cout << dnSpikes.getSum() << " DN spikes, " << "simulation took " << simTime << " secs, VDN[0]=" << VDN[0] << " DT=" << DT << std::endl;
+
+    if(_TIMING) {
+        std::cout << "Initialization time:" << initTime << "s" << std::endl;
+        std::cout << "Sparse initialization time:" << initSparseTime << "s" << std::endl;
+        std::cout << "Neuron update time:" << neuronUpdateTime << "s" << std::endl;
+        std::cout << "Presynaptic update time:" << presynapticUpdateTime << "s" << std::endl;
+        std::cout << "Postsynaptic update time:" << postsynapticUpdateTime << "s" << std::endl;
+    }
 
     // Free everything
     freefiringProbPN();

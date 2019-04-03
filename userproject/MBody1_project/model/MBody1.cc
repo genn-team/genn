@@ -80,6 +80,10 @@ void modelDefinition(ModelSpec &model)
     GENN_PREFERENCES.optimizeCode = true;
 #endif // DEBUG
 
+#ifdef _GPU_DEVICE
+    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+    GENN_PREFERENCES.manualDeviceID = _GPU_DEVICE;
+#endif
 
     NeuronModels::Poisson::ParamValues myPOI_p(
         2.5,    // 0 - refratory period
@@ -238,4 +242,5 @@ void modelDefinition(ModelSpec &model)
 
     model.setSeed(1234);
     model.setPrecision(_FTYPE);
+    model.setTiming(_TIMING);
 }
