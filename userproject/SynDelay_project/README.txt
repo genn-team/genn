@@ -18,7 +18,7 @@ genn-buildmodel.bat SynDelay.cc
 
 then compile the project by typing:
 
-msbuild SynDelay.vcxproj /p:Configuration=Release
+msbuild SynDelay.sln /t:SynDelay /p:Configuration=Release
 
 
 COMPILE (MAC AND LINUX)
@@ -36,4 +36,4 @@ make
 USAGE
 -----
 
-syn_delay [CPU = 0 / GPU = 1] [directory to save output]
+syn_delay [directory to save output]

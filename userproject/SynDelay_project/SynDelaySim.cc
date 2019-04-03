@@ -13,8 +13,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "../include/spike_recorder.h"
-#include "../include/timer.h"
+// User project includes
+#include "spikeRecorder.h"
+#include "timer.h"
 
 #include "SynDelay_CODE/definitions.h"
 
