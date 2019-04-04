@@ -541,7 +541,7 @@ int main(int argc, char *argv[])
         }
 
         // Generate command to build using make
-        const std::string buildCommand = "make -C " + codePath.str();
+        const std::string buildCommand = "make -C \"" + codePath.str() + "\"";
 #endif
 
         // Execute build command
