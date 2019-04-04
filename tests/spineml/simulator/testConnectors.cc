@@ -39,33 +39,6 @@ void checkTriangle(const unsigned int *rowLength, const unsigned int *ind, unsig
 //------------------------------------------------------------------------
 // FixedProbabilityConnection tests
 //------------------------------------------------------------------------
-/*TEST(FixedProbabilityConnectionTest, LowProbabilitySparse) {
-    // XML fragment specifying connector
-    const char *connectorXML =
-        "<LL:Synapse>\n"
-        "   <FixedProbabilityConnection probability=\"0.1\" seed=\"123\"/>\n"
-        "</LL:Synapse>\n";
-
-    // Load XML and get root LL:Synapse element
-    pugi::xml_document connectorDocument;
-    connectorDocument.load_string(connectorXML);
-    auto synapse = connectorDocument.child("LL:Synapse");
-
-    unsigned int *rowLength = new unsigned int[42];
-    unsigned int *ind
-    //const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
-    //unsigned int **rowLength, unsigned int **ind, unsigned int *maxRowLength,
-    //const filesystem::path &basePath, std::vector<unsigned int> &remapIndices
-    // Parse XML and create sparse connector
-    filesystem::path basePath;
-    std::vector<unsigned int> remapIndices;
-    Connectors::create(synapse, 42, 42,
-                       &sparse42, allocate42, basePath,
-                       remapIndices);
-
-    delete [] rowLength;
-}
-//------------------------------------------------------------------------
 TEST(FixedProbabilityConnectionTest, LowProbabilityDenseDeath) {
     // XML fragment specifying connector
     const char *connectorXML =
@@ -84,14 +57,14 @@ TEST(FixedProbabilityConnectionTest, LowProbabilityDenseDeath) {
     {
         std::vector<unsigned int> remapIndices;
         Connectors::create(synapse, 42, 42,
-                           nullptr, nullptr, basePath,
-                           remapIndices);
+                           nullptr, nullptr, nullptr,
+                           basePath, remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
     {
     }
-}*/
+}
 //------------------------------------------------------------------------
 TEST(FixedProbabilityConnectionTest, FullyConnectedDense) {
     // XML fragment specifying connector
@@ -430,7 +403,7 @@ TEST(ConnectionListTest, InlineShuffleOneToOneSparse) {
     delete [] rowLength;
 }
 //------------------------------------------------------------------------
-/*TEST(ConnectionListTest, BinaryFileSparse) {
+TEST(ConnectionListTest, BinaryFileSparse) {
     // XML fragment specifying connector
     const char *connectorXML =
         "<LL:Synapse>\n"
@@ -447,10 +420,13 @@ TEST(ConnectionListTest, InlineShuffleOneToOneSparse) {
     // Parse XML and create sparse connector
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
+    const unsigned int maxRowLength = 42;
+    unsigned int *rowLength = new unsigned int[42];
+    unsigned int *ind = new unsigned int[42 * maxRowLength];
     Connectors::create(synapse, 42, 42,
-                       &sparse42, allocate42, basePath,
-                       remapIndices);
+                       &rowLength, &ind, &maxRowLength,
+                       basePath, remapIndices);
 
     // Check number of connections matches XML
     EXPECT_EQ(remapIndices.size(), 294);
-}*/
+}

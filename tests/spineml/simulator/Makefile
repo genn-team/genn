@@ -36,8 +36,6 @@ all: $(TEST)
 $(TEST): $(TEST_SOURCES) spineml_common
 	$(CXX) $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
 
-generator.d: ;
-
 spineml_common:
 	$(MAKE) -C $(GENN_DIR)/src/spineml_common
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# By default no flags are passed to genn-buildmodel.sh or make
+# By default no flags are passed to genn-buildmodel.sh
 BUILD_FLAGS=""
 REPORT=0
 
@@ -65,22 +65,17 @@ make clean all COVERAGE=1
 # Run tests
 ./test_coverage --gtest_output="xml:test_results_unit.xml"
 
-# Pop unit tests directory
-popd
-# 
-# # Run SpineML tests
-# pushd spineml
-# pushd simulator
-# 
-# # Clean and build
-# make clean all $MAKE_FLAGS 1>>../../msg 2>>../../msg 
-# 
-# # Run SpineML simulator tests
-# ./test --gtest_output="xml:test_results_spineml.xml"
-# 
-# 
-# popd    # simulator
-# popd    # spineml
+popd    # unit
+
+pushd spineml/simulator
+
+# Clean and build
+make clean all
+
+# Run SpineML simulator tests
+./test --gtest_output="xml:test_results_spineml.xml"
+
+popd    # spineml/simulator
 
 if [[ "$(uname)" = "Darwin" ]]; then
     # Loop through features and build list of raw profile output files
