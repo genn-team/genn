@@ -1,9 +1,6 @@
 # Include common makefile
 include ../MakefileCommon
 
-# Add SpineML simulator include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/spineml_common -I$(GENN_DIR)/include/spineml_simulator
-
 # Determine full path to simulator
 SPINEML_SIMULATOR	:=$(GENN_DIR)/bin/spineml_simulator$(GENN_PREFIX)
 OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml_simulator
@@ -16,6 +13,7 @@ OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
 DEPS			:=$(OBJECTS:.o=.d)
 
 # Add compiler and linker flags to link libGeNN and correct backend; and to configure generator to use backend
+CXXFLAGS		+= -I$(GENN_DIR)/include/spineml_common -I$(GENN_DIR)/include/spineml_simulator
 LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_common$(GENN_PREFIX) -ldl
 
 .PHONY: all clean spineml_common

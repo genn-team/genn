@@ -12,9 +12,6 @@ ifndef GENERATOR_NAME
     $(error Environment variable GENERATOR_NAME  must be defined)
 endif
 
-# Add SpineML generator include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/spineml_common -I$(GENN_DIR)/include/spineml_generator
-
 # Determine full path to generator and backend
 SPINEML_GENERATOR	:=$(GENN_DIR)/bin/$(GENERATOR_NAME)$(GENN_PREFIX)
 BACKEND			:=$(GENN_DIR)/lib/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
@@ -29,7 +26,7 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 # Add compiler and linker flags to link libGeNN and correct backend; and to configure generator to use backend
 LDFLAGS			+= -L$(GENN_DIR)/lib -lgenn$(GENN_PREFIX) -lgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX) -lspineml_common$(GENN_PREFIX)
-CXXFLAGS		+= -I$(GENN_DIR)/include/genn_$(BACKEND_NAME)_backend -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
+CXXFLAGS		+= -I$(GENN_DIR)/include/spineml_common -I$(GENN_DIR)/include/spineml_generator -I$(GENN_DIR)/include/genn_$(BACKEND_NAME)_backend -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
 
 .PHONY: all clean libgenn backend spineml_common
 
