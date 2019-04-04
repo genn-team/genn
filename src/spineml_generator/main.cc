@@ -204,10 +204,13 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Expected experiment XML file passed as argument");
         }
 
+        // Read min log severity from command line
+        const plog::Severity minSeverity = (argc > 3) ? (plog::Severity)std::stoi(argv[3]) : plog::info;
+
         // Initialise log channels, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init(plog::info, &consoleAppender);
-        
+        plog::init(minSeverity, &consoleAppender);
+
         // Use filesystem library to get parent path of the network XML file
         const auto experimentPath = filesystem::path(argv[1]).make_absolute();
         const auto basePath = experimentPath.parent_path();
@@ -491,8 +494,10 @@ int main(int argc, char *argv[])
                                                                  &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
                                                                  std::get<3>(synapseMatrixType));
 
-                    // If matrix uses sparse connectivity and one is specified (if initialiser is used, it's not required)
-                    if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE && std::get<2>(synapseMatrixType) != 0) {
+                    // If matrix uses sparse connectivity and no initialiser is specified
+                    if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE
+                        && std::get<3>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
+                    {
                         synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
                     }
                 }

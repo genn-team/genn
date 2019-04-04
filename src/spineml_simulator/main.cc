@@ -524,9 +524,12 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Expected experiment XML file passed as arguments");
         }
 
+        // Read min log severity from command line
+        const plog::Severity minSeverity = (argc > 3) ? (plog::Severity)std::stoi(argv[3]) : plog::info;
+
         // Initialise log channels, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init(plog::info, &consoleAppender);
+        plog::init(minSeverity, &consoleAppender);
 
 #ifdef _WIN32
         // Startup WinSock 2
@@ -684,7 +687,7 @@ int main(int argc, char *argv[])
 
                 // Find row lengths, indices and max row length associated with sparse connection
                 unsigned int **rowLength = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
-                unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
+                unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("ind" + geNNSynPopName).c_str(), true);
                 const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
 
                 // Create connector
@@ -723,7 +726,7 @@ int main(int argc, char *argv[])
 
                     // Find row lengths, indices and max row length associated with sparse connection
                     unsigned int **rowLength = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
-                    unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
+                    unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("ind" + geNNSynPopName).c_str(), true);
                     const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
 
                     // Create connector
