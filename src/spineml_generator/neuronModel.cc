@@ -256,12 +256,12 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
             }
             else {
                 LOGD << "\t\t\tImplementing analogue receive port '" << portName << "' as GeNN additional input variable";
-                m_AdditionalInputVars.emplace_back(portName, std::make_pair("scalar", 0.0));
+                m_AdditionalInputVars.push_back({portName, "scalar", 0.0});
             }
         }
         else if(nodeType == "EventReceivePort") {
             LOGD << "\t\t\tImplementing event receive port '" << portName << "' as a GeNN additional input variable";
-            m_AdditionalInputVars.emplace_back(portName, std::make_pair("scalar", 0.0));
+            m_AdditionalInputVars.push_back({portName, "scalar", 0.0});
             trueSpikeReceivePort = portName;
         }
         else {
@@ -283,7 +283,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
             }
             else {
                 LOGD << "\t\t\tImplementing analogue reduce port '" << portName << "' as GeNN additional input variable";
-                m_AdditionalInputVars.emplace_back(portName, std::make_pair("scalar", 0.0));
+                m_AdditionalInputVars.push_back({portName, "scalar", 0.0});
             }
         }
         else {

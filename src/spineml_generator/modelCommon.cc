@@ -221,11 +221,11 @@ std::tuple<Models::Base::StringVec, Models::Base::VarVec> SpineMLGenerator::find
     // Add all GeNN variables
     Models::Base::VarVec vars;
     std::transform(gennVariables.begin(), gennVariables.end(), std::back_inserter(vars),
-                   [](const std::string &vname){ return std::make_pair(vname, "scalar"); });
+                   [](const std::string &vname){ return Models::Base::Var{vname, "scalar"}; });
 
     // If model has multiple regimes, add unsigned int regime ID to values
     if(multipleRegimes) {
-        vars.emplace_back("_regimeID", "unsigned int");
+        vars.push_back({"_regimeID", "unsigned int"});
     }
 
     // Return parameter names and variables
@@ -250,21 +250,21 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
 
     LOGD << "\t\tVariables:";
     for(const auto &v : vars) {
-        LOGD << "\t\t\t" << v.first << ":" << v.second;
+        LOGD << "\t\t\t" << v.name << ":" << v.type;
 
         // Wrap variable names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
-            wrapVariableNames(*c, v.first);
+            wrapVariableNames(*c, v.name);
         }
     }
 
     LOGD << "\t\tDerived params:";
     for(const auto &d : derivedParams) {
-        LOGD << "\t\t\t" << d.first;
+        LOGD << "\t\t\t" << d.name;
 
         // Wrap derived param names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
-            wrapVariableNames(*c, d.first);
+            wrapVariableNames(*c, d.name);
         }
     }
 
@@ -335,12 +335,12 @@ std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::s
 
     // If this send port corresponds to a state variable
     auto correspondingVar = std::find_if(vars.begin(), vars.end(),
-                                         [sendPortName](const std::pair<std::string, std::string> &v)
+                                         [sendPortName](const Snippet::Base::Var &v)
                                          {
-                                             return (v.first == sendPortName);
+                                             return (v.name == sendPortName);
                                         });
     if(correspondingVar != vars.end()) {
-        return correspondingVar->first;
+        return correspondingVar->name;
     }
     // Otherwise
     else {

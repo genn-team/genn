@@ -78,14 +78,14 @@ public:
         // Populate this vector with either values from map or 0s
         std::transform(modelVars.begin(), modelVars.end(),
                        std::back_inserter(varValues),
-                       [this](const std::pair<std::string, std::string> &n)
+                       [this](const Snippet::Base::Var &n)
                        {
-                           if(n.first == "_regimeID") {
+                           if(n.name == "_regimeID") {
                                return Models::VarInit(InitVarSnippet::Constant::getInstance(),
                                                          {(double)m_Model.getInitialRegimeID()});
                            }
                            else {
-                               auto v = m_VarInitialisers.find(n.first);
+                               auto v = m_VarInitialisers.find(n.name);
                                if(v == m_VarInitialisers.end()) {
                                    return Models::VarInit(InitVarSnippet::Constant::getInstance(), {0.0});
                                }

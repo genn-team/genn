@@ -308,9 +308,9 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 
         // As this variable is being implemented using a built in GeNN state variable, remove it from variables
         auto stateVar = std::find_if(m_Vars.begin(), m_Vars.end(),
-                                     [impulseAssignStateVar](const std::pair<std::string, std::string> &var)
+                                     [impulseAssignStateVar](const Snippet::Base::Var &var)
                                      {
-                                         return (var.first == impulseAssignStateVar);
+                                         return (var.name == impulseAssignStateVar);
                                      });
         if(stateVar == m_Vars.end()) {
             throw std::runtime_error("State variable '" + impulseAssignStateVar + "' referenced in OnImpulse not found");

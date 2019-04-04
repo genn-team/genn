@@ -68,9 +68,9 @@ public:
     bool hasAdditionalInputVar(const std::string &port) const
     {
         auto iVar = std::find_if(m_AdditionalInputVars.begin(), m_AdditionalInputVars.end(),
-                                 [port](const std::pair<std::string, std::pair<std::string, double>> &var)
+                                 [port](const Snippet::Base::ParamVal &var)
                                  {
-                                     return (var.first == port);
+                                     return (var.name == port);
                                  });
         return (iVar != m_AdditionalInputVars.end());
     }
