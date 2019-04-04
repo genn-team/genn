@@ -24,7 +24,7 @@ namespace SpineMLSimulator
 namespace Connectors
 {
     unsigned int create(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
-                        unsigned int **rowLength, unsigned int **ind, unsigned int *maxRowLength,
+                        unsigned int **rowLength, unsigned int **ind, const unsigned int *maxRowLength,
                         const filesystem::path &basePath, std::vector<unsigned int> &remapIndices);
 }   // namespace Connectors
 }   // namespace SpineMLSimulator

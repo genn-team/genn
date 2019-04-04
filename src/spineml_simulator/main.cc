@@ -685,7 +685,7 @@ int main(int argc, char *argv[])
                 // Find row lengths, indices and max row length associated with sparse connection
                 unsigned int **rowLength = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
                 unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
-                unsigned int *maxRowLength = (unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
+                const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
 
                 // Create connector
                 std::vector<unsigned int> remapIndices;
@@ -724,7 +724,7 @@ int main(int argc, char *argv[])
                     // Find row lengths, indices and max row length associated with sparse connection
                     unsigned int **rowLength = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
                     unsigned int **ind = (unsigned int**)getLibrarySymbol(modelLibrary, ("rowLength" + geNNSynPopName).c_str(), true);
-                    unsigned int *maxRowLength = (unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
+                    const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(modelLibrary, ("maxRowLength" + geNNSynPopName).c_str(), true);
 
                     // Create connector
                     std::vector<unsigned int> remapIndices;

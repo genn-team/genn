@@ -29,7 +29,7 @@
 namespace
 {
 void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int,
-                      unsigned int *rowLength, unsigned int *ind, unsigned int maxRowLength,
+                      unsigned int *rowLength, unsigned int *ind, const unsigned int maxRowLength,
                       const filesystem::path &basePath, std::vector<unsigned int> &remapIndices)
 {
     // Get number of connections, either from BinaryFile
@@ -128,7 +128,7 @@ void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned 
 // SpineMLSimulator::Connectors
 //------------------------------------------------------------------------
 unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
-                                                  unsigned int **rowLength, unsigned int **ind, unsigned int *maxRowLength,
+                                                  unsigned int **rowLength, unsigned int **ind, const unsigned int *maxRowLength,
                                                   const filesystem::path &basePath, std::vector<unsigned int> &remapIndices)
 {
     // One to one connectors are initialised using sparse connectivity initialisation
