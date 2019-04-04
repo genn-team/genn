@@ -68,11 +68,6 @@ SynapseMatrixType SpineMLGenerator::Connectors::AllToAll::getMatrixType(const pu
 {
     return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
 }
-//----------------------------------------------------------------------------
-unsigned int SpineMLGenerator::Connectors::AllToAll::estimateMaxRowLength(const pugi::xml_node&, unsigned int, unsigned int numPost)
-{
-    return numPost;
-}
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::List

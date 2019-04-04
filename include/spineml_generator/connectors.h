@@ -48,7 +48,6 @@ namespace OneToOne
 namespace AllToAll
 {
     SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
-    unsigned int estimateMaxRowLength(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
 }   // namespace AllToAll
 
 //----------------------------------------------------------------------------

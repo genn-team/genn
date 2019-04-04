@@ -401,8 +401,12 @@ int main(int argc, char *argv[])
                                                              &passthroughPostsynapticModel, {}, {},
                                                              std::get<3>(synapseMatrixType));
 
-                // If matrix uses sparse connectivity and one is specified (if initialiser is used, it's not required)
-                if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE && std::get<2>(synapseMatrixType) != 0) {
+                // If matrix uses sparse connectivity and no initialiser is specified
+                if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE
+                    && std::get<3>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
+                {
+                    // Check that max connections has been specified
+                    assert(std::get<2>(synapseMatrixType) != 0);
                     synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
                 }
             }
