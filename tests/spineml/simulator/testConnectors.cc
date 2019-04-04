@@ -1,14 +1,11 @@
 // Filesystem includes
-#include "filesystem/path.h"
+#include "path.h"
 
 // Google test includes
 #include "gtest/gtest.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
-
-// GeNN includes
-#include "sparseProjection.h"
 
 // SpineML simulator includes
 #include "connectors.h"
@@ -20,57 +17,20 @@ using namespace SpineMLSimulator;
 //------------------------------------------------------------------------
 namespace
 {
-SparseProjection sparse5;
-SparseProjection sparse10;
-SparseProjection sparse42;
-
-void allocate5(unsigned int connN){
-    sparse5.connN = connN;
-    sparse5.indInG = new unsigned int[6];
-    sparse5.ind = new unsigned int[connN];
-    sparse5.preInd = NULL;
-    sparse5.revIndInG = NULL;
-    sparse5.revInd = NULL;
-    sparse5.remap = NULL;
-}
-
-void allocate10(unsigned int connN){
-    sparse10.connN = connN;
-    sparse10.indInG = new unsigned int[11];
-    sparse10.ind = new unsigned int[connN];
-    sparse10.preInd = NULL;
-    sparse10.revIndInG = NULL;
-    sparse10.revInd = NULL;
-    sparse10.remap = NULL;
-}
-
-void allocate42(unsigned int connN){
-    sparse42.connN = connN;
-    sparse42.indInG = new unsigned int[43];
-    sparse42.ind = new unsigned int[connN];
-    sparse42.preInd = NULL;
-    sparse42.revIndInG = NULL;
-    sparse42.revInd = NULL;
-    sparse42.remap = NULL;
-}
-
-void checkOneToOne(const SparseProjection &projection, unsigned int num)
+void checkOneToOne(const unsigned int *rowLength, const unsigned int *ind, unsigned int numPre)
 {
-    EXPECT_EQ(projection.connN, num);
-    for(unsigned int i = 0; i < num; i++) {
-        EXPECT_EQ(projection.ind[i], i);
-        EXPECT_EQ(projection.indInG[i], i);
+    for(unsigned int i = 0; i < numPre; i++) {
+        EXPECT_EQ(rowLength[i], 1);
+        EXPECT_EQ(ind[i], i);
     }
-    EXPECT_EQ(projection.indInG[num], num);
 }
 
-void checkTriangle(const SparseProjection &projection, unsigned int num)
+void checkTriangle(const unsigned int *rowLength, const unsigned int *ind, unsigned int maxRowLength, unsigned int numPre)
 {
-    for(unsigned int i = 0; i < num; i++) {
-        const unsigned int rowLength = projection.indInG[i + 1] - projection.indInG[i];
-        EXPECT_EQ(rowLength, i);
-        for(unsigned int j = 0; j < rowLength; j++){
-            EXPECT_EQ(projection.ind[projection.indInG[i] + j], j);
+    for(unsigned int i = 0; i < numPre; i++) {
+        EXPECT_EQ(rowLength[i], i);
+        for(unsigned int j = 0; j < rowLength[i]; j++){
+            EXPECT_EQ(ind[(i * maxRowLength) + j], j);
         }
     }
 }
@@ -79,7 +39,7 @@ void checkTriangle(const SparseProjection &projection, unsigned int num)
 //------------------------------------------------------------------------
 // FixedProbabilityConnection tests
 //------------------------------------------------------------------------
-TEST(FixedProbabilityConnectionTest, LowProbabilitySparse) {
+/*TEST(FixedProbabilityConnectionTest, LowProbabilitySparse) {
     // XML fragment specifying connector
     const char *connectorXML =
         "<LL:Synapse>\n"
@@ -91,12 +51,19 @@ TEST(FixedProbabilityConnectionTest, LowProbabilitySparse) {
     connectorDocument.load_string(connectorXML);
     auto synapse = connectorDocument.child("LL:Synapse");
 
+    unsigned int *rowLength = new unsigned int[42];
+    unsigned int *ind
+    //const pugi::xml_node &node, unsigned int numPre, unsigned int numPost,
+    //unsigned int **rowLength, unsigned int **ind, unsigned int *maxRowLength,
+    //const filesystem::path &basePath, std::vector<unsigned int> &remapIndices
     // Parse XML and create sparse connector
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
     Connectors::create(synapse, 42, 42,
                        &sparse42, allocate42, basePath,
                        remapIndices);
+
+    delete [] rowLength;
 }
 //------------------------------------------------------------------------
 TEST(FixedProbabilityConnectionTest, LowProbabilityDenseDeath) {
@@ -124,7 +91,7 @@ TEST(FixedProbabilityConnectionTest, LowProbabilityDenseDeath) {
     catch(const std::runtime_error &)
     {
     }
-}
+}*/
 //------------------------------------------------------------------------
 TEST(FixedProbabilityConnectionTest, FullyConnectedDense) {
     // XML fragment specifying connector
@@ -144,8 +111,8 @@ TEST(FixedProbabilityConnectionTest, FullyConnectedDense) {
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
     unsigned int n = Connectors::create(synapse, 100, 100,
-                                        nullptr, nullptr, basePath,
-                                        remapIndices);
+                                        nullptr, nullptr, nullptr,
+                                        basePath, remapIndices);
     EXPECT_EQ(n, 100 * 100);
 }
 
@@ -170,8 +137,8 @@ TEST(AllToAllConnectionTest, Dense) {
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
     unsigned int n = Connectors::create(synapse, 100, 100,
-                                        nullptr, nullptr, basePath,
-                                        remapIndices);
+                                        nullptr, nullptr, nullptr,
+                                        basePath, remapIndices);
     EXPECT_EQ(n, 100 * 100);
 }
 //------------------------------------------------------------------------
@@ -192,16 +159,22 @@ TEST(AllToAllConnectionTest, SparseDeath) {
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
+    const unsigned int maxRowLength = 42;
+    unsigned int *rowLength = new unsigned int[42];
+    unsigned int *ind = new unsigned int[42 * maxRowLength];
     try
     {
         Connectors::create(synapse, 42, 42,
-                           &sparse42, allocate42, basePath,
-                           remapIndices);
+                           &rowLength, &ind, &maxRowLength,
+                           basePath, remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
     {
     }
+
+    delete [] ind;
+    delete [] rowLength;
 }
 
 //------------------------------------------------------------------------
@@ -227,39 +200,14 @@ TEST(OneToOneConnectionTest, DenseDeath) {
     try
     {
         Connectors::create(synapse, 100, 100,
-                           nullptr, nullptr, basePath,
-                           remapIndices);
+                           nullptr, nullptr, nullptr,
+                           basePath, remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
     {
     }
 }
-//------------------------------------------------------------------------
-TEST(OneToOneConnectionTest, Sparse) {
-    // XML fragment specifying connector
-    const char *connectorXML =
-        "<LL:Synapse>\n"
-        "   <OneToOneConnection/>\n"
-        "</LL:Synapse>\n";
-
-    // Load XML and get root LL:Synapse element
-    pugi::xml_document connectorDocument;
-    connectorDocument.load_string(connectorXML);
-    auto synapse = connectorDocument.child("LL:Synapse");
-
-    // Parse XML and check connector creation correctly realises
-    // this should be implemented as dense matrix and thus
-    // doesn't require SparseProjection or allocation function
-    filesystem::path basePath;
-    std::vector<unsigned int> remapIndices;
-    Connectors::create(synapse, 42, 42,
-                       &sparse42, allocate42, basePath,
-                       remapIndices);
-
-    checkOneToOne(sparse42, 42);
-}
-
 
 //------------------------------------------------------------------------
 // ConnectionList tests
@@ -284,8 +232,8 @@ TEST(ConnectionListTest, DenseDeath) {
     try
     {
         Connectors::create(synapse, 42, 42,
-                           nullptr, nullptr, basePath,
-                           remapIndices);
+                           nullptr, nullptr, nullptr,
+                           basePath, remapIndices);
         FAIL();
     }
     catch(const std::runtime_error &)
@@ -319,13 +267,18 @@ TEST(ConnectionListTest, InlineOneToOneSparse) {
     // Parse XML and create sparse connector
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
+    const unsigned int maxRowLength = 1;
+    unsigned int *rowLength = new unsigned int[10];
+    unsigned int *ind = new unsigned int[10 * maxRowLength];
     Connectors::create(synapse, 10, 10,
-                       &sparse10, allocate10, basePath,
-                       remapIndices);
+                       &rowLength, &ind, &maxRowLength,
+                       basePath, remapIndices);
 
     // Check number of connections matches XML
-    EXPECT_EQ(sparse10.connN, 10);
-    checkOneToOne(sparse10, 10);
+    EXPECT_EQ(remapIndices.size(), 10);
+    checkOneToOne(rowLength, ind, 10);
+    delete [] ind;
+    delete [] rowLength;
 }
 //------------------------------------------------------------------------
 TEST(ConnectionListTest, InlineTriangleSparse) {
@@ -357,13 +310,18 @@ TEST(ConnectionListTest, InlineTriangleSparse) {
     // Parse XML and create sparse connector
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
+    const unsigned int maxRowLength = 4;
+    unsigned int *rowLength = new unsigned int[5];
+    unsigned int *ind = new unsigned int[5 * maxRowLength];
     Connectors::create(synapse, 5, 5,
-                       &sparse5, allocate5, basePath,
-                       remapIndices);
+                       &rowLength, &ind, &maxRowLength,
+                       basePath, remapIndices);
 
     // Check number of connections matches XML
-    EXPECT_EQ(sparse5.connN, 10);
-    checkTriangle(sparse5, 5);
+    EXPECT_EQ(remapIndices.size(), 10);
+    checkTriangle(rowLength, ind, maxRowLength, 5);
+    delete [] ind;
+    delete [] rowLength;
 }
 //------------------------------------------------------------------------
 TEST(ConnectionListTest, InlineShuffleTriangleSparse) {
@@ -392,13 +350,31 @@ TEST(ConnectionListTest, InlineShuffleTriangleSparse) {
     // Parse XML and create sparse connector
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
+    const unsigned int maxRowLength = 4;
+    unsigned int *rowLength = new unsigned int[5];
+    unsigned int *ind = new unsigned int[5 * maxRowLength];
     Connectors::create(synapse, 5, 5,
-                       &sparse5, allocate5, basePath,
-                       remapIndices);
+                       &rowLength, &ind, &maxRowLength,
+                       basePath, remapIndices);
 
-    // Check number of connections matches XML
-    EXPECT_EQ(sparse5.connN, 10);
-    checkTriangle(sparse5, 5);
+    // Check that resultant connectivity is triangle
+    checkTriangle(rowLength, ind, maxRowLength, 5);
+
+    // Check number of connections matches XML and that remapping is correct
+    EXPECT_EQ(remapIndices.size(), 10);
+    EXPECT_EQ(remapIndices[0], (4 * maxRowLength) + 3);
+    EXPECT_EQ(remapIndices[1], (1 * maxRowLength) + 0);
+    EXPECT_EQ(remapIndices[2], (3 * maxRowLength) + 0);
+    EXPECT_EQ(remapIndices[3], (4 * maxRowLength) + 2);
+    EXPECT_EQ(remapIndices[4], (2 * maxRowLength) + 0);
+    EXPECT_EQ(remapIndices[5], (4 * maxRowLength) + 0);
+    EXPECT_EQ(remapIndices[6], (3 * maxRowLength) + 1);
+    EXPECT_EQ(remapIndices[7], (4 * maxRowLength) + 1);
+    EXPECT_EQ(remapIndices[8], (2 * maxRowLength) + 1);
+    EXPECT_EQ(remapIndices[9], (3 * maxRowLength) + 2);
+
+    delete [] ind;
+    delete [] rowLength;
 }
 //------------------------------------------------------------------------
 TEST(ConnectionListTest, InlineShuffleOneToOneSparse) {
@@ -427,16 +403,34 @@ TEST(ConnectionListTest, InlineShuffleOneToOneSparse) {
     // Parse XML and create sparse connector
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
+    const unsigned int maxRowLength = 1;
+    unsigned int *rowLength = new unsigned int[10];
+    unsigned int *ind = new unsigned int[10 * maxRowLength];
     Connectors::create(synapse, 10, 10,
-                       &sparse10, allocate10, basePath,
-                       remapIndices);
+                       &rowLength, &ind, &maxRowLength,
+                       basePath, remapIndices);
 
-    // Check number of connections matches XML
-    EXPECT_EQ(sparse10.connN, 10);
-    checkOneToOne(sparse10, 10);
+    // Check that resultant connectivity is one-to-one
+    checkOneToOne(rowLength, ind, 10);
+
+    // Check number of connections matches XML and that remapping is correct
+    EXPECT_EQ(remapIndices.size(), 10);
+    EXPECT_EQ(remapIndices[0], 6);
+    EXPECT_EQ(remapIndices[1], 1);
+    EXPECT_EQ(remapIndices[2], 7);
+    EXPECT_EQ(remapIndices[3], 3);
+    EXPECT_EQ(remapIndices[4], 4);
+    EXPECT_EQ(remapIndices[5], 9);
+    EXPECT_EQ(remapIndices[6], 8);
+    EXPECT_EQ(remapIndices[7], 0);
+    EXPECT_EQ(remapIndices[8], 5);
+    EXPECT_EQ(remapIndices[9], 2);
+
+    delete [] ind;
+    delete [] rowLength;
 }
 //------------------------------------------------------------------------
-TEST(ConnectionListTest, BinaryFileSparse) {
+/*TEST(ConnectionListTest, BinaryFileSparse) {
     // XML fragment specifying connector
     const char *connectorXML =
         "<LL:Synapse>\n"
@@ -458,5 +452,5 @@ TEST(ConnectionListTest, BinaryFileSparse) {
                        remapIndices);
 
     // Check number of connections matches XML
-    EXPECT_EQ(sparse42.connN, 294);
-}
+    EXPECT_EQ(remapIndices.size(), 294);
+}*/

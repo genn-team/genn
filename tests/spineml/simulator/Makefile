@@ -20,7 +20,7 @@ SPINEML_SIM_SRC_PATH	:= $(GENN_DIR)/src/spineml_simulator
 
 TEST_SOURCES		:= $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc
 TEST_SOURCES		+= $(SPINEML_SIM_TEST_PATH)/*.cc
-TEST_SOURCES		+= $(SPINEML_SIM_SRC_PATH)/inputValue.cc $(SPINEML_SIM_SRC_PATH)/networkClient.cc
+TEST_SOURCES		+= $(SPINEML_SIM_SRC_PATH)/connectors.cc $(SPINEML_SIM_SRC_PATH)/inputValue.cc $(SPINEML_SIM_SRC_PATH)/networkClient.cc
 
 # Add compiler and linker flags to link libGeNN and pthreads
 LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_common$(GENN_PREFIX) -lpthread

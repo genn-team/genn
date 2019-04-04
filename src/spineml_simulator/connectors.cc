@@ -43,8 +43,9 @@ void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned 
     // Zero row lengths
     std::fill_n(rowLength, numPre, 0);
     
-    // Resize remap indices so that there a
-    remapIndices.reserve(numConnections);
+    // Create array with matching dimensions to ind, initially filled with invalid value
+    std::vector<unsigned int> originalOrder(numPre * maxRowLength,
+                                            std::numeric_limits<unsigned int>::max());
 
     // If connectivity is specified using a binary file
     if(binaryFile) {
@@ -68,6 +69,7 @@ void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned 
         }
 
         // Loop through binary words
+        unsigned int i = 0;
         for(size_t remainingWords = numConnections * wordsPerSynapse; remainingWords > 0;) {
             // Read a block into buffer
             const size_t blockWords = std::min<size_t>(bufferSize, remainingWords);
@@ -83,13 +85,11 @@ void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned 
                 const unsigned int pre = connectionBuffer[w];
                 const unsigned int post = connectionBuffer[w + 1];
 
-                // Add postsynaptic index to ragged data structure
+                // Add postsynaptic index to ragged data structure and record creation order
                 const size_t index = (pre * maxRowLength) + rowLength[pre];
                 ind[index] = post;
+                originalOrder[index] = i++;
 
-                // Add index to remap indices
-                remapIndices.push_back(index);
-                
                 // Increment row length
                 rowLength[pre]++;
                 assert(rowLength[pre] <= maxRowLength);
@@ -102,17 +102,16 @@ void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned 
     // Otherwise loop through connections and add to projection
     else {
         // Loop through connections
+        unsigned int i = 0;
         for(auto c : connections) {
-            // Add to temporary indices
+            // Extract pre and postsynaptic index
             const unsigned int pre = c.attribute("src_neuron").as_uint();
             const unsigned int post = c.attribute("dst_neuron").as_uint();
 
-            // Add postsynaptic index to ragged data structure
+            // Add postsynaptic index to ragged data structure and record creation order
             const size_t index = (pre * maxRowLength) + rowLength[pre];
             ind[index] = post;
-
-            // Add index to remap indices
-            remapIndices.push_back(index);
+            originalOrder[index] = i++;
 
             // Increment row length
             rowLength[pre]++;
@@ -121,6 +120,53 @@ void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned 
     }
 
     LOGD << "\tList connector with " << numConnections << " sparse synapses";
+
+    // Reserve remap indices array to match number of connections
+    remapIndices.resize(numConnections);
+
+    // Create array of row indices to use for sorting each row
+    std::vector<unsigned int> rowOrder(maxRowLength);
+    std::vector<unsigned int> rowIndCopy(maxRowLength);
+
+    // Loop through rows
+    for(unsigned int i = 0; i < numPre; i++) {
+        // Get pointer to start of row indices
+        unsigned int *rowIndBegin = &ind[i * maxRowLength];
+
+        // Copy row indices into vector
+        // **NOTE** reordering in place is non-trivial
+        std::copy_n(rowIndBegin, rowLength[i], rowIndCopy.begin());
+
+        // Get iterator to end of section of row order to use for this row
+        auto rowOrderEnd = rowOrder.begin();
+        std::advance(rowOrderEnd, rowLength[i]);
+
+        // Fill section with 0, 1, ..., N
+        std::iota(rowOrder.begin(), rowOrderEnd, 0);
+
+        // Sort row order based on postsynaptic indices
+        std::sort(rowOrder.begin(), rowOrderEnd,
+                  [&rowIndCopy](unsigned int a, unsigned int b)
+                  {
+                      return (rowIndCopy[a] < rowIndCopy[b]);
+                  });
+
+        // Use row order to re-order row indices back into original data structure
+        std::transform(rowOrder.cbegin(), rowOrder.cend(), rowIndBegin,
+                       [&rowIndCopy](unsigned int ord){ return rowIndCopy[ord]; });
+
+        std::cout << i << ":";
+        // Loop through synapses in row
+        for(unsigned int j = 0; j < rowLength[i]; j++) {
+            // Get re-ordered
+
+            const unsigned int reorderedRaggedIdx = (i * maxRowLength) + rowOrder[j];
+            remapIndices[originalOrder[(i * maxRowLength) + j]] = reorderedRaggedIdx;
+
+            std::cout << rowOrder[j] << "(" << originalOrder[(i * maxRowLength) + j] << "),";
+        }
+        std::cout << std::endl;
+    }
 }
 }   // anonymous namespace
 
@@ -134,13 +180,24 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, un
     // One to one connectors are initialised using sparse connectivity initialisation
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-        return numPre;
+        if(rowLength != nullptr && ind != nullptr && maxRowLength != nullptr) {
+            return numPre;
+        }
+        else {
+            throw std::runtime_error("OneToOneConnection does not have corresponding rowlength and ind arrays");
+        }
     }
 
     // All to all connectors are initialised using sparse connectivity initialisation
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
-        return numPre * numPost;
+        if(rowLength == nullptr && ind == nullptr && maxRowLength == nullptr) {
+            return numPre * numPost;
+        }
+        else {
+            throw std::runtime_error("AllToAllConnection should be implemented as dense connectivity without rowLength and ind arrays");
+        }
+
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
