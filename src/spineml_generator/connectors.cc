@@ -81,7 +81,7 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
                                                                                             unsigned int numPre, unsigned int)
 {
     // If connectivity should be read from a binary file
-    std::vector<unsigned int> rowLengths(numPre);
+    std::vector<unsigned int> rowLengths(numPre, 0);
     auto binaryFile = node.child("BinaryFile");
 
     bool explicitDelay = false;
