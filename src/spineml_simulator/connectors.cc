@@ -28,9 +28,9 @@
 //------------------------------------------------------------------------
 namespace
 {
-unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int,
-                              unsigned int *rowLength, unsigned int *ind, unsigned int maxRowLength,
-                              const filesystem::path &basePath, std::vector<unsigned int> &remapIndices)
+void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned int,
+                      unsigned int *rowLength, unsigned int *ind, unsigned int maxRowLength,
+                      const filesystem::path &basePath, std::vector<unsigned int> &remapIndices)
 {
     // Get number of connections, either from BinaryFile
     // node attribute or by counting Connection children
@@ -43,6 +43,9 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
     // Zero row lengths
     std::fill_n(rowLength, numPre, 0);
     
+    // Resize remap indices so that there a
+    remapIndices.reserve(numConnections);
+
     // If connectivity is specified using a binary file
     if(binaryFile) {
         // Create approximately 1Mbyte buffer to hold pre and postsynaptic indices
@@ -81,10 +84,15 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
                 const unsigned int post = connectionBuffer[w + 1];
 
                 // Add postsynaptic index to ragged data structure
-                ind[(pre * maxRowLength) + rowLength[pre]] = post;
+                const size_t index = (pre * maxRowLength) + rowLength[pre];
+                ind[index] = post;
+
+                // Add index to remap indices
+                remapIndices.push_back(index);
                 
                 // Increment row length
                 rowLength[pre]++;
+                assert(rowLength[pre] <= maxRowLength);
             }
 
             // Subtract words in block from totalConnectors
@@ -98,29 +106,21 @@ unsigned int createListSparse(const pugi::xml_node &node, unsigned int numPre, u
             // Add to temporary indices
             const unsigned int pre = c.attribute("src_neuron").as_uint();
             const unsigned int post = c.attribute("dst_neuron").as_uint();
-            
+
             // Add postsynaptic index to ragged data structure
-            ind[(pre * maxRowLength) + rowLength[pre]] = post;
-                
+            const size_t index = (pre * maxRowLength) + rowLength[pre];
+            ind[index] = post;
+
+            // Add index to remap indices
+            remapIndices.push_back(index);
+
             // Increment row length
             rowLength[pre]++;
+            assert(rowLength[pre] <= maxRowLength);
         }
     }
 
-    // Resize remap indices and initialise to SpineML order
-    //remapIndices.resize(numConnections);
-    //std::iota(remapIndices.begin(), remapIndices.end(), 0);
-
-    // Sort indirectly (using remap indices) so connections are in SparseProjection order
-    /*std::sort(remapIndices.begin(), remapIndices.end(),
-              [&tempIndices](unsigned int a, unsigned int b)
-              {
-                  return (tempIndices[a] < tempIndices[b]);
-              });*/
-
     LOGD << "\tList connector with " << numConnections << " sparse synapses";
-
-    return numConnections;
 }
 }   // anonymous namespace
 
@@ -159,8 +159,10 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, un
     auto connectionList = node.child("ConnectionList");
     if(connectionList) {
         if(rowLength != nullptr && ind != nullptr && maxRowLength != nullptr) {
-            return createListSparse(connectionList, numPre, numPost,
-                                    *rowLength, *ind, *maxRowLength, basePath, remapIndices);
+            createListSparse(connectionList, numPre, numPost,
+                             *rowLength, *ind, *maxRowLength, basePath, remapIndices);
+
+            return numPre * (*maxRowLength);
         }
         else {
             throw std::runtime_error("ConnectionList does not have corresponding rowlength and ind arrays");

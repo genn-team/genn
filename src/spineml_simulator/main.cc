@@ -620,7 +620,6 @@ int main(int argc, char *argv[])
         }
 
         // Call library function to initialize
-        // **TODO** this is probably not ENTIRELY necessary as we initialize a lot of stuff again
         {
             Timer t("Init:");
             initialize();
@@ -729,9 +728,9 @@ int main(int argc, char *argv[])
 
                     // Create connector
                     std::vector<unsigned int> remapIndices;
-                    const unsigned int numSynapses = Connectors::create(synapse, popSize, trgPopSize,
-                                                                        rowLength, ind, maxRowLength,
-                                                                        basePath, remapIndices);
+                    const unsigned int synapseVarSize = Connectors::create(synapse, popSize, trgPopSize,
+                                                                           rowLength, ind, maxRowLength,
+                                                                           basePath, remapIndices);
 
                     // Add postsynapse properties to dictionary
                     addPropertiesAndSizes(basePath, postSynapse, model, modelLibrary, geNNSynPopName, trgPopSize,
@@ -739,7 +738,7 @@ int main(int argc, char *argv[])
                     addEventPorts(basePath, postSynapse, componentURLs, componentEventPorts);
 
                     // Add weight update properties to dictionary
-                    addPropertiesAndSizes(basePath, weightUpdate, model, modelLibrary, geNNSynPopName, numSynapses,
+                    addPropertiesAndSizes(basePath, weightUpdate, model, modelLibrary, geNNSynPopName, synapseVarSize,
                                           componentSizes, componentProperties, remapIndices.empty() ? nullptr : &remapIndices);
                     addEventPorts(basePath, weightUpdate, componentURLs, componentEventPorts);
                 }

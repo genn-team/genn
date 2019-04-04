@@ -68,8 +68,11 @@ SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node
                                                       scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
     : Base(hostStateVar, pushFunc, pullFunc, size)
 {
-    // Allocate vector
-    std::vector<scalar> values(size);
+    // Allocate vector to hold values
+    // **NOTE** If we're remapping to a padded sparse matrix we want the size of
+    // our values to match the number of connections rather than the padded size
+    const size_t valueSize =  (remapIndices == nullptr) ? size : remapIndices->size();
+    std::vector<scalar> values(valueSize);
 
     // If there's a binary file
     auto binaryFile = node.child("BinaryFile");
@@ -95,7 +98,7 @@ SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node
             input.read(reinterpret_cast<char*>(&value), sizeof(double));
 
             // Check index is safe and set value
-            assert(index < size);
+            assert(index < valueSize);
             values[index] = value;
         }
 
@@ -123,9 +126,12 @@ void SpineMLSimulator::ModelProperty::ValueList::setValue(const std::vector<scal
     else {
         assert(remapIndices->size() == values.size());
 
-        m_Values.resize(values.size());
+        // Underlying values should be the size of the property
+        m_Values.resize(getSize());
+
+        // Remap values
         for(unsigned int i = 0; i < values.size(); i++) {
-            m_Values[i] = values[(*remapIndices)[i]];
+            m_Values[remapIndices->operator[](i)] = values[i];
         }
     }
 
