@@ -155,17 +155,11 @@ void createListSparse(const pugi::xml_node &node, unsigned int numPre, unsigned 
         std::transform(rowOrder.cbegin(), rowOrder.cend(), rowIndBegin,
                        [&rowIndCopy](unsigned int ord){ return rowIndCopy[ord]; });
 
-        std::cout << i << ":";
-        // Loop through synapses in row
+        // Loop through synapses in newly reorderd row and set the remap index in the 
+        // synapse's ORIGINAL location to its new index in the ragged array
         for(unsigned int j = 0; j < rowLength[i]; j++) {
-            // Get re-ordered
-
-            const unsigned int reorderedRaggedIdx = (i * maxRowLength) + rowOrder[j];
-            remapIndices[originalOrder[(i * maxRowLength) + j]] = reorderedRaggedIdx;
-
-            std::cout << rowOrder[j] << "(" << originalOrder[(i * maxRowLength) + j] << "),";
+            remapIndices[originalOrder[(i * maxRowLength) + rowOrder[j]]] = (i * maxRowLength) + j;
         }
-        std::cout << std::endl;
     }
 }
 }   // anonymous namespace
