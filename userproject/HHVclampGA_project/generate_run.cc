@@ -4,7 +4,7 @@ class GenerateRun : public GenerateRunBase
 {
 public:
     GenerateRun()
-    :   GenerateRunBase("HHVClamp"), m_Protocol(-1), m_NumPops(12), m_TotalTime(200000.0)
+    :   GenerateRunBase("HHVClamp"), m_Protocol(-1), m_NumPops(5000), m_TotalTime(1000.0)
     {
         getApp().add_option("--protocol", m_Protocol, "Protocol to run", true);
         getApp().add_option("--num-pops", m_NumPops, "Number of populations to simulate", true);

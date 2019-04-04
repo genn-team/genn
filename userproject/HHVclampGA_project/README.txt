@@ -13,7 +13,7 @@ To compile it, navigate to genn/userproject/HHVclampGA_project and type:
 
 msbuild ..\userproject.sln /t:generate_hhvclamp_runner /p:Configuration=Release
 
-for Windows users, or:
+for Windows users, or:s
 
 make
 
@@ -35,8 +35,8 @@ Optional arguments:
 --ftype: Sets the floating point precision of the model to either float or double (defaults to float)
 --gpu-device: Sets which GPU device to use for the simulation (defaults to -1 which picks automatically)
 --protocol: Which changes to apply during the run to the parameters of the "true cell" (defaults to -1 which makes no changes)
---num-pops: Number of neurons in the tracking population (defaults to 12)
---total-time: Time in ms how long to run the simulation  (defaults to 200000ms)
+--num-pops: Number of neurons in the tracking population (defaults to 5000)
+--total-time: Time in ms how long to run the simulation  (defaults to 1000 ms)
 
 An example invocation of generate_run is:
 
@@ -48,16 +48,16 @@ for Windows users, or:
 
 for Linux, Mac and other UNIX users.
 
-This will simulate 12 Hodgkin-Huxley neurons on the GPU which will for 200000ms ms be matched to a
+This will simulate 5000 Hodgkin-Huxley neurons on the GPU which will, for 1000 ms, be matched to a
 Hodgkin-Huxley neuron. The output files will be written into a directory of the name test1_output, 
 which will be created if it does not yet exist.
 
-Another example of an invocation would be: 
+Another example of an invocation that records timing information for the the simulation and runs it for 10000 ms would be: 
 
-generate_run.exe --cpu-only --timing --protocol 
+generate_run.exe --timing --total-time 10000
 
 for Windows users, or:
 
-./generate_run 0 -1 12 200000 test1 FTYPE=DOUBLE CPU_ONLY=1
+./generate_run --timing --total-time 10000
 
 for Linux, Mac and other UNIX users.
