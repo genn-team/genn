@@ -169,31 +169,30 @@ else:
 # Determine whether we should run GeNN in CPU_ONLY mode
 cpu_only = (os.environ.get("GENN_SPINEML_CPU_ONLY") is not None)
 
-# Determine names of executables
-generate_executable = "generateSpineML"
-#simulate_executable = "simulateSpineML"
-if cpu_only:
-    generate_executable += "_CPU_ONLY"
-
-
 # check if GeNN initial compile complete
+generate_executable = None
+simulate_executable = None
 if os.name == "nt":
-    generate_executable = "spineml_generator_Release"
-    if not cpu_only:
-        generate_executable += "_CUDA"
+    config = "Release" if cpu_only else "Release_CUDA"
+    generate_executable = "spineml_generator_" + config + ".exe"
+    simulate_executable = "spineml_simulator_Release.exe"
 
-    if not os.path.isfile(os.path.join(genn_path,"bin",generate_executable + ".exe")):
+    if not os.path.isfile(os.path.join(genn_path,"bin",generate_executable)):
         config = "Release" if cpu_only else "Release_CUDA"
         print("Compiling Generate tool")
-        os.system(prog + "&& cd " + os.path.join(genn_path,"spineml","generator") + "&&" + "msbuild /p:Configuration=" + config)
-    if not os.path.isfile(os.path.join(genn_path,"bin","spineml_simulator_Release.exe")):
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild spineml.sln /t:spineml_generator /p:Configuration=" + config)
+    if not os.path.isfile(os.path.join(genn_path,"bin",simulate_executable)):
         print("Compiling Simulate tool")
-        os.system(prog + "&& cd " + os.path.join(genn_path,"src","spineml_simulator") + "&&" + "msbuild /p:Configuration=Release")
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild spineml.sln /t:spineml_simulator /p:Configuration=Release")
 else:
-    if not os.path.isfile(os.path.join(genn_path,"bin", "spineml_generator")):
+    makefile = "MakefileSingleThreadedCPU" if cpu_only else "MakefileCUDA"
+    generate_executable = "spineml_generator_single_threaded_cpu" if cpu_only else "spineml_generator_cuda"
+    simulate_executable = "spineml_simulator"
+
+    if not os.path.isfile(os.path.join(genn_path,"bin", generate_executable)):
         print("Compiling Generate tool")
-        os.system("cd " + os.path.join(genn_path,"src", "spineml_generator") + " && make")
-    if not os.path.isfile(os.path.join(genn_path,"bin", "spineml_simulator")):
+        os.system("cd " + os.path.join(genn_path,"src", "spineml_generator") + " && make -f " + makefile)
+    if not os.path.isfile(os.path.join(genn_path,"bin", simulate_executable)):
         print("Compiling Simulate tool")
         os.system("cd " + os.path.join(genn_path,"src", "spineml_simulator") + " && make")
 
