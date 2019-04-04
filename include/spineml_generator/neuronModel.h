@@ -83,13 +83,16 @@ public:
     //------------------------------------------------------------------------
     // NeuronModels::Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getSimCode() const{ return m_SimCode; }
-    virtual std::string getThresholdConditionCode() const{ return m_ThresholdConditionCode; }
+    virtual std::string getSimCode() const override{ return m_SimCode; }
+    virtual std::string getThresholdConditionCode() const override{ return m_ThresholdConditionCode; }
 
-    virtual Models::Base::StringVec getParamNames() const{ return m_ParamNames; }
-    virtual Models::Base::VarVec getVars() const{ return m_Vars; }
-    virtual Models::Base::ParamValVec getAdditionalInputVars() const{ return m_AdditionalInputVars; }
-    virtual Models::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
+    virtual Models::Base::StringVec getParamNames() const override{ return m_ParamNames; }
+    virtual Models::Base::VarVec getVars() const override{ return m_Vars; }
+    virtual Models::Base::ParamValVec getAdditionalInputVars() const override{ return m_AdditionalInputVars; }
+    virtual Models::Base::DerivedParamVec getDerivedParams() const override{ return m_DerivedParams; }
+
+    // SpineML models never use auto-refractory behaviour
+    virtual bool isAutoRefractoryRequired() const override{ return false; }
 
     //------------------------------------------------------------------------
     // Constants

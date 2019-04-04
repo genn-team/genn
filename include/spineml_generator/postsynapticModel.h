@@ -51,11 +51,11 @@ public:
     //------------------------------------------------------------------------
     // PostsynapticModels::Base virtuals
     //------------------------------------------------------------------------
-    virtual std::string getDecayCode() const{ return m_DecayCode; }
-    virtual std::string getApplyInputCode() const{ return m_ApplyInputCode; }
-    virtual Models::Base::StringVec getParamNames() const{ return m_ParamNames; }
-    virtual Models::Base::VarVec getVars() const{ return m_Vars; }
-    virtual Models::Base::DerivedParamVec getDerivedParams() const{ return m_DerivedParams; }
+    virtual std::string getDecayCode() const override{ return m_DecayCode; }
+    virtual std::string getApplyInputCode() const override{ return m_ApplyInputCode; }
+    virtual Models::Base::StringVec getParamNames() const override{ return m_ParamNames; }
+    virtual Models::Base::VarVec getVars() const override{ return m_Vars; }
+    virtual Models::Base::DerivedParamVec getDerivedParams() const override{ return m_DerivedParams; }
 
     //------------------------------------------------------------------------
     // Public API
