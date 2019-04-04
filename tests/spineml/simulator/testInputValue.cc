@@ -5,16 +5,13 @@
 #include <cmath>
 
 // Filesystem includes
-#include "filesystem/path.h"
+#include "path.h"
 
 // Google test includes
 #include "gtest/gtest.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"
-
-// GeNN includes
-#include "sparseProjection.h"
 
 // SpineML simulator includes
 #include "inputValue.h"
