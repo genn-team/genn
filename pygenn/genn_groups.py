@@ -459,7 +459,7 @@ class SynapseGroup(Group):
         return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
 
     def set_sparse_connections(self, pre_indices, post_indices):
-        """Set ragged foramt connections between two groups of neurons
+        """Set ragged format connections between two groups of neurons
 
         Args:
         pre_indices     --  ndarray of presynaptic indices
@@ -492,6 +492,47 @@ class SynapseGroup(Group):
                             "ragged format sparse connectivity")
 
         self.connections_set = True
+
+    def get_sparse_pre_inds(self):
+        """Get presynaptic indices of synapse group connections
+
+        Returns:
+        ndarray of presynaptic indices
+        """
+
+        if self.is_ragged:
+            if self.ind is None or self.row_lengths is None:
+                raise Exception("only manually initialised connectivity "
+                                "can currently by accessed")
+
+            # Expand row lengths into full array
+            # of presynaptic indices and return
+            return np.hstack([np.repeat(i, l)
+                              for i, l in enumerate(self.row_lengths)])
+
+
+        else:
+            raise Exception("get_sparse_pre_inds only supports"
+                            "ragged format sparse connectivity")
+
+    def get_sparse_post_inds(self):
+        """Get postsynaptic indices of synapse group connections
+
+        Returns:
+        ndarrays of postsynaptic indices
+        """
+
+        if self.is_ragged:
+            if self.ind is None or self.row_lengths is None:
+                raise Exception("only manually initialised connectivity "
+                                "can currently by accessed")
+
+            # Return cached indices
+            return self.ind
+        else:
+            raise Exception("get_sparse_post_inds only supports"
+                            "ragged format sparse connectivity")
+
 
     def set_connected_populations(self, source, target):
         """Set two groups of neurons connected by this SynapseGroup
