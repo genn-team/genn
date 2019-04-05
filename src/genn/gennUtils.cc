@@ -22,17 +22,10 @@ struct GenericFunction
 
 GenericFunction randomFuncs[] = {
     {"gennrand_uniform", 0},
-    {"gennrand_uniform_double", 0},
     {"gennrand_normal", 0},
-    {"gennrand_normal_double", 0},
     {"gennrand_exponential", 0},
-    {"gennrand_exponential_double", 0},
     {"gennrand_log_normal", 2},
-    {"gennrand_log_normal_double", 2},
-    {"gennrand_gamma", 1},
-    {"gennrand_gamma_double", 1},
-    {"gennrand_uint32", 0},
-    {"gennrand_uint64", 0}
+    {"gennrand_gamma", 1}
 };
 }
 

@@ -31,7 +31,7 @@ struct FunctionTemplate
     // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
     FunctionTemplate operator = (const FunctionTemplate &o)
     {
-        return FunctionTemplate{o.genericName, o.numArguments, o.functionTemplate};
+        return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
     }
 
     //! Generic name used to refer to function in user code
@@ -41,7 +41,10 @@ struct FunctionTemplate
     const unsigned int numArguments;
 
     //! The function template (for use with ::functionSubstitute) used when model uses double precision
-    const std::string functionTemplate;
+    const std::string doublePrecisionTemplate;
+
+    //! The function template (for use with ::functionSubstitute) used when model uses single precision
+    const std::string singlePrecisionTemplate;
 };
 
 //--------------------------------------------------------------------------

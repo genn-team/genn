@@ -15,18 +15,11 @@
 namespace
 {
 const std::vector<CodeGenerator::FunctionTemplate> cpuFunctions = {
-    {"gennrand_uniform", 0, "standardUniformDistribution($(rng))"},
-    {"gennrand_uniform_double", 0, "standardUniformDoubleDistribution($(rng))"},
-    {"gennrand_normal", 0, "standardNormalDistribution($(rng))"},
-    {"gennrand_normal_double", 0, "standardNormalDoubleDistribution($(rng))"},
-    {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))"},
-    {"gennrand_exponential_double", 0, "standardExponentialDoubleDistribution($(rng))"},
-    {"gennrand_log_normal", 2, "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
-    {"gennrand_log_normal_double", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))"},
-    {"gennrand_gamma", 1, "std::gamma_distribution<float>($(0), 1.0f)($(rng))"},
-    {"gennrand_gamma_double", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))"},
-    {"gennrand_uint32", 0, "$(rng)()"},
-    {"gennrand_uint64", 0, "(((uint64_t)$(rng)()) << 32 | $(rng)())"}
+    {"gennrand_uniform", 0, "standardUniformDistribution($(rng))", "standardUniformDistribution($(rng))"},
+    {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
+    {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
+    {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
+    {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))", "std::gamma_distribution<float>($(0), 1.0f)($(rng))"}
 };
 
 //--------------------------------------------------------------------------
@@ -687,24 +680,18 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const ModelSpecInternal &) const
+void Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const ModelSpecInternal &model) const
 {
     definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
 
     // Define and implement standard host distributions as recreating them each call is slow
-    definitions << "EXPORT_VAR " << "std::uniform_real_distribution<float> standardUniformDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::uniform_real_distribution<double> standardUniformDoubleDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::normal_distribution<float> standardNormalDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::normal_distribution<double> standardNormalDoubleDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::exponential_distribution<float> standardExponentialDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::exponential_distribution<double> standardExponentialDoubleDistribution;" << std::endl;
-    runner << "std::uniform_real_distribution<float> standardUniformDistribution(0.0f, 1.0f);" << std::endl;
-    runner << "std::uniform_real_distribution<double> standardUniformDoubleDistribution(0.0, 1.0);" << std::endl;
-    runner << "std::normal_distribution<float> standardNormalDistribution(0.0f, 1.0f);" << std::endl;
-    runner << "std::normal_distribution<double> standardNormalDoubleDistribution(0.0, 1.0);" << std::endl;
-    runner << "std::exponential_distribution<float> standardExponentialDistribution(1.0f);" << std::endl;
-    runner << "std::exponential_distribution<double> standardExponentialDoubleDistribution(1.0);" << std::endl;
+    definitions << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
+    definitions << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
+    definitions << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
+    runner << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+    runner << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+    runner << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
