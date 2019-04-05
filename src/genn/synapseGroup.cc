@@ -208,12 +208,12 @@ VarLocation SynapseGroup::getWUVarLocation(const std::string &var) const
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUPreVarLocation(const std::string &var) const
 {
-    return m_WUVarLocation[getWUModel()->getPreVarIndex(var)];
+    return m_WUPreVarLocation[getWUModel()->getPreVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUPostVarLocation(const std::string &var) const
 {
-    return m_WUVarLocation[getWUModel()->getPostVarIndex(var)];
+    return m_WUPostVarLocation[getWUModel()->getPostVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUExtraGlobalParamLocation(const std::string &paramName) const
@@ -223,7 +223,7 @@ VarLocation SynapseGroup::getWUExtraGlobalParamLocation(const std::string &param
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getPSVarLocation(const std::string &var) const
 {
-    return m_WUVarLocation[getPSModel()->getVarIndex(var)];
+    return m_PSVarLocation[getPSModel()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getPSExtraGlobalParamLocation(const std::string &paramName) const
