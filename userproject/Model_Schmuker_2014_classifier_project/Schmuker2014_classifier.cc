@@ -24,7 +24,7 @@
 #include <cstring>
 #include <time.h>
 
-#include "sizes.h"
+#include "parameters.h"
 #include "Schmuker2014_classifier.h"
 #include "Schmuker_2014_classifier_CODE/definitions.h"
 
