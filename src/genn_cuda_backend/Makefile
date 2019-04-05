@@ -31,6 +31,7 @@ ifeq ($(DARWIN),DARWIN)
 $(BACKEND): $(OBJECTS)
 	mkdir -p $(@D)
 	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGS) -o $@ $(OBJECTS)
+	install_name_tool -id "@loader_path$(basename $@)" $@
 else
 $(BACKEND): $(OBJECTS)
 	mkdir -p $(@D)
