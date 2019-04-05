@@ -38,17 +38,19 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
     m_instance, m_type = is_model_valid(model, model_family)
     param_names = list(m_instance.get_param_names())
     params = param_space_to_vals(m_instance, param_space)
-    var_names = [vnt[0] for vnt in m_instance.get_vars()]
-    var_dict = {vnt[0]: Variable(vnt[0], vnt[1], var_space[vnt[0]])
+    var_names = [vnt.name for vnt in m_instance.get_vars()]
+    var_dict = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name])
                 for vnt in m_instance.get_vars()}
 
     if model_family == genn_wrapper.WeightUpdateModels:
-        pre_var_names = [vnt[0] for vnt in m_instance.get_pre_vars()]
-        pre_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], pre_var_space[vnt[0]])
-                        for vnt in m_instance.get_pre_vars()}
-        post_var_names = [vnt[0] for vnt in m_instance.get_post_vars()]
-        post_var_dict = {vnt[0]: Variable(vnt[0], vnt[1], post_var_space[vnt[0]])
-                         for vnt in m_instance.get_post_vars()}
+        pre_var_names = [vnt.name for vnt in m_instance.get_pre_vars()]
+        pre_var_dict = {
+            vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name])
+            for vnt in m_instance.get_pre_vars()}
+        post_var_names = [vnt.name for vnt in m_instance.get_post_vars()]
+        post_var_dict = {
+            vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name])
+            for vnt in m_instance.get_post_vars()}
         return (m_instance, m_type, param_names, params, var_names, var_dict,
                 pre_var_names, pre_var_dict, post_var_names, post_var_dict)
     else:
@@ -148,7 +150,7 @@ def var_space_to_vals(model, var_space):
     Return:
     native model's VarValues
     """
-    return model.make_var_values(VarInitVector([var_space[vnt[0]].init_val
+    return model.make_var_values(VarInitVector([var_space[vnt.name].init_val
                                                 for vnt in model.get_vars()]))
 
 
@@ -163,7 +165,7 @@ def pre_var_space_to_vals(model, var_space):
     native model's VarValues
     """
     return model.make_pre_var_values(
-        VarInitVector([var_space[vnt[0]].init_val
+        VarInitVector([var_space[vnt.name].init_val
                        for vnt in model.get_pre_vars()]))
 
 
@@ -178,7 +180,7 @@ def post_var_space_to_vals(model, var_space):
     native model's VarValues
     """
     return model.make_post_var_values(
-        VarInitVector([var_space[vnt[0]].init_val
+        VarInitVector([var_space[vnt.name].init_val
                        for vnt in model.get_post_vars()]))
 
 

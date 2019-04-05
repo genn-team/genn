@@ -15,15 +15,62 @@
 %{
 #include "snippet.h"
 %}
+%include <std_string.i>
+%include <std_vector.i>
 
+%feature("flatnested", "1");
 %rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
 
 %import "StlContainers.i"
 
+
 %feature("director") Snippet::Base; // for inheritance in python
+
+
+// flatten nested classes
+%rename (Var) Snippet::Base::Var;
+%rename (ParamVal) Snippet::Base::ParamVal;
+%rename (DerivedParam) Snippet::Base::DerivedParam;
+
+// add vector overrides for them
+%template(VarVector) std::vector<Snippet::Base::Var>;
+%template(ParamValVector) std::vector<Snippet::Base::ParamVal>;
+%template(DerivedParamVector) std::vector<Snippet::Base::DerivedParam>;
+
 %include "gennExport.h"
 %include "snippet.h"
 
+// Extend each of the underlying structs with constructors
+%extend Snippet::Base::Var {
+    Var(const std::string &name, const std::string &type) 
+    {
+        Snippet::Base::Var* v = new Snippet::Base::Var();
+        v->name = name;
+        v->type = type;
+        return v;
+    }
+};
+
+%extend Snippet::Base::ParamVal {
+    ParamVal(const std::string &name, const std::string &type, double value) 
+    {
+        Snippet::Base::ParamVal* v = new Snippet::Base::ParamVal();
+        v->name = name;
+        v->type = type;
+        v->value = value;
+        return v;
+    }
+};
+
+%extend Snippet::Base::DerivedParam {
+    DerivedParam(const std::string &name, std::function<double(const std::vector<double> &, double)> func) 
+    {
+        Snippet::Base::DerivedParam* v = new Snippet::Base::DerivedParam();
+        v->name = name;
+        v->func = func;
+        return v;
+    }
+};
 // helper class for callbacks
 %feature("director") DerivedParamFunc;
 %rename(__call__) DerivedParamFunc::operator();
@@ -33,6 +80,8 @@ struct DerivedParamFunc {
   virtual ~DerivedParamFunc() {}
 };
 %}
+
+
 
 // helper function to convert DerivedParamFunc to std::function
 %inline %{

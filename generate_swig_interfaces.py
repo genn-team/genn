@@ -349,18 +349,7 @@ def generateStlContainersInterface( swigPath ):
                  '}\n' )
 
         mg.write( '\n// add template specifications for various STL containers\n' )
-        mg.addSwigTemplate( 'std::pair<std::string, std::string>', 'StringPair' )
-        mg.addSwigTemplate( 'std::pair<std::string, double>', 'StringDoublePair' )
-        mg.addSwigTemplate( 'std::pair<std::string, std::pair<std::string, double>>',
-                'StringStringDoublePairPair' )
-        mg.addSwigTemplate( 'std::pair<std::string, std::{}>'.format( dpfunc_template_spec ),
-                'StringDPFPair')
         mg.addSwigTemplate( 'std::vector<std::string>', 'StringVector' )
-        mg.addSwigTemplate( 'std::vector<std::pair<std::string, std::string>>', 'StringPairVector' )
-        mg.addSwigTemplate( 'std::vector<std::pair<std::string, std::pair<std::string, double>>>',
-                'StringStringDoublePairPairVector' )
-        mg.addSwigTemplate( 'std::vector<std::pair<std::string, std::{}>>'.format( dpfunc_template_spec ),
-                'StringDPFPairVector' )
 
         # These are all data types supported by numpy SWIG interface (at least by default) plus long double
         npDTypes = (

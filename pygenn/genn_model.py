@@ -55,13 +55,11 @@ from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModel as slm
 from .genn_wrapper.Models import VarInit
 from .genn_wrapper.InitSparseConnectivitySnippet import Init
-from .genn_wrapper.Snippet import make_dpf
+from .genn_wrapper.Snippet import (make_dpf, Var, ParamVal, DerivedParam,
+                                   VarVector, ParamValVector,
+                                   DerivedParamVector)
 from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf
-from .genn_wrapper.StlContainers import (StringPair, StringStringDoublePairPair,
-                                         StringDPFPair, StringDoublePair,
-                                         StringPairVector, StringVector,
-                                         StringDPFPairVector,
-                                         StringStringDoublePairPairVector)
+from .genn_wrapper.StlContainers import StringVector
 from .genn_wrapper import VarLocation_HOST_DEVICE
 from .genn_groups import NeuronGroup, SynapseGroup, CurrentSource
 from .model_preprocessor import prepare_snippet
@@ -635,14 +633,13 @@ def create_custom_neuron_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: StringPairVector([StringPair(egp[0], egp[1])
-                                           for egp in extra_global_params])
+            lambda self: VarVector([Var(egp[0], egp[1])
+                                    for egp in extra_global_params])
 
     if additional_input_vars:
         body["get_additional_input_vars"] =\
-            lambda self: StringStringDoublePairPairVector(
-                [StringStringDoublePairPair(a[0], StringDoublePair(a[1], a[2]))
-                 for a in additional_input_vars])
+            lambda self: ParamValVector([ParamVal(a[0], a[1], a[2])
+                                         for a in additional_input_vars])
 
     if is_auto_refractory_required is not None:
         body["is_auto_refractory_required"] =\
@@ -818,18 +815,18 @@ def create_custom_weight_update_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: StringPairVector([StringPair(egp[0], egp[1])
-                                           for egp in extra_global_params])
+            lambda self: VarVector([Var(egp[0], egp[1])
+                                    for egp in extra_global_params])
 
     if pre_var_name_types is not None:
         body["get_pre_vars"] =\
-            lambda self: StringPairVector([StringPair(vn[0], vn[1])
-                                           for vn in pre_var_name_types])
+            lambda self: VarVector([Var(vn[0], vn[1])
+                                    for vn in pre_var_name_types])
 
     if post_var_name_types is not None:
         body["get_post_vars"] =\
-            lambda self: StringPairVector([StringPair(vn[0], vn[1])
-                                           for vn in post_var_name_types])
+            lambda self: VarVector([Var(vn[0], vn[1])
+                                    for vn in post_var_name_types])
 
     if is_pre_spike_time_required is not None:
         body["is_pre_spike_time_required"] =\
@@ -889,8 +886,8 @@ def create_custom_current_source_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: StringPairVector([StringPair(egp[0], egp[1])
-                                           for egp in extra_global_params])
+            lambda self: VarVector([Var(egp[0], egp[1])
+                                    for egp in extra_global_params])
 
     if custom_body is not None:
         body.update(custom_body)
@@ -937,13 +934,13 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
 
     if var_name_types is not None:
         body["get_vars"] =\
-            lambda self: StringPairVector([StringPair(vn[0], vn[1])
-                                           for vn in var_name_types])
+            lambda self: VarVector([Var(vn[0], vn[1])
+                                    for vn in var_name_types])
 
     if derived_params is not None:
         body["get_derived_params"] =\
-            lambda self: StringDPFPairVector([StringDPFPair(dp[0], make_dpf(dp[1]))
-                                              for dp in derived_params])
+            lambda self: DerivedParamVector([DerivedParam(dp[0], make_dpf(dp[1]))
+                                             for dp in derived_params])
 
     if custom_body is not None:
         body.update(custom_body)
@@ -1087,9 +1084,8 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
 
     if row_build_state_vars is not None:
         body["get_row_build_state_vars"] =\
-            lambda self: StringStringDoublePairPairVector(
-                [StringStringDoublePairPair(r[0], StringDoublePair(r[1], r[2]))
-                 for r in row_build_state_vars])
+            lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
+                                         for r in row_build_state_vars])
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] =\
@@ -1101,8 +1097,8 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: StringPairVector([StringStringDoublePairPair(egp[0], egp[1])
-                                           for egp in extra_global_params])
+            lambda self: VarVector([Var(egp[0], egp[1])
+                                    for egp in extra_global_params])
 
     if custom_body is not None:
         body.update(custom_body)
