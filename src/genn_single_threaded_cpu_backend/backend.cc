@@ -68,7 +68,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
     {
         CodeStream::Scope b(os);
 
-        Substitutions funcSubs(cpuFunctions);
+        Substitutions funcSubs(cpuFunctions, model.getPrecision());
         funcSubs.addVarSubstitution("t", "t");
 
         Timer t(os, "neuronUpdate", model.isTimingEnabled());
@@ -148,7 +148,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 {
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
-        Substitutions funcSubs(cpuFunctions);
+        Substitutions funcSubs(cpuFunctions, model.getPrecision());
         funcSubs.addVarSubstitution("t", "t");
 
         CodeStream::Scope b(os);
@@ -331,7 +331,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     os << "void initialize()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(cpuFunctions);
+        Substitutions funcSubs(cpuFunctions, model.getPrecision());
 
         Timer t(os, "init", model.isTimingEnabled());
 
@@ -467,7 +467,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(cpuFunctions);
+        Substitutions funcSubs(cpuFunctions, model.getPrecision());
 
         Timer t(os, "initSparse", model.isTimingEnabled());
 

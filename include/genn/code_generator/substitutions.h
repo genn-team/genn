@@ -24,12 +24,12 @@ public:
         assert(m_Parent != this);
     }
 
-    Substitutions(const std::vector<FunctionTemplate> &functions) : m_Parent(nullptr)
+    Substitutions(const std::vector<FunctionTemplate> &functions, const std::string &ftype) : m_Parent(nullptr)
     {
         // Loop through functions and add as substitutions
-        // **TODO** precision
         for(const auto &f: functions) {
-            addFuncSubstitution(f.genericName, f.numArguments, f.singlePrecisionTemplate);
+            const std::string &funcTemplate = (ftype == "double") ? f.doublePrecisionTemplate : f.singlePrecisionTemplate;
+            addFuncSubstitution(f.genericName, f.numArguments, funcTemplate);
         }
     }
 

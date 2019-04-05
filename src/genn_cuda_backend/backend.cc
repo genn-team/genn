@@ -244,7 +244,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelNeuronUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
 
-        Substitutions kernelSubs(cudaFunctions);
+        Substitutions kernelSubs(cudaFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
 
         // If any neuron groups emit spike events
@@ -472,7 +472,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
     {
         CodeStream::Scope b(os);
         
-        Substitutions kernelSubs(cudaFunctions);
+        Substitutions kernelSubs(cudaFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
 
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelPresynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -611,7 +611,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         {
             CodeStream::Scope b(os);
 
-            Substitutions kernelSubs(cudaFunctions);
+            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPostsynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -718,7 +718,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             CodeStream::Scope b(os);
             os << "unsigned int id = " << m_KernelBlockSizes[KernelSynapseDynamicsUpdate] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-            Substitutions kernelSubs(cudaFunctions);
+            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
             kernelSubs.addVarSubstitution("t", "t");
 
             // Parallelise over synapse groups whose weight update models have code for synapse dynamics
@@ -871,7 +871,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     // initialization kernel code
     size_t idInitStart = 0;
     {
-        Substitutions kernelSubs(cudaFunctions);
+        Substitutions kernelSubs(cudaFunctions, model.getPrecision());
 
         // common variables for all cases
         CodeStream::Scope b(os);
@@ -1030,7 +1030,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             CodeStream::Scope b(os);
 
             // common variables for all cases
-            Substitutions kernelSubs(cudaFunctions);
+            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelInitializeSparse] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
