@@ -9,7 +9,7 @@
 This file contains the network model definition for the "Schmuker_2014_classifier" model.
 
 -------------------------------------------------------------------------- */
-#include "sizes.h"
+#include "parameters.h"
 
 
 #include "modelSpec.h"
@@ -97,7 +97,7 @@ void modelDefinition(ModelSpec &model)
     WeightUpdateModelSpikeEvent::ParamValues synapsesStdExcitatory_params(
         -20.0 // Epre: Presynaptic threshold potential
     );
-    WeightUpdateModelSpikeEvent::VarValues initialConductanceValue(0.0);
+    WeightUpdateModelSpikeEvent::VarValues initialConductanceValue(uninitialisedVar());
 
     
     /*--------------------------------------------------------------------------
