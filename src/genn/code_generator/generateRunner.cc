@@ -530,7 +530,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
 
             std::vector<std::string> currentSourceStatePushPullFunctions;
             for(size_t i = 0; i < csVars.size(); i++) {
-                const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
+                const bool autoInitialized = !cs->getVarInitialisers()[i].getSnippet()->getCode().empty();
                 genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                             runnerPushFunc, runnerPullFunc, csVars[i].type, csVars[i].name + cs->getName(),
                             cs->getVarLocation(i), autoInitialized, n.second.getNumNeurons(), currentSourceStatePushPullFunctions);
