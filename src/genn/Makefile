@@ -22,7 +22,7 @@ ifeq ($(DARWIN),DARWIN)
 $(LIBGENN): $(OBJECTS)
 	mkdir -p $(@D)
 	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGS) -o $@ $(OBJECTS)
-	install_name_tool -id "@loader_path$(basename $@)" $@
+	install_name_tool -id "@loader_path/$(@F)" $@
 else
 $(LIBGENN): $(OBJECTS)
 	mkdir -p $(@D)
