@@ -1,5 +1,5 @@
 GENERATED_CODE_DIR	:=Schmuker_2014_classifier_CODE
-CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra
+CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra -Wno-reorder -Wno-sign-compare -Wno-unused-variable]
 
 .PHONY: all clean generated_code
 
