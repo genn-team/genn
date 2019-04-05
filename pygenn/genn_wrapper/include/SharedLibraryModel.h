@@ -89,6 +89,30 @@ public:
         }
     }
 
+    void allocateExtraGlobalParam(const std::string &popName, const std::string &varName, unsigned int count)
+    {
+        // Get EGP functions and check allocate exists
+        const auto funcs = getEGPFunctions(varName + popName);
+        if(std::get<0>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot allocate EGP '" + varName + "' in population '" + popName + "'");
+        }
+
+        // Call allocate
+        std::get<0>(funcs)(count);
+    }
+
+    void freeExtraGlobalParam(const std::string &popName, const std::string &varName)
+    {
+        // Get EGP functions and check free exists
+        const auto funcs = getEGPFunctions(varName + popName);
+        if(std::get<1>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot free EGP '" + varName + "' in population '" + popName + "'");
+        }
+
+        // Call free
+        std::get<1>(funcs)();
+    }
+
     void pullStateFromDevice(const std::string &popName)
     {
         // Get push and pull state functions and check pull exists
@@ -147,6 +171,18 @@ public:
 
         // Call pull
         pushPull.second();
+    }
+
+    void pullExtraGlobalParam(const std::string &popName, const std::string &varName, unsigned int count)
+    {
+        // Get EGP functions and check pull exists
+        const auto funcs = getEGPFunctions(varName + popName);
+        if(std::get<3>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot pull EGP '" + varName + "' from population '" + popName + "'");
+        }
+
+        // Call pull
+        std::get<3>(funcs)(count);
     }
 
     void pushStateToDevice(const std::string &popName, bool uninitialisedOnly = false)
@@ -209,6 +245,18 @@ public:
         pushPull.first(uninitialisedOnly);
     }
 
+    void pushExtraGlobalParam(const std::string &popName, const std::string &varName, unsigned int count)
+    {
+        // Get EGP functions and check push exists
+        const auto funcs = getEGPFunctions(varName + popName);
+        if(std::get<2>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot push EGP '" + varName + "' to population '" + popName + "'");
+        }
+
+        // Call push
+        std::get<2>(funcs)(count);
+    }
+
     // Assign symbol from shared model to the provided pointer.
     // The symbol is supposed to be an array
     // When used with numpy, wrapper automatically provides varPtr and n1
@@ -242,30 +290,6 @@ public:
         m_FreeMem();
     }
 
-   /* **TODO** the backend should generate these functions for EGP variables with * in
-    * void allocateExtraGlobalParam( const std::string &popName,
-                                   const std::string &paramName,
-                                   const int size )
-    {
-        auto egp = static_cast<void**>(getSymbol( paramName + popName ));
-#ifndef CPU_ONLY
-        CHECK_CUDA_ERRORS( cudaHostAlloc( egp, size * sizeof( scalar ), cudaHostAllocPortable ) );
-#else
-        *egp = malloc( size * sizeof( scalar ) );
-#endif
-    }
-
-    void freeExtraGlobalParam( const std::string &popName,
-                               const std::string &paramName )
-    {
-        auto egp = static_cast<void**>( getSymbol( paramName + popName ));
-#ifndef CPU_ONLY
-        CHECK_CUDA_ERRORS( cudaFreeHost( *egp ) );
-#else
-        free(*egp);
-#endif
-    }*/
-
     void initialize()
     {
         m_Initialize();
@@ -288,8 +312,10 @@ private:
     typedef void (*VoidFunction)(void);
     typedef void (*PushFunction)(bool);
     typedef void (*PullFunction)(void);
+    typedef void (*EGPFunction)(unsigned int);
 
     typedef std::pair<PushFunction, PullFunction> PushPullFunc;
+    typedef std::tuple<EGPFunction, VoidFunction, EGPFunction, EGPFunction> EGPFunc;
 
     //----------------------------------------------------------------------------
     // Private methods
@@ -313,6 +339,31 @@ private:
 
             // Return newly added push and pull functions
             return newPopVar.first->second;
+        }
+    }
+
+    EGPFunc getEGPFunctions(const std::string &description)
+    {
+        // If description is found, return associated EGP functions
+        const auto popEGP = m_PopulationEPGs.find(description);
+        if(popEGP != m_PopulationEPGs.end()) {
+            return popEGP->second;
+        }
+        else {
+            // Get symbols for push and pull functions
+            auto allocateFunc = (EGPFunction)getSymbol("allocate" + description, true);
+            auto freeFunc = (VoidFunction)getSymbol("free" + description, true);
+            auto pushFunc = (EGPFunction)getSymbol("push" + description + "ToDevice", true);
+            auto pullFunc = (EGPFunction)getSymbol("pull" + description + "FromDevice", true);
+
+            // Add to map
+            auto newPopEGP = m_PopulationEPGs.emplace(std::piecewise_construct,
+                                                      std::forward_as_tuple(description),
+                                                      std::forward_as_tuple(allocateFunc, freeFunc,
+                                                                            pushFunc, pullFunc));
+
+            // Return newly functions
+            return newPopEGP.first->second;
         }
     }
 
@@ -357,4 +408,5 @@ private:
     VoidFunction m_StepTime;
     
     std::unordered_map<std::string, PushPullFunc> m_PopulationVars;;
+    std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
 };

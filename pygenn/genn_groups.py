@@ -11,8 +11,7 @@ from six import iteritems
 import numpy as np
 from . import genn_wrapper
 from . import model_preprocessor
-from .model_preprocessor import Variable
-#from .genn_wrapper import VarMode_LOC_HOST_DEVICE_INIT_HOST
+from .model_preprocessor import ExtraGlobalVariable, Variable
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                           SynapseMatrixConnectivity_BITMASK,
                           SynapseMatrixConnectivity_DENSE,
@@ -43,28 +42,23 @@ class Group(object):
         """
         self.vars[var_name].set_values(values)
 
-    def _add_extra_global_param(self, param_name, param_values,
-                                model, auto_alloc=True):
+    def _add_extra_global_param(self, param_name, param_values, model):
         """Add extra global parameter
 
         Args:
         param_name      --  string with the name of the extra global parameter
-        param_values    --  iterable or a single value
+        param_values    --  iterable
         model           --  instance of the model
-        auto_alloc      --  boolean whether the extra global parameter
-                            should be allocated. Defaults to true.
         """
-        pnt = list(model.get_extra_global_params())
         param_type = None
-        for pn, pt in pnt:
-            if pn == param_name:
-                param_type = pt
+        for p in model.get_extra_global_params():
+            if p.name == param_name:
+                param_type = p.type
                 break
 
-        egp = Variable(param_name, param_type, param_values)
-        egp.needs_allocation = auto_alloc
-
-        self.extra_global_params[param_name] = egp
+        assert param_type is not None
+        self.extra_global_params[param_name] = ExtraGlobalVariable(
+            param_name, param_type, param_values)
 
     def _assign_external_pointer(self, slm, scalar, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
@@ -180,16 +174,20 @@ class Group(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            # if auto allocation is not enabled, let the user care about
-            # allocation and initialization of the EGP
-            if egp_data.needs_allocation:
-                slm.allocate_extra_global_param(self.name, egp_name,
-                                                len(egp_data.values))
-                egp_data.view = self._assign_external_pointer(
-                    slm, scalar, egp_name, len(egp_data.values),
-                    egp_data.type[:-1])
-                if egp_data.init_required:
-                    egp_data.view[:] = egp_data.values
+            # Allocate memory
+            slm.allocate_extra_global_param(self.name, egp_name,
+                                            len(egp_data.values))
+
+            # Assign view
+            egp_data.view = self._assign_external_pointer(
+                slm, scalar, egp_name, len(egp_data.values), egp_data.type)
+
+            # Copy values
+            egp_data.view[:] = egp_data.values
+
+            # Push egp_data
+            slm.push_extra_global_param(self.name, egp_name,
+                                        len(egp_data.values))
 
 class NeuronGroup(Group):
 

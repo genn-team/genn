@@ -7,6 +7,25 @@ from . import genn_wrapper
 from .genn_wrapper.Models import VarInit, VarInitVector
 from .genn_wrapper.StlContainers import DoubleVector
 
+genn_to_numpy_types = {
+    "scalar":            np.float32,
+    "float":            np.float32,
+    "double":           np.float64,
+    "int":              np.int32,
+    "unsigned int":     np.uint32,
+    "short":            np.int16,
+    "unsigned short":   np.uint16,
+    "char":             np.int8,
+    "unsigned char":    np.uint8,
+    "uint64_t":         np.uint64,
+    "int64_t":          np.int64,
+    "uint32_t":         np.uint32,
+    "int32_t":          np.int32,
+    "uint16_t":         np.uint16,
+    "int16_t":          np.int16,
+    "uint8_t":          np.uint8,
+    "int8_t":           np.int8,
+}
 
 def prepare_model(model, param_space, var_space, pre_var_space=None,
                   post_var_space=None, model_family=None):
@@ -227,8 +246,44 @@ class Variable(object):
             try:
                 iter(values)
                 self.init_val = genn_wrapper.uninitialised_var()
-                self.values = np.asarray(values, dtype=np.float32)
+                self.values = np.asarray(values, dtype=genn_to_numpy_types[self.type])
                 self.init_required = True
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
                 self.init_val = VarInit(values)
+
+class ExtraGlobalVariable(object):
+
+    """Class holding information about GeNN extra global pointer variable"""
+
+    def __init__(self, variable_name, variable_type, values=None):
+        """Init Variable
+
+        Args:
+        variable_name   --  string name of the variable
+        variable_type   --  string type of the variable
+
+        Keyword args:
+        values          --  iterable
+        """
+        assert variable_type[-1] == "*"
+
+        self.name = variable_name
+        self.type = variable_type[:-1]
+        self.view = None
+        self.set_values(values)
+
+    def set_values(self, values):
+        """Set Variable's values
+
+        Args:
+        values -- iterable, single value or VarInit instance
+        """
+        # Try and iterate values
+        try:
+            iter(values)
+            self.values = np.asarray(values, dtype=genn_to_numpy_types[self.type])
+        # Otherwise give an error
+        except TypeError:
+            raise ValueError("extra global variables can only be "
+                             "initialised with iterables")
