@@ -305,7 +305,7 @@ public:
 
     \note This model uses a linear approximation for the probability
     of firing a spike in a given time step of size `DT`, i.e. the
-    probability of firing is \lambda times `DT`: \f$ p = \lambda \Delta t
+    probability of firing is \f$\lambda\f$ times `DT`: \f$ p = \lambda \Delta t
     \f$. This approximation is usually very good, especially for typical,
     quite small time steps and moderate firing rates. However, it is worth
     noting that the approximation becomes poor for very high firing rates
