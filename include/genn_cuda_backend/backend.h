@@ -287,7 +287,6 @@ private:
     //--------------------------------------------------------------------------
     const KernelBlockSize m_KernelBlockSizes;
     const Preferences m_Preferences;
-    const int m_LocalHostID;
     
     const int m_ChosenDeviceID;
     cudaDeviceProp m_ChosenDevice;

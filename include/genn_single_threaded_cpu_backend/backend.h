@@ -35,7 +35,7 @@ class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
     Backend(int localHostID, const Preferences &preferences)
-    :   m_LocalHostID(localHostID), m_Preferences(preferences)
+    :   BackendBase(localHostID), m_Preferences(preferences)
     {
     }
 
@@ -119,7 +119,6 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    const int m_LocalHostID;
     const Preferences m_Preferences;
 };
 }   // namespace SingleThreadedCPU

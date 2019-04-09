@@ -369,7 +369,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Remote neuron groups" << std::endl;
         for(const auto &n : model.getRemoteNeuronGroups()) {
-            if(n.second.hasOutputToHost(m_LocalHostID)) {
+            if(n.second.hasOutputToHost(getLocalHostID())) {
                 os << "// neuron group " << n.first << std::endl;
                 CodeStream::Scope b(os);
 

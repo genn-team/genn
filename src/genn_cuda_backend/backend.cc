@@ -139,7 +139,7 @@ const char *Backend::KernelNames[KernelMax] = {
     "preSynapseResetKernel"};
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int localHostID, int device)
-:   m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_LocalHostID(localHostID), m_ChosenDeviceID(device)
+:   BackendBase(localHostID), m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -163,7 +163,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
 
         // Loop through remote neuron groups
         for(const auto &n : model.getRemoteNeuronGroups()) {
-            if(n.second.hasOutputToHost(m_LocalHostID) && n.second.isDelayRequired()) {
+            if(n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
                 if(idPreNeuronReset > 0) {
                     os << "else ";
                 }
@@ -882,7 +882,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// Remote neuron groups" << std::endl;
         genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
             [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroupInternal &ng){ return ng.hasOutputToHost(m_LocalHostID); },
+            [this](const NeuronGroupInternal &ng){ return ng.hasOutputToHost(getLocalHostID()); },
             [this, remoteNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
                 os << "// only do this for existing neurons" << std::endl;

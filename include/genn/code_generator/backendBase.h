@@ -73,6 +73,10 @@ public:
     typedef std::function <void(CodeStream &, const NeuronGroupInternal &, Substitutions&,
                                 NeuronGroupHandler, NeuronGroupHandler)> NeuronGroupSimHandler;
     
+    BackendBase(int localHostID)
+    :   m_LocalHostID(localHostID)
+    {
+    }
     virtual ~BackendBase(){}
 
     //--------------------------------------------------------------------------
@@ -217,5 +221,14 @@ public:
         genVariableDefinition(definitions, definitionsInternal, type, name, loc);
         genVariableImplementation(runner, type, name, loc);
     }
+
+    //! Gets ID of local host backend is building code for
+    int getLocalHostID() const{ return m_LocalHostID; }
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    const int m_LocalHostID;
 };
 }   // namespace CodeGenerator
