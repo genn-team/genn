@@ -11,6 +11,7 @@
 // Code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/generateInit.h"
+#include "code_generator/generateMPI.h"
 #include "code_generator/generateNeuronUpdate.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateSynapseUpdate.h"
@@ -50,13 +51,25 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
     generateSupportCode(supportCode, model);
 
-    // Return names of generated modules
-    // **NOTE** when we are building standalone modules runner is included in each model
-    if(standaloneModules) {
-        return {"neuronUpdate", "synapseUpdate", "init"};
-    }
-    else {
-        return {"neuronUpdate", "synapseUpdate", "init", "runner"};
+    // Create basic list of modules
+    std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};
 
+#ifdef MPI_ENABLE
+    std::ofstream mpiStream((outputPath / "mpi.cc").str());
+    CodeStream mpi(mpiStream);
+
+    generateMPI(mpi, model, backend, standaloneModules);
+
+    // Add MPI module
+    modules.push_back("mpi");
+#endif
+
+    // If we aren't building standalone modules, in which case it
+    // will be includes in each one, add runner to list of modules
+    if(!standaloneModules) {
+        modules.push_back("runner");
     }
+
+    // Return list of modules
+    return modules;
 }

@@ -907,6 +907,11 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     definitions << "EXPORT_FUNC void initialize();" << std::endl;
     definitions << "EXPORT_FUNC void initializeSparse();" << std::endl;
 
+#ifdef MPI_ENABLE
+    definitions << "// MPI functions" << std::endl;
+    definitions << "EXPORT_FUNC void generateMPI();" << std::endl;
+#endif
+
     // End extern C block around definitions
     definitions << "}  // extern \"C\"" << std::endl;
     definitionsInternal << "}  // extern \"C\"" << std::endl;

@@ -24,17 +24,24 @@
 // Standard C++ includes
 #include <string>
 
+// GeNN includes
+#include "gennExport.h"
+
 // Forward declarations
 class ModelSpecInternal;
 
-//--------------------------------------------------------------------------
-/*!
-  \brief A function that generates predominantly MPI infrastructure code.
+namespace CodeGenerator
+{
+class BackendBase;
+class CodeStream;
+}
 
-  In this function MPI infrastructure code are generated,
-  including: MPI send and receive functions.
-*/
 //--------------------------------------------------------------------------
-void genMPI(const ModelSpecInternal &model,   //!< Model description
-            const std::string &path,     //!< Path for code generation
-            int localHostID);       //!< ID of local host
+// CodeGenerator
+//--------------------------------------------------------------------------
+namespace CodeGenerator
+{
+//! A function that generates predominantly MPI infrastructure code.
+/*! In this function MPI infrastructure code are generated, including: MPI send and receive functions. */
+void GENN_EXPORT generateMPI(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend, bool standaloneModules);
+}

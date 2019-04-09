@@ -42,6 +42,14 @@ int main(int argc,     //!< number of arguments; expected to be 2
         
         const filesystem::path targetPath(argv[1]);
 
+        // Create code generation path
+        int localHostID = 0;
+#ifdef MPI_ENABLE
+        MPI_Init(NULL, NULL);
+        MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
+        LOGI << "MPI initialized - host ID:" << localHostID;
+#endif
+
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
         ModelSpecInternal model;
@@ -55,13 +63,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
         model.finalize();
 
         // Create code generation path
-        int localHostID = 0;
 #ifdef MPI_ENABLE
-        MPI_Init(NULL, NULL);
-        MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
-        cout << "MPI initialized - host ID:" << localHostID << endl;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
         const filesystem::path outputPath = targetPath / (model.getName() + "_" + std::to_string(localHostID) + "_CODE");
 #else
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
@@ -122,7 +124,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
 #ifdef MPI_ENABLE
         MPI_Finalize();
-        cout << "MPI finalized." << endl;
+        LOGI << "MPI finalized";
 #endif
     }
     catch(const std::exception &exception)
