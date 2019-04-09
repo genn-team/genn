@@ -68,9 +68,6 @@ public:
     bool isTrueSpikeRequired() const;
     bool isSpikeEventRequired() const;
 
-    bool isVarQueueRequired(const std::string &var) const;
-    bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
-
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
     bool isZeroCopyEnabled() const;
@@ -169,6 +166,9 @@ protected:
 
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
     std::string getPrevQueueOffset(const std::string &devPrefix) const;
+
+    bool isVarQueueRequired(const std::string &var) const;
+    bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
 private:
     //------------------------------------------------------------------------

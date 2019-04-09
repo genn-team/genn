@@ -27,19 +27,7 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
-std::string m_Precision;
 
-    //! Type of floating point variables used to store time
-    TimePrecision m_TimePrecision;
-
-    //! The integration time step of the model
-    double m_DT;
-
-    //! Whether timing code should be inserted into model
-    bool m_TimingEnabled;
-
-    //! RNG seed
-    unsigned int m_Seed;
 // ------------------------------------------------------------------------
 // ModelSpec
 // ------------------------------------------------------------------------

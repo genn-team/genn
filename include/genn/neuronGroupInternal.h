@@ -35,5 +35,5 @@ public:
     using NeuronGroup::isParamRequiredBySpikeEventCondition;
     using NeuronGroup::getCurrentQueueOffset;
     using NeuronGroup::getPrevQueueOffset;
-
+    using NeuronGroup::isVarQueueRequired;
 };

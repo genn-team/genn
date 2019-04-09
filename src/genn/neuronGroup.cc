@@ -82,12 +82,6 @@ bool NeuronGroup::isSpikeEventRequired() const
                        [](SynapseGroupInternal *sg){ return sg->isSpikeEventRequired(); });
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::isVarQueueRequired(const std::string &var) const
-{
-    // Return flag corresponding to variable
-    return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
-}
-//----------------------------------------------------------------------------
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
@@ -303,6 +297,12 @@ std::string NeuronGroup::getPrevQueueOffset(const std::string &devPrefix) const
     assert(isDelayRequired());
 
     return "(((" + devPrefix + "spkQuePtr" + getName() + " + " + std::to_string(getNumDelaySlots() - 1) + ") % " + std::to_string(getNumDelaySlots()) + ") * " + std::to_string(getNumNeurons()) + ")";
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isVarQueueRequired(const std::string &var) const
+{
+    // Return flag corresponding to variable
+    return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
