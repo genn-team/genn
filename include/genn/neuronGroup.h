@@ -64,8 +64,6 @@ public:
 
     int getClusterHostID() const{ return m_HostID; }
 
-    int getClusterDeviceID() const{ return m_DeviceID; }
-
     bool isSpikeTimeRequired() const;
     bool isTrueSpikeRequired() const;
     bool isSpikeEventRequired() const;
@@ -113,11 +111,11 @@ public:
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, int hostID, int deviceID) :
+                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, int hostID) :
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
         m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_HostID(hostID), m_DeviceID(deviceID)
+        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_HostID(hostID)
     {
     }
 
@@ -217,7 +215,4 @@ private:
 
     //! The ID of the cluster node which the neuron groups are computed on
     const int m_HostID;
-
-    //! The ID of the CUDA device which the neuron groups are comnputed on
-    const int m_DeviceID;
 };

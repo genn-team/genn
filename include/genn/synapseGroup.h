@@ -121,7 +121,6 @@ public:
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
     int getClusterHostID() const;
-    int getClusterDeviceID() const;
 
     //! Does synapse group need to handle 'true' spikes
     bool isTrueSpikeRequired() const;

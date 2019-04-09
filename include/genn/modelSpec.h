@@ -184,12 +184,13 @@ public:
         \param model neuron model to use for neuron group.
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param hostID if using MPI, the ID of the node to simulate this population on
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModel *model,
                                      const typename NeuronModel::ParamValues &paramValues,
                                      const typename NeuronModel::VarValues &varInitialisers,
-                                     int hostID = 0, int deviceID = 0)
+                                     int hostID = 0)
     {
 #ifdef MPI_ENABLE
         // Determine the host ID
@@ -209,7 +210,7 @@ public:
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, size, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers(), 
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, hostID, deviceID));
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, hostID));
 
         if(!result.second)
         {
@@ -231,9 +232,9 @@ public:
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size,
                                      const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers,
-                                     int hostID = 0, int deviceID = 0)
+                                     int hostID = 0)
     {
-        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers, hostID, deviceID);
+        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers, hostID);
     }
 
     // PUBLIC SYNAPSE FUNCTIONS
@@ -367,7 +368,7 @@ public:
 
     //! Adds a new current source to the model using a current source model managed by the user
     /*! \tparam CurrentSourceModel type of current source model (derived from CurrentSourceModels::Base).
-        \param name string containing unique name of current source.
+        \param currentSourceName string containing unique name of current source.
         \param model current source model to use for current source.
         \param targetNeuronGroupName string name of the target neuron group
         \param paramValues parameters for model wrapped in CurrentSourceModel::ParamValues object.

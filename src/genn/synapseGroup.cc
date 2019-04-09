@@ -143,11 +143,6 @@ int SynapseGroup::getClusterHostID() const
     return m_TrgNeuronGroup->getClusterHostID();
 }
 //----------------------------------------------------------------------------
-int SynapseGroup::getClusterDeviceID() const
-{
-    return m_TrgNeuronGroup->getClusterDeviceID();
-}
-//----------------------------------------------------------------------------
 bool SynapseGroup::isTrueSpikeRequired() const
 {
     return !getWUModel()->getSimCode().empty();
