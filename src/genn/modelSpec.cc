@@ -231,16 +231,6 @@ void ModelSpec::finalize()
     }
 }
 
-std::string ModelSpec::getGeneratedCodePath(const std::string &path, const std::string &filename) const{
-#ifdef MPI_ENABLE
-    int localHostID = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
-    return path + "/" + getName() + "_" + std::to_string(localHostID) + "_CODE/" + filename;
-#else
-    return path + "/" + getName() + "_CODE/" + filename;
-#endif
-}
-
 std::string ModelSpec::scalarExpr(double val) const
 {
     if (m_Precision == "float") {

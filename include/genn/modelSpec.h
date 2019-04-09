@@ -466,9 +466,6 @@ protected:
     //--------------------------------------------------------------------------
     // Protected const methods
     //--------------------------------------------------------------------------
-    //! Generate path for generated code
-    std::string getGeneratedCodePath(const std::string &path, const std::string &filename) const;
-
     //! Get the string literal that should be used to represent a value in the model's floating-point type
     std::string scalarExpr(double) const;
 

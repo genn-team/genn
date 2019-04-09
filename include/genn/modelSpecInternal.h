@@ -24,7 +24,5 @@ public:
 
     using ModelSpec::scalarExpr;
 
-    using ModelSpec::getGeneratedCodePath;
-
     using ModelSpec::zeroCopyInUse;
 };
