@@ -240,10 +240,10 @@ class NeuronGroup(Group):
             self.is_spike_source_array = True
 
     def add_to(self, model_spec, num_neurons):
-        """Add this NeuronGroup to the GeNN modelspec
+        """Add this NeuronGroup to a model
 
         Args:
-        model_spec  --  GeNN modelspec
+        model_spec  --  ``pygenn.genn_model.GeNNModel`` to add to
         num_neurons --  int number of neurons
         """
         add_fct = getattr(model_spec, "add_neuron_population_" + self.type)
@@ -545,10 +545,11 @@ class SynapseGroup(Group):
         self.trg = target
 
     def add_to(self, model_spec, delay_steps):
-        """Add this SynapseGroup to the GeNN NNmodel
+        """Add this SynapseGroup to the a model
 
         Args:
-        model_spec -- GeNN ModelSpec
+        model_spec  -- ``pygenn.genn_model.GeNNModel`` to add to
+        delay_steps -- number of axonal delay timesteps to simulate for this synapse group
         """
         add_fct = getattr(
             model_spec,

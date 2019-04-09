@@ -223,8 +223,9 @@ class GeNNModel(object):
         pop_name    --  name of the new population
         num_neurons --  number of neurons in the new population
         neuron      --  type of the NeuronModels class as string or instance of
-                        neuron class derived from NeuronModels::Custom class.
-                        sa create_custom_neuron_class
+                        neuron class derived from
+                        ``pygenn.genn_wrapper.NeuronModels.Custom`` (see also
+                        pygenn.genn_model.create_custom_neuron_class)
         param_space --  dict with param values for the NeuronModels class
         var_space   --  dict with initial variable values for the
                         NeuronModels class
@@ -260,20 +261,24 @@ class GeNNModel(object):
         w_update_model              --  type of the WeightUpdateModels class
                                         as string or instance of weight update
                                         model class derived from
-                                        WeightUpdateModels::Custom class.
-                                        sa createCustomWeightUpdateClass
-        wu_param_values             --  dict with param values for the
+                                        ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` (see also
+                                        pygenn.genn_model.create_custom_weight_update_class)
+        wu_param_space              --  dict with param values for the
                                         WeightUpdateModels class
-        wu_init_var_values          --  dict with initial variable values for
-                                        the WeightUpdateModels class
+        wu_var_space                --  dict with initial values for
+                                        WeightUpdateModels state variables
+        wu_pre_var_space            --  dict with initial values for
+                                        WeightUpdateModels presynaptic variables
+        wu_post_var_space           --  dict with initial values for
+                                        WeightUpdateModels postsynaptic variables
         postsyn_model               --  type of the PostsynapticModels class
                                         as string or instance of postsynaptic
                                         model class derived from
-                                        PostsynapticModels::Custom class.
-                                        sa create_custom_postsynaptic_class
-        postsyn_param_values        --  dict with param values for the
+                                        ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also
+                                        pygenn.genn_model.create_custom_postsynaptic_class)
+        ps_param_space              --  dict with param values for the
                                         PostsynapticModels class
-        postsyn_init_var_values     --  dict with initial variable values for
+        ps_var_space                --  dict with initial variable values for
                                         the PostsynapticModels class
         connectivity_initialiser    --  InitSparseConnectivitySnippet::Init
                                         for connectivity
@@ -313,8 +318,8 @@ class GeNNModel(object):
         current_source_model    --  type of the CurrentSourceModels class as
                                     string or instance of CurrentSourceModels
                                     class derived from
-                                    CurrentSourceModels::Custom class
-                                    sa createCustomCurrentSourceClass
+                                    ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also
+                                    pygenn.genn_model.create_custom_current_source_class)
         pop_name                --  name of the population into which the
                                     current source should be injected
         param_space             --  dict with param values for the
@@ -580,12 +585,12 @@ def create_custom_neuron_class(class_name, param_names=None,
                                custom_body=None):
 
     """This helper function creates a custom NeuronModel class.
-
-    sa create_custom_postsynaptic_class
-    sa create_custom_weight_update_class
-    sa create_custom_current_source_class
-    sa create_custom_init_var_snippet_class
-    sa create_custom_sparse_connect_init_snippet_class
+    See also:
+    create_custom_postsynaptic_class
+    create_custom_weight_update_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+    create_custom_sparse_connect_init_snippet_class
 
     Args:
     class_name                  --  name of the new class
@@ -599,7 +604,7 @@ def create_custom_neuron_class(class_name, param_names=None,
                                     is string with name of the derived
                                     parameter and the second MUST be an
                                     instance of a class which inherits from
-                                    genn_wrapper.Snippet.DerivedParamFunc
+                                    ``pygenn.genn_wrapper.Snippet.DerivedParamFunc``
     sim_code                    --  string with the simulation code
     threshold_condition_code    --  string with the threshold condition code
     reset_code                  --  string with the reset code
@@ -609,7 +614,8 @@ def create_custom_neuron_class(class_name, param_names=None,
     additional_input_vars       --  list of tuples with names and types as
                                     strings and initial values of additional
                                     local input variables
-
+    is_auto_refractory_required --  does this model require auto-refractory
+                                    logic to be generated?
     custom_body                 --  dictionary with additional attributes and
                                     methods of the new class
     """
@@ -658,12 +664,12 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
                                      decay_code=None, apply_input_code=None,
                                      support_code=None, custom_body=None):
     """This helper function creates a custom PostsynapticModel class.
-
-    sa create_custom_neuron_class
-    sa create_custom_weight_update_class
-    sa create_custom_current_source_class
-    sa create_custom_init_var_snippet_class
-    sa create_custom_sparse_connect_init_snippet_class
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+    create_custom_sparse_connect_init_snippet_class
 
     Args:
     class_name          --  name of the new class
@@ -675,11 +681,10 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
                             MUST be an instance of a class which inherits
-                            from genn_wrapper.Snippet.DerivedParamFunc
+                            from ``pygenn.genn_wrapper.DerivedParamFunc``
     decay_code          --  string with the decay code
     apply_input_code    --  string with the apply input code
     support_code        --  string with the support code
-
     custom_body         --  dictionary with additional attributes and methods
                             of the new class
     """
@@ -723,12 +728,12 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                       is_post_spike_time_required=None,
                                       custom_body=None):
     """This helper function creates a custom WeightUpdateModel class.
-
-    sa create_custom_neuron_class
-    sa create_custom_postsynaptic_class
-    sa create_custom_current_source_class
-    sa create_custom_init_var_snippet_class
-    sa create_custom_sparse_connect_init_snippet_class
+    See also:
+    create_custom_neuron_class
+    create_custom_postsynaptic_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+    create_custom_sparse_connect_init_snippet_class
 
     Args:
     class_name                      --  name of the new class
@@ -748,7 +753,7 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                         is string with name of the derived
                                         parameter and the second MUST be an
                                         instance of a class which inherits from
-                                        genn_wrapper.Snippet.DerivedParamFunc
+                                        ``pygenn.genn_wrapper.DerivedParamFunc``
     sim_code                        --  string with the simulation code
     event_code                      --  string with the event code
     learn_post_code                 --  string with the code to include in
@@ -771,7 +776,6 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                         required in any weight update kernels?
     is_post_spike_time_required     --  boolean, is postsynaptic spike time
                                         required in any weight update kernels?
-
     custom_body                     --  dictionary with additional attributes
                                         and methods of the new class
     """
@@ -851,12 +855,12 @@ def create_custom_current_source_class(class_name, param_names=None,
                                        extra_global_params=None,
                                        custom_body=None):
     """This helper function creates a custom NeuronModel class.
-
-    sa create_custom_neuron_class
-    sa create_custom_weight_update_class
-    sa create_custom_current_source_class
-    sa create_custom_init_var_snippet_class
-    sa create_custom_sparse_connect_init_snippet_class
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+    create_custom_sparse_connect_init_snippet_class
 
     Args:
     class_name          --  name of the new class
@@ -868,11 +872,10 @@ def create_custom_current_source_class(class_name, param_names=None,
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
                             MUST be an instance of the class which inherits
-                            from  genn_wrapper.Snippet.DerivedParamFunc
+                            from  ``pygenn.genn_wrapper.DerivedParamFunc``
     injection_code      --  string with the current injection code
     extra_global_params --  list of pairs of strings with names and types of
                             additional parameters
-
     custom_body         --  dictionary with additional attributes and methods
                             of the new class
     """
@@ -903,12 +906,13 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
 
     This part is common for all model classes and is nearly useless on its own
     unless you specify custom_body.
-    sa create_custom_neuron_class
-    sa create_custom_weight_update_class
-    sa create_custom_postsynaptic_class
-    sa create_custom_current_source_class
-    sa create_custom_init_var_snippet_class
-    sa create_custom_sparse_connect_init_snippet_class
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_postsynaptic_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+    create_custom_sparse_connect_init_snippet_class
 
     Args:
     class_name      --  name of the new class
@@ -918,8 +922,8 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
                         types of the model
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second MUST be
-                        an instance of the class which inherits from
-                        genn_wrapper.Snippet.DerivedParamFunc
+                        an instance of the class which inherits from the
+                        ``pygenn.genn_wrapper.DerivedParamFunc`` class
     custom_body     --  dictionary with attributes and methods of the new class
     """
     def ctor(self):
@@ -991,12 +995,12 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
                                          derived_params=None,
                                          var_init_code=None, custom_body=None):
     """This helper function creates a custom InitVarSnippet class.
-
-    sa create_custom_neuron_class
-    sa create_custom_weight_update_class
-    sa create_custom_postsynaptic_class
-    sa create_custom_current_source_class
-    sa create_custom_sparse_connect_init_snippet_class
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_postsynaptic_class
+    create_custom_current_source_class
+    create_custom_sparse_connect_init_snippet_class
 
     Args:
     class_name      --  name of the new class
@@ -1005,9 +1009,8 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
     param_names     --  list of strings with param names of the model
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second MUST be
-                        an instance of the class which inherits from
-                        genn_wrapper.Snippet.DerivedParamFunc
-    var_initcode    --  string with the variable initialization code
+                        an instance of the `pygenn.genn_wrapper.DerivedParamFunc`` class
+    var_init_code   --  string with the variable initialization code
     custom_body     --  dictionary with additional attributes and methods of
                         the new class
     """
@@ -1039,12 +1042,12 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
                                                     custom_body=None):
     """This helper function creates a custom
     InitSparseConnectivitySnippet class.
-
-    sa create_custom_neuron_class
-    sa create_custom_weight_update_class
-    sa create_custom_postsynaptic_class
-    sa create_custom_current_source_class
-    sa create_custom_init_var_snippet_class
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_postsynaptic_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
 
     Args:
     class_name              --  name of the new class
@@ -1054,20 +1057,17 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     derived_params          --  list of pairs, where the first member is string
                                 with name of the derived parameter and the
                                 second MUST be an instance of the class which
-                                inherits from
-                                genn_wrapper.Snippet.DerivedParamFunc
+                                inherits from ``pygenn.genn_wrapper.DerivedParamFunc``
     row_build_code          --  string with row building initialization code
     row_build_state_vars    --  list of tuples of state variables, their types
                                 and their initial values to use across
                                 row building loop
     calc_max_row_len_func   --  instance of class inheriting from
-                                InitSparseConnectivitySnippet.CalcMaxLengthFunc
-                                used to calculate maximum row length of
-                                synaptic matrix
+                                CalcMaxLengthFunc used to calculate maximum
+                                row length of synaptic matrix
     calc_max_col_len_func   --  instance of class inheriting from
-                                InitSparseConnectivitySnippet.CalcMaxLengthFunc
-                                used to calculate maximum col length of
-                                synaptic matrix
+                                CalcMaxLengthFunc used to calculate maximum
+                                col length of synaptic matrix
     extra_global_params     --  list of pairs of strings with names and
                                 types of additional parameters
     custom_body             --  dictionary with additional attributes and

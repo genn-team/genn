@@ -7,8 +7,9 @@ from . import genn_wrapper
 from .genn_wrapper.Models import VarInit, VarInitVector
 from .genn_wrapper.StlContainers import DoubleVector
 
+"""Dictionary containing conversions between GeNN C++ types and numpy types"""
 genn_to_numpy_types = {
-    "scalar":            np.float32,
+    "scalar":           np.float32,
     "float":            np.float32,
     "double":           np.float64,
     "int":              np.int32,
@@ -34,24 +35,23 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
 
     Args:
     model           --  string or instance of a class derived from
-                        model_family.Custom
+                        ``pygenn.genn_wrapper.NeuronModels.Custom`` or
+                        ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` or
+                        ``pygenn.genn_wrapper.CurrentSourceModels.Custom``
     param_space     --  dict with model parameters
     var_space       --  dict with model variables
     pre_var_space   --  optional dict with (weight update) model
                         presynaptic variables
     post_var_space  --  optional dict with (weight update) model
                         postsynaptic variables
-    model_family    --  genn_wrapper.NeuronModels or
-                        genn_wrapper.WeightUpdateModels or
-                        genn_wrapper.CurrentSourceModels
+    model_family    --  ``pygenn.genn_wrapper.NeuronModels`` or
+                        ``pygenn.genn_wrapper.WeightUpdateModels`` or
+                        ``pygenn.genn_wrapper.CurrentSourceModels``
 
-    Return: tuple consisting of
-            0. model instance,
-            1. model type,
-            2. model parameter names,
-            3. model parameters,
-            5. list of variable names
-            4. dict mapping names of variables to instances of class Variable.
+    Returns:
+    tuple consisting of (model instance, model type, model parameter names,
+                         model parameters, list of variable names,
+                         dict mapping names of variables to instances of class Variable)
 
     """
     m_instance, m_type = is_model_valid(model, model_family)
@@ -82,16 +82,15 @@ def prepare_snippet(snippet, param_space, snippet_family):
 
     Args:
     snippet         --  string or instance of a class derived from
-                        snippet_family.Custom
+                        ``pygenn.genn_wrapper.InitVarSnippet.Custom`` or
+                        ``pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom``
     param_space     --  dict with model parameters
-    snippet_family  --  genn_wrapper.InitVarSnippet or
-                        genn_wrapper.InitSparseConnectivitySnippet
+    snippet_family  --  ``pygenn.genn_wrapper.InitVarSnippet`` or
+                        ``pygenn.genn_wrapper.InitSparseConnectivitySnippet``
 
-    Return: tuple consisting of
-            0. snippet instance,
-            1. snippet type,
-            2. snippet parameter names,
-            3. snippet parameters
+    Returns:
+    tuple consisting of (snippet instance, snippet type,
+                         snippet parameter names, snippet parameters)
     """
     s_instance, s_type = is_model_valid(snippet, snippet_family)
     param_names = list(s_instance.get_param_names())
@@ -109,7 +108,7 @@ def is_model_valid(model, model_family):
     model_family    --  model family (NeuronModels, WeightUpdateModels or
                         PostsynapticModels) to which model should belong to
 
-    Return:
+    Returns:
     instance of the model and its type as string
 
     Raises ValueError if model is not valid (i.e. is not custom and is
@@ -140,7 +139,7 @@ def param_space_to_vals(model, param_space):
     model       --  instance of the model
     param_space --  dict with parameters
 
-    Return:
+    Returns:
     native model's ParamValues
     """
     return model.make_param_values(param_space_to_val_vec(model, param_space))
@@ -153,7 +152,7 @@ def param_space_to_val_vec(model, param_space):
     model     -- instance of the model
     param_space -- dict with parameters
 
-    Return:
+    Returns:
     native vector of parameters
     """
     return DoubleVector([param_space[pn] for pn in model.get_param_names()])
@@ -166,7 +165,7 @@ def var_space_to_vals(model, var_space):
     model       -- instance of the model
     var_space   -- dict with Variables
 
-    Return:
+    Returns:
     native model's VarValues
     """
     return model.make_var_values(VarInitVector([var_space[vnt.name].init_val
@@ -180,7 +179,7 @@ def pre_var_space_to_vals(model, var_space):
     model       -- instance of the weight update model
     var_space   -- dict with Variables
 
-    Return:
+    Returns:
     native model's VarValues
     """
     return model.make_pre_var_values(
@@ -195,7 +194,7 @@ def post_var_space_to_vals(model, var_space):
     model       -- instance of the weight update model
     var_space   -- dict with Variables
 
-    Return:
+    Returns:
     native model's VarValues
     """
     return model.make_post_var_values(
