@@ -157,10 +157,8 @@ int main(int argc, char *argv[])
 
             stepTime();
 
-            pullPNCurrentSpikesFromDevice();
-            pullKCCurrentSpikesFromDevice();
-            pullLHICurrentSpikesFromDevice();
-            pullDNCurrentSpikesFromDevice();
+            // Copy current spikes from all populations from device
+            copyCurrentSpikesFromDevice();
 
             // Record spikes
             pnSpikes.record(t);

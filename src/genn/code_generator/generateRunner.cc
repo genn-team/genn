@@ -382,6 +382,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// remote neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    std::vector<std::string> currentSpikePullFunctions;
     for(const auto &n : model.getRemoteNeuronGroups()) {
         // Write macro so whether a neuron group is remote or not can be determined at compile time
         // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
@@ -407,13 +408,12 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                              "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), numSpikes);
 
             // True spike variable push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(), n.first + "Spikes",
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
+                                n.first + "CurrentSpikes", currentSpikePullFunctions,
                 [&]()
                 {
-                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "glbSpkCnt" + n.first, true, numSpikeCounts);
-                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "glbSpk" + n.first, true, numSpikes);
+                    backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
+                    backend.genCurrentTrueSpikePull(runnerPullFunc, n.second);
                 });
         }
     }
@@ -445,7 +445,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
             });
         
         // Current true spike push and pull functions
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(), n.first + "CurrentSpikes",
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
+                            n.first + "CurrentSpikes", currentSpikePullFunctions,
             [&]()
             {
                 backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
@@ -803,7 +804,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     runner << "void copyStateFromDevice()";
     {
         CodeStream::Scope b(runner);
-         for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getLocalNeuronGroups()) {
             runner << "pull" << n.first << "StateFromDevice();" << std::endl;
         }
 
@@ -813,6 +814,17 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
 
         for(const auto &s : model.getLocalSynapseGroups()) {
             runner << "pull" << s.first << "StateFromDevice();" << std::endl;
+        }
+    }
+    runner << std::endl;
+
+    // ---------------------------------------------------------------------
+    // Function for copying all current spikes from device
+    runner << "void copyCurrentSpikesFromDevice()";
+    {
+        CodeStream::Scope b(runner);
+        for(const auto &func : currentSpikePullFunctions) {
+            runner << "pull" << func << "FromDevice();" << std::endl;
         }
     }
     runner << std::endl;
@@ -897,6 +909,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     definitions << "EXPORT_FUNC void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
     definitions << "EXPORT_FUNC void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
     definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
+    definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
     definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;
