@@ -667,9 +667,7 @@ void Schmuker2014_classifier::run(float runtimeMs, string filename_rasterPlot,bo
 
 void Schmuker2014_classifier::getSpikesFromGPU()
 {
-    pullRNCurrentSpikesFromDevice();
-    pullPNCurrentSpikesFromDevice();
-    pullANCurrentSpikesFromDevice();
+    copyCurrentSpikesFromDevice();
 }
 
 /*--------------------------------------------------------------------------
@@ -708,9 +706,7 @@ void Schmuker2014_classifier::updateWeights_PN_AN()
     memcpy(gPNAN,plasticWeights,countPNAN * sizeof(float));
 
     //update to new weights on the device
-    #ifndef FLAG_RUN_ON_CPU
-        updateWeights_PN_AN_on_device();
-    #endif
+    updateWeights_PN_AN_on_device();
 }
 
 /*--------------------------------------------------------------------------
