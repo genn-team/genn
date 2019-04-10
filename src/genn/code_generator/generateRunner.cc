@@ -383,6 +383,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     allVarStreams << "// remote neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> currentSpikePullFunctions;
+    std::vector<std::string> currentSpikeEventPullFunctions;
     for(const auto &n : model.getRemoteNeuronGroups()) {
         // Write macro so whether a neuron group is remote or not can be determined at compile time
         // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
@@ -477,7 +478,8 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
                 });
 
             // Current spike-like event push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(), n.first + "CurrentSpikeEvents",
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
+                                n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
                 [&]()
                 {
                     backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second);
@@ -830,6 +832,17 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     runner << std::endl;
 
     // ---------------------------------------------------------------------
+    // Function for copying all current spikes events from device
+    runner << "void copyCurrentSpikeEventsFromDevice()";
+    {
+        CodeStream::Scope b(runner);
+        for(const auto &func : currentSpikeEventPullFunctions) {
+            runner << "pull" << func << "FromDevice();" << std::endl;
+        }
+    }
+    runner << std::endl;
+
+    // ---------------------------------------------------------------------
     // Function for setting the CUDA device and the host's global variables.
     // Also estimates memory usage on device ...
     runner << "void allocateMem()";
@@ -910,6 +923,7 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
     definitions << "EXPORT_FUNC void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
     definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
     definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
+    definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
     definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;
