@@ -1,5 +1,20 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v3.3.0
+====
+This release is intended as the last service release for GeNN 3.X.X.
+Fixes for serious bugs <b>may</b> be backported if requested but, otherwise, development will be switching to GeNN 4.
+
+User Side Changes
+----
+1. Postsynaptic models can now have Extra Global Parameters.
+2. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``InitVarSnippet::Gamma``.
+
+Bug fixes:
+----
+1. Devices with Streaming Multiprocessor version 2.1 (compute capability 2.0) now work correctly in Windows.
+2. Seeding of on-device RNGs now works correctly.
+
 Release Notes for GeNN v3.2.0
 ====
 This release extends the initialisation system introduced in 3.1.0 to support the initialisation of sparse synaptic connectivity, adds support for networks with more sophisticated models of synaptic plasticity and delay as well as including several other small features, optimisations and bug fixes for certain system configurations. This release supports GCC >= 4.9.1 on Linux, Visual Studio >= 2013 on Windows and recent versions of Clang on Mac OS X.
