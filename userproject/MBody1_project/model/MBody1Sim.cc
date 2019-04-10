@@ -34,10 +34,10 @@
 #define SYN_OUT_TME 20000.0
 
 
-// reset input every 100 steps == 50ms
+// reset input every 100ms
 #define PAT_TIME 100.0
 
-// pattern goes off at 2 steps == 1 ms
+// pattern goes off after 1.5ms
 #define PATFTIME 1.5
 
 #define TOTAL_TME 5000.0
