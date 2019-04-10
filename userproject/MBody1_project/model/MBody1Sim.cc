@@ -37,8 +37,8 @@
 // reset input every 100ms
 #define PAT_TIME 100.0
 
-// pattern goes off after 1.5ms
-#define PATFTIME 1.5
+// pattern goes off after 10ms
+#define PATFTIME 10.0
 
 #define TOTAL_TME 5000.0
 
@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
     const std::string outLabel = argv[1];
     const std::string outDir = "../" + outLabel + "_output";
 
-    const unsigned long long patSetTimeSteps = (unsigned long long)(PAT_TIME / DT);
-    const unsigned long long patFireTimeSteps = (unsigned long long)(PATFTIME / DT);
+    const unsigned long long patSetTimeSteps = (unsigned long long)std::round(PAT_TIME / DT);
+    const unsigned long long patFireTimeSteps = (unsigned long long)std::round(PATFTIME / DT);
     const unsigned long long numPatterns = 100;
     const scalar baseRateHz = 0.2f;
 

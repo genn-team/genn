@@ -86,7 +86,7 @@ void modelDefinition(ModelSpec &model)
 #endif
 
     NeuronModels::Poisson::ParamValues myPOI_p(
-        2.5,    // 0 - refratory period
+        10.0,   // 0 - refratory period
         1.0,    // 1 - spike duration
         20.0,   // 2 - Vspike
         -60.0); // 3 - Vrest
@@ -183,7 +183,7 @@ void modelDefinition(ModelSpec &model)
         50.0);  // 1 - Vslope: Activation slope of graded release
 
     WeightUpdateModels::StaticGraded::VarValues myDNDN_ini(
-        5.0 / _NDN);  // 0 - g: synaptic conductance
+        10.0 / _NDN);  // 0 - g: synaptic conductance
 
     PostsynapticModels::ExpCond::ParamValues postExpDNDN(
         2.5,    // 0 - tau_S: decay time constant for S [ms]
