@@ -14,6 +14,7 @@ Bug fixes:
 ----
 1. Devices with Streaming Multiprocessor version 2.1 (compute capability 2.0) now work correctly in Windows.
 2. Seeding of on-device RNGs now works correctly.
+3. Improvements to accuracy of memory usage estimates provided by code generator.
 
 Release Notes for GeNN v3.2.0
 ====
