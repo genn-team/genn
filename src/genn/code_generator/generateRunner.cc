@@ -494,8 +494,17 @@ void CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definiti
 
         // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
-            backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, model.getTimePrecision(), "sT" + n.first, n.second.getSpikeTimeLocation(),
+            backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             model.getTimePrecision(), "sT" + n.first, n.second.getSpikeTimeLocation(),
                              n.second.getNumNeurons() * n.second.getNumDelaySlots());
+
+            // Generate push and pull functions
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(), n.first + "SpikeTimes",
+                [&]()
+                {
+                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
+                                                "sT" + n.first, true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                });
         }
 
         // If neuron group needs per-neuron RNGs
