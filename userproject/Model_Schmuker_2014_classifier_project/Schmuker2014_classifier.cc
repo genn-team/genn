@@ -36,9 +36,9 @@ Schmuker2014_classifier::Schmuker2014_classifier():
 correctClass(0),winningClass(0),vrData(NULL),inputRatesCount(0),clearedDownDevice(false)
 {
     //convenience vars
-    countRN  = CLUST_SIZE_RN; //size of receptor neurons RN population ( =  size of input )
-    countPN  = CLUST_SIZE_PN; //size of projection neurons PN population
-    countAN  = CLUST_SIZE_AN; //size of association neurons AN population
+    countRN  = NUM_VR * CLUST_SIZE_RN; //size of receptor neurons RN population ( =  size of input )
+    countPN  = NUM_VR * CLUST_SIZE_PN; //size of projection neurons PN population
+    countAN  = NUM_CLASSES * CLUST_SIZE_AN; //size of association neurons AN population
     //  timestepsPerRecording = RECORDING_TIME_MS / DT ; // = num timesteps contained in each data recording
 
 
