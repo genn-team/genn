@@ -26,7 +26,8 @@ Breaking changes
 3. ``GENN_PREFERENCES`` is no longer a namespace - it's a global struct so members need to be accessed with . rather than ::.
 4. ``NeuronGroup``, ``SynapseGroup``, ``CurrentSource`` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't <i>supposed</i> to call but could. 
    These have now all been made protected and are exposed to GeNN internals using derived classes (``NeuronGroupInternal``, ``SynapseGroupInternal``, ``CurrentSourceInternal``, ``ModelSpecInternal``) that make them public using ``using`` directives.
-5. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
+5. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-neuron-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
+6. The functions used for pushing and pulling have been unified somewhat this means that ``copyStateToDevice`` and ``copyStateFromDevice`` functions no longer copy spikes and ``pus<neuron or synapse name>SpikesToDevice`` and ``pull<neuron or synapse name>SpikesFromDevice`` no longer copy spike times or spike-like events.
    
 Bug fixes:
 ----
