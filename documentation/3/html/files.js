@@ -1,32 +1,29 @@
 var files =
 [
+    [ "build/lib.linux-x86_64-3.6/pygenn/__init__.py", "df/d1e/build_2lib_8linux-x86__64-3_86_2pygenn_2____init_____8py.html", null ],
+    [ "build/lib.linux-x86_64-3.6/pygenn/genn_wrapper/__init__.py", "db/d30/build_2lib_8linux-x86__64-3_86_2pygenn_2genn__wrapper_2____init_____8py.html", null ],
+    [ "pygenn/__init__.py", "d1/d63/pygenn_2____init_____8py.html", null ],
     [ "binomial.cc", "d6/d24/binomial_8cc.html", "d6/d24/binomial_8cc" ],
     [ "binomial.h", "d4/d59/binomial_8h.html", "d4/d59/binomial_8h" ],
     [ "codeGenUtils.cc", "d4/dba/codeGenUtils_8cc.html", "d4/dba/codeGenUtils_8cc" ],
     [ "codeGenUtils.h", "de/d99/codeGenUtils_8h.html", "de/d99/codeGenUtils_8h" ],
     [ "codeStream.cc", "db/dfd/codeStream_8cc.html", "db/dfd/codeStream_8cc" ],
     [ "codeStream.h", "d0/dbb/codeStream_8h.html", "d0/dbb/codeStream_8h" ],
+    [ "CUDABackend.py", "df/d50/CUDABackend_8py.html", "df/d50/CUDABackend_8py" ],
     [ "currentSource.cc", "d7/d8c/currentSource_8cc.html", null ],
     [ "currentSource.h", "da/db7/currentSource_8h.html", [
       [ "CurrentSource", "d1/d48/classCurrentSource.html", "d1/d48/classCurrentSource" ]
     ] ],
     [ "currentSourceModels.cc", "d4/d8a/currentSourceModels_8cc.html", "d4/d8a/currentSourceModels_8cc" ],
     [ "currentSourceModels.h", "da/d49/currentSourceModels_8h.html", "da/d49/currentSourceModels_8h" ],
-    [ "CurrentSourceModels_wrap.cpp", "db/d87/CurrentSourceModels__wrap_8cpp.html", "db/d87/CurrentSourceModels__wrap_8cpp" ],
-    [ "CurrentSourceModels_wrap.h", "d8/d9a/CurrentSourceModels__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", "d7/d48/classSwigDirector__Custom" ]
-    ] ],
-    [ "currentSourceModelsCustom.cc", "d2/d59/currentSourceModelsCustom_8cc.html", "d2/d59/currentSourceModelsCustom_8cc" ],
-    [ "currentSourceModelsCustom.h", "dd/d5c/currentSourceModelsCustom_8h.html", [
-      [ "Custom", "dd/dad/classCurrentSourceModels_1_1Custom.html", "dd/dad/classCurrentSourceModels_1_1Custom" ]
-    ] ],
+    [ "CurrentSourceModels.py", "dd/de3/CurrentSourceModels_8py.html", "dd/de3/CurrentSourceModels_8py" ],
     [ "dpclass.h", "da/dc8/dpclass_8h.html", [
       [ "dpclass", "db/de6/classdpclass.html", "db/de6/classdpclass" ]
     ] ],
     [ "extra_neurons.h", "db/d66/extra__neurons_8h.html", "db/d66/extra__neurons_8h" ],
     [ "extra_postsynapses.h", "d5/d73/extra__postsynapses_8h.html", "d5/d73/extra__postsynapses_8h" ],
     [ "extra_weightupdates.h", "d4/d71/extra__weightupdates_8h.html", null ],
+    [ "generate_swig_interfaces.py", "d1/d25/generate__swig__interfaces_8py.html", "d1/d25/generate__swig__interfaces_8py" ],
     [ "generateALL.cc", "df/d10/generateALL_8cc.html", "df/d10/generateALL_8cc" ],
     [ "generateALL.h", "d8/deb/generateALL_8h.html", "d8/deb/generateALL_8h" ],
     [ "generateCPU.cc", "da/d80/generateCPU_8cc.html", "da/d80/generateCPU_8cc" ],
@@ -39,9 +36,16 @@ var files =
     [ "generateMPI.h", "da/d16/generateMPI_8h.html", "da/d16/generateMPI_8h" ],
     [ "generateRunner.cc", "d3/dad/generateRunner_8cc.html", "d3/dad/generateRunner_8cc" ],
     [ "generateRunner.h", "d2/d75/generateRunner_8h.html", "d2/d75/generateRunner_8h" ],
-    [ "genn_wrapper_wrap.cpp", "da/d86/genn__wrapper__wrap_8cpp.html", "da/d86/genn__wrapper__wrap_8cpp" ],
-    [ "genn_wrapper_wrap.h", "dd/d73/genn__wrapper__wrap_8h.html", null ],
-    [ "GeNNPreferences_wrap.cpp", "d7/d66/GeNNPreferences__wrap_8cpp.html", "d7/d66/GeNNPreferences__wrap_8cpp" ],
+    [ "build/lib.linux-x86_64-3.6/pygenn/genn_groups.py", "d4/dbd/build_2lib_8linux-x86__64-3_86_2pygenn_2genn__groups_8py.html", "d4/dbd/build_2lib_8linux-x86__64-3_86_2pygenn_2genn__groups_8py" ],
+    [ "pygenn/genn_groups.py", "d0/d92/pygenn_2genn__groups_8py.html", [
+      [ "Group", "d1/db3/classpygenn_1_1genn__groups_1_1Group.html", "d1/db3/classpygenn_1_1genn__groups_1_1Group" ],
+      [ "NeuronGroup", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup" ],
+      [ "SynapseGroup", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup" ],
+      [ "CurrentSource", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource" ]
+    ] ],
+    [ "build/lib.linux-x86_64-3.6/pygenn/genn_model.py", "d7/d0b/build_2lib_8linux-x86__64-3_86_2pygenn_2genn__model_8py.html", "d7/d0b/build_2lib_8linux-x86__64-3_86_2pygenn_2genn__model_8py" ],
+    [ "pygenn/genn_model.py", "de/d62/pygenn_2genn__model_8py.html", "de/d62/pygenn_2genn__model_8py" ],
+    [ "genn_wrapper.py", "d0/dea/genn__wrapper_8py.html", "d0/dea/genn__wrapper_8py" ],
     [ "global.cc", "d7/dd8/global_8cc.html", "d7/dd8/global_8cc" ],
     [ "global.h", "d2/d49/global_8h.html", "d2/d49/global_8h" ],
     [ "hr_time.cc", "db/dd3/hr__time_8cc.html", "db/dd3/hr__time_8cc" ],
@@ -51,27 +55,13 @@ var files =
     ] ],
     [ "initSparseConnectivitySnippet.cc", "d4/d88/initSparseConnectivitySnippet_8cc.html", "d4/d88/initSparseConnectivitySnippet_8cc" ],
     [ "initSparseConnectivitySnippet.h", "de/d51/initSparseConnectivitySnippet_8h.html", "de/d51/initSparseConnectivitySnippet_8h" ],
-    [ "InitSparseConnectivitySnippet_wrap.cpp", "df/d3c/InitSparseConnectivitySnippet__wrap_8cpp.html", "df/d3c/InitSparseConnectivitySnippet__wrap_8cpp" ],
-    [ "InitSparseConnectivitySnippet_wrap.h", "dc/dbb/InitSparseConnectivitySnippet__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", "d7/d48/classSwigDirector__Custom" ],
-      [ "SwigDirector_CalcMaxLengthFunc", "d4/dcb/structSwigDirector__CalcMaxLengthFunc.html", "d4/dcb/structSwigDirector__CalcMaxLengthFunc" ]
-    ] ],
-    [ "initSparseConnectivitySnippetCustom.cc", "db/d35/initSparseConnectivitySnippetCustom_8cc.html", "db/d35/initSparseConnectivitySnippetCustom_8cc" ],
-    [ "initSparseConnectivitySnippetCustom.h", "df/d5c/initSparseConnectivitySnippetCustom_8h.html", [
-      [ "Custom", "d0/d8d/classInitSparseConnectivitySnippet_1_1Custom.html", "d0/d8d/classInitSparseConnectivitySnippet_1_1Custom" ]
-    ] ],
+    [ "InitSparseConnectivitySnippet.py", "de/d65/InitSparseConnectivitySnippet_8py.html", "de/d65/InitSparseConnectivitySnippet_8py" ],
     [ "initVarSnippet.cc", "d1/dfe/initVarSnippet_8cc.html", "d1/dfe/initVarSnippet_8cc" ],
     [ "initVarSnippet.h", "d9/ddf/initVarSnippet_8h.html", "d9/ddf/initVarSnippet_8h" ],
-    [ "InitVarSnippet_wrap.cpp", "d6/d32/InitVarSnippet__wrap_8cpp.html", "d6/d32/InitVarSnippet__wrap_8cpp" ],
-    [ "InitVarSnippet_wrap.h", "d0/d13/InitVarSnippet__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", "d7/d48/classSwigDirector__Custom" ]
-    ] ],
-    [ "initVarSnippetCustom.cc", "d5/d88/initVarSnippetCustom_8cc.html", "d5/d88/initVarSnippetCustom_8cc" ],
-    [ "initVarSnippetCustom.h", "d2/d65/initVarSnippetCustom_8h.html", [
-      [ "Custom", "db/d57/classInitVarSnippet_1_1Custom.html", "db/d57/classInitVarSnippet_1_1Custom" ]
-    ] ],
+    [ "InitVarSnippet.py", "d3/d08/InitVarSnippet_8py.html", "d3/d08/InitVarSnippet_8py" ],
+    [ "build/lib.linux-x86_64-3.6/pygenn/model_preprocessor.py", "df/d3b/build_2lib_8linux-x86__64-3_86_2pygenn_2model__preprocessor_8py.html", "df/d3b/build_2lib_8linux-x86__64-3_86_2pygenn_2model__preprocessor_8py" ],
+    [ "pygenn/model_preprocessor.py", "df/dfc/pygenn_2model__preprocessor_8py.html", "df/dfc/pygenn_2model__preprocessor_8py" ],
+    [ "Models.py", "df/d26/Models_8py.html", "df/d26/Models_8py" ],
     [ "include/modelSpec.cc", "d9/d6f/include_2modelSpec_8cc.html", null ],
     [ "src/modelSpec.cc", "d8/d9a/src_2modelSpec_8cc.html", "d8/d9a/src_2modelSpec_8cc" ],
     [ "modelSpec.h", "dc/de1/modelSpec_8h.html", "dc/de1/modelSpec_8h" ],
@@ -81,48 +71,22 @@ var files =
     ] ],
     [ "neuronModels.cc", "dc/dbc/neuronModels_8cc.html", "dc/dbc/neuronModels_8cc" ],
     [ "neuronModels.h", "d3/dc0/neuronModels_8h.html", "d3/dc0/neuronModels_8h" ],
-    [ "NeuronModels_wrap.cpp", "d4/d66/NeuronModels__wrap_8cpp.html", "d4/d66/NeuronModels__wrap_8cpp" ],
-    [ "NeuronModels_wrap.h", "da/dad/NeuronModels__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", "d7/d48/classSwigDirector__Custom" ]
-    ] ],
+    [ "NeuronModels.py", "dc/df2/NeuronModels_8py.html", "dc/df2/NeuronModels_8py" ],
     [ "newModels.h", "d4/ded/newModels_8h.html", "d4/ded/newModels_8h" ],
-    [ "NewModels_wrap.cpp", "d4/d72/NewModels__wrap_8cpp.html", "d4/d72/NewModels__wrap_8cpp" ],
-    [ "NewModels_wrap.h", "d1/d63/NewModels__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ]
-    ] ],
     [ "newNeuronModels.cc", "d1/da9/newNeuronModels_8cc.html", "d1/da9/newNeuronModels_8cc" ],
     [ "newNeuronModels.h", "d0/dcb/newNeuronModels_8h.html", "d0/dcb/newNeuronModels_8h" ],
-    [ "newNeuronModelsCustom.cc", "dc/d1c/newNeuronModelsCustom_8cc.html", "dc/d1c/newNeuronModelsCustom_8cc" ],
-    [ "newNeuronModelsCustom.h", "d7/dad/newNeuronModelsCustom_8h.html", [
-      [ "Custom", "d5/d92/classNeuronModels_1_1Custom.html", "d5/d92/classNeuronModels_1_1Custom" ]
-    ] ],
     [ "newPostsynapticModels.cc", "d9/d9b/newPostsynapticModels_8cc.html", "d9/d9b/newPostsynapticModels_8cc" ],
     [ "newPostsynapticModels.h", "da/d05/newPostsynapticModels_8h.html", "da/d05/newPostsynapticModels_8h" ],
-    [ "newPostsynapticModelsCustom.cc", "d1/d2c/newPostsynapticModelsCustom_8cc.html", "d1/d2c/newPostsynapticModelsCustom_8cc" ],
-    [ "newPostsynapticModelsCustom.h", "d9/d9c/newPostsynapticModelsCustom_8h.html", [
-      [ "Custom", "d5/d94/classPostsynapticModels_1_1Custom.html", "d5/d94/classPostsynapticModels_1_1Custom" ]
-    ] ],
     [ "newWeightUpdateModels.cc", "d1/d54/newWeightUpdateModels_8cc.html", "d1/d54/newWeightUpdateModels_8cc" ],
     [ "newWeightUpdateModels.h", "d4/d0f/newWeightUpdateModels_8h.html", "d4/d0f/newWeightUpdateModels_8h" ],
-    [ "newWeightUpdateModelsCustom.cc", "d2/def/newWeightUpdateModelsCustom_8cc.html", "d2/def/newWeightUpdateModelsCustom_8cc" ],
-    [ "newWeightUpdateModelsCustom.h", "db/dae/newWeightUpdateModelsCustom_8h.html", [
-      [ "Custom", "d1/d65/classWeightUpdateModels_1_1Custom.html", "d1/d65/classWeightUpdateModels_1_1Custom" ]
-    ] ],
     [ "postSynapseModels.cc", "d5/d21/postSynapseModels_8cc.html", "d5/d21/postSynapseModels_8cc" ],
     [ "postSynapseModels.h", "d4/d8a/postSynapseModels_8h.html", "d4/d8a/postSynapseModels_8h" ],
-    [ "PostsynapticModels_wrap.cpp", "d1/dd2/PostsynapticModels__wrap_8cpp.html", "d1/dd2/PostsynapticModels__wrap_8cpp" ],
-    [ "PostsynapticModels_wrap.h", "dd/d72/PostsynapticModels__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", "d7/d48/classSwigDirector__Custom" ]
-    ] ],
-    [ "SharedLibraryModel_wrap.cpp", "d4/d55/SharedLibraryModel__wrap_8cpp.html", "d4/d55/SharedLibraryModel__wrap_8cpp" ],
+    [ "PostsynapticModels.py", "d4/d64/PostsynapticModels_8py.html", "d4/d64/PostsynapticModels_8py" ],
+    [ "setup.py", "da/dab/setup_8py.html", "da/dab/setup_8py" ],
+    [ "SharedLibraryModel.py", "d9/db3/SharedLibraryModel_8py.html", "d9/db3/SharedLibraryModel_8py" ],
+    [ "SingleThreadedCPUBackend.py", "d5/d01/SingleThreadedCPUBackend_8py.html", "d5/d01/SingleThreadedCPUBackend_8py" ],
     [ "snippet.h", "de/d6c/snippet_8h.html", "de/d6c/snippet_8h" ],
-    [ "Snippet_wrap.cpp", "d3/d99/Snippet__wrap_8cpp.html", "d3/d99/Snippet__wrap_8cpp" ],
-    [ "Snippet_wrap.h", "d4/d4b/Snippet__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ],
-      [ "SwigDirector_DerivedParamFunc", "da/d3e/structSwigDirector__DerivedParamFunc.html", "da/d3e/structSwigDirector__DerivedParamFunc" ]
-    ] ],
+    [ "Snippet.py", "d9/d6a/Snippet_8py.html", "d9/d6a/Snippet_8py" ],
     [ "sparseProjection.h", "d6/d2e/sparseProjection_8h.html", [
       [ "SparseProjection", "d9/d91/structSparseProjection.html", "d9/d91/structSparseProjection" ],
       [ "RaggedProjection", "d2/d75/structRaggedProjection.html", "d2/d75/structRaggedProjection" ]
@@ -133,7 +97,7 @@ var files =
     [ "standardGeneratedSections.h", "d7/d6f/standardGeneratedSections_8h.html", "d7/d6f/standardGeneratedSections_8h" ],
     [ "standardSubstitutions.cc", "d2/d64/standardSubstitutions_8cc.html", null ],
     [ "standardSubstitutions.h", "d5/db9/standardSubstitutions_8h.html", "d5/db9/standardSubstitutions_8h" ],
-    [ "StlContainers_wrap.cpp", "d9/d13/StlContainers__wrap_8cpp.html", "d9/d13/StlContainers__wrap_8cpp" ],
+    [ "StlContainers.py", "de/d49/StlContainers_8py.html", "de/d49/StlContainers_8py" ],
     [ "stringUtils.h", "dd/dc3/stringUtils_8h.html", "dd/dc3/stringUtils_8h" ],
     [ "synapseGroup.cc", "da/d3e/synapseGroup_8cc.html", null ],
     [ "synapseGroup.h", "de/db0/synapseGroup_8h.html", [
@@ -145,9 +109,5 @@ var files =
     [ "utils.cc", "d7/da9/utils_8cc.html", "d7/da9/utils_8cc" ],
     [ "utils.h", "d5/d60/utils_8h.html", "d5/d60/utils_8h" ],
     [ "variableMode.h", "d6/d8f/variableMode_8h.html", "d6/d8f/variableMode_8h" ],
-    [ "WeightUpdateModels_wrap.cpp", "de/d01/WeightUpdateModels__wrap_8cpp.html", "de/d01/WeightUpdateModels__wrap_8cpp" ],
-    [ "WeightUpdateModels_wrap.h", "d8/d08/WeightUpdateModels__wrap_8h.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", "d2/d81/classSwigDirector__Base" ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", "d7/d48/classSwigDirector__Custom" ]
-    ] ]
+    [ "WeightUpdateModels.py", "d4/d1a/WeightUpdateModels_8py.html", "d4/d1a/WeightUpdateModels_8py" ]
 ];

@@ -24,3 +24,4 @@
 \form#23:\[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \]
 \form#24:$V$
 \form#25:$E_{pre}$
+\form#26:$\lambda$

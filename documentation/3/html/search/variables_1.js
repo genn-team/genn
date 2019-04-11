@@ -1,11 +1,6 @@
 var searchData=
 [
-  ['as_5fbuffer',['as_buffer',['../d0/d3c/structPyHeapTypeObject.html#a026c64b0a5163ea580e79640ecf209de',1,'PyHeapTypeObject']]],
-  ['as_5fmapping',['as_mapping',['../d0/d3c/structPyHeapTypeObject.html#a3112d193aea288a92036360bec1ce0a5',1,'PyHeapTypeObject']]],
-  ['as_5fnumber',['as_number',['../d0/d3c/structPyHeapTypeObject.html#a795de378df40d11321c0dbe463759560',1,'PyHeapTypeObject']]],
-  ['as_5fsequence',['as_sequence',['../d0/d3c/structPyHeapTypeObject.html#ad553caad5da3a7004aae1b7ac0289f12',1,'PyHeapTypeObject']]],
-  ['asgoodaszero',['asGoodAsZero',['../d8/d27/namespaceGENN__PREFERENCES.html#a735be1f8a3fa1bb1eb74cf981d0525a2',1,'GENN_PREFERENCES']]],
-  ['autochoosedevice',['autoChooseDevice',['../d8/d27/namespaceGENN__PREFERENCES.html#a6922b0be770078c883d5b9270cece84e',1,'GENN_PREFERENCES']]],
-  ['autoinitsparsevars',['autoInitSparseVars',['../d8/d27/namespaceGENN__PREFERENCES.html#a708fe713881a49526d8787d9fc00a2b6',1,'GENN_PREFERENCES']]],
-  ['autorefractory',['autoRefractory',['../d8/d27/namespaceGENN__PREFERENCES.html#aea36da0f447200facdcd5ecad8b39a2a',1,'GENN_PREFERENCES']]]
+  ['backend_5fmodules',['backend_modules',['../de/d6e/namespacepygenn_1_1genn__model.html#a0378993ab51a2871fc274bddf7b55bcd',1,'pygenn::genn_model']]],
+  ['base_5fswigregister',['Base_swigregister',['../dc/d4e/namespacepygenn_1_1genn__wrapper_1_1CurrentSourceModels.html#aa992cea820943fd5c3dfd279241c59fb',1,'pygenn.genn_wrapper.CurrentSourceModels.Base_swigregister()'],['../dd/d78/namespacepygenn_1_1genn__wrapper_1_1InitSparseConnectivitySnippet.html#aa6a1cc9917ca79eed6cde35fab154fc4',1,'pygenn.genn_wrapper.InitSparseConnectivitySnippet.Base_swigregister()'],['../d6/ddc/namespacepygenn_1_1genn__wrapper_1_1InitVarSnippet.html#a1cc82e1f2f5b484b8f5aebd7b99306a0',1,'pygenn.genn_wrapper.InitVarSnippet.Base_swigregister()'],['../d8/dbc/namespacepygenn_1_1genn__wrapper_1_1Models.html#af431c3a1a71f2eea19c19cd4ca57ad44',1,'pygenn.genn_wrapper.Models.Base_swigregister()'],['../d7/d9b/namespacepygenn_1_1genn__wrapper_1_1NeuronModels.html#a90c38d933e4b47833bf3584b4fb812da',1,'pygenn.genn_wrapper.NeuronModels.Base_swigregister()'],['../d3/dc7/namespacepygenn_1_1genn__wrapper_1_1PostsynapticModels.html#ad3908f336d55867259eb7fe59465045d',1,'pygenn.genn_wrapper.PostsynapticModels.Base_swigregister()'],['../d6/d50/namespacepygenn_1_1genn__wrapper_1_1Snippet.html#a608b62b8b575000647371c4d2d690d79',1,'pygenn.genn_wrapper.Snippet.Base_swigregister()'],['../d2/d79/namespacepygenn_1_1genn__wrapper_1_1WeightUpdateModels.html#a44cd0b51bc3466bf8ec7c12499c1b5fe',1,'pygenn.genn_wrapper.WeightUpdateModels.Base_swigregister()']]],
+  ['buildsharedlibrary',['buildSharedLibrary',['../d8/d27/namespaceGENN__PREFERENCES.html#a7848e1de02f155abf95c3e27914d8918',1,'GENN_PREFERENCES']]]
 ];

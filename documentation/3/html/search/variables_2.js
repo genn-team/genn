@@ -1,4 +1,21 @@
 var searchData=
 [
-  ['buildsharedlibrary',['buildSharedLibrary',['../d8/d27/namespaceGENN__PREFERENCES.html#a7848e1de02f155abf95c3e27914d8918',1,'GENN_PREFERENCES']]]
+  ['calcneurons',['calcNeurons',['../d4/dd6/namespaceGENN__FLAGS.html#a631ef752d5ce4479cf8b333f666e90b2',1,'GENN_FLAGS']]],
+  ['calcsynapsedynamics',['calcSynapseDynamics',['../d4/dd6/namespaceGENN__FLAGS.html#ae014e483c4d208132905a83d6910d3ba',1,'GENN_FLAGS']]],
+  ['calcsynapses',['calcSynapses',['../d4/dd6/namespaceGENN__FLAGS.html#af12806867f9ad3b23ffedee4c01cfef7',1,'GENN_FLAGS']]],
+  ['classtoextend',['classToExtend',['../d5/dec/classgenerate__swig__interfaces_1_1SwigExtendScope.html#ac8456ad6ef358eafe889d9e58f3e3a89',1,'generate_swig_interfaces::SwigExtendScope']]],
+  ['collength',['colLength',['../d2/d75/structRaggedProjection.html#a37a0b728d4c4e20d5f498ae9cc645446',1,'RaggedProjection']]],
+  ['connections_5fset',['connections_set',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af92bed3adac69c3fe0701aa312fd07b5',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['connectivity_5finitialiser',['connectivity_initialiser',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a48893828585d570d55f9c488e9690dd2',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['connn',['connN',['../d9/d91/structSparseProjection.html#a52c5a7d78b767694bbf323fef446a2d8',1,'SparseProjection']]],
+  ['container',['container',['../d0/d76/structNameIterCtx.html#a04a868a37c0ff90ed0b028153762d1b8',1,'NameIterCtx']]],
+  ['cpu_5fonly',['cpu_only',['../dd/dc4/namespacesetup.html#ab6c75c95f237388352e4f7b508ea0e16',1,'setup']]],
+  ['cpufunctions',['cpuFunctions',['../de/d99/codeGenUtils_8h.html#a799c4c46dd8f022378502c6afa27e28b',1,'codeGenUtils.h']]],
+  ['create_5fbackend',['create_backend',['../d6/d76/namespacepygenn_1_1genn__wrapper_1_1CUDABackend.html#a136c5865b8b4643e28341cea3065e620',1,'pygenn.genn_wrapper.CUDABackend.create_backend()'],['../d9/df4/namespacepygenn_1_1genn__wrapper_1_1SingleThreadedCPUBackend.html#ae364bac95ce80c3ebfeb65386ef87f0d',1,'pygenn.genn_wrapper.SingleThreadedCPUBackend.create_backend()']]],
+  ['cuda_5fpath',['cuda_path',['../dd/dc4/namespacesetup.html#aae3a0b83e1af1021a92ba6c06142d1d0',1,'setup']]],
+  ['cudafunctions',['cudaFunctions',['../de/d99/codeGenUtils_8h.html#a3316bc1340b03185e4596399878705e0',1,'codeGenUtils.h']]],
+  ['current_5fsource_5fmodel',['current_source_model',['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#aa2e59cb8e23e22392bc2c15dd571fe47',1,'pygenn::genn_groups::CurrentSource']]],
+  ['current_5fsources',['current_sources',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a93daad6952a3dd9e66bc292617ae1830',1,'pygenn::genn_model::GeNNModel']]],
+  ['currentsource_5fswigregister',['CurrentSource_swigregister',['../db/df3/namespacepygenn_1_1genn__wrapper_1_1genn__wrapper.html#af258502276a802d5253612056f96ee2c',1,'pygenn::genn_wrapper::genn_wrapper']]],
+  ['currsourcemodels',['CURRSOURCEMODELS',['../d9/d94/namespacegenerate__swig__interfaces.html#ab7a7c71646a466f411210a6b56b9bd9f',1,'generate_swig_interfaces']]]
 ];

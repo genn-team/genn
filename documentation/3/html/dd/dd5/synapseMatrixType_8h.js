@@ -25,6 +25,6 @@ var synapseMatrixType_8h =
       [ "INDIVIDUAL", "dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323", null ],
       [ "INDIVIDUAL_PSM", "dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa", null ]
     ] ],
-    [ "operator&", "dd/dd5/synapseMatrixType_8h.html#aa09e78ed987437c288d765a264827267", null ],
-    [ "operator&", "dd/dd5/synapseMatrixType_8h.html#aed7c822a202a76e3931f4a2d0ca4eea1", null ]
+    [ "operator&", "dd/dd5/synapseMatrixType_8h.html#a9db79f3b247e8d79603f0208ca397489", null ],
+    [ "operator&", "dd/dd5/synapseMatrixType_8h.html#aa412c5ba30707662878ddbb8b04154c4", null ]
 ];

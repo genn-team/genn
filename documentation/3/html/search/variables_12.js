@@ -1,16 +1,12 @@
 var searchData=
 [
-  ['thedevice',['theDevice',['../d2/d49/global_8h.html#a23b3c32d04af422162d050484a76d11e',1,'theDevice():&#160;global.cc'],['../d7/dd8/global_8cc.html#a23b3c32d04af422162d050484a76d11e',1,'theDevice():&#160;global.cc']]],
-  ['thresholdconditioncode',['thresholdConditionCode',['../d3/dc9/classneuronModel.html#a9b0fae36963fb760040c3b1d22bee25c',1,'neuronModel']]],
-  ['tmpvarnames',['tmpVarNames',['../d3/dc9/classneuronModel.html#ab193cb434db2df5f1fa9a79fba30af83',1,'neuronModel']]],
-  ['tmpvartypes',['tmpVarTypes',['../d3/dc9/classneuronModel.html#a3f5668e85624014cd5de97bf00d2b82f',1,'neuronModel']]],
-  ['traubmiles',['TRAUBMILES',['../d3/dc0/neuronModels_8h.html#a5cb672a4c033703aeb1b7ba7350cfbfd',1,'TRAUBMILES():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#a5cb672a4c033703aeb1b7ba7350cfbfd',1,'TRAUBMILES():&#160;neuronModels.cc']]],
-  ['traubmiles_5falternative',['TRAUBMILES_ALTERNATIVE',['../d3/dc0/neuronModels_8h.html#aec2c16d09ff375f800eb19e048bdc53b',1,'TRAUBMILES_ALTERNATIVE():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#aec2c16d09ff375f800eb19e048bdc53b',1,'TRAUBMILES_ALTERNATIVE():&#160;neuronModels.cc']]],
-  ['traubmiles_5ffast',['TRAUBMILES_FAST',['../d3/dc0/neuronModels_8h.html#aee4db109db367bd6107ac4802228b6e7',1,'TRAUBMILES_FAST():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#aee4db109db367bd6107ac4802228b6e7',1,'TRAUBMILES_FAST():&#160;neuronModels.cc']]],
-  ['traubmiles_5fpstep',['TRAUBMILES_PSTEP',['../d3/dc0/neuronModels_8h.html#ad217188df3a3df16786ff78e72c4e01c',1,'TRAUBMILES_PSTEP():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#ad217188df3a3df16786ff78e72c4e01c',1,'TRAUBMILES_PSTEP():&#160;neuronModels.cc']]],
-  ['traubmiles_5fsafe',['TRAUBMILES_SAFE',['../d3/dc0/neuronModels_8h.html#a0443dbb3d7dd078e1dda2f2977acc0da',1,'TRAUBMILES_SAFE():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#a0443dbb3d7dd078e1dda2f2977acc0da',1,'TRAUBMILES_SAFE():&#160;neuronModels.cc']]],
-  ['ty',['ty',['../d4/d88/structSwigPyObject.html#a77f6f8357ce9c50f7c18c2a4ea72ea62',1,'SwigPyObject::ty()'],['../db/d08/structSwigPyPacked.html#ae179dcfa49ddb42652601334198d4271',1,'SwigPyPacked::ty()']]],
-  ['type',['type',['../d2/d87/structswig__cast__info.html#a06b74832d16cc0c4fd147e4c39095cd9',1,'swig_cast_info::type()'],['../d0/d3c/structPyHeapTypeObject.html#a8b961137de4ebeed5a5d2e4b47ee1ca7',1,'PyHeapTypeObject::type()'],['../d6/d72/structswig__const__info.html#ae8bbc99e1cda11f24e306365cbf33893',1,'swig_const_info::type()']]],
-  ['type_5finitial',['type_initial',['../d8/d1b/structswig__module__info.html#aaf36c0bb2e9e796ff1576359d52507c9',1,'swig_module_info']]],
-  ['types',['types',['../d8/d1b/structswig__module__info.html#a0a70e9ae189c2a26c92adbf2fabcd549',1,'swig_module_info']]]
+  ['values',['values',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a8903b59bf2af200967126ea4daae8592',1,'pygenn::model_preprocessor::Variable']]],
+  ['varinit_5fswigregister',['VarInit_swigregister',['../d8/dbc/namespacepygenn_1_1genn__wrapper_1_1Models.html#aa10cd2efdb6a8cd74d29cf4e074b4898',1,'pygenn::genn_wrapper::Models']]],
+  ['varinitvector_5fswigregister',['VarInitVector_swigregister',['../d8/dbc/namespacepygenn_1_1genn__wrapper_1_1Models.html#a0c2b992dfcfd65fd3f655165138078d8',1,'pygenn::genn_wrapper::Models']]],
+  ['varnames',['varNames',['../d3/dc9/classneuronModel.html#a9a9156ffb643572fd67f6e585ef79ad0',1,'neuronModel::varNames()'],['../d2/d1a/classpostSynModel.html#a3ade04dd55a74c018cb3c3c16a0c4a47',1,'postSynModel::varNames()'],['../dd/db7/classweightUpdateModel.html#a130dc4796aef818562cd9ab112a6dc98',1,'weightUpdateModel::varNames()']]],
+  ['vars',['vars',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html#ad8e33584773714170465d5166c9c5e3e',1,'pygenn::genn_groups::Group']]],
+  ['vartypes',['varTypes',['../d3/dc9/classneuronModel.html#a86788cb29131da0a26ce79693a076352',1,'neuronModel::varTypes()'],['../d2/d1a/classpostSynModel.html#a5afb775c8211cb7591bb3c50526267fc',1,'postSynModel::varTypes()'],['../dd/db7/classweightUpdateModel.html#a77fdb9d1287b883d227f1b50fef9889c',1,'weightUpdateModel::varTypes()']]],
+  ['varvalues_5fswigregister',['VarValues_swigregister',['../d8/dbc/namespacepygenn_1_1genn__wrapper_1_1Models.html#ac70527ea371fbeaebd89881544243146',1,'pygenn::genn_wrapper::Models']]],
+  ['version',['version',['../dd/dc4/namespacesetup.html#a2aa722b36a933088812b50ea79b97a5c',1,'setup']]],
+  ['view',['view',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a8644b9a1b79f22f369f8bc946392b648',1,'pygenn::model_preprocessor::Variable']]]
 ];

@@ -6,6 +6,7 @@ var newNeuronModels_8h =
     [ "Izhikevich", "d7/d0a/classNeuronModels_1_1Izhikevich.html", "d7/d0a/classNeuronModels_1_1Izhikevich" ],
     [ "IzhikevichVariable", "dc/d87/classNeuronModels_1_1IzhikevichVariable.html", "dc/d87/classNeuronModels_1_1IzhikevichVariable" ],
     [ "SpikeSource", "d5/d1f/classNeuronModels_1_1SpikeSource.html", "d5/d1f/classNeuronModels_1_1SpikeSource" ],
+    [ "SpikeSourceArray", "db/d38/classNeuronModels_1_1SpikeSourceArray.html", "db/d38/classNeuronModels_1_1SpikeSourceArray" ],
     [ "Poisson", "de/d1d/classNeuronModels_1_1Poisson.html", "de/d1d/classNeuronModels_1_1Poisson" ],
     [ "PoissonNew", "dc/dc0/classNeuronModels_1_1PoissonNew.html", "dc/dc0/classNeuronModels_1_1PoissonNew" ],
     [ "TraubMiles", "d2/dc3/classNeuronModels_1_1TraubMiles.html", "d2/dc3/classNeuronModels_1_1TraubMiles" ],

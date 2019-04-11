@@ -1,4 +1,21 @@
 var searchData=
 [
-  ['hostcount',['hostCount',['../d2/d49/global_8h.html#a3a9b1273e41b6ba85090fca0451c7693',1,'hostCount():&#160;global.cc'],['../d7/dd8/global_8cc.html#a3a9b1273e41b6ba85090fca0451c7693',1,'hostCount():&#160;global.cc']]]
+  ['include_5fdirs',['include_dirs',['../dd/dc4/namespacesetup.html#a2bb788a3e756338ebbf6376e6d52e04d',1,'setup']]],
+  ['includepath',['includePath',['../d9/d94/namespacegenerate__swig__interfaces.html#a97e3fecc0f95dc6a8e5197ab18b5c6b2',1,'generate_swig_interfaces']]],
+  ['ind',['ind',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad9b056b4a4620bb9f186120e9e8e40cb',1,'pygenn.genn_groups.SynapseGroup.ind()'],['../d9/d91/structSparseProjection.html#a0694beeaa91aef06b0b7dd12176ba36f',1,'SparseProjection::ind()'],['../d2/d75/structRaggedProjection.html#a4192e701393770bc755af33be417b021',1,'RaggedProjection::ind()']]],
+  ['inding',['indInG',['../d9/d91/structSparseProjection.html#a646975cdfbcea70c04b6c3e387fe1342',1,'SparseProjection::indInG()'],['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a9b35b80f9ba988f6f1d031c1c9a35fda',1,'pygenn.genn_groups.SynapseGroup.indInG()']]],
+  ['init_5frequired',['init_required',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#aaa2fab632e26b9ebd69355f71cf269c8',1,'pygenn::model_preprocessor::Variable']]],
+  ['init_5fswigregister',['Init_swigregister',['../dd/d78/namespacepygenn_1_1genn__wrapper_1_1InitSparseConnectivitySnippet.html#ae981c2bfe135ec53b0de866f54aff98a',1,'pygenn::genn_wrapper::InitSparseConnectivitySnippet']]],
+  ['init_5fval',['init_val',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#ac68a6acf871cd1651df79260ca020129',1,'pygenn::model_preprocessor::Variable']]],
+  ['initblksz',['initBlkSz',['../d2/d49/global_8h.html#a3a4af0c443e740fe299e2f12bf6a6ad0',1,'initBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a3a4af0c443e740fe299e2f12bf6a6ad0',1,'initBlkSz():&#160;global.cc']]],
+  ['initblocksize',['initBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#ac1fdecbe7b0fb47adae2d879bd3351c3',1,'GENN_PREFERENCES']]],
+  ['initsparseblksz',['initSparseBlkSz',['../d2/d49/global_8h.html#a93d447447577337bf16b8487c2199ec7',1,'initSparseBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a93d447447577337bf16b8487c2199ec7',1,'initSparseBlkSz():&#160;global.cc']]],
+  ['initsparseblocksize',['initSparseBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#ad6a5da8909f5de7dd370a29d2aa7d660',1,'GENN_PREFERENCES']]],
+  ['initvarsnippet',['INITVARSNIPPET',['../d9/d94/namespacegenerate__swig__interfaces.html#aaed572c3e20c0293830d17121fb9eb6e',1,'generate_swig_interfaces']]],
+  ['install_5frequires',['install_requires',['../dd/dc4/namespacesetup.html#abead4f26b530856f858f0d44c7cf2588',1,'setup']]],
+  ['intvector_5fswigregister',['IntVector_swigregister',['../d6/d9d/namespacepygenn_1_1genn__wrapper_1_1StlContainers.html#a45e5a5d65c89074c6f91c274e43af63e',1,'pygenn::genn_wrapper::StlContainers']]],
+  ['is_5fspike_5fsource_5farray',['is_spike_source_array',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#abc7253978f963067a6c518b98653b4ba',1,'pygenn::genn_groups::NeuronGroup']]],
+  ['izhikevich',['IZHIKEVICH',['../d3/dc0/neuronModels_8h.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc']]],
+  ['izhikevich_5fps',['IZHIKEVICH_PS',['../d4/d8a/postSynapseModels_8h.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc'],['../d5/d21/postSynapseModels_8cc.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc']]],
+  ['izhikevich_5fv',['IZHIKEVICH_V',['../d3/dc0/neuronModels_8h.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc']]]
 ];

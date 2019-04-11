@@ -1,6 +1,7 @@
 var classPostsynapticModels_1_1Base =
 [
-    [ "getApplyInputCode", "d1/d3a/classPostsynapticModels_1_1Base.html#a1f34df49b0acab91a302b57a248b2068", null ],
-    [ "getDecayCode", "d1/d3a/classPostsynapticModels_1_1Base.html#acc7bd35a4842517a2a046ac17e2e6ad3", null ],
-    [ "getSupportCode", "d1/d3a/classPostsynapticModels_1_1Base.html#ab2ffae04b5142df1c166bc1c7cd2aa83", null ]
+    [ "getApplyInputCode", "d1/d3a/classPostsynapticModels_1_1Base.html#ace066adf5600d48f35d8ee20ec898b5c", null ],
+    [ "getDecayCode", "d1/d3a/classPostsynapticModels_1_1Base.html#ae87b3769e5adc11364d4e98db5fc9235", null ],
+    [ "getExtraGlobalParams", "d1/d3a/classPostsynapticModels_1_1Base.html#adcd55d315f77b389d3280e30636b17ea", null ],
+    [ "getSupportCode", "d1/d3a/classPostsynapticModels_1_1Base.html#accc47cb76694891d1e0ef33e93bb56e2", null ]
 ];

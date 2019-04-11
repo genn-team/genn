@@ -1,7 +1,6 @@
 var namespaceNeuronModels =
 [
     [ "Base", "d7/dad/classNeuronModels_1_1Base.html", "d7/dad/classNeuronModels_1_1Base" ],
-    [ "Custom", "d5/d92/classNeuronModels_1_1Custom.html", "d5/d92/classNeuronModels_1_1Custom" ],
     [ "Izhikevich", "d7/d0a/classNeuronModels_1_1Izhikevich.html", "d7/d0a/classNeuronModels_1_1Izhikevich" ],
     [ "IzhikevichVariable", "dc/d87/classNeuronModels_1_1IzhikevichVariable.html", "dc/d87/classNeuronModels_1_1IzhikevichVariable" ],
     [ "LegacyWrapper", "df/d83/classNeuronModels_1_1LegacyWrapper.html", "df/d83/classNeuronModels_1_1LegacyWrapper" ],
@@ -9,6 +8,7 @@ var namespaceNeuronModels =
     [ "PoissonNew", "dc/dc0/classNeuronModels_1_1PoissonNew.html", "dc/dc0/classNeuronModels_1_1PoissonNew" ],
     [ "RulkovMap", "db/d23/classNeuronModels_1_1RulkovMap.html", "db/d23/classNeuronModels_1_1RulkovMap" ],
     [ "SpikeSource", "d5/d1f/classNeuronModels_1_1SpikeSource.html", "d5/d1f/classNeuronModels_1_1SpikeSource" ],
+    [ "SpikeSourceArray", "db/d38/classNeuronModels_1_1SpikeSourceArray.html", "db/d38/classNeuronModels_1_1SpikeSourceArray" ],
     [ "TraubMiles", "d2/dc3/classNeuronModels_1_1TraubMiles.html", "d2/dc3/classNeuronModels_1_1TraubMiles" ],
     [ "TraubMilesAlt", "d0/df2/classNeuronModels_1_1TraubMilesAlt.html", "d0/df2/classNeuronModels_1_1TraubMilesAlt" ],
     [ "TraubMilesFast", "dc/d4c/classNeuronModels_1_1TraubMilesFast.html", "dc/d4c/classNeuronModels_1_1TraubMilesFast" ],

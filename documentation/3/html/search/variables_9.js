@@ -1,13 +1,14 @@
 var searchData=
 [
-  ['implicitconv',['implicitconv',['../d5/d6b/structSwigPyClientData.html#a5f9ebdbc04a774559a64b926b6ec4070',1,'SwigPyClientData']]],
-  ['ind',['ind',['../d9/d91/structSparseProjection.html#a0694beeaa91aef06b0b7dd12176ba36f',1,'SparseProjection::ind()'],['../d2/d75/structRaggedProjection.html#a4192e701393770bc755af33be417b021',1,'RaggedProjection::ind()']]],
-  ['inding',['indInG',['../d9/d91/structSparseProjection.html#a646975cdfbcea70c04b6c3e387fe1342',1,'SparseProjection']]],
-  ['initblksz',['initBlkSz',['../d2/d49/global_8h.html#a3a4af0c443e740fe299e2f12bf6a6ad0',1,'initBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a3a4af0c443e740fe299e2f12bf6a6ad0',1,'initBlkSz():&#160;global.cc']]],
-  ['initblocksize',['initBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#ac1fdecbe7b0fb47adae2d879bd3351c3',1,'GENN_PREFERENCES']]],
-  ['initsparseblksz',['initSparseBlkSz',['../d2/d49/global_8h.html#a93d447447577337bf16b8487c2199ec7',1,'initSparseBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a93d447447577337bf16b8487c2199ec7',1,'initSparseBlkSz():&#160;global.cc']]],
-  ['initsparseblocksize',['initSparseBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#ad6a5da8909f5de7dd370a29d2aa7d660',1,'GENN_PREFERENCES']]],
-  ['izhikevich',['IZHIKEVICH',['../d3/dc0/neuronModels_8h.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#a57aaf01a1c5e075bc2ad849b9b48db31',1,'IZHIKEVICH():&#160;neuronModels.cc']]],
-  ['izhikevich_5fps',['IZHIKEVICH_PS',['../d4/d8a/postSynapseModels_8h.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc'],['../d5/d21/postSynapseModels_8cc.html#a2d91b997bdd2b94782f9cc01b9436632',1,'IZHIKEVICH_PS():&#160;postSynapseModels.cc']]],
-  ['izhikevich_5fv',['IZHIKEVICH_V',['../d3/dc0/neuronModels_8h.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc'],['../dc/dbc/neuronModels_8cc.html#aba25a26e6dc7ed280aad22326b787418',1,'IZHIKEVICH_V():&#160;neuronModels.cc']]]
+  ['learn1synapse',['LEARN1SYNAPSE',['../d2/d5b/synapseModels_8h.html#ae41b9869c1fd201fed3c85f4b0ea0380',1,'LEARN1SYNAPSE():&#160;synapseModels.cc'],['../d9/d5b/synapseModels_8cc.html#ae41b9869c1fd201fed3c85f4b0ea0380',1,'LEARN1SYNAPSE():&#160;synapseModels.cc']]],
+  ['learnblksz',['learnBlkSz',['../d2/d49/global_8h.html#a8f4f479cbd48532e51855884de8dc966',1,'learnBlkSz():&#160;global.cc'],['../d7/dd8/global_8cc.html#a8f4f479cbd48532e51855884de8dc966',1,'learnBlkSz():&#160;global.cc']]],
+  ['learningblocksize',['learningBlockSize',['../d8/d27/namespaceGENN__PREFERENCES.html#a8fe9767c3de6e4ef52e8987ed50a5bd9',1,'GENN_PREFERENCES']]],
+  ['learnsynapsespost',['learnSynapsesPost',['../d4/dd6/namespaceGENN__FLAGS.html#ac42b7395c404abcfb7b975cf578e6b9b',1,'GENN_FLAGS']]],
+  ['level',['Level',['../d5/ddf/structCodeStream_1_1OB.html#a54dcf72f1d0b61191cd5893922dae200',1,'CodeStream::OB::Level()'],['../d2/dff/structCodeStream_1_1CB.html#a887484791debd81c5c202a5ca6eacd67',1,'CodeStream::CB::Level()']]],
+  ['libraries',['libraries',['../dd/dc4/namespacesetup.html#af261c54ddd8bab22210cb3c7a6e71d04',1,'setup']]],
+  ['library_5fdirs',['library_dirs',['../dd/dc4/namespacesetup.html#a821689ca891af443fbc810a6a1bb09d3',1,'setup']]],
+  ['linux',['linux',['../dd/dc4/namespacesetup.html#ad8c8d1ee878294c44f2b0a098fca254a',1,'setup']]],
+  ['longdoublevector_5fswigregister',['LongDoubleVector_swigregister',['../d6/d9d/namespacepygenn_1_1genn__wrapper_1_1StlContainers.html#a83c3b5c398f2b74ac3639a07b33d9c5c',1,'pygenn::genn_wrapper::StlContainers']]],
+  ['longlongvector_5fswigregister',['LongLongVector_swigregister',['../d6/d9d/namespacepygenn_1_1genn__wrapper_1_1StlContainers.html#aa58d4cb241f8bcc9753b7c2415f2c781',1,'pygenn::genn_wrapper::StlContainers']]],
+  ['longvector_5fswigregister',['LongVector_swigregister',['../d6/d9d/namespacepygenn_1_1genn__wrapper_1_1StlContainers.html#a444b372b150d221e2b532e6731855a56',1,'pygenn::genn_wrapper::StlContainers']]]
 ];

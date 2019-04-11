@@ -16,6 +16,6 @@ var variableMode_8h =
       [ "LOC_ZERO_COPY_INIT_HOST", "d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716da04da6df8bdc21d2a00fbcf479d01a83b", null ],
       [ "LOC_ZERO_COPY_INIT_DEVICE", "d6/d8f/variableMode_8h.html#a21a79f2184074500f38877a503a4716da4c0c6c215310241792aef6b6e274fe03", null ]
     ] ],
-    [ "operator&", "d6/d8f/variableMode_8h.html#a40dde5212ad2249f18c1f6e530580d24", null ],
-    [ "operator&", "d6/d8f/variableMode_8h.html#ac7cc503a67cd62435c48a813ee19831d", null ]
+    [ "operator&", "d6/d8f/variableMode_8h.html#a8394f837ca5163cb3094558c372bbffb", null ],
+    [ "operator&", "d6/d8f/variableMode_8h.html#a06e3e2be3ff221c665753bbf2bbf2c4f", null ]
 ];

@@ -4,6 +4,6 @@ var classCurrentSourceModels_1_1GaussianNoise =
     [ "PostVarValues", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#ac7e69c7e285ea08a52a665533fcea88c", null ],
     [ "PreVarValues", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#ae7c515c2764cba9b23ce57a263fbbc81", null ],
     [ "VarValues", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#ab43f44142885037ae153b89e99211025", null ],
-    [ "getParamNames", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#a3c0e444a38e28e9dc58705d10efe6775", null ],
-    [ "SET_INJECTION_CODE", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#a48661a67e24bfe707a0719d12ab1c854", null ]
+    [ "getParamNames", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#ad0c69a87bd606978e13bf6c489b39f20", null ],
+    [ "SET_INJECTION_CODE", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#af80be8c3e3030ca673867c974609e2b2", null ]
 ];

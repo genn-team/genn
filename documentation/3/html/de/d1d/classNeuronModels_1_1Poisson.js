@@ -4,10 +4,10 @@ var classNeuronModels_1_1Poisson =
     [ "PostVarValues", "de/d1d/classNeuronModels_1_1Poisson.html#a9376ea026436e85bb542c7a2838b501b", null ],
     [ "PreVarValues", "de/d1d/classNeuronModels_1_1Poisson.html#aa940bef481a96461afd25cd288782e85", null ],
     [ "VarValues", "de/d1d/classNeuronModels_1_1Poisson.html#a29422ad2625a7fdc307e21ee3419544e", null ],
-    [ "getExtraGlobalParams", "de/d1d/classNeuronModels_1_1Poisson.html#a2ae7b3804d38b31f14d45a720518270a", null ],
-    [ "getParamNames", "de/d1d/classNeuronModels_1_1Poisson.html#a57ed4e7af000c5512d87db63087929f9", null ],
-    [ "getSimCode", "de/d1d/classNeuronModels_1_1Poisson.html#a49e165de0b6179b7749b0d9966c6da95", null ],
-    [ "getThresholdConditionCode", "de/d1d/classNeuronModels_1_1Poisson.html#a06dbd2dec003774427cc6cbeb106ca51", null ],
-    [ "getVars", "de/d1d/classNeuronModels_1_1Poisson.html#aacb627b81b16c93c9a439c0e00e8c97f", null ],
-    [ "isPoisson", "de/d1d/classNeuronModels_1_1Poisson.html#a29a9d88a951541d12a053ad76c1cd54c", null ]
+    [ "getExtraGlobalParams", "de/d1d/classNeuronModels_1_1Poisson.html#a51535acd436597184375ca92578a6f9e", null ],
+    [ "getParamNames", "de/d1d/classNeuronModels_1_1Poisson.html#afc4eae8217dafcb4c513fced5ed91cf9", null ],
+    [ "getSimCode", "de/d1d/classNeuronModels_1_1Poisson.html#a6358f81e1eb01e319507a16cd40af331", null ],
+    [ "getThresholdConditionCode", "de/d1d/classNeuronModels_1_1Poisson.html#a81aa0f5a5a1e956dfa8ba5e182461b31", null ],
+    [ "getVars", "de/d1d/classNeuronModels_1_1Poisson.html#adb2423700ac6387876e1867f56f88667", null ],
+    [ "isPoisson", "de/d1d/classNeuronModels_1_1Poisson.html#acb4724525732882921ee96028c312c07", null ]
 ];

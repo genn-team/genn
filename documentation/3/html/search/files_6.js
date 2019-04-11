@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['generate_5fswig_5finterfaces_2epy',['generate_swig_interfaces.py',['../d1/d25/generate__swig__interfaces_8py.html',1,'']]],
   ['generateall_2ecc',['generateALL.cc',['../df/d10/generateALL_8cc.html',1,'']]],
   ['generateall_2eh',['generateALL.h',['../d8/deb/generateALL_8h.html',1,'']]],
   ['generatecpu_2ecc',['generateCPU.cc',['../da/d80/generateCPU_8cc.html',1,'']]],
@@ -12,9 +13,7 @@ var searchData=
   ['generatempi_2eh',['generateMPI.h',['../da/d16/generateMPI_8h.html',1,'']]],
   ['generaterunner_2ecc',['generateRunner.cc',['../d3/dad/generateRunner_8cc.html',1,'']]],
   ['generaterunner_2eh',['generateRunner.h',['../d2/d75/generateRunner_8h.html',1,'']]],
-  ['genn_5fwrapper_5fwrap_2ecpp',['genn_wrapper_wrap.cpp',['../da/d86/genn__wrapper__wrap_8cpp.html',1,'']]],
-  ['genn_5fwrapper_5fwrap_2eh',['genn_wrapper_wrap.h',['../dd/d73/genn__wrapper__wrap_8h.html',1,'']]],
-  ['gennpreferences_5fwrap_2ecpp',['GeNNPreferences_wrap.cpp',['../d7/d66/GeNNPreferences__wrap_8cpp.html',1,'']]],
+  ['genn_5fwrapper_2epy',['genn_wrapper.py',['../d0/dea/genn__wrapper_8py.html',1,'']]],
   ['global_2ecc',['global.cc',['../d7/dd8/global_8cc.html',1,'']]],
   ['global_2eh',['global.h',['../d2/d49/global_8h.html',1,'']]]
 ];

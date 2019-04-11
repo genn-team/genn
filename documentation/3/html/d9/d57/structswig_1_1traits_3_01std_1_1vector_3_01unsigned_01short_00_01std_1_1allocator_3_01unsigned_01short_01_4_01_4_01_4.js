@@ -1,4 +1,0 @@
-var structswig_1_1traits_3_01std_1_1vector_3_01unsigned_01short_00_01std_1_1allocator_3_01unsigned_01short_01_4_01_4_01_4 =
-[
-    [ "category", "d9/d57/structswig_1_1traits_3_01std_1_1vector_3_01unsigned_01short_00_01std_1_1allocator_3_01unsigned_01short_01_4_01_4_01_4.html#a20c03969d28c1fed2bc9793baa181051", null ]
-];

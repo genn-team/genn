@@ -4,6 +4,7 @@ var newNeuronModels_8cc =
     [ "IMPLEMENT_MODEL", "d1/da9/newNeuronModels_8cc.html#a823115a255f34581c09556fb1c08708b", null ],
     [ "IMPLEMENT_MODEL", "d1/da9/newNeuronModels_8cc.html#ad113264e7d6a28ae18c92d2953e2d669", null ],
     [ "IMPLEMENT_MODEL", "d1/da9/newNeuronModels_8cc.html#a697478b8a22fab92c55b3fefac4d116b", null ],
+    [ "IMPLEMENT_MODEL", "d1/da9/newNeuronModels_8cc.html#a3d22d84613da048c6a8cd0d975e0e950", null ],
     [ "IMPLEMENT_MODEL", "d1/da9/newNeuronModels_8cc.html#ac9fe1db3a169c8c942fcb3c6a0cbcc16", null ],
     [ "IMPLEMENT_MODEL", "d1/da9/newNeuronModels_8cc.html#a1e7caf0e70f0aff1e5fa627f661a3005", null ],
     [ "IMPLEMENT_MODEL", "d1/da9/newNeuronModels_8cc.html#a943c4c53d69a36e283e6a186900de0e7", null ],

@@ -1,38 +1,111 @@
 var hierarchy =
 [
-    [ "swig::allocator< std::pair< std::string, std::function< double(std::vector< double > const &, double) > > >", "d4/d92/structswig_1_1traits_3_01std_1_1vector_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1function_3_ccfce1cbf513d2edf98a290f0057b666.html", null ],
+    [ "pygenn.genn_wrapper.CUDABackend._object", "d1/ded/classpygenn_1_1genn__wrapper_1_1CUDABackend_1_1__object.html", [
+      [ "pygenn.genn_wrapper.CUDABackend.PreferencesBase", "dd/d2e/classpygenn_1_1genn__wrapper_1_1CUDABackend_1_1PreferencesBase.html", [
+        [ "pygenn.genn_wrapper.CUDABackend.Preferences", "d6/d4e/classpygenn_1_1genn__wrapper_1_1CUDABackend_1_1Preferences.html", null ]
+      ] ]
+    ] ],
+    [ "pygenn.genn_wrapper.CurrentSourceModels._object", "d4/d4f/classpygenn_1_1genn__wrapper_1_1CurrentSourceModels_1_1__object.html", null ],
+    [ "pygenn.genn_wrapper.InitSparseConnectivitySnippet._object", "d0/d07/classpygenn_1_1genn__wrapper_1_1InitSparseConnectivitySnippet_1_1__object.html", [
+      [ "pygenn.genn_wrapper.InitSparseConnectivitySnippet.Init", "d2/daf/classpygenn_1_1genn__wrapper_1_1InitSparseConnectivitySnippet_1_1Init.html", null ]
+    ] ],
+    [ "pygenn.genn_wrapper.PostsynapticModels._object", "d5/dcb/classpygenn_1_1genn__wrapper_1_1PostsynapticModels_1_1__object.html", null ],
+    [ "pygenn.genn_wrapper.WeightUpdateModels._object", "d8/de3/classpygenn_1_1genn__wrapper_1_1WeightUpdateModels_1_1__object.html", null ],
+    [ "pygenn.genn_wrapper.SharedLibraryModel._object", "d6/d3c/classpygenn_1_1genn__wrapper_1_1SharedLibraryModel_1_1__object.html", [
+      [ "pygenn.genn_wrapper.SharedLibraryModel.SharedLibraryModel_d", "d6/d9b/classpygenn_1_1genn__wrapper_1_1SharedLibraryModel_1_1SharedLibraryModel__d.html", null ],
+      [ "pygenn.genn_wrapper.SharedLibraryModel.SharedLibraryModel_f", "dd/d21/classpygenn_1_1genn__wrapper_1_1SharedLibraryModel_1_1SharedLibraryModel__f.html", null ],
+      [ "pygenn.genn_wrapper.SharedLibraryModel.SharedLibraryModel_ld", "dd/d88/classpygenn_1_1genn__wrapper_1_1SharedLibraryModel_1_1SharedLibraryModel__ld.html", null ]
+    ] ],
+    [ "pygenn.genn_wrapper.InitVarSnippet._object", "da/d49/classpygenn_1_1genn__wrapper_1_1InitVarSnippet_1_1__object.html", null ],
+    [ "pygenn.genn_wrapper.SingleThreadedCPUBackend._object", "d3/d73/classpygenn_1_1genn__wrapper_1_1SingleThreadedCPUBackend_1_1__object.html", [
+      [ "pygenn.genn_wrapper.SingleThreadedCPUBackend.PreferencesBase", "d9/da5/classpygenn_1_1genn__wrapper_1_1SingleThreadedCPUBackend_1_1PreferencesBase.html", [
+        [ "pygenn.genn_wrapper.SingleThreadedCPUBackend.Preferences", "db/d42/classpygenn_1_1genn__wrapper_1_1SingleThreadedCPUBackend_1_1Preferences.html", null ]
+      ] ]
+    ] ],
+    [ "pygenn.genn_wrapper.Snippet._object", "d3/d6c/classpygenn_1_1genn__wrapper_1_1Snippet_1_1__object.html", [
+      [ "pygenn.genn_wrapper.Snippet.Base", "dd/d3a/classpygenn_1_1genn__wrapper_1_1Snippet_1_1Base.html", [
+        [ "pygenn.genn_wrapper.InitSparseConnectivitySnippet.Base", "d2/d63/classpygenn_1_1genn__wrapper_1_1InitSparseConnectivitySnippet_1_1Base.html", [
+          [ "pygenn.genn_wrapper.InitSparseConnectivitySnippet.Uninitialised", "d4/d5c/classpygenn_1_1genn__wrapper_1_1InitSparseConnectivitySnippet_1_1Uninitialised.html", null ]
+        ] ],
+        [ "pygenn.genn_wrapper.InitVarSnippet.Base", "d3/d30/classpygenn_1_1genn__wrapper_1_1InitVarSnippet_1_1Base.html", [
+          [ "pygenn.genn_wrapper.InitVarSnippet.Uninitialised", "d8/d42/classpygenn_1_1genn__wrapper_1_1InitVarSnippet_1_1Uninitialised.html", null ]
+        ] ],
+        [ "pygenn.genn_wrapper.Models.Base", "d7/d42/classpygenn_1_1genn__wrapper_1_1Models_1_1Base.html", [
+          [ "pygenn.genn_wrapper.CurrentSourceModels.Base", "d0/d46/classpygenn_1_1genn__wrapper_1_1CurrentSourceModels_1_1Base.html", [
+            [ "pygenn.genn_wrapper.CurrentSourceModels.DC", "de/dc2/classpygenn_1_1genn__wrapper_1_1CurrentSourceModels_1_1DC.html", null ]
+          ] ],
+          [ "pygenn.genn_wrapper.NeuronModels.Base", "d6/d08/classpygenn_1_1genn__wrapper_1_1NeuronModels_1_1Base.html", [
+            [ "pygenn.genn_wrapper.NeuronModels.RulkovMap", "db/dea/classpygenn_1_1genn__wrapper_1_1NeuronModels_1_1RulkovMap.html", null ]
+          ] ],
+          [ "pygenn.genn_wrapper.PostsynapticModels.Base", "dc/d0f/classpygenn_1_1genn__wrapper_1_1PostsynapticModels_1_1Base.html", [
+            [ "pygenn.genn_wrapper.PostsynapticModels.ExpCond", "de/dfa/classpygenn_1_1genn__wrapper_1_1PostsynapticModels_1_1ExpCond.html", null ]
+          ] ],
+          [ "pygenn.genn_wrapper.WeightUpdateModels.Base", "da/d51/classpygenn_1_1genn__wrapper_1_1WeightUpdateModels_1_1Base.html", [
+            [ "pygenn.genn_wrapper.WeightUpdateModels.StaticPulse", "da/de5/classpygenn_1_1genn__wrapper_1_1WeightUpdateModels_1_1StaticPulse.html", null ]
+          ] ]
+        ] ]
+      ] ],
+      [ "pygenn.genn_wrapper.Snippet.DerivedParamFunc", "d6/de9/classpygenn_1_1genn__wrapper_1_1Snippet_1_1DerivedParamFunc.html", null ]
+    ] ],
+    [ "pygenn.genn_wrapper.Models._object", "de/d79/classpygenn_1_1genn__wrapper_1_1Models_1_1__object.html", [
+      [ "pygenn.genn_wrapper.Models.ParamValues", "df/da0/classpygenn_1_1genn__wrapper_1_1Models_1_1ParamValues.html", null ],
+      [ "pygenn.genn_wrapper.Models.SwigPyIterator", "d4/d25/classpygenn_1_1genn__wrapper_1_1Models_1_1SwigPyIterator.html", null ],
+      [ "pygenn.genn_wrapper.Models.VarInit", "d0/db3/classpygenn_1_1genn__wrapper_1_1Models_1_1VarInit.html", null ],
+      [ "pygenn.genn_wrapper.Models.VarInitVector", "dc/ded/classpygenn_1_1genn__wrapper_1_1Models_1_1VarInitVector.html", null ],
+      [ "pygenn.genn_wrapper.Models.VarValues", "d6/ded/classpygenn_1_1genn__wrapper_1_1Models_1_1VarValues.html", null ]
+    ] ],
+    [ "pygenn.genn_wrapper.StlContainers._object", "df/db2/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1__object.html", [
+      [ "pygenn.genn_wrapper.StlContainers.DoubleVector", "df/daf/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1DoubleVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.FloatVector", "d4/d7e/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1FloatVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.IntVector", "df/d22/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1IntVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.LongDoubleVector", "de/d3d/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1LongDoubleVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.LongLongVector", "d5/d26/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1LongLongVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.LongVector", "dd/ddf/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1LongVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.ShortVector", "d5/de0/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1ShortVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.SignedCharVector", "db/d69/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1SignedCharVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.STD_DPFunc", "d0/d40/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1STD__DPFunc.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringDoublePair", "dc/db1/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringDoublePair.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringDPFPair", "d7/d0d/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringDPFPair.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringDPFPairVector", "df/d25/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringDPFPairVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringPair", "dc/d04/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringPair.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringPairVector", "dd/de9/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringPairVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringStringDoublePairPair", "dd/d1d/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringStringDoublePairPair.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringStringDoublePairPairVector", "d2/d6f/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringStringDoublePairPairVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.StringVector", "de/d64/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1StringVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.SwigPyIterator", "de/d4f/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1SwigPyIterator.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.UnsignedCharVector", "d4/d63/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1UnsignedCharVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.UnsignedIntVector", "d2/d42/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1UnsignedIntVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.UnsignedLongLongVector", "df/da8/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1UnsignedLongLongVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.UnsignedLongVector", "d4/d1c/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1UnsignedLongVector.html", null ],
+      [ "pygenn.genn_wrapper.StlContainers.UnsignedShortVector", "dd/d76/classpygenn_1_1genn__wrapper_1_1StlContainers_1_1UnsignedShortVector.html", null ]
+    ] ],
+    [ "pygenn.genn_wrapper.genn_wrapper._object", "df/d72/classpygenn_1_1genn__wrapper_1_1genn__wrapper_1_1__object.html", [
+      [ "pygenn.genn_wrapper.genn_wrapper.CurrentSource", "df/db3/classpygenn_1_1genn__wrapper_1_1genn__wrapper_1_1CurrentSource.html", null ],
+      [ "pygenn.genn_wrapper.genn_wrapper.NeuronGroup", "d0/d3a/classpygenn_1_1genn__wrapper_1_1genn__wrapper_1_1NeuronGroup.html", null ],
+      [ "pygenn.genn_wrapper.genn_wrapper.SynapseGroup", "d8/d9b/classpygenn_1_1genn__wrapper_1_1genn__wrapper_1_1SynapseGroup.html", null ]
+    ] ],
+    [ "pygenn.genn_wrapper.NeuronModels._object", "d5/dd0/classpygenn_1_1genn__wrapper_1_1NeuronModels_1_1__object.html", null ],
     [ "Snippet::Base", "db/d97/classSnippet_1_1Base.html", [
       [ "InitSparseConnectivitySnippet::Base", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html", [
-        [ "InitSparseConnectivitySnippet::Custom", "d0/d8d/classInitSparseConnectivitySnippet_1_1Custom.html", [
-          [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ]
-        ] ],
         [ "InitSparseConnectivitySnippet::FixedProbabilityBase", "db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html", [
           [ "InitSparseConnectivitySnippet::FixedProbability", "df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html", null ],
           [ "InitSparseConnectivitySnippet::FixedProbabilityNoAutapse", "d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html", null ]
         ] ],
         [ "InitSparseConnectivitySnippet::OneToOne", "d5/dd3/classInitSparseConnectivitySnippet_1_1OneToOne.html", null ],
-        [ "InitSparseConnectivitySnippet::Uninitialised", "d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html", null ],
-        [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ]
+        [ "InitSparseConnectivitySnippet::Uninitialised", "d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html", null ]
       ] ],
       [ "InitVarSnippet::Base", "d3/d9e/classInitVarSnippet_1_1Base.html", [
         [ "InitVarSnippet::Constant", "dd/dcb/classInitVarSnippet_1_1Constant.html", null ],
-        [ "InitVarSnippet::Custom", "db/d57/classInitVarSnippet_1_1Custom.html", [
-          [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ]
-        ] ],
         [ "InitVarSnippet::Exponential", "d8/d70/classInitVarSnippet_1_1Exponential.html", null ],
+        [ "InitVarSnippet::Gamma", "d0/d54/classInitVarSnippet_1_1Gamma.html", null ],
         [ "InitVarSnippet::Normal", "d5/dc1/classInitVarSnippet_1_1Normal.html", null ],
         [ "InitVarSnippet::Uniform", "dd/da0/classInitVarSnippet_1_1Uniform.html", null ],
-        [ "InitVarSnippet::Uninitialised", "d9/db6/classInitVarSnippet_1_1Uninitialised.html", null ],
-        [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ]
+        [ "InitVarSnippet::Uninitialised", "d9/db6/classInitVarSnippet_1_1Uninitialised.html", null ]
       ] ],
       [ "NewModels::Base", "d9/db4/classNewModels_1_1Base.html", [
         [ "CurrentSourceModels::Base", "d0/de0/classCurrentSourceModels_1_1Base.html", [
-          [ "CurrentSourceModels::Custom", "dd/dad/classCurrentSourceModels_1_1Custom.html", [
-            [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ]
-          ] ],
           [ "CurrentSourceModels::DC", "d7/da1/classCurrentSourceModels_1_1DC.html", null ],
-          [ "CurrentSourceModels::GaussianNoise", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html", null ],
-          [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ]
+          [ "CurrentSourceModels::GaussianNoise", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html", null ]
         ] ],
         [ "NewModels::LegacyWrapper< Base, neuronModel, nModels >", "d7/d5c/classNewModels_1_1LegacyWrapper.html", [
           [ "NeuronModels::LegacyWrapper", "df/d83/classNeuronModels_1_1LegacyWrapper.html", null ]
@@ -44,9 +117,6 @@ var hierarchy =
           [ "WeightUpdateModels::LegacyWrapper", "d7/d90/classWeightUpdateModels_1_1LegacyWrapper.html", null ]
         ] ],
         [ "NeuronModels::Base", "d7/dad/classNeuronModels_1_1Base.html", [
-          [ "NeuronModels::Custom", "d5/d92/classNeuronModels_1_1Custom.html", [
-            [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ]
-          ] ],
           [ "NeuronModels::Izhikevich", "d7/d0a/classNeuronModels_1_1Izhikevich.html", [
             [ "NeuronModels::IzhikevichVariable", "dc/d87/classNeuronModels_1_1IzhikevichVariable.html", null ]
           ] ],
@@ -54,177 +124,42 @@ var hierarchy =
           [ "NeuronModels::PoissonNew", "dc/dc0/classNeuronModels_1_1PoissonNew.html", null ],
           [ "NeuronModels::RulkovMap", "db/d23/classNeuronModels_1_1RulkovMap.html", null ],
           [ "NeuronModels::SpikeSource", "d5/d1f/classNeuronModels_1_1SpikeSource.html", null ],
+          [ "NeuronModels::SpikeSourceArray", "db/d38/classNeuronModels_1_1SpikeSourceArray.html", null ],
           [ "NeuronModels::TraubMiles", "d2/dc3/classNeuronModels_1_1TraubMiles.html", [
             [ "NeuronModels::TraubMilesAlt", "d0/df2/classNeuronModels_1_1TraubMilesAlt.html", null ],
             [ "NeuronModels::TraubMilesFast", "dc/d4c/classNeuronModels_1_1TraubMilesFast.html", null ],
             [ "NeuronModels::TraubMilesNStep", "d6/d08/classNeuronModels_1_1TraubMilesNStep.html", null ]
-          ] ],
-          [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ]
+          ] ]
         ] ],
         [ "PostsynapticModels::Base", "d1/d3a/classPostsynapticModels_1_1Base.html", [
-          [ "PostsynapticModels::Custom", "d5/d94/classPostsynapticModels_1_1Custom.html", [
-            [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ]
-          ] ],
           [ "PostsynapticModels::DeltaCurr", "de/da9/classPostsynapticModels_1_1DeltaCurr.html", null ],
-          [ "PostsynapticModels::ExpCond", "d5/d27/classPostsynapticModels_1_1ExpCond.html", null ],
-          [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ]
+          [ "PostsynapticModels::ExpCond", "d5/d27/classPostsynapticModels_1_1ExpCond.html", null ]
         ] ],
-        [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
         [ "WeightUpdateModels::Base", "d2/d05/classWeightUpdateModels_1_1Base.html", [
-          [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-          [ "WeightUpdateModels::Custom", "d1/d65/classWeightUpdateModels_1_1Custom.html", [
-            [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ]
-          ] ],
           [ "WeightUpdateModels::PiecewiseSTDP", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html", null ],
           [ "WeightUpdateModels::StaticGraded", "d6/d64/classWeightUpdateModels_1_1StaticGraded.html", null ],
           [ "WeightUpdateModels::StaticPulse", "d9/d74/classWeightUpdateModels_1_1StaticPulse.html", null ],
           [ "WeightUpdateModels::StaticPulseDendriticDelay", "d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html", null ]
         ] ]
-      ] ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ]
+      ] ]
     ] ],
     [ "BaseIter", null, [
       [ "PairKeyConstIter< BaseIter >", "d2/dab/classPairKeyConstIter.html", null ]
     ] ],
-    [ "binary_function", null, [
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< PyObject * >", "d1/d26/structstd_1_1less_3_01PyObject_01_5_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigPtr_PyObject >", "d9/dab/structstd_1_1less_3_01swig_1_1SwigPtr__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ],
-      [ "std::less< swig::SwigVar_PyObject >", "d5/dbd/structstd_1_1less_3_01swig_1_1SwigVar__PyObject_01_4.html", null ]
-    ] ],
-    [ "CalcMaxLengthFunc", "d2/de3/structCalcMaxLengthFunc.html", [
-      [ "SwigDirector_CalcMaxLengthFunc", "d4/dcb/structSwigDirector__CalcMaxLengthFunc.html", null ]
-    ] ],
     [ "CodeStream::CB", "d2/dff/structCodeStream_1_1CB.html", null ],
     [ "CStopWatch", "d9/de8/classCStopWatch.html", null ],
     [ "CurrentSource", "d1/d48/classCurrentSource.html", null ],
-    [ "DerivedParamFunc", "dd/d93/structDerivedParamFunc.html", [
-      [ "SwigDirector_DerivedParamFunc", "da/d3e/structSwigDirector__DerivedParamFunc.html", null ]
-    ] ],
-    [ "Swig::Director", "dc/d48/classSwig_1_1Director.html", [
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_Base", "d2/d81/classSwigDirector__Base.html", null ],
-      [ "SwigDirector_CalcMaxLengthFunc", "d4/dcb/structSwigDirector__CalcMaxLengthFunc.html", null ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ],
-      [ "SwigDirector_Custom", "d7/d48/classSwigDirector__Custom.html", null ],
-      [ "SwigDirector_DerivedParamFunc", "da/d3e/structSwigDirector__DerivedParamFunc.html", null ]
-    ] ],
     [ "dpclass", "db/de6/classdpclass.html", [
       [ "expDecayDp", "da/d0d/classexpDecayDp.html", null ],
       [ "pwSTDP", "d0/dba/classpwSTDP.html", null ],
       [ "rulkovdp", "d6/d9e/classrulkovdp.html", null ]
     ] ],
-    [ "exception", null, [
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", [
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorMethodException", "d8/de6/classSwig_1_1DirectorMethodException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorPureVirtualException", "d9/d59/classSwig_1_1DirectorPureVirtualException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ],
-        [ "Swig::DirectorTypeMismatchException", "d9/db0/classSwig_1_1DirectorTypeMismatchException.html", null ]
-      ] ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ],
-      [ "Swig::DirectorException", "d2/d7f/classSwig_1_1DirectorException.html", null ]
-    ] ],
-    [ "swig::from_oper< ValueType >", "dc/d03/structswig_1_1from__oper.html", null ],
-    [ "swig::function< double(std::vector< double > const &, double) >", "d5/db9/structswig_1_1traits_3_01std_1_1function_3_01double_07std_1_1vector_3_01double_01_4_01const_01_6_00_01double_08_01_4.html", null ],
     [ "FunctionTemplate", "d4/da7/structFunctionTemplate.html", null ],
-    [ "Swig::GCItem", "d6/d07/structSwig_1_1GCItem.html", [
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCArray_T< Type >", "df/dd0/structSwig_1_1GCArray__T.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_Object", "d4/db8/structSwig_1_1GCItem__Object.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ],
-      [ "Swig::GCItem_T< Type >", "d0/dd0/structSwig_1_1GCItem__T.html", null ]
-    ] ],
-    [ "Swig::GCItem_var", "df/dad/structSwig_1_1GCItem__var.html", null ],
     [ "GenericFunction", "d3/da1/structGenericFunction.html", null ],
     [ "Snippet::Init< SnippetBase >", "d8/df6/classSnippet_1_1Init.html", null ],
-    [ "Snippet::Init< Base >", "d8/df6/classSnippet_1_1Init.html", null ],
+    [ "Snippet::Init< Base >", "d8/df6/classSnippet_1_1Init.html", [
+      [ "InitSparseConnectivitySnippet::Init", "d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html", null ]
+    ] ],
     [ "Snippet::Init< InitVarSnippet::Base >", "d8/df6/classSnippet_1_1Init.html", [
       [ "NewModels::VarInit", "d7/db2/classNewModels_1_1VarInit.html", null ]
     ] ],
@@ -232,172 +167,37 @@ var hierarchy =
     [ "NeuronGroup", "d7/d3b/classNeuronGroup.html", null ],
     [ "neuronModel", "d3/dc9/classneuronModel.html", null ],
     [ "NNmodel", "dc/de5/classNNmodel.html", null ],
-    [ "swig::noconst_traits< Type >", "d4/d53/structswig_1_1noconst__traits.html", null ],
-    [ "swig::noconst_traits< const Type >", "dc/d48/structswig_1_1noconst__traits_3_01const_01Type_01_4.html", null ],
     [ "CodeStream::OB", "d5/ddf/structCodeStream_1_1OB.html", null ],
+    [ "object", null, [
+      [ "generate_swig_interfaces.CppBlockScope", "db/d75/classgenerate__swig__interfaces_1_1CppBlockScope.html", null ],
+      [ "generate_swig_interfaces.SwigAsIsScope", "db/dd9/classgenerate__swig__interfaces_1_1SwigAsIsScope.html", null ],
+      [ "generate_swig_interfaces.SwigExtendScope", "d5/dec/classgenerate__swig__interfaces_1_1SwigExtendScope.html", null ],
+      [ "generate_swig_interfaces.SwigInitScope", "df/da9/classgenerate__swig__interfaces_1_1SwigInitScope.html", null ],
+      [ "generate_swig_interfaces.SwigInlineScope", "d9/d73/classgenerate__swig__interfaces_1_1SwigInlineScope.html", null ],
+      [ "generate_swig_interfaces.SwigModuleGenerator", "d2/d55/classgenerate__swig__interfaces_1_1SwigModuleGenerator.html", null ],
+      [ "pygenn.genn_groups.Group", "d1/db3/classpygenn_1_1genn__groups_1_1Group.html", [
+        [ "pygenn.genn_groups.CurrentSource", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html", null ],
+        [ "pygenn.genn_groups.CurrentSource", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html", null ],
+        [ "pygenn.genn_groups.NeuronGroup", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html", null ],
+        [ "pygenn.genn_groups.NeuronGroup", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html", null ],
+        [ "pygenn.genn_groups.SynapseGroup", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html", null ],
+        [ "pygenn.genn_groups.SynapseGroup", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html", null ]
+      ] ],
+      [ "pygenn.genn_groups.Group", "d1/db3/classpygenn_1_1genn__groups_1_1Group.html", null ],
+      [ "pygenn.genn_model.GeNNModel", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html", null ],
+      [ "pygenn.genn_model.GeNNModel", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html", null ],
+      [ "pygenn.model_preprocessor.Variable", "d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html", null ],
+      [ "pygenn.model_preprocessor.Variable", "d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html", null ]
+    ] ],
     [ "ostream", null, [
       [ "CodeStream", "da/da8/classCodeStream.html", null ]
     ] ],
-    [ "swig::pair< std::string, std::function< double(std::vector< double > const &, double) > >", "d5/d3a/structswig_1_1traits_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1function_3_01double_07std_1_13af69a0089fd17d8d4999e0c9ec96793.html", null ],
-    [ "swig::pointer_category", "d9/d27/structswig_1_1pointer__category.html", null ],
     [ "postSynModel", "d2/d1a/classpostSynModel.html", null ],
-    [ "PyHeapTypeObject", "d0/d3c/structPyHeapTypeObject.html", null ],
     [ "RaggedProjection< PostIndexType >", "d2/d75/structRaggedProjection.html", null ],
     [ "CodeStream::Scope", "d2/d16/classCodeStream_1_1Scope.html", null ],
     [ "SparseProjection", "d9/d91/structSparseProjection.html", null ],
-    [ "swig::stop_iteration", "dd/d58/structswig_1_1stop__iteration.html", null ],
     [ "stopWatch", "d1/df5/structstopWatch.html", null ],
-    [ "swig_cast_info", "d2/d87/structswig__cast__info.html", null ],
-    [ "swig_const_info", "d6/d72/structswig__const__info.html", null ],
-    [ "swig_globalvar", "d4/ddc/structswig__globalvar.html", null ],
-    [ "swig_module_info", "d8/d1b/structswig__module__info.html", null ],
-    [ "swig_type_info", "dd/dee/structswig__type__info.html", null ],
-    [ "swig_varlinkobject", "d8/d89/structswig__varlinkobject.html", null ],
-    [ "swig::SwigPtr_PyObject", "d2/d50/classswig_1_1SwigPtr__PyObject.html", [
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ],
-      [ "swig::SwigVar_PyObject", "de/d74/structswig_1_1SwigVar__PyObject.html", null ]
-    ] ],
-    [ "SwigPyClientData", "d5/d6b/structSwigPyClientData.html", null ],
-    [ "swig::SwigPyIterator", "dc/dec/structswig_1_1SwigPyIterator.html", [
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", [
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorClosed_T< OutIterator, ValueType, FromOper >", "d2/dd2/classswig_1_1SwigPyIteratorClosed__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ],
-        [ "swig::SwigPyIteratorOpen_T< OutIterator, ValueType, FromOper >", "d4/dae/classswig_1_1SwigPyIteratorOpen__T.html", null ]
-      ] ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ],
-      [ "swig::SwigPyIterator_T< OutIterator >", "de/ddc/classswig_1_1SwigPyIterator__T.html", null ]
-    ] ],
-    [ "SwigPyObject", "d4/d88/structSwigPyObject.html", null ],
-    [ "SwigPyPacked", "db/d08/structSwigPyPacked.html", null ],
-    [ "swig::SwigPySequence_ArrowProxy< T >", "d0/d65/structswig_1_1SwigPySequence__ArrowProxy.html", null ],
-    [ "swig::SwigPySequence_Cont< T >", "d5/d64/structswig_1_1SwigPySequence__Cont.html", null ],
-    [ "swig::SwigPySequence_InputIterator< T, Reference >", "d1/d3a/structswig_1_1SwigPySequence__InputIterator.html", null ],
-    [ "swig::SwigPySequence_Ref< T >", "df/d62/structswig_1_1SwigPySequence__Ref.html", null ],
     [ "SynapseGroup", "dc/dfa/classSynapseGroup.html", null ],
-    [ "swig::traits< Type >", "d6/ddd/structswig_1_1traits.html", null ],
-    [ "swig::traits< double >", "d6/de5/structswig_1_1traits_3_01double_01_4.html", null ],
-    [ "swig::traits< float >", "d0/da1/structswig_1_1traits_3_01float_01_4.html", null ],
-    [ "swig::traits< int >", "d4/d6d/structswig_1_1traits_3_01int_01_4.html", null ],
-    [ "swig::traits< long >", "d7/d93/structswig_1_1traits_3_01long_01_4.html", null ],
-    [ "swig::traits< long double >", "d8/da0/structswig_1_1traits_3_01long_01double_01_4.html", null ],
-    [ "swig::traits< long long >", "d9/d65/structswig_1_1traits_3_01long_01long_01_4.html", null ],
-    [ "swig::traits< NewModels::VarInit >", "dd/d76/structswig_1_1traits_3_01NewModels_1_1VarInit_01_4.html", null ],
-    [ "swig::traits< PyObject * >", "d0/d8e/structswig_1_1traits_3_01PyObject_01_5_01_4.html", null ],
-    [ "swig::traits< short >", "d7/d22/structswig_1_1traits_3_01short_01_4.html", null ],
-    [ "swig::traits< signed char >", "d0/d47/structswig_1_1traits_3_01signed_01char_01_4.html", null ],
-    [ "swig::traits< std::pair< std::string, double > >", "d8/d33/structswig_1_1traits_3_01std_1_1pair_3_01std_1_1string_00_01double_01_4_01_4.html", null ],
-    [ "swig::traits< std::pair< std::string, std::pair< std::string, double > > >", "d1/dae/structswig_1_1traits_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1pair_3_01std_1_1string_00_01double_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::pair< std::string, std::string > >", "d5/d2b/structswig_1_1traits_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1string_01_4_01_4.html", null ],
-    [ "swig::traits< std::string >", "d0/d16/structswig_1_1traits_3_01std_1_1string_01_4.html", null ],
-    [ "swig::traits< std::vector< double, std::allocator< double > > >", "df/dee/structswig_1_1traits_3_01std_1_1vector_3_01double_00_01std_1_1allocator_3_01double_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< float, std::allocator< float > > >", "de/d54/structswig_1_1traits_3_01std_1_1vector_3_01float_00_01std_1_1allocator_3_01float_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< int, std::allocator< int > > >", "da/da1/structswig_1_1traits_3_01std_1_1vector_3_01int_00_01std_1_1allocator_3_01int_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< long double, std::allocator< long double > > >", "d3/d68/structswig_1_1traits_3_01std_1_1vector_3_01long_01double_00_01std_1_1allocator_3_01long_01double_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< long long, std::allocator< long long > > >", "d9/dcd/structswig_1_1traits_3_01std_1_1vector_3_01long_01long_00_01std_1_1allocator_3_01long_01long_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< long, std::allocator< long > > >", "d3/d22/structswig_1_1traits_3_01std_1_1vector_3_01long_00_01std_1_1allocator_3_01long_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< NewModels::VarInit, std::allocator< NewModels::VarInit > > >", "dc/dd8/structswig_1_1traits_3_01std_1_1vector_3_01NewModels_1_1VarInit_00_01std_1_1allocator_3_01NewModels_1_1VarInit_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< short, std::allocator< short > > >", "dc/d71/structswig_1_1traits_3_01std_1_1vector_3_01short_00_01std_1_1allocator_3_01short_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< signed char, std::allocator< signed char > > >", "d7/d2e/structswig_1_1traits_3_01std_1_1vector_3_01signed_01char_00_01std_1_1allocator_3_01signed_01char_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< std::pair< std::string, std::pair< std::string, double > >, std::allocator< std::pair< std::string, std::pair< std::string, double > > > > >", "de/d0a/structswig_1_1traits_3_01std_1_1vector_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1pair_3_01stdf7972532145e420ceb7c6fde418f5ba.html", null ],
-    [ "swig::traits< std::vector< std::pair< std::string, std::string >, std::allocator< std::pair< std::string, std::string > > > >", "d1/dbf/structswig_1_1traits_3_01std_1_1vector_3_01std_1_1pair_3_01std_1_1string_00_01std_1_1string_01_4cbfe8a4ab992076942e58700093b17c4.html", null ],
-    [ "swig::traits< std::vector< std::string, std::allocator< std::string > > >", "d9/d8f/structswig_1_1traits_3_01std_1_1vector_3_01std_1_1string_00_01std_1_1allocator_3_01std_1_1string_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< unsigned char, std::allocator< unsigned char > > >", "d0/de5/structswig_1_1traits_3_01std_1_1vector_3_01unsigned_01char_00_01std_1_1allocator_3_01unsigned_01char_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< unsigned int, std::allocator< unsigned int > > >", "df/d6e/structswig_1_1traits_3_01std_1_1vector_3_01unsigned_01int_00_01std_1_1allocator_3_01unsigned_01int_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< unsigned long long, std::allocator< unsigned long long > > >", "d6/d4e/structswig_1_1traits_3_01std_1_1vector_3_01unsigned_01long_01long_00_01std_1_1allocator_3_01unsi86a9af32ceca1b07a7265c2f5b9b8e1d.html", null ],
-    [ "swig::traits< std::vector< unsigned long, std::allocator< unsigned long > > >", "d9/d63/structswig_1_1traits_3_01std_1_1vector_3_01unsigned_01long_00_01std_1_1allocator_3_01unsigned_01long_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< std::vector< unsigned short, std::allocator< unsigned short > > >", "d9/d57/structswig_1_1traits_3_01std_1_1vector_3_01unsigned_01short_00_01std_1_1allocator_3_01unsigned_01short_01_4_01_4_01_4.html", null ],
-    [ "swig::traits< Type * >", "d5/dae/structswig_1_1traits_3_01Type_01_5_01_4.html", null ],
-    [ "swig::traits< unsigned char >", "dd/dac/structswig_1_1traits_3_01unsigned_01char_01_4.html", null ],
-    [ "swig::traits< unsigned int >", "d9/d27/structswig_1_1traits_3_01unsigned_01int_01_4.html", null ],
-    [ "swig::traits< unsigned long >", "d7/d6a/structswig_1_1traits_3_01unsigned_01long_01_4.html", null ],
-    [ "swig::traits< unsigned long long >", "d9/ddc/structswig_1_1traits_3_01unsigned_01long_01long_01_4.html", null ],
-    [ "swig::traits< unsigned short >", "d6/d4a/structswig_1_1traits_3_01unsigned_01short_01_4.html", null ],
-    [ "swig::traits_as< Type, Category >", "d0/dbe/structswig_1_1traits__as.html", null ],
-    [ "swig::traits_as< Type *, pointer_category >", "d1/d5a/structswig_1_1traits__as_3_01Type_01_5_00_01pointer__category_01_4.html", null ],
-    [ "swig::traits_as< Type, pointer_category >", "dd/df4/structswig_1_1traits__as_3_01Type_00_01pointer__category_01_4.html", null ],
-    [ "swig::traits_as< Type, value_category >", "d1/d04/structswig_1_1traits__as_3_01Type_00_01value__category_01_4.html", null ],
-    [ "swig::traits_asptr< Type >", "da/da9/structswig_1_1traits__asptr.html", null ],
-    [ "swig::traits_asptr< std::pair< T, U > >", "d3/d6c/structswig_1_1traits__asptr_3_01std_1_1pair_3_01T_00_01U_01_4_01_4.html", null ],
-    [ "swig::traits_asptr< std::vector< T > >", "d4/d3d/structswig_1_1traits__asptr_3_01std_1_1vector_3_01T_01_4_01_4.html", null ],
-    [ "swig::traits_asptr_stdseq< Seq, T >", "d9/d27/structswig_1_1traits__asptr__stdseq.html", null ],
-    [ "swig::traits_asval< Type >", "d2/d4e/structswig_1_1traits__asval.html", null ],
-    [ "swig::traits_asval< double >", "d9/db9/structswig_1_1traits__asval_3_01double_01_4.html", null ],
-    [ "swig::traits_asval< float >", "da/d38/structswig_1_1traits__asval_3_01float_01_4.html", null ],
-    [ "swig::traits_asval< int >", "df/db3/structswig_1_1traits__asval_3_01int_01_4.html", null ],
-    [ "swig::traits_asval< long >", "de/d40/structswig_1_1traits__asval_3_01long_01_4.html", null ],
-    [ "swig::traits_asval< long long >", "db/dc4/structswig_1_1traits__asval_3_01long_01long_01_4.html", null ],
-    [ "swig::traits_asval< PyObject * >", "d7/d74/structswig_1_1traits__asval_3_01PyObject_01_5_01_4.html", null ],
-    [ "swig::traits_asval< short >", "d4/da2/structswig_1_1traits__asval_3_01short_01_4.html", null ],
-    [ "swig::traits_asval< signed char >", "de/d0b/structswig_1_1traits__asval_3_01signed_01char_01_4.html", null ],
-    [ "swig::traits_asval< std::string >", "d3/d5e/structswig_1_1traits__asval_3_01std_1_1string_01_4.html", null ],
-    [ "swig::traits_asval< Type * >", "d2/d7a/structswig_1_1traits__asval_3_01Type_01_5_01_4.html", null ],
-    [ "swig::traits_asval< unsigned char >", "d8/d39/structswig_1_1traits__asval_3_01unsigned_01char_01_4.html", null ],
-    [ "swig::traits_asval< unsigned int >", "d7/d22/structswig_1_1traits__asval_3_01unsigned_01int_01_4.html", null ],
-    [ "swig::traits_asval< unsigned long >", "de/d19/structswig_1_1traits__asval_3_01unsigned_01long_01_4.html", null ],
-    [ "swig::traits_asval< unsigned long long >", "d6/d37/structswig_1_1traits__asval_3_01unsigned_01long_01long_01_4.html", null ],
-    [ "swig::traits_asval< unsigned short >", "dc/d06/structswig_1_1traits__asval_3_01unsigned_01short_01_4.html", null ],
-    [ "swig::traits_check< Type, Category >", "d2/dec/structswig_1_1traits__check.html", null ],
-    [ "swig::traits_check< PyObject *, value_category >", "d2/d1a/structswig_1_1traits__check_3_01PyObject_01_5_00_01value__category_01_4.html", null ],
-    [ "swig::traits_check< Type, pointer_category >", "d2/d14/structswig_1_1traits__check_3_01Type_00_01pointer__category_01_4.html", null ],
-    [ "swig::traits_check< Type, value_category >", "de/d9a/structswig_1_1traits__check_3_01Type_00_01value__category_01_4.html", null ],
-    [ "swig::traits_from< Type >", "db/d96/structswig_1_1traits__from.html", null ],
-    [ "swig::traits_from< const Type * >", "dd/dfa/structswig_1_1traits__from_3_01const_01Type_01_5_01_4.html", null ],
-    [ "swig::traits_from< double >", "d3/de7/structswig_1_1traits__from_3_01double_01_4.html", null ],
-    [ "swig::traits_from< float >", "d0/d69/structswig_1_1traits__from_3_01float_01_4.html", null ],
-    [ "swig::traits_from< int >", "d2/dcf/structswig_1_1traits__from_3_01int_01_4.html", null ],
-    [ "swig::traits_from< long >", "d6/d55/structswig_1_1traits__from_3_01long_01_4.html", null ],
-    [ "swig::traits_from< long long >", "d0/de7/structswig_1_1traits__from_3_01long_01long_01_4.html", null ],
-    [ "swig::traits_from< PyObject * >", "d0/dd3/structswig_1_1traits__from_3_01PyObject_01_5_01_4.html", null ],
-    [ "swig::traits_from< short >", "d6/dc4/structswig_1_1traits__from_3_01short_01_4.html", null ],
-    [ "swig::traits_from< signed char >", "d5/d98/structswig_1_1traits__from_3_01signed_01char_01_4.html", null ],
-    [ "swig::traits_from< std::pair< T, U > >", "d6/d7d/structswig_1_1traits__from_3_01std_1_1pair_3_01T_00_01U_01_4_01_4.html", null ],
-    [ "swig::traits_from< std::string >", "df/d3f/structswig_1_1traits__from_3_01std_1_1string_01_4.html", null ],
-    [ "swig::traits_from< std::vector< T > >", "d5/dfc/structswig_1_1traits__from_3_01std_1_1vector_3_01T_01_4_01_4.html", null ],
-    [ "swig::traits_from< Type * >", "d8/d62/structswig_1_1traits__from_3_01Type_01_5_01_4.html", null ],
-    [ "swig::traits_from< unsigned char >", "d1/deb/structswig_1_1traits__from_3_01unsigned_01char_01_4.html", null ],
-    [ "swig::traits_from< unsigned int >", "d1/dc6/structswig_1_1traits__from_3_01unsigned_01int_01_4.html", null ],
-    [ "swig::traits_from< unsigned long >", "df/db7/structswig_1_1traits__from_3_01unsigned_01long_01_4.html", null ],
-    [ "swig::traits_from< unsigned long long >", "d7/df3/structswig_1_1traits__from_3_01unsigned_01long_01long_01_4.html", null ],
-    [ "swig::traits_from< unsigned short >", "d0/d4e/structswig_1_1traits__from_3_01unsigned_01short_01_4.html", null ],
-    [ "swig::traits_from_ptr< Type >", "d7/db5/structswig_1_1traits__from__ptr.html", null ],
-    [ "swig::traits_from_stdseq< Seq, T >", "d8/d9b/structswig_1_1traits__from__stdseq.html", null ],
-    [ "swig::traits_info< Type >", "db/dd6/structswig_1_1traits__info.html", null ],
-    [ "Swig::UnknownExceptionHandler", "d7/d50/classSwig_1_1UnknownExceptionHandler.html", null ],
-    [ "swig::value_category", "de/de3/structswig_1_1value__category.html", null ],
     [ "Snippet::ValueBase< NumVars >", "da/d76/classSnippet_1_1ValueBase.html", null ],
     [ "Snippet::ValueBase< 0 >", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html", null ],
     [ "NewModels::VarInitContainerBase< NumVars >", "d6/d53/classNewModels_1_1VarInitContainerBase.html", null ],
