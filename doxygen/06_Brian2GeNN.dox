@@ -32,7 +32,7 @@ run(duration)
 Of course, your simulation should be more complex than the example above to actually benefit from the performance gains of using a GPU via GeNN.
 
 -----
-\link SpineML Previous\endlink | \link brian2genn Top\endlink | \link ReleaseNotes  Next\endlink
+\link SpineML Previous\endlink | \link brian2genn Top\endlink | \link PyGeNN  Next\endlink
 
 */
 //----------------------------------------------------------------------------
