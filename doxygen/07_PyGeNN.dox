@@ -2,7 +2,7 @@
 /*! \page PyGeNN Python interface (PyGeNN)
 
 As well as being able to build GeNN models and user code directly from C++, you can also access all GeNN features from Python.
-The ``pygenn.genn_model.GeNNModel`` class provides a thin wrapper around ``ModelSpec`` as well as providing support for loading and running simulations; and accessing their state.
+The ``pygenn.genn_model.GeNNModel`` class provides a thin wrapper around ``NNmodel`` as well as providing support for loading and running simulations; and accessing their state.
 ``SynapseGroup``, ``NeuronGroup`` and ``CurrentSource`` are similarly wrapped by the ``pygenn.genn_groups.SynapseGroup``, ``pygenn.genn_groups.NeuronGroup`` and ``pygenn.genn_groups.CurrentSource`` classes respectively.
 
 PyGeNN can be built from source on Mac and Linux following the instructions in the README file in the pygenn directory of the GeNN repository.
