@@ -969,7 +969,7 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
 
     body = {}
 
-    if 'get_code' in body.keys():
+    if var_init_code is not None:
         body["get_code"] = lambda self: dedent(var_init_code)
 
     if custom_body is not None:
