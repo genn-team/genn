@@ -286,6 +286,7 @@ Many neuron models have probabilistic terms, for example a source of noise or a 
 - <code>\$(gennrand_normal)</code> returns a number drawn from a normal distribution with a mean of 0 and a standard deviation of 1.
 - <code>\$(gennrand_exponential)</code> returns a number drawn from an exponential distribution with \f$\lambda=1\f$.
 - <code>\$(gennrand_log_normal, MEAN, STDDEV)</code> returns a number drawn from a log-normal distribution with the specified mean and standard deviation.
+- <code>\$(gennrand_gamma, ALPHA)</code> returns a number drawn from a gamma distribution with the specified shape.
 
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
 \code
@@ -521,6 +522,7 @@ or initialised using one of a number of predefined _variable initialisation snip
 - InitVarSnippet::Uniform
 - InitVarSnippet::Normal
 - InitVarSnippet::Exponential
+- InitVarSnippet::Gamma
 
 For example, to initialise a parameter using values drawn from the normal distribution:
 \code
