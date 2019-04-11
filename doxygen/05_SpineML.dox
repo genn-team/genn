@@ -22,7 +22,6 @@ From SpineCreator, select Edit->Settings->Simulators and add a new simulator usi
 \image latex spinecreator_screenshot.png width=10cm
 
 If you would like SpineCreator to use GeNN in CPU only mode, add an environment variable called "GENN_SPINEML_CPU_ONLY". 
-Additionally, if you are running GeNN on a 64-bit Linux system with Glibc 2.23 or 2.24 (namely Ubuntu 16.04 LTS), we recommend adding another environment variable called "LD_BIND_NOW" and setting this to "1" to work around a [bug](https://bugs.launchpad.net/ubuntu/+source/glibc/+bug/1663280) found in Glibc.
 
 The best way to get started using SpineML with GeNN is to experiment with some example models. A number are available [here](https://github.com/SpineML/spineml) although the "Striatal model" uses features not currently supported by GeNN and the two "Brette Benchmark" models use a legacy syntax no longer supported by SpineCreator (or GeNN).
 Once you have loaded a model, click "Expts" from the menu on the left hand side of SpineCreator, choose the experiment you would like to run and then select your newly created GeNN simulator in the "Setup Simulator" panel:

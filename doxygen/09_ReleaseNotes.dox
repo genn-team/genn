@@ -8,31 +8,41 @@ However, especially if you have been using GeNN 2.XX syntax, it breaks backward 
 User Side Changes
 ----
 1. Totally new build system - ``make install`` can be used to install GeNN to a system location on Linux and Mac and Windows projects work much better in the Visual Studio IDE.
-2. Python interface - All features of GeNN are now exposed to Python through the ``::pygenn`` module (see \ref PyGeNN for more details)..
+2. Python interface now supports Windows and can be installed using binary 'wheels' (see \ref PyGeNN for more details).
 3. No need to call ``initGeNN()`` at start and ``model.finalize()`` at end of all models.
 4. Initialisation system simplified - if you specify a value or initialiser for a variable or sparse connectivity, 
    it will be initialised by your chosen backend. If you mark it as uninitialised, it is up to you to initialize it 
    in user code between the calls to ``initialize()`` and ``initializeSparse()`` (where it will be copied to device).
 5. ``genn-create-user-project`` helper scripts to create Makefiles or MSBuild projects for building user code
-6. Postsynaptic models can now have Extra Global Parameters.
-7. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``InitVarSnippet::Gamma``.
 8. State variables can now be pushed and pulled individually using the `pull<var name><neuron or synapse name>FromDevice()` and `push<var name><neuron or synapse name>ToDevice()` functions.
 9. Management of extra global parameter arrays has been somewhat automated. **TODO**
+10. ``GENN_PREFERENCES`` is no longer a namespace - it's a global struct so members need to be accessed with . rather than ::.
+11. ``NeuronGroup``, ``SynapseGroup``, ``CurrentSource`` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't <i>supposed</i> to call but could. 
+   These have now all been made protected and are exposed to GeNN internals using derived classes (``NeuronGroupInternal``, ``SynapseGroupInternal``, ``CurrentSourceInternal``, ``ModelSpecInternal``) that make them public using ``using`` directives.
+12. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-neuron-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
+13. The functions used for pushing and pulling have been unified somewhat this means that ``copyStateToDevice`` and ``copyStateFromDevice`` functions no longer copy spikes and ``pus<neuron or synapse name>SpikesToDevice`` and ``pull<neuron or synapse name>SpikesFromDevice`` no longer copy spike times or spike-like events.
 
-Breaking changes
+Deprecations
 ----
 1. Yale-format sparse matrices are no longer supported.
 2. GeNN 2.X syntax for implementing neuron and synapse models is no longer supported,
-3. ``GENN_PREFERENCES`` is no longer a namespace - it's a global struct so members need to be accessed with . rather than ::.
-4. ``NeuronGroup``, ``SynapseGroup``, ``CurrentSource`` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't <i>supposed</i> to call but could. 
-   These have now all been made protected and are exposed to GeNN internals using derived classes (``NeuronGroupInternal``, ``SynapseGroupInternal``, ``CurrentSourceInternal``, ``ModelSpecInternal``) that make them public using ``using`` directives.
-5. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-neuron-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
-6. The functions used for pushing and pulling have been unified somewhat this means that ``copyStateToDevice`` and ``copyStateFromDevice`` functions no longer copy spikes and ``pus<neuron or synapse name>SpikesToDevice`` and ``pull<neuron or synapse name>SpikesFromDevice`` no longer copy spike times or spike-like events.
-   
+
+Release Notes for GeNN v3.3.0
+====
+This release is intended as the last service release for GeNN 3.X.X.
+Fixes for serious bugs <b>may</b> be backported if requested but, otherwise, development will be switching to GeNN 4.
+
+User Side Changes
+----
+1. Postsynaptic models can now have Extra Global Parameters.
+2. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``InitVarSnippet::Gamma``.
+3. Experimental Python interface - All features of GeNN are now exposed to Python through the ``::pygenn`` module (see \ref PyGeNN for more details).
+
 Bug fixes:
 ----
 1. Devices with Streaming Multiprocessor version 2.1 (compute capability 2.0) now work correctly in Windows.
 2. Seeding of on-device RNGs now works correctly.
+3. Improvements to accuracy of memory usage estimates provided by code generator.
 
 Release Notes for GeNN v3.2.0
 ====
