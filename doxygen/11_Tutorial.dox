@@ -173,7 +173,7 @@ int main()
     pullPop1StateFromDevice();
 
     for (int j= 0; j < 10; j++) {  
-        cout << VpullVPop1FromDevicePop1[j] << " ";
+        cout << VPop1[j] << " ";
         cout << mPop1[j] << " ";
         cout << hPop1[j] << " ";
         cout << nPop1[j] << endl;
