@@ -5,7 +5,10 @@
 #include <string>
 #include <vector>
 
-// Third party includes
+// PLOG includes
+#include <plog/Log.h>
+
+// Filesystem includes
 #include "path.h"
 
 // Code generator includes
@@ -48,7 +51,7 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     generateNeuronUpdate(neuronUpdate, model, backend, standaloneModules);
     generateSynapseUpdate(synapseUpdate, model, backend, standaloneModules);
     generateInit(init, model, backend, standaloneModules);
-    generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
+    auto mem = generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
     generateSupportCode(supportCode, model);
 
     // Create basic list of modules
@@ -64,10 +67,22 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     modules.push_back("mpi");
 #endif
 
-    // If we aren't building standalone modules, in which case it
-    // will be includes in each one, add runner to list of modules
+    // If we aren't building standalone modules
     if(!standaloneModules) {
+        // Because it won't be included in each
+        // module, add runner to list of modules
         modules.push_back("runner");
+
+        // **YUCK** this is kinda (ab)using standaloneModules for things it's not intended for but...
+        // Show memory usage
+        LOGI << "Host memory required for model: " << mem.getHostMBytes() << " MB";
+        LOGI << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
+        LOGI << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
+
+        // Give warning of model requires more memory than device has
+        if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
+            LOGW << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
+        }
     }
 
     // Return list of modules

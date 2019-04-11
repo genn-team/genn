@@ -34,8 +34,8 @@ struct Preferences : public PreferencesBase
 class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
-    Backend(int localHostID, const Preferences &preferences)
-    :   BackendBase(localHostID), m_Preferences(preferences)
+    Backend(int localHostID, const std::string &scalarType, const Preferences &preferences)
+    :   BackendBase(localHostID, scalarType), m_Preferences(preferences)
     {
     }
 
@@ -61,7 +61,7 @@ public:
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -84,9 +84,9 @@ public:
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, size_t count) const override;
 
-    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const override;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                  const std::string &name, size_t count) const override;
+    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const override;
+    virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                                      const std::string &name, size_t count) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const override;
 
@@ -105,6 +105,9 @@ public:
     virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const override;
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
+
+    //! How many bytes of memory does 'device' have
+    virtual size_t getDeviceMemoryBytes() const override{ return 0; }
 
 private:
     //--------------------------------------------------------------------------

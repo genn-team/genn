@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // PLOG includes
@@ -49,6 +50,54 @@ struct PreferencesBase
 };
 
 //--------------------------------------------------------------------------
+// CodeGenerator::MemAlloc
+//--------------------------------------------------------------------------
+class MemAlloc
+{
+public:
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    size_t getHostBytes() const{ return m_HostBytes; }
+    size_t getDeviceBytes() const{ return m_DeviceBytes; }
+    size_t getZeroCopyBytes() const{ return m_ZeroCopyBytes; }
+    size_t getHostMBytes() const{ return m_HostBytes / (1024 * 1024); }
+    size_t getDeviceMBytes() const{ return m_DeviceBytes / (1024 * 1024); }
+    size_t getZeroCopyMBytes() const{ return m_ZeroCopyBytes / (1024 * 1024); }
+
+    //--------------------------------------------------------------------------
+    // Operators
+    //--------------------------------------------------------------------------
+    MemAlloc &operator+=(const MemAlloc& rhs){
+        m_HostBytes += rhs.m_HostBytes;
+        m_DeviceBytes += rhs.m_DeviceBytes;
+        m_ZeroCopyBytes += rhs.m_ZeroCopyBytes;
+        return *this;
+    }
+
+    //--------------------------------------------------------------------------
+    // Static API
+    //--------------------------------------------------------------------------
+    static MemAlloc zero(){ return MemAlloc(0, 0, 0); }
+    static MemAlloc host(size_t hostBytes){ return MemAlloc(hostBytes, 0, 0); }
+    static MemAlloc device(size_t deviceBytes){ return MemAlloc(0, deviceBytes, 0); }
+    static MemAlloc zeroCopy(size_t zeroCopyBytes){ return MemAlloc(0, 0, zeroCopyBytes); }
+
+private:
+    MemAlloc(size_t hostBytes, size_t deviceBytes, size_t zeroCopyBytes)
+    :   m_HostBytes(hostBytes), m_DeviceBytes(deviceBytes), m_ZeroCopyBytes(zeroCopyBytes)
+    {
+    }
+
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    size_t m_HostBytes;
+    size_t m_DeviceBytes;
+    size_t m_ZeroCopyBytes;
+};
+
+//--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
 class GENN_EXPORT BackendBase
@@ -73,10 +122,7 @@ public:
     typedef std::function <void(CodeStream &, const NeuronGroupInternal &, Substitutions&,
                                 NeuronGroupHandler, NeuronGroupHandler)> NeuronGroupSimHandler;
     
-    BackendBase(int localHostID)
-    :   m_LocalHostID(localHostID)
-    {
-    }
+    BackendBase(int localHostID, const std::string &scalarType);
     virtual ~BackendBase(){}
 
     //--------------------------------------------------------------------------
@@ -133,7 +179,7 @@ public:
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0; 
+    virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -155,9 +201,9 @@ public:
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
 
-    virtual void genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const = 0;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                  const std::string &name, size_t count) const = 0;
+    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const = 0;
+    virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                                              const std::string &name, size_t count) const = 0;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 
@@ -194,6 +240,9 @@ public:
     virtual bool isSynRemapRequired() const = 0;
     virtual bool isPostsynapticRemapRequired() const = 0;
 
+    //! How many bytes of memory does 'device' have
+    virtual size_t getDeviceMemoryBytes() const = 0;
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -206,13 +255,13 @@ public:
     }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
-    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+    MemAlloc genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                              const std::string &type, const std::string &name, VarLocation loc, size_t count) const
     {
         genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
         genVariableImplementation(runner, type + "*", name, loc);
-        genVariableAllocation(allocations, type, name, loc, count);
         genVariableFree(free, name, loc);
+        return genVariableAllocation(allocations, type, name, loc, count);
     }
 
     //! Helper function to generate matching definition and declaration code for a scalar variable
@@ -225,10 +274,25 @@ public:
     //! Gets ID of local host backend is building code for
     int getLocalHostID() const{ return m_LocalHostID; }
 
+protected:
+    //--------------------------------------------------------------------------
+    // Protected API
+    //--------------------------------------------------------------------------
+    void addType(const std::string &type, size_t size)
+    {
+        m_TypeBytes.emplace(type, size);
+    }
+
+    size_t getSize(const std::string &type) const;
+
 private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const int m_LocalHostID;
+
+    // Size of supported types in bytes - used for estimating memory usage
+    std::unordered_map<std::string, size_t> m_TypeBytes;
+
 };
 }   // namespace CodeGenerator

@@ -133,7 +133,7 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
-                                           const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
+                                           const CodeGenerator::CUDA::Preferences &preferences, int localHostID, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -181,7 +181,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backend
-        Backend backend(blockSize, preferences, 0, deviceID);
+        Backend backend(blockSize, preferences, localHostID, model.getPrecision(), deviceID);
 
         // Generate code
         const auto moduleNames = generateAll(model, backend, outputPath, true);
@@ -359,7 +359,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
 }
 //--------------------------------------------------------------------------
 int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
-                        const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
+                        const CodeGenerator::CUDA::Preferences &preferences, int localHostID, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -383,7 +383,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Ker
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences, outputPath);
+        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences, localHostID, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -493,10 +493,10 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
         // Choose optimal device
         KernelBlockSize cudaBlockSize;
-        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
+        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, localHostID, outputPath);
 
         // Create backend
-        return Backend(cudaBlockSize, preferences, localHostID, deviceID);
+        return Backend(cudaBlockSize, preferences, localHostID, model.getPrecision(), deviceID);
     }
     // Otherwise
     else {
@@ -508,14 +508,14 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
         if(preferences.blockSizeSelectMethod == BlockSizeSelect::OCCUPANCY) {
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, outputPath);
+            optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, localHostID, outputPath);
 
             // Create backend
-            return Backend(cudaBlockSize, preferences, localHostID, deviceID);
+            return Backend(cudaBlockSize, preferences, localHostID, model.getPrecision(), deviceID);
         }
         // Otherwise, create backend using manual block sizes specified in preferences
         else {
-            return Backend(preferences.manualBlockSizes, preferences, localHostID, deviceID);
+            return Backend(preferences.manualBlockSizes, preferences, localHostID, model.getPrecision(), deviceID);
         }
 
     }

@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="binomial.cc" />
+    <ClCompile Include="code_generator\backendBase.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
     <ClCompile Include="code_generator\generateAll.cc" />
     <ClCompile Include="code_generator\generateInit.cc" />
@@ -31,6 +31,7 @@
     <ClCompile Include="code_generator\generateSupportCode.cc" />
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\codeGenUtils.cc" />
+    <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
