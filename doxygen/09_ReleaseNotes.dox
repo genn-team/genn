@@ -9,6 +9,7 @@ User Side Changes
 ----
 1. Postsynaptic models can now have Extra Global Parameters.
 2. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``InitVarSnippet::Gamma``.
+3. Experimental Python interface - All features of GeNN are now exposed to Python through the ``::pygenn`` module (see \ref PyGeNN for more details).
 
 Bug fixes:
 ----
