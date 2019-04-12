@@ -143,7 +143,7 @@ Additionally, we need to add a call to a second initialisation function to ``mai
 initializeSparse();
 \endcode
 This initializes any variables associated with the sparse connectivity we have added (and will also copy any manually initialised variables to the GPU).
-Finally, after adjusting the GNUmakefile or MSBuild script to point to ``tenHHRingSimulation.cc`` rather than ``tenHHSimulation.cc``, we can build and run our new simulator in the same way we did in \ref Tutorial1.
+Then, after using the ``genn-create-user-project`` tool to create a new project with a model name of ``tenHHRing`` and using ``tenHHRingSimulation.cc`` rather than ``tenHHSimulation.cc``, we can build and run our new simulator in the same way we did in \ref Tutorial1.
 However, even after all our hard work, if we plot the content of the first column against the subsequent 10 columns of `tenHHexample.V.dat` it looks very similar to the plot we obtained at the end of \ref Tutorial1.
 \image html tenHHRingexample1.png
 \image latex tenHHRingexample1.png width=10cm

@@ -188,7 +188,7 @@ On Linux and Mac, GeNN simulations are typically built using a simple Makefile w
 \code
 genn-create-user-project.sh tennHHModel tenHHSimulation.cc
 \endcode
-This defines that the final executable of this simulation is named tennHHModel and the simulation code is given in the file `tenHHSimulation.cc` that we completed above.
+This defines that the model is named tennHHModel and the simulation code is given in the file `tenHHSimulation.cc` that we completed above.
 Now type
 \code
 make
@@ -200,11 +200,11 @@ A suitable solution and project can be generated automatically with the followin
 \code
 genn-create-user-project.bat tennHHModel tenHHSimulation.cc
 \endcode
+his defines that the model is named tennHHModel and the simulation code is given in the file `tenHHSimulation.cc` that we completed above.
 Now type
 \code
 msbuild tennHHModel.sln /p:Configuration=Release /t:tennHHModel
 \endcode
-
 
 \section RunningSim Running the Simulation
 You can now execute your newly-built simulator on Linux or Mac with
@@ -213,7 +213,7 @@ You can now execute your newly-built simulator on Linux or Mac with
 \endcode
 Or on Windows with
 \code
-tennHHModel
+tennHHModel_Release
 \endcode
 The output you obtain should look like
 \code
