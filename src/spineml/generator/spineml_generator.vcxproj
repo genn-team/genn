@@ -68,8 +68,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>..\..\bin\</OutDir>
-    <IntDir>..\..\$(Platform)\$(Configuration)\spineml_generator\</IntDir>
+    <OutDir>..\..\..\bin\</OutDir>
+    <IntDir>..\..\..\$(Platform)\$(Configuration)\spineml_generator\</IntDir>
     <TargetName>spineml_generator_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -77,13 +77,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include\spineml\generator;..\..\..\include\spineml\common;..\..\..\include\genn\genn;..\..\..\include\genn\backends\single_threaded_cpu;..\..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>genn_Debug.lib;genn_single_threaded_cpu_backend_Debug.lib;spineml_common_Debug.lib%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>genn_Debug.lib;genn_single_threaded_cpu_backend_Debug.lib;spineml_common_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_CUDA|x64'">
@@ -91,13 +91,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include\spineml\generator;..\..\..\include\spineml\common;..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>genn_Debug.lib;genn_cuda_backend_Debug.lib;spineml_common_Debug.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -107,7 +107,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn;..\..\include\genn_single_threaded_cpu_backend;..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include\spineml\generator;..\..\..\include\spineml\common;..\..\..\include\genn\genn;..\..\..\include\genn\backends\single_threaded_cpu;..\..\..\include\genn\third_party;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -115,7 +115,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>genn_Release.lib;genn_single_threaded_cpu_backend_Release.lib;spineml_common_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_CUDA|x64'">
@@ -125,7 +125,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\spineml_generator;..\..\include\spineml_common;..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include\spineml\generator;..\..\..\include\spineml\common;..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(BuildModelInclude);$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -133,7 +133,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>genn_Release.lib;genn_cuda_backend_Release.lib;spineml_common_Release.lib;$(CUDA_PATH)\lib\$(Platform)\cudart.lib;$(CUDA_PATH)\lib\$(Platform)\cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

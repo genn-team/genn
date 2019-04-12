@@ -41,8 +41,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>..\..\lib\</OutDir>
-    <IntDir>..\..\$(Platform)\$(Configuration)\spineml_common\</IntDir>
+    <OutDir>..\..\..\lib\</OutDir>
+    <IntDir>..\..\..\$(Platform)\$(Configuration)\spineml_common\</IntDir>
     <TargetName>spineml_common_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -50,7 +50,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../include/spineml_common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../include/spineml/common</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -63,7 +63,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../include/spineml_common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../include/spineml/common</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
