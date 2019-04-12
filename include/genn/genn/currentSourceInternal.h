@@ -18,7 +18,6 @@ public:
 
     using CurrentSource::initDerivedParams;
     using CurrentSource::getDerivedParams;
-    using CurrentSource::isInitCodeRequired;
     using CurrentSource::isSimRNGRequired;
     using CurrentSource::isInitRNGRequired;
 };

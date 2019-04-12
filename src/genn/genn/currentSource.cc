@@ -52,16 +52,6 @@ void CurrentSource::initDerivedParams(double dt)
     }
 }
 //----------------------------------------------------------------------------
-bool CurrentSource::isInitCodeRequired() const
-{
-    // Return true if any of the variables initialisers have any code
-    return std::any_of(getVarInitialisers().cbegin(), getVarInitialisers().cend(),
-                       [](const Models::VarInit &v)
-                       {
-                           return !v.getSnippet()->getCode().empty();
-                       });
-}
-//----------------------------------------------------------------------------
 bool CurrentSource::isSimRNGRequired() const
 {
     // Returns true if any parts of the current source code require an RNG

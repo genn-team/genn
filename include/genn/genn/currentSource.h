@@ -76,9 +76,6 @@ protected:
     //------------------------------------------------------------------------
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
 
-    //! Does this current source require any initialisation code to be run
-    bool isInitCodeRequired() const;
-
     //! Does this current source require an RNG to simulate
     bool isSimRNGRequired() const;
 
