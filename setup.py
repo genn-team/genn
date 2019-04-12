@@ -27,7 +27,7 @@ genn_wrapper_path = os.path.join(genn_path, "pygenn", "genn_wrapper")
 genn_wrapper_include = os.path.join(genn_wrapper_path, "include")
 genn_wrapper_swig = os.path.join(genn_wrapper_path, "swig")
 genn_wrapper_generated = os.path.join(genn_wrapper_path, "generated")
-genn_include = os.path.join(genn_path, "include", "genn")
+genn_include = os.path.join(genn_path, "include", "genn", "genn")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
 
 swig_opts = ["-c++", "-relativeimport", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
@@ -65,7 +65,7 @@ if linux:
     genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
 
 # By default build single-threaded CPU backend
-backends = [("genn_single_threaded_cpu_backend", "SingleThreadedCPU", {})]
+backends = [("single_threaded_cpu", "SingleThreadedCPU", {})]
 
 # If CUDA was found, add backend configuration
 if cuda_installed:
@@ -79,7 +79,7 @@ if cuda_installed:
 
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
-    backends.append(("genn_cuda_backend", "CUDA",
+    backends.append(("cuda", "CUDA",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
                       "library_dirs": [cuda_library_dir],
@@ -113,14 +113,14 @@ for filename, namespace, kwargs in backends:
     # Add relocatable version of backend library to libraries
     # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
     if windows:
-        backend_extension_kwargs["libraries"].insert(0, filename + "_Release_DLL")
-        package_data.append("genn_wrapper/" + filename + "_Release_DLL.*")
+        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend_Release_DLL")
+        package_data.append("genn_wrapper/genn_" + filename + "_backend_Release_DLL.*")
     else:
-        backend_extension_kwargs["libraries"].insert(0, filename + "_dynamic")
-        package_data.append("genn_wrapper/lib" + filename + "_dynamic.*")
+        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend_dynamic")
+        package_data.append("genn_wrapper/libgenn_" + filename + "_backend_dynamic.*")
 
     # Add backend include directory to both SWIG and C++ compiler options
-    backend_include_dir = os.path.join(genn_path, "include", filename)
+    backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", filename)
     backend_extension_kwargs["include_dirs"].append(backend_include_dir)
     backend_extension_kwargs["swig_opts"].append("-I" + backend_include_dir)
 

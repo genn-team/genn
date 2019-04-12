@@ -443,7 +443,7 @@ def generateBackend(swigPath, folder, namespace):
 
 def generateConfigs(gennPath, backends):
     swigPath = os.path.join(gennPath, 'pygenn', 'genn_wrapper', 'generated')
-    includePath = os.path.join(gennPath, 'include', 'genn')
+    includePath = os.path.join(gennPath, 'include', 'genn', 'genn')
     
     # Create output path if it doesn't exist
     if not os.path.exists(swigPath):
