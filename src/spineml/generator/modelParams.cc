@@ -7,7 +7,7 @@
 #include <iostream>
 
 // Filesystem includes
-#include "third_party/path.h"
+#include "path.h"
 
 // pugixml includes
 #include "pugixml/pugixml.hpp"

@@ -1,8 +1,8 @@
 # Include common makefile
-include ../MakefileCommon
+include ../../MakefileCommon
 
 # Add backend  include directory to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/genn_single_threaded_cpu_backend
+CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/single_threaded_cpu
 
 # Add prefix to object directory and library name
 BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)

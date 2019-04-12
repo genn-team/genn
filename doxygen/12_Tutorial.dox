@@ -283,7 +283,7 @@ int main()
     initialize();
     initializeSparse();
 
-    ofstream os("tenHHRing_output.V.dat");
+    std::ofstream os("tenHHRing_output.V.dat");
     while(t < 200.0f) {
         if(iT == 0) {
             glbSpkStim[0] = 0;
@@ -298,7 +298,7 @@ int main()
         for (int j= 0; j < 10; j++) {
             os << VPop1[j] << " ";
         }
-        os << endl;
+        os << std::endl;
     }
     os.close();
     return 0;

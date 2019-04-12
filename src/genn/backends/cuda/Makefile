@@ -1,5 +1,5 @@
 # Include common makefile
-include ../MakefileCommon
+include ../../MakefileCommon
 
 # Check that CUDA path is set
 ifndef CUDA_PATH
@@ -7,7 +7,7 @@ ifndef CUDA_PATH
 endif
 
 # Add backend and CUDA include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/genn_cuda_backend -I"$(CUDA_PATH)/include"
+CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/cuda -I"$(CUDA_PATH)/include"
 
 # Add prefix to object directory and library name
 BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_cuda_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)

@@ -1,8 +1,8 @@
 # Include common makefile
-include ../MakefileCommon
+include ../../genn/MakefileCommon
 
 # Add SpineML commoninclude directory to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/spineml_common
+CXXFLAGS		+=-I$(GENN_DIR)/include/spineml/common
 
 # Find source files
 PUGIXML_SOURCES		:=$(wildcard pugixml/*.cpp)

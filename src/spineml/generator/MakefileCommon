@@ -1,5 +1,5 @@
 # Include common makefile
-include ../MakefileCommon
+include ../../genn/MakefileCommon
 
 # Check required environment variable names are set
 ifndef BACKEND_NAME
@@ -26,7 +26,7 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 # Add compiler and linker flags to link libGeNN and correct backend; and to configure generator to use backend
 LDFLAGS			+= -L$(GENN_DIR)/lib -lgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX) -lspineml_common$(GENN_PREFIX) -lgenn$(GENN_PREFIX)
-CXXFLAGS		+= -I$(GENN_DIR)/include/spineml_common -I$(GENN_DIR)/include/spineml_generator -I$(GENN_DIR)/include/genn_$(BACKEND_NAME)_backend -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
+CXXFLAGS		+= -I$(GENN_DIR)/include/spineml/common -I$(GENN_DIR)/include/spineml/generator -I$(GENN_DIR)/include/genn/backends/$(BACKEND_NAME) -DBACKEND_NAMESPACE=$(BACKEND_NAMESPACE)
 
 .PHONY: all clean libgenn backend spineml_common
 
@@ -44,13 +44,13 @@ $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 %.d: ;
 
 libgenn:
-	$(MAKE) -C $(GENN_DIR)/src/genn
+	$(MAKE) -C $(GENN_DIR)/src/genn/genn
 
 backend:
-	$(MAKE) -C $(GENN_DIR)/src/genn_$(BACKEND_NAME)_backend
+	$(MAKE) -C $(GENN_DIR)/src/genn/backends/$(BACKEND_NAME)
 
 spineml_common:
-	$(MAKE) -C $(GENN_DIR)/src/spineml_common
+	$(MAKE) -C $(GENN_DIR)/src/spineml/common
 
 clean:
 	rm -f $(OBJECT_DIRECTORY)/*.o $(OBJECT_DIRECTORY)/*.d $(SPINEML_GENERATOR)
