@@ -63,7 +63,7 @@ if defined -d (
 		set "MACROS=%MACROS% /p:Configuration=Debug"
 		set GENERATOR=.\generator_Debug.exe
 	) else (
-		set "BACKEND_PROJECT=cuda"
+		set "BACKEND_PROJECT=cuda_backend"
 		set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
 		set GENERATOR=.\generator_Debug_CUDA.exe
 	)    
@@ -74,7 +74,7 @@ if defined -d (
 		set "MACROS=%MACROS% /p:Configuration=Release"
 		set GENERATOR=.\generator_Release.exe
 	) else (
-		set "BACKEND_PROJECT=cuda"
+		set "BACKEND_PROJECT=cuda_backend"
 		set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
 		set GENERATOR=.\generator_Release_CUDA.exe
 	)
@@ -91,7 +91,7 @@ msbuild "%GENN_PATH%..\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildP
 
 
 rem :: build generator
-msbuild "%GENN_PATH%..\src\genn_generator\generator.vcxproj" %MACROS%&& (
+msbuild "%GENN_PATH%..\src\genn\generator\generator.vcxproj" %MACROS%&& (
 	echo Successfully built code generator
 ) || (
 	echo Unable to build code generator

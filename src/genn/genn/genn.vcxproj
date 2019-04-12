@@ -69,8 +69,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>..\..\lib\</OutDir>
-    <IntDir>..\..\$(Platform)\$(Configuration)\lib_genn\</IntDir>
+    <OutDir>..\..\..\lib\</OutDir>
+    <IntDir>..\..\..\$(Platform)\$(Configuration)\lib_genn\</IntDir>
     <TargetName>genn_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -81,7 +81,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\genn;..\..\include\genn\third_party</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
     </ClCompile>

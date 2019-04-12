@@ -3,17 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_simulator", "src\spineml_simulator\spineml_simulator.vcxproj", "{8FBF8A36-6935-4FCD-A2B4-CF3D927203BE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_simulator", "src\spineml\simulator\spineml_simulator.vcxproj", "{8FBF8A36-6935-4FCD-A2B4-CF3D927203BE}"
 	ProjectSection(ProjectDependencies) = postProject
 		{63424AC3-404B-4F72-8E94-0342524A966B} = {63424AC3-404B-4F72-8E94-0342524A966B}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_generator", "src\spineml_generator\spineml_generator.vcxproj", "{C7A136E7-6B8B-4A3A-A598-CAD396AE0E3C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_generator", "src\spineml\generator\spineml_generator.vcxproj", "{C7A136E7-6B8B-4A3A-A598-CAD396AE0E3C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{63424AC3-404B-4F72-8E94-0342524A966B} = {63424AC3-404B-4F72-8E94-0342524A966B}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_common", "src\spineml_common\spineml_common.vcxproj", "{63424AC3-404B-4F72-8E94-0342524A966B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_common", "src\spineml\common\spineml_common.vcxproj", "{63424AC3-404B-4F72-8E94-0342524A966B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -43,8 +43,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>..\..\lib\</OutDir>
-    <IntDir>..\..\$(Platform)\$(Configuration)\cuda_backend\</IntDir>
+    <OutDir>..\..\..\..\lib\</OutDir>
+    <IntDir>..\..\..\..\$(Platform)\$(Configuration)\cuda_backend\</IntDir>
     <TargetName>genn_cuda_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -55,7 +55,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include\genn_cuda_backend;..\..\include\genn;..\..\include\genn\third_party;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\include\genn\backends\cuda;..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">_CRT_SECURE_NO_WARNINGS;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
@@ -66,7 +66,7 @@
       <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">genn_Release_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">genn_Debug_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">..\..\lib;$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">..\..\..\..\lib;$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
