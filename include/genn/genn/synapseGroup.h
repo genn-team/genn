@@ -203,25 +203,12 @@ public:
     //! Does this synapse group require an RNG for it's weight update init code?
     bool isWUInitRNGRequired() const;
 
-    //! Is device var init code required for any variables in this synapse group's postsynaptic model?
-    bool isPSVarInitRequired() const;
-
     //! Is var init code required for any variables in this synapse group's weight update model?
     bool isWUVarInitRequired() const;
-
-    //! Is var init code required for any presynaptic variables in this synapse group's weight update model
-    bool isWUPreVarInitRequired() const;
-
-    //! Is var init code required for any postsynaptic variables in this synapse group's weight update model
-    bool isWUPostVarInitRequired() const;
 
     //! Is sparse connectivity initialisation code required for this synapse group?
     bool isSparseConnectivityInitRequired() const;
 
-    //! Is any form of device initialisation required?
-    bool isInitRequired() const;
-
-    
 protected:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,

@@ -263,19 +263,6 @@ bool SynapseGroup::isWUInitRNGRequired() const
     return Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode());
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::isPSVarInitRequired() const
-{
-    // If this synapse group has per-synapse state variables,
-    // return true if any of them have initialisation code
-    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-        return std::any_of(m_PSVarInitialisers.cbegin(), m_PSVarInitialisers.cend(),
-                           [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
-    }
-    else {
-        return false;
-    }
-}
-//----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables,
@@ -289,34 +276,10 @@ bool SynapseGroup::isWUVarInitRequired() const
     }
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::isWUPreVarInitRequired() const
-{
-    return std::any_of(m_WUPreVarInitialisers.cbegin(), m_WUPreVarInitialisers.cend(),
-                       [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::isWUPostVarInitRequired() const
-{
-    return std::any_of(m_WUPostVarInitialisers.cbegin(), m_WUPostVarInitialisers.cend(),
-                       [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
-}
-//----------------------------------------------------------------------------
 bool SynapseGroup::isSparseConnectivityInitRequired() const
 {
     // Return true if there is code to initialise sparse connectivity on device
     return !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::isInitRequired() const
-{
-    // If the synaptic matrix is dense and some synaptic variables are initialised on device, return true
-    if((getMatrixType() & SynapseMatrixConnectivity::DENSE) && isWUVarInitRequired()) {
-        return true;
-    }
-    // Otherwise return true if there is sparse connectivity to be initialised on device
-    else {
-        return isSparseConnectivityInitRequired();
-    }
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
