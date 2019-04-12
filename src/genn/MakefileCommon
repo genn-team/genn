@@ -4,10 +4,10 @@ OS_UPPER			:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 DARWIN				:=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
 # Get directory of this makefile i.e. GeNN directory (means make can be invoked else where)
-GENN_DIR 			:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../)
+GENN_DIR 			:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
 
 # Set standard compiler and archiver flags
-CXXFLAGS 			+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn -I$(GENN_DIR)/include/genn/third_party
+CXXFLAGS 			+=-std=c++11 -Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn/genn -I$(GENN_DIR)/include/genn/third_party
 ARFLAGS				:=-rcs
 
 # On Mac OS X, use Clang++ rather than GC++

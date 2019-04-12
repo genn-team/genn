@@ -73,7 +73,7 @@ export CUDA_PATH=${CUDA_PATH-/usr/local/cuda}
 
 # generate model code
 BASEDIR=$(dirname "$0")
-make -C $BASEDIR/../src/genn_generator -f $GENERATOR_MAKEFILE $MACROS
+make -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$MPI_ENABLE" ]]; then
     cp "$GENERATOR" "$GENERATOR"_"$OMPI_COMM_WORLD_RANK"
