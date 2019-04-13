@@ -134,6 +134,7 @@ void modelDefinition(NNmodel &model)
 
     // Override the variable mode of V and b so they can be used to calculate U on host
     inh->setVarMode("V", VarMode::LOC_HOST_DEVICE_INIT_HOST);
+    inh->setVarMode("U", VarMode::LOC_HOST_DEVICE_INIT_HOST);
     inh->setVarMode("b", VarMode::LOC_HOST_DEVICE_INIT_HOST);
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Exc_Exc", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
