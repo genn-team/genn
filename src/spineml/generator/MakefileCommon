@@ -15,7 +15,7 @@ endif
 # Determine full path to generator and backend
 SPINEML_GENERATOR	:=$(GENN_DIR)/bin/$(GENERATOR_NAME)$(GENN_PREFIX)
 BACKEND			:=$(GENN_DIR)/lib/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/$(GENERATOR_NAME)
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml/$(GENERATOR_NAME)
 
 # Find source files
 SOURCES			:=$(wildcard *.cc)

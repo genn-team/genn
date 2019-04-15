@@ -12,7 +12,7 @@ SOURCES			:=pugixml/pugixml.cpp#$(PUGIXML_SOURCES)
 SPINEML_COMMON		:=$(GENN_DIR)/lib/libspineml_common$(GENN_PREFIX).a
 
 # Build objecs in sub-directory
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml_common
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml/common
 
 # Add object directory prefix
 OBJECTS			:=$(SOURCES:%.cpp=$(OBJECT_DIRECTORY)/%.o)

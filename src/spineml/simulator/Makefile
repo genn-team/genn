@@ -3,7 +3,7 @@ include ../../genn/MakefileCommon
 
 # Determine full path to simulator
 SPINEML_SIMULATOR	:=$(GENN_DIR)/bin/spineml_simulator$(GENN_PREFIX)
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml_simulator
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml/simulator
 
 # Find source files
 SOURCES			:=$(wildcard *.cc)

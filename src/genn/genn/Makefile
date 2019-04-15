@@ -7,7 +7,7 @@ BACKEND_SOURCES		:=$(wildcard code_generator/*.cc)
 SOURCES			:=$(FRONTEND_SOURCES) $(BACKEND_SOURCES) 
 
 # Build objecs in sub-directory
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn/genn
 
 # Add object directory prefix
 OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)

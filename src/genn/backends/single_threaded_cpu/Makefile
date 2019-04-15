@@ -8,7 +8,7 @@ CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/single_threaded_cpu
 BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_single_threaded_cpu_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)
 
 # Build objecs in sub-directory
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn_single_threaded_cpu_backend
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn/backends/single_threaded_cpu
 
 # Find source files
 SOURCES			:= $(wildcard *.cc)
