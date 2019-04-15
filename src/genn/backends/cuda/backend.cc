@@ -553,6 +553,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                 // If spike events should be processed
                 if (sg.isSpikeEventRequired()) {
+                    CodeStream::Scope b(os);
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
                         assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
                         genPresynapticUpdatePreSpan(os, model, sg, popSubs, false,
@@ -566,6 +567,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                 // If true spikes should be processed
                 if (sg.isTrueSpikeRequired()) {
+                    CodeStream::Scope b(os);
                     if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
                         assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
                         genPresynapticUpdatePreSpan(os, model, sg, popSubs, true,
