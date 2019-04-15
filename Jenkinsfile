@@ -324,6 +324,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                 buildStep("Archiving output (" + env.NODE_NAME + ")") {
                     dir("genn") {
                         def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
+                        archive uniqueMsg;
 
                         // Run 'next-generation' warning plugin on results
                         if("mac" in nodeLabel) {
@@ -335,7 +336,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         else {
                             recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
                         }
-                        archive uniqueMsg;
+
                     }
                 }
             }
