@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+// PLOG includes
+#include <plog/Log.h>
+
 // GeNN includes
 #include "gennExport.h"
 
@@ -100,7 +103,17 @@ public:
 
         ~Scope()
         {
-            m_CodeStream << CodeStream::CB(m_Level);
+            // If we're not in the middle of handling an uncaught exception
+            if(!std::uncaught_exception()) {
+                try
+                {
+                    m_CodeStream << CodeStream::CB(m_Level);
+                }
+                catch(const std::runtime_error &exception)
+                {
+                    LOGE << exception.what();
+                }
+            }
         }
 
     private:
