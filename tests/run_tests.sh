@@ -108,13 +108,19 @@ if [[ "$(uname)" = "Darwin" ]]; then
     # 'Show' text based coverage
     xcrun llvm-cov show $LLVM_TEST_EXECUTABLES -instr-profile=coverage.profdata > coverage_$NODE_NAME.txt
 else
-    # Loop through directories in which there might be coverage
-    for OBJ_DIR in ${GENN_PATH}obj_coverage/*/ ; do
+    # Use lcov to capture libgenn coverage
+    lcov --directory ${GENN_PATH}obj_coverage/genn/genn --base-directory ${GENN_PATH}src/genn/genn --capture -rc lcov_branch_coverage=1 --output-file genn_coverage.txt
+
+    # Add tracefile to list of tracefile arguments to pass to lcov
+    LCOV_TRACEFILE_ARGS+=" --add-tracefile genn_coverage.txt" 
+    
+    # Loop through directories in which there might be coverage for backends
+    for BACKEND_OBJ_DIR in ${GENN_PATH}obj_coverage/genn/backends/*/ ; do
         # Get corresponding module name
-        MODULE=$(basename $OBJ_DIR)
+        MODULE=$(basename $BACKEND_OBJ_DIR)
 
         # Use lcov to capture all coverage for this module
-        lcov --directory $OBJ_DIR --base-directory ${GENN_PATH}src/$MODULE/ --capture -rc lcov_branch_coverage=1 --output-file ${MODULE}_coverage.txt
+        lcov --directory $BACKEND_OBJ_DIR --base-directory ${GENN_PATH}src/genn/backends/$MODULE/ --capture -rc lcov_branch_coverage=1 --output-file ${MODULE}_coverage.txt
 
         # Add tracefile to list of tracefile arguments to pass to lcov
         LCOV_TRACEFILE_ARGS+=" --add-tracefile ${MODULE}_coverage.txt" 
