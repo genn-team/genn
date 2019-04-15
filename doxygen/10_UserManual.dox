@@ -172,6 +172,7 @@ There is a number of predefined models which can be used with the NNmodel::addNe
 - NeuronModels::RulkovMap
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
+- NeuronModels::LIF
 - NeuronModels::SpikeSource
 - NeuronModels::PoissonNew
 - NeuronModels::TraubMiles
@@ -305,7 +306,7 @@ networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1,
 /*! 
 \page sectSynapseModels Weight update models
 
-Currently 3 predefined weight update models are available: 
+Currently 4 predefined weight update models are available: 
 - WeightUpdateModels::StaticPulse
 - WeightUpdateModels::StaticPulseDendriticDelay
 - WeightUpdateModels::StaticGraded
@@ -370,7 +371,8 @@ All code snippets, aside from those defined with ``SET_PRE_SPIKE_CODE()`` and ``
 
 \page sect_postsyn Postsynaptic integration methods
 
-There are currently 2 built-in postsynaptic integration methods:
+There are currently 3 built-in postsynaptic integration methods:
+- PostsynapticModels::ExpCurr
 - PostsynapticModels::ExpCond
 - PostsynapticModels::DeltaCurr
 

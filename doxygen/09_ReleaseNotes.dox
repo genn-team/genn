@@ -21,11 +21,13 @@ User Side Changes
    These have now all been made protected and are exposed to GeNN internals using derived classes (``NeuronGroupInternal``, ``SynapseGroupInternal``, ``CurrentSourceInternal``, ``ModelSpecInternal``) that make them public using ``using`` directives.
 12. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-neuron-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
 13. The functions used for pushing and pulling have been unified somewhat this means that ``copyStateToDevice`` and ``copyStateFromDevice`` functions no longer copy spikes and ``pus<neuron or synapse name>SpikesToDevice`` and ``pull<neuron or synapse name>SpikesFromDevice`` no longer copy spike times or spike-like events.
+14. Standard models of leaky-integrate-and-fire neuron (``NeuronModels::LIF``) and of exponentially shaped postsynaptic current (``PostsynapticModels::ExpCurr``) have been added.
 
 Deprecations
 ----
 1. Yale-format sparse matrices are no longer supported.
-2. GeNN 2.X syntax for implementing neuron and synapse models is no longer supported,
+2. GeNN 2.X syntax for implementing neuron and synapse models is no longer supported.
+3. \$(addtoinSyn) = X; \$(updatelinsyn); idiom in weight update models has been replaced by function style ``$(addToInSyn, X);``.
 
 Release Notes for GeNN v3.3.0
 ====
