@@ -1,5 +1,5 @@
 # Include common makefile
-include ../../src/MakefileCommon
+include ../../src/genn/MakefileCommon
 
 # Get simulate SpineML path i.e. directory of this Makefile
 UNIT_TEST_PATH		:=$(GENN_DIR)/tests/unit
@@ -23,7 +23,7 @@ $(TEST): $(TEST_SOURCES) libgenn
 generator.d: ;
 
 libgenn:
-	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn; fi;
+	if [ -w $(GENN_DIR)/lib ]; then $(MAKE) -C $(GENN_DIR)/src/genn/genn; fi;
 
 clean:
 	rm -f $(TEST) *.d *.gcno
