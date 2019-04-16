@@ -14,14 +14,15 @@ User Side Changes
    it will be initialised by your chosen backend. If you mark it as uninitialised, it is up to you to initialize it 
    in user code between the calls to ``initialize()`` and ``initializeSparse()`` (where it will be copied to device).
 5. ``genn-create-user-project`` helper scripts to create Makefiles or MSBuild projects for building user code
-8. State variables can now be pushed and pulled individually using the `pull<var name><neuron or synapse name>FromDevice()` and `push<var name><neuron or synapse name>ToDevice()` functions.
-9. Management of extra global parameter arrays has been somewhat automated (see \ref extraGlobalParamSim for more details).
-10. ``GENN_PREFERENCES`` is no longer a namespace - it's a global struct so members need to be accessed with . rather than ::.
-11. ``NeuronGroup``, ``SynapseGroup``, ``CurrentSource`` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't <i>supposed</i> to call but could. 
+6. State variables can now be pushed and pulled individually using the `pull<var name><neuron or synapse name>FromDevice()` and `push<var name><neuron or synapse name>ToDevice()` functions.
+7. Management of extra global parameter arrays has been somewhat automated (see \ref extraGlobalParamSim for more details).
+8. ``GENN_PREFERENCES`` is no longer a namespace - it's a global struct so members need to be accessed with . rather than ::.
+9. ``NeuronGroup``, ``SynapseGroup``, ``CurrentSource`` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't <i>supposed</i> to call but could. 
    These have now all been made protected and are exposed to GeNN internals using derived classes (``NeuronGroupInternal``, ``SynapseGroupInternal``, ``CurrentSourceInternal``, ``ModelSpecInternal``) that make them public using ``using`` directives.
-12. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-neuron-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
-13. The functions used for pushing and pulling have been unified somewhat this means that ``copyStateToDevice`` and ``copyStateFromDevice`` functions no longer copy spikes and ``pus<neuron or synapse name>SpikesToDevice`` and ``pull<neuron or synapse name>SpikesFromDevice`` no longer copy spike times or spike-like events.
-14. Standard models of leaky-integrate-and-fire neuron (``NeuronModels::LIF``) and of exponentially shaped postsynaptic current (``PostsynapticModels::ExpCurr``) have been added.
+10. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-neuron-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
+11. The functions used for pushing and pulling have been unified somewhat this means that ``copyStateToDevice`` and ``copyStateFromDevice`` functions no longer copy spikes and ``pus<neuron or synapse name>SpikesToDevice`` and ``pull<neuron or synapse name>SpikesFromDevice`` no longer copy spike times or spike-like events.
+12. Standard models of leaky-integrate-and-fire neuron (``NeuronModels::LIF``) and of exponentially shaped postsynaptic current (``PostsynapticModels::ExpCurr``) have been added.
+13. When a model is built using the CUDA backend, the device it was built for is stored using it's PCI bus ID so it will always use the same device.
 
 Deprecations
 ----
