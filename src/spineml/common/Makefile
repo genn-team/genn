@@ -30,7 +30,7 @@ $(SPINEML_COMMON): $(OBJECTS)
 
 $(OBJECT_DIRECTORY)/%.o: %.cpp $(OBJECT_DIRECTORY)/%.d
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -std=c++11 $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
 

@@ -34,7 +34,7 @@ TEST			:=$(SPINEML_SIM_TEST_PATH)/test$(GENN_PREFIX)
 all: $(TEST)
 
 $(TEST): $(TEST_SOURCES) spineml_common
-	$(CXX) $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
+	$(CXX) -std=c++11 $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
 
 spineml_common:
 	$(MAKE) -C $(GENN_DIR)/src/spineml/common

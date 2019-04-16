@@ -18,7 +18,7 @@ TEST			:=$(UNIT_TEST_PATH)/test$(GENN_PREFIX)
 all: $(TEST)
 
 $(TEST): $(TEST_SOURCES) libgenn
-	$(CXX) $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
+	$(CXX) -std=c++11 $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
 
 generator.d: ;
 
