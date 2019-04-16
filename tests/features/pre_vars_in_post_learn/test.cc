@@ -16,11 +16,11 @@ suite of minimal models with known analytic outcomes that are used for continuou
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
 #include "../../utils/simulation_test_vars.h"
-#include "../../utils/simulation_neuron_policy_pre_var.h"
+#include "../../utils/simulation_neuron_policy_pre_post_var.h"
 #include "../../utils/simulation_synapse_policy_dense.h"
 
 // Combine neuron and synapse policies together to build variable-testing fixture
-typedef SimulationTestVars<SimulationNeuronPolicyPreVar, SimulationSynapsePolicyDense> SimTest;
+typedef SimulationTestVars<SimulationNeuronPolicyPrePostVar, SimulationSynapsePolicyDense> SimTest;
 
 TEST_F(SimTest, PreVarsInPostLearn)
 {
