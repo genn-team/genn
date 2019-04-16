@@ -1,0 +1,3 @@
+ignore:
+  - "include/genn/third_party"
+  - "tests/**/*
