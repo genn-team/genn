@@ -9,6 +9,7 @@ genn_help () {
     echo "-m            generate MPI simulation code"
     echo "-v            generates coverage information"
     echo "-h            shows this help message"
+    echo "-s standard   changes the C++ standard the model is built with"
     echo "-o outpath    changes the output directory"
     echo "-i includepath    add additional include directories (seperated by colons)"
 }
@@ -24,14 +25,16 @@ trap 'genn_error $LINENO 50 "command failure"' ERR
 OUT_PATH="$PWD";
 BUILD_MODEL_INCLUDE=""
 GENERATOR_MAKEFILE="MakefileCUDA"
+CXX_STANDARD="c++11"
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cdmvo:i:h" option; do
+    while getopts "cdmvs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
         d) DEBUG=1;;
         m) MPI_ENABLE=1;;
         v) COVERAGE=1;;
         h) genn_help; exit;;
+        s) CXX_STANDARD="$OPTARG";;
         o) OUT_PATH="$OPTARG";;
         i) BUILD_MODEL_INCLUDE="$OPTARG";;
         ?) genn_help; exit;;
@@ -49,7 +52,7 @@ pushd $OUT_PATH > /dev/null
 OUT_PATH="$PWD"
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
-MACROS="MODEL=$PWD/$(basename $MODEL) GENERATOR_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE"
+MACROS="MODEL=$PWD/$(basename $MODEL) GENERATOR_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE CXX_STANDARD=$CXX_STANDARD"
 GENERATOR=./generator
 popd > /dev/null
 if [[ -n "$DEBUG" ]]; then

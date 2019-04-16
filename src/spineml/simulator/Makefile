@@ -27,7 +27,7 @@ $(SPINEML_SIMULATOR): $(OBJECTS) spineml_common
 
 $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -std=c++11 $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
 
