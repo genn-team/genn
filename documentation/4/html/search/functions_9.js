@@ -19,8 +19,6 @@ var searchData=
   ['isdendriticdelayrequired',['isDendriticDelayRequired',['../dc/dfa/classSynapseGroup.html#a0ab4cea002580bb64da2a55db37ab189',1,'SynapseGroup']]],
   ['iseventthresholdretestrequired',['isEventThresholdReTestRequired',['../dc/dfa/classSynapseGroup.html#a3598cc5fbf801448c1aa4d16daab03f0',1,'SynapseGroup']]],
   ['isglobalrngrequired',['isGlobalRNGRequired',['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#acd9a5796a357e5b633eb81bee2c35d65',1,'CodeGenerator::CUDA::Backend::isGlobalRNGRequired()'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a88af0f853c733bbb3043c2b8dfe30cec',1,'CodeGenerator::SingleThreadedCPU::Backend::isGlobalRNGRequired()'],['../d3/d15/classCodeGenerator_1_1BackendBase.html#abd63eb9b142bf73c95921747ad708f14',1,'CodeGenerator::BackendBase::isGlobalRNGRequired()']]],
-  ['isinitcoderequired',['isInitCodeRequired',['../d1/d48/classCurrentSource.html#a8ef9cac35ee8837ac5fdd97ceb3c3b5a',1,'CurrentSource']]],
-  ['isinitrequired',['isInitRequired',['../dc/dfa/classSynapseGroup.html#a916012d46f8128b30e6319a2e1211ce8',1,'SynapseGroup']]],
   ['isinitrngrequired',['isInitRNGRequired',['../d1/d48/classCurrentSource.html#a77badded2963f6e73982f6f2c0c4eacc',1,'CurrentSource::isInitRNGRequired()'],['../d7/d3b/classNeuronGroup.html#a3377276c4239b87c72ba7a538fcca825',1,'NeuronGroup::isInitRNGRequired()'],['../d4/d3d/namespaceUtils.html#a3cba4962c69919bac88a4f7d4a88ee3d',1,'Utils::isInitRNGRequired()']]],
   ['isparamrequiredbyspikeeventcondition',['isParamRequiredBySpikeEventCondition',['../d7/d3b/classNeuronGroup.html#a02f93b828dac7f6200336f833ebaad4c',1,'NeuronGroup']]],
   ['ispostspiketimerequired',['isPostSpikeTimeRequired',['../d2/d05/classWeightUpdateModels_1_1Base.html#a02fb269c52929c962bab49d86d2ca45e',1,'WeightUpdateModels::Base::isPostSpikeTimeRequired()'],['../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a03875502d4f8594bfd1f53d248ae63c2',1,'WeightUpdateModels::PiecewiseSTDP::isPostSpikeTimeRequired()']]],
@@ -28,7 +26,6 @@ var searchData=
   ['isprespiketimerequired',['isPreSpikeTimeRequired',['../d2/d05/classWeightUpdateModels_1_1Base.html#a26c3071dfdf87eaddb857a535894bf7a',1,'WeightUpdateModels::Base::isPreSpikeTimeRequired()'],['../df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a060eb8fe3f26e106c662519d23a93717',1,'WeightUpdateModels::PiecewiseSTDP::isPreSpikeTimeRequired()']]],
   ['ispsinitrngrequired',['isPSInitRNGRequired',['../dc/dfa/classSynapseGroup.html#a0cb20a9bde00e1ba8132143bfc3d96c9',1,'SynapseGroup']]],
   ['ispsmodelmerged',['isPSModelMerged',['../dc/dfa/classSynapseGroup.html#aed8d1a858f0731119785fc90394b2220',1,'SynapseGroup']]],
-  ['ispsvarinitrequired',['isPSVarInitRequired',['../dc/dfa/classSynapseGroup.html#a473d0decae96167c597f4ce1e54cfc0a',1,'SynapseGroup']]],
   ['isrngrequired',['isRNGRequired',['../d4/d3d/namespaceUtils.html#aed26fcdb3b695c252189c2059b17b14d',1,'Utils']]],
   ['issimrngrequired',['isSimRNGRequired',['../d1/d48/classCurrentSource.html#a69ae0ab08a8f9960574199ac40585fe3',1,'CurrentSource::isSimRNGRequired()'],['../d7/d3b/classNeuronGroup.html#a193c659939f14aa5442295804f203477',1,'NeuronGroup::isSimRNGRequired()']]],
   ['issparseconnectivityinitrequired',['isSparseConnectivityInitRequired',['../dc/dfa/classSynapseGroup.html#a1c2454ff904e5df412539aa6477e4f0e',1,'SynapseGroup']]],
@@ -40,8 +37,6 @@ var searchData=
   ['istypepointer',['isTypePointer',['../d4/d3d/namespaceUtils.html#a6288decaa7fb3927a7320329be1908a9',1,'Utils']]],
   ['isvarqueuerequired',['isVarQueueRequired',['../d7/d3b/classNeuronGroup.html#aea0036098408c4e451602ff91396d426',1,'NeuronGroup::isVarQueueRequired(const std::string &amp;var) const'],['../d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837',1,'NeuronGroup::isVarQueueRequired(size_t index) const']]],
   ['iswuinitrngrequired',['isWUInitRNGRequired',['../dc/dfa/classSynapseGroup.html#aa8191f2f567437c1129e3209fa07273d',1,'SynapseGroup']]],
-  ['iswupostvarinitrequired',['isWUPostVarInitRequired',['../dc/dfa/classSynapseGroup.html#ad17d9d59f7d737ef30294e6acb2c459a',1,'SynapseGroup']]],
-  ['iswuprevarinitrequired',['isWUPreVarInitRequired',['../dc/dfa/classSynapseGroup.html#a7172468ad47a9bd5acb2b52dcb7f0c69',1,'SynapseGroup']]],
   ['iswuvarinitrequired',['isWUVarInitRequired',['../dc/dfa/classSynapseGroup.html#a04792c6fbefc32a49c0b936bc6ea5318',1,'SynapseGroup']]],
   ['iszerocopyenabled',['isZeroCopyEnabled',['../d7/d3b/classNeuronGroup.html#a808eebf23213351d0972b5765e29775d',1,'NeuronGroup::isZeroCopyEnabled()'],['../dc/dfa/classSynapseGroup.html#ae49b55ca7bf25160ae98cc43972fca7b',1,'SynapseGroup::isZeroCopyEnabled()']]]
 ];

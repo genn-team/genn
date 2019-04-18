@@ -13,7 +13,6 @@ var classCurrentSource =
     [ "getVarLocation", "d1/d48/classCurrentSource.html#a0b5061240ea86ae09f52bf128b158aed", null ],
     [ "getVarLocation", "d1/d48/classCurrentSource.html#a4082262b23f60d230840455ffbb8c5f3", null ],
     [ "initDerivedParams", "d1/d48/classCurrentSource.html#af9cc1203e0ef0a067c188324a09b15be", null ],
-    [ "isInitCodeRequired", "d1/d48/classCurrentSource.html#a8ef9cac35ee8837ac5fdd97ceb3c3b5a", null ],
     [ "isInitRNGRequired", "d1/d48/classCurrentSource.html#a77badded2963f6e73982f6f2c0c4eacc", null ],
     [ "isSimRNGRequired", "d1/d48/classCurrentSource.html#a69ae0ab08a8f9960574199ac40585fe3", null ],
     [ "setExtraGlobalParamLocation", "d1/d48/classCurrentSource.html#a43687bec0ce75867db3661b587e2b6b9", null ],

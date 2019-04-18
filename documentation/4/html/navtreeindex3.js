@@ -1,14 +1,13 @@
 var NAVTREEINDEX3 =
 {
-"da/d16/generateMPI_8h.html#ab064c9ce4812db4d3616b89c9c292ec2":[16,0,26,0],
 "da/d16/generateMPI_8h_source.html":[16,0,26],
 "da/d2c/generateMPI_8cc.html":[16,0,25],
 "da/d3e/synapseGroup_8cc.html":[16,0,65],
 "da/d49/currentSourceModels_8h.html":[16,0,18],
 "da/d49/currentSourceModels_8h.html#adf53ca7b56294cfcca6f22ddfd1daf4f":[16,0,18,3],
 "da/d49/currentSourceModels_8h_source.html":[16,0,18],
-"da/d6d/namespacepygenn.html":[15,0,7],
 "da/d6d/namespacepygenn.html":[14,0,8],
+"da/d6d/namespacepygenn.html":[15,0,7],
 "da/d76/classSnippet_1_1ValueBase.html":[15,0,8,2],
 "da/d76/classSnippet_1_1ValueBase.html#a4988c19ce485c6112dd63218abd13a20":[15,0,8,2,0],
 "da/d76/classSnippet_1_1ValueBase.html#a69f7917cb03d425eadc1593564eaf792":[15,0,8,2,1],
@@ -164,8 +163,8 @@ var NAVTREEINDEX3 =
 "db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a8ad49047e343c93b0c92be50b57ae7f5":[15,0,2,2,0],
 "db/d6d/single__threaded__cpu_2backend_8h.html":[16,0,4],
 "db/d6d/single__threaded__cpu_2backend_8h_source.html":[16,0,4],
-"db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[15,0,0,1],
 "db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[14,0,0,1],
+"db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[15,0,0,1],
 "db/d97/classSnippet_1_1Base.html":[15,0,8,0],
 "db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48":[15,0,8,0,4],
 "db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519":[15,0,8,0,5],
@@ -249,5 +248,6 @@ var NAVTREEINDEX3 =
 "dc/dc0/classNeuronModels_1_1PoissonNew.html#ab880c13caef654859997b9944412fe65":[15,0,5,5,4],
 "dc/dc0/classNeuronModels_1_1PoissonNew.html#adffa087f5ef9119034afe192b208dd94":[15,0,5,5,5],
 "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html":[15,0,7,0,2],
-"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0e0da2c47058822597a9a802380e762f":[15,0,7,0,2,4]
+"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0e0da2c47058822597a9a802380e762f":[15,0,7,0,2,4],
+"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a1d2af6b44512827de67598b630f1448e":[15,0,7,0,2,12]
 };

@@ -99,11 +99,11 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d3/d15/classCodeGenerator_1_1BackendBase.html#a37be1d74b9fa1bdd516f1afa5638077a",
-"d6/d08/classNeuronModels_1_1TraubMilesNStep.html",
-"da/d16/generateMPI_8h.html#ab064c9ce4812db4d3616b89c9c292ec2",
-"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a1d2af6b44512827de67598b630f1448e",
-"de/db7/genn__model_8py.html#aa2daf7a01b3f49dcbc5dba9690020bc3"
+"d3/d15/classCodeGenerator_1_1BackendBase.html#a42880fdb96bb9ee3ac30f7cb900786a0",
+"d6/d08/classNeuronModels_1_1TraubMilesNStep.html#a55b5664bf554d2cb756710afa41827ce",
+"da/d16/generateMPI_8h_source.html",
+"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a3cd4c9a8da6c73efc7c403c44435cde4",
+"de/ded/sectNeuronModels.html#neuron_additional_input"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

@@ -112,11 +112,14 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li><code><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a></code>, <code><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a></code>, <code><a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a></code> and <code>NNmodel</code> all previously exposed a lot of methods that the user wasn't <em>supposed</em> to call but could. These have now all been made protected and are exposed to GeNN internals using derived classes (<code><a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a></code>, <code><a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a></code>, <code><a class="el" href="../../d6/de6/classCurrentSourceInternal.html">CurrentSourceInternal</a></code>, <code><a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a></code>) that make them public using <code>using</code> directives.</li>
 <li>Auto-refractory behaviour was controlled using <code>GENN_PREFERENCES::autoRefractory</code>, this is now controlled on a per-neuron-model basis using the <code>SET_NEEDS_AUTO_REFRACTORY</code> macro.</li>
 <li>The functions used for pushing and pulling have been unified somewhat this means that <code>copyStateToDevice</code> and <code>copyStateFromDevice</code> functions no longer copy spikes and <code>pus&lt;neuron or synapse name&gt;SpikesToDevice</code> and <code>pull&lt;neuron or synapse name&gt;SpikesFromDevice</code> no longer copy spike times or spike-like events.</li>
+<li>Standard models of leaky-integrate-and-fire neuron (<code><a class="el" href="../../d0/d6d/classNeuronModels_1_1LIF.html">NeuronModels::LIF</a></code>) and of exponentially shaped postsynaptic current (<code><a class="el" href="../../d5/d1e/classPostsynapticModels_1_1ExpCurr.html" title="Exponential decay with synaptic input treated as a current value. ">PostsynapticModels::ExpCurr</a></code>) have been added.</li>
+<li>When a model is built using the CUDA backend, the device it was built for is stored using it's PCI bus ID so it will always use the same device.</li>
 </ol>
 <h2>Deprecations </h2>
 <ol type="1">
 <li>Yale-format sparse matrices are no longer supported.</li>
-<li>GeNN 2.X syntax for implementing neuron and synapse models is no longer supported,</li>
+<li>GeNN 2.X syntax for implementing neuron and synapse models is no longer supported.</li>
+<li>$(addtoinSyn) = X; $(updatelinsyn); idiom in weight update models has been replaced by function style <code>$(addToInSyn, X);</code>.</li>
 </ol>
 <h1>Release Notes for GeNN v3.3.0 </h1>
 <p>This release is intended as the last service release for GeNN 3.X.X. Fixes for serious bugs <b>may</b> be backported if requested but, otherwise, development will be switching to GeNN 4.</p>
@@ -342,7 +345,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Apr 12 2019 14:10:14 for GeNN by
+    <li class="footer">Generated on Thu Apr 18 2019 09:50:11 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
