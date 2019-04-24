@@ -276,7 +276,7 @@ Normally, neuron models receive the linear sum of the inputs coming from all of 
 However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
 For example, if we wanted our leaky integrator to operate on the the product of two input currents, it could be defined as follows:
 \code
-SET_ADDITIONAL_INPUT_VARS({{"Isyn2", {"scalar", 1.0}}});
+SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", 1.0}});
 SET_SIM_CODE("const scalar input = $(Isyn) * $(Isyn2);\n"
              "$(V) = input - $(ExpTC)*(input - $(V));");
 \endcode
