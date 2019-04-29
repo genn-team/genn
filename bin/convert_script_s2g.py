@@ -176,7 +176,17 @@ if os.name == "nt":
     config = "Release" if cpu_only else "Release_CUDA"
     generate_executable = "spineml_generator_" + config + ".exe"
     simulate_executable = "spineml_simulator_Release.exe"
-
+    
+    backend_target = "single_threaded_cpu_backend" if cpu_only else "cuda_backend"
+    genn_library = "genn_Release.lib"
+    backend_library = "genn_" + backend_target + "_Release.lib"
+    
+    if not os.path.isfile(os.path.join(genn_path,"lib",genn_library)):
+        print("Compiling LibGeNN")
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild genn.sln /t:genn /p:Configuration=Release")
+    if not os.path.isfile(os.path.join(genn_path,"lib", backend_library)):
+        print("Compiling backend")
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild genn.sln /t:" + backend_target + " /p:Configuration=Release")
     if not os.path.isfile(os.path.join(genn_path,"bin",generate_executable)):
         config = "Release" if cpu_only else "Release_CUDA"
         print("Compiling Generate tool")
