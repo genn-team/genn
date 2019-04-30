@@ -11,7 +11,7 @@ endif
 BACKEND_LIBS		:=$(BACKENDS:%=$(LIBRARY_DIRECTORY)/libgenn_%_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION))
 
 # Default install location
-PREFIX 			:= /usr/local
+PREFIX 			?= /usr/local
 
 .PHONY: all clean install uninstall libgenn $(BACKENDS)
 
