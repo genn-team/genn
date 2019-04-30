@@ -71,6 +71,19 @@ restarted to initialise the variables set using the `SETX` command.
 
 This completes the installation.
 
+### ARCH LINUX INSTALL
+For Arch Linux there are GeNN packages available [from the AUR](https://aur.archlinux.org/packages/?O=0&K=genn).
+
+Install with your AUR helper of choice, like so:
+```sh
+yay -S genn
+```
+
+If you do not want CUDA support (i.e. if you don't have an NVIDIA GPU), there is a CPU-only version of the package:
+```sh
+yay -S genn_cpu_only
+```
+
 ## USING GeNN 
 
 ### SAMPLE PROJECTS
