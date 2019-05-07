@@ -21,6 +21,9 @@
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector<double> &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector<double> &){ return MAX_COL_LENGTH; }; }
+
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual VarVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
@@ -98,18 +101,8 @@ public:
         "$(addSynapse, $(id_pre));\n"
         "$(endRow);\n");
     
-    SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &)
-        {
-            assert(numPre == numPost);
-            return 1;
-        });
-    SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &)
-        {
-            assert(numPre == numPost);
-            return 1;
-        });
+    SET_MAX_ROW_LENGTH(1);
+    SET_MAX_COL_LENGTH(1);
 };
 
 //----------------------------------------------------------------------------
