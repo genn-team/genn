@@ -37,7 +37,7 @@ echo -en "\n" >> Makefile
 echo "all: $PROJECT_NAME" >> Makefile
 echo -en "\n" >> Makefile
 echo "$PROJECT_NAME: $SOURCE_FILES generated_code" >> Makefile
-echo "	\$(CXX) \$(CXXFLAGS) $INCLUDES $SOURCE_FILES -o $PROJECT_NAME -L\$(GENERATED_CODE_DIR) -lrunner -Wl,-rpath=\$(GENERATED_CODE_DIR)" >> Makefile
+echo "	\$(CXX) \$(CXXFLAGS) $INCLUDES $SOURCE_FILES -o $PROJECT_NAME -L\$(GENERATED_CODE_DIR) -lrunner -Wl,-rpath \$(GENERATED_CODE_DIR)" >> Makefile
 echo -en "\n" >> Makefile
 echo "generated_code:" >> Makefile
 echo "	\$(MAKE) -C \$(GENERATED_CODE_DIR)" >> Makefile
