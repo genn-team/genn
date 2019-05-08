@@ -157,7 +157,7 @@ void ModelSpec::finalize()
                 assert(!wu->getEventThresholdConditionCode().empty());
 
                  // Create iteration context to iterate over derived and extra global parameters
-                ExtraGlobalParamNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+                VarNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
                 DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
 
                 // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters

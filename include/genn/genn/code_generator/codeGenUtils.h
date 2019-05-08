@@ -8,7 +8,7 @@
 #include <vector>
 
 // GeNN includes
-#include "models.h"
+#include "snippet.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -92,9 +92,9 @@ struct NameIterCtx
 //----------------------------------------------------------------------------
 // Typedefines
 //----------------------------------------------------------------------------
-typedef NameIterCtx<Models::Base::VarVec> VarNameIterCtx;
-typedef NameIterCtx<Models::Base::DerivedParamVec> DerivedParamNameIterCtx;
-typedef NameIterCtx<Models::Base::VarVec> ExtraGlobalParamNameIterCtx;
+typedef NameIterCtx<Snippet::Base::VarVec> VarNameIterCtx;
+typedef NameIterCtx<Snippet::Base::DerivedParamVec> DerivedParamNameIterCtx;
+typedef NameIterCtx<Snippet::Base::ParamValVec> ParamValIterCtx;
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
