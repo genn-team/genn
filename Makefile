@@ -17,7 +17,7 @@ PREFIX 			?= /usr/local
 
 all: libgenn $(BACKENDS)
 
-install: $(LIBGENN) $(BACKEND_LIBS)
+install: libgenn $(BACKENDS)
 	@# Make install directories
 	@mkdir -p $(PREFIX)/bin
 	@mkdir -p $(PREFIX)/include/genn
