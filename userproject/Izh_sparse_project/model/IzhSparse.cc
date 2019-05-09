@@ -52,7 +52,7 @@ public:
         "if(c >= $(rowLength)) {\n"
         "   $(endRow);\n"
         "}\n");
-    SET_ROW_BUILD_STATE_VARS({{"x", {"scalar", 0.0}},{"c", {"unsigned int", 0}}});
+    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", 0}});
 
     SET_PARAM_NAMES({"rowLength"});
 
