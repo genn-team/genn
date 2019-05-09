@@ -444,7 +444,7 @@ class GeNNModel(object):
             src_data.reinitialise(self._slm, self._scalar)
 
         # Initialise any sparse variables
-        self._slm.initialize_model()
+        self._slm.initialize_sparse()
 
     def step_time(self):
         if not self._loaded:
