@@ -536,7 +536,7 @@ int main(int argc, char *argv[])
         }
 
         // Generate command to build using msbuild
-        const std::string buildCommand = "msbuild /p:Configuration=Release \"" + (codePath / "runner.vcxproj").str() + "\"";
+        const std::string buildCommand = "msbuild /p:Configuration=Release  /verbosity:minimal \"" + (codePath / "runner.vcxproj").str() + "\"";
 #else
         // Create makefile to compile and link all generated modules
         // **NOTE** scope requiredso it gets closed before being built

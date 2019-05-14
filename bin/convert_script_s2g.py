@@ -183,17 +183,17 @@ if os.name == "nt":
     
     if not os.path.isfile(os.path.join(genn_path,"lib",genn_library)):
         print("Compiling LibGeNN")
-        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild genn.sln /t:genn /p:Configuration=Release")
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild genn.sln /verbosity:minimal /t:genn /p:Configuration=Release")
     if not os.path.isfile(os.path.join(genn_path,"lib", backend_library)):
         print("Compiling backend")
-        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild genn.sln /t:" + backend_target + " /p:Configuration=Release")
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild genn.sln /verbosity:minimal /t:" + backend_target + " /p:Configuration=Release")
     if not os.path.isfile(os.path.join(genn_path,"bin",generate_executable)):
         config = "Release" if cpu_only else "Release_CUDA"
         print("Compiling Generate tool")
-        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild spineml.sln /t:spineml_generator /p:Configuration=" + config)
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild spineml.sln /verbosity:minimal /t:spineml_generator /p:Configuration=" + config)
     if not os.path.isfile(os.path.join(genn_path,"bin",simulate_executable)):
         print("Compiling Simulate tool")
-        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild spineml.sln /t:spineml_simulator /p:Configuration=Release")
+        os.system(prog + "&& cd " + genn_path + "&&" + "msbuild spineml.sln /verbosity:minimal /t:spineml_simulator /p:Configuration=Release")
 else:
     makefile = "MakefileSingleThreadedCPU" if cpu_only else "MakefileCUDA"
     generate_executable = "spineml_generator_single_threaded_cpu" if cpu_only else "spineml_generator_cuda"
@@ -211,7 +211,6 @@ if recompile is True:
     f = open(os.path.join(out_dir,"time.txt"),'w')
     f.write('*Compiling...')
     f.close()
-    #os.system(prog + "&&" + os.path.join(genn_path,"spineml","generator","generateSpineML") + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
     os.system(prog + "&&" + os.path.join(genn_path,"bin",generate_executable) + " " + os.path.join(out_dir,"experiment" + str(args.e) + ".xml"))
 
 f = open(os.path.join(out_dir,"time.txt"),'w')
