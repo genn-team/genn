@@ -1792,7 +1792,7 @@ void Backend::genMSBuildImportProps(std::ostream &os) const
     // Import CUDA props file
     os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
     os << "\t\t<Import Project=\"$(VCTargetsPath)\\BuildCustomizations\\CUDA $(CudaVersion).props\" />" << std::endl;
-    os << "</ImportGroup>" << std::endl;
+    os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildItemDefinitions(std::ostream &os) const
@@ -1818,6 +1818,9 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t</Link>" << std::endl;
 
     // Add item definition for CUDA compilation
+    // **YUCK** the CUDA Visual Studio plugin build system demands that you specify both a virtual an actual architecture 
+    // (which NVCC itself doesn't require). While, in general, actual architectures are usable as virtual architectures, 
+    // there is no compute_21 so we need to replace that with compute_20
     const std::string architecture = std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     const std::string virtualArchitecture = (architecture == "21") ? "20" : architecture;
     os << "\t\t<CudaCompile>" << std::endl;
@@ -1830,7 +1833,11 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
 //--------------------------------------------------------------------------
 void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const
 {
-    os << "\t\t<CudaCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
+    os << "\t\t<CudaCompile Include=\"" << moduleName << ".cc\" >" << std::endl;
+    // **YUCK** for some reasons you can't call .Contains on %(BaseCommandLineTemplate) directly
+    // Solution suggested by https://stackoverflow.com/questions/9512577/using-item-functions-on-metadata-values
+    os << "\t\t\t<AdditionalOptions Condition=\" !$([System.String]::new('%(BaseCommandLineTemplate)').Contains('-x cu')) \">-x cu %(AdditionalOptions)</AdditionalOptions>" << std::endl;
+    os << "\t\t</CudaCompile>" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportTarget(std::ostream &os) const

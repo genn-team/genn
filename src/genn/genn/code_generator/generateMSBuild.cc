@@ -52,7 +52,7 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend
 
     os << "\t<ImportGroup Label=\"PropertySheets\">" << std::endl;
     os << "\t\t<Import Project=\"$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props\" Condition=\"exists('$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props')\" Label=\"LocalAppDataPlatform\" />" << std::endl;
-    os << "</ImportGroup>" << std::endl;
+    os << "\t</ImportGroup>" << std::endl;
 
     // Generate property group configuring build target
     os << "\t<PropertyGroup>" << std::endl;
