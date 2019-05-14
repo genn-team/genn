@@ -44,8 +44,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>..\..\bin\</OutDir>
-    <IntDir>..\..\$(Platform)\$(Configuration)\spineml_simulator\</IntDir>
+    <OutDir>..\..\..\bin\</OutDir>
+    <IntDir>..\..\..\$(Platform)\$(Configuration)\spineml_simulator\</IntDir>
     <TargetName>spineml_simulator_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
