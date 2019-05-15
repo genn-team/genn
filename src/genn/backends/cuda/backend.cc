@@ -467,141 +467,147 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         updateSynapseGroupExtraGlobalParams(s.second, synapseDynamicsKernelParameters, {wum->getSynapseDynamicsCode()});
     }
 
+    // If any synapse groups require spike-driven presynaptic updates
     size_t idPresynapticStart = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(";
-    for (const auto &p : presynapticKernelParameters) {
-        os << p.second << " " << p.first << ", ";
-    }
-    os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()); }))
     {
-        CodeStream::Scope b(os);
-        
-        Substitutions kernelSubs(cudaFunctions, model.getPrecision());
-        kernelSubs.addVarSubstitution("t", "t");
-
-        os << "const unsigned int id = " << m_KernelBlockSizes[KernelPresynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
-
-        // We need shLg if any synapse groups accumulate into shared memory
-        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [this](const ModelSpec::SynapseGroupValueType &s){ return this->shouldAccumulateInSharedMemory(s.second); }))
-        {
-            os << "__shared__ " << model.getPrecision() << " shLg[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
+        os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(";
+        for (const auto &p : presynapticKernelParameters) {
+            os << p.second << " " << p.first << ", ";
         }
-        
-        // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
-        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [&model](const ModelSpec::SynapseGroupValueType &s)
+        os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
+            kernelSubs.addVarSubstitution("t", "t");
+
+            os << "const unsigned int id = " << m_KernelBlockSizes[KernelPresynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+            // We need shLg if any synapse groups accumulate into shared memory
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                [this](const ModelSpec::SynapseGroupValueType &s){ return this->shouldAccumulateInSharedMemory(s.second); }))
             {
-                return (s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
-                        && (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
-            }))
-        {
-            os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-        }
-
-        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [&model](const ModelSpec::SynapseGroupValueType &s)
-            { 
-                return (s.second.isTrueSpikeRequired() || !s.second.getWUModel()->getLearnPostCode().empty());
-            }))
-        {
-            os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-        }
-        
-        if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-            [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired()); }))
-        {
-            os << "__shared__ unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-        }
-        
-        // Parallelise over synapse groups
-        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
-            [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
-            [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
-            {
-                // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-                if(sg.getSrcNeuronGroup()->isDelayRequired()) {
-                    os << "const unsigned int preReadDelaySlot = " << sg.getPresynapticAxonalDelaySlot("dd_") << ";" << std::endl;
-                    os << "const unsigned int preReadDelayOffset = preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
-                }
-
-                // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-                if(sg.getTrgNeuronGroup()->isDelayRequired()) {
-                    os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
-                }
-
-                // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
-                if (shouldAccumulateInLinSyn(sg)) {
-                    os << "// only do this for existing neurons" << std::endl;
-                    os << model.getPrecision() << " linSyn;" << std::endl;
-                    os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "linSyn = dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "];" << std::endl;
-                    }
-                }
-                // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
-                // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                else if(shouldAccumulateInSharedMemory(sg)) {
-                    os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "shLg[threadIdx.x] = dd_inSyn" << sg.getName() << "[threadIdx.x];"<< std::endl;
-                    }
-                    os << "__syncthreads();" << std::endl;
-                }
-
-                // If spike events should be processed
-                if (sg.isSpikeEventRequired()) {
-                    CodeStream::Scope b(os);
-                    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-                        assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-                        genPresynapticUpdatePreSpan(os, model, sg, popSubs, false,
-                                                    wumThreshHandler, wumEventHandler);
-                    }
-                    else {
-                        genPresynapticUpdatePostSpan(os, model, sg, popSubs, false,
-                                                     wumThreshHandler, wumEventHandler);
-                    }
-                }
-
-                // If true spikes should be processed
-                if (sg.isTrueSpikeRequired()) {
-                    CodeStream::Scope b(os);
-                    if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-                        assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-                        genPresynapticUpdatePreSpan(os, model, sg, popSubs, true,
-                                                    wumThreshHandler, wumSimHandler);
-                    }
-                    else {
-                        genPresynapticUpdatePostSpan(os, model, sg, popSubs, true,
-                                                     wumThreshHandler, wumSimHandler);
-                    }
-                }
-                
-                os << std::endl;
-
-                // If we have been accumulating into a register, write value back to global memory
-                if (shouldAccumulateInLinSyn(sg)) {
-                    os << "// only do this for existing neurons" << std::endl;
-                    os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "] = linSyn;" << std::endl;
-                    }
-                }
-                // Otherwise, if we have been accumulating into shared memory, write value back to global memory
-                // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                else if(shouldAccumulateInSharedMemory(sg)) {
-                    os << "__syncthreads();" << std::endl;
-                    os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "dd_inSyn" << sg.getName() << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
-                    }
-                }
+                os << "__shared__ " << model.getPrecision() << " shLg[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
             }
-        );
+
+            // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                [&model](const ModelSpec::SynapseGroupValueType &s)
+                {
+                    return (s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
+                            && (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
+                }))
+            {
+                os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
+            }
+
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                [&model](const ModelSpec::SynapseGroupValueType &s)
+                {
+                    return (s.second.isTrueSpikeRequired() || !s.second.getWUModel()->getLearnPostCode().empty());
+                }))
+            {
+                os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
+            }
+
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired()); }))
+            {
+                os << "__shared__ unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
+            }
+
+            // Parallelise over synapse groups
+            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
+                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
+                [](const SynapseGroupInternal &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
+                [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
+                {
+                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                    if(sg.getSrcNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int preReadDelaySlot = " << sg.getPresynapticAxonalDelaySlot("dd_") << ";" << std::endl;
+                        os << "const unsigned int preReadDelayOffset = preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                    if(sg.getTrgNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
+                    if (shouldAccumulateInLinSyn(sg)) {
+                        os << "// only do this for existing neurons" << std::endl;
+                        os << model.getPrecision() << " linSyn;" << std::endl;
+                        os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "linSyn = dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "];" << std::endl;
+                        }
+                    }
+                    // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
+                    // **NOTE** is ok as number of target neurons <= synapseBlkSz
+                    else if(shouldAccumulateInSharedMemory(sg)) {
+                        os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "shLg[threadIdx.x] = dd_inSyn" << sg.getName() << "[threadIdx.x];"<< std::endl;
+                        }
+                        os << "__syncthreads();" << std::endl;
+                    }
+
+                    // If spike events should be processed
+                    if (sg.isSpikeEventRequired()) {
+                        CodeStream::Scope b(os);
+                        if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
+                            assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+                            genPresynapticUpdatePreSpan(os, model, sg, popSubs, false,
+                                                        wumThreshHandler, wumEventHandler);
+                        }
+                        else {
+                            genPresynapticUpdatePostSpan(os, model, sg, popSubs, false,
+                                                        wumThreshHandler, wumEventHandler);
+                        }
+                    }
+
+                    // If true spikes should be processed
+                    if (sg.isTrueSpikeRequired()) {
+                        CodeStream::Scope b(os);
+                        if(sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
+                            assert(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+                            genPresynapticUpdatePreSpan(os, model, sg, popSubs, true,
+                                                        wumThreshHandler, wumSimHandler);
+                        }
+                        else {
+                            genPresynapticUpdatePostSpan(os, model, sg, popSubs, true,
+                                                        wumThreshHandler, wumSimHandler);
+                        }
+                    }
+
+                    os << std::endl;
+
+                    // If we have been accumulating into a register, write value back to global memory
+                    if (shouldAccumulateInLinSyn(sg)) {
+                        os << "// only do this for existing neurons" << std::endl;
+                        os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "] = linSyn;" << std::endl;
+                        }
+                    }
+                    // Otherwise, if we have been accumulating into shared memory, write value back to global memory
+                    // **NOTE** is ok as number of target neurons <= synapseBlkSz
+                    else if(shouldAccumulateInSharedMemory(sg)) {
+                        os << "__syncthreads();" << std::endl;
+                        os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "dd_inSyn" << sg.getName() << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
+                        }
+                    }
+                }
+            );
+        }
     }
 
     // If any synapse groups require postsynaptic learning
