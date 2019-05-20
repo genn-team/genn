@@ -199,6 +199,7 @@ public:
     //--------------------------------------------------------------------------
     const cudaDeviceProp &getChosenCUDADevice() const{ return m_ChosenDevice; }
     int getChosenDeviceID() const{ return m_ChosenDeviceID; }
+    int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
 
     //--------------------------------------------------------------------------

@@ -1295,6 +1295,47 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << std::endl;
     os << "#define SUPPORT_CODE_FUNC __device__ __host__ inline" << std::endl;
     os << std::endl;
+
+    // If device is older than SM 6 or we're using a version of CUDA older than 8
+    if ((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)){
+        os << "// software version of atomic add for double precision" << std::endl;
+        os << "__device__ double atomicAddSW(double* address, double val)";
+        {
+            CodeStream::Scope b(os);
+            os << "unsigned long long int* address_as_ull = (unsigned long long int*)address;" << std::endl;
+            os << "unsigned long long int old = *address_as_ull, assumed;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "assumed = old;" << std::endl;
+                os << "old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));" << std::endl;
+            }
+            os << "while (assumed != old);" << std::endl;
+            os << "return __longlong_as_double(old);" << std::endl;
+        }
+        os << std::endl;
+    }
+
+    // If we're using a CUDA device with SM < 2
+    if (getChosenCUDADevice().major < 2) {
+        os << "// software version of atomic add for single precision float" << std::endl;
+        os << "__device__ float atomicAddSW(float* address, float val)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "int* address_as_ull = (int*)address;" << std::endl;
+            os << "int old = *address_as_ull, assumed;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "assumed = old;" << std::endl;
+                os << "old = atomicCAS(address_as_ull, assumed, __float_as_int(val + __int_as_float(assumed)));" << std::endl;
+            }
+            os << "while (assumed != old);" << std::endl;
+            os << "return __int_as_float(old);" << std::endl;
+        }
+        os << std::endl;
+    }
+    os << std::endl;
     os << "template<typename RNG>" << std::endl;
     os << "__device__ float exponentialDistFloat(RNG *rng)";
     {
