@@ -1299,7 +1299,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     // If device is older than SM 6 or we're using a version of CUDA older than 8
     if ((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)){
         os << "// software version of atomic add for double precision" << std::endl;
-        os << "__device__ double atomicAddSW(double* address, double val)";
+        os << "__device__ inline double atomicAddSW(double* address, double val)";
         {
             CodeStream::Scope b(os);
             os << "unsigned long long int* address_as_ull = (unsigned long long int*)address;" << std::endl;
@@ -1319,7 +1319,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     // If we're using a CUDA device with SM < 2
     if (getChosenCUDADevice().major < 2) {
         os << "// software version of atomic add for single precision float" << std::endl;
-        os << "__device__ float atomicAddSW(float* address, float val)" << std::endl;
+        os << "__device__ inline float atomicAddSW(float* address, float val)" << std::endl;
         {
             CodeStream::Scope b(os);
             os << "int* address_as_ull = (int*)address;" << std::endl;
@@ -1337,7 +1337,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     }
     os << std::endl;
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ float exponentialDistFloat(RNG *rng)";
+    os << "__device__ inline float exponentialDistFloat(RNG *rng)";
     {
         CodeStream::Scope b(os);
         os << "while (true)";
@@ -1353,7 +1353,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     }
     os << std::endl;
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ double exponentialDistDouble(RNG *rng)";
+    os << "__device__ inline double exponentialDistDouble(RNG *rng)";
     {
         CodeStream::Scope b(os);
         os << "while (true)";
@@ -1372,7 +1372,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     // Generate gamma-distributed variates using Marsaglia and Tsang's method
     // G. Marsaglia and W. Tsang. A simple method for generating gamma variables. ACM Transactions on Mathematical Software, 26(3):363-372, 2000.
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ float gammaDistFloatInternal(RNG *rng, float c, float d)" << std::endl;
+    os << "__device__ inline float gammaDistFloatInternal(RNG *rng, float c, float d)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "float x, v, u;" << std::endl;
@@ -1403,7 +1403,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     }
     os << std::endl;
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ float gammaDistFloat(RNG *rng, float a)" << std::endl;
+    os << "__device__ inline float gammaDistFloat(RNG *rng, float a)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "if (a > 1)" << std::endl;
@@ -1425,7 +1425,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << std::endl;
 
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ float gammaDistDoubleInternal(RNG *rng, double c, double d)" << std::endl;
+    os << "__device__ inline float gammaDistDoubleInternal(RNG *rng, double c, double d)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "double x, v, u;" << std::endl;
@@ -1457,7 +1457,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << std::endl;
 
     os << "template<typename RNG>" << std::endl;
-    os << "__device__ float gammaDistDouble(RNG *rng, double a)" << std::endl;
+    os << "__device__ inline float gammaDistDouble(RNG *rng, double a)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "if (a > 1.0)" << std::endl;
