@@ -949,7 +949,7 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     if custom_body is not None:
         body.update(custom_body)
 
-    return type(class_name, (base,), body)
+    return type(class_name, (base,), body)()
 
 
 def create_dpf_class(dp_func):
@@ -1104,5 +1104,5 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
         body.update(custom_body)
 
     return create_custom_model_class(
-        class_name, genn_wrapper.InitVarSnippet.Custom, param_names,
+        class_name, genn_wrapper.InitSparseConnectivitySnippet.Custom, param_names,
         None, derived_params, body)
