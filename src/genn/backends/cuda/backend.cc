@@ -1298,7 +1298,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         os << "const float q = 1.0f - p;" << std::endl;
         os << "const float qn = expf(n * logf(q));" << std::endl;
         os << "const float np = n * p;" << std::endl;
-        os << "const unsigned int bound = min(n, np + (10.0f * sqrtf((np * q) + 1.0f)));" << std::endl;
+        os << "const unsigned int bound = min(n, (unsigned int)(np + (10.0f * sqrtf((np * q) + 1.0f))));" << std::endl;
 
         os << "unsigned int x = 0;" << std::endl;
         os << "float px = qn;" << std::endl;
@@ -1349,7 +1349,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         os << "const double q = 1.0 - p;" << std::endl;
         os << "const double qn = exp(n * log(q));" << std::endl;
         os << "const double np = n * p;" << std::endl;
-        os << "const unsigned int bound = min(n, np + (10.0 * sqrt((np * q) + 1.0)));" << std::endl;
+        os << "const unsigned int bound = min(n, (unsigned int)(np + (10.0 * sqrt((np * q) + 1.0))));" << std::endl;
 
         os << "unsigned int x = 0;" << std::endl;
         os << "double px = qn;" << std::endl;
