@@ -22,7 +22,7 @@ const std::vector<Substitutions::FunctionTemplate> cpuSinglePrecisionFunctions =
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))"},
     {"gennrand_log_normal", 2, "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
     {"gennrand_gamma", 1, "std::gamma_distribution<float>($(0), 1.0f)($(rng))"},
-    {"gennrand_binomial", 2, "std::binomial_distribution<unsigned int>($(1), $(0))($(rng))"}
+    {"gennrand_binomial", 2, "std::binomial_distribution<unsigned int>($(0), $(1))($(rng))"}
 };
 //--------------------------------------------------------------------------
 const std::vector<Substitutions::FunctionTemplate> cpuDoublePrecisionFunctions = {
@@ -31,7 +31,7 @@ const std::vector<Substitutions::FunctionTemplate> cpuDoublePrecisionFunctions =
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))"},
     {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))"},
     {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))"},
-    {"gennrand_binomial", 2, "std::binomial_distribution<unsigned int>($(1), $(0))($(rng))"}
+    {"gennrand_binomial", 2, "std::binomial_distribution<unsigned int>($(0), $(1))($(rng))"}
 };
 
 //--------------------------------------------------------------------------
