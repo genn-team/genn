@@ -14,6 +14,8 @@ var searchData=
   ['set_5finjection_5fcode',['SET_INJECTION_CODE',['../da/d49/currentSourceModels_8h.html#adf53ca7b56294cfcca6f22ddfd1daf4f',1,'currentSourceModels.h']]],
   ['set_5flearn_5fpost_5fcode',['SET_LEARN_POST_CODE',['../dc/dab/weightUpdateModels_8h.html#a9f1ad825b90bcbaab3b0d18fc4d00016',1,'weightUpdateModels.h']]],
   ['set_5flearn_5fpost_5fsupport_5fcode',['SET_LEARN_POST_SUPPORT_CODE',['../dc/dab/weightUpdateModels_8h.html#a5acb21708695409f1ebdd950017b6052',1,'weightUpdateModels.h']]],
+  ['set_5fmax_5fcol_5flength',['SET_MAX_COL_LENGTH',['../de/d51/initSparseConnectivitySnippet_8h.html#a9d72764eb9a910bba6d4a1776717ba02',1,'initSparseConnectivitySnippet.h']]],
+  ['set_5fmax_5frow_5flength',['SET_MAX_ROW_LENGTH',['../de/d51/initSparseConnectivitySnippet_8h.html#a338915170111c85ba647e848d28ee2a9',1,'initSparseConnectivitySnippet.h']]],
   ['set_5fneeds_5fauto_5frefractory',['SET_NEEDS_AUTO_REFRACTORY',['../d3/dc0/neuronModels_8h.html#a8e76c0c83549fc188cc73f323895b445',1,'neuronModels.h']]],
   ['set_5fneeds_5fpost_5fspike_5ftime',['SET_NEEDS_POST_SPIKE_TIME',['../dc/dab/weightUpdateModels_8h.html#a4f3e008922887cba8cfafc0fb0e53965',1,'weightUpdateModels.h']]],
   ['set_5fneeds_5fpre_5fspike_5ftime',['SET_NEEDS_PRE_SPIKE_TIME',['../dc/dab/weightUpdateModels_8h.html#ad06378df00a5d9ffe4068ba2c01b09ab',1,'weightUpdateModels.h']]],

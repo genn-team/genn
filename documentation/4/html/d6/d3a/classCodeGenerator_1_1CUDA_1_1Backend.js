@@ -42,6 +42,7 @@ var classCodeGenerator_1_1CUDA_1_1Backend =
     [ "getChosenDeviceID", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#abea0d22644b3f60389249e8c9fe9e615", null ],
     [ "getDeviceMemoryBytes", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae5788df928832109eb10606611e45066", null ],
     [ "getNVCCFlags", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aa2cc5085a98b9aa8e4e47509c54ab13e", null ],
+    [ "getRuntimeVersion", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae997cc1a24e965c90132162297e190ab", null ],
     [ "getVarPrefix", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a4b10e92d9f9f86252136e0b31a769464", null ],
     [ "isGlobalRNGRequired", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#acd9a5796a357e5b633eb81bee2c35d65", null ],
     [ "isPostsynapticRemapRequired", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#af4eb927f939b6416b193848660287f48", null ],

@@ -7,6 +7,5 @@ var searchData=
   ['expcurr',['ExpCurr',['../d5/d1e/classPostsynapticModels_1_1ExpCurr.html',1,'PostsynapticModels']]],
   ['exponential',['Exponential',['../d8/d70/classInitVarSnippet_1_1Exponential.html',1,'InitVarSnippet']]],
   ['extra_5fglobal_5fparams',['extra_global_params',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a646ab45304e93c1cec854df96e8fb197',1,'pygenn::genn_groups::Group']]],
-  ['extraglobalparamnameiterctx',['ExtraGlobalParamNameIterCtx',['../d0/d02/namespaceCodeGenerator.html#ac00d6a3870619b672d70ba0111bcc896',1,'CodeGenerator']]],
   ['extraglobalvariable',['ExtraGlobalVariable',['../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html',1,'pygenn::model_preprocessor']]]
 ];

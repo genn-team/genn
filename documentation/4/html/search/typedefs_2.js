@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['extraglobalparamnameiterctx',['ExtraGlobalParamNameIterCtx',['../d0/d02/namespaceCodeGenerator.html#ac00d6a3870619b672d70ba0111bcc896',1,'CodeGenerator']]]
+  ['grouphandler',['GroupHandler',['../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2',1,'CodeGenerator::BackendBase']]]
 ];

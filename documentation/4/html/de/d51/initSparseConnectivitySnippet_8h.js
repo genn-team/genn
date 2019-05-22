@@ -10,6 +10,8 @@ var initSparseConnectivitySnippet_8h =
     [ "SET_CALC_MAX_COL_LENGTH_FUNC", "de/d51/initSparseConnectivitySnippet_8h.html#ad59a50b968b2b9dc03093ea1306eec40", null ],
     [ "SET_CALC_MAX_ROW_LENGTH_FUNC", "de/d51/initSparseConnectivitySnippet_8h.html#adc763f727358b11685ddeab7ca8434f2", null ],
     [ "SET_EXTRA_GLOBAL_PARAMS", "de/d51/initSparseConnectivitySnippet_8h.html#aa33e3634a531794ddac1ad49bde09071", null ],
+    [ "SET_MAX_COL_LENGTH", "de/d51/initSparseConnectivitySnippet_8h.html#a9d72764eb9a910bba6d4a1776717ba02", null ],
+    [ "SET_MAX_ROW_LENGTH", "de/d51/initSparseConnectivitySnippet_8h.html#a338915170111c85ba647e848d28ee2a9", null ],
     [ "SET_ROW_BUILD_CODE", "de/d51/initSparseConnectivitySnippet_8h.html#a3758f6bc5bc997383426d5f277b8acc9", null ],
     [ "SET_ROW_BUILD_STATE_VARS", "de/d51/initSparseConnectivitySnippet_8h.html#abfe3722618884af89eb9c64e1345c03f", null ]
 ];
