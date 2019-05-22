@@ -64,7 +64,7 @@ right in.
 
 A network model is defined by the user by providing the function 
 \code{.cc}
-void modelDefinition(NNmodel &model) 
+void modelDefinition(ModelSpec &model) 
 \endcode
 in a separate file, such as `MyModel.cc`. In this function, the following
 tasks must be completed:
@@ -144,7 +144,7 @@ where the arguments are
                                                             postsynaptic model's state variables
 \arg `InitSparseConnectivitySnippet::Init connectivityInitialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
-The NNmodel::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
+The ModelSpec::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
 - SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::SPARSE connectivity (see \ref subsect34).
 \note
 When using a sparse connectivity initialisation snippet, these values are set automatically.
@@ -168,7 +168,7 @@ in `weightVarInitialisers` therefore these must be constant rather than sampled 
 //----------------------------------------------------------------------------
 /*! 
 \page sectNeuronModels Neuron models
-There is a number of predefined models which can be used with the NNmodel::addNeuronGroup function:
+There is a number of predefined models which can be used with the ModelSpec::addNeuronGroup function:
 - NeuronModels::RulkovMap
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
@@ -200,7 +200,7 @@ For convenience the methods this class should implement can be implemented using
     The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. 
     Parameters are assumed to be always of type double.
 - SET_VARS() defines the names and type strings (e.g. "float", "double", etc) 
-    of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model with NNmodel::setPrecision.
+    of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model with ModelSpec::setPrecision.
     The variables defined here as `NAME` can then be used in the
     syntax \$(NAME) in the code string. 
 - SET_NEEDS_AUTO_REFRACTORY() defines whether the neuron should include an automatic refractory period to prevent it emitting spikes in successive timesteps.
@@ -398,7 +398,7 @@ However additional input variables can be added to a neuron model using the SET_
 //----------------------------------------------------------------------------
 /*! 
 \page sectCurrentSourceModels Current source models
-There is a number of predefined models which can be used with the NNmodel::addCurrentSource function:
+There is a number of predefined models which can be used with the ModelSpec::addCurrentSource function:
 - CurrentSourceModels::DC
 - CurrentSourceModels::GaussianNoise
 
@@ -459,9 +459,9 @@ Their values must be initialised at runtime and, if running on the GPU, copied a
 - SynapseMatrixWeight::INDIVIDUAL_PSM allows each postsynapic neuron to have unique post synaptic model variables.
 Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::GLOBAL saves memory by only maintaining one copy of the weight update model variables.
-This is automatically initialized to the initial value passed to NNmodel::addSynapsePopulation.
+This is automatically initialized to the initial value passed to ModelSpec::addSynapsePopulation.
 
-Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to NNmodel::addSynapsePopulation:
+Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to ModelSpec::addSynapsePopulation:
 - SynapseMatrixType::SPARSE_GLOBALG
 - SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM
 - SynapseMatrixType::SPARSE_INDIVIDUALG
@@ -603,6 +603,16 @@ public:
         "}\n");
 
     SET_PARAM_NAMES({"numNeighbours"});
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            return (unsigned int)pars[0];
+        });
+    SET_CALC_MAX_COL_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            return (unsigned int)pars[0];
+        });
 };
 IMPLEMENT_SNIPPET(Ring);
 \endcode
@@ -610,6 +620,8 @@ Each <i>row</i> of sparse connectivity is initialised independantly by running t
 The \$(num_post) variable can be used to access the number of neurons in the postsynaptic population and the \$(id_pre) variable can be used to access the index of the presynaptic neuron associated with the row being generated.
 The `SET_ROW_BUILD_STATE_VARS()` macro can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row.
 Synapses are added to the row using the \$(addSynapse, target) function and iteration is stopped using the \$(endRow) function.
+To avoid having to manually call SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections, sparse connectivity snippets can also provide code to calculate the maximum row and column lengths this connectivity will result in using the SET_CALC_MAX_ROW_LENGTH_FUNC() and SET_CALC_MAX_COL_LENGTH_FUNC() macros.
+Alternatively, if the maximum row or column length is constant, the `SET_MAX_ROW_LENGTH()` and `SET_MAX_COL_LENGTH()` shorthand macros can be used.
 
 \section sect_sparse_connect_init_modes Sparse connectivity locations
 Once you have defined <b>how</b> sparse connectivity is going to be initialised, similarly to variables, you can control <b>where</b> it is allocated. 

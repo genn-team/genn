@@ -8,25 +8,25 @@ We recommend users to also have a look at the \ref Examples, and to follow the t
 
 \section CreateAndSimulate Creating and simulating a network model 
 
-The user is first expected to create an object of class NNmodel by creating the function modelDefinition() which includes calls to following methods:
+The user is first expected to create an object of class ModelSpec by creating the function modelDefinition() which includes calls to following methods:
 
-- NNmodel::setDT();
-- NNmodel::setName();  
+- ModelSpec::setDT();
+- ModelSpec::setName();  
 
 Then add neuron populations by:
 
-- NNmodel::addNeuronPopulation();
+- ModelSpec::addNeuronPopulation();
 
 for each neuron population. Add synapse populations by:
 
-- NNmodel::addSynapsePopulation();
+- ModelSpec::addSynapsePopulation();
 
 for each synapse population.
 
-Other optional functions are explained in NNmodel class reference. At the end the function should look like this:
+Other optional functions are explained in ModelSpec class reference. At the end the function should look like this:
  
 \code
-void modelDefinition(NNModel &model) {
+void modelDefinition(ModelSpec &model) {
   model.setDT(0.5);
   model.setName("YourModelName");
   model.addNeuronPopulation(...);
@@ -42,7 +42,7 @@ This function will be called by generateALL.cc to create corresponding CPU and G
 
 These functions can then be used in a .cc file which runs the simulation. This file should include \<YourModelName\>_CODE/definitions.h. Generated code differ from one model to the other, but core functions are the same and they should be called in correct order. First, the following variables should be defined and initialized:
 
-- NNmodel model // initialized by calling modelDefinition(model)
+- ModelSpec model // initialized by calling modelDefinition(model)
 - Array containing current input (if any)
 
 Any variables marked as unintialised using the ``uninitialisedVar()`` function or sparse connectivity not initialised using a snippet must be initialised by the user between calls to ``initialize()`` and ``initializeSparse()``.
@@ -98,7 +98,7 @@ Double precision floating point numbers are supported by devices with compute ca
 
 GPUs are designed to work better with single precision while double precision is the standard for CPUs. This difference should be kept in mind while comparing performance.
 
-While setting up the network for GeNN, double precision floating point numbers are used as this part is done on the CPU. For the simulation, GeNN lets users choose between single or double precision. Overall, new variables in the generated code are defined with the precision specified by NNmodel::setPrecision(unsigned int), providing GENN_FLOAT or GENN_DOUBLE as argument. GENN_FLOAT is the default value. The keyword \c scalar can be used in the user-defined model codes for a variable that could either be single or double precision. This keyword is detected at code generation and substituted with "float" or "double" according to the precision set by NNmodel::setPrecision(unsigned int).
+While setting up the network for GeNN, double precision floating point numbers are used as this part is done on the CPU. For the simulation, GeNN lets users choose between single or double precision. Overall, new variables in the generated code are defined with the precision specified by ModelSpec::setPrecision(unsigned int), providing GENN_FLOAT or GENN_DOUBLE as argument. GENN_FLOAT is the default value. The keyword \c scalar can be used in the user-defined model codes for a variable that could either be single or double precision. This keyword is detected at code generation and substituted with "float" or "double" according to the precision set by ModelSpec::setPrecision(unsigned int).
  
 There may be ambiguities in arithmetic operations using explicit numbers. Standard C compilers presume that any number defined as "X" is an integer and any number defined as "X.Y" is a double. Make sure to use the same precision in your operations in order to avoid performance loss.
 

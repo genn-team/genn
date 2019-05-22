@@ -14,13 +14,13 @@ The first step is to write a model definition function in a model definition fil
 \note
 The ">>" in the example code snippets refers to a shell prompt in a unix shell, do not enter them as part of your shell commands.
 
-The model definition file contains the definition of the network model we want to simulate. First, we need to include the GeNN model specification code `modelSpec.h`. Then the model definition takes the form of a function named `modelDefinition` that takes one argument, passed by reference, of type `NNmodel`. Type in your `tenHHModel.cc` file:
+The model definition file contains the definition of the network model we want to simulate. First, we need to include the GeNN model specification code `modelSpec.h`. Then the model definition takes the form of a function named `modelDefinition` that takes one argument, passed by reference, of type `ModelSpec`. Type in your `tenHHModel.cc` file:
 \code
 // Model definintion file tenHHModel.cc
 
 #include "modelSpec.h"
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     // definition of tenHHModel
 }
@@ -33,7 +33,7 @@ model.setName("tenHHModel");
 \note 
 With this we have fixed the integration time step to `0.1` in the usual time units. The typical units in GeNN are `ms`, `mV`, `nF`, and `&mu;S`. Therefore, this defines `DT= 0.1 ms`.
 
-Making the actual model definition makes use of the NNmodel::addNeuronPopulation and NNmodel::addSynapsePopulation member functions of the NNmodel object. The arguments to a call to NNmodel::addNeuronPopulation are
+Making the actual model definition makes use of the ModelSpec::addNeuronPopulation and ModelSpec::addSynapsePopulation member functions of the ModelSpec object. The arguments to a call to ModelSpec::addNeuronPopulation are
 \arg `NeuronModel`: template parameter specifying the neuron model class to use
 \arg `const std::string &name`: the name of the population
 \arg `unsigned int size`: The number of neurons in the population
@@ -73,7 +73,7 @@ This completes the model definition in this example. The complete `tenHHModel.cc
 
 #include "modelSpec.h"
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     // definition of tenHHModel
     model.setDT(0.1);
@@ -132,7 +132,7 @@ int main()
     return 0;
 }
 \endcode
-This boiler plate code includes the header file for the generated code `definitions.h` in the subdirectory `tenHHModel_CODE` where GeNN deposits all generated code (this corresponds to the name passed to the ``NNmodel::setName`` function).
+This boiler plate code includes the header file for the generated code `definitions.h` in the subdirectory `tenHHModel_CODE` where GeNN deposits all generated code (this corresponds to the name passed to the ``ModelSpec::setName`` function).
 Calling `allocateMem()` allocates the memory structures for all neuron variables and `initialize()` launches a GPU kernel which initialise all state variables to their initial values.
 Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms. To do so, we add after `initialize();`
 \note

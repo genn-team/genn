@@ -86,7 +86,7 @@ public:
 };
 IMPLEMENT_SNIPPET(Ring);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     // definition of tenHHRing
     model.setDT(0.1);
@@ -221,7 +221,7 @@ public:
 };
 IMPLEMENT_SNIPPET(FirstToFirst);
 
-void modelDefinition(NNmodel &model)
+void modelDefinition(ModelSpec &model)
 {
     // definition of tenHHRing
     model.setDT(0.1);

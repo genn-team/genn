@@ -168,10 +168,10 @@ completed to define a neuronal network model.
    c) The actual network needs to be defined in the form of a function
       `modelDefinition`, i.e. 
       \code{.cc}
-      void modelDefinition(NNmodel &model); 
+      void modelDefinition(ModelSpec &model); 
       \endcode  
       \note
-      The name `modelDefinition` and its parameter of type `NNmodel&`
+      The name `modelDefinition` and its parameter of type `ModelSpec&`
       are fixed and cannot be changed if GeNN is to recognize it as a
       model definition.
 
@@ -185,8 +185,8 @@ completed to define a neuronal network model.
       left to the user if custom model elements are used.
 
    `MBody1.cc` shows a typical example of a model definition function. In
-   its core it contains calls to NNmodel::addNeuronPopulation and
-   NNmodel::addSynapsePopulation to build up the network. For a full range
+   its core it contains calls to ModelSpec::addNeuronPopulation and
+   ModelSpec::addSynapsePopulation to build up the network. For a full range
    of options for defining a network, refer to the \link UserManual User
    Manual\endlink.
 	
