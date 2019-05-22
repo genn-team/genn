@@ -10,6 +10,7 @@ IMPLEMENT_SNIPPET(InitVarSnippet::NormalClipped);
 IMPLEMENT_SNIPPET(InitVarSnippet::NormalClippedDelay);
 IMPLEMENT_SNIPPET(InitVarSnippet::Exponential);
 IMPLEMENT_SNIPPET(InitVarSnippet::Gamma);
+IMPLEMENT_SNIPPET(InitVarSnippet::Binomial);
 
 //----------------------------------------------------------------------------
 // InitVarSnippet::Base
