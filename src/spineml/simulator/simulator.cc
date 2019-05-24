@@ -376,7 +376,7 @@ void *Simulator::getLibrarySymbol(const char *name, bool allowMissing) const
     return symbol;
 }
 //----------------------------------------------------------------------------
-std::tuple<unsigned int*, unsigned int*, unsigned int*, Simulator::VoidFunction, Simulator::VoidFunction> Simulator::getNeuronPopSpikeVars(const std::string &popName) const
+Simulator::NeuronPopSpikeVars Simulator::getNeuronPopSpikeVars(const std::string &popName) const
 {
     // Get pointers to spike counts in model library
     unsigned int **hostSpikeCount = (unsigned int **)getLibrarySymbol(("glbSpkCnt" + popName).c_str());
@@ -669,7 +669,7 @@ unsigned int Simulator::getComponentSize(const std::string &componentName,
 {
     auto component = componentSizes.find(componentName);
     if(component == componentSizes.end()) {
-        throw std::runtime_error("Cannot find neuron population:" + componentName);
+        throw std::runtime_error("Cannot find component:" + componentName);
     }
     else {
         return component->second;
