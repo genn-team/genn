@@ -185,21 +185,14 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned int time
 }
 
 //----------------------------------------------------------------------------
-// SpineMLSimulator::LogOutput::AnalogueNetwork
+// SpineMLSimulator::LogOutput::AnalogueExternal
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
-                                                              const std::string&, unsigned int popSize,
-                                                              const filesystem::path&,
-                                                              const ModelProperty::Base *modelProperty)
+SpineMLSimulator::LogOutput::AnalogueExternal::AnalogueExternal(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+                                                                const std::string&, unsigned int,
+                                                                const filesystem::path&,
+                                                                const ModelProperty::Base *modelProperty)
     : AnalogueBase(node, dt, numTimeSteps, modelProperty), m_CurrentIntervalTimesteps(0)
 {
-    // Check size determined by indices/population size matches attribute
-    const unsigned int size = getIndices().empty() ? popSize : getIndices().size();
-    //assert(size == node.attribute("size").as_uint());
-
-    // Allocate output buffer
-    m_OutputBuffer.resize(size);
-
     // If external timestep is zero then send every timestep
     const double externalTimestepMs = node.attribute("timestep").as_double();
     if(externalTimestepMs == 0.0) {
@@ -215,6 +208,46 @@ SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_no
         m_IntervalTimesteps = ((unsigned int)std::round(externalTimestepMs / dt)) - 1;
         LOGD << "\tExternal timestep:" << externalTimestepMs << "ms - interval:" << m_IntervalTimesteps;
     }
+}
+//----------------------------------------------------------------------------
+void SpineMLSimulator::LogOutput::AnalogueExternal::record(double, unsigned int timestep)
+{
+    // If we should be recording this timestep
+    if(shouldRecord(timestep)) {
+        // If we should transmit this timestep
+        if(m_CurrentIntervalTimesteps == 0) {
+            // Pull state variable from device
+            // **TODO** simple min/max index optimisation
+            pullModelPropertyFromDevice();
+
+            // Perform additional recording logic
+            recordInternal();
+
+            // Reset interval
+            m_CurrentIntervalTimesteps = m_IntervalTimesteps;
+        }
+        // Otherwise decrement interval
+        else {
+            m_CurrentIntervalTimesteps--;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::LogOutput::AnalogueNetwork
+//----------------------------------------------------------------------------
+SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+                                                              const std::string &port, unsigned int popSize,
+                                                              const filesystem::path &logPath,
+                                                              const ModelProperty::Base *modelProperty)
+    : AnalogueExternal(node, dt, numTimeSteps, port, popSize, logPath, modelProperty)
+{
+    // Check size determined by indices/population size matches attribute
+    const unsigned int size = getIndices().empty() ? popSize : getIndices().size();
+    //assert(size == node.attribute("size").as_uint());
+
+    // Allocate output buffer
+    m_OutputBuffer.resize(size);
 
     // Read connection stats
     const std::string connectionName = node.attribute("name").value();
@@ -231,46 +264,29 @@ SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_no
     }
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::LogOutput::AnalogueNetwork::record(double, unsigned int timestep)
+void SpineMLSimulator::LogOutput::AnalogueNetwork::recordInternal()
 {
-    // If we should be recording this timestep
-    if(shouldRecord(timestep)) {
-        // If we should transmit this timestep
-        if(m_CurrentIntervalTimesteps == 0) {
-            // Pull state variable from device
-            // **TODO** simple min/max index optimisation
-            pullModelPropertyFromDevice();
+    // If no indices are specified, transform all values in model property into double precision
+    // **TODO** once precision is switchable this could be optimised out
+    if(getIndices().empty()) {
+        std::transform(getModelPropertyHostStateVarBegin(), getModelPropertyHostStateVarEnd(), m_OutputBuffer.begin(),
+                    [](scalar x)
+                    {
+                        return static_cast<double>(x);
+                    });
+    }
+    // Otherwise, transform indexed variables into output buffer
+    else {
+        std::transform(getIndices().begin(), getIndices().end(), m_OutputBuffer.begin(),
+                    [this](unsigned int i)
+                    {
+                        return static_cast<double>(getModelPropertyHostStateVarBegin()[i]);
+                    });
+    }
 
-            // If no indices are specified, transform all values in model property into double precision
-            // **TODO** once precision is switchable this could be optimised out
-            if(getIndices().empty()) {
-                std::transform(getModelPropertyHostStateVarBegin(), getModelPropertyHostStateVarEnd(), m_OutputBuffer.begin(),
-                            [](scalar x)
-                            {
-                                return static_cast<double>(x);
-                            });
-            }
-            // Otherwise, transform indexed variables into output buffer
-            else {
-                std::transform(getIndices().begin(), getIndices().end(), m_OutputBuffer.begin(),
-                            [this](unsigned int i)
-                            {
-                                return static_cast<double>(getModelPropertyHostStateVarBegin()[i]);
-                            });
-            }
-
-            // Send output data over network client
-            if(!m_Client.send(m_OutputBuffer)) {
-                throw std::runtime_error("Cannot send data to socket");
-            }
-
-            // Reset interval
-            m_CurrentIntervalTimesteps = m_IntervalTimesteps;
-        }
-        // Otherwise decrement interval
-        else {
-            m_CurrentIntervalTimesteps--;
-        }
+    // Send output data over network client
+    if(!m_Client.send(m_OutputBuffer)) {
+        throw std::runtime_error("Cannot send data to socket");
     }
 }
 

@@ -102,7 +102,7 @@ public:
                  const ModelProperty::Base *modelProperty);
 
     //----------------------------------------------------------------------------
-    // Declared virtuals
+    // Base virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
     virtual void record(double dt, unsigned int timestep) override;
@@ -120,7 +120,42 @@ private:
 //----------------------------------------------------------------------------
 // SpineMLSimulator::LogOutput::AnalogueNetwork
 //----------------------------------------------------------------------------
-class AnalogueNetwork : public AnalogueBase
+class AnalogueExternal : public AnalogueBase
+{
+public:
+    AnalogueExternal(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+                     const std::string &port, unsigned int popSize,
+
+                     const filesystem::path &logPath,
+                     const ModelProperty::Base *modelProperty);
+
+    //----------------------------------------------------------------------------
+    // Base virtuals
+    //----------------------------------------------------------------------------
+    // Record any data required during this timestep
+    virtual void record(double dt, unsigned int timestep) final;
+
+protected:
+    //----------------------------------------------------------------------------
+    // Declared virtuals
+    //----------------------------------------------------------------------------
+    virtual void recordInternal(){}
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    // How many GeNN timesteps do we wait before logging
+    unsigned int m_IntervalTimesteps;
+
+    // Count down to next time we log
+    unsigned int m_CurrentIntervalTimesteps;
+};
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::LogOutput::AnalogueNetwork
+//----------------------------------------------------------------------------
+class AnalogueNetwork : public AnalogueExternal
 {
 public:
     AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
@@ -128,23 +163,17 @@ public:
                     const filesystem::path &logPath,
                     const ModelProperty::Base *modelProperty);
 
+protected:
     //----------------------------------------------------------------------------
-    // Declared virtuals
+    // AnalogueExternal virtuals
     //----------------------------------------------------------------------------
-    // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) override;
+    virtual void recordInternal() override;
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
     NetworkClient m_Client;
-
-    // How many GeNN timesteps do we wait before logging
-    unsigned int m_IntervalTimesteps;
-
-    // Count down to next time we log
-    unsigned int m_CurrentIntervalTimesteps;
 
     // Buffer used to generate contiguous output data
     // **NOTE** network protocol always uses double precision
@@ -164,7 +193,7 @@ public:
           ModelProperty::Base::PullFunc pullCurrentSpikesFunc);
 
     //----------------------------------------------------------------------------
-    // Declared virtuals
+    // Base virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
     virtual void record(double dt, unsigned int timestep) override;
