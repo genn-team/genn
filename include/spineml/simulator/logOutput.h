@@ -68,16 +68,21 @@ public:
     AnalogueBase(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
                  const ModelProperty::Base *modelProperty);
 
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    const scalar *getModelPropertyHostStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
+    const scalar *getModelPropertyHostStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
+
+    unsigned int getModelPropertySize() const{ return m_ModelProperty->getSize(); }
+
+    const std::vector<unsigned int> &getIndices() const{ return m_Indices; }
+
 protected:
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    const scalar *getModelPropertyHostStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
-    const scalar *getModelPropertyHostStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
     void pullModelPropertyFromDevice() const{ m_ModelProperty->pullFromDevice(); }
-    unsigned int getModelPropertySize() const{ return m_ModelProperty->getSize(); }
-
-    const std::vector<unsigned int> &getIndices() const{ return m_Indices; }
 
 private:
     //----------------------------------------------------------------------------
