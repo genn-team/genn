@@ -360,6 +360,12 @@ void Simulator::stepTime()
     }
 }
 //----------------------------------------------------------------------------
+const LogOutput::AnalogueExternal *Simulator::getExternalLogger(const std::string &componentName,
+                                                                const std::string &portName) const
+{
+    return nullptr;
+}
+//----------------------------------------------------------------------------
 void *Simulator::getLibrarySymbol(const char *name, bool allowMissing) const
 {
 #ifdef _WIN32
@@ -620,8 +626,9 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
         throw std::runtime_error("Cannot find component '" + target + "'");
     }
 
-     // If this writing to file or network
-    const bool shouldLogToFile = (strcmp(node.attribute("host").value(), "") == 0);
+    // If this writing to file or network
+    const std::string hostName = node.attribute("host").value();
+    const bool shouldLogToFile = hostName.empty();
 
     // If target is an event send port
     const std::string port = node.attribute("port").value();
@@ -653,6 +660,12 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                 if(shouldLogToFile) {
                     return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueFile(node, getDT(), numTimeSteps, port, targetSize->second,
                                                                                         logPath, portProperty->second.get()));
+                }
+                else if(hostName == "0.0.0.0") {
+                    LogOutput::AnalogueExternal *log = new LogOutput::AnalogueExternal(node, getDT(), numTimeSteps, port, targetSize->second,
+                                                                                       logPath, portProperty->second.get());
+                    m_ExternalLoggers[target].emplace(port, log);
+                    return std::unique_ptr<LogOutput::Base>(log);
                 }
                 else {
                     return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueNetwork(node, getDT(), numTimeSteps, port, targetSize->second,

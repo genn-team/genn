@@ -42,6 +42,10 @@ public:
     //! Advance simulation by one timestep
     void stepTime();
 
+    //! Get an external logger by name
+    const LogOutput::AnalogueExternal *getExternalLogger(const std::string &componentName,
+                                                         const std::string &portName) const;
+
     //! Get the simulation timestep (in ms)
     double getDT() const{ return m_DT; }
 
@@ -175,5 +179,8 @@ private:
 
     //! Map of model properties associated with each component
     std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty::Base>>> m_ComponentProperties;
+
+    //! Map of external loggers associated with component ports
+    std::map<std::string, std::map<std::string, const LogOutput::AnalogueExternal*>> m_ExternalLoggers;
 };
 }   // namespace SpineMLSimulator
