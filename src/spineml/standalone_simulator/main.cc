@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 #endif  // _WIN32
 
         // Create simulator
-        Simulator simulator(argv[1], argv[2]);
+        Simulator simulator(argv[1], (argc > 2) ? argv[2] : "");
 
         const unsigned int numTimeSteps = simulator.calcNumTimesteps();
         LOGI << "Simulating for " << numTimeSteps << " " << simulator.getDT() << "ms timesteps";
