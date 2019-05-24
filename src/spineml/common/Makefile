@@ -37,4 +37,4 @@ $(OBJECT_DIRECTORY)/%.o: %.cpp $(OBJECT_DIRECTORY)/%.d
 clean:
 	@find $(OBJECT_DIRECTORY) -type f -name "*.o" -delete
 	@find $(OBJECT_DIRECTORY) -type f -name "*.d" -delete
-	@rm -f $(LIBGENN)
+	@rm -f $(SPINEML_COMMON)
