@@ -394,8 +394,10 @@ Simulator::NeuronPopSpikeVars Simulator::getNeuronPopSpikeVars(const std::string
     return std::make_tuple(*hostSpikeCount, *hostSpikes, spikeQueuePtr, pushFunc, pullFunc);
 }
 //----------------------------------------------------------------------------
-void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_node &node, const pugi::xml_node &modelNode, const std::string &geNNPopName, unsigned int popSize,
-                                      std::map<std::string, unsigned int> &sizes, const std::vector<unsigned int> *remapIndices)
+void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pugi::xml_node &node,
+                                      const pugi::xml_node &modelNode, const std::string &geNNPopName,
+                                      unsigned int popSize, std::map<std::string, unsigned int> &sizes,
+                                      const std::vector<unsigned int> *remapIndices)
 {
     // Get SpineML name of component
     const char *spineMLName = node.attribute("name").value();
@@ -523,8 +525,10 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
     }
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<Input::Base> Simulator::createInput(const pugi::xml_node &node, const std::map<std::string, unsigned int> &componentSizes,
-                                                    const std::map<std::string, std::string> &componentURLs, const ComponentEventPorts &componentEventPorts)
+std::unique_ptr<Input::Base> Simulator::createInput(const pugi::xml_node &node,
+                                                    const std::map<std::string, unsigned int> &componentSizes,
+                                                    const std::map<std::string, std::string> &componentURLs,
+                                                    const ComponentEventPorts &componentEventPorts)
 {
 
     // Get name of target
@@ -600,7 +604,8 @@ std::unique_ptr<Input::Base> Simulator::createInput(const pugi::xml_node &node, 
     }
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node &node, const filesystem::path &logPath,
+std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node &node,
+                                                            const filesystem::path &logPath,
                                                             const std::map<std::string, unsigned int> &componentSizes,
                                                             const std::map<std::string, std::string> &componentURLs,
                                                             const ComponentEventPorts &componentEventPorts)

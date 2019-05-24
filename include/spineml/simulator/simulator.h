@@ -132,8 +132,10 @@ private:
         T *hostStateVar = reinterpret_cast<T*>(getLibrarySymbol(stateVarName.c_str(), true));
 
         // Get push and pull functions
-        auto pushFunc = (ModelProperty::Base::PushFunc)getLibrarySymbol(("push" + stateVarName + "ToDevice").c_str(), true);
-        auto pullFunc = (ModelProperty::Base::PullFunc)getLibrarySymbol(("pull" + stateVarName + "FromDevice").c_str(), true);
+        auto pushFunc = (ModelProperty::Base::PushFunc)getLibrarySymbol(("push" + stateVarName + "ToDevice").c_str(),
+                                                                        true);
+        auto pullFunc = (ModelProperty::Base::PullFunc)getLibrarySymbol(("pull" + stateVarName + "FromDevice").c_str(),
+                                                                        true);
 
         // Return in tuple
         return std::make_tuple(hostStateVar, pushFunc, pullFunc);
