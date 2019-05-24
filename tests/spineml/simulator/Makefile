@@ -16,28 +16,28 @@ include ../../../src/genn/MakefileCommon
 
 # Get simulate SpineML path i.e. directory of this Makefile
 SPINEML_SIM_TEST_PATH	:=$(GENN_DIR)/tests/spineml/simulator
-SPINEML_SIM_SRC_PATH	:= $(GENN_DIR)/src/spineml/simulator
 
 TEST_SOURCES		:= $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc
 TEST_SOURCES		+= $(SPINEML_SIM_TEST_PATH)/*.cc
-TEST_SOURCES		+= $(SPINEML_SIM_SRC_PATH)/connectors.cc $(SPINEML_SIM_SRC_PATH)/inputValue.cc $(SPINEML_SIM_SRC_PATH)/networkClient.cc
 
-# Add compiler and linker flags to link libGeNN and pthreads
-LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_common$(GENN_PREFIX) -lpthread
+# Add compiler and linker flags to link SpineML simulator and common libraries; and pthreads
+LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_simulator$(GENN_PREFIX) -lspineml_common$(GENN_PREFIX) -lpthread
 CXXFLAGS		+= -I$(GENN_DIR)/include/spineml/common -I$(GENN_DIR)/include/spineml/simulator -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" 
 
-# Determine full path to generator and backend
+# Determine full path to test executable
 TEST			:=$(SPINEML_SIM_TEST_PATH)/test$(GENN_PREFIX)
 
-.PHONY: all clean libgenn
+.PHONY: all clean spineml_common spineml_simulator
 
 all: $(TEST)
 
-$(TEST): $(TEST_SOURCES) spineml_common
+$(TEST): $(TEST_SOURCES) spineml_common spineml_simulator
 	$(CXX) -std=c++11 $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
 
 spineml_common:
 	$(MAKE) -C $(GENN_DIR)/src/spineml/common
 
+spineml_simulator:
+	$(MAKE) -C $(GENN_DIR)/src/spineml/simulator
 clean:
 	rm -f $(TEST) *.d *.gcno
