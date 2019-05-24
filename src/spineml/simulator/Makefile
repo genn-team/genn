@@ -1,8 +1,8 @@
 # Include common makefile
 include ../../genn/MakefileCommon
 
-# Determine full path to simulator
-SPINEML_SIMULATOR	:=$(GENN_DIR)/bin/spineml_simulator$(GENN_PREFIX)
+# Add prefix to object directory and library name
+SPINEML_SIMULATOR	:=$(GENN_DIR)/lib/libspineml_simulator$(GENN_PREFIX).a
 OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml/simulator
 
 # Find source files
@@ -16,12 +16,13 @@ DEPS			:=$(OBJECTS:.o=.d)
 CXXFLAGS		+= -I$(GENN_DIR)/include/spineml/common -I$(GENN_DIR)/include/spineml/simulator
 LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_common$(GENN_PREFIX) -ldl
 
-.PHONY: all clean spineml_common
+.PHONY: all clean
 
 all: $(SPINEML_SIMULATOR)
 
-$(SPINEML_SIMULATOR): $(OBJECTS) spineml_common
-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
+$(SPINEML_SIMULATOR): $(OBJECTS)
+	mkdir -p $(@D)
+	$(AR) $(ARFLAGS) $@ $(OBJECTS)
 
 -include $(DEPS)
 
@@ -30,9 +31,6 @@ $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	$(CXX) -std=c++11 $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
-
-spineml_common:
-	$(MAKE) -C $(GENN_DIR)/src/spineml/common
 
 clean:
 	rm -f $(OBJECT_DIRECTORY)/*.o $(OBJECT_DIRECTORY)/*.d $(SPINEML_SIMULATOR)

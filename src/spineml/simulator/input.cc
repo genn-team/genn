@@ -21,6 +21,10 @@
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Input::Base
 //----------------------------------------------------------------------------
+SpineMLSimulator::Input::Base::~Base()
+{
+}
+//----------------------------------------------------------------------------
 SpineMLSimulator::Input::Base::Base(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value) : m_Value(std::move(value))
 {
     // Read start time
