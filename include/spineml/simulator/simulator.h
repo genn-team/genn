@@ -8,9 +8,9 @@
 
 // SpineML simulator includes
 #include "input.h"
+#include "inputValue.h"
 #include "logOutput.h"
 #include "modelProperty.h"
-
 
 //----------------------------------------------------------------------------
 // Macros
@@ -43,8 +43,10 @@ public:
     void stepTime();
 
     //! Get an external logger by name
-    const LogOutput::AnalogueExternal *getExternalLogger(const std::string &componentName,
-                                                         const std::string &portName) const;
+    const LogOutput::AnalogueExternal *getExternalLogger(const std::string &name) const;
+
+    //! Get an external input by name
+    InputValue::External *getExternalInput(const std::string &name) const;
 
     //! Get the simulation timestep (in ms)
     double getDT() const{ return m_DT; }
@@ -180,7 +182,10 @@ private:
     //! Map of model properties associated with each component
     std::map<std::string, std::map<std::string, std::unique_ptr<ModelProperty::Base>>> m_ComponentProperties;
 
-    //! Map of external loggers associated with component ports
-    std::map<std::string, std::map<std::string, const LogOutput::AnalogueExternal*>> m_ExternalLoggers;
+    //! Map of named external loggers
+    std::map<std::string, const LogOutput::AnalogueExternal*> m_ExternalLoggers;
+
+    //! Map of named external inputs
+    std::map<std::string, InputValue::External*> m_ExternalInputs;
 };
 }   // namespace SpineMLSimulator

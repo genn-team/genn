@@ -360,10 +360,26 @@ void Simulator::stepTime()
     }
 }
 //----------------------------------------------------------------------------
-const LogOutput::AnalogueExternal *Simulator::getExternalLogger(const std::string &componentName,
-                                                                const std::string &portName) const
+const LogOutput::AnalogueExternal *Simulator::getExternalLogger(const std::string &name) const
 {
-    return nullptr;
+    auto logger = m_ExternalLoggers.find(name);
+    if(logger != m_ExternalLoggers.cend()) {
+        return logger->second;
+    }
+    else {
+        return nullptr;
+    }
+}
+//----------------------------------------------------------------------------
+InputValue::External *Simulator::getExternalInput(const std::string &name) const
+{
+    auto logger = m_ExternalInputs.find(name);
+    if(logger != m_ExternalInputs.cend()) {
+        return logger->second;
+    }
+    else {
+        return nullptr;
+    }
 }
 //----------------------------------------------------------------------------
 void *Simulator::getLibrarySymbol(const char *name, bool allowMissing) const
@@ -548,7 +564,8 @@ std::unique_ptr<Input::Base> Simulator::createInput(const pugi::xml_node &node,
     }
 
     // Create suitable input value
-    std::unique_ptr<InputValue::Base> inputValue = InputValue::create(m_DT, targetSize->second, node);
+    std::unique_ptr<InputValue::Base> inputValue = InputValue::create(m_DT, targetSize->second, node,
+                                                                      m_ExternalInputs);
 
     // If target is an event receive port
     std::string port = node.attribute("port").value();
@@ -662,9 +679,17 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                                                                                         logPath, portProperty->second.get()));
                 }
                 else if(hostName == "0.0.0.0") {
+                    // Create logger
                     LogOutput::AnalogueExternal *log = new LogOutput::AnalogueExternal(node, getDT(), numTimeSteps, port, targetSize->second,
                                                                                        logPath, portProperty->second.get());
-                    m_ExternalLoggers[target].emplace(port, log);
+
+                    // Add to map of external loggers
+                    const std::string name = node.attribute("name").value();
+                    if(!m_ExternalLoggers.emplace(name, log).second) {
+                        LOGW << "External logger with duplicate name '" << name << "' encountered";
+                    }
+
+                    // Return pointer
                     return std::unique_ptr<LogOutput::Base>(log);
                 }
                 else {

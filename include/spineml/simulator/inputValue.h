@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 // Simulator includes
@@ -184,7 +185,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    const unsigned int getSize()
+    unsigned int getSize() const
     {
         return getTargetIndices().empty() ? getNumNeurons() : getTargetIndices().size();
     }
@@ -228,7 +229,8 @@ private:
 //----------------------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------------------
-std::unique_ptr<Base> create(double dt, unsigned int numNeurons, const pugi::xml_node &node);
+std::unique_ptr<Base> create(double dt, unsigned int numNeurons, const pugi::xml_node &node,
+                             std::map<std::string, InputValue::External*> &externalInputs);
 
 }   // namespace InputValue
 }   // namespace SpineMLSimulator
