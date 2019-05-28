@@ -253,10 +253,6 @@ void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned int
 SpineMLSimulator::InputValue::External::External(double dt, unsigned int numNeurons, const pugi::xml_node &node)
 : Base(numNeurons, node), m_CurrentIntervalTimesteps(0)
 {
-    // Check size determined by indices/population size matches attribute
-    const unsigned int size = getTargetIndices().empty() ? numNeurons : getTargetIndices().size();
-    //assert(node.attribute("size").as_uint() == size);
-
     // If external timestep is zero then send every timestep
     const double externalTimestepMs = node.attribute("timestep").as_double();
     if(externalTimestepMs == 0.0) {
@@ -274,21 +270,7 @@ SpineMLSimulator::InputValue::External::External(double dt, unsigned int numNeur
     }
 
     // Resize buffer
-    m_Buffer.resize(size);
-
-    // Read connection stats
-    const std::string connectionName = node.attribute("name").value();
-    const std::string hostname = node.attribute("host").value();
-    const int port = node.attribute("tcp_port").as_int();
-    LOGD << "\tNetwork input '" << connectionName << "' (" << hostname << ":" << port << ")";
-
-    // Attempt to connect network client
-    if(!m_Client.connect(hostname, port, size, NetworkClient::DataType::Analogue,
-        NetworkClient::Mode::Target, connectionName))
-    {
-        throw std::runtime_error("Cannot connect network client");
-    }
-
+    m_Buffer.resize(getSize());
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::InputValue::External::update(double, unsigned int,
@@ -296,10 +278,8 @@ void SpineMLSimulator::InputValue::External::update(double, unsigned int,
 {
     // If we should update this timestep
     if(m_CurrentIntervalTimesteps == 0) {
-        // Read buffer from network client
-        if(!m_Client.receive(m_Buffer)) {
-            throw std::runtime_error("Cannot receive data from socket");
-        }
+        // Perform additional update logic
+        updateInternal();
 
         // If we have no target indices, apply array values to each neuron
         if(getTargetIndices().empty()) {
@@ -323,6 +303,34 @@ void SpineMLSimulator::InputValue::External::update(double, unsigned int,
     }
 }
 
+//----------------------------------------------------------------------------
+// SpineMLSimulator::InputValue::ExternalNetwork
+//----------------------------------------------------------------------------
+SpineMLSimulator::InputValue::ExternalNetwork::ExternalNetwork(double dt, unsigned int numNeurons, const pugi::xml_node &node)
+: External(dt, numNeurons, node)
+{
+    // Read connection stats
+    const std::string connectionName = node.attribute("name").value();
+    const std::string hostname = node.attribute("host").value();
+    const int port = node.attribute("tcp_port").as_int();
+    LOGD << "\tNetwork input '" << connectionName << "' (" << hostname << ":" << port << ")";
+
+    // Attempt to connect network client
+    if(!m_Client.connect(hostname, port, getSize(), NetworkClient::DataType::Analogue,
+        NetworkClient::Mode::Target, connectionName))
+    {
+        throw std::runtime_error("Cannot connect network client");
+    }
+}
+//------------------------------------------------------------------------
+void SpineMLSimulator::InputValue::ExternalNetwork::updateInternal()
+{
+    // Read buffer from network client
+    if(!m_Client.receive(getBuffer())) {
+        throw std::runtime_error("Cannot receive data from socket");
+    }
+}
+
 //------------------------------------------------------------------------
 // SpineMLSimulator::InputValue
 //------------------------------------------------------------------------
@@ -342,7 +350,13 @@ std::unique_ptr<SpineMLSimulator::InputValue::Base> SpineMLSimulator::InputValue
         return std::unique_ptr<Base>(new TimeVaryingArray(dt, numNeurons, node));
     }
     else if(strcmp(node.name(), "ExternalInput") == 0) {
-        return std::unique_ptr<Base>(new External(dt, numNeurons, node));
+        const std::string hostName = node.attribute("host").value();
+        if(hostName == "0.0.0.0") {
+            return std::unique_ptr<Base>(new External(dt, numNeurons, node));
+        }
+        else {
+            return std::unique_ptr<Base>(new ExternalNetwork(dt, numNeurons, node));
+        }
     }
     else {
         throw std::runtime_error("Input value type '" + std::string(node.name()) + "' not supported");

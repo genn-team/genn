@@ -167,13 +167,34 @@ public:
     // InputValue virtuals
     //------------------------------------------------------------------------
     virtual void update(double dt, unsigned int timestep,
-                        std::function<void(unsigned int, double)> applyValueFunc) override;
+                        std::function<void(unsigned int, double)> applyValueFunc) final;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    std::vector<double>::iterator getBufferBegin(){ return m_Buffer.begin(); }
+    std::vector<double>::iterator getBufferEnd(){ return m_Buffer.end(); }
+
+protected:
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    virtual void updateInternal(){}
+
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    const unsigned int getSize()
+    {
+        return getTargetIndices().empty() ? getNumNeurons() : getTargetIndices().size();
+    }
+
+    std::vector<double> &getBuffer(){ return m_Buffer; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    NetworkClient m_Client;
     std::vector<double> m_Buffer;
 
     // How many GeNN timesteps do we wait before updating
@@ -181,6 +202,27 @@ private:
 
     // Count down to next time we update
     unsigned int m_CurrentIntervalTimesteps;
+};
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::InputValue::ExternalNetwork
+//----------------------------------------------------------------------------
+class ExternalNetwork : public External
+{
+public:
+    ExternalNetwork(double dt, unsigned int numNeurons, const pugi::xml_node &node);
+
+protected:
+    //------------------------------------------------------------------------
+    // External virtuals
+    //------------------------------------------------------------------------
+    virtual void updateInternal() override;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    NetworkClient m_Client;
 };
 
 //----------------------------------------------------------------------------
