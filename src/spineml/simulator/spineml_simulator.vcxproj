@@ -18,19 +18,19 @@
     <ClCompile Include="input.cc" />
     <ClCompile Include="inputValue.cc" />
     <ClCompile Include="logOutput.cc" />
-    <ClCompile Include="main.cc" />
+    <ClCompile Include="simulator.cc" />
     <ClCompile Include="modelProperty.cc" />
     <ClCompile Include="networkClient.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -44,7 +44,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>..\..\..\bin\</OutDir>
+    <OutDir>..\..\..\lib\</OutDir>
     <IntDir>..\..\..\$(Platform)\$(Configuration)\spineml_simulator\</IntDir>
     <TargetName>spineml_simulator_$(Configuration)</TargetName>
   </PropertyGroup>
