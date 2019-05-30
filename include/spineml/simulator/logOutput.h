@@ -31,32 +31,32 @@ namespace LogOutput
 class Base
 {
 public:
-    Base(const pugi::xml_node &node, double dt, unsigned int numTimeSteps);
+    Base(const pugi::xml_node &node, double dt);
     virtual ~Base(){}
 
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) = 0;
+    virtual void record(double dt, unsigned long long timestep) = 0;
 
 protected:
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    bool shouldRecord(unsigned int timestep) const
+    bool shouldRecord(unsigned long long timestep) const
     {
         return (timestep >= m_StartTimeStep && timestep < m_EndTimeStep);
     }
 
-    unsigned int getEndTimestep() const{ return m_EndTimeStep; }
+    unsigned long long getEndTimestep() const{ return m_EndTimeStep; }
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    unsigned int m_StartTimeStep;
-    unsigned int m_EndTimeStep;
+    unsigned long long m_StartTimeStep;
+    unsigned long long m_EndTimeStep;
 };
 
 //----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ private:
 class AnalogueBase : public Base
 {
 public:
-    AnalogueBase(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    AnalogueBase(const pugi::xml_node &node, double dt, 
                  const ModelProperty::Base *modelProperty);
 
     //----------------------------------------------------------------------------
@@ -101,7 +101,7 @@ private:
 class AnalogueFile : public AnalogueBase
 {
 public:
-    AnalogueFile(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    AnalogueFile(const pugi::xml_node &node, double dt, unsigned long long numTimeSteps,
                  const std::string &port, unsigned int popSize,
                  const filesystem::path &logPath,
                  const ModelProperty::Base *modelProperty);
@@ -110,7 +110,7 @@ public:
     // Base virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) override;
+    virtual void record(double dt, unsigned long long timestep) override;
 
 private:
     //----------------------------------------------------------------------------
@@ -128,7 +128,7 @@ private:
 class AnalogueExternal : public AnalogueBase
 {
 public:
-    AnalogueExternal(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    AnalogueExternal(const pugi::xml_node &node, double dt,
                      const std::string &port, unsigned int popSize,
 
                      const filesystem::path &logPath,
@@ -138,7 +138,7 @@ public:
     // Base virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) final;
+    virtual void record(double dt, unsigned long long timestep) final;
 
 protected:
     //----------------------------------------------------------------------------
@@ -163,7 +163,7 @@ private:
 class AnalogueNetwork : public AnalogueExternal
 {
 public:
-    AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    AnalogueNetwork(const pugi::xml_node &node, double dt,
                     const std::string &port, unsigned int popSize,
                     const filesystem::path &logPath,
                     const ModelProperty::Base *modelProperty);
@@ -191,7 +191,7 @@ private:
 class Event : public Base
 {
 public:
-    Event(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    Event(const pugi::xml_node &node, double dt, unsigned long long numTimeSteps,
           const std::string &port, unsigned int popSize,
           const filesystem::path &logPath, unsigned int *spikeQueuePtr,
           unsigned int *hostSpikeCount, unsigned int *hostSpikes,
@@ -201,7 +201,7 @@ public:
     // Base virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) override;
+    virtual void record(double dt, unsigned long long timestep) override;
 
 private:
     //----------------------------------------------------------------------------

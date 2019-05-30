@@ -33,22 +33,22 @@ SpineMLSimulator::Input::Base::Base(double dt, const pugi::xml_node &node, std::
         m_StartTimeStep = 0;
     }
     else {
-        m_StartTimeStep = (unsigned int)std::ceil(startAttr.as_double() / dt);
+        m_StartTimeStep = (unsigned long long)std::ceil(startAttr.as_double() / dt);
     }
 
     // Read duration
     auto durationAttr = node.attribute("duration");
     if(durationAttr.empty()) {
-        m_EndTimeStep = std::numeric_limits<unsigned int>::max();
+        m_EndTimeStep = std::numeric_limits<unsigned long long>::max();
     }
     else {
-        m_EndTimeStep = m_StartTimeStep + (unsigned int)std::ceil(durationAttr.as_double() / dt);
+        m_EndTimeStep = m_StartTimeStep + (unsigned long long)std::ceil(durationAttr.as_double() / dt);
     }
 
     LOGD << "\tStart timestep:" << m_StartTimeStep << ", end timestep:" << m_EndTimeStep;
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::Input::Base::updateValues(double dt, unsigned int timestep,
+void SpineMLSimulator::Input::Base::updateValues(double dt, unsigned long long timestep,
                                                  std::function<void(unsigned int, double)> applyValueFunc) const
 {
     m_Value->update(dt, timestep, applyValueFunc);
@@ -92,7 +92,7 @@ SpineMLSimulator::Input::InterSpikeIntervalBase::InterSpikeIntervalBase(double d
 {
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned int timestep)
+void SpineMLSimulator::Input::InterSpikeIntervalBase::apply(double dt, unsigned long long timestep)
 {
     // Determine if there are any update values this timestep (rate changes)
     // **NOTE** even if we shouldn't be applying any input, rate updates still should happen
@@ -197,7 +197,7 @@ SpineMLSimulator::Input::SpikeTime::SpikeTime(double dt, const pugi::xml_node &n
     LOGD << "\tSpike time";
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::Input::SpikeTime::apply(double dt, unsigned int timestep)
+void SpineMLSimulator::Input::SpikeTime::apply(double dt, unsigned long long timestep)
 {
     // If we should be applying input during this timestep
     if(shouldApply(timestep)) {
@@ -222,7 +222,7 @@ SpineMLSimulator::Input::Analogue::Analogue(double dt, const pugi::xml_node &nod
 {
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::Input::Analogue::apply(double dt, unsigned int timestep)
+void SpineMLSimulator::Input::Analogue::apply(double dt, unsigned long long timestep)
 {
     // Determine if there are any value update this timestep
     // **NOTE** even if we shouldn't be applying any input, value updates still should happen
@@ -247,7 +247,7 @@ void SpineMLSimulator::Input::Analogue::apply(double dt, unsigned int timestep)
     if(shouldApply(timestep) && m_PropertyUpdateRequired) {
         // Loop through current values and update corresponding model property values
         for(const auto &v : m_CurrentValues) {
-            m_ModelProperty->getHostStateVarBegin()[v.first] = v.second;
+            m_ModelProperty->getHostStateVarBegin()[v.first] = (scalar)v.second;
         }
 
         // Upload model property if required

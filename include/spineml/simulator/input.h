@@ -40,7 +40,7 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    virtual void apply(double dt, unsigned int timestep) = 0;
+    virtual void apply(double dt, unsigned long long timestep) = 0;
 
 protected:
      Base(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value);
@@ -48,20 +48,20 @@ protected:
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    bool shouldApply(unsigned int timestep) const
+    bool shouldApply(unsigned long long timestep) const
     {
         return (timestep >= m_StartTimeStep && timestep < m_EndTimeStep);
     }
 
-    void updateValues(double dt, unsigned int timestep,
+    void updateValues(double dt, unsigned long long timestep,
                       std::function<void(unsigned int, double)> applyValueFunc) const;
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    unsigned int m_StartTimeStep;
-    unsigned int m_EndTimeStep;
+    unsigned long long m_StartTimeStep;
+    unsigned long long m_EndTimeStep;
 
     std::unique_ptr<InputValue::Base> m_Value;
 };
@@ -114,7 +114,7 @@ public:
     //----------------------------------------------------------------------------
     // Base virtuals
     //----------------------------------------------------------------------------
-    virtual void apply(double dt, unsigned int timestep) override;
+    virtual void apply(double dt, unsigned long long timestep) override;
 
 protected:
     InterSpikeIntervalBase(double dt, const pugi::xml_node &node, std::unique_ptr<InputValue::Base> value,
@@ -186,7 +186,7 @@ public:
     //----------------------------------------------------------------------------
     // SpikeBase virtuals
     //----------------------------------------------------------------------------
-    virtual void apply(double dt, unsigned int timestep) override;
+    virtual void apply(double dt, unsigned long long timestep) override;
 };
 
 //----------------------------------------------------------------------------
@@ -201,7 +201,7 @@ public:
     //----------------------------------------------------------------------------
     // Base virtuals
     //----------------------------------------------------------------------------
-    virtual void apply(double dt, unsigned int timestep) override;
+    virtual void apply(double dt, unsigned long long timestep) override;
 
 private:
     //----------------------------------------------------------------------------

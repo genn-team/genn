@@ -60,9 +60,9 @@ public:
     double getLogMs() const{ return m_LogMs; }
 
     //! Calculate duration of simulation read from experiment in timesteps
-    unsigned int calcNumTimesteps() const
+    unsigned long long calcNumTimesteps() const
     {
-        return (unsigned int)std::ceil(getDurationMs() / getDT());
+        return (unsigned long long)std::ceil(getDurationMs() / getDT());
     }
 
 private:

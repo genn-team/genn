@@ -62,7 +62,7 @@ SpineMLSimulator::InputValue::Constant::Constant(double, unsigned int numNeurons
     LOGD << "\tConstant value:" << m_Value;
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::Constant::update(double, unsigned int timestep,
+void SpineMLSimulator::InputValue::Constant::update(double, unsigned long long timestep,
                                                     std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If this is the first timestep, apply constant value
@@ -100,7 +100,7 @@ SpineMLSimulator::InputValue::ConstantArray::ConstantArray(double, unsigned int 
     }
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::ConstantArray::update(double, unsigned int timestep,
+void SpineMLSimulator::InputValue::ConstantArray::update(double, unsigned long long timestep,
                                                          std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If this is the first timestep, apply array of values
@@ -141,7 +141,7 @@ SpineMLSimulator::InputValue::TimeVarying::TimeVarying(double dt, unsigned int n
 
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::TimeVarying::update(double, unsigned int timestep,
+void SpineMLSimulator::InputValue::TimeVarying::update(double, unsigned long long timestep,
                                                        std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If there is a time value to apply at this timestep, do so
@@ -234,7 +234,7 @@ SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double dt, unsi
     }
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned int timestep,
+void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned long long timestep,
                                                             std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If there is a time value to apply at this timestep, do so
@@ -273,7 +273,7 @@ SpineMLSimulator::InputValue::External::External(double dt, unsigned int numNeur
     m_Buffer.resize(getSize());
 }
 //------------------------------------------------------------------------
-void SpineMLSimulator::InputValue::External::update(double, unsigned int,
+void SpineMLSimulator::InputValue::External::update(double, unsigned long long,
                                                     std::function<void(unsigned int, double)> applyValueFunc)
 {
     // If we should update this timestep

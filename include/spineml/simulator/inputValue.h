@@ -31,7 +31,7 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) = 0;
 
 protected:
@@ -77,7 +77,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //------------------------------------------------------------------------
@@ -98,7 +98,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //------------------------------------------------------------------------
@@ -119,7 +119,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 
 private:
@@ -167,7 +167,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) final;
 
     //------------------------------------------------------------------------
@@ -187,7 +187,7 @@ protected:
     //------------------------------------------------------------------------
     unsigned int getSize() const
     {
-        return getTargetIndices().empty() ? getNumNeurons() : getTargetIndices().size();
+        return getTargetIndices().empty() ? getNumNeurons() : (unsigned int)getTargetIndices().size();
     }
 
     std::vector<double> &getBuffer(){ return m_Buffer; }

@@ -322,7 +322,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
 void Simulator::stepTime()
 {
     // Get GeNN timestep at start of step
-    const unsigned int i = *m_SimulationTimestep;
+    const unsigned long long i = *m_SimulationTimestep;
 
     // Apply inputs
     {
@@ -633,7 +633,7 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                                                             const std::map<std::string, std::string> &componentURLs,
                                                             const ComponentEventPorts &componentEventPorts)
 {
-    const unsigned int numTimeSteps = calcNumTimesteps();
+    const unsigned long long numTimeSteps = calcNumTimesteps();
     // Get name of target
     std::string target = node.attribute("target").value();
 
@@ -680,7 +680,7 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                 }
                 else if(hostName == "0.0.0.0") {
                     // Create logger
-                    LogOutput::AnalogueExternal *log = new LogOutput::AnalogueExternal(node, getDT(), numTimeSteps, port, targetSize->second,
+                    LogOutput::AnalogueExternal *log = new LogOutput::AnalogueExternal(node, getDT(), port, targetSize->second,
                                                                                        logPath, portProperty->second.get());
 
                     // Add to map of external loggers
@@ -693,7 +693,7 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                     return std::unique_ptr<LogOutput::Base>(log);
                 }
                 else {
-                    return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueNetwork(node, getDT(), numTimeSteps, port, targetSize->second,
+                    return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueNetwork(node, getDT(), port, targetSize->second,
                                                                                            logPath, portProperty->second.get()));
                 }
             }
