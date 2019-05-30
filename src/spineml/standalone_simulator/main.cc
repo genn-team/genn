@@ -30,11 +30,11 @@ int main(int argc, char *argv[])
         // Create simulator
         Simulator simulator(argv[1], (argc > 2) ? argv[2] : "");
 
-        const unsigned int numTimeSteps = simulator.calcNumTimesteps();
+        const unsigned long long numTimeSteps = simulator.calcNumTimesteps();
         LOGI << "Simulating for " << numTimeSteps << " " << simulator.getDT() << "ms timesteps";
 
         // Loop through time
-        for(unsigned int i = 0; i < numTimeSteps; i++) {
+        for(unsigned long long i = 0; i < numTimeSteps; i++) {
             simulator.stepTime();
         }
 
