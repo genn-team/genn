@@ -633,9 +633,8 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                                                             const std::map<std::string, std::string> &componentURLs,
                                                             const ComponentEventPorts &componentEventPorts)
 {
-    const unsigned long long numTimeSteps = calcNumTimesteps();
     // Get name of target
-    std::string target = node.attribute("target").value();
+    const std::string target = node.attribute("target").value();
 
     // Find size of target component
     auto targetSize = componentSizes.find(target);
@@ -648,6 +647,7 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
     const bool shouldLogToFile = hostName.empty();
 
     // If target is an event send port
+    const unsigned long long numTimeSteps = calcNumTimesteps();
     const std::string port = node.attribute("port").value();
     if(isEventSendPort(target, port, componentURLs, componentEventPorts)) {
         // **TODO** spike-based network logging not supported
