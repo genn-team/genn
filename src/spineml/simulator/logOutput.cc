@@ -167,7 +167,7 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned long lon
 
         // If no indices are specified, directly write out data from model property
         if(getIndices().empty()) {
-            m_File.write(reinterpret_cast<const char*>(getModelPropertyHostStateVarBegin()), sizeof(scalar) * getModelPropertySize());
+            m_File.write(reinterpret_cast<const char*>(getStateVarBegin()), sizeof(scalar) * getModelPropertySize());
         }
         // Otherwise
         else {
@@ -175,7 +175,7 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned long lon
             std::transform(getIndices().begin(), getIndices().end(), m_OutputBuffer.begin(),
                            [this](unsigned int i)
                            {
-                               return getModelPropertyHostStateVarBegin()[i];
+                               return getStateVarBegin()[i];
                            });
 
             // Write output buffer to file
@@ -269,7 +269,7 @@ void SpineMLSimulator::LogOutput::AnalogueNetwork::recordInternal()
     // If no indices are specified, transform all values in model property into double precision
     // **TODO** once precision is switchable this could be optimised out
     if(getIndices().empty()) {
-        std::transform(getModelPropertyHostStateVarBegin(), getModelPropertyHostStateVarEnd(), m_OutputBuffer.begin(),
+        std::transform(getStateVarBegin(), getStateVarEnd(), m_OutputBuffer.begin(),
                     [](scalar x)
                     {
                         return static_cast<double>(x);
@@ -280,7 +280,7 @@ void SpineMLSimulator::LogOutput::AnalogueNetwork::recordInternal()
         std::transform(getIndices().begin(), getIndices().end(), m_OutputBuffer.begin(),
                     [this](unsigned int i)
                     {
-                        return static_cast<double>(getModelPropertyHostStateVarBegin()[i]);
+                        return static_cast<double>(getStateVarBegin()[i]);
                     });
     }
 

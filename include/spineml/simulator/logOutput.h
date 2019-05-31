@@ -71,8 +71,8 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    const scalar *getModelPropertyHostStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
-    const scalar *getModelPropertyHostStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
+    const scalar *getStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
+    const scalar *getStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
 
     unsigned int getModelPropertySize() const{ return m_ModelProperty->getSize(); }
 
