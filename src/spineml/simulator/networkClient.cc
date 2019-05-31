@@ -17,7 +17,7 @@ SpineMLSimulator::NetworkClient::NetworkClient() : m_Socket(-1)
 {
 }
 //----------------------------------------------------------------------------
-SpineMLSimulator::NetworkClient::NetworkClient(const std::string &hostname, int port, int size, DataType dataType, Mode mode, const std::string &connectionName)
+SpineMLSimulator::NetworkClient::NetworkClient(const std::string &hostname, unsigned int port, unsigned int size, DataType dataType, Mode mode, const std::string &connectionName)
 {
     if(!connect(hostname, port, size, dataType, mode, connectionName)) {
         throw std::runtime_error("Cannot connect network client");
@@ -36,7 +36,7 @@ SpineMLSimulator::NetworkClient::~NetworkClient()
     }
 }
 //----------------------------------------------------------------------------
-bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int port, int size, DataType dataType, Mode mode, const std::string &connectionName)
+bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, unsigned int port, unsigned int size, DataType dataType, Mode mode, const std::string &connectionName)
 {
     // Create socket
     m_Socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -57,7 +57,7 @@ bool SpineMLSimulator::NetworkClient::connect(const std::string &hostname, int p
     sockaddr_in destAddress;
     memset(&destAddress, 0, sizeof(sockaddr_in));
     destAddress.sin_family = AF_INET;
-    destAddress.sin_port = htons(port);
+    destAddress.sin_port = htons((uint16_t)port);
     destAddress.sin_addr.s_addr = inet_addr(hostname.c_str());
 
    // Connect socket

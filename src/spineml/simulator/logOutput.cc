@@ -252,7 +252,7 @@ SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_no
     // Read connection stats
     const std::string connectionName = node.attribute("name").value();
     const std::string hostname = node.attribute("host").value();
-    const int tcpPort = node.attribute("tcp_port").as_int();
+    const unsigned int tcpPort = node.attribute("tcp_port").as_uint();
 
     LOGD << "\tAnalogue network log '" << connectionName << "' (" << hostname << ":" << tcpPort << ")";
 

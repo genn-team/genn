@@ -312,7 +312,7 @@ SpineMLSimulator::InputValue::ExternalNetwork::ExternalNetwork(double dt, unsign
     // Read connection stats
     const std::string connectionName = node.attribute("name").value();
     const std::string hostname = node.attribute("host").value();
-    const int port = node.attribute("tcp_port").as_int();
+    const unsigned int port = node.attribute("tcp_port").as_uint();
     LOGD << "\tNetwork input '" << connectionName << "' (" << hostname << ":" << port << ")";
 
     // Attempt to connect network client
