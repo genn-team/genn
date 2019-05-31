@@ -39,6 +39,11 @@ int main(int argc, char *argv[])
         }
 
         LOGI << "Applying input: " << simulator.getInputMs() << "ms, simulating:" << simulator.getSimulateMs() << "ms, logging:" << simulator.getLogMs() << "ms" << std::endl;
+
+#ifdef _WIN32
+        // Close down WinSock 2
+        WSACleanup();
+#endif
     }
     catch(const std::exception &exception)
     {
