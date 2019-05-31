@@ -188,7 +188,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
 
         // Read basic population properties
         const char *popName = neuron.attribute("name").value();
-        const unsigned int popSize = neuron.attribute("size").as_int();
+        const unsigned int popSize = neuron.attribute("size").as_uint();
         LOGI << "Population '" << popName << "' consisting of " << popSize << " neurons";
 
         // Add neuron population properties to dictionary

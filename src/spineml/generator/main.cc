@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
 
             // Read basic population properties
             auto popName = SpineMLUtils::getSafeName(neuron.attribute("name").value());
-            const unsigned int popSize = neuron.attribute("size").as_int();
+            const unsigned int popSize = neuron.attribute("size").as_uint();
             LOGD << "Population " << popName << " consisting of " << popSize << " neurons";
 
             // If population is a spike source add GeNN spike source
