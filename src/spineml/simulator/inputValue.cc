@@ -352,15 +352,15 @@ std::unique_ptr<SpineMLSimulator::InputValue::Base> SpineMLSimulator::InputValue
     else if(strcmp(node.name(), "ExternalInput") == 0) {
         const std::string hostName = node.attribute("host").value();
         if(hostName == "0.0.0.0") {
-            External *inputValue = new External(dt, numNeurons, node);
+            std::unique_ptr<External> inputValue(new External(dt, numNeurons, node));
 
             // Add to map of external inputs
             const std::string name = node.attribute("name").value();
-            if(!externalInputs.emplace(name, inputValue).second) {
+            if(!externalInputs.emplace(name, inputValue.get()).second) {
                 LOGW << "External input with duplicate name '" << name << "' encountered";
             }
 
-            return std::unique_ptr<Base>(inputValue);
+            return inputValue;
         }
         else {
             return std::unique_ptr<Base>(new ExternalNetwork(dt, numNeurons, node));

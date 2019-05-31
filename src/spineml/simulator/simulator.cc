@@ -680,17 +680,18 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                 }
                 else if(hostName == "0.0.0.0") {
                     // Create logger
-                    LogOutput::AnalogueExternal *log = new LogOutput::AnalogueExternal(node, getDT(), port, targetSize->second,
-                                                                                       logPath, portProperty->second.get());
+                    std::unique_ptr<LogOutput::AnalogueExternal> log(
+                        new LogOutput::AnalogueExternal(node, getDT(), port, targetSize->second,
+                                                        logPath, portProperty->second.get()));
 
                     // Add to map of external loggers
                     const std::string name = node.attribute("name").value();
-                    if(!m_ExternalLoggers.emplace(name, log).second) {
+                    if(!m_ExternalLoggers.emplace(name, log.get()).second) {
                         LOGW << "External logger with duplicate name '" << name << "' encountered";
                     }
 
                     // Return pointer
-                    return std::unique_ptr<LogOutput::Base>(log);
+                    return log;
                 }
                 else {
                     return std::unique_ptr<LogOutput::Base>(new LogOutput::AnalogueNetwork(node, getDT(), port, targetSize->second,
