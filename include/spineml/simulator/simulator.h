@@ -13,15 +13,6 @@
 #include "modelProperty.h"
 
 //----------------------------------------------------------------------------
-// Macros
-//----------------------------------------------------------------------------
-#ifdef _WIN32
-    #define LIBRARY_HANDLE HMODULE
-#else
-    #define LIBRARY_HANDLE void*
-#endif
-
-//----------------------------------------------------------------------------
 // SpineMLSimulator::Simulator
 //----------------------------------------------------------------------------
 namespace SpineMLSimulator
@@ -69,6 +60,13 @@ private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
+    //! Platform-specific type of handle to dynamically-loaded library
+#ifdef _WIN32
+    typedef HMODULE LibraryHandle;
+#else
+    typedef void* LibraryHandle;
+#endif
+
     //! Function pointer type for void function
     typedef void (*VoidFunction)(void);
 
@@ -151,7 +149,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     //! Handle to model library
-    LIBRARY_HANDLE m_ModelLibrary;
+    LibraryHandle m_ModelLibrary;
 
     //! Pointer to stepTime function in model library
     VoidFunction m_StepTime;
