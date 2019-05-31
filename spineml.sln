@@ -15,6 +15,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_generator", "src\sp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_common", "src\spineml\common\spineml_common.vcxproj", "{63424AC3-404B-4F72-8E94-0342524A966B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spineml_standalone_simulator", "src\spineml\standalone_simulator\spineml_standalone_simulator.vcxproj", "{549424F0-60AD-45AE-AAEB-BDDFD141E716}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8FBF8A36-6935-4FCD-A2B4-CF3D927203BE} = {8FBF8A36-6935-4FCD-A2B4-CF3D927203BE}
+		{63424AC3-404B-4F72-8E94-0342524A966B} = {63424AC3-404B-4F72-8E94-0342524A966B}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_CUDA|x64 = Debug_CUDA|x64
@@ -47,6 +53,14 @@ Global
 		{63424AC3-404B-4F72-8E94-0342524A966B}.Release_CUDA|x64.Build.0 = Release|x64
 		{63424AC3-404B-4F72-8E94-0342524A966B}.Release|x64.ActiveCfg = Release|x64
 		{63424AC3-404B-4F72-8E94-0342524A966B}.Release|x64.Build.0 = Release|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Debug_CUDA|x64.ActiveCfg = Debug|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Debug_CUDA|x64.Build.0 = Debug|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Debug|x64.ActiveCfg = Debug|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Debug|x64.Build.0 = Debug|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Release_CUDA|x64.ActiveCfg = Release|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Release_CUDA|x64.Build.0 = Release|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Release|x64.ActiveCfg = Release|x64
+		{549424F0-60AD-45AE-AAEB-BDDFD141E716}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

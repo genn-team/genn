@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 // Simulator includes
@@ -30,7 +31,7 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) = 0;
 
 protected:
@@ -76,7 +77,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //------------------------------------------------------------------------
@@ -97,7 +98,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //------------------------------------------------------------------------
@@ -118,7 +119,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 private:
     //----------------------------------------------------------------------------
@@ -139,7 +140,7 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
+    virtual void update(double dt, unsigned long long timestep,
                         std::function<void(unsigned int, double)> applyValueFunc) override;
 
 private:
@@ -166,14 +167,35 @@ public:
     //------------------------------------------------------------------------
     // InputValue virtuals
     //------------------------------------------------------------------------
-    virtual void update(double dt, unsigned int timestep,
-                        std::function<void(unsigned int, double)> applyValueFunc) override;
+    virtual void update(double dt, unsigned long long timestep,
+                        std::function<void(unsigned int, double)> applyValueFunc) final;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    std::vector<double>::iterator getBufferBegin(){ return m_Buffer.begin(); }
+    std::vector<double>::iterator getBufferEnd(){ return m_Buffer.end(); }
+
+protected:
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    virtual void updateInternal(){}
+
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    unsigned int getSize() const
+    {
+        return getTargetIndices().empty() ? getNumNeurons() : (unsigned int)getTargetIndices().size();
+    }
+
+    std::vector<double> &getBuffer(){ return m_Buffer; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    NetworkClient m_Client;
     std::vector<double> m_Buffer;
 
     // How many GeNN timesteps do we wait before updating
@@ -184,9 +206,31 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// SpineMLSimulator::InputValue::ExternalNetwork
+//----------------------------------------------------------------------------
+class ExternalNetwork : public External
+{
+public:
+    ExternalNetwork(double dt, unsigned int numNeurons, const pugi::xml_node &node);
+
+protected:
+    //------------------------------------------------------------------------
+    // External virtuals
+    //------------------------------------------------------------------------
+    virtual void updateInternal() override;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    NetworkClient m_Client;
+};
+
+//----------------------------------------------------------------------------
 // Functions
 //----------------------------------------------------------------------------
-std::unique_ptr<Base> create(double dt, unsigned int numNeurons, const pugi::xml_node &node);
+std::unique_ptr<Base> create(double dt, unsigned int numNeurons, const pugi::xml_node &node,
+                             std::map<std::string, InputValue::External*> &externalInputs);
 
 }   // namespace InputValue
 }   // namespace SpineMLSimulator

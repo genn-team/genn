@@ -54,7 +54,7 @@ const char *SpineMLTypeName<double>::name = "double";
 //----------------------------------------------------------------------------
 // SpineMLSimulator::Base::Base
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt, unsigned int numTimeSteps)
+SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt)
 {
     LOGI << "Log '" << node.attribute("name").value() << "'";
 
@@ -64,16 +64,16 @@ SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt, u
         m_StartTimeStep = 0;
     }
     else {
-        m_StartTimeStep = (unsigned int)std::ceil(startAttr.as_double() / dt);
+        m_StartTimeStep = (unsigned long long)std::ceil(startAttr.as_double() / dt);
     }
 
     // Read duration
     auto durationAttr = node.attribute("duration");
     if(durationAttr.empty()) {
-        m_EndTimeStep = numTimeSteps;
+        m_EndTimeStep = std::numeric_limits<unsigned long long>::max();
     }
     else {
-        m_EndTimeStep = m_StartTimeStep + (unsigned int)std::ceil(durationAttr.as_double() / dt);
+        m_EndTimeStep = m_StartTimeStep + (unsigned long long)std::ceil(durationAttr.as_double() / dt);
     }
 
     LOGD << "\tStart timestep:" << m_StartTimeStep << ", end timestep:" << m_EndTimeStep;
@@ -82,9 +82,9 @@ SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt, u
 //----------------------------------------------------------------------------
 // SpineMLSimulator::LogOutput::AnalogueBase
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutput::AnalogueBase::AnalogueBase(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+SpineMLSimulator::LogOutput::AnalogueBase::AnalogueBase(const pugi::xml_node &node, double dt,
                                                         const ModelProperty::Base *modelProperty)
-    : Base(node, dt, numTimeSteps), m_ModelProperty(modelProperty)
+    : Base(node, dt), m_ModelProperty(modelProperty)
 {
     // If indices are specified
     auto indices = node.attribute("indices");
@@ -100,11 +100,11 @@ SpineMLSimulator::LogOutput::AnalogueBase::AnalogueBase(const pugi::xml_node &no
 //----------------------------------------------------------------------------
 // SpineMLSimulator::LogOutput::AnalogueFile
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &node, double dt, unsigned long long numTimeSteps,
                                                         const std::string &port, unsigned int popSize,
                                                         const filesystem::path &logPath,
                                                         const ModelProperty::Base *modelProperty)
-    : AnalogueBase(node, dt, numTimeSteps, modelProperty)
+    : AnalogueBase(node, dt, modelProperty)
 {
     // If indices are specified, allocate output buffer to match indices
     if(!getIndices().empty()) {
@@ -124,7 +124,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     // Write standard report metadata here
     report.append_child("LogFile").text().set((fileTitle + "_log.bin").c_str());
     report.append_child("LogFileType").text().set("binary");
-    report.append_child("LogEndTime").text().set((double)getEndTimestep() * dt);
+    report.append_child("LogEndTime").text().set((double)numTimeSteps * dt);
 
     // If we're logging data from all neurons, add LogAll node to report
     if(getIndices().empty()) {
@@ -157,7 +157,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     m_File.open(absoluteFileTitle + "_log.bin", std::ios::binary);
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned int timestep)
+void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned long long timestep)
 {
     // If we should be recording this timestep
     if(shouldRecord(timestep)) {
@@ -167,7 +167,7 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned int time
 
         // If no indices are specified, directly write out data from model property
         if(getIndices().empty()) {
-            m_File.write(reinterpret_cast<const char*>(getModelPropertyHostStateVarBegin()), sizeof(scalar) * getModelPropertySize());
+            m_File.write(reinterpret_cast<const char*>(getStateVarBegin()), sizeof(scalar) * getModelPropertySize());
         }
         // Otherwise
         else {
@@ -175,7 +175,7 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned int time
             std::transform(getIndices().begin(), getIndices().end(), m_OutputBuffer.begin(),
                            [this](unsigned int i)
                            {
-                               return getModelPropertyHostStateVarBegin()[i];
+                               return getStateVarBegin()[i];
                            });
 
             // Write output buffer to file
@@ -185,21 +185,14 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned int time
 }
 
 //----------------------------------------------------------------------------
-// SpineMLSimulator::LogOutput::AnalogueNetwork
+// SpineMLSimulator::LogOutput::AnalogueExternal
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
-                                                              const std::string&, unsigned int popSize,
-                                                              const filesystem::path&,
-                                                              const ModelProperty::Base *modelProperty)
-    : AnalogueBase(node, dt, numTimeSteps, modelProperty), m_CurrentIntervalTimesteps(0)
+SpineMLSimulator::LogOutput::AnalogueExternal::AnalogueExternal(const pugi::xml_node &node, double dt,
+                                                                const std::string&, unsigned int,
+                                                                const filesystem::path&,
+                                                                const ModelProperty::Base *modelProperty)
+    : AnalogueBase(node, dt, modelProperty), m_CurrentIntervalTimesteps(0)
 {
-    // Check size determined by indices/population size matches attribute
-    const unsigned int size = getIndices().empty() ? popSize : getIndices().size();
-    //assert(size == node.attribute("size").as_uint());
-
-    // Allocate output buffer
-    m_OutputBuffer.resize(size);
-
     // If external timestep is zero then send every timestep
     const double externalTimestepMs = node.attribute("timestep").as_double();
     if(externalTimestepMs == 0.0) {
@@ -215,23 +208,9 @@ SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_no
         m_IntervalTimesteps = ((unsigned int)std::round(externalTimestepMs / dt)) - 1;
         LOGD << "\tExternal timestep:" << externalTimestepMs << "ms - interval:" << m_IntervalTimesteps;
     }
-
-    // Read connection stats
-    const std::string connectionName = node.attribute("name").value();
-    const std::string hostname = node.attribute("host").value();
-    const int tcpPort = node.attribute("tcp_port").as_int();
-
-    LOGD << "\tAnalogue network log '" << connectionName << "' (" << hostname << ":" << tcpPort << ")";
-
-    // Attempt to connect network client
-    if(!m_Client.connect(hostname, tcpPort, size, NetworkClient::DataType::Analogue,
-        NetworkClient::Mode::Source, connectionName))
-    {
-        throw std::runtime_error("Cannot connect network client");
-    }
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::LogOutput::AnalogueNetwork::record(double, unsigned int timestep)
+void SpineMLSimulator::LogOutput::AnalogueExternal::record(double, unsigned long long timestep)
 {
     // If we should be recording this timestep
     if(shouldRecord(timestep)) {
@@ -241,28 +220,8 @@ void SpineMLSimulator::LogOutput::AnalogueNetwork::record(double, unsigned int t
             // **TODO** simple min/max index optimisation
             pullModelPropertyFromDevice();
 
-            // If no indices are specified, transform all values in model property into double precision
-            // **TODO** once precision is switchable this could be optimised out
-            if(getIndices().empty()) {
-                std::transform(getModelPropertyHostStateVarBegin(), getModelPropertyHostStateVarEnd(), m_OutputBuffer.begin(),
-                            [](scalar x)
-                            {
-                                return static_cast<double>(x);
-                            });
-            }
-            // Otherwise, transform indexed variables into output buffer
-            else {
-                std::transform(getIndices().begin(), getIndices().end(), m_OutputBuffer.begin(),
-                            [this](unsigned int i)
-                            {
-                                return static_cast<double>(getModelPropertyHostStateVarBegin()[i]);
-                            });
-            }
-
-            // Send output data over network client
-            if(!m_Client.send(m_OutputBuffer)) {
-                throw std::runtime_error("Cannot send data to socket");
-            }
+            // Perform additional recording logic
+            recordInternal();
 
             // Reset interval
             m_CurrentIntervalTimesteps = m_IntervalTimesteps;
@@ -274,16 +233,73 @@ void SpineMLSimulator::LogOutput::AnalogueNetwork::record(double, unsigned int t
     }
 }
 
+//----------------------------------------------------------------------------
+// SpineMLSimulator::LogOutput::AnalogueNetwork
+//----------------------------------------------------------------------------
+SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_node &node, double dt,
+                                                              const std::string &port, unsigned int popSize,
+                                                              const filesystem::path &logPath,
+                                                              const ModelProperty::Base *modelProperty)
+    : AnalogueExternal(node, dt, port, popSize, logPath, modelProperty)
+{
+    // Check size determined by indices/population size matches attribute
+    const unsigned int size = getIndices().empty() ? popSize : (unsigned int)getIndices().size();
+    //assert(size == node.attribute("size").as_uint());
+
+    // Allocate output buffer
+    m_OutputBuffer.resize(size);
+
+    // Read connection stats
+    const std::string connectionName = node.attribute("name").value();
+    const std::string hostname = node.attribute("host").value();
+    const unsigned int tcpPort = node.attribute("tcp_port").as_uint();
+
+    LOGD << "\tAnalogue network log '" << connectionName << "' (" << hostname << ":" << tcpPort << ")";
+
+    // Attempt to connect network client
+    if(!m_Client.connect(hostname, tcpPort, size, NetworkClient::DataType::Analogue,
+        NetworkClient::Mode::Source, connectionName))
+    {
+        throw std::runtime_error("Cannot connect network client");
+    }
+}
+//----------------------------------------------------------------------------
+void SpineMLSimulator::LogOutput::AnalogueNetwork::recordInternal()
+{
+    // If no indices are specified, transform all values in model property into double precision
+    // **TODO** once precision is switchable this could be optimised out
+    if(getIndices().empty()) {
+        std::transform(getStateVarBegin(), getStateVarEnd(), m_OutputBuffer.begin(),
+                    [](scalar x)
+                    {
+                        return static_cast<double>(x);
+                    });
+    }
+    // Otherwise, transform indexed variables into output buffer
+    else {
+        std::transform(getIndices().begin(), getIndices().end(), m_OutputBuffer.begin(),
+                    [this](unsigned int i)
+                    {
+                        return static_cast<double>(getStateVarBegin()[i]);
+                    });
+    }
+
+    // Send output data over network client
+    if(!m_Client.send(m_OutputBuffer)) {
+        throw std::runtime_error("Cannot send data to socket");
+    }
+}
+
 
 //----------------------------------------------------------------------------
-// SpineMLSimulator::LogOutputSpike
+// SpineMLSimulator::LogOutput::Event
 //----------------------------------------------------------------------------
-SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt, unsigned long long numTimeSteps,
                                           const std::string &port, unsigned int popSize,
                                           const filesystem::path &logPath, unsigned int *spikeQueuePtr,
                                           unsigned int *hostSpikeCount, unsigned int *hostSpikes,
                                           ModelProperty::Base::PullFunc pullCurrentSpikesFunc)
-    : Base(node, dt, numTimeSteps), m_PopSize(popSize), m_SpikeQueuePtr(spikeQueuePtr),
+    : Base(node, dt), m_PopSize(popSize), m_SpikeQueuePtr(spikeQueuePtr),
       m_HostSpikeCount(hostSpikeCount), m_HostSpikes(hostSpikes), m_PullCurrentSpikesFunc(pullCurrentSpikesFunc)
 {
     // If indices are specified
@@ -310,7 +326,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     report.append_child("LogFile").text().set((fileTitle + "_log.csv").c_str());
     report.append_child("LogFileType").text().set("csv");
     report.append_child("LogPort").text().set(port.c_str());
-    report.append_child("LogEndTime").text().set((double)getEndTimestep() * dt);
+    report.append_child("LogEndTime").text().set((double)numTimeSteps * dt);
 
     // If we're logging events from all neurons, add LogAll node to report
     if(m_Indices.empty()) {
@@ -350,7 +366,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     m_File.open(absoluteFileTitle + "_log.csv");
 }
 //----------------------------------------------------------------------------
-void SpineMLSimulator::LogOutput::Event::record(double dt, unsigned int timestep)
+void SpineMLSimulator::LogOutput::Event::record(double dt, unsigned long long timestep)
 {
     // If we should be recording this timestep
     if(shouldRecord(timestep)) {

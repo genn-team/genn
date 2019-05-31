@@ -31,32 +31,32 @@ namespace LogOutput
 class Base
 {
 public:
-    Base(const pugi::xml_node &node, double dt, unsigned int numTimeSteps);
+    Base(const pugi::xml_node &node, double dt);
     virtual ~Base(){}
 
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) = 0;
+    virtual void record(double dt, unsigned long long timestep) = 0;
 
 protected:
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    bool shouldRecord(unsigned int timestep) const
+    bool shouldRecord(unsigned long long timestep) const
     {
         return (timestep >= m_StartTimeStep && timestep < m_EndTimeStep);
     }
 
-    unsigned int getEndTimestep() const{ return m_EndTimeStep; }
+    unsigned long long getEndTimestep() const{ return m_EndTimeStep; }
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    unsigned int m_StartTimeStep;
-    unsigned int m_EndTimeStep;
+    unsigned long long m_StartTimeStep;
+    unsigned long long m_EndTimeStep;
 };
 
 //----------------------------------------------------------------------------
@@ -65,19 +65,24 @@ private:
 class AnalogueBase : public Base
 {
 public:
-    AnalogueBase(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    AnalogueBase(const pugi::xml_node &node, double dt, 
                  const ModelProperty::Base *modelProperty);
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    const scalar *getStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
+    const scalar *getStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
+
+    unsigned int getModelPropertySize() const{ return m_ModelProperty->getSize(); }
+
+    const std::vector<unsigned int> &getIndices() const{ return m_Indices; }
 
 protected:
     //----------------------------------------------------------------------------
     // Protected API
     //----------------------------------------------------------------------------
-    const scalar *getModelPropertyHostStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
-    const scalar *getModelPropertyHostStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
     void pullModelPropertyFromDevice() const{ m_ModelProperty->pullFromDevice(); }
-    unsigned int getModelPropertySize() const{ return m_ModelProperty->getSize(); }
-
-    const std::vector<unsigned int> &getIndices() const{ return m_Indices; }
 
 private:
     //----------------------------------------------------------------------------
@@ -96,16 +101,16 @@ private:
 class AnalogueFile : public AnalogueBase
 {
 public:
-    AnalogueFile(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    AnalogueFile(const pugi::xml_node &node, double dt, unsigned long long numTimeSteps,
                  const std::string &port, unsigned int popSize,
                  const filesystem::path &logPath,
                  const ModelProperty::Base *modelProperty);
 
     //----------------------------------------------------------------------------
-    // Declared virtuals
+    // Base virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) override;
+    virtual void record(double dt, unsigned long long timestep) override;
 
 private:
     //----------------------------------------------------------------------------
@@ -120,31 +125,60 @@ private:
 //----------------------------------------------------------------------------
 // SpineMLSimulator::LogOutput::AnalogueNetwork
 //----------------------------------------------------------------------------
-class AnalogueNetwork : public AnalogueBase
+class AnalogueExternal : public AnalogueBase
 {
 public:
-    AnalogueNetwork(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    AnalogueExternal(const pugi::xml_node &node, double dt,
+                     const std::string &port, unsigned int popSize,
+
+                     const filesystem::path &logPath,
+                     const ModelProperty::Base *modelProperty);
+
+    //----------------------------------------------------------------------------
+    // Base virtuals
+    //----------------------------------------------------------------------------
+    // Record any data required during this timestep
+    virtual void record(double dt, unsigned long long timestep) final;
+
+protected:
+    //----------------------------------------------------------------------------
+    // Declared virtuals
+    //----------------------------------------------------------------------------
+    virtual void recordInternal(){}
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    // How many GeNN timesteps do we wait before logging
+    unsigned int m_IntervalTimesteps;
+
+    // Count down to next time we log
+    unsigned int m_CurrentIntervalTimesteps;
+};
+
+//----------------------------------------------------------------------------
+// SpineMLSimulator::LogOutput::AnalogueNetwork
+//----------------------------------------------------------------------------
+class AnalogueNetwork : public AnalogueExternal
+{
+public:
+    AnalogueNetwork(const pugi::xml_node &node, double dt,
                     const std::string &port, unsigned int popSize,
                     const filesystem::path &logPath,
                     const ModelProperty::Base *modelProperty);
 
+protected:
     //----------------------------------------------------------------------------
-    // Declared virtuals
+    // AnalogueExternal virtuals
     //----------------------------------------------------------------------------
-    // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) override;
+    virtual void recordInternal() override;
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
     NetworkClient m_Client;
-
-    // How many GeNN timesteps do we wait before logging
-    unsigned int m_IntervalTimesteps;
-
-    // Count down to next time we log
-    unsigned int m_CurrentIntervalTimesteps;
 
     // Buffer used to generate contiguous output data
     // **NOTE** network protocol always uses double precision
@@ -157,17 +191,17 @@ private:
 class Event : public Base
 {
 public:
-    Event(const pugi::xml_node &node, double dt, unsigned int numTimeSteps,
+    Event(const pugi::xml_node &node, double dt, unsigned long long numTimeSteps,
           const std::string &port, unsigned int popSize,
           const filesystem::path &logPath, unsigned int *spikeQueuePtr,
           unsigned int *hostSpikeCount, unsigned int *hostSpikes,
           ModelProperty::Base::PullFunc pullCurrentSpikesFunc);
 
     //----------------------------------------------------------------------------
-    // Declared virtuals
+    // Base virtuals
     //----------------------------------------------------------------------------
     // Record any data required during this timestep
-    virtual void record(double dt, unsigned int timestep) override;
+    virtual void record(double dt, unsigned long long timestep) override;
 
 private:
     //----------------------------------------------------------------------------

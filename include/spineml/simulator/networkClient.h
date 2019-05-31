@@ -46,13 +46,13 @@ public:
     };
     
     NetworkClient();
-    NetworkClient(const std::string &hostname, int port, int size, DataType dataType, Mode mode, const std::string &connectionName);
+    NetworkClient(const std::string &hostname, unsigned int port, unsigned int size, DataType dataType, Mode mode, const std::string &connectionName);
     ~NetworkClient();
     
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool connect(const std::string &hostname, int port, int size, DataType dataType, Mode mode, const std::string &connectionName);
+    bool connect(const std::string &hostname, unsigned int port, unsigned int size, DataType dataType, Mode mode, const std::string &connectionName);
 
     bool receive(std::vector<double> &buffer);
     bool send(const std::vector<double> &buffer);
