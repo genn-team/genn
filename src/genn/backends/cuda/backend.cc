@@ -1523,12 +1523,6 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &mo
     char pciBusID[32];
     CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, m_ChosenDeviceID));
 
-    // Write code to get device by PCI bus ID
-    // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
-    os << "int deviceID;" << std::endl;
-    os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
-    os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
-
     // If the model requires zero-copy
     if(model.zeroCopyInUse()) {
         // If device doesn't support mapping host memory error
@@ -1538,7 +1532,15 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &mo
 
         // set appropriate device flags
         os << "CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
+        os << std::endl;
     }
+    
+    // Write code to get device by PCI bus ID
+    // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
+    os << "int deviceID;" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const
