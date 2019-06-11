@@ -14,6 +14,7 @@ enum class VarLocation : uint8_t
     ZERO_COPY = (1 << 2),
 
     HOST_DEVICE = HOST | DEVICE,
+    HOST_DEVICE_ZERO_COPY = HOST | DEVICE | ZERO_COPY,
 };
 
 //----------------------------------------------------------------------------
