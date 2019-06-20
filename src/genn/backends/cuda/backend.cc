@@ -151,8 +151,13 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
+    // Add sizes of CUDA-specific types
     addType("curandState", 44);
     addType("curandStatePhilox4_32_10_t", 64);
+
+    // Add standard presynaptic update strategies to backend
+    addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base>(new PresynapticUpdateStrategy::PreSpan));
+    addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base>(new PresynapticUpdateStrategy::PostSpan));
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
@@ -1945,6 +1950,11 @@ std::string Backend::getNVCCFlags() const
     return nvccFlags;
 }
 //--------------------------------------------------------------------------
+void Backend::addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base> strategy)
+{
+    m_PresynapticUpdateStrategies.push_back(std::move(strategy));
+}
+//--------------------------------------------------------------------------
 size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
 {
      if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -2139,7 +2149,7 @@ void Backend::genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpecInterna
 void Backend::genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
                                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
 {
-     // Get suffix based on type of events
+    // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
     os << "const unsigned int numSpikes = dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName();
@@ -2321,6 +2331,20 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
     else {
         return "atomicAdd";
     }
+}
+//--------------------------------------------------------------------------
+const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
+{
+    // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
+    // **NOTE** this is done backwards so that user-registered strategies get first priority
+    for(auto s = m_PresynapticUpdateStrategies.rbegin(); s != m_PresynapticUpdateStrategies.rend(); ++s) {
+        if((*s)->isCompatible(sg)) {
+            return s->get();
+        }
+    }
+
+    throw std::runtime_error("Unable to find a suitable presynaptic update strategy for synapse group '" + sg.getName() + "'");
+    return nullptr;
 }
 }   // namespace CUDA
 }   // namespace CodeGenerator

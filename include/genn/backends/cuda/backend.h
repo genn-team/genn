@@ -19,6 +19,9 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 
+// CUDA backend includes
+#include "presynapticUpdateStrategy.h"
+
 // Forward declarations
 namespace filesystem
 {
@@ -202,6 +205,10 @@ public:
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
 
+    //! Register a new presynaptic update strategy
+    /*! This function should be called with strategies in ascending order of preference */
+    void addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base> strategy);
+
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
@@ -288,6 +295,9 @@ private:
 
     std::string getFloatAtomicAdd(const std::string &ftype) const;
 
+    // Get appropriate presynaptic update strategy to use for this synapse group
+    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const;
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
@@ -298,6 +308,8 @@ private:
     cudaDeviceProp m_ChosenDevice;
 
     int m_RuntimeVersion;
+
+    std::vector<std::unique_ptr<PresynapticUpdateStrategy::Base>> m_PresynapticUpdateStrategies;
 };
 }   // CUDA
 }   // CodeGenerator
