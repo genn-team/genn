@@ -1,5 +1,8 @@
 #pragma once
 
+// GeNN code generator includes
+#include "code_generator/backendBase.h"
+
 // Forward declarations
 class ModelSpecInternal;
 class SynapseGroupInternal;
@@ -25,8 +28,8 @@ public:
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const = 0;
 
-    //! Can this presynaptic update strategy be used to simulate this synapse group?
-    virtual bool canSimulate(const SynapseGroupInternal &sg) const = 0;
+    //! Is this presynaptic update strategy compatible with a given synapse group?
+    virtual bool isCompatible(const SynapseGroupInternal &sg) const = 0;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
     virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg) const = 0;
@@ -36,7 +39,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                              SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const = 0;
+                              BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -55,8 +58,8 @@ public:
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
 
-    //! Can this presynaptic update strategy be used to simulate this synapse group?
-    virtual bool canSimulate(const SynapseGroupInternal &sg) const override;
+    //! Is this presynaptic update strategy compatible with a given synapse group?
+    virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
     virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg) const override;
@@ -66,7 +69,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                              SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const override;
+                              BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -85,8 +88,8 @@ public:
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
 
-    //! Can this presynaptic update strategy be used to simulate this synapse group?
-    virtual bool canSimulate(const SynapseGroupInternal &sg) const override;
+    //! Is this presynaptic update strategy compatible with a given synapse group?
+    virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
     virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg) const override;
@@ -96,7 +99,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                              SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const override;
+                              BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 };
 }   // namespace PresynapticUpdateStrategy
 }   // namespace CUDA

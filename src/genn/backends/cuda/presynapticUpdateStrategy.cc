@@ -1,5 +1,12 @@
 #include "presynapticUpdateStrategy.h"
 
+// GeNN includes
+#include "modelSpecInternal.h"
+
+// GeNN code generator includes
+#include "code_generator/codeStream.h"
+#include "code_generator/substitutions.h"
+
 //----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan
 //----------------------------------------------------------------------------
@@ -20,10 +27,10 @@ size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
     // Use a thread for each presynaptic neuron
     // **YUCK** really should only launch a thread per-spike
-    return sg.getSrcNeuronGroup()->getNumThreads();
+    return sg.getSrcNeuronGroup()->getNumNeurons();
 }
 //----------------------------------------------------------------------------
-bool PreSpan::canSimulate(const SynapseGroupInternal &sg) const
+bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
     return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
@@ -54,7 +61,7 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) con
 }
 //----------------------------------------------------------------------------
 void PreSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                           SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+                           BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -163,7 +170,7 @@ size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
     }
 }
 //----------------------------------------------------------------------------
-bool PostSpan::canSimulate(const SynapseGroupInternal &sg) const
+bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
     return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
@@ -189,7 +196,7 @@ bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) co
 }
 //----------------------------------------------------------------------------
 void PostSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                            SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const
+                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
