@@ -7,6 +7,14 @@
 class ModelSpecInternal;
 class SynapseGroupInternal;
 
+namespace CodeGenerator
+{
+namespace CUDA
+{
+class Backend;
+}
+}
+
 //--------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::Base
 //--------------------------------------------------------------------------
@@ -19,6 +27,10 @@ namespace PresynapticUpdateStrategy
 class Base
 {
 public:
+    Base(const Backend &backend) : m_Backend(backend)
+    {
+    }
+
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
@@ -38,8 +50,21 @@ public:
     virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const = 0;
 
     //! Generate presynaptic update code
-    virtual void generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                              BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
+
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected API
+    //------------------------------------------------------------------------
+    const Backend &getBackend() const{ return m_Backend; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const Backend &m_Backend;
 };
 
 //--------------------------------------------------------------------------
@@ -49,6 +74,10 @@ public:
 class PreSpan : public Base
 {
 public:
+    PreSpan(const Backend &backend) : Base(backend)
+    {
+    }
+
     //------------------------------------------------------------------------
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
@@ -68,8 +97,8 @@ public:
     virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const override;
 
     //! Generate presynaptic update code
-    virtual void generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                              BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -79,6 +108,10 @@ public:
 class PostSpan : public Base
 {
 public:
+    PostSpan(const Backend &backend) : Base(backend)
+    {
+    }
+
     //------------------------------------------------------------------------
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
@@ -98,8 +131,8 @@ public:
     virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const override;
 
     //! Generate presynaptic update code
-    virtual void generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                              BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 };
 }   // namespace PresynapticUpdateStrategy
 }   // namespace CUDA

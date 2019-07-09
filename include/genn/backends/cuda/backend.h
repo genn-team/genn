@@ -205,6 +205,10 @@ public:
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
 
+    std::string getFloatAtomicAdd(const std::string &ftype) const;
+
+    size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
+
     //! Register a new presynaptic update strategy
     /*! This function should be called with strategies in ascending order of preference */
     void addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base> strategy);
@@ -282,18 +286,7 @@ private:
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
 
-    void genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                                     SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
-    void genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
-
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
-
-    bool shouldAccumulateInLinSyn(const SynapseGroupInternal &sg) const;
-
-    bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const;
-
-    std::string getFloatAtomicAdd(const std::string &ftype) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const;

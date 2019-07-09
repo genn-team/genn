@@ -7,6 +7,9 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 
+// CUDA backend includes
+#include "backend.h"
+
 //----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan
 //----------------------------------------------------------------------------
@@ -36,7 +39,7 @@ bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
     return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
 }
 //----------------------------------------------------------------------------
-bool PreSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg) const
+bool PreSpan::shouldAccumulateInRegister(const SynapseGroupInternal &) const
 {
     // When presynaptic parallelism is used
     return false;
@@ -46,7 +49,7 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) con
 {
     // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
-    if(getChosenCUDADevice().major < 5) {
+    if(getBackend().getChosenCUDADevice().major < 5) {
         return false;
     }
     // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
@@ -56,12 +59,13 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) con
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
     else {
-        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getTrgNeuronGroup()->getNumNeurons() <= m_KernelBlockSizes[KernelPresynapticUpdate]);
+        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                && sg.getTrgNeuronGroup()->getNumNeurons() <= getBackend().getKernelBlockSize(KernelPresynapticUpdate));
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                           BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+                      BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -127,17 +131,17 @@ void PreSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, const
 
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
-                synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                synSubs.addFuncSubstitution("addToInSynDelay", 2, getBackend().getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
             }
             // Otherwise
             else {
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
                 if(shouldAccumulateInSharedMemory(sg)) {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
+                    synSubs.addFuncSubstitution("addToInSyn", 1, getBackend().getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
+                    synSubs.addFuncSubstitution("addToInSyn", 1, getBackend().getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
                 }
             }
 
@@ -176,9 +180,9 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
     return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
 }
 //----------------------------------------------------------------------------
-bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg) const
+bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &) const
 {
-    // When presynaptic parallelism is used
+    // Threads are never associated with a single postsynaptic neuron
     return false;
 }
 //----------------------------------------------------------------------------
@@ -191,12 +195,13 @@ bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) co
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
     else {
-        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getTrgNeuronGroup()->getNumNeurons() <= m_KernelBlockSizes[KernelPresynapticUpdate]);
+        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                && sg.getTrgNeuronGroup()->getNumNeurons() <= getBackend().getKernelBlockSize(KernelPresynapticUpdate));
     }
 }
 //----------------------------------------------------------------------------
-void PostSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -208,21 +213,21 @@ void PostSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, cons
     else {
         os << "[0];" << std::endl;
     }
-    os << "const unsigned int numSpikeBlocks = (numSpikes + " << m_KernelBlockSizes[KernelPresynapticUpdate] << " - 1) / " << m_KernelBlockSizes[KernelPresynapticUpdate] << ";" << std::endl;
+    os << "const unsigned int numSpikeBlocks = (numSpikes + " << getBackend().getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << getBackend().getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
 
     const auto *wu = sg.getWUModel();
     os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
     {
         CodeStream::Scope b(os);
-        os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << m_KernelBlockSizes[KernelPresynapticUpdate] << ") + 1 : " << m_KernelBlockSizes[KernelPresynapticUpdate] << ";" << std::endl;
+        os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << getBackend().getKernelBlockSize(KernelPresynapticUpdate) << ") + 1 : " << getBackend().getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
         os << "__syncthreads();" << std::endl;
         os << "if (threadIdx.x < numSpikesInBlock)";
         {
             CodeStream::Scope b(os);
             const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * " << m_KernelBlockSizes[KernelPresynapticUpdate] << ") + threadIdx.x];" << std::endl;
+            os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * " << getBackend().getKernelBlockSize(KernelPresynapticUpdate) << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
             if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
@@ -293,7 +298,7 @@ void PostSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, cons
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getBackend().getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
                 }
                 // Otherwise
                 else {
@@ -303,7 +308,7 @@ void PostSpan::generateCode(CodeStream &os, const ModelSpecInternal &model, cons
                             synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs["id_post"] + "] += $(0)");
                         }
                         else {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
+                            synSubs.addFuncSubstitution("addToInSyn", 1, getBackend().getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
                         }
                     }
                     else {
