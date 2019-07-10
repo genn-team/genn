@@ -138,6 +138,11 @@ const char *Backend::KernelNames[KernelMax] = {
     "preNeuronResetKernel",
     "preSynapseResetKernel"};
 //--------------------------------------------------------------------------
+std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
+    new PresynapticUpdateStrategy::PreSpan,
+    new PresynapticUpdateStrategy::PostSpan,
+};
+//--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
                  int localHostID, const std::string &scalarType, int device)
 :   BackendBase(localHostID, scalarType), m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
@@ -154,10 +159,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Add sizes of CUDA-specific types
     addType("curandState", 44);
     addType("curandStatePhilox4_32_10_t", 64);
-
-    // Add standard presynaptic update strategies to backend
-    addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base>(new PresynapticUpdateStrategy::PreSpan(*this)));
-    addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base>(new PresynapticUpdateStrategy::PostSpan(*this)));
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
@@ -494,7 +495,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                 [this](const ModelSpec::SynapseGroupValueType &s)
                 {
-                    return this->getPresynapticUpdateStrategy(s.second)->shouldAccumulateInSharedMemory(s.second);
+                    return this->getPresynapticUpdateStrategy(s.second)->shouldAccumulateInSharedMemory(s.second, *this);
                 }))
             {
                 os << "__shared__ " << model.getPrecision() << " shLg[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
@@ -548,7 +549,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     }
 
                     // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
-                    if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg)) {
+                    if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
                         os << "// only do this for existing neurons" << std::endl;
                         os << model.getPrecision() << " linSyn;" << std::endl;
                         os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
@@ -559,7 +560,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     }
                     // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
                     // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                    else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg)) {
+                    else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
                         os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
                             CodeStream::Scope b(os);
@@ -571,19 +572,21 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     // If spike events should be processed
                     if (sg.isSpikeEventRequired()) {
                         CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, false, wumThreshHandler, wumEventHandler);
+                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, false,
+                                                           wumThreshHandler, wumEventHandler);
                     }
 
                     // If true spikes should be processed
                     if (sg.isTrueSpikeRequired()) {
                         CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, true, wumThreshHandler, wumSimHandler);
+                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, true,
+                                                           wumThreshHandler, wumSimHandler);
                     }
 
                     os << std::endl;
 
                     // If we have been accumulating into a register, write value back to global memory
-                    if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg)) {
+                    if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
                         os << "// only do this for existing neurons" << std::endl;
                         os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
@@ -593,7 +596,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     }
                     // Otherwise, if we have been accumulating into shared memory, write value back to global memory
                     // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                    else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg)) {
+                    else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
                         os << "__syncthreads();" << std::endl;
                         os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
@@ -1954,26 +1957,9 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
     }
 }
 //--------------------------------------------------------------------------
-void Backend::addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base> strategy)
-{
-    m_PresynapticUpdateStrategies.push_back(std::move(strategy));
-}
-//--------------------------------------------------------------------------
 size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
 {
-     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) {
-            return sg.getSrcNeuronGroup()->getNumNeurons();
-        }
-        else {
-            // paddedSize is the lowest multiple of blockSize >= maxConn[i]
-            return sg.getMaxConnections();
-        }
-    }
-    else {
-        // paddedSize is the lowest multiple of blockSize >= neuronN[synapseTarget[i]]
-        return sg.getTrgNeuronGroup()->getNumNeurons();
-    }
+     return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);
 }
 //--------------------------------------------------------------------------
 size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg)
@@ -1994,6 +1980,11 @@ size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
     else {
         return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
     }
+}
+//--------------------------------------------------------------------------
+void Backend::addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base *strategy)
+{
+    s_PresynapticUpdateStrategies.push_back(strategy);
 }
 //--------------------------------------------------------------------------
 void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
@@ -2077,13 +2068,13 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     }
 }
 //--------------------------------------------------------------------------
-const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
+const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
 {
     // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
     // **NOTE** this is done backwards so that user-registered strategies get first priority
-    for(auto s = m_PresynapticUpdateStrategies.rbegin(); s != m_PresynapticUpdateStrategies.rend(); ++s) {
+    for(auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
         if((*s)->isCompatible(sg)) {
-            return s->get();
+            return *s;
         }
     }
 

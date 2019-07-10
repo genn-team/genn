@@ -27,10 +27,6 @@ namespace PresynapticUpdateStrategy
 class Base
 {
 public:
-    Base(const Backend &backend) : m_Backend(backend)
-    {
-    }
-
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
@@ -44,27 +40,14 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg) const = 0;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg) const = 0;
+    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
 
     //! Are input currents emitted by this presynaptic update accumulated into a shared memory array?
-    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const = 0;
+    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                          BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
-
-
-protected:
-    //------------------------------------------------------------------------
-    // Protected API
-    //------------------------------------------------------------------------
-    const Backend &getBackend() const{ return m_Backend; }
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const Backend &m_Backend;
 };
 
 //--------------------------------------------------------------------------
@@ -74,10 +57,6 @@ private:
 class PreSpan : public Base
 {
 public:
-    PreSpan(const Backend &backend) : Base(backend)
-    {
-    }
-
     //------------------------------------------------------------------------
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
@@ -91,13 +70,13 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg) const override;
+    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a shared memory array?
-    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const override;
+    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                          BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 };
 
@@ -108,10 +87,6 @@ public:
 class PostSpan : public Base
 {
 public:
-    PostSpan(const Backend &backend) : Base(backend)
-    {
-    }
-
     //------------------------------------------------------------------------
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
@@ -125,13 +100,13 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg) const override;
+    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a shared memory array?
-    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const override;
+    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                          BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 };
 }   // namespace PresynapticUpdateStrategy

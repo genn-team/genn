@@ -209,16 +209,16 @@ public:
 
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 
-    //! Register a new presynaptic update strategy
-    /*! This function should be called with strategies in ascending order of preference */
-    void addPresynapticUpdateStrategy(std::unique_ptr<PresynapticUpdateStrategy::Base> strategy);
-
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
     static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
+
+    //! Register a new presynaptic update strategy
+    /*! This function should be called with strategies in ascending order of preference */
+    static void addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base* strategy);
 
     //--------------------------------------------------------------------------
     // Constants
@@ -288,8 +288,11 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
+    //--------------------------------------------------------------------------
+    // Private static methods
+    //--------------------------------------------------------------------------
     // Get appropriate presynaptic update strategy to use for this synapse group
-    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const;
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg);
 
     //--------------------------------------------------------------------------
     // Members
@@ -302,7 +305,10 @@ private:
 
     int m_RuntimeVersion;
 
-    std::vector<std::unique_ptr<PresynapticUpdateStrategy::Base>> m_PresynapticUpdateStrategies;
+    //--------------------------------------------------------------------------
+    // Static members
+    //--------------------------------------------------------------------------
+    static std::vector<PresynapticUpdateStrategy::Base*> s_PresynapticUpdateStrategies;
 };
 }   // CUDA
 }   // CodeGenerator
