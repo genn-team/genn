@@ -22,8 +22,8 @@ namespace PresynapticUpdateStrategy
 size_t PreSpan::getStride(const SynapseGroupInternal &sg) const
 {
     return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-        ? sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons()
-        : sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
+        ? sg.getTrgNeuronGroup()->getNumNeurons()
+        : sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
 size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
@@ -160,8 +160,8 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 size_t PostSpan::getStride(const SynapseGroupInternal &sg) const
 {
     return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-        ? sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons()
-        : sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
+        ? sg.getTrgNeuronGroup()->getNumNeurons()
+        : sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
 size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
