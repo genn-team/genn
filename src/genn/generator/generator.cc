@@ -47,7 +47,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 #ifdef MPI_ENABLE
         MPI_Init(NULL, NULL);
         MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
-        LOGI << "MPI initialized - host ID:" << localHostID;
+        std::cout << "MPI initialized - host ID:" << localHostID;
 #endif
 
         // Create model
@@ -57,7 +57,15 @@ int main(int argc,     //!< number of arguments; expected to be 2
         
         // Initialise logging, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init(GENN_PREFERENCES.logLevel, &consoleAppender);
+
+        // If there isn't already a plog instance, initialise one
+        if(plog::get() == nullptr) {
+            plog::init(GENN_PREFERENCES.logLevel, &consoleAppender);
+        }
+        // Otherwise, set it's max severity from GeNN preferences
+        else {
+            plog::get()->setMaxSeverity(GENN_PREFERENCES.logLevel);
+        }
 
         // Finalize model
         model.finalize();
@@ -124,7 +132,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
 #ifdef MPI_ENABLE
         MPI_Finalize();
-        LOGI << "MPI finalized";
+        std::cout << "MPI finalized";
 #endif
     }
     catch(const std::exception &exception)
