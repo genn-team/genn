@@ -180,10 +180,12 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
     return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
 }
 //----------------------------------------------------------------------------
-bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &, const Backend &) const
+bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &) const
 {
-    // Threads are never associated with a single postsynaptic neuron
-    return false;
+    // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield
+    // (where each thread represents an individual neuron)
+    return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
+            || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
 }
 //----------------------------------------------------------------------------
 bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
