@@ -604,11 +604,11 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     os << name << " = new " << underlyingType << "[count];" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &) const
+void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, VarLocation) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &) const
+void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, VarLocation) const
 {
 }
 //--------------------------------------------------------------------------
@@ -658,11 +658,11 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, bool, size_t) const
+void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, size_t) const
+void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
 {
 }
 //--------------------------------------------------------------------------

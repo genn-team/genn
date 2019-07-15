@@ -1523,12 +1523,6 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &mo
     char pciBusID[32];
     CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, m_ChosenDeviceID));
 
-    // Write code to get device by PCI bus ID
-    // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
-    os << "int deviceID;" << std::endl;
-    os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
-    os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
-
     // If the model requires zero-copy
     if(model.zeroCopyInUse()) {
         // If device doesn't support mapping host memory error
@@ -1538,7 +1532,15 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &mo
 
         // set appropriate device flags
         os << "CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
+        os << std::endl;
     }
+    
+    // Write code to get device by PCI bus ID
+    // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
+    os << "int deviceID;" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const
@@ -1671,26 +1673,30 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name) const
+void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    // Get underlying type
-    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+    if(!(loc & VarLocation::ZERO_COPY)) {
+        // Get underlying type
+        // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
+        const std::string underlyingType = ::Utils::getUnderlyingType(type);
 
-    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
-    os << ", " << name;
-    os << ", count * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
+        os << ", " << name;
+        os << ", count * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name) const
+void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    // Get underlying type
-    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+    if(!(loc & VarLocation::ZERO_COPY)) {
+        // Get underlying type
+        // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
+        const std::string underlyingType = ::Utils::getUnderlyingType(type);
 
-    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
-    os << ", d_"  << name;
-    os << ", count * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
+        os << ", d_"  << name;
+        os << ", count * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
@@ -1732,27 +1738,31 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, bool autoInitialized, size_t count) const
+void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
 {
-    // Only copy if uninitialisedOnly isn't set
-    if(autoInitialized) {
-        os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
-    }
+    if(!(loc & VarLocation::ZERO_COPY)) {
+        // Only copy if uninitialisedOnly isn't set
+        if(autoInitialized) {
+            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
+        }
 
-    os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
-    os << ", " << name;
-    os << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
+        os << ", " << name;
+        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
 
-    if(autoInitialized) {
-        os << CodeStream::CB(1101);
+        if(autoInitialized) {
+            os << CodeStream::CB(1101);
+        }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, size_t count) const
+void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
-    os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
-    os << ", d_"  << name;
-    os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+    if(!(loc & VarLocation::ZERO_COPY)) {
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
+        os << ", d_"  << name;
+        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &) const
@@ -1990,59 +2000,63 @@ void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std:
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
-    // Is delay required
-    const bool delayRequired = spikeEvent ?
-        ng.isDelayRequired() :
-        (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+    if(!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
+        // Is delay required
+        const bool delayRequired = spikeEvent ?
+            ng.isDelayRequired() :
+            (ng.isTrueSpikeRequired() && ng.isDelayRequired());
 
-    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
-    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+        const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+        const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
 
-    if (delayRequired) {
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
-        os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
-        os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
-        os << ", " << spikePrefix << ng.getName();
-        os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-    }
-    else {
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
-        os << ", " << spikeCntPrefix << ng.getName();
-        os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
-        os << ", " << spikePrefix << ng.getName();
-        os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        if (delayRequired) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
+            os << ", " << spikePrefix << ng.getName();
+            os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
+            os << ", " << spikePrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
-    // Is delay required
-    const bool delayRequired = spikeEvent ?
-        ng.isDelayRequired() :
-        (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+    if(!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
+        // Is delay required
+        const bool delayRequired = spikeEvent ?
+            ng.isDelayRequired() :
+            (ng.isTrueSpikeRequired() && ng.isDelayRequired());
 
-    const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
-    const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+        const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+        const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
 
-    if (delayRequired) {
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
-        os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
-        os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        if (delayRequired) {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-    }
-    else {
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
-        os << ", d_" << spikeCntPrefix << ng.getName();
-        os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
-        os << ", d_" << spikePrefix << ng.getName();
-        os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+        else {
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
+            os << ", d_" << spikeCntPrefix << ng.getName();
+            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
+            os << ", d_" << spikePrefix << ng.getName();
+            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
