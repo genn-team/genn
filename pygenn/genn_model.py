@@ -521,7 +521,7 @@ class GeNNModel(object):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
-        self._slm.push_var_from_device(pop_name, var_name)
+        self._slm.push_var_to_device(pop_name, var_name)
 
     def end(self):
         """Free memory"""

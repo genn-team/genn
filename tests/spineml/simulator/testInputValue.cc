@@ -1,5 +1,6 @@
 // Standard C++ includes
 #include <bitset>
+#include <map>
 
 // Standard C includes
 #include <cmath>
@@ -28,10 +29,12 @@ TEST(ConstantTest, All) {
     // Load XML and get root LL:Synapse element
     pugi::xml_document inputDocument;
     inputDocument.load_string(inputXML);
+
     auto input = inputDocument.child("ConstantInput");
 
     // Parse XML and create input value
-    auto inputValue = InputValue::create(1.0, 10, input);
+    std::map<std::string, InputValue::External*> externalInputs;
+    auto inputValue = InputValue::create(1.0, 10, input, externalInputs);
 
     // Update for first timestep
     std::bitset<10> valuesUpdate;
@@ -66,7 +69,8 @@ TEST(ConstantTest, Indices) {
     auto input = inputDocument.child("ConstantInput");
 
     // Parse XML and create input value
-    auto inputValue = InputValue::create(1.0, 10, input);
+    std::map<std::string, InputValue::External*> externalInputs;
+    auto inputValue = InputValue::create(1.0, 10, input, externalInputs);
 
     // Update for first timestep
     std::bitset<10> valuesUpdate;
@@ -108,7 +112,8 @@ TEST(ConstantArrayTest, AllArraySizeDeath) {
     // Parse XML
     try
     {
-        InputValue::create(1.0, 10, input);
+        std::map<std::string, InputValue::External*> externalInputs;
+        InputValue::create(1.0, 10, input, externalInputs);
         FAIL();
     }
     catch(const std::runtime_error &)
@@ -127,7 +132,8 @@ TEST(ConstantArrayTest, All) {
     auto input = inputDocument.child("ConstantArrayInput");
 
     // Parse XML and create input value
-    auto inputValue = InputValue::create(1.0, 4, input);
+    std::map<std::string, InputValue::External*> externalInputs;
+    auto inputValue = InputValue::create(1.0, 4, input, externalInputs);
 
     // Update for first timestep
     std::bitset<4> valuesUpdate;
@@ -176,7 +182,8 @@ TEST(ConstantArrayTest, IndicesSizeDeath) {
     // Parse XML
     try
     {
-        InputValue::create(1.0, 10, input);
+        std::map<std::string, InputValue::External*> externalInputs;
+        InputValue::create(1.0, 10, input, externalInputs);
         FAIL();
     }
     catch(const std::runtime_error &)
@@ -195,7 +202,8 @@ TEST(ConstantArrayTest, Indices) {
     auto input = inputDocument.child("ConstantArrayInput");
 
     // Parse XML and create input value
-    auto inputValue = InputValue::create(1.0, 10, input);
+    std::map<std::string, InputValue::External*> externalInputs;
+    auto inputValue = InputValue::create(1.0, 10, input, externalInputs);
 
     // Update for first timestep
     std::bitset<10> valuesUpdate;
@@ -251,7 +259,8 @@ TEST(TimeVaryingInput, All) {
     auto input = inputDocument.child("TimeVaryingInput");
 
     // Parse XML and create input value
-    auto inputValue = InputValue::create(1.0, 10, input);
+    std::map<std::string, InputValue::External*> externalInputs;
+    auto inputValue = InputValue::create(1.0, 10, input, externalInputs);
 
     // Check nothing gets updated in subsequent updates
     for(unsigned int t = 0; t < 50; t++) {
@@ -295,7 +304,8 @@ TEST(TimeVaryingInput, ShuffleAll) {
     auto input = inputDocument.child("TimeVaryingInput");
 
     // Parse XML and create input value
-    auto inputValue = InputValue::create(1.0, 10, input);
+    std::map<std::string, InputValue::External*> externalInputs;
+    auto inputValue = InputValue::create(1.0, 10, input, externalInputs);
 
     // Check nothing gets updated in subsequent updates
     for(unsigned int t = 0; t < 50; t++) {
@@ -341,7 +351,8 @@ TEST(TimeVaryingArrayInput, All) {
     auto input = inputDocument.child("TimeVaryingArrayInput");
 
     // Parse XML and create input value
-    auto inputValue = InputValue::create(1.0, 10, input);
+    std::map<std::string, InputValue::External*> externalInputs;
+    auto inputValue = InputValue::create(1.0, 10, input, externalInputs);
 
     // Check nothing gets updated in subsequent updates
     for(unsigned int t = 0; t < 50; t++) {
