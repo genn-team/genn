@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.0</span>
+   &#160;<span id="projectnumber">4.0.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -112,7 +112,7 @@ Variable locations</h1>
 <p>Once you have defined <b>how</b> your variables are going to be initialised you need to configure <b>where</b> they will be allocated. By default memory is allocated for variables on both the GPU and the host. However, the following alternative 'variable locations' are available:</p><ul>
 <li><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae10b6ab6a278644ce40631f62f360b6d">VarLocation::DEVICE</a> - Variables are only allocated on the GPU, saving memory but meaning that they can't easily be copied to the host - best for internal state variables.</li>
 <li><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087aa34547c8e93e562b2c7952c77d426710">VarLocation::HOST_DEVICE</a> - Variables are allocated on both the GPU and the host - the default.</li>
-<li><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae5f97fff9c755d0906f1a4dcdb48ef57">VarLocation::ZERO_COPY</a> - Variables are allocated as 'zero-copy' memory accessible to the host and GPU.</li>
+<li><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087a42b7a82fbd6d845b0d5c5dbd67846e0d">VarLocation::HOST_DEVICE_ZERO_COPY</a> - Variables are allocated as 'zero-copy' memory accessible to the host and GPU - useful on devices such as Jetson TX1 where physical memory is shared between the GPU and CPU.</li>
 </ul>
 <dl class="section note"><dt>Note</dt><dd>'Zero copy' memory is only supported on newer embedded systems such as the Jetson TX1 where there is no physical seperation between GPU and host memory and thus the same block of memory can be shared between them.</dd></dl>
 <p>These modes can be set as a model default using <code><a class="el" href="../../da/dfd/classModelSpec.html#a55c87917355d34463a3c19fc6887e67a" title="What is the default location for model state variables? ">ModelSpec::setDefaultVarLocation</a></code> or on a per-variable basis using one of the following functions:</p><ul>
@@ -134,7 +134,7 @@ Variable locations</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Wed May 22 2019 15:30:01 for GeNN by
+    <li class="footer">Generated on Mon Jul 15 2019 11:39:13 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

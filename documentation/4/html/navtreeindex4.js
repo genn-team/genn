@@ -1,5 +1,6 @@
 var NAVTREEINDEX4 =
 {
+"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0e0da2c47058822597a9a802380e762f":[15,0,7,0,2,4],
 "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a1d2af6b44512827de67598b630f1448e":[15,0,7,0,2,12],
 "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a3cd4c9a8da6c73efc7c403c44435cde4":[15,0,7,0,2,8],
 "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a4a569b27b4c1517027d02a588079091b":[15,0,7,0,2,11],
@@ -27,8 +28,8 @@ var NAVTREEINDEX4 =
 "dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fafd3e4ece78a7d422280d5ed379482229":[16,0,50,4,2],
 "dc/de1/modelSpec_8h.html#a82512da3fc2cd603ff00f8f5b7f2f1ce":[16,0,50,7],
 "dc/de1/modelSpec_8h.html#a957acf630622e4f9fd4ddd773e962a92":[16,0,50,2],
-"dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[16,0,50,3,0],
 "dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[16,0,50,3,1],
+"dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[16,0,50,3,0],
 "dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[16,0,50,3],
 "dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08ae401c6285be90f3a255c38f422b1a60c":[16,0,50,3,2],
 "dc/de1/modelSpec_8h.html#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2":[16,0,50,5],
@@ -206,8 +207,8 @@ var NAVTREEINDEX4 =
 "de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a":[16,0,63,7],
 "de/d6c/snippet_8h.html#af3c47debe5fc34060e716d7db25462ab":[16,0,63,8],
 "de/d6c/snippet_8h_source.html":[16,0,63],
-"de/d6e/namespacepygenn_1_1genn__model.html":[14,0,8,1],
 "de/d6e/namespacepygenn_1_1genn__model.html":[15,0,7,1],
+"de/d6e/namespacepygenn_1_1genn__model.html":[14,0,8,1],
 "de/d80/synapseGroupInternal_8h.html":[16,0,67],
 "de/d80/synapseGroupInternal_8h_source.html":[16,0,67],
 "de/d99/codeGenUtils_8h.html":[16,0,11],
@@ -248,6 +249,5 @@ var NAVTREEINDEX4 =
 "de/db7/genn__model_8py.html#a603410a2e8454498c99148657de8c460":[16,0,39,4],
 "de/db7/genn__model_8py.html#a7fa33c9872ab0cf97d0b60fa41bf17fe":[16,0,39,10],
 "de/db7/genn__model_8py.html#a80f3b56cb2dc934ea04ed15a629c7db9":[16,0,39,5],
-"de/db7/genn__model_8py.html#aa2daf7a01b3f49dcbc5dba9690020bc3":[16,0,39,11],
-"de/db7/genn__model_8py.html#acd4074f475e3e48c21d1c31d1a28597b":[16,0,39,7]
+"de/db7/genn__model_8py.html#aa2daf7a01b3f49dcbc5dba9690020bc3":[16,0,39,11]
 };

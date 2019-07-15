@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.0</span>
+   &#160;<span id="projectnumber">4.0.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -106,10 +106,14 @@ $(document).ready(function(){initNavTree('d6/d8f/variableMode_8h.html','../../')
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a2807180f6261d89020cf7d7d498fb087"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> : uint8_t { <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ab9361011891280a44d85b967739cc6a5">VarLocation::HOST</a> = (1 &lt;&lt; 0), 
+<tr class="memitem:a2807180f6261d89020cf7d7d498fb087"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> : uint8_t { <br />
+&#160;&#160;<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ab9361011891280a44d85b967739cc6a5">VarLocation::HOST</a> = (1 &lt;&lt; 0), 
 <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae10b6ab6a278644ce40631f62f360b6d">VarLocation::DEVICE</a> = (1 &lt;&lt; 1), 
 <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae5f97fff9c755d0906f1a4dcdb48ef57">VarLocation::ZERO_COPY</a> = (1 &lt;&lt; 2), 
-<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087aa34547c8e93e562b2c7952c77d426710">VarLocation::HOST_DEVICE</a> = HOST | DEVICE
+<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087aa34547c8e93e562b2c7952c77d426710">VarLocation::HOST_DEVICE</a> = HOST | DEVICE, 
+<br />
+&#160;&#160;<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087a42b7a82fbd6d845b0d5c5dbd67846e0d">VarLocation::HOST_DEVICE_ZERO_COPY</a> = HOST | DEVICE | ZERO_COPY
+<br />
  }<tr class="memdesc:a2807180f6261d89020cf7d7d498fb087"><td class="mdescLeft">&#160;</td><td class="mdescRight">&lt; Flags defining which memory space variables should be allocated in  <a href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:a2807180f6261d89020cf7d7d498fb087"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,6 +150,7 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="a2807180f6261d89020cf7d7d498fb087ae10b6ab6a278644ce40631f62f360b6d"></a>DEVICE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a2807180f6261d89020cf7d7d498fb087ae5f97fff9c755d0906f1a4dcdb48ef57"></a>ZERO_COPY&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a2807180f6261d89020cf7d7d498fb087aa34547c8e93e562b2c7952c77d426710"></a>HOST_DEVICE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a2807180f6261d89020cf7d7d498fb087a42b7a82fbd6d845b0d5c5dbd67846e0d"></a>HOST_DEVICE_ZERO_COPY&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -193,7 +198,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../d6/d8f/variableMode_8h.html">variableMode.h</a></li>
-    <li class="footer">Generated on Wed May 22 2019 15:30:01 for GeNN by
+    <li class="footer">Generated on Mon Jul 15 2019 11:39:13 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

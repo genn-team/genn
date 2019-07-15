@@ -1,5 +1,6 @@
 var NAVTREEINDEX3 =
 {
+"da/d16/generateMPI_8h.html":[16,0,26],
 "da/d16/generateMPI_8h.html#ab064c9ce4812db4d3616b89c9c292ec2":[16,0,26,0],
 "da/d16/generateMPI_8h_source.html":[16,0,26],
 "da/d2c/generateMPI_8cc.html":[16,0,25],
@@ -248,6 +249,5 @@ var NAVTREEINDEX3 =
 "dc/dc0/classNeuronModels_1_1PoissonNew.html#ab36c7c3db9a0b3751ebabb1c5ccbf063":[15,0,5,5,1],
 "dc/dc0/classNeuronModels_1_1PoissonNew.html#ab880c13caef654859997b9944412fe65":[15,0,5,5,4],
 "dc/dc0/classNeuronModels_1_1PoissonNew.html#adffa087f5ef9119034afe192b208dd94":[15,0,5,5,5],
-"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html":[15,0,7,0,2],
-"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0e0da2c47058822597a9a802380e762f":[15,0,7,0,2,4]
+"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html":[15,0,7,0,2]
 };
