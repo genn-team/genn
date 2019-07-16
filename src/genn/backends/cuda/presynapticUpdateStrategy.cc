@@ -19,13 +19,6 @@ namespace CUDA
 {
 namespace PresynapticUpdateStrategy
 {
-size_t PreSpan::getStride(const SynapseGroupInternal &sg) const
-{
-    return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-        ? sg.getTrgNeuronGroup()->getNumNeurons()
-        : sg.getMaxConnections();
-}
-//----------------------------------------------------------------------------
 size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
     // Use a thread for each presynaptic neuron
@@ -156,13 +149,6 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 
 //----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan
-//----------------------------------------------------------------------------
-size_t PostSpan::getStride(const SynapseGroupInternal &sg) const
-{
-    return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-        ? sg.getTrgNeuronGroup()->getNumNeurons()
-        : sg.getMaxConnections();
-}
 //----------------------------------------------------------------------------
 size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {

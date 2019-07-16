@@ -30,9 +30,6 @@ public:
     //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
-    //! Get the stride i.e. the row length with which synaptic data structures should be allocated
-    virtual size_t getStride(const SynapseGroupInternal &sg) const = 0;
-
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const = 0;
 
@@ -60,9 +57,6 @@ public:
     //------------------------------------------------------------------------
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
-    //! Get the stride i.e. the row length with which synaptic data structures should be allocated
-    virtual size_t getStride(const SynapseGroupInternal &sg) const override;
-
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
 
@@ -90,9 +84,6 @@ public:
     //------------------------------------------------------------------------
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
-    //! Get the stride i.e. the row length with which synaptic data structures should be allocated
-    virtual size_t getStride(const SynapseGroupInternal &sg) const override;
-
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
 
