@@ -82,7 +82,7 @@ if defined -d (
 
 
 rem :: build backend
-msbuild "%GENN_PATH%..\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true && (
+msbuild "%GENN_PATH%..\genn.sln" /m /verbosity:minimal /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true && (
 	echo Successfully built GeNN
 ) || (
 	echo Unable to build GeNN
@@ -91,7 +91,7 @@ msbuild "%GENN_PATH%..\genn.sln" /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildP
 
 
 rem :: build generator
-msbuild "%GENN_PATH%..\src\genn\generator\generator.vcxproj" %MACROS%&& (
+msbuild "%GENN_PATH%..\src\genn\generator\generator.vcxproj" /m /verbosity:minimal %MACROS%&& (
 	echo Successfully built code generator
 ) || (
 	echo Unable to build code generator

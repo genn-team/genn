@@ -204,9 +204,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 checkUnreplacedVariables(iCode, cs->getName() + " : current source injectionCode");
                 os << iCode << std::endl;
 
-                // Write updated variables back to global memory
+                // Write non-readonly variables back to global memory
                 for(const auto &v : csm->getVars()) {
-                    os << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
+                    if(!v.readonly) {
+                        os << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
+                    }
                 }
             }
 
@@ -356,14 +358,20 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 }
             }
 
-            // store the defined parts of the neuron state into the global state variables dd_V etc
+            // Loop through neuron state variables
             for(const auto &v : nm->getVars()) {
-                os << backend.getVarPrefix() << v.name << ng.getName() << "[";
+                // If state variables is not read-only - meaning that it may have been updated - or it is delayed -
+                // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
+                // back to global state variables dd_V etc  
+                const bool delayed = (ng.isVarQueueRequired(v.name) && ng.isDelayRequired());
+                if(!v.readonly || delayed) {
+                    os << backend.getVarPrefix() << v.name << ng.getName() << "[";
 
-                if (ng.isVarQueueRequired(v.name) && ng.isDelayRequired()) {
-                    os << "writeDelayOffset + ";
+                    if (delayed) {
+                        os << "writeDelayOffset + ";
+                    }
+                    os << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
                 }
-                os << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
             }
 
             for (const auto &m : ng.getMergedInSyn()) {
@@ -390,8 +398,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 }
 
                 os << backend.getVarPrefix() << "inSyn"  << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "] = linSyn" << sg->getPSModelTargetName() << ";" << std::endl;
+
+                // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
-                    os << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << sg->getPSModelTargetName() << ";" << std::endl;
+                    if(!v.readonly) {
+                        os << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << sg->getPSModelTargetName() << ";" << std::endl;
+                    }
                 }
             }
         },
@@ -437,13 +449,19 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                     checkUnreplacedVariables(code, sg->getName() + " : simCodePreSpike");
                     os << code;
 
-                    // Write back presynaptic variables into global memory
+                    // Loop through presynaptic variables into global memory
                     for(const auto &v : sg->getWUModel()->getPreVars()) {
-                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
-                        if (sg->getDelaySteps() != NO_DELAY) {
-                            os << "writeDelayOffset + ";
+                        // If state variables is not read-only - meaning that it may have been updated - or it is axonally delayed -
+                        // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
+                        // back to global state variables dd_V etc  
+                        const bool delayed = (sg->getDelaySteps() != NO_DELAY);
+                        if(!v.readonly || delayed) {
+                            os << backend.getVarPrefix() << v.name << sg->getName() << "[";
+                            if (delayed) {
+                                os << "writeDelayOffset + ";
+                            }
+                            os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                         }
-                        os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -490,11 +508,17 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Write back presynaptic variables into global memory
                     for(const auto &v : sg->getWUModel()->getPostVars()) {
-                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
-                        if (sg->getBackPropDelaySteps() != NO_DELAY) {
-                            os << "writeDelayOffset + ";
+                        // If state variables is not read-only - meaning that it may have been updated - or it is dendritically delayed -
+                        // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
+                        // back to global state variables dd_V etc  
+                        const bool delayed = (sg->getBackPropDelaySteps() != NO_DELAY);
+                        if(!v.readonly || delayed) {
+                            os << backend.getVarPrefix() << v.name << sg->getName() << "[";
+                            if (delayed) {
+                                os << "writeDelayOffset + ";
+                            }
+                            os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                         }
-                        os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                     }
                 }
             }
