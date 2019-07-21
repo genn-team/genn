@@ -6,9 +6,10 @@
 //!< Flags defining differnet types of synaptic matrix connectivity
 enum class SynapseMatrixConnectivity : unsigned int
 {
-    DENSE   = (1 << 0),
-    BITMASK = (1 << 1),
-    SPARSE  = (1 << 2),
+    DENSE       = (1 << 0),
+    BITMASK     = (1 << 1),
+    SPARSE      = (1 << 2),
+    PROCEDURAL  = (1 << 3),
 };
 
 //!< Flags defining different types of synaptic matrix connectivity
