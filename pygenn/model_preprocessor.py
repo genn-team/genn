@@ -2,7 +2,9 @@
 This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
+from numbers import Number
 import numpy as np
+from six import iterkeys, itervalues
 from . import genn_wrapper
 from .genn_wrapper.Models import VarInit, VarInitVector
 from .genn_wrapper.StlContainers import DoubleVector
@@ -56,17 +58,32 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
     """
     m_instance, m_type = is_model_valid(model, model_family)
     param_names = list(m_instance.get_param_names())
+    if set(iterkeys(param_space)) != set(param_names):
+        raise ValueError("Invalid parameter values for {0}".format(
+            model_family.__name__))
     params = param_space_to_vals(m_instance, param_space)
+
     var_names = [vnt.name for vnt in m_instance.get_vars()]
+    if set(iterkeys(var_space)) != set(var_names):
+        raise ValueError("Invalid variable initializers for {0}".format(
+            model_family.__name__))
     var_dict = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name])
                 for vnt in m_instance.get_vars()}
 
+
     if model_family == genn_wrapper.WeightUpdateModels:
         pre_var_names = [vnt.name for vnt in m_instance.get_pre_vars()]
+        if set(iterkeys(pre_var_space)) != set(pre_var_names):
+            raise ValueError("Invalid presynaptic variable initializers "
+                             "for {0}".format(model_family.__name__))
         pre_var_dict = {
             vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name])
             for vnt in m_instance.get_pre_vars()}
+
         post_var_names = [vnt.name for vnt in m_instance.get_post_vars()]
+        if set(iterkeys(post_var_space)) != set(post_var_names):
+            raise ValueError("Invalid postsynaptic variable initializers "
+                             "for {0}".format(model_family.__name__))
         post_var_dict = {
             vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name])
             for vnt in m_instance.get_post_vars()}
@@ -94,6 +111,9 @@ def prepare_snippet(snippet, param_space, snippet_family):
     """
     s_instance, s_type = is_model_valid(snippet, snippet_family)
     param_names = list(s_instance.get_param_names())
+    if set(iterkeys(param_space)) != set(param_names):
+        raise ValueError("Invalid parameter initializers for {0}".format(
+            snippet_family.__name__))
     params = param_space_to_val_vec(s_instance, param_space)
 
     return (s_instance, s_type, param_names, params)
@@ -155,6 +175,9 @@ def param_space_to_val_vec(model, param_space):
     Returns:
     native vector of parameters
     """
+    if not all(isinstance(p, Number) for p in itervalues(param_space)):
+        raise ValueError("non-numeric parameters are not supported")
+
     return DoubleVector([param_space[pn] for pn in model.get_param_names()])
 
 

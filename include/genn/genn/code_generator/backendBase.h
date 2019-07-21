@@ -185,8 +185,8 @@ public:
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name) const = 0;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name) const = 0;
+    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
 
     virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
@@ -194,8 +194,8 @@ public:
     virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
                                            const Substitutions &kernelSubs, Handler handler) const = 0;
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, bool autoInitialized, size_t count) const = 0;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, size_t count) const = 0;
+    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
+    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
@@ -248,10 +248,10 @@ public:
     //--------------------------------------------------------------------------
     //! Helper function to generate matching push and pull functions for a variable
     void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const std::string &type, const std::string &name, bool autoInitialized, size_t count) const
+                             const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
     {
-        genVariablePush(push, type, name, autoInitialized, count);
-        genVariablePull(pull, type, name, count);
+        genVariablePush(push, type, name, loc, autoInitialized, count);
+        genVariablePull(pull, type, name, loc, count);
     }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array

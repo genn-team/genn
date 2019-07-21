@@ -1,4 +1,19 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.0.1
+====
+This release fixes several small bugs found in GeNN 4.0.0 and implements some small features:
+
+User Side Changes
+----
+1. Improved detection and handling of errors when specifying model parameters and values in PyGeNN.
+2. SpineML simulator is now implemented as a library which can be used directly from user applications as well as from command line tool.
+
+Bug fixes:
+----
+1. Fixed typo in ``GeNNModel.push_var_to_device`` function in PyGeNN.
+2. Fixed broken support for Visual C++ 2013.
+3. Fixed zero-copy mode.
+4. Fixed typo in tutorial 2.
 
 Release Notes for GeNN v4.0.0
 ====

@@ -90,11 +90,9 @@ void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
 {
-    // A variable can be pushed and pulled if it is located
-    // on both host and device and doesn't use zero-copy memory
+    // A variable can be pushed and pulled if it is located on both host and device
     return ((loc & VarLocation::HOST) &&
-            (loc & VarLocation::DEVICE) &&
-            !(loc & VarLocation::ZERO_COPY));
+            (loc & VarLocation::DEVICE));
 }
 //-------------------------------------------------------------------------
 bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
@@ -165,7 +163,7 @@ CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, C
     genVarPushPullScope(definitionsFunc, push, pull, loc, name, statePushPullFunction,
         [&]()
         {
-            backend.genVariablePushPull(push, pull, type, name, autoInitialized, count);
+            backend.genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
         });
 
     // Generate variables
@@ -210,14 +208,14 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
             extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
             {
                 CodeGenerator::CodeStream::Scope a(extraGlobalParam);
-                backend.genExtraGlobalParamPush(extraGlobalParam, type, name);
+                backend.genExtraGlobalParamPush(extraGlobalParam, type, name, loc);
             }
 
             // Write pull function
             extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
             {
                 CodeGenerator::CodeStream::Scope a(extraGlobalParam);
-                backend.genExtraGlobalParamPull(extraGlobalParam, type, name);
+                backend.genExtraGlobalParamPull(extraGlobalParam, type, name, loc);
             }
         }
 
@@ -443,9 +441,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             [&]()
             {
                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                            "unsigned int", "glbSpkCnt" + n.first, true, numSpikeCounts);
+                                            "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeLocation(), true, numSpikeCounts);
                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                            "unsigned int", "glbSpk" + n.first, true, numSpikes);
+                                            "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), true, numSpikes);
             });
         
         // Current true spike push and pull functions
@@ -475,9 +473,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "glbSpkCntEvnt" + n.first, true, n.second.getNumDelaySlots());
+                                                "unsigned int", "glbSpkCntEvnt" + n.first, n.second.getSpikeLocation(), true, n.second.getNumDelaySlots());
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "glbSpkEvnt" + n.first, true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                                                "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeLocation(), true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
                 });
 
             // Current spike-like event push and pull functions
@@ -506,7 +504,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                "sT" + n.first, true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                                                "sT" + n.first, n.second.getSpikeTimeLocation(), true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
                 });
         }
 
@@ -651,11 +649,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 {
                      // Row lengths
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "rowLength" + s.first, autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
+                                                "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
                     // Target indices
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "ind" + s.first, autoInitialized, size);
+                                                "unsigned int", "ind" + s.first, s.second.getSparseConnectivityLocation(), autoInitialized, size);
                 });
         }
     }
@@ -715,7 +713,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(), "inSyn" + s.first, synapseGroupStatePushPullFunctions,
                 [&]()
                 {
-                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.first,
+                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.first, s.second.getInSynLocation(),
                                                 true, s.second.getTrgNeuronGroup()->getNumNeurons());
                 });
 
@@ -727,7 +725,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                     genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i), psmVars[i].name + s.first, synapseGroupStatePushPullFunctions,
                         [&]()
                         {
-                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.first,
+                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.first, s.second.getPSVarLocation(i),
                                                         autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
                         });
                 }

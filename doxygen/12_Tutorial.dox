@@ -25,12 +25,12 @@ public:
     SET_ROW_BUILD_CODE(
         "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
         "$(endRow);\n");
-    SET_CALC_MAX_ROW_LENGTH_FUNC([](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars){ return 1;});
+    SET_MAX_ROW_LENGTH(1);
 };
 IMPLEMENT_SNIPPET(Ring);
 \endcode
 The ``SET_ROW_BUILD_CODE`` code string will be called to generate each row of the synaptic matrix (connections coming from a single presynaptic neuron) and, in this case, each row consists of a single synapses from the presynaptic neuron \$(id_pre) to \$(id_pre) + 1 (the modulus operator is used to ensure that the final connection between neuron `9` and `0` is made correctly).
-In order to allow GeNN to better optimise the generated code we also provide a function that returns the maximum row length.
+In order to allow GeNN to better optimise the generated code we also provide a maximum row length.
 In this case each row always contains only one synapse but, when more complex connectivity is used, the number of neurons in the pre and postsynaptic population as well as any parameters used to configure the snippet can be accessed from this function.
 \note When defining GeNN code strings, the \$(VariableName) syntax is used to refer to variables provided by GeNN and the \$(FunctionName, Parameter1,...) syntax is used to call functions provided by GeNN.
 
@@ -49,7 +49,7 @@ PostsynapticModels::ExpCond::ParamValues ps_p(
 We can then add a synapse population at the end of the `modelDefinition(...)` function,
 \code
 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-    "Pop1self", SynapseMatrixType::RAGGED_GLOBALG, 10,
+    "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 10,
     "Pop1", "Pop1",
     {}, s_ini,
     ps_p, {},
@@ -59,7 +59,7 @@ The addSynapsePopulation parameters are
 \arg WeightUpdateModel: template parameter specifying the type of weight update model (derived from WeightUpdateModels::Base).
 \arg PostsynapticModel: template parameter specifying the  type of postsynaptic model (derived from PostsynapticModels::Base).
 \arg name string containing unique name of synapse population.
-\arg mtype how the synaptic matrix associated with this synapse population should be represented. Here SynapseMatrixType::RAGGED_GLOBALG means that there will be sparse connectivity and each connection will have the same weight (-0.2 as specified previously).
+\arg mtype how the synaptic matrix associated with this synapse population should be represented. Here SynapseMatrixType::SPARSE_GLOBALG means that there will be sparse connectivity and each connection will have the same weight (-0.2 as specified previously).
 \arg delayStep integer specifying number of timesteps of propagation delay that spikes travelling through this synapses population should incur (or NO_DELAY for none)
 \arg src string specifying name of presynaptic (source) population
 \arg trg string specifying name of postsynaptic (target) population
@@ -82,7 +82,7 @@ public:
     SET_ROW_BUILD_CODE(
         "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
         "$(endRow);\n");
-    SET_CALC_MAX_ROW_LENGTH_FUNC([](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars){ return 1;});
+    SET_MAX_ROW_LENGTH(1);
 };
 IMPLEMENT_SNIPPET(Ring);
 
@@ -117,7 +117,7 @@ void modelDefinition(ModelSpec &model)
         -80.0); // 1 - Erev: Reversal potential
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-        "Pop1self", SynapseMatrixType::DENSE_INDIVIDUALG, 100,
+        "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 100,
         "Pop1", "Pop1",
         {}, s_ini,
         ps_p, {},
@@ -163,7 +163,7 @@ public:
         "   $(addSynapse, $(id_pre));\n"
         "}\n"
         "$(endRow);\n");
-    SET_CALC_MAX_ROW_LENGTH_FUNC([](unsigned int, unsigned int, const std::vector<double> &){ return 1;});
+    SET_MAX_ROW_LENGTH(1);
 };
 IMPLEMENT_SNIPPET(FirstToFirst);
 \endcode
@@ -173,7 +173,7 @@ We then need to add it to the network by adding the following to the end of the 
 \code
 model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-    "StimPop1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+    "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
     "Stim", "Pop1",
     {}, s_ini,
     ps_p, {},
@@ -204,7 +204,7 @@ public:
     SET_ROW_BUILD_CODE(
         "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
         "$(endRow);\n");
-    SET_CALC_MAX_ROW_LENGTH_FUNC([](unsigned int, unsigned int, const std::vector<double> &){ return 1;});
+    SET_MAX_ROW_LENGTH(1);
 };
 IMPLEMENT_SNIPPET(Ring);
 
@@ -217,7 +217,7 @@ public:
         "   $(addSynapse, $(id_pre));\n"
         "}\n"
         "$(endRow);\n");
-    SET_CALC_MAX_ROW_LENGTH_FUNC([](unsigned int, unsigned int, const std::vector<double> &){ return 1;});
+    SET_MAX_ROW_LENGTH(1);
 };
 IMPLEMENT_SNIPPET(FirstToFirst);
 
@@ -253,14 +253,14 @@ void modelDefinition(ModelSpec &model)
         -80.0); // 1 - Erev: Reversal potential
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-        "Pop1self", SynapseMatrixType::RAGGED_GLOBALG, 100,
+        "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 100,
         "Pop1", "Pop1",
         {}, s_ini,
         ps_p, {},
         initConnectivity<Ring>());
 
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-        "StimPop1", SynapseMatrixType::RAGGED_GLOBALG, NO_DELAY,
+        "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
         "Stim", "Pop1",
         {}, s_ini,
         ps_p, {},
