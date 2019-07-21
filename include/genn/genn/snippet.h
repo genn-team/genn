@@ -119,11 +119,14 @@ public:
     //----------------------------------------------------------------------------
     // Structs
     //----------------------------------------------------------------------------
-    //! A variable has a name and a type
+    //! A variable has a name, a type and a readonly flag
+    /*! Through the wonders of C++ aggregate initialization, if readonly 
+    // is not initialized in the {}, it will be VALUE-initialised to false*/
     struct Var
     {
         std::string name;
         std::string type;
+        bool readonly;
     };
 
     struct ParamVal
