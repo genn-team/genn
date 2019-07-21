@@ -142,7 +142,7 @@ class StaticPulse : public Base
 public:
     DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0);
 
-    SET_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar", true}});
 
     SET_SIM_CODE("$(addToInSyn, $(g));\n");
 };
@@ -168,7 +168,7 @@ class StaticPulseDendriticDelay : public Base
 public:
     DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2);
 
-    SET_VARS({{"g", "scalar"},{"d", "uint8_t"}});
+    SET_VARS({{"g", "scalar", true},{"d", "uint8_t", true}});
 
     SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
 };
@@ -205,7 +205,7 @@ public:
     DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 2, 1, 0, 0);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
-    SET_VARS({{"g", "scalar"}});
+    SET_VARS({{"g", "scalar", true}});
 
     SET_EVENT_CODE("$(addToInSyn, max(0.0, $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT));\n");
 
