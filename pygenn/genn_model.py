@@ -824,12 +824,12 @@ def create_custom_weight_update_class(class_name, param_names=None,
 
     if pre_var_name_types is not None:
         body["get_pre_vars"] =\
-            lambda self: VarVector([Var(vn[0], vn[1])
+            lambda self: VarVector([Var(*vn)
                                     for vn in pre_var_name_types])
 
     if post_var_name_types is not None:
         body["get_post_vars"] =\
-            lambda self: VarVector([Var(vn[0], vn[1])
+            lambda self: VarVector([Var(*vn)
                                     for vn in post_var_name_types])
 
     if is_pre_spike_time_required is not None:
@@ -938,7 +938,7 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
 
     if var_name_types is not None:
         body["get_vars"] =\
-            lambda self: VarVector([Var(vn[0], vn[1])
+            lambda self: VarVector([Var(*vn)
                                     for vn in var_name_types])
 
     if derived_params is not None:
