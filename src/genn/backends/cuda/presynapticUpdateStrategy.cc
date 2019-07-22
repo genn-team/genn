@@ -368,24 +368,30 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
 
-    Substitutions procPopSubs(&popSubs);
-
+    // If there is a spike for this thread to process
+    os << "if (" << popSubs["id"] << " < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-        os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-        os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << procPopSubs["id"] << "];" << std::endl;
+        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot])";
     }
     else {
-        os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-        os << "[" << procPopSubs["id"] << "];" << std::endl;
+        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[0])";
     }
-
-    // Add presynaptic index to substitution stack
-    procPopSubs.addVarSubstitution("id_pre", "preInd");
-
-    // If there is a spike for this thread to process
-    os << "if (" << procPopSubs["id"] << " < preInd)";
     {
         CodeStream::Scope b(os);
+
+        Substitutions procPopSubs(&popSubs);
+
+        if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+            os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << procPopSubs["id"] << "];" << std::endl;
+        }
+        else {
+            os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
+            os << "[" << procPopSubs["id"] << "];" << std::endl;
+        }
+
+        // Add presynaptic index to substitution stack
+        procPopSubs.addVarSubstitution("id_pre", "preInd");
 
         // Get connectivity initialisation code
         const auto &connectInit = sg.getConnectivityInitialiser();
