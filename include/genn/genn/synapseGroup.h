@@ -197,6 +197,9 @@ public:
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
 
+    //! Does this synapse group require an RNG to generate procedural connectivity?
+    bool isProceduralConnectivityRNGRequired() const;
+
     //! Does this synapse group require an RNG for it's postsynaptic init code?
     bool isPSInitRNGRequired() const;
 

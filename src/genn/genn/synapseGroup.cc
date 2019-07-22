@@ -246,6 +246,12 @@ bool SynapseGroup::isDendriticDelayRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isProceduralConnectivityRNGRequired() const
+{
+    return ((m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) &&
+            Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isPSInitRNGRequired() const
 {
     // If initialising the postsynaptic variables require an RNG, return true
@@ -259,8 +265,9 @@ bool SynapseGroup::isWUInitRNGRequired() const
         return true;
     }
 
-    // Return true if the var init mode we're querying is the one used for sparse connectivity and the connectivity initialiser requires an RNG
-    return Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode());
+    // Return true if matrix has sparse or bitmask connectivity and an RNG is required to initialise connectivity
+    return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
+            && Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
@@ -278,8 +285,9 @@ bool SynapseGroup::isWUVarInitRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isSparseConnectivityInitRequired() const
 {
-    // Return true if there is code to initialise sparse connectivity on device
-    return !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
+    // Return true if the matrix type is sparse or bitmask and there is code to initialise sparse connectivity
+    return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
+            && !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty());
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
@@ -300,10 +308,23 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
+    // If connectivity is procedural
+    if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
+        // If there's no row build code, give an error
+        if(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode().empty()) {
+            throw std::runtime_error("Cannot use procedural connectivity without specifying connectivity initialisation snippet");
+        }
+
+        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
+        if(!m_WUModel->getLearnPostCode().empty()) {
+            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
+        }
+    }
+
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+    // **NOTE** only do this for sparse or procedural connectivity as this should not be set for bitmasks
     auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
-    if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+    if(calcMaxRowLengthFunc && ((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL))) {
         m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
                                                 m_ConnectivityInitialiser.getParams());
     }
@@ -313,9 +334,9 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     }
 
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+    // **NOTE** only do this for sparse or procedural connectivity as this should not be set for bitmasks
     auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
-    if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+    if(calcMaxColLengthFunc && ((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL))) {
         m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
                                                       m_ConnectivityInitialiser.getParams());
     }

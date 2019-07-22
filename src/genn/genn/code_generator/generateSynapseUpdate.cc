@@ -53,7 +53,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
                                       model.getDT());
     baseSubs.apply(code);
     code= ensureFtype(code, model.getPrecision());
-    checkUnreplacedVariables(code, sg.getName() + errorSuffix);
+    //checkUnreplacedVariables(code, sg.getName() + errorSuffix);
     os << code;
 }
 }   // Anonymous namespace

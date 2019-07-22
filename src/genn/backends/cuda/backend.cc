@@ -141,6 +141,7 @@ const char *Backend::KernelNames[KernelMax] = {
 std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategy::PreSpan,
     new PresynapticUpdateStrategy::PostSpan,
+    new PresynapticUpdateStrategy::PreSpanProcedural,
 };
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
@@ -1916,11 +1917,11 @@ bool Backend::isGlobalRNGRequired(const ModelSpecInternal &model) const
         return true;
     }
 
-    // If any synapse groups require an RNG for weight update model initialisation, return true
+    // If any synapse groups require an RNG for weight update model initialisation or procedural connectivity, return true
     if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
         [](const ModelSpec::SynapseGroupValueType &s)
         {
-            return s.second.isWUInitRNGRequired();
+            return (s.second.isWUInitRNGRequired() || s.second.isProceduralConnectivityRNGRequired());
         }))
     {
         return true;
