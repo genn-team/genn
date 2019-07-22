@@ -36,7 +36,7 @@ void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseG
 
     // Substitue derived and standard parameters into init code
     DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
-    VarNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
+    EGPNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
     value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
     name_substitutions(code, "", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());

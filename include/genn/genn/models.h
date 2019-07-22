@@ -20,16 +20,26 @@
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
 #define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual VarVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
+
+//----------------------------------------------------------------------------
+// VarAccess
+//----------------------------------------------------------------------------
+//! How is this variable accessed by model?
+enum class VarAccess
+{
+    READ_WRITE = 0, //! This variable is both read and written by the model
+    READ_ONLY,      //! This variable is only read by the model
+};
 
 //----------------------------------------------------------------------------
 // Models::VarInit
 //----------------------------------------------------------------------------
-namespace Models
-{
 //! Class used to bind together everything required to initialise a variable:
 //! 1. A pointer to a variable initialisation snippet
 //! 2. The parameters required to control the variable initialisation snippet
+namespace Models
+{
 class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
@@ -130,6 +140,32 @@ class Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------
+    // Structs
+    //----------------------------------------------------------------------------
+    //! A variable has a name, a type and an access type
+    /*! Explicit constructors required as although, through the wonders of C++
+        aggregate initialization, access would default to VarAccess::READ_WRITE
+        if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
+    struct Var
+    {
+        Var()
+        {}
+        Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(t), access(a)
+        {}
+        Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
+        {}
+
+        std::string name;
+        std::string type;
+        VarAccess access;
+    };
+
+    //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef std::vector<Var> VarVec;
+
+    //----------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
     //! Gets names and types (as strings) of model variables
@@ -137,7 +173,7 @@ public:
 
     //! Gets names and types (as strings) of additional
     //! per-population parameters for the weight update model.
-    virtual VarVec getExtraGlobalParams() const{ return {}; }
+    virtual EGPVec getExtraGlobalParams() const{ return {}; }
 
     //------------------------------------------------------------------------
     // Public methods
@@ -145,13 +181,13 @@ public:
     //! Find the index of a named variable
     size_t getVarIndex(const std::string &varName) const
     {
-        return getVarVecIndex(varName, getVars());
+        return getNamedVecIndex(varName, getVars());
     }
 
     //! Find the index of a named extra global parameter
     size_t getExtraGlobalParamIndex(const std::string &paramName) const
     {
-        return getVarVecIndex(paramName, getExtraGlobalParams());
+        return getNamedVecIndex(paramName, getExtraGlobalParams());
     }
 };
 } // Models

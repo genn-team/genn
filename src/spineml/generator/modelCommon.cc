@@ -335,7 +335,7 @@ std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::s
 
     // If this send port corresponds to a state variable
     auto correspondingVar = std::find_if(vars.begin(), vars.end(),
-                                         [sendPortName](const Snippet::Base::Var &v)
+                                         [sendPortName](const Models::Base::Var &v)
                                          {
                                              return (v.name == sendPortName);
                                         });
