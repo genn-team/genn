@@ -474,6 +474,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                             {wum->getSimCode(), wum->getEventCode(), wum->getEventThresholdConditionCode()});
         updateSynapseGroupExtraGlobalParams(s.second, postsynapticKernelParameters, {wum->getLearnPostCode()});
         updateSynapseGroupExtraGlobalParams(s.second, synapseDynamicsKernelParameters, {wum->getSynapseDynamicsCode()});
+
+        // If synapse group is connected using procedural connectivity, also add
+        // sparse connectivity initialization parameters to presynaptic kernel parameters
+        if(s.second.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+            const auto *initSparseConnectivitySnippet = s.second.getConnectivityInitialiser().getSnippet();
+            updateExtraGlobalParams(s.first, "", initSparseConnectivitySnippet->getExtraGlobalParams(), presynapticKernelParameters,
+                                    {initSparseConnectivitySnippet->getRowBuildCode()});
+        }
     }
 
     // If any synapse groups require spike-driven presynaptic updates
