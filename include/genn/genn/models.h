@@ -142,11 +142,17 @@ public:
     //----------------------------------------------------------------------------
     // Structs
     //----------------------------------------------------------------------------
-    //! A variable has a name, a type and a readonly flag
-    /*! Through the wonders of C++ aggregate initialization, if readonly
-    // is not initialized in the {}, it will be VALUE-initialised to false*/
+    //! A variable has a name, a type and an access type
+    /*! Explicit constructors required as although, through the wonders of C++
+        aggregate initialization, access would default to VarAccess::READ_WRITE
+        if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
     struct Var
     {
+        Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(t), access(a)
+        {}
+        Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
+        {}
+
         std::string name;
         std::string type;
         VarAccess access;
