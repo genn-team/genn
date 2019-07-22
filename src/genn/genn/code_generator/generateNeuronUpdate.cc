@@ -32,7 +32,7 @@ void applyNeuronModelSubstitutions(std::string &code, const NeuronGroupInternal 
     // Create iteration context to iterate over the variables; derived and extra global parameters
     VarNameIterCtx nmVars(nm->getVars());
     DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
-    VarNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
+    EGPNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
     ParamValIterCtx nmAdditionalInputVars(nm->getAdditionalInputVars());
 
     name_substitutions(code, "l", nmVars.nameBegin, nmVars.nameEnd, varSuffix, varExt);
@@ -51,7 +51,7 @@ void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroupIn
     // Create iterators to iterate over the names of the postsynaptic model's initial values
     VarNameIterCtx psmVars(psm->getVars());
     DerivedParamNameIterCtx psmDerivedParams(psm->getDerivedParams());
-    VarNameIterCtx psmExtraGlobalParams(psm->getExtraGlobalParams());
+    EGPNameIterCtx psmExtraGlobalParams(psm->getExtraGlobalParams());
 
     if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         name_substitutions(code, "lps", psmVars.nameBegin, psmVars.nameEnd, sg->getName());
@@ -192,7 +192,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 // Create iteration context to iterate over the variables; derived and extra global parameters
                 VarNameIterCtx csVars(csm->getVars());
                 DerivedParamNameIterCtx csDerivedParams(csm->getDerivedParams());
-                VarNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
+                EGPNameIterCtx csExtraGlobalParams(csm->getExtraGlobalParams());
 
                 name_substitutions(iCode, "lcs", csVars.nameBegin, csVars.nameEnd);
                 value_substitutions(iCode, csm->getParamNames(), cs->getParams());
@@ -204,9 +204,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 checkUnreplacedVariables(iCode, cs->getName() + " : current source injectionCode");
                 os << iCode << std::endl;
 
-                // Write non-readonly variables back to global memory
+                // Write read/write variables back to global memory
                 for(const auto &v : csm->getVars()) {
-                    if(!v.readonly) {
+                    if(v.access == VarAccess::READ_WRITE) {
                         os << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
                     }
                 }
@@ -360,11 +360,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
             // Loop through neuron state variables
             for(const auto &v : nm->getVars()) {
-                // If state variables is not read-only - meaning that it may have been updated - or it is delayed -
+                // If state variables is read/writes - meaning that it may have been updated - or it is delayed -
                 // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
                 // back to global state variables dd_V etc  
                 const bool delayed = (ng.isVarQueueRequired(v.name) && ng.isDelayRequired());
-                if(!v.readonly || delayed) {
+                if((v.access == VarAccess::READ_WRITE) || delayed) {
                     os << backend.getVarPrefix() << v.name << ng.getName() << "[";
 
                     if (delayed) {
@@ -401,7 +401,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
-                    if(!v.readonly) {
+                    if(v.access == VarAccess::READ_WRITE) {
                         os << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << sg->getPSModelTargetName() << ";" << std::endl;
                     }
                 }
@@ -433,7 +433,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                     // Create iteration context to iterate over the weight update model
                     // postsynaptic variables; derived and extra global parameters
                     DerivedParamNameIterCtx wuDerivedParams(sg->getWUModel()->getDerivedParams());
-                    VarNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
+                    EGPNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
                     VarNameIterCtx wuPreVars(sg->getWUModel()->getPreVars());
 
                     value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
@@ -451,11 +451,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Loop through presynaptic variables into global memory
                     for(const auto &v : sg->getWUModel()->getPreVars()) {
-                        // If state variables is not read-only - meaning that it may have been updated - or it is axonally delayed -
+                        // If state variables is read/write - meaning that it may have been updated - or it is axonally delayed -
                         // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
                         // back to global state variables dd_V etc  
                         const bool delayed = (sg->getDelaySteps() != NO_DELAY);
-                        if(!v.readonly || delayed) {
+                        if((v.access == VarAccess::READ_WRITE) || delayed) {
                             os << backend.getVarPrefix() << v.name << sg->getName() << "[";
                             if (delayed) {
                                 os << "writeDelayOffset + ";
@@ -489,7 +489,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                     // Create iteration context to iterate over the weight update model
                     // postsynaptic variables; derived and extra global parameters
                     DerivedParamNameIterCtx wuDerivedParams(sg->getWUModel()->getDerivedParams());
-                    VarNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
+                    EGPNameIterCtx wuExtraGlobalParams(sg->getWUModel()->getExtraGlobalParams());
                     VarNameIterCtx wuPostVars(sg->getWUModel()->getPostVars());
 
                     value_substitutions(code, sg->getWUModel()->getParamNames(), sg->getWUParams());
@@ -508,11 +508,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Write back presynaptic variables into global memory
                     for(const auto &v : sg->getWUModel()->getPostVars()) {
-                        // If state variables is not read-only - meaning that it may have been updated - or it is dendritically delayed -
+                        // If state variables is read/write - meaning that it may have been updated - or it is dendritically delayed -
                         // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
                         // back to global state variables dd_V etc  
                         const bool delayed = (sg->getBackPropDelaySteps() != NO_DELAY);
-                        if(!v.readonly || delayed) {
+                        if((v.access == VarAccess::READ_WRITE) || delayed) {
                             os << backend.getVarPrefix() << v.name << sg->getName() << "[";
                             if (delayed) {
                                 os << "writeDelayOffset + ";
