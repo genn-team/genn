@@ -42,7 +42,7 @@ public:
     {
         // Record start event
         if(m_TimingEnabled) {
-            m_CodeStream << "cudaEventRecord(" << m_Name << "Start);" << std::endl;
+            m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventRecord(" << m_Name << "Start));" << std::endl;
         }
     }
 
@@ -50,14 +50,14 @@ public:
     {
         // Record stop event
         if(m_TimingEnabled) {
-            m_CodeStream << "cudaEventRecord(" << m_Name << "Stop);" << std::endl;
+            m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventRecord(" << m_Name << "Stop));" << std::endl;
 
             // If we should synchronise on stop, insert call
             if(m_SynchroniseOnStop) {
-                m_CodeStream << "cudaEventSynchronize(" << m_Name << "Stop);" << std::endl;
+                m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventSynchronize(" << m_Name << "Stop));" << std::endl;
 
                 m_CodeStream << "float tmp;" << std::endl;
-                m_CodeStream << "cudaEventElapsedTime(&tmp, " << m_Name << "Start, " << m_Name << "Stop);" << std::endl;
+                m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, " << m_Name << "Start, " << m_Name << "Stop));" << std::endl;
                 m_CodeStream << m_Name << "Time += tmp / 1000.0;" << std::endl;
             }
         }
@@ -401,6 +401,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
             os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>();" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
         if(idStart > 0) {
             CodeStream::Scope b(os);
@@ -412,6 +413,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
                 gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
 }
@@ -798,6 +800,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
             os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
         // Launch synapse dynamics kernel if required
@@ -811,6 +814,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
         // Launch presynaptic update kernel
@@ -824,6 +828,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
         // Launch postsynaptic update kernel
@@ -837,6 +842,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 gennExtraGlobalParamPass(os, p);
             }
             os << "t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
 }
@@ -1212,17 +1218,18 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
             // Launch kernel to initalize RNG
             os << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
         for(const auto &s : model.getLocalSynapseGroups()) {
             // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
             if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-                os << "cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
             }
             // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
             else if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                os << "cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
             }
         }
 
@@ -1238,6 +1245,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     gennExtraGlobalParamPass(os, p);
                 }
                 os << "deviceRNGSeed);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
         }
     }
@@ -1258,6 +1266,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                 genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
                 os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
         }
     }
@@ -1547,12 +1556,12 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInterna
 {
     // Synchronise if zero-copy is in use
     if(model.zeroCopyInUse()) {
-        os << "cudaDeviceSynchronize();" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaDeviceSynchronize());" << std::endl;
     }
 
     // If timing is enabled, synchronise last event
     if(model.isTimingEnabled()) {
-        os << "cudaEventSynchronize(neuronUpdateStop);" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaEventSynchronize(neuronUpdateStop));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1598,7 +1607,7 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
 
     if(loc & VarLocation::HOST) {
         const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-        os << "cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << ");" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << "));" << std::endl;
         allocation += MemAlloc::host(count * getSize(type));
     }
 
@@ -1659,7 +1668,7 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 
     if(loc & VarLocation::HOST) {
         const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-        os << "cudaHostAlloc(&" << name << ", count * sizeof(" << underlyingType << "), " << flags << ");" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", count * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
     }
 
     // If variable is present on device at all
@@ -1793,17 +1802,17 @@ void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream
     runner << "cudaEvent_t " << name << "Stop;" << std::endl;
 
     // Create start and stop events in allocations
-    allocations << "cudaEventCreate(&" << name << "Start);" << std::endl;
-    allocations << "cudaEventCreate(&" << name << "Stop);" << std::endl;
+    allocations << "CHECK_CUDA_ERRORS(cudaEventCreate(&" << name << "Start));" << std::endl;
+    allocations << "CHECK_CUDA_ERRORS(cudaEventCreate(&" << name << "Stop));" << std::endl;
 
     // Destroy start and stop events in allocations
-    free << "cudaEventDestroy(" << name << "Start);" << std::endl;
-    free << "cudaEventDestroy(" << name << "Stop);" << std::endl;
+    free << "CHECK_CUDA_ERRORS(cudaEventDestroy(" << name << "Start));" << std::endl;
+    free << "CHECK_CUDA_ERRORS(cudaEventDestroy(" << name << "Stop));" << std::endl;
 
     if(updateInStepTime) {
         CodeGenerator::CodeStream::Scope b(stepTimeFinalise);
         stepTimeFinalise << "float tmp;" << std::endl;
-        stepTimeFinalise << "cudaEventElapsedTime(&tmp, " << name << "Start, " << name << "Stop);" << std::endl;
+        stepTimeFinalise << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, " << name << "Start, " << name << "Stop));" << std::endl;
         stepTimeFinalise << name << "Time += tmp / 1000.0;" << std::endl;
     }
 }
