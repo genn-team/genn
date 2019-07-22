@@ -53,10 +53,10 @@ from six import iteritems, itervalues
 # pygenn imports
 from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModel as slm
-from .genn_wrapper.Models import VarInit
+from .genn_wrapper.Models import (Var, VarInit, VarVector)
 from .genn_wrapper.InitSparseConnectivitySnippet import Init
-from .genn_wrapper.Snippet import (make_dpf, Var, ParamVal, DerivedParam,
-                                   VarVector, ParamValVector,
+from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
+                                   EGPVector, ParamValVector,
                                    DerivedParamVector)
 from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf
 from .genn_wrapper.StlContainers import StringVector
@@ -639,7 +639,7 @@ def create_custom_neuron_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: VarVector([Var(egp[0], egp[1])
+            lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 
     if additional_input_vars:
@@ -819,7 +819,7 @@ def create_custom_weight_update_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: VarVector([Var(egp[0], egp[1])
+            lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 
     if pre_var_name_types is not None:
@@ -889,7 +889,7 @@ def create_custom_current_source_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: VarVector([Var(egp[0], egp[1])
+            lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 
     if custom_body is not None:
@@ -1097,7 +1097,7 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] =\
-            lambda self: VarVector([Var(egp[0], egp[1])
+            lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 
     if custom_body is not None:
