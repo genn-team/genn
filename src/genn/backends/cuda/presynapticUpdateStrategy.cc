@@ -402,7 +402,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         // **TODO** we should offset this past sequences used for initialisation
         if(::Utils::isRNGRequired(connectInit.getSnippet()->getRowBuildCode())) {
             os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
-            os << "skipahead_sequence((unsigned long long)id, &connectRNG);" << std::endl;
+            os << "skipahead_sequence((unsigned long long)(" << procPopSubs["id_start"] << " + preInd), &connectRNG);" << std::endl;
 
             // Add substitution for RNG
             procPopSubs.addVarSubstitution("rng", "&connectRNG");
