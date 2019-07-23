@@ -982,11 +982,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << std::endl;
 
         os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Synapse groups with sparse connectivity" << std::endl;
+        os << "// Synapse groups with sparse or procedural connectivity" << std::endl;
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
-            [sgSparseConnectHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+            [](const SynapseGroupInternal &sg){ return (sg.isSparseConnectivityInitRequired() || (sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)); },
+            [&model, sgSparseConnectHandler,this](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
@@ -1000,6 +1000,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     // **NOTE** not LOCAL id
                     if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+
+                        // **TODO** nicer
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
                         // Add substitution for RNG
@@ -1033,6 +1035,48 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         // Build function template to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
                                                     ind + "[(" + popSubs["id"] + " * " + std::to_string(sg.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)");
+                    }
+                    else if(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+                        // **TODO** make generic
+                        // Generate value initialisation code into new stream
+                        std::ostringstream valueInitStream;
+                        CodeStream valueInit(valueInitStream);
+
+                        const auto vars = sg.getWUModel()->getVars();
+                        for (size_t k = 0; k < vars.size(); k++) {
+                            const auto &varInit = sg.getWUVarInitialisers().at(k);
+
+                            Substitutions varSubs(popSubs);
+
+                            varSubs.addVarSubstitution("id_pre", popSubs["id"]);
+                            varSubs.addVarSubstitution("id_post", "$(0)");
+                            varSubs.addVarSubstitution("id_syn", "idx");
+
+                            // If this variable has any initialisation code
+                            if(!varInit.getSnippet()->getCode().empty()) {
+                                CodeStream::Scope b(valueInit);
+
+                                varSubs.addVarSubstitution("value", getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
+
+                                std::string code = varInit.getSnippet()->getCode();
+                                varSubs.apply(code);
+
+                                // Substitue derived and standard parameters into init code
+                                DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
+                                value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
+                                value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+
+                                code = ensureFtype(code, model.getPrecision());
+                                //checkUnreplacedVariables(code, "initVar");
+                                valueInit << code << std::endl;
+                                valueInit << "idx++;" << std::endl;
+                            }
+                        }
+
+                        os << "unsigned int idx = " << popSubs["id"] << " * " << sg.getMaxConnections() << ";" << std::endl;
+
+                        popSubs.addFuncSubstitution("addSynapse", 1, valueInitStream.str());
+
                     }
                     else {
                         assert(false);
