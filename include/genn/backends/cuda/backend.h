@@ -257,9 +257,6 @@ private:
 
                 os << "// " << g.first << std::endl;
 
-                // Add start id of group to subs
-                popSubs.addVarSubstitution("id_start", std::to_string(idStart));
-
                 // If this is the first  group
                 if (idStart == 0) {
                     os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
