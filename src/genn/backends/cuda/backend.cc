@@ -885,6 +885,18 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << std::endl;
     }
 
+    // Count the number of threads that will be used to initialize connectivity or initialize state variables for procedural connectivity
+    const size_t numConnectivityThreads = std::accumulate(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), 0,
+                                                          [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
+                                                          {
+                                                              if(s.second.isSparseConnectivityInitRequired() || isProceduralInitRequired(s.second)) {
+                                                                  return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]));
+                                                              }
+                                                              else {
+                                                                  return acc;
+                                                              }
+                                                          });
+
     // Build map of extra global parameters for init kernel
     std::map<std::string, std::string> initKernelParameters;
     for(const auto &s : model.getLocalSynapseGroups()) {
@@ -992,7 +1004,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [](const SynapseGroupInternal &sg){ return (sg.isSparseConnectivityInitRequired() || isProceduralInitRequired(sg)); },
-            [&model, sgSparseConnectHandler,this](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+            [&model, numConnectivityThreads, sgSparseConnectHandler, this](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
@@ -1001,18 +1013,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 os << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
                 {
                     CodeStream::Scope b(os);
-                    // If this connectivity requires an RNG for initialisation,
-                    // make copy of global phillox RNG and skip ahead by thread id
-                    // **NOTE** not LOCAL id
-                    if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-
-                        // **TODO** nicer
-                        os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
-
-                        // Add substitution for RNG
-                        popSubs.addVarSubstitution("rng", "&initRNG");
-                    }
 
                     // If the synapse group has bitmask connectivity
                     if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -1048,6 +1048,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         std::ostringstream valueInitStream;
                         CodeStream valueInit(valueInitStream);
 
+                        // If this state variable requires an RNG for initialisation,
+                        // make copy of global phillox RNG and skip ahead by thread id,
+                        // offsetting past those used for connectivity
+                        if(sg.isWUInitRNGRequired()) {
+                            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                            os << "skipahead_sequence((unsigned long long)(" << numConnectivityThreads << " + id), &initRNG);" << std::endl;
+                        }
+
                         const auto vars = sg.getWUModel()->getVars();
                         for (size_t k = 0; k < vars.size(); k++) {
                             const auto &varInit = sg.getWUVarInitialisers().at(k);
@@ -1058,7 +1066,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                             varSubs.addVarSubstitution("id_post", "$(0)");
                             varSubs.addVarSubstitution("id_syn", "idx");
 
-                            // **TODO** remove rng and add in another rng instance
+                            // Add new substition for RNG
+                            if(sg.isWUInitRNGRequired()) {
+                                varSubs.addVarSubstitution("rng", "&initRNG");
+                            }
 
                             // If this variable has any initialisation code
                             if(!varInit.getSnippet()->getCode().empty()) {
@@ -1077,17 +1088,34 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                                 code = ensureFtype(code, model.getPrecision());
                                 //checkUnreplacedVariables(code, "initVar");
                                 valueInit << code << std::endl;
-                                valueInit << "idx++;" << std::endl;
                             }
                         }
 
+                        // After initialising all variables associated wiht thissynapse, advance to next
+                        valueInit << "idx++;" << std::endl;
+
+                        // Calculate synapse index for first row
                         os << "unsigned int idx = " << popSubs["id"] << " * " << sg.getMaxConnections() << ";" << std::endl;
 
+                        // Substitute our value initialization code for the addSynapse function
                         popSubs.addFuncSubstitution("addSynapse", 1, valueInitStream.str());
 
                     }
                     else {
                         assert(false);
+                    }
+
+                    // If this connectivity requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    // **NOTE** not LOCAL id
+                    if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                        os << "curandStatePhilox4_32_10_t connectivityRNG = dd_rng[0];" << std::endl;
+
+                        // **TODO** nicer
+                        os << "skipahead_sequence((unsigned long long)id, &connectivityRNG);" << std::endl;
+
+                        // Add substitution for RNG
+                        popSubs.addVarSubstitution("rng", "&connectivityRNG");
                     }
 
                     popSubs.addVarSubstitution("id_pre", popSubs["id"]);
@@ -1096,7 +1124,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             });
     }
     os << std::endl;
-    const size_t numStaticInitThreads = idInitStart;
+
+    // Because the previous block of code may have used two sequences per thread,
+    // add padding before the first sequence used for initialization of sparse connectivity
+    const size_t staticInitSequenceEnd = idInitStart + numConnectivityThreads;
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
@@ -1125,14 +1156,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
                 [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
                 [](const SynapseGroupInternal &sg){ return isSparseInitRequired(sg); },
-                [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+                [this, &model, sgSparseInitHandler, staticInitSequenceEnd](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
                 {
                     // If this post synapse requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
                     if(sg.isWUInitRNGRequired()) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                        os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)" << staticInitSequenceEnd << " + id, &initRNG);" << std::endl;
 
                         // Add substitution for RNG
                         popSubs.addVarSubstitution("rng", "&initRNG");
