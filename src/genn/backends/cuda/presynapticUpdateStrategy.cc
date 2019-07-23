@@ -379,18 +379,18 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
     {
         CodeStream::Scope b(os);
 
-        Substitutions procPopSubs(&popSubs);
-
+        // Determine the index of the presynaptic neuron this thread is responsible for
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << procPopSubs["id"] << "];" << std::endl;
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << popSubs["id"] << "];" << std::endl;
         }
         else {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[" << procPopSubs["id"] << "];" << std::endl;
+            os << "[" << popSubs["id"] << "];" << std::endl;
         }
 
         // Add presynaptic index to substitution stack
+        Substitutions procPopSubs(&popSubs);
         procPopSubs.addVarSubstitution("id_pre", "preInd");
 
         // Get connectivity initialisation code
