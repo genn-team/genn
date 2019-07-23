@@ -129,9 +129,9 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
-    virtual void genDefinitionsPreamble(CodeStream &os) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os) const override;
-    virtual void genRunnerPreamble(CodeStream &os) const override;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const override;
 

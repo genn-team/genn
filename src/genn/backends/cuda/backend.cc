@@ -1280,7 +1280,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsPreamble(CodeStream &os) const
+void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &) const
 {
     os << "// Standard C++ includes" << std::endl;
     os << "#include <string>" << std::endl;
@@ -1305,7 +1305,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "}" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
+void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &) const
 {
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
@@ -1496,7 +1496,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const
 {
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
@@ -1519,19 +1519,22 @@ void Backend::genRunnerPreamble(CodeStream &os) const
     }
     os << std::endl;
 
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Helper function for getting the device pointer corresponding to a zero-copied host pointer and assigning it to a symbol" << std::endl;
-    os << std::endl;
-    os << "template<class T>" << std::endl;
-    os << "void deviceZeroCopy(T hostPtr, const T *devPtr, const T &devSymbol)";
-    {
-        CodeStream::Scope b(os);
-        os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)devPtr, (void*)hostPtr, 0));" << std::endl;
-        os << "void *devSymbolPtr;" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devSymbolPtr, devSymbol));" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(devSymbolPtr, devPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
+    // If the model requires zero-copy
+    if(model.zeroCopyInUse()) {
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Helper function for getting the device pointer corresponding to a zero-copied host pointer and assigning it to a symbol" << std::endl;
+        os << std::endl;
+        os << "template<class T>" << std::endl;
+        os << "void deviceZeroCopy(T hostPtr, const T *devPtr, const T &devSymbol)";
+        {
+            CodeStream::Scope b(os);
+            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)devPtr, (void*)hostPtr, 0));" << std::endl;
+            os << "void *devSymbolPtr;" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devSymbolPtr, devSymbol));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(devSymbolPtr, devPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
+        }
+        os << std::endl;
     }
-    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const

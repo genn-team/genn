@@ -532,7 +532,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsPreamble(CodeStream &os) const
+void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const
 {
     os << "// Standard C++ includes" << std::endl;
     os << "#include <chrono>" << std::endl;
@@ -543,16 +543,32 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "#include <cmath>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
+
+     // If a global RNG is required, define standard host distributions as recreating them each call is slow
+    if(isGlobalRNGRequired(model)) {
+        os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
+void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &) const
 {
     os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &) const
+void Backend::genRunnerPreamble(CodeStream &, const ModelSpecInternal &model) const
 {
+    // If a global RNG is required, implement standard host distributions as recreating them each call is slow
+    if(isGlobalRNGRequired(model)) {
+        os << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
+        os << std::endl;
+    }
+
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpecInternal &) const
@@ -687,19 +703,11 @@ MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream
     definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
 
-    // Define and implement standard host distributions as recreating them each call is slow
-    definitions << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
-    runner << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
-    runner << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
-    runner << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
-
     return MemAlloc::zero();
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
-                               const std::string&, size_t) const
+                                   const std::string&, size_t) const
 {
     // No need for population RNGs for single-threaded CPU
     return MemAlloc::zero();

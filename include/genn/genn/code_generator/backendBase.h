@@ -161,14 +161,14 @@ public:
 
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/
-    virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
     //! Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
-    virtual void genDefinitionsInternalPreamble(CodeStream &os) const = 0;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
 
-    virtual void genRunnerPreamble(CodeStream &os) const = 0;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
     //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
@@ -201,9 +201,14 @@ public:
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
 
+    //! Generate a global RNG
+    /*! On single-threaded platforms this may be the only RNG but on parallel platforms it is likely to be a counter-based RNG */
     virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const = 0;
+
+    //! Generate an RNG with a state per population member
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                              const std::string &name, size_t count) const = 0;
+                                      const std::string &name, size_t count) const = 0;
+
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 

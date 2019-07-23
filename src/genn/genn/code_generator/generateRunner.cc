@@ -247,12 +247,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     definitions << "#define EXPORT_VAR extern" << std::endl;
     definitions << "#define EXPORT_FUNC" << std::endl;
 #endif
-    backend.genDefinitionsPreamble(definitions);
+    backend.genDefinitionsPreamble(definitions, model);
 
     // Write definitions internal preamble
     definitionsInternal << "#pragma once" << std::endl;
     definitionsInternal << "#include \"definitions.h\"" << std::endl << std::endl;
-    backend.genDefinitionsInternalPreamble(definitionsInternal);
+    backend.genDefinitionsInternalPreamble(definitionsInternal, model);
     
     // write DT macro
     if (model.getTimePrecision() == "float") {
@@ -277,7 +277,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Write runner preamble
     runner << "#include \"definitionsInternal.h\"" << std::endl << std::endl;
-    backend.genRunnerPreamble(runner);
+    backend.genRunnerPreamble(runner, model);
 
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
