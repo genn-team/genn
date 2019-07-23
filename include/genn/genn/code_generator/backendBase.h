@@ -136,8 +136,8 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
-    /*! \param os CodeStream to write function to
-        \param model model to generate code for
+    /*! \param os                       CodeStream to write function to
+        \param model                    model to generate code for
         \param wumThreshHandler         callback to write platform-independent code to update an individual NeuronGroup
         \param wumSimHandler            callback to write platform-independent code to process presynaptic spikes.
                                         "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
@@ -201,9 +201,9 @@ public:
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
 
-    //! Generate a global RNG
-    /*! On single-threaded platforms this may be the only RNG but on parallel platforms it is likely to be a counter-based RNG */
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const = 0;
+    //! Generate a single RNG instance
+    /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
+    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
 
     //! Generate an RNG with a state per population member
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,

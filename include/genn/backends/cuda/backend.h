@@ -171,7 +171,7 @@ public:
         genCurrentSpikePull(os, ng, true);
     }
 
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const override;
+    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                                       CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
@@ -244,9 +244,9 @@ private:
                           FilterGroupFunc<T> filter, 
                           GroupHandler<T> handler) const
     {
-        // Populate neuron update groups
+        // Loop through groups
         for (const auto &g : groups) {
-            // If this synapse group should be processed
+            // If this group should be processed
             Substitutions popSubs(&kernelSubs);
             if(filter(g.second)) {
                 const size_t paddedSize = getPaddedSizeFunc(g.second);

@@ -319,7 +319,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // If backend requires a global RNG to simulate (or initialize) this model
     if(backend.isGlobalRNGRequired(model)) {
-        mem += backend.genGlobalRNG(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree, model);
+        mem += backend.genGlobalRNG(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree);
     }
     allVarStreams << std::endl;
 

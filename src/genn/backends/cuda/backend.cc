@@ -1829,7 +1829,7 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &) const
+MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
 {
     // Create a single Philox4_32_10 RNG
     genVariableDefinition(definitions, definitionsInternal, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);

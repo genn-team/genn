@@ -698,12 +698,12 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
 {
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const ModelSpecInternal &model) const
+MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &) const
 {
     definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
 
-    return MemAlloc::zero();
+    return MemAlloc::host(sizeof(std::mt19937));
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
