@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <numeric>
 
 // PLOG includes
 #include <plog/Log.h>
@@ -88,6 +89,11 @@ bool isSparseInitRequired(const SynapseGroupInternal &sg)
 {
     return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
             && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
+}
+//-----------------------------------------------------------------------
+bool isProceduralInitRequired(const SynapseGroupInternal &sg)
+{
+    return ((sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) && sg.isWUVarInitRequired());
 }
 //-----------------------------------------------------------------------
 void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Snippet::Base::EGPVec &extraGlobalParameters,
@@ -985,7 +991,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// Synapse groups with sparse or procedural connectivity" << std::endl;
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroupInternal &sg){ return (sg.isSparseConnectivityInitRequired() || (sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)); },
+            [](const SynapseGroupInternal &sg){ return (sg.isSparseConnectivityInitRequired() || isProceduralInitRequired(sg)); },
             [&model, sgSparseConnectHandler,this](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
@@ -1052,6 +1058,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                             varSubs.addVarSubstitution("id_post", "$(0)");
                             varSubs.addVarSubstitution("id_syn", "idx");
 
+                            // **TODO** remove rng and add in another rng instance
+
                             // If this variable has any initialisation code
                             if(!varInit.getSnippet()->getCode().empty()) {
                                 CodeStream::Scope b(valueInit);
@@ -1113,7 +1121,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 os << "__shared__ unsigned int shRowStart[" << m_KernelBlockSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
             }
 
-            // Initialise weight update variables for synapse groups with dense connectivity
+            // Initialise weight update variables for synapse groups with sparse connectivity
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
                 [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
                 [](const SynapseGroupInternal &sg){ return isSparseInitRequired(sg); },
@@ -2030,6 +2038,50 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
     else {
         return "atomicAdd";
     }
+}
+//--------------------------------------------------------------------------
+size_t Backend::getProceduralConnectivitySequence(const SynapseGroupInternal &sg, const ModelSpecInternal &model) const
+{
+    // Assert that this synapse group has procedural connectivity
+    assert(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL);
+
+    // Calculate the total threads used to initialize local neuron groups
+    size_t thread = std::accumulate(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(), 0,
+                                    [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
+                                    {
+                                        return (acc + Utils::padSize(n.second.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]));
+                                    });
+
+    // Add on total number of threads used to initialize local synapse groups with dense connectivity
+    thread = std::accumulate(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), thread,
+                             [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
+                             {
+                                 if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE)
+                                     && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
+                                     && s.second.isWUVarInitRequired())
+                                 {
+                                     return (acc + Utils::padSize(s.second.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]));
+                                 }
+                                 else {
+                                     return acc;
+                                 }
+                             });
+
+    // Find the synapse group we're interested in in map
+    const auto sgIter = model.getLocalSynapseGroups().find(sg.getName());
+    assert(sgIter != model.getLocalSynapseGroups().cend());
+
+    // Accumulate total number of threads used to initialize synapse groups before this one
+    return std::accumulate(model.getLocalSynapseGroups().cbegin(), sgIter, thread,
+                           [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
+                           {
+                               if(s.second.isSparseConnectivityInitRequired() || isProceduralInitRequired(s.second)) {
+                                   return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]));
+                               }
+                               else {
+                                   return acc;
+                               }
+                           });
 }
 //--------------------------------------------------------------------------
 size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)

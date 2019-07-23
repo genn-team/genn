@@ -209,6 +209,10 @@ public:
 
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 
+    //! Calculate the starting sequence number to use for this synapse group's procedural connectivity
+    /*! This is used so that procedural connectivity RNGs are seeded the same way in both initialization and presynaptic updating code */
+    size_t getProceduralConnectivitySequence(const SynapseGroupInternal &sg, const ModelSpecInternal &model) const;
+
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
