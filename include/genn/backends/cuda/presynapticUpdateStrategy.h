@@ -43,8 +43,10 @@ public:
     virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
+                         BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -70,8 +72,10 @@ public:
     virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
+                         BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -97,8 +101,10 @@ public:
     virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
+                         BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -124,8 +130,10 @@ public:
     virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
+                         BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const override;
 };
 }   // namespace PresynapticUpdateStrategy
 }   // namespace CUDA

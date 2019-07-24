@@ -136,22 +136,26 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
-    /*! \param os                       CodeStream to write function to
-        \param model                    model to generate code for
-        \param wumThreshHandler         callback to write platform-independent code to update an individual NeuronGroup
-        \param wumSimHandler            callback to write platform-independent code to process presynaptic spikes.
-                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                        to callback via Substitutions.
-        \param wumEventHandler          callback to write platform-independent code to process presynaptic spike-like events.
-                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                        to callback via Substitutions.
-        \param postLearnHandler         callback to write platform-independent code to process postsynaptic spikes.
-                                        "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
-        \param synapseDynamicsHandler   callback to write platform-independent code to update time-driven synapse dynamics.
-                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                        to callback via Substitutions.*/
+    /*! \param os                           CodeStream to write function to
+        \param model                        model to generate code for
+        \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
+        \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
+                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                            to callback via Substitutions.
+        \param wumEventHandler              callback to write platform-independent code to process presynaptic spike-like events.
+                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                            to callback via Substitutions.
+        \param wumProceduralConnectHandler  callback to write platform-indepent code to procedurally generate connectivity
+                                            "id_pre" variable and "addSynapse" function will be provided to callback via Substitutions.
+                                            callback needs to implement loop over synapses in row, providing "synAddress" variable if INDIVIDUALG
+        \param postLearnHandler             callback to write platform-independent code to process postsynaptic spikes.
+                                            "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
+        \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
+                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                            to callback via Substitutions.*/
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
+                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                                  SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const = 0;
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,

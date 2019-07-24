@@ -57,8 +57,10 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, con
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                      BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                      const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                      BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
+                      BackendBase::SynapseGroupHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -114,9 +116,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             // **TODO** pretty sure __ldg will boost performance here - basically will bring whole row into cache
             os << "const unsigned int ipost = dd_ind" <<  sg.getName() << "[synAddress];" << std::endl;
 
-            // Code substitutions ----------------------------------------------------------------------------------
-            std::string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
-
+            // Create substitution stack for presynaptic simulation code
             Substitutions synSubs(&popSubs);
             synSubs.addVarSubstitution("id_pre", "preInd");
             synSubs.addVarSubstitution("id_post", "ipost");
@@ -163,7 +163,7 @@ size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
 bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
-    return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
+    return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC) && !(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL);
 }
 //----------------------------------------------------------------------------
 bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &) const
@@ -188,8 +188,10 @@ bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, co
     }
 }
 //----------------------------------------------------------------------------
-void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                       const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
+                       BackendBase::SynapseGroupHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -361,8 +363,10 @@ bool PreSpanProcedural::shouldAccumulateInSharedMemory(const SynapseGroupInterna
     }
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                                BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                                const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                                BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
+                                BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -393,21 +397,16 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         Substitutions procPopSubs(&popSubs);
         procPopSubs.addVarSubstitution("id_pre", "preInd");
 
-        // Get connectivity initialisation code
-        const auto &connectInit = sg.getConnectivityInitialiser();
-
         // If this connectivity requires an RNG for initialisation,
         // make copy of connect  phillox RNG and skip ahead by thread id
         // **NOTE** not LOCAL id
-        // **TODO** we should offset this past sequences used for initialisation
-        if(::Utils::isRNGRequired(connectInit.getSnippet()->getRowBuildCode())) {
+        if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
             os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
             os << "skipahead_sequence((unsigned long long)(" << backend.getProceduralConnectivitySequence(sg, model) << " + preInd), &connectRNG);" << std::endl;
 
-            // Add substitution for RNG
+            // Add substitution for RNGwumProceduralConnectHandler
             procPopSubs.addVarSubstitution("rng", "&connectRNG");
         }
-
 
         if (!wu->getSimSupportCode().empty()) {
             os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
@@ -427,78 +426,48 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
             os << CodeStream::OB(130);
         }
 
-        // **THINK** generic
-        for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-            os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
-        }
+        // Create substitution stack for generating presynaptic simulation code
+        Substitutions synSubs(&procPopSubs);
 
-        // **TODO** only necessary when INDIVIDUALG
+        // Replace $(id_post) with first 'function' parameter as simulation code is
+        // going to be, in turn, substituted into procedural connectivity generation code
+        synSubs.addVarSubstitution("id_post", "$(0)");
+
+        // If this synaptic matrix has individual state variables, implement using loop counter
+        // (which will be provided by the wumProceduralConnectHandler)
         if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            os << "for(unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";;synAddress++)";
+            synSubs.addVarSubstitution("id_syn", "synAddress");
         }
+
+        // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+        if(sg.isDendriticDelayRequired()) {
+            synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "$(id_post)], $(0))");
+        }
+        // Otherwise
         else {
-            os << "while(true)";
-        }
-        {
-            CodeStream::Scope b(os);
-
-            // Code substitutions ----------------------------------------------------------------------------------
-            std::string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
-
-            Substitutions synSubs(&procPopSubs);
-            synSubs.addVarSubstitution("id_post", "$(0)");
-            if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                synSubs.addVarSubstitution("id_syn", "synAddress");
+            // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
+            if(shouldAccumulateInSharedMemory(sg, backend)) {
+                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[$(id_post)], $(0))");
             }
-
-            // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-            if(sg.isDendriticDelayRequired()) {
-                synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "$(id_post)], $(0))");
-            }
-            // Otherwise
+            // Otherwise, substitute global memory array for $(inSyn)
             else {
-                // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
-                if(shouldAccumulateInSharedMemory(sg, backend)) {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[$(id_post)], $(0))");
-                }
-                // Otherwise, substitute global memory array for $(inSyn)
-                else {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[$(id_post)], $(0))");
-                }
+                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[$(id_post)], $(0))");
             }
-
-            // Generate weight update model code into new stream
-            std::ostringstream presynapticUpdateStream;
-            CodeStream presynapticUpdate(presynapticUpdateStream);
-            wumSimHandler(presynapticUpdate, sg, synSubs);
-
-            Substitutions connSubs(&procPopSubs);
-
-            connSubs.addFuncSubstitution("addSynapse", 1, presynapticUpdateStream.str());
-
-            // **TODO** start generic
-            connSubs.addVarSubstitution("num_post", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
-            connSubs.addFuncSubstitution("endRow", 0, "break");
-
-
-            std::string pCode = connectInit.getSnippet()->getRowBuildCode();
-
-            // Substitue derived and standard parameters into init code
-            DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
-            EGPNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
-            value_substitutions(pCode, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-            value_substitutions(pCode, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
-            name_substitutions(pCode, "", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
-
-
-            connSubs.apply(pCode);
-            pCode = ensureFtype(pCode, model.getPrecision());
-            checkUnreplacedVariables(pCode, "proceduralSparseConnectivity");
-
-            // Write out code
-            os << pCode << std::endl;
-            // **TODO** end generic
         }
+
+        // Generate presynaptic simulation code into new stream
+        std::ostringstream presynapticUpdateStream;
+        CodeStream presynapticUpdate(presynapticUpdateStream);
+        wumSimHandler(presynapticUpdate, sg, synSubs);
+
+        // Create second substitution stack for generating procedural connectivity code
+        Substitutions connSubs(&procPopSubs);
+
+        // When a synapse should be 'added', substitute in presynaptic update code
+        connSubs.addFuncSubstitution("addSynapse", 1, presynapticUpdateStream.str());
+
+        // Generate procedural connectivity code
+        wumProceduralConnectHandler(os, sg, connSubs);
 
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << CodeStream::CB(130);

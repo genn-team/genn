@@ -432,7 +432,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
+                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                               SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
@@ -548,7 +549,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
                 [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
                 [](const SynapseGroupInternal &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
-                [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
+                [wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &model, this]
+                (CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
                     // Get presynaptic update strategy to use for this synapse group
                     const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg);
@@ -590,14 +592,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     if (sg.isSpikeEventRequired()) {
                         CodeStream::Scope b(os);
                         presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, false,
-                                                           wumThreshHandler, wumEventHandler);
+                                                           wumThreshHandler, wumEventHandler, wumProceduralConnectHandler);
                     }
 
                     // If true spikes should be processed
                     if (sg.isTrueSpikeRequired()) {
                         CodeStream::Scope b(os);
                         presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, true,
-                                                           wumThreshHandler, wumSimHandler);
+                                                           wumThreshHandler, wumSimHandler, wumProceduralConnectHandler);
                     }
 
                     os << std::endl;

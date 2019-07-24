@@ -76,7 +76,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
     // Synaptic update kernels
     backend.genSynapseUpdate(os, model,
         // Presynaptic weight update threshold
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
         {
             // Get event threshold condition code
             std::string code = sg.getWUModel()->getEventThresholdConditionCode();
@@ -98,16 +98,54 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
             os << code;
         },
         // Presynaptic spike
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getWUModel()->getSimCode(), " : simCode",
                                       sg, baseSubs, model, backend);
         },
         // Presynaptic spike-like event
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getWUModel()->getEventCode(), " : eventCode",
                                       sg, baseSubs, model, backend);
+        },
+        // Procedural connectivity
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
+        {
+            baseSubs.addVarSubstitution("num_post", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+            baseSubs.addFuncSubstitution("endRow", 0, "break");
+
+            // Initialise row building state variables for procedural connectivity
+            const auto &connectInit = sg.getConnectivityInitialiser();
+            for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
+            }
+
+            // Loop through synapses in row, providing address if this synapse group has individual state variables
+            if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                os << "for(unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";;synAddress++)";
+            }
+            else {
+                os << "while(true)";
+            }
+            {
+                CodeStream::Scope b(os);
+                std::string pCode = connectInit.getSnippet()->getRowBuildCode();
+
+                // Substitue derived and standard parameters into init code
+                DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
+                EGPNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
+                value_substitutions(pCode, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+                value_substitutions(pCode, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
+                name_substitutions(pCode, "", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
+
+                baseSubs.apply(pCode);
+                pCode = ensureFtype(pCode, model.getPrecision());
+                checkUnreplacedVariables(pCode, "proceduralSparseConnectivity");
+
+                // Write out code
+                os << pCode << std::endl;
+            }
         },
         // Postsynaptic learning code
         [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
