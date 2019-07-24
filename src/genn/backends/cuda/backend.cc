@@ -1073,7 +1073,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         // Call handler to initialise synapse
                         sgProceduralInitHandler(valueInit, sg, initSubs);
 
-                        // After initialising all variables associated wiht thissynapse, advance to next
+                        // After initialising all variables associated with this synapse, advance to next
                         valueInit << "idx++;" << std::endl;
 
                         // Calculate synapse index for first row
