@@ -372,6 +372,35 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 os << code << std::endl;
             }
         },
+        // Procedural synaptic matric var initialization
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+        {
+            // Loop through weight update model variables
+            const auto vars = sg.getWUModel()->getVars();
+            for (size_t k = 0; k < vars.size(); k++) {
+                const auto &varInit = sg.getWUVarInitialisers().at(k);
+
+                // If this variable has any initialisation code
+                if(!varInit.getSnippet()->getCode().empty()) {
+                    CodeStream::Scope b(os);
+
+                    // Create new substitution stack for this variable and add substition to directly initialize variable
+                    Substitutions varSubs(popSubs);
+                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
+
+                    // Apply substitutions
+                    // **NOTE** don't check for unreplaced variables because this code
+                    // will typically be substituted into another section of code
+                    std::string code = varInit.getSnippet()->getCode();
+                    varSubs.apply(code);
+                    applyVarInitSnippetSubstitutions(code, varInit);
+                    code = ensureFtype(code, model.getPrecision());
+
+                    // Write out code
+                    os << code << std::endl;
+                }
+            }
+        },
         // Sparse synaptic matrix var initialisation
         [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
         {

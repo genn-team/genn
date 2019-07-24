@@ -866,7 +866,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                       NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                      SynapseGroupHandler sgSparseInitHandler) const
+                      SynapseGroupHandler sgProceduralInitHandler, SynapseGroupHandler sgSparseInitHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -1006,7 +1006,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [](const SynapseGroupInternal &sg){ return (sg.isSparseConnectivityInitRequired() || isProceduralInitRequired(sg)); },
-            [&model, numConnectivityThreads, sgSparseConnectHandler, this](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+            [&model, numConnectivityThreads, sgProceduralInitHandler, sgSparseConnectHandler, this]
+            (CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
@@ -1015,6 +1016,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 os << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
                 {
                     CodeStream::Scope b(os);
+                    popSubs.addVarSubstitution("id_pre", popSubs["id"]);
 
                     // If the synapse group has bitmask connectivity
                     if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -1058,40 +1060,18 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                             os << "skipahead_sequence((unsigned long long)(" << numConnectivityThreads << " + id), &initRNG);" << std::endl;
                         }
 
-                        const auto vars = sg.getWUModel()->getVars();
-                        for (size_t k = 0; k < vars.size(); k++) {
-                            const auto &varInit = sg.getWUVarInitialisers().at(k);
+                        // Create new substition stack for initializing synaptic variables
+                        Substitutions initSubs(popSubs);
+                        initSubs.addVarSubstitution("id_post", "$(0)");
+                        initSubs.addVarSubstitution("id_syn", "idx");
 
-                            Substitutions varSubs(popSubs);
-
-                            varSubs.addVarSubstitution("id_pre", popSubs["id"]);
-                            varSubs.addVarSubstitution("id_post", "$(0)");
-                            varSubs.addVarSubstitution("id_syn", "idx");
-
-                            // Add new substition for RNG
-                            if(sg.isWUInitRNGRequired()) {
-                                varSubs.addVarSubstitution("rng", "&initRNG");
-                            }
-
-                            // If this variable has any initialisation code
-                            if(!varInit.getSnippet()->getCode().empty()) {
-                                CodeStream::Scope b(valueInit);
-
-                                varSubs.addVarSubstitution("value", getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
-
-                                std::string code = varInit.getSnippet()->getCode();
-                                varSubs.apply(code);
-
-                                // Substitue derived and standard parameters into init code
-                                DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
-                                value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
-                                value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
-
-                                code = ensureFtype(code, model.getPrecision());
-                                //checkUnreplacedVariables(code, "initVar");
-                                valueInit << code << std::endl;
-                            }
+                        // Add new substition for RNG
+                        if(sg.isWUInitRNGRequired()) {
+                            initSubs.addVarSubstitution("rng", "&initRNG");
                         }
+
+                        // Call handler to initialise synapse
+                        sgProceduralInitHandler(valueInit, sg, initSubs);
 
                         // After initialising all variables associated wiht thissynapse, advance to next
                         valueInit << "idx++;" << std::endl;
@@ -1112,15 +1092,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     // **NOTE** not LOCAL id
                     if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
                         os << "curandStatePhilox4_32_10_t connectivityRNG = dd_rng[0];" << std::endl;
-
-                        // **TODO** nicer
                         os << "skipahead_sequence((unsigned long long)id, &connectivityRNG);" << std::endl;
 
                         // Add substitution for RNG
                         popSubs.addVarSubstitution("rng", "&connectivityRNG");
                     }
 
-                    popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                     sgSparseConnectHandler(os, sg, popSubs);
                 }
             });
