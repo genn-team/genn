@@ -121,13 +121,8 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
                 os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
             }
 
-            // Loop through synapses in row, providing address if this synapse group has individual state variables
-            if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                os << "for(unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";;synAddress++)";
-            }
-            else {
-                os << "while(true)";
-            }
+            // Loop through synapses in row
+            os << "while(true)";
             {
                 CodeStream::Scope b(os);
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();
