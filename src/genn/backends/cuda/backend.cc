@@ -90,7 +90,7 @@ bool isSparseInitRequired(const SynapseGroupInternal &sg)
             && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
 }
 //-----------------------------------------------------------------------
-void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Models::Base::VarVec &extraGlobalParameters,
+void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Snippet::Base::EGPVec &extraGlobalParameters,
                              std::map<std::string, std::string> &kernelParameters, const std::vector<std::string> &codeStrings)
 {
     // Loop through list of global parameters

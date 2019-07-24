@@ -25,6 +25,7 @@
 #include "initVarSnippetCustom.h"
 %}
 
+%feature("flatnested", "1");
 %rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
 
 %ignore LegacyWrapper;
@@ -37,7 +38,15 @@
 %include "gennExport.h"
 %feature("director") Models::Base; // for inheritance in python
 %nodefaultctor Models::VarInit;
+
+// flatten nested classes
+%rename (Var) Models::Base::Var;
+
+// add vector overrides for them
+%template(VarVector) std::vector<Models::Base::Var>;
+
 %include "models.h"
+
 
 %nodefaultctor CustomValues::VarValues;
 %include "customVarValues.h"

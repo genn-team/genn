@@ -174,7 +174,7 @@ void neuronSubstitutionsInSynapticCode(
     DerivedParamNameIterCtx preDerivedParams(neuronModel->getDerivedParams());
     value_substitutions(wCode, preDerivedParams.nameBegin, preDerivedParams.nameEnd, ng->getDerivedParams(), sourceSuffix);
 
-    VarNameIterCtx preExtraGlobalParams(neuronModel->getExtraGlobalParams());
+    EGPNameIterCtx preExtraGlobalParams(neuronModel->getExtraGlobalParams());
     name_substitutions(wCode, "", preExtraGlobalParams.nameBegin, preExtraGlobalParams.nameEnd, ng->getName(), sourceSuffix);
 }
 

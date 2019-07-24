@@ -119,13 +119,14 @@ public:
     //----------------------------------------------------------------------------
     // Structs
     //----------------------------------------------------------------------------
-    //! A variable has a name and a type
-    struct Var
+    //! An extra global parameter has a name and a type
+    struct EGP
     {
         std::string name;
         std::string type;
     };
 
+    //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
         std::string name;
@@ -145,7 +146,7 @@ public:
     // Typedefines
     //----------------------------------------------------------------------------
     typedef std::vector<std::string> StringVec;
-    typedef std::vector<Var> VarVec;
+    typedef std::vector<EGP> EGPVec;
     typedef std::vector<ParamVal> ParamValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
 
@@ -164,14 +165,15 @@ protected:
     //------------------------------------------------------------------------
     // Protected static helpers
     //------------------------------------------------------------------------
-    static size_t getVarVecIndex(const std::string &varName, const VarVec &vars)
+    template<typename T>
+    static size_t getNamedVecIndex(const std::string &name, const std::vector<T> &vec)
     {
-        auto varIter = std::find_if(vars.begin(), vars.end(),
-            [varName](const Var &v){ return (v.name == varName); });
-        assert(varIter != vars.end());
+        auto iter = std::find_if(vec.begin(), vec.end(),
+            [name](const T &v){ return (v.name == name); });
+        assert(iter != vec.end());
 
-        // Return flag corresponding to variable
-        return distance(vars.begin(), varIter);
+        // Return 'distance' between first entry in vector and iterator i.e. index
+        return distance(vec.begin(), iter);
     }
 };
 

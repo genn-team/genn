@@ -28,12 +28,12 @@
 
 
 // flatten nested classes
-%rename (Var) Snippet::Base::Var;
+%rename (EGP) Snippet::Base::EGP;
 %rename (ParamVal) Snippet::Base::ParamVal;
 %rename (DerivedParam) Snippet::Base::DerivedParam;
 
 // add vector overrides for them
-%template(VarVector) std::vector<Snippet::Base::Var>;
+%template(EGPVector) std::vector<Snippet::Base::EGP>;
 %template(ParamValVector) std::vector<Snippet::Base::ParamVal>;
 %template(DerivedParamVector) std::vector<Snippet::Base::DerivedParam>;
 
@@ -41,10 +41,10 @@
 %include "snippet.h"
 
 // Extend each of the underlying structs with constructors
-%extend Snippet::Base::Var {
-    Var(const std::string &name, const std::string &type) 
+%extend Snippet::Base::EGP {
+    EGP(const std::string &name, const std::string &type) 
     {
-        Snippet::Base::Var* v = new Snippet::Base::Var();
+        Snippet::Base::EGP* v = new Snippet::Base::EGP();
         v->name = name;
         v->type = type;
         return v;

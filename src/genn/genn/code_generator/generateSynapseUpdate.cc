@@ -24,7 +24,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 
     // Create iteration context to iterate over the variables; derived and extra global parameters
     DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
-    VarNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
+    EGPNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
     VarNameIterCtx wuVars(wu->getVars());
     VarNameIterCtx wuPreVars(wu->getPreVars());
     VarNameIterCtx wuPostVars(wu->getPostVars());
@@ -83,7 +83,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
 
             // Make weight update model substitutions
             DerivedParamNameIterCtx wuDerivedParams(sg.getWUModel()->getDerivedParams());
-            VarNameIterCtx wuExtraGlobalParams(sg.getWUModel()->getExtraGlobalParams());
+            EGPNameIterCtx wuExtraGlobalParams(sg.getWUModel()->getExtraGlobalParams());
             value_substitutions(code, sg.getWUModel()->getParamNames(), sg.getWUParams());
             value_substitutions(code, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg.getWUDerivedParams());
             name_substitutions(code, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg.getName());

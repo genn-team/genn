@@ -190,8 +190,9 @@ public:
     DECLARE_MODEL(NeuronModels::IzhikevichVariable, 0, 6);
 
     SET_PARAM_NAMES({});
-    SET_VARS({{"V","scalar"}, {"U", "scalar"}, {"a", "scalar"},
-             {"b", "scalar"}, {"c", "scalar"}, {"d", "scalar"}});
+    SET_VARS({{"V","scalar"}, {"U", "scalar"},
+              {"a", "scalar", VarAccess::READ_ONLY}, {"b", "scalar", VarAccess::READ_ONLY},
+              {"c", "scalar", VarAccess::READ_ONLY}, {"d", "scalar", VarAccess::READ_ONLY}});
 };
 
 //----------------------------------------------------------------------------
@@ -275,7 +276,7 @@ public:
         "$(startSpike) != $(endSpike) && "
         "$(t) >= $(spikeTimes)[$(startSpike)]" );
     SET_RESET_CODE( "$(startSpike)++;\n" );
-    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int"}} );
+    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY}} );
     SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
     SET_NEEDS_AUTO_REFRACTORY(false);
 };

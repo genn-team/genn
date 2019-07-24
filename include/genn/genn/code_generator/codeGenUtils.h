@@ -8,6 +8,7 @@
 #include <vector>
 
 // GeNN includes
+#include "models.h"
 #include "snippet.h"
 #include "variableMode.h"
 
@@ -92,7 +93,8 @@ struct NameIterCtx
 //----------------------------------------------------------------------------
 // Typedefines
 //----------------------------------------------------------------------------
-typedef NameIterCtx<Snippet::Base::VarVec> VarNameIterCtx;
+typedef NameIterCtx<Models::Base::VarVec> VarNameIterCtx;
+typedef NameIterCtx<Snippet::Base::EGPVec> EGPNameIterCtx;
 typedef NameIterCtx<Snippet::Base::DerivedParamVec> DerivedParamNameIterCtx;
 typedef NameIterCtx<Snippet::Base::ParamValVec> ParamValIterCtx;
 
