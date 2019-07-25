@@ -434,10 +434,8 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         synSubs.addVarSubstitution("id_post", "$(0)");
 
         // If this synaptic matrix has individual state variables
-        if(sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            os << "unsigned int idx = preInd * " << sg.getMaxConnections() << ";" << std::endl;
-            synSubs.addVarSubstitution("id_syn", "idx");
-        }
+        os << "unsigned int synAddress = preInd * " << sg.getMaxConnections() << ";" << std::endl;
+        synSubs.addVarSubstitution("id_syn", "synAddress");
 
         // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
         if(sg.isDendriticDelayRequired()) {
@@ -461,7 +459,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         wumSimHandler(presynapticUpdate, sg, synSubs);
 
         // After updating this synapse, advance to next
-        presynapticUpdate << "idx++;" << std::endl;
+        presynapticUpdate << "synAddress++;" << std::endl;
 
         // Create second substitution stack for generating procedural connectivity code
         Substitutions connSubs(&procPopSubs);
