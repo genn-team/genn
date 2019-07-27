@@ -277,7 +277,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
             [](const ModelSpec::NeuronGroupValueType &n){ return !n.second.getNeuronModel()->getThresholdConditionCode().empty(); }))
         {
-            os << "__shared__ volatile unsigned int shSpk[" << m_KernelBlockSizes[KernelNeuronUpdate] << "];" << std::endl;
             os << "__shared__ volatile unsigned int shPosSpk;" << std::endl;
             os << "__shared__ volatile unsigned int shSpkCount;" << std::endl;
             os << "if (threadIdx.x == 0);";
