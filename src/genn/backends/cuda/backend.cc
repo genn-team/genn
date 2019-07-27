@@ -622,7 +622,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             Substitutions kernelSubs(cudaFunctions, model.getPrecision());
             kernelSubs.addVarSubstitution("t", "t");
 
-            os << "const unsigned int id = " << m_KernelBlockSizes[KernelPostsynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
             os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPostsynapticUpdate] << "];" << std::endl;
             if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                 [&model](const ModelSpec::SynapseGroupValueType &s)
