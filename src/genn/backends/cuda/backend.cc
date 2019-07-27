@@ -519,9 +519,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 {
                     return (s.second.isTrueSpikeRequired() || !s.second.getWUModel()->getLearnPostCode().empty());
                 }))
-            {
-                os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }
 
             if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                 [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired()); }))
