@@ -348,14 +348,15 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
         // Sparse synaptic matrix connectivity initialisation
         [&model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
         {
-            popSubs.addVarSubstitution("num_post", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
             popSubs.addFuncSubstitution("endRow", 0, "break");
 
             // Initialise row building state variables and loop on generated code to initialise sparse connectivity
             const auto &connectInit = sg.getConnectivityInitialiser();
             os << "// Build sparse connectivity" << std::endl;
             for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-                os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
+                std::string value = a.value;
+                popSubs.apply(value);
+                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
             }
             os << "while(true)";
             {

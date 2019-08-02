@@ -1017,6 +1017,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 {
                     CodeStream::Scope b(os);
                     popSubs.addVarSubstitution("id_pre", popSubs["id"]);
+                    popSubs.addVarSubstitution("id_post_begin", "0");
+                    popSubs.addVarSubstitution("id_post_end", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
 
                     // If the synapse group has bitmask connectivity
                     if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {

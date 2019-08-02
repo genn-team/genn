@@ -115,7 +115,7 @@ class FixedProbabilityBase : public Base
 public:
     virtual std::string getRowBuildCode() const override = 0;
 
-    SET_ROW_BUILD_STATE_VARS({{"prevJ", "int", -1}});
+    SET_ROW_BUILD_STATE_VARS({{"prevJ", "int", "$(id_post_begin) - 1"}});
 
     SET_PARAM_NAMES({"prob"});
     SET_DERIVED_PARAMS({{"probLogRecip", [](const std::vector<double> &pars, double){ return 1.0 / log(1.0 - pars[0]); }}});
@@ -160,7 +160,7 @@ public:
     SET_ROW_BUILD_CODE(
         "const scalar u = $(gennrand_uniform);\n"
         "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "if(prevJ < $(num_post)) {\n"
+        "if(prevJ < $(id_post_end)) {\n"
         "   $(addSynapse, prevJ);\n"
         "}\n"
         "else {\n"
@@ -196,7 +196,7 @@ public:
         "   nextJ = prevJ + (1 + (int)(log(u) * $(probLogRecip)));\n"
         "} while(nextJ == $(id_pre));\n"
         "prevJ = nextJ;\n"
-        "if(prevJ < $(num_post)) {\n"
+        "if(prevJ < $(id_post_end)) {\n"
         "   $(addSynapse, prevJ);\n"
         "}\n"
         "else {\n"

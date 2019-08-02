@@ -10,6 +10,7 @@
 
 // CUDA backend includes
 #include "backend.h"
+#include "utils.h"
 
 //----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan
@@ -22,8 +23,7 @@ namespace PresynapticUpdateStrategy
 {
 size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
-    // Use a thread for each presynaptic neuron
-    // **YUCK** really should only launch a thread per-spike
+    // Use specified number of threads for each presynaptic neuron
     return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
@@ -344,9 +344,8 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
 //--------------------------------------------------------------------------
 size_t PreSpanProcedural::getNumThreads(const SynapseGroupInternal &sg) const
 {
-    // Use a thread for each presynaptic neuron
-    // **YUCK** really should only launch a thread per-spike
-    return sg.getSrcNeuronGroup()->getNumNeurons();
+    // Use specified number of threads for each presynaptic neuron
+    return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
 bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg) const
@@ -388,8 +387,16 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
 
+    if(sg.getNumThreadsPerSpike() > 1) {
+        os << "const unsigned int spike = " << popSubs["id"] << " / " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+        os << "const unsigned int thread = " << popSubs["id"] << " % " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+    }
+    else {
+        os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
+    }
+
     // If there is a spike for this thread to process
-    os << "if (" << popSubs["id"] << " < " ;
+    os << "if (spike < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
         os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot])";
     }
@@ -402,11 +409,11 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         // Determine the index of the presynaptic neuron this thread is responsible for
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << popSubs["id"] << "];" << std::endl;
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + spike];" << std::endl;
         }
         else {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[" << popSubs["id"] << "];" << std::endl;
+            os << "[spike];" << std::endl;
         }
 
         // Add presynaptic index to substitution stack
@@ -482,6 +489,33 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
 
         // When a synapse should be 'added', substitute in presynaptic update code
         connSubs.addFuncSubstitution("addSynapse", 1, presynapticUpdateStream.str());
+
+        // If we are using more than one thread to process each row
+        if(sg.getNumThreadsPerSpike() > 1) {
+            // Calculate how long the sub-row to process on each thread is
+            const unsigned int numPostPerThread = Utils::ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(),
+                                                                    sg.getNumThreadsPerSpike());
+
+            os << "const unsigned int idPostStart = thread * " << numPostPerThread << ";" << std::endl;
+
+            // If number of post neurons per thread directly divides total number of postsynaptic neurons
+            if((sg.getTrgNeuronGroup()->getNumNeurons() % numPostPerThread) == 0) {
+                os << "const unsigned int idPostEnd = idPostStart + " << numPostPerThread << ";" << std::endl;
+            }
+            // Otherwise clamp
+            else {
+                os << "const unsigned int idPostEnd = umin(idPostStart + " << numPostPerThread << ", " << sg.getTrgNeuronGroup()->getNumNeurons() << ");" << std::endl;
+            }
+
+            connSubs.addVarSubstitution("id_post_begin", "idPostStart");
+            connSubs.addVarSubstitution("id_post_end", "idPostEnd");
+
+        }
+        // Otherwise, set the beginning and end ID to the entire range of postsynaptic neurons
+        else {
+            connSubs.addVarSubstitution("id_post_begin", "0");
+            connSubs.addVarSubstitution("id_post_end", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+        }
 
         // Generate procedural connectivity code
         wumProceduralConnectHandler(os, sg, connSubs);

@@ -426,6 +426,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                         Substitutions popSubs(&funcSubs);
                         popSubs.addVarSubstitution("id_pre", "i");
+                        popSubs.addVarSubstitution("id_post_begin", 0);
+                        popSubs.addVarSubstitution("id_post_end", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
 
                         // Add function to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
@@ -450,6 +452,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         // Build function template to set correct bit in bitmask
                         Substitutions popSubs(&funcSubs);
                         popSubs.addVarSubstitution("id_pre", "i");
+                        popSubs.addVarSubstitution("id_post_begin", 0);
+                        popSubs.addVarSubstitution("id_post_end", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
 
                         // Add function to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
