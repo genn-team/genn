@@ -872,7 +872,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &s
             CodeStream::Scope b(os);
             if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 // **TODO** seperate stride from max connection
-                os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getMaxConnections()) + ") + j;" << std::endl;
+                os << "const unsigned int synAddress = (ipre * " << sg.getMaxConnections()) << ") + j;" << std::endl;
                 os << "const unsigned int ipost = ind" << sg.getName() << "[synAddress];" << std::endl;
             }
             else {
@@ -881,7 +881,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &s
                     os << "if (B(gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(20);
                 }
 
-                os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + ipost;" << std::endl;
+                os << "const unsigned int synAddress = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << ") + ipost;" << std::endl;
             }
 
             Substitutions synSubs(&popSubs);

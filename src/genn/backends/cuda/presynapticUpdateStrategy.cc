@@ -98,10 +98,10 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
         }
 
         if(sg.getNumThreadsPerSpike() > 1) {
-            os << "unsigned int synAddress = (preInd * " << std::to_string(sg.getMaxConnections()) << ") + thread;" << std::endl;
+            os << "unsigned int synAddress = (preInd * " << sg.getMaxConnections() << ") + thread;" << std::endl;
         }
         else {
-            os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
+            os << "unsigned int synAddress = preInd * " << sg.getMaxConnections() << ";" << std::endl;
         }
         os << "const unsigned int npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
 
@@ -286,7 +286,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                 Substitutions synSubs(&popSubs);
                 synSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
                 if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
+                    os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << sg.getMaxConnections() << ";" << std::endl;
                     os << "const unsigned int npost = shRowLength[j];" << std::endl;
 
                     os << "if (" << popSubs["id"] << " < npost)" << CodeStream::OB(140);
@@ -296,7 +296,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     synSubs.addVarSubstitution("id_post", "ipost");
                 }
                 else { // DENSE
-                    os << "unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " + popSubs["id"] + ";" << std::endl;
+                    os << "unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << ") + " + popSubs["id"] + ";" << std::endl;
 
                     synSubs.addVarSubstitution("id_post", popSubs["id"]);
                 }

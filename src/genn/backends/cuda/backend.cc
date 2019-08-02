@@ -710,12 +710,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                 Substitutions synSubs(&popSubs);
                                 if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     os << "if (" << popSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
-                                    os << "const unsigned int synAddress = dd_remap" + sg.getName() + "[(shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs["id"] << "];" << std::endl;
-                                    os << "const unsigned int ipre = synAddress / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
+                                    os << "const unsigned int synAddress = dd_remap" << sg.getName() << "[(shSpk[j] * " << sg.getMaxSourceConnections() << ") + " << popSubs["id"] << "];" << std::endl;
+                                    os << "const unsigned int ipre = synAddress / " << sg.getMaxConnections() << ";" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", "ipre");
                                 }
                                 else {
-                                    os << "const unsigned int synAddress = (" << popSubs["id"] << " * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + shSpk[j];" << std::endl;
+                                    os << "const unsigned int synAddress = (" << popSubs["id"] << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ") + shSpk[j];" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", synSubs["id"]);
                                 }
 
@@ -2025,7 +2025,7 @@ std::string Backend::getNVCCFlags() const
         nvccFlags += " -O3 -use_fast_math";
     }
     if (m_Preferences.debugCode) {
-        nvccFlags += " -O0 -g -G";
+//         nvccFlags += " -O0 -g -G";
     }
     if (m_Preferences.showPtxInfo) {
         nvccFlags += " -Xptxas \"-v\"";
