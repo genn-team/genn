@@ -95,6 +95,10 @@ public:
     /*! with a thread per target neuron (default) or a thread per source spike */
     void setSpanType(SpanType spanType);
 
+    //! Set how many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC
+    // **TODO** this shouldn't be in SynapseGroup - it's backend-specific
+    void setNumThreadsPerSpike(unsigned int numThreadsPerSpike);
+
     //! Sets the number of delay steps used to delay postsynaptic spikes travelling back along dendrites to synapses
     void setBackPropDelaySteps(unsigned int timesteps);
 
@@ -104,6 +108,7 @@ public:
     const std::string &getName() const{ return m_Name; }
 
     SpanType getSpanType() const{ return m_SpanType; }
+    unsigned int getNumThreadsPerSpike() const{ return m_NumThreadsPerSpike; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getBackPropDelaySteps() const{ return m_BackPropDelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
@@ -267,6 +272,9 @@ private:
 
     //! Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron, or for every presynaptic neuron.
     SpanType m_SpanType;
+
+    //! How many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC
+    unsigned int m_NumThreadsPerSpike;
 
     //! Global synaptic conductance delay for the group (in time steps)
     unsigned int m_DelaySteps;

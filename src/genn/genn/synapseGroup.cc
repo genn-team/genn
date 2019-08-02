@@ -131,6 +131,16 @@ void SynapseGroup::setSpanType(SpanType spanType)
     }
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::setNumThreadsPerSpike(unsigned int numThreadsPerSpike)
+{
+    if (m_SpanType == SpanType::PRESYNAPTIC) {
+        m_NumThreadsPerSpike = numThreadsPerSpike;
+    }
+    else {
+        throw std::runtime_error("setSpanType: This function is not enabled for dense connectivity type.");
+    }
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setBackPropDelaySteps(unsigned int timesteps)
 {
     m_BackPropDelaySteps = timesteps;
@@ -288,7 +298,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, VarLocation defaultSparseConnectivityLocation)
-    :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
+    :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_EventThresholdReTestRequired(false),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
