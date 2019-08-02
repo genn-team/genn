@@ -23,7 +23,7 @@ size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
     // Use a thread for each presynaptic neuron
     // **YUCK** really should only launch a thread per-spike
-    return sg.getSrcNeuronGroup()->getNumNeurons();
+    return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
 bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
@@ -64,7 +64,15 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
 
-    os << "if (" << popSubs["id"] << " < " ;
+    if(sg.getNumThreadsPerSpike() > 1) {
+        os << "const unsigned int spike = " << popSubs["id"] << " / " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+        os << "const unsigned int thread = " << popSubs["id"] << " % " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+    }
+    else {
+        os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
+    }
+
+    os << "if (spike < " ;
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
         os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot])";
     }
@@ -80,17 +88,20 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 
         if (sg.getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + " << popSubs["id"] << "];" << std::endl;
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + spike];" << std::endl;
         }
         else {
             os << "const unsigned int preInd = dd_glbSpk"  << eventSuffix << sg.getSrcNeuronGroup()->getName();
-            os << "[" << popSubs["id"] << "];" << std::endl;
+            os << "[spike];" << std::endl;
         }
 
-        if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
-            os << "const unsigned int npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
+        if(sg.getNumThreadsPerSpike() > 1) {
+            os << "unsigned int synAddress = (preInd * " << std::to_string(sg.getMaxConnections()) << ") + thread;" << std::endl;
         }
+        else {
+            os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
+        }
+        os << "const unsigned int npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
 
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << "if(";
@@ -107,7 +118,12 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             os << CodeStream::OB(130);
         }
 
-        os << "for(unsigned int i = 0; i < npost; i++, synAddress++)";
+        if(sg.getNumThreadsPerSpike() > 1) {
+            os << "for(unsigned int i = thread; i < npost; i += " << sg.getNumThreadsPerSpike() << ", synAddress += " << sg.getNumThreadsPerSpike() << ")";
+        }
+        else {
+            os << "for(unsigned int i = 0; i < npost; i++, synAddress++)";
+        }
         {
             CodeStream::Scope b(os);
 
