@@ -28,20 +28,6 @@ void applyVarInitSnippetSubstitutions(std::string &code, const Models::VarInit &
     value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
 }
 //--------------------------------------------------------------------------
-void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroupInternal &sg)
-{
-    using namespace CodeGenerator;
-
-    const auto connectInit = sg.getConnectivityInitialiser();
-
-    // Substitue derived and standard parameters into init code
-    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
-    EGPNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
-    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
-    name_substitutions(code, "", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
-}
-//--------------------------------------------------------------------------
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
                        const CodeGenerator::Substitutions &popSubs, const NeuronGroupInternal &ng, bool spikeEvent)
 {
@@ -361,9 +347,12 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             {
                 CodeStream::Scope b(os);
 
-                // Apply substitutions
+                // Add substitutions
+                popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+                popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+                popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "", sg.getName());
+
                 std::string code = connectInit.getSnippet()->getRowBuildCode();
-                applySparsConnectInitSnippetSubstitutions(code, sg);
                 popSubs.apply(code);
                 code = ensureFtype(code, model.getPrecision());
                 checkUnreplacedVariables(code, "initSparseConnectivity");
