@@ -130,7 +130,7 @@ void functionSubstitute(std::string &code, const std::string &funcName,
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of name substitutions for variables in code snippets.
 //--------------------------------------------------------------------------
-template<typename NameIter>
+/*template<typename NameIter>
 inline void name_substitutions(std::string &code, const std::string &prefix, NameIter namesBegin, NameIter namesEnd, const std::string &postfix= "", const std::string &ext = "")
 {
     for (NameIter n = namesBegin; n != namesEnd; n++) {
@@ -138,15 +138,7 @@ inline void name_substitutions(std::string &code, const std::string &prefix, Nam
                    "$(" + *n + ext + ")",
                    prefix + *n + postfix);
     }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets.
-//--------------------------------------------------------------------------
-inline void name_substitutions(std::string &code, const std::string &prefix, const std::vector<std::string> &names, const std::string &postfix= "", const std::string &ext = "")
-{
-    name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
-}
+}*/
 
 //--------------------------------------------------------------------------
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
@@ -189,10 +181,12 @@ std::string writePreciseString(T value)
 //--------------------------------------------------------------------------
 //! \brief This function performs a list of value substitutions for parameters in code snippets.
 //--------------------------------------------------------------------------
-template<typename NameIter>
-inline void value_substitutions(std::string &code, NameIter namesBegin, NameIter namesEnd, const std::vector<double> &values, const std::string &ext = "")
+template<typename T>
+inline void value_substitutions(std::string &code, std::map<std::string, T>::const_iterator varBegin,
+                                std::map<std::string, T>::const_iterator varEnd,
+                                const std::vector<double> &values, const std::string &ext = "")
 {
-    NameIter n = namesBegin;
+    auto n = namesBegin;
     auto v = values.cbegin();
     for (;n != namesEnd && v != values.cend(); n++, v++) {
         std::stringstream stream;
