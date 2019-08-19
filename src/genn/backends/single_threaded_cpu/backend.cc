@@ -736,13 +736,13 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream &os) const
 {
-    os << "\t$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
+    os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     os << "%.o: %.cc %.d" << std::endl;
-    os << "\t$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream&) const

@@ -44,7 +44,7 @@ void CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backen
     backend.genMakefileLinkRule(os);
     // On Mac OS X add final step to recipe to make librunner relative to rpath
 #ifdef __APPLE__
-    os << "\tinstall_name_tool -id \"@rpath/$@\" $@" << std::endl;
+    os << "\t@install_name_tool -id \"@rpath/$@\" $@" << std::endl;
 #endif
     os << std::endl;
 
@@ -62,5 +62,5 @@ void CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backen
 
     // Add clean rule
     os << "clean:" << std::endl;
-    os << "\trm -f $(OBJECTS) $(DEPS) librunner.so" << std::endl;
+    os << "\t@rm -f $(OBJECTS) $(DEPS) librunner.so" << std::endl;
 }

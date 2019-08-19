@@ -1830,19 +1830,19 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream &os) const
 {
-    os << "\t$(NVCC) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
+    os << "\t@$(NVCC) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     // Add one rule to generate dependency files from cc files
     os << "%.d: %.cc" << std::endl;
-    os << "\t$(NVCC) -M $(NVCCFLAGS) $< 1> $@" << std::endl;
+    os << "\t@$(NVCC) -M $(NVCCFLAGS) $< 1> $@" << std::endl;
     os << std::endl;
 
     // Add another to build object files from cc files
     os << "%.o: %.cc %.d" << std::endl;
-    os << "\t$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
+    os << "\t@$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream &os) const
