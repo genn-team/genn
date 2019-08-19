@@ -22,27 +22,18 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void applyNeuronModelSubstitutions(std::string &code, const NeuronGroupInternal &ng,
-                                   const std::string &varSuffix = "", const std::string &varExt = "")
+void addNeuronModelSubstitutions(Substitutions &substitution, const NeuronGroupInternal &ng,
+                                 const std::string &sourceSuffix = "", const std::string &destSuffix = "")
 {
-    using namespace CodeGenerator;
-
     const NeuronModels::Base *nm = ng.getNeuronModel();
-
-    // Create iteration context to iterate over the variables; derived and extra global parameters
-    VarNameIterCtx nmVars(nm->getVars());
-    DerivedParamNameIterCtx nmDerivedParams(nm->getDerivedParams());
-    EGPNameIterCtx nmExtraGlobalParams(nm->getExtraGlobalParams());
-    ParamValIterCtx nmAdditionalInputVars(nm->getAdditionalInputVars());
-
-    name_substitutions(code, "l", nmVars.nameBegin, nmVars.nameEnd, varSuffix, varExt);
-    value_substitutions(code, nm->getParamNames(), ng.getParams());
-    value_substitutions(code, nmDerivedParams.nameBegin, nmDerivedParams.nameEnd, ng.getDerivedParams());
-    name_substitutions(code, "", nmExtraGlobalParams.nameBegin, nmExtraGlobalParams.nameEnd, ng.getName());
-    name_substitutions(code, "", nmAdditionalInputVars.nameBegin, nmAdditionalInputVars.nameEnd, "");
+    substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
+    substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams();
+    substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams());
+    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "", ng.getName());
+    substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
 }
 //--------------------------------------------------------------------------
-void applyPostsynapticModelSubstitutions(std::string &code, const SynapseGroupInternal *sg)
+void addPostsynapticModelSubstitutions(std::string &code, const SynapseGroupInternal *sg)
 {
     using namespace CodeGenerator;
 
@@ -156,8 +147,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Apply substitutions to current converter code
                 std::string psCode = psm->getApplyInputCode();
-                applyNeuronModelSubstitutions(psCode, ng);
-                applyPostsynapticModelSubstitutions(psCode, sg);
+                addNeuronModelSubstitutions(inSynSubs, ng);
+                addPostsynapticModelSubstitutions(inSynSubs, sg);
                 inSynSubs.apply(psCode);
                 psCode = ensureFtype(psCode, model.getPrecision());
                 checkUnreplacedVariables(psCode, sg->getPSModelTargetName() + " : postSyntoCurrent");
@@ -223,7 +214,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
 
-                applyNeuronModelSubstitutions(thCode, ng);
+                addNeuronModelSubstitutions(popSubs, ng);
                 popSubs.apply(thCode);
                 thCode= ensureFtype(thCode, model.getPrecision());
                 checkUnreplacedVariables(thCode, ng.getName() + " : thresholdConditionCode");
@@ -234,11 +225,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
             }
 
             os << "// calculate membrane potential" << std::endl;
+            addNeuronModelSubstitutions(popSubs, ng);
+
             std::string sCode = nm->getSimCode();
             popSubs.apply(sCode);
-
-            applyNeuronModelSubstitutions(sCode, ng);
-
             sCode = ensureFtype(sCode, model.getPrecision());
             checkUnreplacedVariables(sCode, ng.getName() + " : neuron simCode");
 
@@ -252,9 +242,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 // Loop through outgoing synapse populations that will contribute to event condition code
                 for(const auto &spkEventCond : ng.getSpikeEventCondition()) {
                     // Replace of parameters, derived parameters and extraglobalsynapse parameters
+                    Substitutions spkEventCondSubs(&popSubs);
+
+                    addNeuronModelSubstitutions(spkEventCondSubs, ng, "_pre");
+
                     std::string eCode = spkEventCond.first;
-                    applyNeuronModelSubstitutions(eCode, ng, "", "_pre");
-                    popSubs.apply(eCode);
+                    spkEventCondSubs.apply(eCode);
                     eCode = ensureFtype(eCode, model.getPrecision());
                     checkUnreplacedVariables(eCode, ng.getName() + " : neuronSpkEvntCondition");
 
