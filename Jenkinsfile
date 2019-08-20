@@ -237,7 +237,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             virtualenv virtualenv
                             . virtualenv/bin/activate
 
-                            pip install numpy
+                            pip install "numpy>1.6, < 1.15"
 
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
