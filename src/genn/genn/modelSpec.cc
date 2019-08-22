@@ -27,6 +27,7 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
+#include "code_generator/substitutions.h"
 
 // ------------------------------------------------------------------------
 // ModelSpec
@@ -156,16 +157,15 @@ void ModelSpec::finalize()
                 using namespace CodeGenerator;
                 assert(!wu->getEventThresholdConditionCode().empty());
 
-                 // Create iteration context to iterate over derived and extra global parameters
-                EGPNameIterCtx wuExtraGlobalParams(wu->getExtraGlobalParams());
-                DerivedParamNameIterCtx wuDerivedParams(wu->getDerivedParams());
-
                 // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
                 // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
+                Substitutions thresholdSubs;
+                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
+                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
+                thresholdSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg->getName());
+
                 std::string eCode = wu->getEventThresholdConditionCode();
-                value_substitutions(eCode, wu->getParamNames(), sg->getWUParams());
-                value_substitutions(eCode, wuDerivedParams.nameBegin, wuDerivedParams.nameEnd, sg->getWUDerivedParams());
-                name_substitutions(eCode, "", wuExtraGlobalParams.nameBegin, wuExtraGlobalParams.nameEnd, sg->getName());
+                thresholdSubs.apply(eCode);
 
                 // Add code and name of
                 std::string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?

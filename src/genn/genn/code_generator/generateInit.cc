@@ -18,14 +18,10 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void applyVarInitSnippetSubstitutions(std::string &code, const Models::VarInit &varInit)
+void addVarInitSnippetSubstitutions(CodeGenerator::Substitutions &subs, const Models::VarInit &varInit)
 {
-    using namespace CodeGenerator;
-
-    // Substitue derived and standard parameters into init code
-    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
-    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
-    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
+    subs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
+    subs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
 }
 //--------------------------------------------------------------------------
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
@@ -123,14 +119,17 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                 [&backend, &vars, &varInit, &popName, &ftype, k, count, isVarQueueRequired, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
+                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
+
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
                         // Generate initial value into temporary variable
                         os << vars[k].type << " initVal;" << std::endl;
                         varSubs.addVarSubstitution("value", "initVal");
 
+
                         std::string code = varInit.getSnippet()->getCode();
-                        applyVarInitSnippetSubstitutions(code, varInit);
                         varSubs.apply(code);
                         code = ensureFtype(code, ftype);
                         checkUnreplacedVariables(code, "initVar");
@@ -147,7 +146,6 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + popName + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
-                        applyVarInitSnippetSubstitutions(code, varInit);
                         varSubs.apply(code);
                         code = ensureFtype(code, ftype);
                         checkUnreplacedVariables(code, "initVar");
@@ -188,10 +186,12 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
+                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.apply(code);
-                    applyVarInitSnippetSubstitutions(code, varInit);
+
                     code = ensureFtype(code, ftype);
                     checkUnreplacedVariables(code, "initVar");
                     os << code << std::endl;

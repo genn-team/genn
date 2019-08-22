@@ -37,12 +37,12 @@ public:
     // Public API
     //--------------------------------------------------------------------------
     template<typename T>
-    void addVarNameSubstitution(const std::map<std::string, T> &sourceVars, const std::string &sourceSuffix = "",
+    void addVarNameSubstitution(const std::vector<T> &variables, const std::string &sourceSuffix = "",
                                 const std::string &destPrefix = "", const std::string &destSuffix = "")
     {
         for(const auto &v : variables) {
-            addVarSubstitution(v.first + sourceSuffix,
-                               destPrefix + v.first + destSuffix);
+            addVarSubstitution(v.name + sourceSuffix,
+                               destPrefix + v.name + destSuffix);
         }
     }
 
@@ -56,24 +56,24 @@ public:
     }
 
     template<typename T>
-    void addVarValueSubstitution(const std::map<std::string, T> &sourceVars, const std::vector<double> &varVals,
+    void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
                                  const std::string &sourceSuffix = "")
     {
-        if(sourceVars.size() != varVals.size()) {
+        if(variables.size() != values.size()) {
             throw std::runtime_error("Number of variables does not match number of values");
         }
 
-        auto var = sourceVars.cbegin();
+        auto var = variables.cbegin();
         auto val = values.cbegin();
-        for (;var != sourceVars.cend() && val != varVals.cend(); var++, val++) {
+        for (;var != variables.cend() && val != values.cend(); var++, val++) {
             std::stringstream stream;
             writePreciseString(stream, *val);
-            addVarSubstitution(v.first + sourceSuffix,
+            addVarSubstitution(var->name + sourceSuffix,
                                stream.str());
         }
     }
 
-    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &paramVals,
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values,
                                    const std::string &sourceSuffix = "")
     {
         if(paramNames.size() != values.size()) {
@@ -82,7 +82,7 @@ public:
 
         auto param = paramNames.cbegin();
         auto val = values.cbegin();
-        for (;param != paramNames.cend() && val != varVals.cend(); param++, val++) {
+        for (;param != paramNames.cend() && val != values.cend(); param++, val++) {
             std::stringstream stream;
             writePreciseString(stream, *val);
             addVarSubstitution(*param + sourceSuffix,
