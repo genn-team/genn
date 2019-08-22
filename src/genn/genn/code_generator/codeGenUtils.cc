@@ -164,12 +164,12 @@ void neuronSubstitutionsInSynapticCode(
 
     // presynaptic neuron variables, parameters, and global parameters
     const auto *neuronModel = ng->getNeuronModel();
-    substitutions.addVarSubstitution("$(sT" + sourceSuffix + ")",
+    substitutions.addVarSubstitution("sT" + sourceSuffix,
                                      "(" + delayOffset + varPrefix + devPrefix+ "sT" + ng->getName() + "[" + offset + idx + "]" + varSuffix + ")");
     for(const auto &v : neuronModel->getVars()) {
         const std::string varIdx = ng->isVarQueueRequired(v.name) ? offset + idx : idx;
 
-        substitutions.addVarSubstitution("$(" + v.name + sourceSuffix + ")",
+        substitutions.addVarSubstitution(v.name + sourceSuffix,
                                          varPrefix + devPrefix + v.name + ng->getName() + "[" + varIdx + "]" + varSuffix);
     }
     substitutions.addParamValueSubstitution(neuronModel->getParamNames(), ng->getParams(), sourceSuffix);
