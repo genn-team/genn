@@ -297,25 +297,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
                         }
 
-                        // If node isn't CPU only
-                        if(!nodeLabel.contains("cpu_only")) {
-                            // Loop through node labels
-                            for(l in nodeLabel) {
-                                // If label starts with CUDA
-                                if(l.startsWith("cuda")) {
-                                    // Rename wheel with cuda version prefix
-                                    if(isUnix()) {
-                                        sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
-                                    }
-                                    else {
-                                        bat "FOR /f \"tokens=*\" %%w IN ('DIR /b *.whl') DO REN \"%%w\" \"" + l + "-%%w\"";
-                                    }
-
-                                    break;
-                                }
-                            }
-                        }
-
                         // Archive wheel itself
                         archive "*.whl"
                     }
