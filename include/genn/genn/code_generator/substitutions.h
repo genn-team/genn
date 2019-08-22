@@ -5,6 +5,9 @@
 #include <stdexcept>
 #include <string>
 
+// PLOG includes
+#include <plog/Log.h>
+
 // Standard C includes
 #include <cassert>
 
@@ -165,6 +168,7 @@ private:
     {
         // Apply variable substitutions
         for(const auto &v : m_VarSubstitutions) {
+            LOGD << "Substituting '$(" << v.first << ")' for '" << v.second << "'";
             substitute(code, "$(" + v.first + ")", v.second);
         }
 
