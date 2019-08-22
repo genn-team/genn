@@ -16,7 +16,7 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorSuffix, const SynapseGroupInternal &sg,
+void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext, const SynapseGroupInternal &sg,
                                const CodeGenerator::Substitutions &baseSubs, const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
 {
     const auto *wu = sg.getWUModel();
@@ -48,9 +48,8 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     neuronSubstitutionsInSynapticCode(synapseSubs, sg, synapseSubs["id_pre"],
                                       synapseSubs["id_post"], backend.getVarPrefix(),
                                       model.getDT());
-    synapseSubs.apply(code);
+    synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
     code= CodeGenerator::ensureFtype(code, model.getPrecision());
-    CodeGenerator::checkUnreplacedVariables(code, sg.getName() + errorSuffix);
     os << code;
 }
 }   // Anonymous namespace
@@ -88,21 +87,20 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
 
             // Get event threshold condition code
             std::string code = sg.getWUModel()->getEventThresholdConditionCode();
-            baseSubs.apply(code);
+            baseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
             code = ensureFtype(code, model.getPrecision());
-            checkUnreplacedVariables(code, sg.getName() + " : evntThreshold");
             os << code;
         },
         // Presynaptic spike
         [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
         {
-            applySynapseSubstitutions(os, sg.getWUModel()->getSimCode(), " : simCode",
+            applySynapseSubstitutions(os, sg.getWUModel()->getSimCode(), "simCode",
                                       sg, baseSubs, model, backend);
         },
         // Presynaptic spike-like event
         [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
         {
-            applySynapseSubstitutions(os, sg.getWUModel()->getEventCode(), " : eventCode",
+            applySynapseSubstitutions(os, sg.getWUModel()->getEventCode(), "eventCode",
                                       sg, baseSubs, model, backend);
         },
         // Postsynaptic learning code
@@ -112,7 +110,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
                 os << " using namespace " << sg.getName() << "_weightupdate_simLearnPost;" << std::endl;
             }
 
-            applySynapseSubstitutions(os, sg.getWUModel()->getLearnPostCode(), " : simLearnPost",
+            applySynapseSubstitutions(os, sg.getWUModel()->getLearnPostCode(), "learnPostCode",
                                       sg, baseSubs, model, backend);
         },
         // Synapse dynamics
@@ -122,7 +120,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
                 os << " using namespace " << sg.getName() << "_weightupdate_synapseDynamics;" << std::endl;
             }
 
-            applySynapseSubstitutions(os, sg.getWUModel()->getSynapseDynamicsCode(), " : synapseDynamics",
+            applySynapseSubstitutions(os, sg.getWUModel()->getSynapseDynamicsCode(), "synapseDynamics",
                                       sg, baseSubs, model, backend);
         }
     );

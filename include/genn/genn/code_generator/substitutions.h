@@ -139,6 +139,12 @@ public:
         applyVars(code);
     }
 
+    void applyCheckUnreplaced(std::string &code, const std::string &context) const
+    {
+        apply(code);
+        checkUnreplacedVariables(code, context);
+    }
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------

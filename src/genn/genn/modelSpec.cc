@@ -157,7 +157,7 @@ void ModelSpec::finalize()
                 using namespace CodeGenerator;
                 assert(!wu->getEventThresholdConditionCode().empty());
 
-                // do an early replacement of parameters, derived parameters and extraglobalsynapse parameters
+                // do an early replacement of parameters, derived parameters and extra global parameters
                 // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
                 Substitutions thresholdSubs;
                 thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());

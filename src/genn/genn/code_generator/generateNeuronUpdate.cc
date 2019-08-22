@@ -142,9 +142,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Apply substitutions to current converter code
                 std::string psCode = psm->getApplyInputCode();
-                inSynSubs.apply(psCode);
+                inSynSubs.applyCheckUnreplaced(psCode, "postSyntoCurrent : " + sg->getPSModelTargetName());
                 psCode = ensureFtype(psCode, model.getPrecision());
-                checkUnreplacedVariables(psCode, sg->getPSModelTargetName() + " : postSyntoCurrent");
 
                 if (!psm->getSupportCode().empty()) {
                     os << CodeStream::OB(29) << " using namespace " << sg->getPSModelTargetName() << "_postsyn;" << std::endl;
@@ -176,9 +175,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "", cs->getName());
 
                 std::string iCode = csm->getInjectionCode();
-                currSourceSubs.apply(iCode);
+                currSourceSubs.applyCheckUnreplaced(iCode, "injectionCode : " + cs->getName());
                 iCode = ensureFtype(iCode, model.getPrecision());
-                checkUnreplacedVariables(iCode, cs->getName() + " : current source injectionCode");
                 os << iCode << std::endl;
 
                 // Write read/write variables back to global memory
@@ -200,9 +198,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
             else {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
 
-                neuronSubs.apply(thCode);
+                neuronSubs.applyCheckUnreplaced(thCode, "thresholdConditionCode : " + ng.getName());
                 thCode= ensureFtype(thCode, model.getPrecision());
-                checkUnreplacedVariables(thCode, ng.getName() + " : thresholdConditionCode");
 
                 if (nm->isAutoRefractoryRequired()) {
                     os << "const bool oldSpike= (" << thCode << ");" << std::endl;
@@ -211,9 +208,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
             os << "// calculate membrane potential" << std::endl;
             std::string sCode = nm->getSimCode();
-            neuronSubs.apply(sCode);
+            neuronSubs.applyCheckUnreplaced(sCode, "simCode : " + ng.getName());
             sCode = ensureFtype(sCode, model.getPrecision());
-            checkUnreplacedVariables(sCode, ng.getName() + " : neuron simCode");
 
             os << sCode << std::endl;
 
@@ -230,9 +226,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                     addNeuronModelSubstitutions(spkEventCondSubs, ng, "_pre");
 
                     std::string eCode = spkEventCond.first;
-                    spkEventCondSubs.apply(eCode);
+                    spkEventCondSubs.applyCheckUnreplaced(eCode, "neuronSpkEvntCondition : " + ng.getName());
                     eCode = ensureFtype(eCode, model.getPrecision());
-                    checkUnreplacedVariables(eCode, ng.getName() + " : neuronSpkEvntCondition");
 
                     // Open scope for spike-like event test
                     os << CodeStream::OB(31);
@@ -273,9 +268,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                     // add after-spike reset if provided
                     if (!nm->getResetCode().empty()) {
                         std::string rCode = nm->getResetCode();
-                        neuronSubs.apply(rCode);
+                        neuronSubs.applyCheckUnreplaced(rCode, "resetCode : " + ng.getName());
                         rCode = ensureFtype(rCode, model.getPrecision());
-                        checkUnreplacedVariables(rCode, ng.getName() + " : resetCode");
 
                         os << "// spike reset code" << std::endl;
                         os << rCode << std::endl;
@@ -358,9 +352,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 addPostsynapticModelSubstitutions(inSynSubs, sg);
 
                 std::string pdCode = psm->getDecayCode();
-                inSynSubs.apply(pdCode);
+                inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : " + sg->getPSModelTargetName());
                 pdCode = ensureFtype(pdCode, model.getPrecision());
-                checkUnreplacedVariables(pdCode, sg->getPSModelTargetName() + " : postSynDecay");
 
                 os << "// the post-synaptic dynamics" << std::endl;
                 if (!psm->getSupportCode().empty()) {
@@ -413,9 +406,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Perform standard substitutions
                     std::string code = sg->getWUModel()->getPreSpikeCode();
-                    preSubs.apply(code);
+                    preSubs.applyCheckUnreplaced(code, "preSpikeCode : " + sg->getName());
                     code = ensureFtype(code, model.getPrecision());
-                    checkUnreplacedVariables(code, sg->getName() + " : simCodePreSpike");
                     os << code;
 
                     // Loop through presynaptic variables into global memory
@@ -464,9 +456,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                     // Perform standard substitutions
                     std::string code = sg->getWUModel()->getPostSpikeCode();
-                    postSubs.apply(code);
+                    postSubs.applyCheckUnreplaced(code, "postSpikeCode : " + sg->getName());
                     code = ensureFtype(code, model.getPrecision());
-                    checkUnreplacedVariables(code, sg->getName() + " : simLearnPostSpike");
                     os << code;
 
                     // Write back presynaptic variables into global memory

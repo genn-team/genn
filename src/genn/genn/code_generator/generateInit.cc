@@ -130,9 +130,8 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 
 
                         std::string code = varInit.getSnippet()->getCode();
-                        varSubs.apply(code);
+                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + popName);
                         code = ensureFtype(code, ftype);
-                        checkUnreplacedVariables(code, "initVar");
                         os << code << std::endl;
 
                         // Copy this into all delay slots
@@ -146,9 +145,8 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + popName + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
-                        varSubs.apply(code);
+                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + popName);
                         code = ensureFtype(code, ftype);
-                        checkUnreplacedVariables(code, "initVar");
                         os << code << std::endl;
                     }
                 });
@@ -190,10 +188,8 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
 
                     std::string code = varInit.getSnippet()->getCode();
-                    varSubs.apply(code);
-
+                    varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + sg.getName());
                     code = ensureFtype(code, ftype);
-                    checkUnreplacedVariables(code, "initVar");
                     os << code << std::endl;
                 });
         }
@@ -353,9 +349,8 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "", sg.getName());
 
                 std::string code = connectInit.getSnippet()->getRowBuildCode();
-                popSubs.apply(code);
+                popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : " + sg.getName());
                 code = ensureFtype(code, model.getPrecision());
-                checkUnreplacedVariables(code, "initSparseConnectivity");
 
                 // Write out code
                 os << code << std::endl;
