@@ -278,6 +278,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     synSubs.addVarSubstitution("id_post", "ipost");
                 }
                 else { // DENSE
+                    os << "unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " + popSubs["id"] + ";" << std::endl;
                     synSubs.addVarSubstitution("id_post", popSubs["id"]);
                 }
                 synSubs.addVarSubstitution("id_syn", "synAddress");
