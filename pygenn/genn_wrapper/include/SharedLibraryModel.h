@@ -407,6 +407,6 @@ private:
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
     
-    std::unordered_map<std::string, PushPullFunc> m_PopulationVars;;
+    std::unordered_map<std::string, PushPullFunc> m_PopulationVars;
     std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
 };
