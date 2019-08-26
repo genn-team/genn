@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <ostream>
+#include <stdexcept>
 #include <streambuf>
 #include <string>
 #include <vector>
