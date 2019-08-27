@@ -59,8 +59,10 @@ var searchData=
   ['genn_5flong_5fdouble',['GENN_LONG_DOUBLE',['../dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08ae401c6285be90f3a255c38f422b1a60c',1,'modelSpec.h']]],
   ['genn_5fmodel_2epy',['genn_model.py',['../de/db7/genn__model_8py.html',1,'']]],
   ['genn_5fpreferences',['GENN_PREFERENCES',['../dd/d90/generator_8cc.html#af2b915f479a1645376d92bcd835d2e13',1,'generator.cc']]],
+  ['genn_5fto_5fnumpy_5ftypes',['genn_to_numpy_types',['../d0/d17/namespacepygenn_1_1model__preprocessor.html#a61d7be69c20babd2663997b0f5769e10',1,'pygenn::model_preprocessor']]],
   ['genneuronupdate',['genNeuronUpdate',['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aac00294b1ef371c52c105bcd85abf790',1,'CodeGenerator::CUDA::Backend::genNeuronUpdate()'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a840069e30f8bd7f51cb3d7add3b821bc',1,'CodeGenerator::SingleThreadedCPU::Backend::genNeuronUpdate()'],['../d3/d15/classCodeGenerator_1_1BackendBase.html#ae8915df91011c1c65ff2a9b52bc8e05c',1,'CodeGenerator::BackendBase::genNeuronUpdate()']]],
   ['gennexport_2eh',['gennExport.h',['../d1/d8e/gennExport_8h.html',1,'']]],
+  ['gennmodel',['GeNNModel',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html',1,'pygenn::genn_model']]],
   ['gennutils_2ecc',['gennUtils.cc',['../d1/d04/gennUtils_8cc.html',1,'']]],
   ['gennutils_2eh',['gennUtils.h',['../d9/d59/gennUtils_8h.html',1,'']]],
   ['genpopulationrng',['genPopulationRNG',['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ad6174620c02abe41cd16bc7003019e85',1,'CodeGenerator::CUDA::Backend::genPopulationRNG()'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#adaeb5f9858ea97095468f72dfc58281d',1,'CodeGenerator::SingleThreadedCPU::Backend::genPopulationRNG()'],['../d3/d15/classCodeGenerator_1_1BackendBase.html#a45611d965af4bf0c86285add875cdeaa',1,'CodeGenerator::BackendBase::genPopulationRNG()']]],
@@ -79,6 +81,9 @@ var searchData=
   ['genvariablepull',['genVariablePull',['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a5cc94a36f46e4e524ee30afb87aafbc9',1,'CodeGenerator::CUDA::Backend::genVariablePull()'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a2f4b92e3a2296078dc7ae53eafe0854e',1,'CodeGenerator::SingleThreadedCPU::Backend::genVariablePull()'],['../d3/d15/classCodeGenerator_1_1BackendBase.html#addcfe5c7751b6dc87dd13f59127fcb3b',1,'CodeGenerator::BackendBase::genVariablePull()']]],
   ['genvariablepush',['genVariablePush',['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#af0c2251d4ce823c13850bc3201ae49d3',1,'CodeGenerator::CUDA::Backend::genVariablePush()'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#aa5bcab7500013ba656c0e4a898d79020',1,'CodeGenerator::SingleThreadedCPU::Backend::genVariablePush()'],['../d3/d15/classCodeGenerator_1_1BackendBase.html#aa04def4fec77c03d419b79e11abfb035',1,'CodeGenerator::BackendBase::genVariablePush()']]],
   ['genvariablepushpull',['genVariablePushPull',['../d3/d15/classCodeGenerator_1_1BackendBase.html#a3adc59ef44b8c052dc8038c59ae743a3',1,'CodeGenerator::BackendBase']]],
+  ['get_5fsparse_5fpost_5finds',['get_sparse_post_inds',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8e3a0f310ee5ce1afcfffea3eb0fe67c',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['get_5fsparse_5fpre_5finds',['get_sparse_pre_inds',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad64df56c8184a34c85f256e09be9063f',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['get_5fvar_5fvalues',['get_var_values',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af4d5e6078a2f7e231a869909731d90ab',1,'pygenn::genn_groups::SynapseGroup']]],
   ['getadditionalinputvars',['getAdditionalInputVars',['../d7/dad/classNeuronModels_1_1Base.html#a31b37d82e943c8f8e9221f0012411eca',1,'NeuronModels::Base']]],
   ['getapplyinputcode',['getApplyInputCode',['../d1/d3a/classPostsynapticModels_1_1Base.html#ace066adf5600d48f35d8ee20ec898b5c',1,'PostsynapticModels::Base::getApplyInputCode()'],['../d5/d1e/classPostsynapticModels_1_1ExpCurr.html#a6e85c8dbf187916807951d162d984a27',1,'PostsynapticModels::ExpCurr::getApplyInputCode()'],['../d5/d27/classPostsynapticModels_1_1ExpCond.html#a47439992700c673018b847d6350efc75',1,'PostsynapticModels::ExpCond::getApplyInputCode()'],['../de/da9/classPostsynapticModels_1_1DeltaCurr.html#a4ed0d483fa452dd7405aced6dddf3a12',1,'PostsynapticModels::DeltaCurr::getApplyInputCode()']]],
   ['getbackpropdelaysteps',['getBackPropDelaySteps',['../dc/dfa/classSynapseGroup.html#aaddfca073f33dadfc1766689bf0b15f4',1,'SynapseGroup']]],
@@ -204,6 +209,7 @@ var searchData=
   ['getzerocopybytes',['getZeroCopyBytes',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#abc2602688ece395a2798a1f72eb9b810',1,'CodeGenerator::MemAlloc']]],
   ['getzerocopymbytes',['getZeroCopyMBytes',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#a2faa6b6734e92998dd62a7465de56c70',1,'CodeGenerator::MemAlloc']]],
   ['global',['GLOBAL',['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334',1,'synapseMatrixType.h']]],
+  ['group',['Group',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html',1,'pygenn::genn_groups']]],
   ['grouphandler',['GroupHandler',['../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2',1,'CodeGenerator::BackendBase']]],
   ['genn_20documentation',['GeNN Documentation',['../index.html',1,'']]]
 ];

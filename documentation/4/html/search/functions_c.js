@@ -1,7 +1,9 @@
 var searchData=
 [
-  ['padsize',['padSize',['../d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils.html#a3b874aa3a303cd2db0779db12f259d81',1,'CodeGenerator::CUDA::Utils']]],
-  ['postneuronsubstitutionsinsynapticcode',['postNeuronSubstitutionsInSynapticCode',['../d0/d02/namespaceCodeGenerator.html#a1d9105793919659e85634fe4a3d94900',1,'CodeGenerator']]],
-  ['preferences',['Preferences',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a81d2f28e0431fcbb375e6c0c547a879d',1,'CodeGenerator::CUDA::Preferences']]],
-  ['preneuronsubstitutionsinsynapticcode',['preNeuronSubstitutionsInSynapticCode',['../d0/d02/namespaceCodeGenerator.html#a50a3d09c47901d799d7732f4ed6d2f58',1,'CodeGenerator']]]
+  ['name_5fsubstitutions',['name_substitutions',['../d0/d02/namespaceCodeGenerator.html#af0d563118cb96804450e398824d9dcbb',1,'CodeGenerator::name_substitutions(std::string &amp;code, const std::string &amp;prefix, NameIter namesBegin, NameIter namesEnd, const std::string &amp;postfix=&quot;&quot;, const std::string &amp;ext=&quot;&quot;)'],['../d0/d02/namespaceCodeGenerator.html#ad9f131d82605f49225e48d8e1a92be1c',1,'CodeGenerator::name_substitutions(std::string &amp;code, const std::string &amp;prefix, const std::vector&lt; std::string &gt; &amp;names, const std::string &amp;postfix=&quot;&quot;, const std::string &amp;ext=&quot;&quot;)']]],
+  ['nameiterctx',['NameIterCtx',['../df/d6f/structCodeGenerator_1_1NameIterCtx.html#a48637bc260812a5af43e0857ec978478',1,'CodeGenerator::NameIterCtx']]],
+  ['neurongroup',['NeuronGroup',['../d7/d3b/classNeuronGroup.html#aa2b21c7c696a54bb3824c6843a0d5bb1',1,'NeuronGroup::NeuronGroup(const NeuronGroup &amp;)=delete'],['../d7/d3b/classNeuronGroup.html#acf9b709abcfb87f8bdc2375796aa8b78',1,'NeuronGroup::NeuronGroup()=delete'],['../d7/d3b/classNeuronGroup.html#afdb07e927285a193101570e5dd17c49b',1,'NeuronGroup::NeuronGroup(const std::string &amp;name, int numNeurons, const NeuronModels::Base *neuronModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; Models::VarInit &gt; &amp;varInitialisers, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, int hostID)']]],
+  ['neurongroupinternal',['NeuronGroupInternal',['../dc/da3/classNeuronGroupInternal.html#a10d1a8498a9bd91151ff1b4b3c480a95',1,'NeuronGroupInternal']]],
+  ['neuronsubstitutionsinsynapticcode',['neuronSubstitutionsInSynapticCode',['../d0/d02/namespaceCodeGenerator.html#ab792dd23b63e89e1fce0947a3c2aaba7',1,'CodeGenerator']]],
+  ['num_5fsynapses',['num_synapses',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a47259ad1e1fb0b61ec07652dd272cc8e',1,'pygenn::genn_groups::SynapseGroup']]]
 ];

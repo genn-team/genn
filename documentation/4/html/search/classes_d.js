@@ -8,6 +8,6 @@ var searchData=
   ['staticpulsedendriticdelay',['StaticPulseDendriticDelay',['../d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html',1,'WeightUpdateModels']]],
   ['structnameconstiter',['StructNameConstIter',['../d7/d76/classCodeGenerator_1_1StructNameConstIter.html',1,'CodeGenerator']]],
   ['substitutions',['Substitutions',['../de/d22/classCodeGenerator_1_1Substitutions.html',1,'CodeGenerator']]],
-  ['synapsegroup',['SynapseGroup',['../dc/dfa/classSynapseGroup.html',1,'']]],
+  ['synapsegroup',['SynapseGroup',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html',1,'pygenn.genn_groups.SynapseGroup'],['../dc/dfa/classSynapseGroup.html',1,'SynapseGroup']]],
   ['synapsegroupinternal',['SynapseGroupInternal',['../dd/d48/classSynapseGroupInternal.html',1,'']]]
 ];
