@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['_5f_5finit_5f_5f',['__init__',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a44c2cfa0fba7209cc89c0e70b3882f71',1,'pygenn.genn_groups.Group.__init__()'],['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a9804b52565c959b8f7220227a02b1b21',1,'pygenn.genn_groups.NeuronGroup.__init__()'],['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ada93239064c29c7587a3cc23c7a26b1b',1,'pygenn.genn_groups.SynapseGroup.__init__()'],['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a67f5e692501129aa592af2bb1cbd7dc4',1,'pygenn.genn_groups.CurrentSource.__init__()'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a97af74b8965a23e3ff5ccf76997e07c5',1,'pygenn.genn_model.GeNNModel.__init__()'],['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#ab20618a65cd98299bea646c70f7d8a7d',1,'pygenn.model_preprocessor.Variable.__init__()'],['../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#a788a8a4c49c71a1ca8ecea63043c1c7b',1,'pygenn.model_preprocessor.ExtraGlobalVariable.__init__()']]],
   ['_5f_5finit_5f_5f_2epy',['__init__.py',['../d3/d9a/____init_____8py.html',1,'']]]
 ];

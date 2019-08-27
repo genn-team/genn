@@ -7,7 +7,7 @@ var annotated_dup =
     [ "Models", "dd/d20/namespaceModels.html", "dd/d20/namespaceModels" ],
     [ "NeuronModels", "da/dac/namespaceNeuronModels.html", "da/dac/namespaceNeuronModels" ],
     [ "PostsynapticModels", "db/dcb/namespacePostsynapticModels.html", "db/dcb/namespacePostsynapticModels" ],
-    [ "pygenn", "da/d6d/namespacepygenn.html", "da/d6d/namespacepygenn" ],
+    [ "pygenn", "da/d6d/namespacepygenn.html", null ],
     [ "Snippet", "df/daa/namespaceSnippet.html", "df/daa/namespaceSnippet" ],
     [ "WeightUpdateModels", "da/d80/namespaceWeightUpdateModels.html", "da/d80/namespaceWeightUpdateModels" ],
     [ "CurrentSource", "d1/d48/classCurrentSource.html", "d1/d48/classCurrentSource" ],

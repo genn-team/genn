@@ -90,16 +90,6 @@ var hierarchy =
       [ "NeuronGroupInternal", "dc/da3/classNeuronGroupInternal.html", null ]
     ] ],
     [ "CodeGenerator::CodeStream::OB", "d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB.html", null ],
-    [ "object", null, [
-      [ "pygenn.genn_groups.Group", "d1/db3/classpygenn_1_1genn__groups_1_1Group.html", [
-        [ "pygenn.genn_groups.CurrentSource", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html", null ],
-        [ "pygenn.genn_groups.NeuronGroup", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html", null ],
-        [ "pygenn.genn_groups.SynapseGroup", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html", null ]
-      ] ],
-      [ "pygenn.genn_model.GeNNModel", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html", null ],
-      [ "pygenn.model_preprocessor.ExtraGlobalVariable", "d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html", null ],
-      [ "pygenn.model_preprocessor.Variable", "d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html", null ]
-    ] ],
     [ "Snippet::Base::ParamVal", "d7/dda/structSnippet_1_1Base_1_1ParamVal.html", null ],
     [ "CodeGenerator::PreferencesBase", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html", [
       [ "CodeGenerator::CUDA::Preferences", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html", null ],

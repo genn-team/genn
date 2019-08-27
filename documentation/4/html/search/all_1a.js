@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['zero',['zero',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#a855d60ed10ef7b083bd0efd360ad4184',1,'CodeGenerator::MemAlloc']]],
-  ['zero_5fcopy',['ZERO_COPY',['../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae5f97fff9c755d0906f1a4dcdb48ef57',1,'variableMode.h']]],
-  ['zerocopy',['zeroCopy',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#abb8977011232ea837e81cef7b1b33cbc',1,'CodeGenerator::MemAlloc']]],
-  ['zerocopyinuse',['zeroCopyInUse',['../da/dfd/classModelSpec.html#ab666b8e3114b41107b936da9682389e3',1,'ModelSpec']]]
+  ['_7ebackendbase',['~BackendBase',['../d3/d15/classCodeGenerator_1_1BackendBase.html#ac4ba1c12b2a97dfb6cb4f3cd5df10f50',1,'CodeGenerator::BackendBase']]],
+  ['_7ebase',['~Base',['../db/d97/classSnippet_1_1Base.html#a17a9ca158277401f2c190afb1e791d1f',1,'Snippet::Base']]],
+  ['_7emodelspec',['~ModelSpec',['../da/dfd/classModelSpec.html#a60ffaa6deb779cff61da6a7ea651613f',1,'ModelSpec']]],
+  ['_7escope',['~Scope',['../d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html#a4da3a97bb1b6ae60e5b04651ec840ab5',1,'CodeGenerator::CodeStream::Scope']]]
 ];

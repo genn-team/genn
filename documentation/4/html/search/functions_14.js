@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['weight_5fupdate_5fvar_5fsize',['weight_update_var_size',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#abc7df7f3c37f091bea75d067d1e87835',1,'pygenn::genn_groups::SynapseGroup']]],
-  ['writeprecisestring',['writePreciseString',['../d0/d02/namespaceCodeGenerator.html#ab6085ea1d46a8959cf26df18c9675b61',1,'CodeGenerator::writePreciseString(std::ostream &amp;os, T value)'],['../d0/d02/namespaceCodeGenerator.html#ada66f2dbbdc1120868dcdd7e994d467c',1,'CodeGenerator::writePreciseString(T value)']]]
+  ['_7ebackendbase',['~BackendBase',['../d3/d15/classCodeGenerator_1_1BackendBase.html#ac4ba1c12b2a97dfb6cb4f3cd5df10f50',1,'CodeGenerator::BackendBase']]],
+  ['_7ebase',['~Base',['../db/d97/classSnippet_1_1Base.html#a17a9ca158277401f2c190afb1e791d1f',1,'Snippet::Base']]],
+  ['_7emodelspec',['~ModelSpec',['../da/dfd/classModelSpec.html#a60ffaa6deb779cff61da6a7ea651613f',1,'ModelSpec']]],
+  ['_7escope',['~Scope',['../d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html#a4da3a97bb1b6ae60e5b04651ec840ab5',1,'CodeGenerator::CodeStream::Scope']]]
 ];

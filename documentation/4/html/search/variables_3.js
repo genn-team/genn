@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['extra_5fglobal_5fparams',['extra_global_params',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a646ab45304e93c1cec854df96e8fb197',1,'pygenn::genn_groups::Group']]]
+  ['func',['func',['../d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html#a4b29bbe2e353521b8499128a73ec5a2b',1,'Snippet::Base::DerivedParam']]]
 ];
