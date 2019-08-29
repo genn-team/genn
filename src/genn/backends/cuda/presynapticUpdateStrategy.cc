@@ -45,8 +45,8 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, con
     if(backend.getChosenCUDADevice().major < 5) {
         return false;
     }
-    // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
-    else if(sg.isDendriticDelayRequired()) {
+    // Otherwise, if dendritic delays are required or postsynaptic models are mergeds, shared memory approach cannot be used so return false
+    else if(sg.isDendriticDelayRequired() || sg.isPSModelMerged()) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
@@ -185,15 +185,15 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
 bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &) const
 {
     // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield
-    // (where each thread represents an individual neuron)
-    return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-            || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
+    // (where each thread represents an individual neuron) and the synapse group's output isn't merged
+    return (((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
+            || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) && !sg.isPSModelMerged());
 }
 //----------------------------------------------------------------------------
 bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
 {
-    // If dendritic delays are required, shared memory approach cannot be used so return false
-    if(sg.isDendriticDelayRequired()) {
+    // If dendritic delays are required or postsynaptic models are merged, shared memory approach cannot be used so return false
+    if(sg.isDendriticDelayRequired() || sg.isPSModelMerged()) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
