@@ -552,6 +552,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                     // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
                     if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
+                        assert(!sg.isPSModelMerged());
+
                         os << "// only do this for existing neurons" << std::endl;
                         os << model.getPrecision() << " linSyn;" << std::endl;
                         os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
@@ -563,6 +565,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
                     // **NOTE** is ok as number of target neurons <= synapseBlkSz
                     else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
+                        assert(!sg.isPSModelMerged());
+
                         os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
                             CodeStream::Scope b(os);
@@ -589,6 +593,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                     // If we have been accumulating into a register, write value back to global memory
                     if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
+                        assert(!sg.isPSModelMerged());
+
                         os << "// only do this for existing neurons" << std::endl;
                         os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
@@ -599,6 +605,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     // Otherwise, if we have been accumulating into shared memory, write value back to global memory
                     // **NOTE** is ok as number of target neurons <= synapseBlkSz
                     else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
+                        assert(!sg.isPSModelMerged());
+
                         os << "__syncthreads();" << std::endl;
                         os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
