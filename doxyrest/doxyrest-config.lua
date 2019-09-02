@@ -47,7 +47,7 @@ FRAME_FILE = "index.rst.in"
 --! specified, the command line takes precedence.
 --!
 
-INPUT_FILE = "../documentation/xml/index.xml"
+INPUT_FILE = "documentation/xml/index.xml"
 
 --!
 --! The output master (index) reStructuredText file. Usually, the index frame
@@ -57,7 +57,7 @@ INPUT_FILE = "../documentation/xml/index.xml"
 --! the default output master file.
 --!
 
-OUTPUT_FILE = "source/index.rst"
+OUTPUT_FILE = "doxyrest/source/index.rst"
 
 --!
 --! File with project-specific reStructuredText definitions. When non``nil``,
@@ -86,7 +86,7 @@ INDEX_TITLE = "My Project Documentation"
 --! documentation pages.
 --!
 
-INTRO_FILE = "page_index.rst"
+INTRO_FILE = "doxyrest/page_index.rst"
 
 --!
 --! Specify whether to sort groups lexicographically (by ``title``) or
