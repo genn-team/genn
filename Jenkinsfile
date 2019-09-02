@@ -329,9 +329,9 @@ for(b = 0; b < builderNodes.size(); b++) {
 parallel builders
 
 //--------------------------------------------------------------------------
-// Final generation of documentation
+// Final generation of documentation on master
 //--------------------------------------------------------------------------
-node {
+node("master") {
     buildStep("Building documentation") {
         dir("genn") {
             // Make documentation, add generated rst files to git and push
