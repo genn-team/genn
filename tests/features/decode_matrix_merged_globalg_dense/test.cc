@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file decode_matrix_globalg_dense/test.cc
+/*! \file decode_matrix_merged_globalg_dense/test.cc
 
 \brief Main test code that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
