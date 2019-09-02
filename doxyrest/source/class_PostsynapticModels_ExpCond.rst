@@ -1,0 +1,111 @@
+.. index:: pair: class; PostsynapticModels::ExpCond
+.. _doxid-d5/d27/classPostsynapticModels_1_1ExpCond:
+
+class PostsynapticModels::ExpCond
+=================================
+
+.. toctree::
+	:hidden:
+
+Overview
+~~~~~~~~
+
+Exponential decay with synaptic input treated as a conductance value. :ref:`More...<details-d5/d27/classPostsynapticModels_1_1ExpCond>`
+
+
+.. ref-code-block:: cpp
+	:class: doxyrest-overview-code-block
+
+	#include <postsynapticModels.h>
+	
+	class ExpCond: public :ref:`PostsynapticModels::Base<doxid-d1/d3a/classPostsynapticModels_1_1Base>`
+	{
+	public:
+		// typedefs
+	
+		typedef :ref:`Snippet::ValueBase<doxid-da/d76/classSnippet_1_1ValueBase>`<2> :target:`ParamValues<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1adf00f1e0fc0c194503d37bbf26f67bcd>`;
+		typedef :ref:`Models::VarInitContainerBase<doxid-d6/d24/classModels_1_1VarInitContainerBase>`<0> :target:`VarValues<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1acd01e836c2540d7f990a2bfc3424e567>`;
+		typedef :ref:`Models::VarInitContainerBase<doxid-d6/d24/classModels_1_1VarInitContainerBase>`<0> :target:`PreVarValues<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1a998a7159505cfe04aecf30a1f25d564e>`;
+		typedef :ref:`Models::VarInitContainerBase<doxid-d6/d24/classModels_1_1VarInitContainerBase>`<0> :target:`PostVarValues<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1ad851b9cfc3d0601f0464ff0eda9b6479>`;
+
+		// methods
+	
+		static const ExpCond* :target:`getInstance<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1a35c487d768b8d0818d9d2228e3ac9b30>`();
+		virtual std::string :target:`getDecayCode<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1aae0d82c4e55234ac5758ea1ae543fb94>`() const;
+		virtual std::string :target:`getApplyInputCode<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1a47439992700c673018b847d6350efc75>`() const;
+		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1a2ce1c4583459baae77b6434911d6ecb9>`() const;
+		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1ab8722f87e4907267ca07d18d1f72dab4>`() const;
+	};
+
+Inherited Members
+-----------------
+
+.. ref-code-block:: cpp
+	:class: doxyrest-overview-inherited-code-block
+
+	public:
+		// typedefs
+	
+		typedef std::vector<std::string> :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>`;
+		typedef std::vector<:ref:`EGP<doxid-dd/d5d/structSnippet_1_1Base_1_1EGP>`> :ref:`EGPVec<doxid-db/d97/classSnippet_1_1Base_1a43ece29884e2c6cabffe9abf985807c6>`;
+		typedef std::vector<:ref:`ParamVal<doxid-d7/dda/structSnippet_1_1Base_1_1ParamVal>`> :ref:`ParamValVec<doxid-db/d97/classSnippet_1_1Base_1a0156727ddf8f9c9cbcbc0d3d913b6b48>`;
+		typedef std::vector<:ref:`DerivedParam<doxid-d9/d0c/structSnippet_1_1Base_1_1DerivedParam>`> :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>`;
+		typedef std::vector<:ref:`Var<doxid-d5/d42/structModels_1_1Base_1_1Var>`> :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>`;
+
+		// structs
+	
+		struct :ref:`DerivedParam<doxid-d9/d0c/structSnippet_1_1Base_1_1DerivedParam>`;
+		struct :ref:`EGP<doxid-dd/d5d/structSnippet_1_1Base_1_1EGP>`;
+		struct :ref:`ParamVal<doxid-d7/dda/structSnippet_1_1Base_1_1ParamVal>`;
+		struct :ref:`Var<doxid-d5/d42/structModels_1_1Base_1_1Var>`;
+
+		// methods
+	
+		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1aad4f3bb00c5f29cb9d0e3585db3f4e20>`() const;
+		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1a450c7783570d875e19bcd8a88d10bbf6>`() const;
+		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getVars<doxid-d6/d97/classModels_1_1Base_1a5da12b4e51f0b969510dd97d45ad285a>`() const;
+		virtual :ref:`EGPVec<doxid-db/d97/classSnippet_1_1Base_1a43ece29884e2c6cabffe9abf985807c6>` :ref:`getExtraGlobalParams<doxid-d6/d97/classModels_1_1Base_1ad6a043bb48b7620c4294854c042e561e>`() const;
+		size_t :ref:`getVarIndex<doxid-d6/d97/classModels_1_1Base_1ab54e5508872ef8d1558b7da8aa25bb63>`(const std::string& varName) const;
+		size_t :ref:`getExtraGlobalParamIndex<doxid-d6/d97/classModels_1_1Base_1a693ad5cfedde6e2db10200501c549c81>`(const std::string& paramName) const;
+		virtual std::string :ref:`getDecayCode<doxid-d1/d3a/classPostsynapticModels_1_1Base_1ae87b3769e5adc11364d4e98db5fc9235>`() const;
+		virtual std::string :ref:`getApplyInputCode<doxid-d1/d3a/classPostsynapticModels_1_1Base_1ace066adf5600d48f35d8ee20ec898b5c>`() const;
+		virtual std::string :ref:`getSupportCode<doxid-d1/d3a/classPostsynapticModels_1_1Base_1accc47cb76694891d1e0ef33e93bb56e2>`() const;
+
+.. _details-d5/d27/classPostsynapticModels_1_1ExpCond:
+
+Detailed Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+Exponential decay with synaptic input treated as a conductance value.
+
+This model has no variables and two parameters:
+
+* ``tau`` : Decay time constant
+
+* ``E`` : Reversal potential
+
+``tau`` is used by the derived parameter ``expdecay`` which returns expf(-dt/tau).
+
+Methods
+-------
+
+.. index:: pair: function; getParamNames
+.. _doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1a2ce1c4583459baae77b6434911d6ecb9:
+
+.. ref-code-block:: cpp
+	:class: doxyrest-title-code-block
+
+	virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` getParamNames() const
+
+Gets names of of (independent) model parameters.
+
+.. index:: pair: function; getDerivedParams
+.. _doxid-d5/d27/classPostsynapticModels_1_1ExpCond_1ab8722f87e4907267ca07d18d1f72dab4:
+
+.. ref-code-block:: cpp
+	:class: doxyrest-title-code-block
+
+	virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` getDerivedParams() const
+
+Gets names of derived model parameters and the function objects to call to Calculate their value from a vector of model parameter values
+
