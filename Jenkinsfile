@@ -327,3 +327,26 @@ for(b = 0; b < builderNodes.size(); b++) {
 
 // Run builds in parallel
 parallel builders
+
+//--------------------------------------------------------------------------
+// Final generation of documentation
+//--------------------------------------------------------------------------
+node {
+    buildStep("Building documentation") {
+        dir("genn") {
+            // Make documentation, add generated rst files to git and push
+            // **NOTE** use [ci skip] to prevent Jenkins getting stuck in a loop of doom
+            script = """
+            ./makedoc
+            git add doxyrest/source/
+            git commit -m "automatic commit of doxyrest documentation [ci skip]"
+            git push
+            """
+
+            def docStatusCode = sh script:script, returnStatus:true
+            if(docStatusCode != 0) {
+                setBuildStatus("Building documentation", "FAILURE");
+            }
+        }
+    }
+}
