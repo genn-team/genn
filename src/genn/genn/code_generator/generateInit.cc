@@ -18,12 +18,6 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void addVarInitSnippetSubstitutions(CodeGenerator::Substitutions &subs, const Models::VarInit &varInit)
-{
-    subs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
-    subs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
-}
-//--------------------------------------------------------------------------
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
                        const CodeGenerator::Substitutions &popSubs, const NeuronGroupInternal &ng, bool spikeEvent)
 {
