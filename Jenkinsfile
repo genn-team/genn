@@ -121,6 +121,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                         bat script:"rmdir /S /Q genn", returnStatus:true;
                     }
                     
+                    echo scm.branches;
+
                     dir("genn") {
                         // Checkout GeNN into it
                         // **NOTE** because we're using multi-branch project URL is substituted here
