@@ -1,4 +1,4 @@
-.. include:: doxyrest/page_index.rst
+.. include:: page_index.rst
 
 .. toctree::
 	:hidden:
@@ -8,7 +8,6 @@
 	page_brian2genn.rst
 	page_Credits.rst
 	page_Examples.rst
-	page_index.rst
 	page_Installation.rst
 	page_PyGeNN.rst
 	page_Quickstart.rst
@@ -25,7 +24,6 @@
 |	:doc:`page_brian2genn`
 |	:doc:`page_Credits`
 |	:doc:`page_Examples`
-|	:doc:`page_index`
 |	:doc:`page_Installation`
 |	:doc:`page_PyGeNN`
 |	:doc:`page_Quickstart`
