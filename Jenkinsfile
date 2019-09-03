@@ -91,11 +91,6 @@ for(b in desiredBuilds) {
     }
 }
 
-node("master") {
-    buildStep("Skipping builds triggered from CI") {
-        scmSkip(deleteBuild: true, skipPattern:".*\\[ci skip\\].*")
-    }
-}
 //--------------------------------------------------------------------------
 // Parallel build step
 //--------------------------------------------------------------------------
@@ -350,11 +345,10 @@ node("master") {
                 // Use credentials for git
                 withCredentials([usernamePassword(credentialsId: "genn-jenkins-ci", passwordVariable: "GIT_PASSWORD", usernameVariable: "GIT_USERNAME")]) {
                     // Make documentation, add generated rst files to git and push
-                    // **NOTE** use [ci skip] to prevent Jenkins getting stuck in a loop of doom
                     script = """
                     ./makedoc
                     git add doxyrest/source/
-                    git commit -m "automatic commit of doxyrest documentation [ci skip]"
+                    git commit -m "automatic commit of doxyrest documentation"
                     git pull
                     git push --set-upstream https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/genn-team/genn.git ${scm.branches[0]}
                     """
