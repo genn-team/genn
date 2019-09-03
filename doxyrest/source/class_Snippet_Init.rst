@@ -23,18 +23,16 @@ Class used to bind together everything required to utilize a snippet
 	class Init
 	{
 	public:
-		// construction
+		// methods
 	
 		:target:`Init<doxid-d8/df6/classSnippet_1_1Init_1ae1b490fba08a926f30d03977b37339c5>`(
 			const SnippetBase* snippet,
 			const std::vector<double>& params
 			);
-
-		// methods
 	
-		const SnippetBase* :target:`getSnippet<doxid-d8/df6/classSnippet_1_1Init_1acc38860261805f85e85a69661623a0d2>`() const;
-		const std::vector<double>& :target:`getParams<doxid-d8/df6/classSnippet_1_1Init_1a82d9ffd36d23da70dd3d206f8f54649c>`() const;
-		const std::vector<double>& :target:`getDerivedParams<doxid-d8/df6/classSnippet_1_1Init_1a293e3c5bd9130372a3b0cdf0312f4590>`() const;
+		const SnippetBase* :target:`getSnippet<doxid-d8/df6/classSnippet_1_1Init_1a3ceb867b6da08f8cc093b73d7e255718>`() const;
+		const std::vector<double>& :target:`getParams<doxid-d8/df6/classSnippet_1_1Init_1aa9ac5d3132df146c7cc83a92f81c5195>`() const;
+		const std::vector<double>& :target:`getDerivedParams<doxid-d8/df6/classSnippet_1_1Init_1a114423c5f6999733ad63b0630aa2afcc>`() const;
 		void :target:`initDerivedParams<doxid-d8/df6/classSnippet_1_1Init_1a567ca2921ef0b3906c8a418aff1124c0>`(double dt);
 	};
 

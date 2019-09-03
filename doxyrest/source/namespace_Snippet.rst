@@ -28,10 +28,10 @@ Wrapper to ensure at compile time that correct number of values are used when sp
 	template <typename SnippetBase>
 	class :ref:`Init<doxid-d8/df6/classSnippet_1_1Init>`;
 
-	template <size_t NumVars>
-	class :ref:`ValueBase<doxid-da/d76/classSnippet_1_1ValueBase>`;
-
 	template <>
 	class :ref:`ValueBase<0><doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4>`;
+
+	template <size_t NumVars>
+	class :ref:`ValueBase<doxid-da/d76/classSnippet_1_1ValueBase>`;
 
 	} // namespace Snippet

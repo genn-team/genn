@@ -1,8 +1,8 @@
-.. index:: pair: class; Snippet::ValueBase<0>
-.. _doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4:
+.. index:: pair: class; Snippet::ValueBase
+.. _doxid-da/d76/classSnippet_1_1ValueBase:
 
-template class Snippet::ValueBase<0>
-====================================
+template class Snippet::ValueBase
+=================================
 
 .. toctree::
 	:hidden:
@@ -10,7 +10,7 @@ template class Snippet::ValueBase<0>
 Overview
 ~~~~~~~~
 
-Template specialisation of :ref:`ValueBase <doxid-da/d76/classSnippet_1_1ValueBase>` to avoid compiler warnings in the case when a model requires no parameters or state variables :ref:`More...<details-dd/df2/classSnippet_1_1ValueBase_3_010_01_4>`
+
 
 
 .. ref-code-block:: cpp
@@ -18,36 +18,35 @@ Template specialisation of :ref:`ValueBase <doxid-da/d76/classSnippet_1_1ValueBa
 
 	#include <snippet.h>
 	
-	template <>
-	class ValueBase<0>
+	template <size_t NumVars>
+	class ValueBase
 	{
 	public:
-		// construction
-	
-		template <typename... T>
-		:target:`ValueBase<doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4_1a7fab07343a7f0b9ae1a694559fbcdfbf>`(T&&... vals);
-
 		// methods
 	
-		std::vector<double> :ref:`getValues<doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4_1ae25702eaea986281230a9396a28e03ce>`() const;
+		template <typename... T>
+		:target:`ValueBase<doxid-da/d76/classSnippet_1_1ValueBase_1aa001b4d15730423c4915ce75e26ca89f>`(T&&... vals);
+	
+		const std::vector<double>& :ref:`getValues<doxid-da/d76/classSnippet_1_1ValueBase_1ad87c5118a6be03345c415702dd70eedb>`() const;
+		double :target:`operator []<doxid-da/d76/classSnippet_1_1ValueBase_1ab7ffe4a19d6b14c9c4a0d41fb14812f0>` (size_t pos) const;
 	};
-.. _details-dd/df2/classSnippet_1_1ValueBase_3_010_01_4:
+.. _details-da/d76/classSnippet_1_1ValueBase:
 
 Detailed Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Template specialisation of :ref:`ValueBase <doxid-da/d76/classSnippet_1_1ValueBase>` to avoid compiler warnings in the case when a model requires no parameters or state variables
+
 
 Methods
 -------
 
 .. index:: pair: function; getValues
-.. _doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4_1ae25702eaea986281230a9396a28e03ce:
+.. _doxid-da/d76/classSnippet_1_1ValueBase_1ad87c5118a6be03345c415702dd70eedb:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	std::vector<double> getValues() const
+	const std::vector<double>& getValues() const
 
 Gets values as a vector of doubles.
 

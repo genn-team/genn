@@ -18,8 +18,8 @@ class CodeGenerator::TeeBuf
 	class TeeBuf: public streambuf
 	{
 	public:
-		// construction
+		// methods
 	
 		template <typename... T>
-		:target:`TeeBuf<doxid-d8/d5e/classCodeGenerator_1_1TeeBuf_1a181dc32669ff97d7f0e2539ea0ed4d38>`(T&&... streamBufs);
+		:target:`TeeBuf<doxid-d8/d5e/classCodeGenerator_1_1TeeBuf_1abb5b5abc4fd9e3b7fbf0ce03b5f22511>`(T&&... streamBufs);
 	};

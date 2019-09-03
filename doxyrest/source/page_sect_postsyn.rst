@@ -31,7 +31,7 @@ In the same manner as to both the neuron and weight update models discussed in :
   
   .. ref-code-block:: cpp
   
-  	SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
+  	:ref:`SET_APPLY_INPUT_CODE <doxid-d8/d47/postsynapticModels_8h_1a41d7141aeae91e2840c2629106b6a3b1>`("$(Isyn) += $(inSyn) * ($(E) - $(V))");
   
   where $(E) is a postsynaptic model parameter specifying reversal potential and $(V) is the variable containing the postsynaptic neuron's membrane potential. As discussed in :ref:`Built-in Variables in GeNN <doxid-d0/da6/UserGuide_1predefinedVars>`, $(Isyn) is the built in variable used to sum neuron input. However additional input variables can be added to a neuron model using the :ref:`SET_ADDITIONAL_INPUT_VARS() <doxid-d3/dc0/neuronModels_8h_1a96a3e23f5c7309a47bc6562e0be81e99>` macro (see :ref:`Defining your own neuron type <doxid-de/ded/sectNeuronModels_1sect_own>` for more details).
 

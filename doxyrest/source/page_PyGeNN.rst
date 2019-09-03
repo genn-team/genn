@@ -17,7 +17,7 @@ The following example shows how PyGeNN can be easily interfaced with standard Py
 	from :ref:`pygenn.genn_model <doxid-de/d6e/namespacepygenn_1_1genn__model>` import GeNNModel
 	
 	# Create a single-precision GeNN model
-	model = :ref:`GeNNModel <doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel>`("float", "pygenn")
+	model = GeNNModel("float", "pygenn")
 	
 	# Set simulation timestep to 0.1ms
 	model.dT = 0.1

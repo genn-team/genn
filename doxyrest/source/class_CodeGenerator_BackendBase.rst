@@ -29,15 +29,14 @@ Overview
 		typedef :ref:`GroupHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1adba20f0748ab61dd226b26bf116b04c2>`<:ref:`SynapseGroupInternal<doxid-dd/d48/classSynapseGroupInternal>`> :ref:`SynapseGroupHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a85aea4cafbf9a7e9ceb6b0d12e9d4997>`;
 		typedef std::function<void(:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`&, const :ref:`NeuronGroupInternal<doxid-dc/da3/classNeuronGroupInternal>`&, :ref:`Substitutions<doxid-de/d22/classCodeGenerator_1_1Substitutions>`&, :ref:`NeuronGroupHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a55e34429d3f08186318fe811d5bc6531>`, :ref:`NeuronGroupHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a55e34429d3f08186318fe811d5bc6531>`)> :ref:`NeuronGroupSimHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a938379883f4cdf06998dd969a3d74a73>`;
 
-		// construction
+		// methods
 	
 		:target:`BackendBase<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a0ce0c48ea6c5041fb3a6d3d3cd1d24bc>`(
 			int localHostID,
 			const std::string& scalarType
 			);
-
-		// methods
 	
+		virtual :target:`~BackendBase<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ac4ba1c12b2a97dfb6cb4f3cd5df10f50>`();
 		virtual void :ref:`genNeuronUpdate<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ae8915df91011c1c65ff2a9b52bc8e05c>`(:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& os, const :ref:`ModelSpecInternal<doxid-dc/dfa/classModelSpecInternal>`& model, :ref:`NeuronGroupSimHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a938379883f4cdf06998dd969a3d74a73>` simHandler, :ref:`NeuronGroupHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a55e34429d3f08186318fe811d5bc6531>` wuVarUpdateHandler) const = 0;
 	
 		virtual void :ref:`genSynapseUpdate<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a7a63d712f5cb7e8053c93acb6df77d58>`(
@@ -234,13 +233,13 @@ Overview
 			) const = 0;
 	
 		virtual void :target:`genMSBuildImportTarget<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3530f453f5bc8d354d16958a09da56ed>`(std::ostream& os) const = 0;
-		virtual std::string :ref:`getVarPrefix<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ac66d53f7f18bb431ae53eb572a330c28>`() const;
+		virtual std::string :ref:`getVarPrefix<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a817fca06615b5436d0a00e25e7eb04bb>`() const;
 		virtual bool :ref:`isGlobalRNGRequired<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1abd63eb9b142bf73c95921747ad708f14>`(const :ref:`ModelSpecInternal<doxid-dc/dfa/classModelSpecInternal>`& model) const = 0;
 		virtual bool :target:`isSynRemapRequired<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a064f208bb1d5c47dad599d737fe9e3bc>`() const = 0;
 		virtual bool :target:`isPostsynapticRemapRequired<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a98d6344fec8a12ae7ea7ac8bece8ed50>`() const = 0;
 		virtual size_t :ref:`getDeviceMemoryBytes<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a034f408b28b10f750cd501a4dfecceac>`() const = 0;
 	
-		void :ref:`genVariablePushPull<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3adc59ef44b8c052dc8038c59ae743a3>`(
+		void :ref:`genVariablePushPull<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a88e6465a9217de179050154d3779e957>`(
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& push,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& pull,
 			const std::string& type,
@@ -250,7 +249,7 @@ Overview
 			size_t count
 			) const;
 	
-		:ref:`MemAlloc<doxid-d2/d06/classCodeGenerator_1_1MemAlloc>` :ref:`genArray<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ae617cf7a7410262a4a0f6b996fda5898>`(
+		:ref:`MemAlloc<doxid-d2/d06/classCodeGenerator_1_1MemAlloc>` :ref:`genArray<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1aec83f512127c6a85a285a1c8b02925a1>`(
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitions,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitionsInternal,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& runner,
@@ -262,7 +261,7 @@ Overview
 			size_t count
 			) const;
 	
-		void :ref:`genScalar<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a2fee5243cf9b6abb870190f3933a23de>`(
+		void :ref:`genScalar<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3f7a0752cdee6b7667d729de1578bbbf>`(
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitions,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitionsInternal,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& runner,
@@ -271,7 +270,7 @@ Overview
 			:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc
 			) const;
 	
-		int :ref:`getLocalHostID<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1acb346f249dd810eb388ed8882410b5d2>`() const;
+		int :ref:`getLocalHostID<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1aca884725d8e8efcc6d2fa4e69dadca8a>`() const;
 	};
 
 	// direct descendants
@@ -524,7 +523,7 @@ In MSBuild, the 'item definitions' are used to override the default properties o
 see `https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-items#item-definitions <https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-items#item-definitions>`__ for more information.
 
 .. index:: pair: function; getVarPrefix
-.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ac66d53f7f18bb431ae53eb572a330c28:
+.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a817fca06615b5436d0a00e25e7eb04bb:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -554,7 +553,7 @@ Different backends use different RNGs for different things. Does this one requir
 How many bytes of memory does 'device' have.
 
 .. index:: pair: function; genVariablePushPull
-.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3adc59ef44b8c052dc8038c59ae743a3:
+.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a88e6465a9217de179050154d3779e957:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -572,7 +571,7 @@ How many bytes of memory does 'device' have.
 Helper function to generate matching push and pull functions for a variable.
 
 .. index:: pair: function; genArray
-.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ae617cf7a7410262a4a0f6b996fda5898:
+.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1aec83f512127c6a85a285a1c8b02925a1:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -592,7 +591,7 @@ Helper function to generate matching push and pull functions for a variable.
 Helper function to generate matching definition, declaration, allocation and free code for an array.
 
 .. index:: pair: function; genScalar
-.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a2fee5243cf9b6abb870190f3933a23de:
+.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3f7a0752cdee6b7667d729de1578bbbf:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -609,7 +608,7 @@ Helper function to generate matching definition, declaration, allocation and fre
 Helper function to generate matching definition and declaration code for a scalar variable.
 
 .. index:: pair: function; getLocalHostID
-.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1acb346f249dd810eb388ed8882410b5d2:
+.. _doxid-d3/d15/classCodeGenerator_1_1BackendBase_1aca884725d8e8efcc6d2fa4e69dadca8a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block

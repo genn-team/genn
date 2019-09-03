@@ -33,7 +33,10 @@ Inherited Members
 
 		// methods
 	
+		:ref:`ModelSpec<doxid-da/dfd/classModelSpec_1a5f71e866bd0b2af2abf2b1e8dde7d6d4>`();
+		:ref:`ModelSpec<doxid-da/dfd/classModelSpec_1ab5f3d20c830593a4452be5878e43bba8>`(const :ref:`ModelSpec<doxid-da/dfd/classModelSpec>`&);
 		:ref:`ModelSpec<doxid-da/dfd/classModelSpec>`& :ref:`operator =<doxid-da/dfd/classModelSpec_1aaf415f0379159d74d57d18126cf2982e>` (const :ref:`ModelSpec<doxid-da/dfd/classModelSpec>`&);
+		:ref:`~ModelSpec<doxid-da/dfd/classModelSpec_1a60ffaa6deb779cff61da6a7ea651613f>`();
 		void :ref:`setName<doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`(const std::string& name);
 		void :ref:`setPrecision<doxid-da/dfd/classModelSpec_1a7548f1bf634884c051e4fbac3cf6212c>`(:ref:`FloatType<doxid-dc/de1/modelSpec_8h_1aa039815ec6b74d0fe4cb016415781c08>` floattype);
 		void :ref:`setTimePrecision<doxid-da/dfd/classModelSpec_1a379793c6fcbe1f834ad18cf4c5789537>`(:ref:`TimePrecision<doxid-dc/de1/modelSpec_8h_1a71ece086a364ee04c7ffc3f626218b8f>` timePrecision);
@@ -44,15 +47,15 @@ Inherited Members
 		void :ref:`setDefaultExtraGlobalParamLocation<doxid-da/dfd/classModelSpec_1aa0d462099083f12bc9f98b9b0fb86d64>`(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
 		void :ref:`setDefaultSparseConnectivityLocation<doxid-da/dfd/classModelSpec_1a9bc61e7c5dce757de3a9b7479852ca72>`(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
 		void :ref:`setMergePostsynapticModels<doxid-da/dfd/classModelSpec_1ac40ba51579f94af5ca7fa51c4f67fe8f>`(bool merge);
-		const std::string& :ref:`getName<doxid-da/dfd/classModelSpec_1a85d4dd3812220d12c99a35333c9d1803>`() const;
-		const std::string& :ref:`getPrecision<doxid-da/dfd/classModelSpec_1a9d48caa22a5ecd5946368afb92a492ee>`() const;
-		std::string :ref:`getTimePrecision<doxid-da/dfd/classModelSpec_1a8ce5c434e12fecf2651d886bd22e82b7>`() const;
-		double :ref:`getDT<doxid-da/dfd/classModelSpec_1a589612f79c2f9645cd485285b33d2edd>`() const;
-		unsigned int :ref:`getSeed<doxid-da/dfd/classModelSpec_1a24a6871d45b88b81fa8c5dd514621575>`() const;
-		bool :ref:`isTimingEnabled<doxid-da/dfd/classModelSpec_1acadfb9fd83c86d18ccf678e43d08ac5d>`() const;
-		unsigned int :ref:`getNumLocalNeurons<doxid-da/dfd/classModelSpec_1a8d616a39c62738ada800c209c390ea90>`() const;
-		unsigned int :ref:`getNumRemoteNeurons<doxid-da/dfd/classModelSpec_1aebdac7c02748769f2c9e84b78ce5c6ae>`() const;
-		unsigned int :ref:`getNumNeurons<doxid-da/dfd/classModelSpec_1a9ed13c5dd6690fefc1737b25f11796ec>`() const;
+		const std::string& :ref:`getName<doxid-da/dfd/classModelSpec_1a4a4fc34aa4a09b384bd0ea7134bd49fa>`() const;
+		const std::string& :ref:`getPrecision<doxid-da/dfd/classModelSpec_1aafede0edcd474eb000230b63b8c1562d>`() const;
+		std::string :ref:`getTimePrecision<doxid-da/dfd/classModelSpec_1aa02041a6c0e06ba384a2bbf5e8d925a6>`() const;
+		double :ref:`getDT<doxid-da/dfd/classModelSpec_1a79796e2faf44bc12bb716cb376603fc2>`() const;
+		unsigned int :ref:`getSeed<doxid-da/dfd/classModelSpec_1a4f032e3eb72f40ea3dcdafee8e0ad289>`() const;
+		bool :ref:`isTimingEnabled<doxid-da/dfd/classModelSpec_1a2ba95653dc8c75539a7e582e66999f2e>`() const;
+		unsigned int :ref:`getNumLocalNeurons<doxid-da/dfd/classModelSpec_1a46ab18306ec13a61d4aff75645b8646e>`() const;
+		unsigned int :ref:`getNumRemoteNeurons<doxid-da/dfd/classModelSpec_1aaf562353e81f02732b6bb49311f16dda>`() const;
+		unsigned int :ref:`getNumNeurons<doxid-da/dfd/classModelSpec_1a453b3a92fb74742103d48cbf81fa47bb>`() const;
 		:ref:`NeuronGroup<doxid-d7/d3b/classNeuronGroup>`* :ref:`findNeuronGroup<doxid-da/dfd/classModelSpec_1a7508ff35c5957bf8a4385168fed50e2c>`(const std::string& name);
 	
 		template <typename NeuronModel>

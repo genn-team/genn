@@ -24,7 +24,7 @@ An open bracket marker. :ref:`More...<details-d4/d6b/structCodeGenerator_1_1Code
 	
 		const unsigned int :target:`Level<doxid-d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB_1adc50a112eb3588a5526a80810c83a14b>`;
 
-		// construction
+		// methods
 	
 		:target:`OB<doxid-d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB_1a890a4c3888f1439c4c51166d8518135c>`(unsigned int level);
 	};
@@ -39,5 +39,5 @@ Write to code stream ``os`` using:
 
 .. ref-code-block:: cpp
 
-	os << OB(16);
+	os << :ref:`OB <doxid-d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB_1a890a4c3888f1439c4c51166d8518135c>`(16);
 

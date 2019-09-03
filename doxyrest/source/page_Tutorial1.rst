@@ -31,7 +31,7 @@ The model definition file contains the definition of the network model we want t
 	
 	#include "modelSpec.h"
 	
-	void modelDefinition(ModelSpec &model)
+	void modelDefinition(:ref:`ModelSpec <doxid-da/dfd/classModelSpec>` &model)
 	{
 	    // definition of tenHHModel
 	}
@@ -40,8 +40,8 @@ Two standard elements to the `modelDefinition function are setting the simulatio
 
 .. ref-code-block:: cpp
 
-	model.setDT(0.1);
-	model.setName("tenHHModel");
+	model.:ref:`setDT <doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
+	model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHModel");
 
 With this we have fixed the integration time step to ``0.1`` in the usual time units. The typical units in GeNN are ``ms``, ``mV``, ``nF``, and ``S``. Therefore, this defines ``DT= 0.1 ms``.
 
@@ -62,7 +62,7 @@ We first create the parameter and initial variable arrays,
 .. ref-code-block:: cpp
 
 	// definition of tenHHModel
-	NeuronModels::TraubMiles::ParamValues p(
+	:ref:`NeuronModels::TraubMiles::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` p(
 	    7.15,       // 0 - gNa: Na conductance in muS
 	    50.0,       // 1 - ENa: Na equi potential in mV
 	    1.43,       // 2 - gK: K conductance in muS
@@ -71,7 +71,7 @@ We first create the parameter and initial variable arrays,
 	    -63.563,    // 5 - El: leak equi potential in mV
 	    0.143);     // 6 - Cmem: membr. capacity density in nF
 	
-	NeuronModels::TraubMiles::VarValues ini(
+	:ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
 	    -60.0,      // 0 - membrane potential V
 	    0.0529324,  // 1 - prob. for Na channel activation m
 	    0.3176767,  // 2 - prob. for not Na channel blocking h
@@ -83,7 +83,7 @@ Having defined the parameter values and initial values we can now create the neu
 
 .. ref-code-block:: cpp
 
-	model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
+	model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`>("Pop1", 10, p, ini);
 
 This completes the model definition in this example. The complete ``tenHHModel.cc`` file now should look like this:
 
@@ -93,13 +93,13 @@ This completes the model definition in this example. The complete ``tenHHModel.c
 	
 	#include "modelSpec.h"
 	
-	void modelDefinition(ModelSpec &model)
+	void modelDefinition(:ref:`ModelSpec <doxid-da/dfd/classModelSpec>` &model)
 	{
 	    // definition of tenHHModel
-	    model.setDT(0.1);
-	    model.setName("tenHHModel");
+	    model.:ref:`setDT <doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
+	    model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHModel");
 	
-	    NeuronModels::TraubMiles::ParamValues p(
+	    :ref:`NeuronModels::TraubMiles::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` p(
 	        7.15,       // 0 - gNa: Na conductance in muS
 	        50.0,       // 1 - ENa: Na equi potential in mV
 	        1.43,       // 2 - gK: K conductance in muS
@@ -108,13 +108,13 @@ This completes the model definition in this example. The complete ``tenHHModel.c
 	        -63.563,    // 5 - El: leak equi potential in mV
 	        0.143);     // 6 - Cmem: membr. capacity density in nF
 	
-	    NeuronModels::TraubMiles::VarValues ini(
+	    :ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
 	        -60.0,      // 0 - membrane potential V
 	        0.0529324,  // 1 - prob. for Na channel activation m
 	        0.3176767,  // 2 - prob. for not Na channel blocking h
 	        0.5961207); // 3 - prob. for K channel activation n
 	
-	    model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
+	    model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`>("Pop1", 10, p, ini);
 	}
 
 This model definition suffices to generate code for simulating the ten Hodgkin-Huxley neurons on the a GPU or CPU. The second part of a GeNN simulation is the user code that sets up the simulation, does the data handling for input and output and generally defines the numerical experiment to be run.
@@ -349,7 +349,7 @@ to the top of tenHHSimulation.cc. After building the model; and building and run
 
 
 .. image:: tenHHexample.png
-	:width: 10
+	:alt: width=10cm
 
 However so far, the neurons are not connected and do not receive input. As the :ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>` model is silent in such conditions, the membrane voltages of the 10 neurons will simply drift from the -60mV they were initialised at to their resting potential.
 

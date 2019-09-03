@@ -1,8 +1,8 @@
-.. index:: pair: class; Snippet::ValueBase
-.. _doxid-da/d76/classSnippet_1_1ValueBase:
+.. index:: pair: class; Snippet::ValueBase<0>
+.. _doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4:
 
-template class Snippet::ValueBase
-=================================
+template class Snippet::ValueBase<0>
+====================================
 
 .. toctree::
 	:hidden:
@@ -10,7 +10,7 @@ template class Snippet::ValueBase
 Overview
 ~~~~~~~~
 
-
+Template specialisation of :ref:`ValueBase <doxid-da/d76/classSnippet_1_1ValueBase>` to avoid compiler warnings in the case when a model requires no parameters or state variables :ref:`More...<details-dd/df2/classSnippet_1_1ValueBase_3_010_01_4>`
 
 
 .. ref-code-block:: cpp
@@ -18,37 +18,34 @@ Overview
 
 	#include <snippet.h>
 	
-	template <size_t NumVars>
-	class ValueBase
+	template <>
+	class ValueBase<0>
 	{
 	public:
-		// construction
-	
-		template <typename... T>
-		:target:`ValueBase<doxid-da/d76/classSnippet_1_1ValueBase_1a4988c19ce485c6112dd63218abd13a20>`(T&&... vals);
-
 		// methods
 	
-		const std::vector<double>& :ref:`getValues<doxid-da/d76/classSnippet_1_1ValueBase_1a69f7917cb03d425eadc1593564eaf792>`() const;
-		double :target:`operator []<doxid-da/d76/classSnippet_1_1ValueBase_1ab16d489b13647bff35b63dffb357ad24>` (size_t pos) const;
+		template <typename... T>
+		:target:`ValueBase<doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4_1a19f754bd4f0ccac6a75e30c5d5153f0e>`(T&&... vals);
+	
+		std::vector<double> :ref:`getValues<doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4_1a3f9a0ac72854478e32629b2ca0db834c>`() const;
 	};
-.. _details-da/d76/classSnippet_1_1ValueBase:
+.. _details-dd/df2/classSnippet_1_1ValueBase_3_010_01_4:
 
 Detailed Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-
+Template specialisation of :ref:`ValueBase <doxid-da/d76/classSnippet_1_1ValueBase>` to avoid compiler warnings in the case when a model requires no parameters or state variables
 
 Methods
 -------
 
 .. index:: pair: function; getValues
-.. _doxid-da/d76/classSnippet_1_1ValueBase_1a69f7917cb03d425eadc1593564eaf792:
+.. _doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4_1a3f9a0ac72854478e32629b2ca0db834c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	const std::vector<double>& getValues() const
+	std::vector<double> getValues() const
 
 Gets values as a vector of doubles.
 

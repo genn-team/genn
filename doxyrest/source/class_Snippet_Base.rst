@@ -40,8 +40,9 @@ Overview
 
 		// methods
 	
-		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1aad4f3bb00c5f29cb9d0e3585db3f4e20>`() const;
-		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1a450c7783570d875e19bcd8a88d10bbf6>`() const;
+		virtual :target:`~Base<doxid-db/d97/classSnippet_1_1Base_1a17a9ca158277401f2c190afb1e791d1f>`();
+		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1a0c8374854fbdc457bf0f75e458748580>`() const;
+		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1ab01de002618efa59541c927ffdd463f5>`() const;
 	};
 
 	// direct descendants
@@ -60,7 +61,7 @@ Methods
 -------
 
 .. index:: pair: function; getParamNames
-.. _doxid-db/d97/classSnippet_1_1Base_1aad4f3bb00c5f29cb9d0e3585db3f4e20:
+.. _doxid-db/d97/classSnippet_1_1Base_1a0c8374854fbdc457bf0f75e458748580:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -70,7 +71,7 @@ Methods
 Gets names of of (independent) model parameters.
 
 .. index:: pair: function; getDerivedParams
-.. _doxid-db/d97/classSnippet_1_1Base_1a450c7783570d875e19bcd8a88d10bbf6:
+.. _doxid-db/d97/classSnippet_1_1Base_1ab01de002618efa59541c927ffdd463f5:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block

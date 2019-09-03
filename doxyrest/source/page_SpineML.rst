@@ -13,7 +13,7 @@ From SpineCreator, select Edit->Settings->Simulators and add a new simulator usi
 
 
 .. image:: spinecreator_screenshot.png
-	:width: 10
+	:alt: width=10cm
 
 If you would like SpineCreator to use GeNN in CPU only mode, add an environment variable called "GENN_SPINEML_CPU_ONLY".
 
@@ -24,7 +24,7 @@ The best way to get started using SpineML with GeNN is to experiment with some e
 
 
 .. image:: spinecreator_experiment_screenshot.png
-	:width: 5
+	:alt: width=5cm
 
 Now click "Run experiment" and, after a short time, the results of your GeNN simulation will be available for plotting by clicking the "Graphs" option in the menu on the left hand side of SpineCreator. :ref:`Previous <doxid-d9/d61/Examples>` \| :ref:`Top <doxid-d2/dba/SpineML>` \| :ref:`Next <doxid-d3/d0c/brian2genn>`
 

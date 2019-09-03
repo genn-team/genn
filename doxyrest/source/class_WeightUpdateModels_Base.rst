@@ -23,22 +23,22 @@ Overview
 	public:
 		// methods
 	
-		virtual std::string :ref:`getSimCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a0b7445981ce7bf71e7866fd961029004>`() const;
-		virtual std::string :ref:`getEventCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a8c4939c38b32ae603cd237f0e8d76b8a>`() const;
-		virtual std::string :ref:`getLearnPostCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a0bb39d77c70d759d9036352d316ee044>`() const;
-		virtual std::string :ref:`getSynapseDynamicsCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1ab3daed63a1d17897aa73c741b728ea6e>`() const;
-		virtual std::string :ref:`getEventThresholdConditionCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1aab9670aee177fafc6908f177b322b791>`() const;
-		virtual std::string :ref:`getSimSupportCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a5ed9cae169e9808c6c8823e624880451>`() const;
-		virtual std::string :ref:`getLearnPostSupportCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1ac5d1d2d7524cab0f19e965159dd58e8b>`() const;
-		virtual std::string :ref:`getSynapseDynamicsSuppportCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1aca2d11a28a6cb587dba5f7ae9c87c445>`() const;
-		virtual std::string :ref:`getPreSpikeCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a09e5ecd955d9a89bb8deeb5858fa718a>`() const;
-		virtual std::string :ref:`getPostSpikeCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a2eab2ca9adfa8698ffe90392b41d1435>`() const;
-		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getPreVars<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a59c2e29f7c607d87d9342ee88153013d>`() const;
-		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getPostVars<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a9d81ca1fb2686a808e975f974ec4884d>`() const;
-		virtual bool :ref:`isPreSpikeTimeRequired<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a26c3071dfdf87eaddb857a535894bf7a>`() const;
-		virtual bool :ref:`isPostSpikeTimeRequired<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a02fb269c52929c962bab49d86d2ca45e>`() const;
-		size_t :ref:`getPreVarIndex<doxid-d2/d05/classWeightUpdateModels_1_1Base_1add432f1a452d82183e0574d1fe171f75>`(const std::string& varName) const;
-		size_t :ref:`getPostVarIndex<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a4bca317ba20ee97433d03930081deac3>`(const std::string& varName) const;
+		virtual std::string :ref:`getSimCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1aff2152fb55b5b0148491ca4eed9291eb>`() const;
+		virtual std::string :ref:`getEventCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a090f5529defe517fabf84c543209406f>`() const;
+		virtual std::string :ref:`getLearnPostCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1abd6d3ec97fb1da0f5750f71c7afc09b1>`() const;
+		virtual std::string :ref:`getSynapseDynamicsCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a307cb4e18479682b74972257c5d28dc5>`() const;
+		virtual std::string :ref:`getEventThresholdConditionCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a3157e0e66cdc654be4ef4ad67024f84d>`() const;
+		virtual std::string :ref:`getSimSupportCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a948b94c553782e9cc05a59bda014fe26>`() const;
+		virtual std::string :ref:`getLearnPostSupportCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1af98ae8f3d545f8d66d0f80662bf5b322>`() const;
+		virtual std::string :ref:`getSynapseDynamicsSuppportCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a7aae3190642d0bbe7f3f6fa01021783f>`() const;
+		virtual std::string :ref:`getPreSpikeCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a79e16d6c154e21a8ca7e56599cbe553b>`() const;
+		virtual std::string :ref:`getPostSpikeCode<doxid-d2/d05/classWeightUpdateModels_1_1Base_1abb81b1a933f13ba2af62c088387e186f>`() const;
+		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getPreVars<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a949a9adcbc40d4ae9bbb51b2ec08dff5>`() const;
+		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getPostVars<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a97a0a4fb30a66bb629cd88306e659105>`() const;
+		virtual bool :ref:`isPreSpikeTimeRequired<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a86fb753d87f35b53d789f96c6189a911>`() const;
+		virtual bool :ref:`isPostSpikeTimeRequired<doxid-d2/d05/classWeightUpdateModels_1_1Base_1ad93200ea885e60a88c108db10349edea>`() const;
+		size_t :ref:`getPreVarIndex<doxid-d2/d05/classWeightUpdateModels_1_1Base_1ac8b3e37eeb3f0034ebba50ec01c2840e>`(const std::string& varName) const;
+		size_t :ref:`getPostVarIndex<doxid-d2/d05/classWeightUpdateModels_1_1Base_1a5812718ff39cc394f1c6242e3d3f0987>`(const std::string& varName) const;
 	};
 
 	// direct descendants
@@ -72,12 +72,13 @@ Inherited Members
 
 		// methods
 	
-		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1aad4f3bb00c5f29cb9d0e3585db3f4e20>`() const;
-		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1a450c7783570d875e19bcd8a88d10bbf6>`() const;
-		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getVars<doxid-d6/d97/classModels_1_1Base_1a5da12b4e51f0b969510dd97d45ad285a>`() const;
-		virtual :ref:`EGPVec<doxid-db/d97/classSnippet_1_1Base_1a43ece29884e2c6cabffe9abf985807c6>` :ref:`getExtraGlobalParams<doxid-d6/d97/classModels_1_1Base_1ad6a043bb48b7620c4294854c042e561e>`() const;
-		size_t :ref:`getVarIndex<doxid-d6/d97/classModels_1_1Base_1ab54e5508872ef8d1558b7da8aa25bb63>`(const std::string& varName) const;
-		size_t :ref:`getExtraGlobalParamIndex<doxid-d6/d97/classModels_1_1Base_1a693ad5cfedde6e2db10200501c549c81>`(const std::string& paramName) const;
+		virtual :ref:`~Base<doxid-db/d97/classSnippet_1_1Base_1a17a9ca158277401f2c190afb1e791d1f>`();
+		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1a0c8374854fbdc457bf0f75e458748580>`() const;
+		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1ab01de002618efa59541c927ffdd463f5>`() const;
+		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getVars<doxid-d6/d97/classModels_1_1Base_1a9df8ba9bf6d971a574ed4745f6cf946c>`() const;
+		virtual :ref:`EGPVec<doxid-db/d97/classSnippet_1_1Base_1a43ece29884e2c6cabffe9abf985807c6>` :ref:`getExtraGlobalParams<doxid-d6/d97/classModels_1_1Base_1a7fdddb7d19382736b330ade62c441de1>`() const;
+		size_t :ref:`getVarIndex<doxid-d6/d97/classModels_1_1Base_1afa0e39df5002efc76448e180f82825e4>`(const std::string& varName) const;
+		size_t :ref:`getExtraGlobalParamIndex<doxid-d6/d97/classModels_1_1Base_1ae046c19ad56dfb2808c5f4d2cc7475fe>`(const std::string& paramName) const;
 
 .. _details-d2/d05/classWeightUpdateModels_1_1Base:
 
@@ -90,7 +91,7 @@ Methods
 -------
 
 .. index:: pair: function; getSimCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a0b7445981ce7bf71e7866fd961029004:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1aff2152fb55b5b0148491ca4eed9291eb:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -100,7 +101,7 @@ Methods
 Gets simulation code run when 'true' spikes are received.
 
 .. index:: pair: function; getEventCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a8c4939c38b32ae603cd237f0e8d76b8a:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a090f5529defe517fabf84c543209406f:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -110,7 +111,7 @@ Gets simulation code run when 'true' spikes are received.
 Gets code run when events (all the instances where event threshold condition is met) are received.
 
 .. index:: pair: function; getLearnPostCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a0bb39d77c70d759d9036352d316ee044:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1abd6d3ec97fb1da0f5750f71c7afc09b1:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -122,7 +123,7 @@ Gets code to include in the learnSynapsesPost kernel/function.
 For examples when modelling STDP, this is where the effect of postsynaptic spikes which occur *after* presynaptic spikes are applied.
 
 .. index:: pair: function; getSynapseDynamicsCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1ab3daed63a1d17897aa73c741b728ea6e:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a307cb4e18479682b74972257c5d28dc5:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -132,7 +133,7 @@ For examples when modelling STDP, this is where the effect of postsynaptic spike
 Gets code for synapse dynamics which are independent of spike detection.
 
 .. index:: pair: function; getEventThresholdConditionCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1aab9670aee177fafc6908f177b322b791:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a3157e0e66cdc654be4ef4ad67024f84d:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -142,7 +143,7 @@ Gets code for synapse dynamics which are independent of spike detection.
 Gets codes to test for events.
 
 .. index:: pair: function; getSimSupportCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a5ed9cae169e9808c6c8823e624880451:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a948b94c553782e9cc05a59bda014fe26:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -154,7 +155,7 @@ Gets support code to be made available within the synapse kernel/function.
 This is intended to contain user defined device functions that are used in the weight update code. Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "\__host\__ \__device\__" to be available for both GPU and CPU versions; note that this support code is available to sim, event threshold and event code
 
 .. index:: pair: function; getLearnPostSupportCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1ac5d1d2d7524cab0f19e965159dd58e8b:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1af98ae8f3d545f8d66d0f80662bf5b322:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -166,7 +167,7 @@ Gets support code to be made available within learnSynapsesPost kernel/function.
 Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "\__host\__ \__device\__" to be available for both GPU and CPU versions.
 
 .. index:: pair: function; getSynapseDynamicsSuppportCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1aca2d11a28a6cb587dba5f7ae9c87c445:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a7aae3190642d0bbe7f3f6fa01021783f:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -178,7 +179,7 @@ Gets support code to be made available within the synapse dynamics kernel/functi
 Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef; functions should be declared as "\__host\__ \__device\__" to be available for both GPU and CPU versions.
 
 .. index:: pair: function; getPreSpikeCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a09e5ecd955d9a89bb8deeb5858fa718a:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a79e16d6c154e21a8ca7e56599cbe553b:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -190,7 +191,7 @@ Gets code to be run once per spiking presynaptic neuron before sim code is run o
 This is typically for the code to update presynaptic variables. Postsynaptic and synapse variables are not accesible from within this code
 
 .. index:: pair: function; getPostSpikeCode
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a2eab2ca9adfa8698ffe90392b41d1435:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1abb81b1a933f13ba2af62c088387e186f:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -202,7 +203,7 @@ Gets code to be run once per spiking postsynaptic neuron before learn post code 
 This is typically for the code to update postsynaptic variables. Presynaptic and synapse variables are not accesible from within this code
 
 .. index:: pair: function; getPreVars
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a59c2e29f7c607d87d9342ee88153013d:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a949a9adcbc40d4ae9bbb51b2ec08dff5:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -212,7 +213,7 @@ This is typically for the code to update postsynaptic variables. Presynaptic and
 Gets names and types (as strings) of state variables that are common across all synapses coming from the same presynaptic neuron
 
 .. index:: pair: function; getPostVars
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a9d81ca1fb2686a808e975f974ec4884d:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a97a0a4fb30a66bb629cd88306e659105:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -222,7 +223,7 @@ Gets names and types (as strings) of state variables that are common across all 
 Gets names and types (as strings) of state variables that are common across all synapses going to the same postsynaptic neuron
 
 .. index:: pair: function; isPreSpikeTimeRequired
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a26c3071dfdf87eaddb857a535894bf7a:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a86fb753d87f35b53d789f96c6189a911:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -232,7 +233,7 @@ Gets names and types (as strings) of state variables that are common across all 
 Whether presynaptic spike times are needed or not.
 
 .. index:: pair: function; isPostSpikeTimeRequired
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a02fb269c52929c962bab49d86d2ca45e:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1ad93200ea885e60a88c108db10349edea:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -242,7 +243,7 @@ Whether presynaptic spike times are needed or not.
 Whether postsynaptic spike times are needed or not.
 
 .. index:: pair: function; getPreVarIndex
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1add432f1a452d82183e0574d1fe171f75:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1ac8b3e37eeb3f0034ebba50ec01c2840e:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -252,7 +253,7 @@ Whether postsynaptic spike times are needed or not.
 Find the index of a named presynaptic variable.
 
 .. index:: pair: function; getPostVarIndex
-.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a4bca317ba20ee97433d03930081deac3:
+.. _doxid-d2/d05/classWeightUpdateModels_1_1Base_1a5812718ff39cc394f1c6242e3d3f0987:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block

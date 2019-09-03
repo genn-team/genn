@@ -33,10 +33,10 @@ Overview
 
 		// methods
 	
-		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getVars<doxid-d6/d97/classModels_1_1Base_1a5da12b4e51f0b969510dd97d45ad285a>`() const;
-		virtual :ref:`EGPVec<doxid-db/d97/classSnippet_1_1Base_1a43ece29884e2c6cabffe9abf985807c6>` :ref:`getExtraGlobalParams<doxid-d6/d97/classModels_1_1Base_1ad6a043bb48b7620c4294854c042e561e>`() const;
-		size_t :ref:`getVarIndex<doxid-d6/d97/classModels_1_1Base_1ab54e5508872ef8d1558b7da8aa25bb63>`(const std::string& varName) const;
-		size_t :ref:`getExtraGlobalParamIndex<doxid-d6/d97/classModels_1_1Base_1a693ad5cfedde6e2db10200501c549c81>`(const std::string& paramName) const;
+		virtual :ref:`VarVec<doxid-d6/d97/classModels_1_1Base_1a5a6bc95969a38ac1ac68ab4a0ba94c75>` :ref:`getVars<doxid-d6/d97/classModels_1_1Base_1a9df8ba9bf6d971a574ed4745f6cf946c>`() const;
+		virtual :ref:`EGPVec<doxid-db/d97/classSnippet_1_1Base_1a43ece29884e2c6cabffe9abf985807c6>` :ref:`getExtraGlobalParams<doxid-d6/d97/classModels_1_1Base_1a7fdddb7d19382736b330ade62c441de1>`() const;
+		size_t :ref:`getVarIndex<doxid-d6/d97/classModels_1_1Base_1afa0e39df5002efc76448e180f82825e4>`(const std::string& varName) const;
+		size_t :ref:`getExtraGlobalParamIndex<doxid-d6/d97/classModels_1_1Base_1ae046c19ad56dfb2808c5f4d2cc7475fe>`(const std::string& paramName) const;
 	};
 
 	// direct descendants
@@ -68,8 +68,9 @@ Inherited Members
 
 		// methods
 	
-		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1aad4f3bb00c5f29cb9d0e3585db3f4e20>`() const;
-		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1a450c7783570d875e19bcd8a88d10bbf6>`() const;
+		virtual :ref:`~Base<doxid-db/d97/classSnippet_1_1Base_1a17a9ca158277401f2c190afb1e791d1f>`();
+		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1a0c8374854fbdc457bf0f75e458748580>`() const;
+		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1ab01de002618efa59541c927ffdd463f5>`() const;
 
 .. _details-d6/d97/classModels_1_1Base:
 
@@ -82,7 +83,7 @@ Methods
 -------
 
 .. index:: pair: function; getVars
-.. _doxid-d6/d97/classModels_1_1Base_1a5da12b4e51f0b969510dd97d45ad285a:
+.. _doxid-d6/d97/classModels_1_1Base_1a9df8ba9bf6d971a574ed4745f6cf946c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -92,7 +93,7 @@ Methods
 Gets names and types (as strings) of model variables.
 
 .. index:: pair: function; getExtraGlobalParams
-.. _doxid-d6/d97/classModels_1_1Base_1ad6a043bb48b7620c4294854c042e561e:
+.. _doxid-d6/d97/classModels_1_1Base_1a7fdddb7d19382736b330ade62c441de1:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -102,7 +103,7 @@ Gets names and types (as strings) of model variables.
 Gets names and types (as strings) of additional per-population parameters for the weight update model.
 
 .. index:: pair: function; getVarIndex
-.. _doxid-d6/d97/classModels_1_1Base_1ab54e5508872ef8d1558b7da8aa25bb63:
+.. _doxid-d6/d97/classModels_1_1Base_1afa0e39df5002efc76448e180f82825e4:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -112,7 +113,7 @@ Gets names and types (as strings) of additional per-population parameters for th
 Find the index of a named variable.
 
 .. index:: pair: function; getExtraGlobalParamIndex
-.. _doxid-d6/d97/classModels_1_1Base_1a693ad5cfedde6e2db10200501c549c81:
+.. _doxid-d6/d97/classModels_1_1Base_1ae046c19ad56dfb2808c5f4d2cc7475fe:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block

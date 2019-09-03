@@ -29,14 +29,8 @@ Class holding information about GeNN extra global pointer variable. :ref:`More..
 
 		// methods
 	
-		def :ref:`__init__<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a788a8a4c49c71a1ca8ecea63043c1c7b>`(
-			self self,
-			variable_name variable_name,
-			variable_type variable_type,
-			:ref:`values<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a7955b71fac4270579250247bbdaef199>` values = None
-			);
-	
-		def :ref:`set_values<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a09e4e8058d9f945990944f7676fed73b>`(self self, :ref:`values<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a7955b71fac4270579250247bbdaef199>` values);
+		def :ref:`__init__<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a03a04eda53ad603c3a13dc3b9156be4a>`();
+		def :ref:`set_values<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a9ec82f58973c7df1a46ad937e948441c>`();
 	};
 .. _details-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable:
 
@@ -49,17 +43,12 @@ Methods
 -------
 
 .. index:: pair: function; __init__
-.. _doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a788a8a4c49c71a1ca8ecea63043c1c7b:
+.. _doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a03a04eda53ad603c3a13dc3b9156be4a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def __init__(
-		self self,
-		variable_name variable_name,
-		variable_type variable_type,
-		:ref:`values<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a7955b71fac4270579250247bbdaef199>` values = None
-		)
+	def __init__()
 
 Init :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>`.
 
@@ -86,12 +75,12 @@ Init :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable
 		- iterable
 
 .. index:: pair: function; set_values
-.. _doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a09e4e8058d9f945990944f7676fed73b:
+.. _doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a9ec82f58973c7df1a46ad937e948441c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def set_values(self self, :ref:`values<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable_1a7955b71fac4270579250247bbdaef199>` values)
+	def set_values()
 
 Set :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>` 's values.
 

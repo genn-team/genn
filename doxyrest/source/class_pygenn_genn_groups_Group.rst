@@ -28,8 +28,8 @@ Parent class of :ref:`NeuronGroup <doxid-dc/dc9/classpygenn_1_1genn__groups_1_1N
 
 		// methods
 	
-		def :ref:`__init__<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a44c2cfa0fba7209cc89c0e70b3882f71>`(self self, :ref:`name<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a2c166d9ace64b65eca3d4d0d91e0bf0d>` name);
-		def :ref:`set_var<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a5b79e0c32a3f3c3e03c2a03baa6e13d3>`(self self, var_name var_name, values values);
+		def :ref:`__init__<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1ac4f6b8f8fb67862785fd508f23d50140>`();
+		def :ref:`set_var<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a9a44ddf9d465e2f272d8e5d16aa82c54>`();
 	};
 
 	// direct descendants
@@ -48,12 +48,12 @@ Methods
 -------
 
 .. index:: pair: function; __init__
-.. _doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a44c2cfa0fba7209cc89c0e70b3882f71:
+.. _doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1ac4f6b8f8fb67862785fd508f23d50140:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def __init__(self self, :ref:`name<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a2c166d9ace64b65eca3d4d0d91e0bf0d>` name)
+	def __init__()
 
 Init :ref:`Group <doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group>`.
 
@@ -70,12 +70,12 @@ Init :ref:`Group <doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group>`.
 		- string name of the :ref:`Group <doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group>`
 
 .. index:: pair: function; set_var
-.. _doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a5b79e0c32a3f3c3e03c2a03baa6e13d3:
+.. _doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a9a44ddf9d465e2f272d8e5d16aa82c54:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def set_var(self self, var_name var_name, values values)
+	def set_var()
 
 Set values for a Variable.
 

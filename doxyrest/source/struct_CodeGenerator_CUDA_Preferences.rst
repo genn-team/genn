@@ -28,6 +28,10 @@ Overview
 		:ref:`BlockSizeSelect<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a54abdd5e5351c160ba420cd758edb7ab>` :ref:`blockSizeSelectMethod<doxid-da/dae/structCodeGenerator_1_1CUDA_1_1Preferences_1ad9ddce1e46c8707bf1c30116f9a799be>`;
 		:ref:`KernelBlockSize<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a834e8ff4a9b37453a04e5bfa2743423b>` :ref:`manualBlockSizes<doxid-da/dae/structCodeGenerator_1_1CUDA_1_1Preferences_1a24e6c8b33837783988259baa53fd4dda>`;
 		std::string :ref:`userNvccFlags<doxid-da/dae/structCodeGenerator_1_1CUDA_1_1Preferences_1aa370bc1e7c48d0928ace7bf4baaa7e73>`;
+
+		// methods
+	
+		:target:`Preferences<doxid-da/dae/structCodeGenerator_1_1CUDA_1_1Preferences_1a81d2f28e0431fcbb375e6c0c547a879d>`();
 	};
 
 Inherited Members

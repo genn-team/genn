@@ -1,8 +1,8 @@
-.. index:: pair: class; Models::VarInitContainerBase
-.. _doxid-d6/d24/classModels_1_1VarInitContainerBase:
+.. index:: pair: class; Models::VarInitContainerBase<0>
+.. _doxid-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4:
 
-template class Models::VarInitContainerBase
-===========================================
+template class Models::VarInitContainerBase<0>
+==============================================
 
 .. toctree::
 	:hidden:
@@ -10,7 +10,7 @@ template class Models::VarInitContainerBase
 Overview
 ~~~~~~~~
 
-Wrapper to ensure at compile time that correct number of value initialisers are used when specifying the values of a model's initial state. :ref:`More...<details-d6/d24/classModels_1_1VarInitContainerBase>`
+Template specialisation of ValueInitBase to avoid compiler warnings in the case when a model requires no variable initialisers :ref:`More...<details-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4>`
 
 
 .. ref-code-block:: cpp
@@ -18,37 +18,35 @@ Wrapper to ensure at compile time that correct number of value initialisers are 
 
 	#include <models.h>
 	
-	template <size_t NumVars>
-	class VarInitContainerBase
+	template <>
+	class VarInitContainerBase<0>
 	{
 	public:
-		// construction
-	
-		template <typename... T>
-		:target:`VarInitContainerBase<doxid-d6/d24/classModels_1_1VarInitContainerBase_1a354dfe92300e835facb084583df03d9c>`(T&&... initialisers);
-
 		// methods
 	
-		const std::vector<:ref:`VarInit<doxid-d8/dee/classModels_1_1VarInit>`>& :ref:`getInitialisers<doxid-d6/d24/classModels_1_1VarInitContainerBase_1a20b4885664ed4d7b5483d8b57ec4c242>`() const;
-		const :ref:`VarInit<doxid-d8/dee/classModels_1_1VarInit>`& :target:`operator []<doxid-d6/d24/classModels_1_1VarInitContainerBase_1a2de564fbceeb1e57aad2199313e8ead6>` (size_t pos) const;
+		template <typename... T>
+		:target:`VarInitContainerBase<doxid-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4_1ab5788868274aca0719273ce3397c3011>`(T&&... initialisers);
+	
+		:target:`VarInitContainerBase<doxid-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4_1ac786815e6fb3da4aa592a31b884d4421>`(const :ref:`Snippet::ValueBase<doxid-da/d76/classSnippet_1_1ValueBase>`<0>&);
+		std::vector<:ref:`VarInit<doxid-d8/dee/classModels_1_1VarInit>`> :ref:`getInitialisers<doxid-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4_1a116dac3cc19dff97f83dc11f3eaab23b>`() const;
 	};
-.. _details-d6/d24/classModels_1_1VarInitContainerBase:
+.. _details-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4:
 
 Detailed Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Wrapper to ensure at compile time that correct number of value initialisers are used when specifying the values of a model's initial state.
+Template specialisation of ValueInitBase to avoid compiler warnings in the case when a model requires no variable initialisers
 
 Methods
 -------
 
 .. index:: pair: function; getInitialisers
-.. _doxid-d6/d24/classModels_1_1VarInitContainerBase_1a20b4885664ed4d7b5483d8b57ec4c242:
+.. _doxid-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4_1a116dac3cc19dff97f83dc11f3eaab23b:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	const std::vector<:ref:`VarInit<doxid-d8/dee/classModels_1_1VarInit>`>& getInitialisers() const
+	std::vector<:ref:`VarInit<doxid-d8/dee/classModels_1_1VarInit>`> getInitialisers() const
 
 Gets initialisers as a vector of Values.
 

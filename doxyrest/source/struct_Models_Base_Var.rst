@@ -26,7 +26,7 @@ A variable has a name, a type and an access type. :ref:`More...<details-d5/d42/s
 		std::string :target:`type<doxid-d5/d42/structModels_1_1Base_1_1Var_1a0cd74662a030e8cd95027844b47f09a0>`;
 		:ref:`VarAccess<doxid-d4/d13/models_8h_1a5a5f7e906a7fdc27f3e5eb66b7115240>` :target:`access<doxid-d5/d42/structModels_1_1Base_1_1Var_1a43fa55b9b858bb7b6fd9927267aa61ae>`;
 
-		// construction
+		// methods
 	
 		:target:`Var<doxid-d5/d42/structModels_1_1Base_1_1Var_1a3f416643a3668eac22768b43bbb42e50>`();
 	

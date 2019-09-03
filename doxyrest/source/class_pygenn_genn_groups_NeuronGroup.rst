@@ -32,15 +32,15 @@ Class representing a group of neurons. :ref:`More...<details-dc/dc9/classpygenn_
 
 		// methods
 	
-		def :ref:`__init__<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a9804b52565c959b8f7220227a02b1b21>`(self self, :ref:`name<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a2c166d9ace64b65eca3d4d0d91e0bf0d>` name);
-		def :ref:`current_spikes<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1af331b05c1525ca3cafc9f006d88d1746>`(self self);
-		def :ref:`delay_slots<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a0e0da2c47058822597a9a802380e762f>`(self self);
-		def :target:`size<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a3cd4c9a8da6c73efc7c403c44435cde4>`(self self);
-		def :ref:`set_neuron<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1aee609924fc55381b0761ae1b587d4b7e>`(self self, model model, param_space param_space, var_space var_space);
-		def :ref:`add_to<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a597150844c84e62e5e98bbb18774b1cc>`(self self, model_spec model_spec, num_neurons num_neurons);
-		def :ref:`add_extra_global_param<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a870207702ea6ffc852401643a2dd9960>`(self self, param_name param_name, param_values param_values);
-		def :ref:`load<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a4d0e3c87d99f1c348a3a8849882d2606>`(self self, slm slm, scalar scalar);
-		def :ref:`reinitialise<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1aad5a7be34e8bf7ee1ef233b094e8cbd9>`(self self, slm slm, scalar scalar);
+		def :ref:`__init__<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a2eb4fa60b1914bafa1bcd1cb5f986234>`();
+		def :ref:`current_spikes<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a77fd60d55b344be646dc11adb5316e7e>`();
+		def :ref:`delay_slots<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a389da0244755995123f2a1913287b97a>`();
+		def :target:`size<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1ae01b45db7a3199b124be2330d22ec01d>`();
+		def :ref:`set_neuron<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a67bb528752a537c966cdad2fa785fb48>`();
+		def :ref:`add_to<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1acee03b53c099c4263fd65ff8a8814aac>`();
+		def :ref:`add_extra_global_param<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1af646754621dc897e2ce83365660e5b36>`();
+		def :ref:`load<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a9291a4c6fddaba4f50537d06941211ef>`();
+		def :ref:`reinitialise<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1ad94bce8552a3efa969fef0d088a2795c>`();
 	};
 
 Inherited Members
@@ -58,8 +58,8 @@ Inherited Members
 
 		// methods
 	
-		def :ref:`__init__<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a44c2cfa0fba7209cc89c0e70b3882f71>`(self self, :ref:`name<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a2c166d9ace64b65eca3d4d0d91e0bf0d>` name);
-		def :ref:`set_var<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a5b79e0c32a3f3c3e03c2a03baa6e13d3>`(self self, var_name var_name, values values);
+		def :ref:`__init__<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1ac4f6b8f8fb67862785fd508f23d50140>`();
+		def :ref:`set_var<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a9a44ddf9d465e2f272d8e5d16aa82c54>`();
 
 .. _details-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup:
 
@@ -72,12 +72,12 @@ Methods
 -------
 
 .. index:: pair: function; __init__
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a9804b52565c959b8f7220227a02b1b21:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a2eb4fa60b1914bafa1bcd1cb5f986234:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def __init__(self self, :ref:`name<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group_1a2c166d9ace64b65eca3d4d0d91e0bf0d>` name)
+	def __init__()
 
 Init :ref:`NeuronGroup <doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup>`.
 
@@ -94,37 +94,32 @@ Init :ref:`NeuronGroup <doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup>
 		- string name of the group
 
 .. index:: pair: function; current_spikes
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1af331b05c1525ca3cafc9f006d88d1746:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a77fd60d55b344be646dc11adb5316e7e:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def current_spikes(self self)
+	def current_spikes()
 
 Current spikes from GeNN.
 
 .. index:: pair: function; delay_slots
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a0e0da2c47058822597a9a802380e762f:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a389da0244755995123f2a1913287b97a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def delay_slots(self self)
+	def delay_slots()
 
 Maximum delay steps needed for this group.
 
 .. index:: pair: function; set_neuron
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1aee609924fc55381b0761ae1b587d4b7e:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a67bb528752a537c966cdad2fa785fb48:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def set_neuron(
-		self self,
-		model model,
-		param_space param_space,
-		var_space var_space
-		)
+	def set_neuron()
 
 Set neuron, its parameters and initial variables.
 
@@ -151,12 +146,12 @@ Set neuron, its parameters and initial variables.
 		- dict with model variables
 
 .. index:: pair: function; add_to
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a597150844c84e62e5e98bbb18774b1cc:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1acee03b53c099c4263fd65ff8a8814aac:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def add_to(self self, model_spec model_spec, num_neurons num_neurons)
+	def add_to()
 
 Add this :ref:`NeuronGroup <doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup>` to a model.
 
@@ -178,16 +173,12 @@ Add this :ref:`NeuronGroup <doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGr
 		- int number of neurons
 
 .. index:: pair: function; add_extra_global_param
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a870207702ea6ffc852401643a2dd9960:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1af646754621dc897e2ce83365660e5b36:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def add_extra_global_param(
-		self self,
-		param_name param_name,
-		param_values param_values
-		)
+	def add_extra_global_param()
 
 Add extra global parameter.
 
@@ -209,12 +200,12 @@ Add extra global parameter.
 		- iterable or a single value
 
 .. index:: pair: function; load
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a4d0e3c87d99f1c348a3a8849882d2606:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1a9291a4c6fddaba4f50537d06941211ef:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def load(self self, slm slm, scalar scalar)
+	def load()
 
 Loads neuron group.
 
@@ -236,12 +227,12 @@ Loads neuron group.
 		- String specifying "scalar" type
 
 .. index:: pair: function; reinitialise
-.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1aad5a7be34e8bf7ee1ef233b094e8cbd9:
+.. _doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup_1ad94bce8552a3efa969fef0d088a2795c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def reinitialise(self self, slm slm, scalar scalar)
+	def reinitialise()
 
 Reinitialise neuron group.
 

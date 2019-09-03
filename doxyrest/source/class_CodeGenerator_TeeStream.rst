@@ -18,8 +18,8 @@ class CodeGenerator::TeeStream
 	class TeeStream: public std::ostream
 	{
 	public:
-		// construction
+		// methods
 	
 		template <typename... T>
-		:target:`TeeStream<doxid-d7/d71/classCodeGenerator_1_1TeeStream_1aaa2b2fde0be84476a22141eeb1f16ecf>`(T&&... streamBufs);
+		:target:`TeeStream<doxid-d7/d71/classCodeGenerator_1_1TeeStream_1ad1eb122320a649987fa90b0e39bb7c3b>`(T&&... streamBufs);
 	};

@@ -30,10 +30,10 @@ Class used to bind together everything required to initialise a variable:
 	class :ref:`Base<doxid-d6/d97/classModels_1_1Base>`;
 	class :ref:`VarInit<doxid-d8/dee/classModels_1_1VarInit>`;
 
-	template <size_t NumVars>
-	class :ref:`VarInitContainerBase<doxid-d6/d24/classModels_1_1VarInitContainerBase>`;
-
 	template <>
 	class :ref:`VarInitContainerBase<0><doxid-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4>`;
+
+	template <size_t NumVars>
+	class :ref:`VarInitContainerBase<doxid-d6/d24/classModels_1_1VarInitContainerBase>`;
 
 	} // namespace Models

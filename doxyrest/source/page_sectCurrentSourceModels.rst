@@ -27,14 +27,14 @@ For example, using these macros, we can define a uniformly distributed noisy cur
 
 .. ref-code-block:: cpp
 
-	class UniformNoise : public CurrentSourceModels::Base
+	class UniformNoise : public :ref:`CurrentSourceModels::Base <doxid-d0/de0/classCurrentSourceModels_1_1Base>`
 	{
 	public:
-	    DECLARE_MODEL(UniformNoise, 1, 0);
+	    :ref:`DECLARE_MODEL <doxid-d4/d13/models_8h_1ae0c817e85c196f39cf62d608883cda13>`(UniformNoise, 1, 0);
 	    
-	    SET_SIM_CODE("$(injectCurrent, $(gennrand_uniform) * $(magnitude));");
+	    :ref:`SET_SIM_CODE <doxid-d3/dc0/neuronModels_8h_1a8d014c818d8ee68f3a16838dcd4f030f>`("$(injectCurrent, $(gennrand_uniform) * $(magnitude));");
 	    
-	    SET_PARAM_NAMES({"magnitude"});
+	    :ref:`SET_PARAM_NAMES <doxid-de/d6c/snippet_8h_1a75315265035fd71c5b5f7d7f449edbd7>`({"magnitude"});
 	};
 
 :ref:`Previous <doxid-dd/de4/sect_postsyn>` \| :ref:`Top <doxid-dc/d05/UserManual>` \| :ref:`Next <doxid-d5/d39/subsect34>`

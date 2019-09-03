@@ -32,14 +32,8 @@ Class holding information about GeNN variables. :ref:`More...<details-d5/de5/cla
 
 		// methods
 	
-		def :ref:`__init__<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1ab20618a65cd98299bea646c70f7d8a7d>`(
-			self self,
-			variable_name variable_name,
-			variable_type variable_type,
-			:ref:`values<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1a8903b59bf2af200967126ea4daae8592>` values = None
-			);
-	
-		def :ref:`set_values<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1af1b69a4c6fa36bff92e5773000ed340b>`(self self, :ref:`values<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1a8903b59bf2af200967126ea4daae8592>` values);
+		def :ref:`__init__<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1adc91484b845934820ba6c6f5a9920def>`();
+		def :ref:`set_values<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1a3b3493a3f7dde4952f94613ecbc0d3e8>`();
 	};
 .. _details-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable:
 
@@ -52,17 +46,12 @@ Methods
 -------
 
 .. index:: pair: function; __init__
-.. _doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1ab20618a65cd98299bea646c70f7d8a7d:
+.. _doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1adc91484b845934820ba6c6f5a9920def:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def __init__(
-		self self,
-		variable_name variable_name,
-		variable_type variable_type,
-		:ref:`values<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1a8903b59bf2af200967126ea4daae8592>` values = None
-		)
+	def __init__()
 
 Init :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>`.
 
@@ -89,12 +78,12 @@ Init :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable
 		- iterable, single value or VarInit instance
 
 .. index:: pair: function; set_values
-.. _doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1af1b69a4c6fa36bff92e5773000ed340b:
+.. _doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1a3b3493a3f7dde4952f94613ecbc0d3e8:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def set_values(self self, :ref:`values<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable_1a8903b59bf2af200967126ea4daae8592>` values)
+	def set_values()
 
 Set :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>` 's values.
 

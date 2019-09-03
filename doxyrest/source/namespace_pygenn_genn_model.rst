@@ -27,108 +27,22 @@ Overview
 
 	// global variables
 
-	 :target:`backend_modules<doxid-de/d6e/namespacepygenn_1_1genn__model_1a0378993ab51a2871fc274bddf7b55bcd>`;
-	 :target:`m<doxid-de/d6e/namespacepygenn_1_1genn__model_1a0ae588c769b098f97bc66450ab28011c>`;
+	tuple :target:`backend_modules<doxid-de/d6e/namespacepygenn_1_1genn__model_1a82394dbc72a8c94cdf12968807e4307d>`;
+	tuple :target:`m<doxid-de/d6e/namespacepygenn_1_1genn__model_1a22227864f213a2a35fec9c99bc490a16>`;
 
 	// global functions
 
-	def :ref:`init_var<doxid-de/d6e/namespacepygenn_1_1genn__model_1aa2daf7a01b3f49dcbc5dba9690020bc3>`(init_var_snippet init_var_snippet, param_space param_space);
-
-	def :ref:`init_connectivity<doxid-de/d6e/namespacepygenn_1_1genn__model_1a7fa33c9872ab0cf97d0b60fa41bf17fe>`(
-		init_sparse_connect_snippet init_sparse_connect_snippet,
-		param_space param_space
-		);
-
-	def :ref:`create_custom_neuron_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		derived_params derived_params = None,
-		sim_code sim_code = None,
-		threshold_condition_code threshold_condition_code = None,
-		reset_code reset_code = None,
-		support_code support_code = None,
-		extra_global_params extra_global_params = None,
-		additional_input_vars additional_input_vars = None,
-		is_auto_refractory_required is_auto_refractory_required = None,
-		custom_body custom_body = None
-		);
-
-	def :ref:`create_custom_postsynaptic_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611>`(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		derived_params derived_params = None,
-		decay_code decay_code = None,
-		apply_input_code apply_input_code = None,
-		support_code support_code = None,
-		custom_body custom_body = None
-		);
-
-	def :ref:`create_custom_weight_update_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		pre_var_name_types pre_var_name_types = None,
-		post_var_name_types post_var_name_types = None,
-		derived_params derived_params = None,
-		sim_code sim_code = None,
-		event_code event_code = None,
-		learn_post_code learn_post_code = None,
-		synapse_dynamics_code synapse_dynamics_code = None,
-		event_threshold_condition_code event_threshold_condition_code = None,
-		pre_spike_code pre_spike_code = None,
-		post_spike_code post_spike_code = None,
-		sim_support_code sim_support_code = None,
-		learn_post_support_code learn_post_support_code = None,
-		synapse_dynamics_suppport_code synapse_dynamics_suppport_code = None,
-		extra_global_params extra_global_params = None,
-		is_pre_spike_time_required is_pre_spike_time_required = None,
-		is_post_spike_time_required is_post_spike_time_required = None,
-		custom_body custom_body = None
-		);
-
-	def :ref:`create_custom_current_source_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		derived_params derived_params = None,
-		injection_code injection_code = None,
-		extra_global_params extra_global_params = None,
-		custom_body custom_body = None
-		);
-
-	def :ref:`create_custom_model_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a603410a2e8454498c99148657de8c460>`(
-		class_name class_name,
-		base base,
-		param_names param_names,
-		var_name_types var_name_types,
-		derived_params derived_params,
-		custom_body custom_body
-		);
-
-	def :ref:`create_dpf_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a4877194a4aa6f04ecbc8768ec1c2de21>`(dp_func dp_func);
-	def :ref:`create_cmlf_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1acd7310ba25ce86ad93d8fc54debf0e68>`(cml_func cml_func);
-
-	def :ref:`create_custom_init_var_snippet_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff>`(
-		class_name class_name,
-		param_names param_names = None,
-		derived_params derived_params = None,
-		var_init_code var_init_code = None,
-		custom_body custom_body = None
-		);
-
-	def :ref:`create_custom_sparse_connect_init_snippet_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b>`(
-		class_name class_name,
-		param_names param_names = None,
-		derived_params derived_params = None,
-		row_build_code row_build_code = None,
-		row_build_state_vars row_build_state_vars = None,
-		calc_max_row_len_func calc_max_row_len_func = None,
-		calc_max_col_len_func calc_max_col_len_func = None,
-		extra_global_params extra_global_params = None,
-		custom_body custom_body = None
-		);
+	def :ref:`init_var<doxid-de/d6e/namespacepygenn_1_1genn__model_1a07f8ce7769b538aed7e8f81762f025b5>`();
+	def :ref:`init_connectivity<doxid-de/d6e/namespacepygenn_1_1genn__model_1aa7165e8d9a7156dc8685fff376d51270>`();
+	def :ref:`create_custom_neuron_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`();
+	def :ref:`create_custom_postsynaptic_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138>`();
+	def :ref:`create_custom_weight_update_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`();
+	def :ref:`create_custom_current_source_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`();
+	def :ref:`create_custom_model_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1ab53f2b73940e694cfb903f66eb36b268>`();
+	def :ref:`create_dpf_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1ac168d515f72c3f48eddabbd78d34166b>`();
+	def :ref:`create_cmlf_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1ac5cff0f737f177c327eaf3e3e9603177>`();
+	def :ref:`create_custom_init_var_snippet_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0>`();
+	def :ref:`create_custom_sparse_connect_init_snippet_class<doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0>`();
 
 	} // namespace genn_model
 .. _details-de/d6e/namespacepygenn_1_1genn__model:
@@ -142,12 +56,12 @@ Global Functions
 ----------------
 
 .. index:: pair: function; init_var
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1aa2daf7a01b3f49dcbc5dba9690020bc3:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a07f8ce7769b538aed7e8f81762f025b5:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def init_var(init_var_snippet init_var_snippet, param_space param_space)
+	def init_var()
 
 This helper function creates a VarInit object to easily initialise a variable using a snippet.
 
@@ -169,15 +83,12 @@ This helper function creates a VarInit object to easily initialise a variable us
 		- dict with param values for the :ref:`InitVarSnippet <doxid-d2/dfc/namespaceInitVarSnippet>` class
 
 .. index:: pair: function; init_connectivity
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a7fa33c9872ab0cf97d0b60fa41bf17fe:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1aa7165e8d9a7156dc8685fff376d51270:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def init_connectivity(
-		init_sparse_connect_snippet init_sparse_connect_snippet,
-		param_space param_space
-		)
+	def init_connectivity()
 
 This helper function creates a :ref:`InitSparseConnectivitySnippet::Init <doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>` object to easily initialise connectivity using a snippet.
 
@@ -199,25 +110,12 @@ This helper function creates a :ref:`InitSparseConnectivitySnippet::Init <doxid-
 		- dict with param values for the :ref:`InitSparseConnectivitySnippet <doxid-dc/ddd/namespaceInitSparseConnectivitySnippet>` class
 
 .. index:: pair: function; create_custom_neuron_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_custom_neuron_class(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		derived_params derived_params = None,
-		sim_code sim_code = None,
-		threshold_condition_code threshold_condition_code = None,
-		reset_code reset_code = None,
-		support_code support_code = None,
-		extra_global_params extra_global_params = None,
-		additional_input_vars additional_input_vars = None,
-		is_auto_refractory_required is_auto_refractory_required = None,
-		custom_body custom_body = None
-		)
+	def create_custom_neuron_class()
 
 This helper function creates a custom NeuronModel class.
 
@@ -246,32 +144,19 @@ This helper function creates a custom NeuronModel class.
 	*
 		- derived_params
 
-		- list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from ``pygenn.genn_wrapper.Snippet.DerivedParamFunc``
-
-	*
-		- sim_code
-
-		- string with the simulation code
-
-	*
-		- threshold_condition_code
-
-		- string with the threshold condition code
-
-	*
-		- reset_code
-
-		- string with the reset code
-
-	*
-		- support_code
-
-		- string with the support code
-
-	*
-		- extra_global_params
-
-		- list of pairs of strings with names and types of additional parameters
+		- 
+		  list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from
+		  
+		  .. ref-code-block:: cpp
+		  
+		  	                                   ``pygenn.genn_wrapper.Snippet.DerivedParamFunc``
+		  	@param     sim_code    string with the simulation code
+		  	@param     threshold_condition_code    string with the threshold condition code
+		  	@param     reset_code  string with the reset code
+		  	@param     support_code    string with the support code
+		  	@param     extra_global_params list of pairs of strings with names and
+		  
+		  types of additional parameters
 
 	*
 		- additional_input_vars
@@ -292,32 +177,23 @@ This helper function creates a custom NeuronModel class.
 
 .. rubric:: See also:
 
-:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611>`
+:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138>`
 
-:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`
+:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`
 
-:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`
+:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`
 
-:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff>`
+:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0>`
 
-:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b>`
+:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0>`
 
 .. index:: pair: function; create_custom_postsynaptic_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_custom_postsynaptic_class(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		derived_params derived_params = None,
-		decay_code decay_code = None,
-		apply_input_code apply_input_code = None,
-		support_code support_code = None,
-		custom_body custom_body = None
-		)
+	def create_custom_postsynaptic_class()
 
 This helper function creates a custom PostsynapticModel class.
 
@@ -372,44 +248,23 @@ This helper function creates a custom PostsynapticModel class.
 
 .. rubric:: See also:
 
-:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`
+:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`
 
-:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`
+:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`
 
-:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`
+:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`
 
-:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff>`
+:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0>`
 
-:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b>`
+:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0>`
 
 .. index:: pair: function; create_custom_weight_update_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_custom_weight_update_class(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		pre_var_name_types pre_var_name_types = None,
-		post_var_name_types post_var_name_types = None,
-		derived_params derived_params = None,
-		sim_code sim_code = None,
-		event_code event_code = None,
-		learn_post_code learn_post_code = None,
-		synapse_dynamics_code synapse_dynamics_code = None,
-		event_threshold_condition_code event_threshold_condition_code = None,
-		pre_spike_code pre_spike_code = None,
-		post_spike_code post_spike_code = None,
-		sim_support_code sim_support_code = None,
-		learn_post_support_code learn_post_support_code = None,
-		synapse_dynamics_suppport_code synapse_dynamics_suppport_code = None,
-		extra_global_params extra_global_params = None,
-		is_pre_spike_time_required is_pre_spike_time_required = None,
-		is_post_spike_time_required is_post_spike_time_required = None,
-		custom_body custom_body = None
-		)
+	def create_custom_weight_update_class()
 
 This helper function creates a custom WeightUpdateModel class.
 
@@ -448,22 +303,17 @@ This helper function creates a custom WeightUpdateModel class.
 	*
 		- derived_params
 
-		- list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from ``pygenn.genn_wrapper.DerivedParamFunc``
-
-	*
-		- sim_code
-
-		- string with the simulation code
-
-	*
-		- event_code
-
-		- string with the event code
-
-	*
-		- learn_post_code
-
-		- string with the code to include in learn_synapse_post kernel/function
+		- 
+		  list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from
+		  
+		  .. ref-code-block:: cpp
+		  
+		  	                                       ``pygenn.genn_wrapper.DerivedParamFunc``
+		  	@param     sim_code    string with the simulation code
+		  	@param     event_code  string with the event code
+		  	@param     learn_post_code string with the code to include in
+		  
+		  learn_synapse_post kernel/function
 
 	*
 		- synapse_dynamics_code
@@ -524,31 +374,23 @@ This helper function creates a custom WeightUpdateModel class.
 
 .. rubric:: See also:
 
-:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`
+:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`
 
-:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611>`
+:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138>`
 
-:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`
+:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`
 
-:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff>`
+:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0>`
 
-:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b>`
+:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0>`
 
 .. index:: pair: function; create_custom_current_source_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_custom_current_source_class(
-		class_name class_name,
-		param_names param_names = None,
-		var_name_types var_name_types = None,
-		derived_params derived_params = None,
-		injection_code injection_code = None,
-		extra_global_params extra_global_params = None,
-		custom_body custom_body = None
-		)
+	def create_custom_current_source_class()
 
 This helper function creates a custom NeuronModel class.
 
@@ -598,30 +440,23 @@ This helper function creates a custom NeuronModel class.
 
 .. rubric:: See also:
 
-:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`
+:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`
 
-:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`
+:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`
 
-:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`
+:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`
 
-:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff>`
+:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0>`
 
-:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b>`
+:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0>`
 
 .. index:: pair: function; create_custom_model_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a603410a2e8454498c99148657de8c460:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1ab53f2b73940e694cfb903f66eb36b268:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_custom_model_class(
-		class_name class_name,
-		base base,
-		param_names param_names,
-		var_name_types var_name_types,
-		derived_params derived_params,
-		custom_body custom_body
-		)
+	def create_custom_model_class()
 
 This helper function completes a custom model class creation.
 
@@ -668,25 +503,25 @@ This part is common for all model classes and is nearly useless on its own unles
 
 .. rubric:: See also:
 
-:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`
+:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`
 
-:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`
+:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`
 
-:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611>`
+:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138>`
 
-:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`
+:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`
 
-:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff>`
+:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0>`
 
-:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b>`
+:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0>`
 
 .. index:: pair: function; create_dpf_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a4877194a4aa6f04ecbc8768ec1c2de21:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1ac168d515f72c3f48eddabbd78d34166b:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_dpf_class(dp_func dp_func)
+	def create_dpf_class()
 
 Helper function to create derived parameter function class.
 
@@ -703,12 +538,12 @@ Helper function to create derived parameter function class.
 		- a function which computes the derived parameter and takes two args "pars" (vector of double) and "dt" (double)
 
 .. index:: pair: function; create_cmlf_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1acd7310ba25ce86ad93d8fc54debf0e68:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1ac5cff0f737f177c327eaf3e3e9603177:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_cmlf_class(cml_func cml_func)
+	def create_cmlf_class()
 
 Helper function to create function class for calculating sizes of matrices initialised with sparse connectivity initialisation snippet.
 
@@ -725,18 +560,12 @@ Helper function to create function class for calculating sizes of matrices initi
 		- a function which computes the length and takes three args "num_pre" (unsigned int), "num_post" (unsigned int) and "pars" (vector of double)
 
 .. index:: pair: function; create_custom_init_var_snippet_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_custom_init_var_snippet_class(
-		class_name class_name,
-		param_names param_names = None,
-		derived_params derived_params = None,
-		var_init_code var_init_code = None,
-		custom_body custom_body = None
-		)
+	def create_custom_init_var_snippet_class()
 
 This helper function creates a custom :ref:`InitVarSnippet <doxid-d2/dfc/namespaceInitVarSnippet>` class.
 
@@ -776,33 +605,23 @@ This helper function creates a custom :ref:`InitVarSnippet <doxid-d2/dfc/namespa
 
 .. rubric:: See also:
 
-:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`
+:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`
 
-:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`
+:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`
 
-:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611>`
+:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138>`
 
-:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`
+:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`
 
-:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b>`
+:ref:`create_custom_sparse_connect_init_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0>`
 
 .. index:: pair: function; create_custom_sparse_connect_init_snippet_class
-.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1acd4074f475e3e48c21d1c31d1a28597b:
+.. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a85fee2c4f7423b65ac44af05d1c721c0:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def create_custom_sparse_connect_init_snippet_class(
-		class_name class_name,
-		param_names param_names = None,
-		derived_params derived_params = None,
-		row_build_code row_build_code = None,
-		row_build_state_vars row_build_state_vars = None,
-		calc_max_row_len_func calc_max_row_len_func = None,
-		calc_max_col_len_func calc_max_col_len_func = None,
-		extra_global_params extra_global_params = None,
-		custom_body custom_body = None
-		)
+	def create_custom_sparse_connect_init_snippet_class()
 
 This helper function creates a custom :ref:`InitSparseConnectivitySnippet <doxid-dc/ddd/namespaceInitSparseConnectivitySnippet>` class.
 
@@ -862,13 +681,13 @@ This helper function creates a custom :ref:`InitSparseConnectivitySnippet <doxid
 
 .. rubric:: See also:
 
-:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`
+:ref:`create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`
 
-:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`
+:ref:`create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`
 
-:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611>`
+:ref:`create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138>`
 
-:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`
+:ref:`create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`
 
-:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a432e3d1d2c6c4745a1d79ee147b88fff>`
+:ref:`create_custom_init_var_snippet_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af842768d9ca6333c64063900e479e1b0>`
 

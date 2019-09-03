@@ -166,7 +166,7 @@ According to the work flow outlined above, there are several steps to be complet
    
    .. ref-code-block:: cpp
    
-   	NeuronModels::PoissonNew::ParamValues poissonParams(
+   	:ref:`NeuronModels::PoissonNew::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` poissonParams(
    	  10.0);      // 0 - firing rate
    
    would define the (homogeneous) parameters for a population of Poisson neurons. The number of required parameters and their meaning is defined by the neuron or synapse type. Refer to the :ref:`User Manual <doxid-dc/d05/UserManual>` for details. We recommend, however, to use comments like in the above example to achieve maximal clarity of each parameter's meaning.

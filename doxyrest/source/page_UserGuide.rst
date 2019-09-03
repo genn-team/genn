@@ -33,12 +33,12 @@ Other optional functions are explained in :ref:`ModelSpec <doxid-da/dfd/classMod
 
 .. ref-code-block:: cpp
 
-	void modelDefinition(ModelSpec &model) {
-	  model.setDT(0.5);
-	  model.setName("YourModelName");
-	  model.addNeuronPopulation(...);
+	void modelDefinition(:ref:`ModelSpec <doxid-da/dfd/classModelSpec>` &model) {
+	  model.:ref:`setDT <doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.5);
+	  model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("YourModelName");
+	  model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`(...);
 	  ...
-	  model.addSynapsePopulation(...);
+	  model.:ref:`addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`(...);
 	  ...
 	}
 
@@ -168,7 +168,7 @@ User-defined model variables originate from classes derived off the :ref:`Neuron
 
 .. ref-code-block:: cpp
 
-	SET_VARS({{"V", "scalar"}});
+	:ref:`SET_VARS <doxid-d4/d13/models_8h_1a3025b9fc844fccdf8cc2b51ef4a6e0aa>`({{"V", "scalar"}});
 
 When a neuron or synapse population using this model is added to the model, the full GeNN name of the variable will be obtained by concatenating the variable name with the name of the population. For example if we a add a population called ``Pop`` using a model which contains our ``V`` variable, a variable ``VPop`` of type ``scalar*`` will be available in the global namespace of the simulation program. GeNN will pre-allocate this C array to the correct size of elements corresponding to the size of the neuron population. GeNN will also free these variables when the provided function ``freeMem()`` is called. Users can otherwise manipulate these variable arrays as they wish. For convenience, GeNN provides functions to copy each state variable from the device into host memory and vice versa e.g. ``pullVPopFromDevice()`` and ``pushVPoptoDevice()``. Alternatively, all state variables associated with a population can be copied using a single call E.g.
 
@@ -197,7 +197,7 @@ GeNN has no explicitly hard-coded synapse and neuron variables. Users are free t
   
   .. ref-code-block:: cpp
   
-  	SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn)*($(E)-$(V))");
+  	:ref:`SET_APPLY_INPUT_CODE <doxid-d8/d47/postsynapticModels_8h_1a41d7141aeae91e2840c2629106b6a3b1>`("$(Isyn) += $(inSyn)*($(E)-$(V))");
   
   which implements a conductance based synapse in which the postsynaptic current is given by :math:`I_{\rm syn}= g*s*(V_{\rm rev}-V_{\rm post})`.
 

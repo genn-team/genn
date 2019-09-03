@@ -33,114 +33,32 @@ Overview
 
 		// methods
 	
-		def :ref:`__init__<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a97af74b8965a23e3ff5ccf76997e07c5>`(
-			self self,
-			precision precision = None,
-			:ref:`model_name<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab1164b8374a4b390e77bc32effed638c>` model_name = "GeNNModel",
-			enable_debug enable_debug = False,
-			backend backend = None
-			);
-	
-		def :target:`use_backend<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a4735ba33ebee63fe36e2da3f384ead4a>`(self self);
-	
-		def :target:`use_backend<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a3137503c327f26fcc6d7323505233745>`(
-			self self,
-			backend backend
-			);
-	
-		def :ref:`default_var_location<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1abac6e37ea0e6fc1a3b092543a9012951>`(self self);
-	
-		def :target:`default_var_location<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a6fb04c026cd6daf493fb160b939d81a1>`(
-			self self,
-			location location
-			);
-	
-		def :ref:`default_sparse_connectivity_location<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a08c1d0a533cc7b2a6bb41e421d57b888>`(location location);
-	
-		def :target:`default_sparse_connectivity_location<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a623389c1d66d61f0ccce2870c2a3b946>`(
-			self self,
-			location location
-			);
-	
-		def :ref:`model_name<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a657e703ee01779146f1ccb8351ede55b>`(self self);
-	
-		def :target:`model_name<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a4e21fa1268613abb29d4d85de6084638>`(
-			self self,
-			model_name model_name
-			);
-	
-		def :ref:`t<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a48193c41cf24f25cdd2970cab7c88e87>`(self self);
-	
-		def :target:`t<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a290cab59495dd92ea26f6d379ba3c373>`(
-			self self,
-			t t
-			);
-	
-		def :ref:`timestep<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1aef0498990a471f39daad3fd841df7111>`(self self);
-	
-		def :target:`timestep<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a8e25caa5f6fa75b1034c15d71ec86e59>`(
-			self self,
-			timestep timestep
-			);
-	
-		def :ref:`dT<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ac249821001e0f49753b17ad46c68e049>`(self self);
-	
-		def :target:`dT<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a487dbad5a2661672d5fea901f1eb71f3>`(
-			self self,
-			dt dt
-			);
-	
-		def :ref:`add_neuron_population<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a100324e214546094fced5e66fb0582d4>`(
-			self self,
-			pop_name pop_name,
-			num_neurons num_neurons,
-			neuron neuron,
-			param_space param_space,
-			var_space var_space
-			);
-	
-		def :ref:`add_synapse_population<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab573f92c82ec25d5c80f94070b6008c0>`(
-			self self,
-			pop_name pop_name,
-			matrix_type matrix_type,
-			delay_steps delay_steps,
-			source source,
-			target target,
-			w_update_model w_update_model,
-			wu_param_space wu_param_space,
-			wu_var_space wu_var_space,
-			wu_pre_var_space wu_pre_var_space,
-			wu_post_var_space wu_post_var_space,
-			postsyn_model postsyn_model,
-			ps_param_space ps_param_space,
-			ps_var_space ps_var_space,
-			connectivity_initialiser connectivity_initialiser = None
-			);
-	
-		def :ref:`add_current_source<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a20b03cbc0200038e8dd9950553fe5152>`(
-			self self,
-			cs_name cs_name,
-			current_source_model current_source_model,
-			pop_name pop_name,
-			param_space param_space,
-			var_space var_space
-			);
-	
-		def :ref:`build<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a481795d2e7a45410799786a1c5122834>`(self self, path_to_model path_to_model = "./");
-		def :ref:`load<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a3f5a720288c67d0a87a1a270c7ff2f2c>`(self self);
-		def :ref:`reinitialise<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a475a22c65205debb202eb98d4dc929f2>`(self self);
-		def :target:`step_time<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a6d71c8d91805b64c5a69fc62ea3dfbdb>`(self self);
-		def :ref:`pull_state_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a6c5c3ab36b8348eade67585325652a70>`(self self, pop_name pop_name);
-		def :ref:`pull_spikes_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a866e2b2d9f823c67365bce6395b82387>`(self self, pop_name pop_name);
-		def :ref:`pull_current_spikes_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a3ea2a76a16f5aa01ac244d3a4eb289f4>`(self self, pop_name pop_name);
-		def :ref:`pull_connectivity_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a915100ccf83beff4923c503475aad46a>`(self self, pop_name pop_name);
-		def :ref:`pull_var_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a9a24190a85b0e01e1f22e030a4a6a42b>`(self self, pop_name pop_name, var_name var_name);
-		def :ref:`push_state_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afc6a5ef4b76997365450b40eaca00db0>`(self self, pop_name pop_name);
-		def :ref:`push_spikes_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a2c68d702b36428da03126c0dd13d4c9e>`(self self, pop_name pop_name);
-		def :ref:`push_current_spikes_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a02586b0bf4c6969e7013778ced108194>`(self self, pop_name pop_name);
-		def :ref:`push_connectivity_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a88a9e18417e48815a2534a2e6dead826>`(self self, pop_name pop_name);
-		def :ref:`push_var_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a8217fc38ecb1bbbd249bfee27455ac90>`(self self, pop_name pop_name, var_name var_name);
-		def :ref:`end<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a06269039e7798cafe00f637e5df88410>`(self self);
+		def :ref:`__init__<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab62bfb325a7b701e4763d2c2e27170da>`();
+		def :target:`use_backend<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a69ec72251ff8334a0b8294cbdb049399>`();
+		def :ref:`default_var_location<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a53bcaef460652366789cdeeee443d194>`();
+		def :ref:`default_sparse_connectivity_location<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1abb13cf7f140b3a18d647f8644604d451>`();
+		def :ref:`model_name<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afefdda5f27d55ca55d7e8e7703372785>`();
+		def :ref:`t<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab67386f1c84f9c828827dfa54d609e78>`();
+		def :ref:`timestep<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a204a3f0b579978cf3534d2c6dbb5c186>`();
+		def :ref:`dT<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a076181e209188da2b3592afe8a3b04f1>`();
+		def :ref:`add_neuron_population<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a6981e562d305fa486400451c9464e775>`();
+		def :ref:`add_synapse_population<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1aa0d99a65e3ca5c179feb8c120e9da252>`();
+		def :ref:`add_current_source<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ae3f4be499e6355cc917d0d3d6239815a>`();
+		def :ref:`build<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a271d098822afa359ca392752b16683cc>`();
+		def :ref:`load<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a8baf03355871cb66ea2368909433c22a>`();
+		def :ref:`reinitialise<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a355a09159b9a00859300e01fae12687e>`();
+		def :target:`step_time<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a37c76768715c6d4cc396ab73fb62a065>`();
+		def :ref:`pull_state_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a71633dae5b0ac071b255857073bbf7e4>`();
+		def :ref:`pull_spikes_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a4ba17d02864196b87f79cd25f9b326e7>`();
+		def :ref:`pull_current_spikes_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1af88752774f48315be30964fb44226fb1>`();
+		def :ref:`pull_connectivity_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a586c5aa3caf6bc232eab54c9ea7f3218>`();
+		def :ref:`pull_var_from_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ad0fa3cd33bf965b706459d21328c49a9>`();
+		def :ref:`push_state_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afe34bc9de940fc5ca5d23f02140caa1a>`();
+		def :ref:`push_spikes_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a4109fc7d61910f2836b036e4ca80d002>`();
+		def :ref:`push_current_spikes_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afbb2cb09e264df5615fc6e39d6fe5545>`();
+		def :ref:`push_connectivity_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ac729fc62b67c260c0d91fb9c374bab62>`();
+		def :ref:`push_var_to_device<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a912ec53be14d047d9a47e3d0fd1ba938>`();
+		def :ref:`end<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1aa1ab378068b692100af0cec3014cdf5f>`();
 	};
 .. _details-db/d57/classpygenn_1_1genn__model_1_1GeNNModel:
 
@@ -153,18 +71,12 @@ Methods
 -------
 
 .. index:: pair: function; __init__
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a97af74b8965a23e3ff5ccf76997e07c5:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab62bfb325a7b701e4763d2c2e27170da:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def __init__(
-		self self,
-		precision precision = None,
-		:ref:`model_name<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab1164b8374a4b390e77bc32effed638c>` model_name = "GeNNModel",
-		enable_debug enable_debug = False,
-		backend backend = None
-		)
+	def __init__()
 
 Init :ref:`GeNNModel <doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel>`.
 
@@ -196,79 +108,72 @@ Init :ref:`GeNNModel <doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel>`.
 		- string specifying name of backend module to use Defaults to None to pick 'best' backend for your system
 
 .. index:: pair: function; default_var_location
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1abac6e37ea0e6fc1a3b092543a9012951:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a53bcaef460652366789cdeeee443d194:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def default_var_location(self self)
+	def default_var_location()
 
 Default variable location - defines where state variables are initialised.
 
 .. index:: pair: function; default_sparse_connectivity_location
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a08c1d0a533cc7b2a6bb41e421d57b888:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1abb13cf7f140b3a18d647f8644604d451:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def default_sparse_connectivity_location(location location)
+	def default_sparse_connectivity_location()
 
 Default sparse connectivity mode - where connectivity is initialised.
 
 .. index:: pair: function; model_name
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a657e703ee01779146f1ccb8351ede55b:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afefdda5f27d55ca55d7e8e7703372785:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def model_name(self self)
+	def model_name()
 
 Name of the model.
 
 .. index:: pair: function; t
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a48193c41cf24f25cdd2970cab7c88e87:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab67386f1c84f9c828827dfa54d609e78:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def t(self self)
+	def t()
 
 Simulation time in ms.
 
 .. index:: pair: function; timestep
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1aef0498990a471f39daad3fd841df7111:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a204a3f0b579978cf3534d2c6dbb5c186:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def timestep(self self)
+	def timestep()
 
 Simulation time step.
 
 .. index:: pair: function; dT
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ac249821001e0f49753b17ad46c68e049:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a076181e209188da2b3592afe8a3b04f1:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def dT(self self)
+	def dT()
 
 Step size.
 
 .. index:: pair: function; add_neuron_population
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a100324e214546094fced5e66fb0582d4:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a6981e562d305fa486400451c9464e775:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def add_neuron_population(
-		self self,
-		pop_name pop_name,
-		num_neurons num_neurons,
-		neuron neuron,
-		param_space param_space,
-		var_space var_space
-		)
+	def add_neuron_population()
 
 Add a neuron population to the GeNN model.
 
@@ -292,7 +197,7 @@ Add a neuron population to the GeNN model.
 	*
 		- neuron
 
-		- type of the :ref:`NeuronModels <doxid-da/dac/namespaceNeuronModels>` class as string or instance of neuron class derived from ``pygenn.genn_wrapper.NeuronModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a80f3b56cb2dc934ea04ed15a629c7db9>`)
+		- type of the :ref:`NeuronModels <doxid-da/dac/namespaceNeuronModels>` class as string or instance of neuron class derived from ``pygenn.genn_wrapper.NeuronModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_neuron_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b>`)
 
 	*
 		- param_space
@@ -305,28 +210,12 @@ Add a neuron population to the GeNN model.
 		- dict with initial variable values for the :ref:`NeuronModels <doxid-da/dac/namespaceNeuronModels>` class
 
 .. index:: pair: function; add_synapse_population
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ab573f92c82ec25d5c80f94070b6008c0:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1aa0d99a65e3ca5c179feb8c120e9da252:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def add_synapse_population(
-		self self,
-		pop_name pop_name,
-		matrix_type matrix_type,
-		delay_steps delay_steps,
-		source source,
-		target target,
-		w_update_model w_update_model,
-		wu_param_space wu_param_space,
-		wu_var_space wu_var_space,
-		wu_pre_var_space wu_pre_var_space,
-		wu_post_var_space wu_post_var_space,
-		postsyn_model postsyn_model,
-		ps_param_space ps_param_space,
-		ps_var_space ps_var_space,
-		connectivity_initialiser connectivity_initialiser = None
-		)
+	def add_synapse_population()
 
 Add a synapse population to the GeNN model.
 
@@ -365,7 +254,7 @@ Add a synapse population to the GeNN model.
 	*
 		- w_update_model
 
-		- type of the :ref:`WeightUpdateModels <doxid-da/d80/namespaceWeightUpdateModels>` class as string or instance of weight update model class derived from ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1af8c5efd0096b17d61e13463b1cc73878>`)
+		- type of the :ref:`WeightUpdateModels <doxid-da/d80/namespaceWeightUpdateModels>` class as string or instance of weight update model class derived from ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_weight_update_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a28377fbeef1d2e3b4a5ddf8f763af3>`)
 
 	*
 		- wu_param_space
@@ -390,7 +279,7 @@ Add a synapse population to the GeNN model.
 	*
 		- postsyn_model
 
-		- type of the :ref:`PostsynapticModels <doxid-db/dcb/namespacePostsynapticModels>` class as string or instance of postsynaptic model class derived from ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a091ea4fe261201327c877528287f9611>`)
+		- type of the :ref:`PostsynapticModels <doxid-db/dcb/namespacePostsynapticModels>` class as string or instance of postsynaptic model class derived from ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_postsynaptic_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a67332bdc9d851f2de537bb1b8ee81138>`)
 
 	*
 		- ps_param_space
@@ -408,19 +297,12 @@ Add a synapse population to the GeNN model.
 		- :ref:`InitSparseConnectivitySnippet::Init <doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>` for connectivity
 
 .. index:: pair: function; add_current_source
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a20b03cbc0200038e8dd9950553fe5152:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ae3f4be499e6355cc917d0d3d6239815a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def add_current_source(
-		self self,
-		cs_name cs_name,
-		current_source_model current_source_model,
-		pop_name pop_name,
-		param_space param_space,
-		var_space var_space
-		)
+	def add_current_source()
 
 Add a current source to the GeNN model.
 
@@ -439,7 +321,7 @@ Add a current source to the GeNN model.
 	*
 		- current_source_model
 
-		- type of the :ref:`CurrentSourceModels <doxid-d6/dd3/namespaceCurrentSourceModels>` class as string or instance of :ref:`CurrentSourceModels <doxid-d6/dd3/namespaceCurrentSourceModels>` class derived from ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a1cd795d295c4cc4f05968f04dbf5b9d3>`)
+		- type of the :ref:`CurrentSourceModels <doxid-d6/dd3/namespaceCurrentSourceModels>` class as string or instance of :ref:`CurrentSourceModels <doxid-d6/dd3/namespaceCurrentSourceModels>` class derived from ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also :ref:`pygenn.genn_model.create_custom_current_source_class <doxid-de/d6e/namespacepygenn_1_1genn__model_1a940817f86b8a6e16139ec7beaf2e2a9a>`)
 
 	*
 		- pop_name
@@ -457,12 +339,12 @@ Add a current source to the GeNN model.
 		- dict with initial variable values for the :ref:`CurrentSourceModels <doxid-d6/dd3/namespaceCurrentSourceModels>` class
 
 .. index:: pair: function; build
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a481795d2e7a45410799786a1c5122834:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a271d098822afa359ca392752b16683cc:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def build(self self, path_to_model path_to_model = "./")
+	def build()
 
 Finalize and build a GeNN model.
 
@@ -479,132 +361,132 @@ Finalize and build a GeNN model.
 		- path where to place the generated model code. Defaults to the local directory.
 
 .. index:: pair: function; load
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a3f5a720288c67d0a87a1a270c7ff2f2c:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a8baf03355871cb66ea2368909433c22a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def load(self self)
+	def load()
 
 import the model as shared library and initialize it
 
 .. index:: pair: function; reinitialise
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a475a22c65205debb202eb98d4dc929f2:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a355a09159b9a00859300e01fae12687e:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def reinitialise(self self)
+	def reinitialise()
 
 reinitialise model to its original state without re-loading
 
 .. index:: pair: function; pull_state_from_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a6c5c3ab36b8348eade67585325652a70:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a71633dae5b0ac071b255857073bbf7e4:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def pull_state_from_device(self self, pop_name pop_name)
+	def pull_state_from_device()
 
 Pull state from the device for a given population.
 
 .. index:: pair: function; pull_spikes_from_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a866e2b2d9f823c67365bce6395b82387:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a4ba17d02864196b87f79cd25f9b326e7:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def pull_spikes_from_device(self self, pop_name pop_name)
+	def pull_spikes_from_device()
 
 Pull spikes from the device for a given population.
 
 .. index:: pair: function; pull_current_spikes_from_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a3ea2a76a16f5aa01ac244d3a4eb289f4:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1af88752774f48315be30964fb44226fb1:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def pull_current_spikes_from_device(self self, pop_name pop_name)
+	def pull_current_spikes_from_device()
 
 Pull spikes from the device for a given population.
 
 .. index:: pair: function; pull_connectivity_from_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a915100ccf83beff4923c503475aad46a:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a586c5aa3caf6bc232eab54c9ea7f3218:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def pull_connectivity_from_device(self self, pop_name pop_name)
+	def pull_connectivity_from_device()
 
 Pull connectivity from the device for a given population.
 
 .. index:: pair: function; pull_var_from_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a9a24190a85b0e01e1f22e030a4a6a42b:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ad0fa3cd33bf965b706459d21328c49a9:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def pull_var_from_device(self self, pop_name pop_name, var_name var_name)
+	def pull_var_from_device()
 
 Pull variable from the device for a given population.
 
 .. index:: pair: function; push_state_to_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afc6a5ef4b76997365450b40eaca00db0:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afe34bc9de940fc5ca5d23f02140caa1a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def push_state_to_device(self self, pop_name pop_name)
+	def push_state_to_device()
 
 Push state to the device for a given population.
 
 .. index:: pair: function; push_spikes_to_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a2c68d702b36428da03126c0dd13d4c9e:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a4109fc7d61910f2836b036e4ca80d002:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def push_spikes_to_device(self self, pop_name pop_name)
+	def push_spikes_to_device()
 
 Push spikes to the device for a given population.
 
 .. index:: pair: function; push_current_spikes_to_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a02586b0bf4c6969e7013778ced108194:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1afbb2cb09e264df5615fc6e39d6fe5545:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def push_current_spikes_to_device(self self, pop_name pop_name)
+	def push_current_spikes_to_device()
 
 Push current spikes to the device for a given population.
 
 .. index:: pair: function; push_connectivity_to_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a88a9e18417e48815a2534a2e6dead826:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1ac729fc62b67c260c0d91fb9c374bab62:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def push_connectivity_to_device(self self, pop_name pop_name)
+	def push_connectivity_to_device()
 
 Push connectivity to the device for a given population.
 
 .. index:: pair: function; push_var_to_device
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a8217fc38ecb1bbbd249bfee27455ac90:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a912ec53be14d047d9a47e3d0fd1ba938:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def push_var_to_device(self self, pop_name pop_name, var_name var_name)
+	def push_var_to_device()
 
 Push variable to the device for a given population.
 
 .. index:: pair: function; end
-.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1a06269039e7798cafe00f637e5df88410:
+.. _doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel_1aa1ab378068b692100af0cec3014cdf5f:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def end(self self)
+	def end()
 
 Free memory.
 

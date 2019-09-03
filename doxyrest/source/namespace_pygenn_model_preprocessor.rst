@@ -33,22 +33,14 @@ Overview
 
 	// global functions
 
-	def :ref:`prepare_model<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a029f48e8c8c01ba4a24e11ff4d578d11>`(
-		model model,
-		param_space param_space,
-		var_space var_space,
-		pre_var_space pre_var_space = None,
-		post_var_space post_var_space = None,
-		model_family model_family = None
-		);
-
-	def :ref:`prepare_snippet<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aef83afc60aa51f177264dcb416a6035c>`(snippet snippet, param_space param_space, snippet_family snippet_family);
-	def :ref:`is_model_valid<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a8394727291320f68735c9ad636362853>`(model model, model_family model_family);
-	def :ref:`param_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1ab095322336d228b80db47a280f435ba2>`(model model, param_space param_space);
-	def :ref:`param_space_to_val_vec<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a93d693245c53a02c06c201f5769500b5>`(model model, param_space param_space);
-	def :ref:`var_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a4ece878baa9619ecfcbdf5770e5a4eec>`(model model, var_space var_space);
-	def :ref:`pre_var_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aa3a43765e294bbd7fe4976a3b377b733>`(model model, var_space var_space);
-	def :ref:`post_var_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a5d924093505fd70d9261b35a0f9c6a6d>`(model model, var_space var_space);
+	def :ref:`prepare_model<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1afa2002972d2398cc6727c36712c27a25>`();
+	def :ref:`prepare_snippet<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1af8787ed2b94336e2f15d1bb2a7525ca2>`();
+	def :ref:`is_model_valid<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aed65dd8c7c532f1d68afc6792082f8f8>`();
+	def :ref:`param_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aa5dcb3499ba649215fc1de5a5760347c>`();
+	def :ref:`param_space_to_val_vec<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aace69bd4664d6b8420bcfa717b999ef1>`();
+	def :ref:`var_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a3b22825cc9feaa2db636d339f4af547f>`();
+	def :ref:`pre_var_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aa92c968e8193bf3b61aab69eccc9fc39>`();
+	def :ref:`post_var_space_to_vals<doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a474973e600f1cd24e3156cba8b8cf355>`();
 
 	} // namespace model_preprocessor
 .. _details-d0/d17/namespacepygenn_1_1model__preprocessor:
@@ -62,19 +54,12 @@ Global Functions
 ----------------
 
 .. index:: pair: function; prepare_model
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a029f48e8c8c01ba4a24e11ff4d578d11:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1afa2002972d2398cc6727c36712c27a25:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def prepare_model(
-		model model,
-		param_space param_space,
-		var_space var_space,
-		pre_var_space pre_var_space = None,
-		post_var_space post_var_space = None,
-		model_family model_family = None
-		)
+	def prepare_model()
 
 Prepare a model by checking its validity and extracting information about variables and parameters.
 
@@ -88,22 +73,17 @@ Prepare a model by checking its validity and extracting information about variab
 	*
 		- model
 
-		- string or instance of a class derived from ``pygenn.genn_wrapper.NeuronModels.Custom`` or ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` or ``pygenn.genn_wrapper.CurrentSourceModels.Custom``
-
-	*
-		- param_space
-
-		- dict with model parameters
-
-	*
-		- var_space
-
-		- dict with model variables
-
-	*
-		- pre_var_space
-
-		- optional dict with (weight update) model presynaptic variables
+		- 
+		  string or instance of a class derived from ``pygenn.genn_wrapper.NeuronModels.Custom`` or ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` or
+		  
+		  .. ref-code-block:: cpp
+		  
+		  	                       ``pygenn.genn_wrapper.CurrentSourceModels.Custom``
+		  	@param     param_space dict with model parameters
+		  	@param     var_space   dict with model variables
+		  	@param     pre_var_space   optional dict with (weight update) model
+		  
+		  presynaptic variables
 
 	*
 		- post_var_space
@@ -113,25 +93,24 @@ Prepare a model by checking its validity and extracting information about variab
 	*
 		- model_family
 
-		- ``pygenn.genn_wrapper.NeuronModels`` or ``pygenn.genn_wrapper.WeightUpdateModels`` or ``pygenn.genn_wrapper.CurrentSourceModels``
-
-
-
-.. rubric:: Returns:
-
-tuple consisting of (model instance, model type, model parameter names, model parameters, list of variable names, dict mapping names of variables to instances of class :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>`)
+		- 
+		  ``pygenn.genn_wrapper.NeuronModels`` or ``pygenn.genn_wrapper.WeightUpdateModels`` or
+		  
+		  .. ref-code-block:: cpp
+		  
+		  	                       ``pygenn.genn_wrapper.CurrentSourceModels``
+		  	
+		  	@return
+		  
+		  tuple consisting of (model instance, model type, model parameter names, model parameters, list of variable names, dict mapping names of variables to instances of class :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>`)
 
 .. index:: pair: function; prepare_snippet
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aef83afc60aa51f177264dcb416a6035c:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1af8787ed2b94336e2f15d1bb2a7525ca2:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def prepare_snippet(
-		snippet snippet,
-		param_space param_space,
-		snippet_family snippet_family
-		)
+	def prepare_snippet()
 
 Prepare a snippet by checking its validity and extracting information about parameters.
 
@@ -145,31 +124,27 @@ Prepare a snippet by checking its validity and extracting information about para
 	*
 		- snippet
 
-		- string or instance of a class derived from ``pygenn.genn_wrapper.InitVarSnippet.Custom`` or ``pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom``
-
-	*
-		- param_space
-
-		- dict with model parameters
-
-	*
-		- snippet_family
-
-		- ``pygenn.genn_wrapper.InitVarSnippet`` or ``pygenn.genn_wrapper.InitSparseConnectivitySnippet``
-
-
-
-.. rubric:: Returns:
-
-tuple consisting of (snippet instance, snippet type, snippet parameter names, snippet parameters)
+		- 
+		  string or instance of a class derived from ``pygenn.genn_wrapper.InitVarSnippet.Custom`` or
+		  
+		  .. ref-code-block:: cpp
+		  
+		  	                       ``pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom``
+		  	@param     param_space dict with model parameters
+		  	@param     snippet_family  ``pygenn.genn_wrapper.InitVarSnippet`` or
+		  	                       ``pygenn.genn_wrapper.InitSparseConnectivitySnippet``
+		  	
+		  	@return
+		  
+		  tuple consisting of (snippet instance, snippet type, snippet parameter names, snippet parameters)
 
 .. index:: pair: function; is_model_valid
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a8394727291320f68735c9ad636362853:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aed65dd8c7c532f1d68afc6792082f8f8:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def is_model_valid(model model, model_family model_family)
+	def is_model_valid()
 
 Check whether the model is valid, i.e is native or derived from model_family.Custom.
 
@@ -199,12 +174,12 @@ Raises ValueError if model is not valid (i.e. is not custom and is not natively 
 instance of the model and its type as string
 
 .. index:: pair: function; param_space_to_vals
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1ab095322336d228b80db47a280f435ba2:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aa5dcb3499ba649215fc1de5a5760347c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def param_space_to_vals(model model, param_space param_space)
+	def param_space_to_vals()
 
 Convert a param_space dict to ParamValues.
 
@@ -232,12 +207,12 @@ Convert a param_space dict to ParamValues.
 native model's ParamValues
 
 .. index:: pair: function; param_space_to_val_vec
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a93d693245c53a02c06c201f5769500b5:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aace69bd4664d6b8420bcfa717b999ef1:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def param_space_to_val_vec(model model, param_space param_space)
+	def param_space_to_val_vec()
 
 Convert a param_space dict to a std::vector<double>
 
@@ -265,12 +240,12 @@ Convert a param_space dict to a std::vector<double>
 native vector of parameters
 
 .. index:: pair: function; var_space_to_vals
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a4ece878baa9619ecfcbdf5770e5a4eec:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a3b22825cc9feaa2db636d339f4af547f:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def var_space_to_vals(model model, var_space var_space)
+	def var_space_to_vals()
 
 Convert a var_space dict to VarValues.
 
@@ -298,12 +273,12 @@ Convert a var_space dict to VarValues.
 native model's VarValues
 
 .. index:: pair: function; pre_var_space_to_vals
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aa3a43765e294bbd7fe4976a3b377b733:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1aa92c968e8193bf3b61aab69eccc9fc39:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def pre_var_space_to_vals(model model, var_space var_space)
+	def pre_var_space_to_vals()
 
 Convert a var_space dict to PreVarValues.
 
@@ -331,12 +306,12 @@ Convert a var_space dict to PreVarValues.
 native model's VarValues
 
 .. index:: pair: function; post_var_space_to_vals
-.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a5d924093505fd70d9261b35a0f9c6a6d:
+.. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1a474973e600f1cd24e3156cba8b8cf355:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	def post_var_space_to_vals(model model, var_space var_space)
+	def post_var_space_to_vals()
 
 Convert a var_space dict to PostVarValues.
 

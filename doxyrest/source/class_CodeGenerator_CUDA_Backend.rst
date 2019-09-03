@@ -25,7 +25,7 @@ Overview
 	
 		static const char* :target:`KernelNames<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a9efc38e97bacfddb2925921ce5df91e3>`[KernelMax];
 
-		// construction
+		// methods
 	
 		:target:`Backend<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a9f01f9b7a15ea7e31510d3725c7147ab>`(
 			const :ref:`KernelBlockSize<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a834e8ff4a9b37453a04e5bfa2743423b>`& kernelBlockSizes,
@@ -34,8 +34,6 @@ Overview
 			const std::string& scalarType,
 			int device
 			);
-
-		// methods
 	
 		virtual void :ref:`genNeuronUpdate<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1aac00294b1ef371c52c105bcd85abf790>`(:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& os, const :ref:`ModelSpecInternal<doxid-dc/dfa/classModelSpecInternal>`& model, :ref:`NeuronGroupSimHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a938379883f4cdf06998dd969a3d74a73>` simHandler, :ref:`NeuronGroupHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a55e34429d3f08186318fe811d5bc6531>` wuVarUpdateHandler) const;
 	
@@ -238,12 +236,12 @@ Overview
 		virtual bool :target:`isSynRemapRequired<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1ac393b97a8a98ad75ee65883ac77f6a2b>`() const;
 		virtual bool :target:`isPostsynapticRemapRequired<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1af4eb927f939b6416b193848660287f48>`() const;
 		virtual size_t :ref:`getDeviceMemoryBytes<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1ae5788df928832109eb10606611e45066>`() const;
-		const cudaDeviceProp& :target:`getChosenCUDADevice<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a3d746532d480e6e5b99b524df0928005>`() const;
-		int :target:`getChosenDeviceID<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1abea0d22644b3f60389249e8c9fe9e615>`() const;
-		int :target:`getRuntimeVersion<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1ae997cc1a24e965c90132162297e190ab>`() const;
-		std::string :target:`getNVCCFlags<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1aa2cc5085a98b9aa8e4e47509c54ab13e>`() const;
-		std::string :target:`getFloatAtomicAdd<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a1ba50737bd7829a6495043d9e020ec5b>`(const std::string& ftype) const;
-		size_t :target:`getKernelBlockSize<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a95e6cbf19f6044f78bad0108fad5d4f9>`(:ref:`Kernel<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a05381dc4178da4eb5cd21384a44dace4>` kernel) const;
+		const cudaDeviceProp& :target:`getChosenCUDADevice<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a03814877a752ed9ef0c63dbb1320da70>`() const;
+		int :target:`getChosenDeviceID<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a428484ac026d692312c76cee6e67dcc5>`() const;
+		int :target:`getRuntimeVersion<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a28686e0f104341e1eaba42648a5edf2c>`() const;
+		std::string :target:`getNVCCFlags<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a3cbd03ccb955922efa300de9ff9c90b6>`() const;
+		std::string :target:`getFloatAtomicAdd<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a22ae1c31c460cc6b1a38120652d2179d>`(const std::string& ftype) const;
+		size_t :target:`getKernelBlockSize<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1afe9f3858faa6dd680a368884091ffd35>`(:ref:`Kernel<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a05381dc4178da4eb5cd21384a44dace4>` kernel) const;
 		static size_t :target:`getNumPresynapticUpdateThreads<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a329a55cd79838f58b20a699e92858720>`(const :ref:`SynapseGroupInternal<doxid-dd/d48/classSynapseGroupInternal>`& sg);
 		static size_t :target:`getNumPostsynapticUpdateThreads<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1ad960a69ff210f6bdea4d3979645dc947>`(const :ref:`SynapseGroupInternal<doxid-dd/d48/classSynapseGroupInternal>`& sg);
 		static size_t :target:`getNumSynapseDynamicsThreads<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend_1a3fc7808cb0b427e57cbc71a416613155>`(const :ref:`SynapseGroupInternal<doxid-dd/d48/classSynapseGroupInternal>`& sg);
@@ -267,6 +265,8 @@ Inherited Members
 
 		// methods
 	
+		:ref:`BackendBase<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a0ce0c48ea6c5041fb3a6d3d3cd1d24bc>`(int localHostID, const std::string& scalarType);
+		virtual :ref:`~BackendBase<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ac4ba1c12b2a97dfb6cb4f3cd5df10f50>`();
 		virtual void :ref:`genNeuronUpdate<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ae8915df91011c1c65ff2a9b52bc8e05c>`(:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& os, const :ref:`ModelSpecInternal<doxid-dc/dfa/classModelSpecInternal>`& model, :ref:`NeuronGroupSimHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a938379883f4cdf06998dd969a3d74a73>` simHandler, :ref:`NeuronGroupHandler<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a55e34429d3f08186318fe811d5bc6531>` wuVarUpdateHandler) const = 0;
 	
 		virtual void :ref:`genSynapseUpdate<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a7a63d712f5cb7e8053c93acb6df77d58>`(
@@ -399,13 +399,13 @@ Inherited Members
 		virtual void :ref:`genMSBuildItemDefinitions<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a955c31de992db529595956bc33ca1525>`(std::ostream& os) const = 0;
 		virtual void :ref:`genMSBuildCompileModule<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1aaa0922c18f30dabce3693503a5df3a3d>`(const std::string& moduleName, std::ostream& os) const = 0;
 		virtual void :ref:`genMSBuildImportTarget<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3530f453f5bc8d354d16958a09da56ed>`(std::ostream& os) const = 0;
-		virtual std::string :ref:`getVarPrefix<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ac66d53f7f18bb431ae53eb572a330c28>`() const;
+		virtual std::string :ref:`getVarPrefix<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a817fca06615b5436d0a00e25e7eb04bb>`() const;
 		virtual bool :ref:`isGlobalRNGRequired<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1abd63eb9b142bf73c95921747ad708f14>`(const :ref:`ModelSpecInternal<doxid-dc/dfa/classModelSpecInternal>`& model) const = 0;
 		virtual bool :ref:`isSynRemapRequired<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a064f208bb1d5c47dad599d737fe9e3bc>`() const = 0;
 		virtual bool :ref:`isPostsynapticRemapRequired<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a98d6344fec8a12ae7ea7ac8bece8ed50>`() const = 0;
 		virtual size_t :ref:`getDeviceMemoryBytes<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a034f408b28b10f750cd501a4dfecceac>`() const = 0;
 	
-		void :ref:`genVariablePushPull<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3adc59ef44b8c052dc8038c59ae743a3>`(
+		void :ref:`genVariablePushPull<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a88e6465a9217de179050154d3779e957>`(
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& push,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& pull,
 			const std::string& type,
@@ -415,7 +415,7 @@ Inherited Members
 			size_t count
 			) const;
 	
-		:ref:`MemAlloc<doxid-d2/d06/classCodeGenerator_1_1MemAlloc>` :ref:`genArray<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1ae617cf7a7410262a4a0f6b996fda5898>`(
+		:ref:`MemAlloc<doxid-d2/d06/classCodeGenerator_1_1MemAlloc>` :ref:`genArray<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1aec83f512127c6a85a285a1c8b02925a1>`(
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitions,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitionsInternal,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& runner,
@@ -427,7 +427,7 @@ Inherited Members
 			size_t count
 			) const;
 	
-		void :ref:`genScalar<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a2fee5243cf9b6abb870190f3933a23de>`(
+		void :ref:`genScalar<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1a3f7a0752cdee6b7667d729de1578bbbf>`(
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitions,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& definitionsInternal,
 			:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& runner,
@@ -436,7 +436,7 @@ Inherited Members
 			:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc
 			) const;
 	
-		int :ref:`getLocalHostID<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1acb346f249dd810eb388ed8882410b5d2>`() const;
+		int :ref:`getLocalHostID<doxid-d3/d15/classCodeGenerator_1_1BackendBase_1aca884725d8e8efcc6d2fa4e69dadca8a>`() const;
 
 .. _details-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend:
 

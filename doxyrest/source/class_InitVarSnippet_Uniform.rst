@@ -28,7 +28,7 @@ Initialises variable by sampling from the uniform distribution. :ref:`More...<de
 			2
 			);
 	
-		:target:`SET_CODE<doxid-dd/da0/classInitVarSnippet_1_1Uniform_1a8934da78e9686b3f73c45ac9edfb6266>`("const scalar scale = $(max) - $(min);\ "$(value)=$(min)+($(gennrand_uniform)*scale);");
+		:target:`SET_CODE<doxid-dd/da0/classInitVarSnippet_1_1Uniform_1a0178b9f1627170eb8184777b51b478d6>`();
 		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-dd/da0/classInitVarSnippet_1_1Uniform_1a7a0123f8f1d664a8da72f1b469ab197f>`() const;
 	};
 
@@ -54,9 +54,10 @@ Inherited Members
 
 		// methods
 	
-		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1aad4f3bb00c5f29cb9d0e3585db3f4e20>`() const;
-		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1a450c7783570d875e19bcd8a88d10bbf6>`() const;
-		virtual std::string :ref:`getCode<doxid-d3/d9e/classInitVarSnippet_1_1Base_1aa3b44c4812a379342d46f8a9f5a0fcbf>`() const;
+		virtual :ref:`~Base<doxid-db/d97/classSnippet_1_1Base_1a17a9ca158277401f2c190afb1e791d1f>`();
+		virtual :ref:`StringVec<doxid-db/d97/classSnippet_1_1Base_1a06cd0f6da1424a20163e12b6fec62519>` :ref:`getParamNames<doxid-db/d97/classSnippet_1_1Base_1a0c8374854fbdc457bf0f75e458748580>`() const;
+		virtual :ref:`DerivedParamVec<doxid-db/d97/classSnippet_1_1Base_1ad14217cebf11eddffa751a4d5c4792cb>` :ref:`getDerivedParams<doxid-db/d97/classSnippet_1_1Base_1ab01de002618efa59541c927ffdd463f5>`() const;
+		virtual std::string :ref:`getCode<doxid-d3/d9e/classInitVarSnippet_1_1Base_1af6547fd34390034643ed1651f7cf1797>`() const;
 
 .. _details-dd/da0/classInitVarSnippet_1_1Uniform:
 

@@ -76,7 +76,7 @@ Single compartment Izhikevich neuron(s)
 	
 	for Linux, Mac and other UNIX users.
 
-Izhikevich neuron model: :ref:`[1] <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
+Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
 
 
 
@@ -154,7 +154,7 @@ Izhikevich neurons driven by Poisson input spike trains:
 	
 	for Linux, Mac and other UNIX users.
 
-Izhikevich neuron model: :ref:`[1] <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
+Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
 
 
 
@@ -233,7 +233,7 @@ Pulse-coupled Izhikevich network
 	
 	for Linux, Mac and other UNIX users.
 
-Izhikevich neuron model: :ref:`[1] <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
+Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
 
 
 
@@ -286,7 +286,7 @@ Izhikevich network with delayed synapses
 	
 	syn_delay [directory to save output]
 
-Izhikevich neuron model: :ref:`[1] <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
+Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITEREF_izhikevich2003simple>`
 
 
 
@@ -402,7 +402,7 @@ Insect olfaction model
 	olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
 	doi:10.1007/s00422-005-0019-7
 
-Nowotny insect olfaction model: :ref:`[3] <doxid-d0/de3/citelist_1CITEREF_nowotny2005self>`; Traub-Miles Hodgkin-Huxley neuron model: :ref:`[7] <doxid-d0/de3/citelist_1CITEREF_Traub1991>`
+Nowotny insect olfaction model: :ref:`nowotny2005self <doxid-d0/de3/citelist_1CITEREF_nowotny2005self>`; Traub-Miles Hodgkin-Huxley neuron model: :ref:`Traub1991 <doxid-d0/de3/citelist_1CITEREF_Traub1991>`
 
 
 
@@ -479,7 +479,7 @@ Voltage clamp simulation to estimate Hodgkin-Huxley parameters
 	
 	for Linux, Mac and other UNIX users.
 
-Traub-Miles Hodgkin-Huxley neuron model: :ref:`[7] <doxid-d0/de3/citelist_1CITEREF_Traub1991>`
+Traub-Miles Hodgkin-Huxley neuron model: :ref:`Traub1991 <doxid-d0/de3/citelist_1CITEREF_Traub1991>`
 
 
 

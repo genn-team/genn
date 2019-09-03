@@ -20,7 +20,7 @@ For example, to initialise synaptic connectivity with a 10% connection probabili
 
 	InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProb(0.1);
 	    
-	model.addSynapsePopulation<...>(
+	model.:ref:`addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`<...>(
 	        ...
 	        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
 
@@ -37,13 +37,13 @@ For example, the following sparse connectivity initialisation snippet could be u
 
 .. ref-code-block:: cpp
 
-	class Ring : public InitSparseConnectivitySnippet::Base
+	class Ring : public :ref:`InitSparseConnectivitySnippet::Base <doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>`
 	{
 	public:
-	    DECLARE_SNIPPET(Ring, 1);
+	    :ref:`DECLARE_SNIPPET <doxid-de/d6c/snippet_8h_1ac5727a6720d28f034afadde948ed6e9a>`(Ring, 1);
 	
-	    SET_ROW_BUILD_STATE_VARS({{"offset", {"unsigned int", 1}}}});
-	    SET_ROW_BUILD_CODE(
+	    :ref:`SET_ROW_BUILD_STATE_VARS <doxid-de/d51/initSparseConnectivitySnippet_8h_1abfe3722618884af89eb9c64e1345c03f>`({{"offset", {"unsigned int", 1}}}});
+	    :ref:`SET_ROW_BUILD_CODE <doxid-de/d51/initSparseConnectivitySnippet_8h_1a3758f6bc5bc997383426d5f277b8acc9>`(
 	        "const unsigned int target = ($(id_pre) + offset) % $(num_post);\n"
 	        "$(addSynapse, target);\n"
 	        "offset++;\n"
@@ -51,19 +51,19 @@ For example, the following sparse connectivity initialisation snippet could be u
 	        "   $(endRow);\n"
 	        "}\n");
 	
-	    SET_PARAM_NAMES({"numNeighbours"});
-	    SET_CALC_MAX_ROW_LENGTH_FUNC(
+	    :ref:`SET_PARAM_NAMES <doxid-de/d6c/snippet_8h_1a75315265035fd71c5b5f7d7f449edbd7>`({"numNeighbours"});
+	    :ref:`SET_CALC_MAX_ROW_LENGTH_FUNC <doxid-de/d51/initSparseConnectivitySnippet_8h_1adc763f727358b11685ddeab7ca8434f2>`(
 	        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
 	        {
 	            return (unsigned int)pars[0];
 	        });
-	    SET_CALC_MAX_COL_LENGTH_FUNC(
+	    :ref:`SET_CALC_MAX_COL_LENGTH_FUNC <doxid-de/d51/initSparseConnectivitySnippet_8h_1ad59a50b968b2b9dc03093ea1306eec40>`(
 	        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
 	        {
 	            return (unsigned int)pars[0];
 	        });
 	};
-	IMPLEMENT_SNIPPET(Ring);
+	:ref:`IMPLEMENT_SNIPPET <doxid-de/d6c/snippet_8h_1af3c47debe5fc34060e716d7db25462ab>`(Ring);
 
 Each *row* of sparse connectivity is initialised independantly by running the snippet of code specified using the ``:ref:`SET_ROW_BUILD_CODE() <doxid-de/d51/initSparseConnectivitySnippet_8h_1a3758f6bc5bc997383426d5f277b8acc9>``` macro within a loop. The $(num_post) variable can be used to access the number of neurons in the postsynaptic population and the $(id_pre) variable can be used to access the index of the presynaptic neuron associated with the row being generated. The ``:ref:`SET_ROW_BUILD_STATE_VARS() <doxid-de/d51/initSparseConnectivitySnippet_8h_1abfe3722618884af89eb9c64e1345c03f>``` macro can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row. Synapses are added to the row using the $(addSynapse, target) function and iteration is stopped using the $(endRow) function. To avoid having to manually call :ref:`SynapseGroup::setMaxConnections <doxid-dc/dfa/classSynapseGroup_1aab6b2fb0ad30189bc11ee3dd7d48dbb2>` and :ref:`SynapseGroup::setMaxSourceConnections <doxid-dc/dfa/classSynapseGroup_1a93b12c08d634f1a2300f1b91ef34ea24>`, sparse connectivity snippets can also provide code to calculate the maximum row and column lengths this connectivity will result in using the :ref:`SET_CALC_MAX_ROW_LENGTH_FUNC() <doxid-de/d51/initSparseConnectivitySnippet_8h_1adc763f727358b11685ddeab7ca8434f2>` and :ref:`SET_CALC_MAX_COL_LENGTH_FUNC() <doxid-de/d51/initSparseConnectivitySnippet_8h_1ad59a50b968b2b9dc03093ea1306eec40>` macros. Alternatively, if the maximum row or column length is constant, the ``:ref:`SET_MAX_ROW_LENGTH() <doxid-de/d51/initSparseConnectivitySnippet_8h_1a338915170111c85ba647e848d28ee2a9>``` and ``:ref:`SET_MAX_COL_LENGTH() <doxid-de/d51/initSparseConnectivitySnippet_8h_1a9d72764eb9a910bba6d4a1776717ba02>``` shorthand macros can be used.
 

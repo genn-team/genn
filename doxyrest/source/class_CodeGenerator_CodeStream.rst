@@ -33,12 +33,9 @@ class CodeGenerator::CodeStream
 		class :ref:`IndentBuffer<doxid-d7/db2/classCodeGenerator_1_1CodeStream_1_1IndentBuffer>`;
 		class :ref:`Scope<doxid-d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope>`;
 
-		// construction
+		// methods
 	
 		:target:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream_1a04a5a264774068dd66b7cd84d2e7a816>`();
 		:target:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream_1aa16ba20eb1d2da8dc23045ed8ca74d59>`(std::ostream& stream);
-
-		// methods
-	
 		void :target:`setSink<doxid-d9/df8/classCodeGenerator_1_1CodeStream_1abe44259e6c0aa0bedd34b99e641e2d87>`(std::ostream& stream);
 	};

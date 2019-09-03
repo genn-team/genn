@@ -10,7 +10,7 @@ Previously we have shown variables being initialised to constant values such as:
 
 .. ref-code-block:: cpp
 
-	NeuronModels::TraubMiles::VarValues ini(
+	:ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
 	    0.0529324,     // 1 - prob. for Na channel activation m
 	    ...
 	);
@@ -19,8 +19,8 @@ state variables can also be left *uninitialised* leaving it up to the user code 
 
 .. ref-code-block:: cpp
 
-	NeuronModels::TraubMiles::VarValues ini(
-	    uninitialisedVar(),     // 1 - prob. for Na channel activation m
+	:ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
+	    :ref:`uninitialisedVar <doxid-dc/de1/modelSpec_8h_1a6bd7d3c3ead0a4d0ffb15d2a4c67d043>`(),     // 1 - prob. for Na channel activation m
 	    ...
 	);
 
@@ -42,7 +42,7 @@ For example, to initialise a parameter using values drawn from the normal distri
 	    0.05,   // 0 - mean
 	    0.01);  // 1 - standard deviation
 	    
-	NeuronModels::TraubMiles::VarValues ini(
+	:ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
 	    initVar<InitVarSnippet::Normal>(params),     // 1 - prob. for Na channel activation m
 	    ...
 	);
@@ -58,12 +58,12 @@ Similarly to neuron, weight update and postsynaptic models, new variable initial
 
 .. ref-code-block:: cpp
 
-	class NormalPositive : public InitVarSnippet::Base
+	class NormalPositive : public :ref:`InitVarSnippet::Base <doxid-d3/d9e/classInitVarSnippet_1_1Base>`
 	{
 	public:
-	    DECLARE_SNIPPET(NormalPositive, 2);
+	    :ref:`DECLARE_SNIPPET <doxid-de/d6c/snippet_8h_1ac5727a6720d28f034afadde948ed6e9a>`(NormalPositive, 2);
 	
-	    SET_CODE(
+	    :ref:`SET_CODE <doxid-d9/ddf/initVarSnippet_8h_1a4b6549c5c6a7a5b8058283d68fa11578>`(
 	        "scalar normal;"
 	        "do\n"
 	        "{\n"
@@ -71,9 +71,9 @@ Similarly to neuron, weight update and postsynaptic models, new variable initial
 	        "} while (normal < 0.0);\n"
 	        "$(value) = normal;\n");
 	
-	    SET_PARAM_NAMES({"mean", "sd"});
+	    :ref:`SET_PARAM_NAMES <doxid-de/d6c/snippet_8h_1a75315265035fd71c5b5f7d7f449edbd7>`({"mean", "sd"});
 	};
-	IMPLEMENT_SNIPPET(NormalPositive);
+	:ref:`IMPLEMENT_SNIPPET <doxid-de/d6c/snippet_8h_1af3c47debe5fc34060e716d7db25462ab>`(NormalPositive);
 
 Within the snippet of code specified using the ``:ref:`SET_CODE() <doxid-d9/ddf/initVarSnippet_8h_1a4b6549c5c6a7a5b8058283d68fa11578>``` macro, when initialisising neuron and postaynaptic model state variables , the $(id) variable can be used to access the id of the neuron being initialised. Similarly, when initialising weight update model state variables, the $(id_pre) and $(id_post) variables can used to access the ids of the pre and postsynaptic neurons connected by the synapse being initialised.
 

@@ -19,7 +19,7 @@ Finally, to reduce confusion we should rename the model itself. Open ``tenHHRing
 
 .. ref-code-block:: cpp
 
-	model.setName("tenHHRing");
+	model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHRing");
 
 
 
@@ -32,16 +32,16 @@ We want to connect our ten neurons into a ring where each neuron connects to its
 
 .. ref-code-block:: cpp
 
-	class Ring : public InitSparseConnectivitySnippet::Base
+	class Ring : public :ref:`InitSparseConnectivitySnippet::Base <doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>`
 	{
 	public:
-	    DECLARE_SNIPPET(Ring, 0);
-	    SET_ROW_BUILD_CODE(
+	    :ref:`DECLARE_SNIPPET <doxid-de/d6c/snippet_8h_1ac5727a6720d28f034afadde948ed6e9a>`(Ring, 0);
+	    :ref:`SET_ROW_BUILD_CODE <doxid-de/d51/initSparseConnectivitySnippet_8h_1a3758f6bc5bc997383426d5f277b8acc9>`(
 	        "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
 	        "$(endRow);\n");
-	    SET_MAX_ROW_LENGTH(1);
+	    :ref:`SET_MAX_ROW_LENGTH <doxid-de/d51/initSparseConnectivitySnippet_8h_1a338915170111c85ba647e848d28ee2a9>`(1);
 	};
-	IMPLEMENT_SNIPPET(Ring);
+	:ref:`IMPLEMENT_SNIPPET <doxid-de/d6c/snippet_8h_1af3c47debe5fc34060e716d7db25462ab>`(Ring);
 
 The ``SET_ROW_BUILD_CODE`` code string will be called to generate each row of the synaptic matrix (connections coming from a single presynaptic neuron) and, in this case, each row consists of a single synapses from the presynaptic neuron $(id_pre) to $(id_pre) + 1 (the modulus operator is used to ensure that the final connection between neuron ``9`` and ``0`` is made correctly). In order to allow GeNN to better optimise the generated code we also provide a maximum row length. In this case each row always contains only one synapse but, when more complex connectivity is used, the number of neurons in the pre and postsynaptic population as well as any parameters used to configure the snippet can be accessed from this function. When defining GeNN code strings, the $(VariableName) syntax is used to refer to variables provided by GeNN and the $(FunctionName, Parameter1,...) syntax is used to call functions provided by GeNN.
 
@@ -61,7 +61,7 @@ Now we need additional initial values and parameters for the synapse and post-sy
 	WeightUpdateModels::StaticPulse::VarValues s_ini(
 	    -0.2); // 0 - g: the synaptic conductance value
 	
-	PostsynapticModels::ExpCond::ParamValues ps_p(
+	:ref:`PostsynapticModels::ExpCond::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` ps_p(
 	    1.0,    // 0 - tau_S: decay time constant for S [ms]
 	    -80.0); // 1 - Erev: Reversal potential
 
@@ -71,8 +71,8 @@ We can then add a synapse population at the end of the ``modelDefinition(...)`` 
 
 .. ref-code-block:: cpp
 
-	model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-	    "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 10,
+	model.:ref:`addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`<:ref:`WeightUpdateModels::StaticPulse <doxid-d9/d74/classWeightUpdateModels_1_1StaticPulse>`, :ref:`PostsynapticModels::ExpCond <doxid-d5/d27/classPostsynapticModels_1_1ExpCond>`>(
+	    "Pop1self", :ref:`SynapseMatrixType::SPARSE_GLOBALG <doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d>`, 10,
 	    "Pop1", "Pop1",
 	    {}, s_ini,
 	    ps_p, {},
@@ -111,24 +111,24 @@ Adding the addSynapsePopulation command to the model definition informs GeNN tha
 	// Model definition file tenHHRing.cc
 	#include "modelSpec.h"
 	
-	class Ring : public InitSparseConnectivitySnippet::Base
+	class Ring : public :ref:`InitSparseConnectivitySnippet::Base <doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>`
 	{
 	public:
-	    DECLARE_SNIPPET(Ring, 0);
-	    SET_ROW_BUILD_CODE(
+	    :ref:`DECLARE_SNIPPET <doxid-de/d6c/snippet_8h_1ac5727a6720d28f034afadde948ed6e9a>`(Ring, 0);
+	    :ref:`SET_ROW_BUILD_CODE <doxid-de/d51/initSparseConnectivitySnippet_8h_1a3758f6bc5bc997383426d5f277b8acc9>`(
 	        "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
 	        "$(endRow);\n");
-	    SET_MAX_ROW_LENGTH(1);
+	    :ref:`SET_MAX_ROW_LENGTH <doxid-de/d51/initSparseConnectivitySnippet_8h_1a338915170111c85ba647e848d28ee2a9>`(1);
 	};
-	IMPLEMENT_SNIPPET(Ring);
+	:ref:`IMPLEMENT_SNIPPET <doxid-de/d6c/snippet_8h_1af3c47debe5fc34060e716d7db25462ab>`(Ring);
 	
-	void modelDefinition(ModelSpec &model)
+	void modelDefinition(:ref:`ModelSpec <doxid-da/dfd/classModelSpec>` &model)
 	{
 	    // definition of tenHHRing
-	    model.setDT(0.1);
-	    model.setName("tenHHRing");
+	    model.:ref:`setDT <doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
+	    model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHRing");
 	
-	    NeuronModels::TraubMiles::ParamValues p(
+	    :ref:`NeuronModels::TraubMiles::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` p(
 	        7.15,       // 0 - gNa: Na conductance in muS
 	        50.0,       // 1 - ENa: Na equi potential in mV
 	        1.43,       // 2 - gK: K conductance in muS
@@ -137,23 +137,23 @@ Adding the addSynapsePopulation command to the model definition informs GeNN tha
 	        -63.563,    // 5 - El: leak equi potential in mV
 	        0.143);     // 6 - Cmem: membr. capacity density in nF
 	
-	    NeuronModels::TraubMiles::VarValues ini(
+	    :ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
 	        -60.0,         // 0 - membrane potential V
 	        0.0529324,     // 1 - prob. for Na channel activation m
 	        0.3176767,     // 2 - prob. for not Na channel blocking h
 	        0.5961207);    // 3 - prob. for K channel activation n
 	
-	    model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
+	    model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`>("Pop1", 10, p, ini);
 	
 	    WeightUpdateModels::StaticPulse::VarValues s_ini(
 	         -0.2); // 0 - g: the synaptic conductance value
 	
-	    PostsynapticModels::ExpCond::ParamValues ps_p(
+	    :ref:`PostsynapticModels::ExpCond::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` ps_p(
 	        1.0,    // 0 - tau_S: decay time constant for S [ms]
 	        -80.0); // 1 - Erev: Reversal potential
 	
-	    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-	        "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 100,
+	    model.:ref:`addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`<:ref:`WeightUpdateModels::StaticPulse <doxid-d9/d74/classWeightUpdateModels_1_1StaticPulse>`, :ref:`PostsynapticModels::ExpCond <doxid-d5/d27/classPostsynapticModels_1_1ExpCond>`>(
+	        "Pop1self", :ref:`SynapseMatrixType::SPARSE_GLOBALG <doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d>`, 100,
 	        "Pop1", "Pop1",
 	        {}, s_ini,
 	        ps_p, {},
@@ -175,7 +175,7 @@ Now we can open the ``tenHHRingSimulation.cc`` file and update the file name of 
 	// tenHHRingModel simulation code
 	#include "tenHHRing_CODE/definitions.h"
 
-Additionally, we need to add a call to a second initialisation function to ``:ref:`main() <doxid-dd/d90/generator_8cc_1a0ddf1224851353fc92bfbff6f499fa97>``` after we call ``initialize()`` :
+Additionally, we need to add a call to a second initialisation function to ``main()`` after we call ``initialize()`` :
 
 .. ref-code-block:: cpp
 
@@ -188,7 +188,7 @@ This initializes any variables associated with the sparse connectivity we have a
 
 
 .. image:: tenHHRingexample1.png
-	:width: 10
+	:alt: width=10cm
 
 This is because none of the neurons are spiking so there are no spikes to propagate around the ring.
 
@@ -205,26 +205,26 @@ We can use a :ref:`NeuronModels::SpikeSource <doxid-d5/d1f/classNeuronModels_1_1
 
 .. ref-code-block:: cpp
 
-	class FirstToFirst : public InitSparseConnectivitySnippet::Base
+	class FirstToFirst : public :ref:`InitSparseConnectivitySnippet::Base <doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>`
 	{
 	public:
-	    DECLARE_SNIPPET(FirstToFirst, 0);
-	    SET_ROW_BUILD_CODE(
+	    :ref:`DECLARE_SNIPPET <doxid-de/d6c/snippet_8h_1ac5727a6720d28f034afadde948ed6e9a>`(FirstToFirst, 0);
+	    :ref:`SET_ROW_BUILD_CODE <doxid-de/d51/initSparseConnectivitySnippet_8h_1a3758f6bc5bc997383426d5f277b8acc9>`(
 	        "if($(id_pre) == 0) {\n"
 	        "   $(addSynapse, $(id_pre));\n"
 	        "}\n"
 	        "$(endRow);\n");
-	    SET_MAX_ROW_LENGTH(1);
+	    :ref:`SET_MAX_ROW_LENGTH <doxid-de/d51/initSparseConnectivitySnippet_8h_1a338915170111c85ba647e848d28ee2a9>`(1);
 	};
-	IMPLEMENT_SNIPPET(FirstToFirst);
+	:ref:`IMPLEMENT_SNIPPET <doxid-de/d6c/snippet_8h_1af3c47debe5fc34060e716d7db25462ab>`(FirstToFirst);
 
 We then need to add it to the network by adding the following to the end of the ``modelDefinition(...)`` function:
 
 .. ref-code-block:: cpp
 
-	model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
-	model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-	    "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+	model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::SpikeSource <doxid-d5/d1f/classNeuronModels_1_1SpikeSource>`>("Stim", 1, {}, {});
+	model.:ref:`addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`<:ref:`WeightUpdateModels::StaticPulse <doxid-d9/d74/classWeightUpdateModels_1_1StaticPulse>`, :ref:`PostsynapticModels::ExpCond <doxid-d5/d27/classPostsynapticModels_1_1ExpCond>`>(
+	    "StimPop1", :ref:`SynapseMatrixType::SPARSE_GLOBALG <doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d>`, :ref:`NO_DELAY <doxid-dc/de1/modelSpec_8h_1a291aa33d0e485ee09a6881cf8056e13c>`,
 	    "Stim", "Pop1",
 	    {}, s_ini,
 	    ps_p, {},
@@ -249,37 +249,37 @@ At this point our user code ``tenHHRingModel.cc`` should look like this
 	// Model definintion file tenHHRing.cc
 	#include "modelSpec.h"
 	
-	class Ring : public InitSparseConnectivitySnippet::Base
+	class Ring : public :ref:`InitSparseConnectivitySnippet::Base <doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>`
 	{
 	public:
-	    DECLARE_SNIPPET(Ring, 0);
-	    SET_ROW_BUILD_CODE(
+	    :ref:`DECLARE_SNIPPET <doxid-de/d6c/snippet_8h_1ac5727a6720d28f034afadde948ed6e9a>`(Ring, 0);
+	    :ref:`SET_ROW_BUILD_CODE <doxid-de/d51/initSparseConnectivitySnippet_8h_1a3758f6bc5bc997383426d5f277b8acc9>`(
 	        "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
 	        "$(endRow);\n");
-	    SET_MAX_ROW_LENGTH(1);
+	    :ref:`SET_MAX_ROW_LENGTH <doxid-de/d51/initSparseConnectivitySnippet_8h_1a338915170111c85ba647e848d28ee2a9>`(1);
 	};
-	IMPLEMENT_SNIPPET(Ring);
+	:ref:`IMPLEMENT_SNIPPET <doxid-de/d6c/snippet_8h_1af3c47debe5fc34060e716d7db25462ab>`(Ring);
 	
-	class FirstToFirst : public InitSparseConnectivitySnippet::Base
+	class FirstToFirst : public :ref:`InitSparseConnectivitySnippet::Base <doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>`
 	{
 	public:
-	    DECLARE_SNIPPET(FirstToFirst, 0);
-	    SET_ROW_BUILD_CODE(
+	    :ref:`DECLARE_SNIPPET <doxid-de/d6c/snippet_8h_1ac5727a6720d28f034afadde948ed6e9a>`(FirstToFirst, 0);
+	    :ref:`SET_ROW_BUILD_CODE <doxid-de/d51/initSparseConnectivitySnippet_8h_1a3758f6bc5bc997383426d5f277b8acc9>`(
 	        "if($(id_pre) == 0) {\n"
 	        "   $(addSynapse, $(id_pre));\n"
 	        "}\n"
 	        "$(endRow);\n");
-	    SET_MAX_ROW_LENGTH(1);
+	    :ref:`SET_MAX_ROW_LENGTH <doxid-de/d51/initSparseConnectivitySnippet_8h_1a338915170111c85ba647e848d28ee2a9>`(1);
 	};
-	IMPLEMENT_SNIPPET(FirstToFirst);
+	:ref:`IMPLEMENT_SNIPPET <doxid-de/d6c/snippet_8h_1af3c47debe5fc34060e716d7db25462ab>`(FirstToFirst);
 	
-	void modelDefinition(ModelSpec &model)
+	void modelDefinition(:ref:`ModelSpec <doxid-da/dfd/classModelSpec>` &model)
 	{
 	    // definition of tenHHRing
-	    model.setDT(0.1);
-	    model.setName("tenHHRing");
+	    model.:ref:`setDT <doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
+	    model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHRing");
 	
-	    NeuronModels::TraubMiles::ParamValues p(
+	    :ref:`NeuronModels::TraubMiles::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` p(
 	        7.15,       // 0 - gNa: Na conductance in muS
 	        50.0,       // 1 - ENa: Na equi potential in mV
 	        1.43,       // 2 - gK: K conductance in muS
@@ -288,31 +288,31 @@ At this point our user code ``tenHHRingModel.cc`` should look like this
 	        -63.563,    // 5 - El: leak equi potential in mV
 	        0.143);     // 6 - Cmem: membr. capacity density in nF
 	
-	    NeuronModels::TraubMiles::VarValues ini(
+	    :ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
 	        -60.0,         // 0 - membrane potential V
 	        0.0529324,     // 1 - prob. for Na channel activation m
 	        0.3176767,     // 2 - prob. for not Na channel blocking h
 	        0.5961207);    // 3 - prob. for K channel activation n
 	
-	    model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
-	    model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
+	    model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`>("Pop1", 10, p, ini);
+	    model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::SpikeSource <doxid-d5/d1f/classNeuronModels_1_1SpikeSource>`>("Stim", 1, {}, {});
 	
 	    WeightUpdateModels::StaticPulse::VarValues s_ini(
 	         -0.2); // 0 - g: the synaptic conductance value
 	
-	    PostsynapticModels::ExpCond::ParamValues ps_p(
+	    :ref:`PostsynapticModels::ExpCond::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` ps_p(
 	        1.0,    // 0 - tau_S: decay time constant for S [ms]
 	        -80.0); // 1 - Erev: Reversal potential
 	
-	    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-	        "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 100,
+	    model.:ref:`addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`<:ref:`WeightUpdateModels::StaticPulse <doxid-d9/d74/classWeightUpdateModels_1_1StaticPulse>`, :ref:`PostsynapticModels::ExpCond <doxid-d5/d27/classPostsynapticModels_1_1ExpCond>`>(
+	        "Pop1self", :ref:`SynapseMatrixType::SPARSE_GLOBALG <doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d>`, 100,
 	        "Pop1", "Pop1",
 	        {}, s_ini,
 	        ps_p, {},
 	        initConnectivity<Ring>());
 	
-	    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-	        "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+	    model.:ref:`addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`<:ref:`WeightUpdateModels::StaticPulse <doxid-d9/d74/classWeightUpdateModels_1_1StaticPulse>`, :ref:`PostsynapticModels::ExpCond <doxid-d5/d27/classPostsynapticModels_1_1ExpCond>`>(
+	        "StimPop1", :ref:`SynapseMatrixType::SPARSE_GLOBALG <doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d>`, :ref:`NO_DELAY <doxid-dc/de1/modelSpec_8h_1a291aa33d0e485ee09a6881cf8056e13c>`,
 	        "Stim", "Pop1",
 	        {}, s_ini,
 	        ps_p, {},
@@ -363,7 +363,7 @@ Finally if we build, make and run this model; and plot the first 200 ms of the t
 
 
 .. image:: tenHHRingexample2.png
-	:width: 10
+	:alt: width=10cm
 
 :ref:`Previous <doxid-d5/dbb/Tutorial1>` \| :ref:`Top <doxid-dc/d7e/Tutorial2>` \| :ref:`Next <doxid-d0/da6/UserGuide>`
 
