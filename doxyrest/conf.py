@@ -50,5 +50,5 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-# The document name of the “master” document, that is, the document that contains the root toctree directive.
-master_doc = "index"
+# The document name of the "master" document, that is, the document that contains the root toctree directive.
+master_doc = "source/index"
