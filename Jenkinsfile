@@ -91,6 +91,11 @@ for(b in desiredBuilds) {
     }
 }
 
+node("master") {
+    buildStep("Skipping builds triggered from CI") {
+        scmSkip(deleteBuild: true, skipPattern:".*\\[ci skip\\].*")
+    }
+}
 //--------------------------------------------------------------------------
 // Parallel build step
 //--------------------------------------------------------------------------
