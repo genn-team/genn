@@ -340,19 +340,22 @@ parallel builders
 node("master") {
     buildStep("Building documentation") {
         dir("genn") {
-            // Make documentation, add generated rst files to git and push
-            // **NOTE** use [ci skip] to prevent Jenkins getting stuck in a loop of doom
-            script = """
-            ./makedoc
-            git add doxyrest/source/
-            git commit -m "automatic commit of doxyrest documentation [ci skip]"
-            git pull
-            git push --set-upstream origin ${scm.branches[0]}
-            """
+            // Use credentials for git
+            withCredentials([usernamePassword(credentialsId: "genn-jenkins-ci", passwordVariable: "GIT_PASSWORD", usernameVariable: "GIT_USERNAME")]) {
+                // Make documentation, add generated rst files to git and push
+                // **NOTE** use [ci skip] to prevent Jenkins getting stuck in a loop of doom
+                script = """
+                ./makedoc
+                git add doxyrest/source/
+                git commit -m "automatic commit of doxyrest documentation [ci skip]"
+                git pull
+                git push --set-upstream origin ${scm.branches[0]}
+                """
 
-            def docStatusCode = sh script:script, returnStatus:true
-            if(docStatusCode != 0) {
-                setBuildStatus("Building documentation", "FAILURE");
+                def docStatusCode = sh script:script, returnStatus:true
+                if(docStatusCode != 0) {
+                    setBuildStatus("Building documentation", "FAILURE");
+                }
             }
         }
     }
