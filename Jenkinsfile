@@ -349,7 +349,7 @@ node("master") {
                 git add doxyrest/source/
                 git commit -m "automatic commit of doxyrest documentation [ci skip]"
                 git pull
-                git push --set-upstream origin ${scm.branches[0]}
+                git push --set-upstream https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/genn-team/genn.git ${scm.branches[0]}
                 """
 
                 def docStatusCode = sh script:script, returnStatus:true
