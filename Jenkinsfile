@@ -237,7 +237,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             virtualenv virtualenv
                             . virtualenv/bin/activate
 
-                            pip install numpy
+                            pip install "numpy>1.6, < 1.15"
 
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
@@ -294,25 +294,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                             def wheelStatusCode = bat script:script, returnStatus:true
                             if(wheelStatusCode != 0) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                            }
-                        }
-
-                        // If node isn't CPU only
-                        if(!nodeLabel.contains("cpu_only")) {
-                            // Loop through node labels
-                            for(l in nodeLabel) {
-                                // If label starts with CUDA
-                                if(l.startsWith("cuda")) {
-                                    // Rename wheel with cuda version prefix
-                                    if(isUnix()) {
-                                        sh "find . -name \"*.whl\" -exec sh -c 'mv \$(basename \$1) " + l + "-\$(basename \$1)' x {} \\;";
-                                    }
-                                    else {
-                                        bat "FOR /f \"tokens=*\" %%w IN ('DIR /b *.whl') DO REN \"%%w\" \"" + l + "-%%w\"";
-                                    }
-
-                                    break;
-                                }
                             }
                         }
 

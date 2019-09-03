@@ -1,4 +1,13 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.0.2
+====
+This release fixes several small issues with the generation of binary wheels for Python:
+
+Bug fixes:
+----
+1. There was a conflict between the versions of numpy used to build the wheels and the version required for the PyGeNN packages
+2. Wheels were renamed to include the CUDA version which broke them.
+
 Release Notes for GeNN v4.0.1
 ====
 This release fixes several small bugs found in GeNN 4.0.0 and implements some small features:
