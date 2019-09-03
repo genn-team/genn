@@ -124,7 +124,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                     dir("genn") {
                         // Checkout GeNN into it
                         // **NOTE** because we're using multi-branch project URL is substituted here
-                        checkout scm
+                        // **NOTE** for some reason without extensions, Jenkins leaves branch with detached head (https://stackoverflow.com/questions/44006070/jenkins-gitscm-finishes-the-clone-in-a-detached-head-state-how-can-i-make-sure)
+                        checkout scm, extensions: [[$class: "LocalBranch", localBranch: "**"]]
                     }
                     
                     // **NOTE** only try and set build status AFTER checkout
