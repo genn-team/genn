@@ -86,7 +86,7 @@ INDEX_TITLE = "My Project Documentation"
 --! documentation pages.
 --!
 
-INTRO_FILE = "doxyrest/page_index.rst"
+INTRO_FILE = "page_index.rst"
 
 --!
 --! Specify whether to sort groups lexicographically (by ``title``) or
