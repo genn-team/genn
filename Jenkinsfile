@@ -341,13 +341,12 @@ node("master") {
     buildStep("Building documentation") {
         withEnv(["GENN_PATH=" + pwd() + "/genn"]) {
             dir("genn") {
-
                 // Use credentials for git
                 withCredentials([usernamePassword(credentialsId: "genn-jenkins-ci", passwordVariable: "GIT_PASSWORD", usernameVariable: "GIT_USERNAME")]) {
                     // Make documentation, add generated rst files to git and push
                     script = """
                     ./makedoc
-                    git add doxyrest/source/
+                    git add docs/source/
                     git commit -m "automatic commit of doxyrest documentation"
                     git pull
                     git push --set-upstream https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/genn-team/genn.git ${scm.branches[0]}

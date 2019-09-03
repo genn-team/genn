@@ -57,7 +57,7 @@ INPUT_FILE = "documentation/xml/index.xml"
 --! the default output master file.
 --!
 
-OUTPUT_FILE = "doxyrest/source/index.rst"
+OUTPUT_FILE = "docs/source/index.rst"
 
 --!
 --! File with project-specific reStructuredText definitions. When non``nil``,

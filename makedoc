@@ -11,4 +11,4 @@ doxygen/fixLatexLabels.pl documentation/latex/refman.tex
 doxygen/replace_in_files.pl "\\\\backmatter" "" documentation/latex/refman.tex
 
 # Run doxyrest to generate rest format documentation
-doxyrest -c doxyrest/doxyrest-config.lua -F $DOXYREST_FRAME_DIR/common/ -F $DOXYREST_FRAME_DIR/cfamily 
+doxyrest -c docs/doxyrest-config.lua -F $DOXYREST_FRAME_DIR/common/ -F $DOXYREST_FRAME_DIR/cfamily 
