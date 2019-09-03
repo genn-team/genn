@@ -421,11 +421,10 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         procPopSubs.addVarSubstitution("id_pre", "preInd");
 
         // If this connectivity requires an RNG for initialisation,
-        // make copy of connect  phillox RNG and skip ahead by thread id
-        // **NOTE** not LOCAL id
+        // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
         if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
             os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
-            os << "skipahead_sequence((unsigned long long)(" << backend.getProceduralConnectivitySequence(sg, model) << " + preInd), &connectRNG);" << std::endl;
+            os << "skipahead_sequence((unsigned long long)(" << backend.getProceduralConnectivitySequence(sg, model) << " + " << popSubs["id"] << "), &connectRNG);" << std::endl;
 
             // Add substitution for RNGwumProceduralConnectHandler
             procPopSubs.addVarSubstitution("rng", "&connectRNG");

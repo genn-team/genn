@@ -888,16 +888,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 
     // Count the number of threads that will be used to initialize connectivity or initialize state variables for procedural connectivity
-    const size_t numConnectivityThreads = std::accumulate(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), 0,
-                                                          [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
-                                                          {
-                                                              if(s.second.isSparseConnectivityInitRequired() || isProceduralInitRequired(s.second)) {
-                                                                  return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]));
-                                                              }
-                                                              else {
-                                                                  return acc;
-                                                              }
-                                                          });
+    const size_t numProceduralThreads = std::accumulate(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), 0,
+                                                        [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
+                                                        {
+                                                            if(isProceduralInitRequired(s.second)) {
+                                                                return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getNumThreadsPerSpike(), m_KernelBlockSizes[KernelInitialize]));
+                                                            }
+                                                            else {
+                                                                return acc;
+                                                            }
+                                                        });
 
     // Build map of extra global parameters for init kernel
     std::map<std::string, std::string> initKernelParameters;
@@ -1002,11 +1002,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << std::endl;
 
         os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Synapse groups with sparse or procedural connectivity" << std::endl;
+        os << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroupInternal &sg){ return (sg.isSparseConnectivityInitRequired() || isProceduralInitRequired(sg)); },
-            [&model, numConnectivityThreads, sgProceduralInitHandler, sgSparseConnectHandler, this]
+            [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
+            [&model, sgSparseConnectHandler, this]
             (CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
@@ -1048,43 +1048,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         popSubs.addFuncSubstitution("addSynapse", 1,
                                                     ind + "[(" + popSubs["id"] + " * " + std::to_string(sg.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)");
                     }
-                    else if(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-                        // **TODO** make generic
-                        // Generate value initialisation code into new stream
-                        std::ostringstream valueInitStream;
-                        CodeStream valueInit(valueInitStream);
-
-                        // If this state variable requires an RNG for initialisation,
-                        // make copy of global phillox RNG and skip ahead by thread id,
-                        // offsetting past those used for connectivity
-                        if(sg.isWUInitRNGRequired()) {
-                            os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                            os << "skipahead_sequence((unsigned long long)(" << numConnectivityThreads << " + id), &initRNG);" << std::endl;
-                        }
-
-                        // Create new substition stack for initializing synaptic variables
-                        Substitutions initSubs(popSubs);
-                        initSubs.addVarSubstitution("id_post", "$(0)");
-                        initSubs.addVarSubstitution("id_syn", "idx");
-
-                        // Add new substition for RNG
-                        if(sg.isWUInitRNGRequired()) {
-                            initSubs.addVarSubstitution("rng", "&initRNG");
-                        }
-
-                        // Call handler to initialise synapse
-                        sgProceduralInitHandler(valueInit, sg, initSubs);
-
-                        // After initialising all variables associated with this synapse, advance to next
-                        valueInit << "idx++;" << std::endl;
-
-                        // Calculate synapse index for first row
-                        os << "unsigned int idx = " << popSubs["id"] << " * " << sg.getMaxConnections() << ";" << std::endl;
-
-                        // Substitute our value initialization code for the addSynapse function
-                        popSubs.addFuncSubstitution("addSynapse", 1, valueInitStream.str());
-
-                    }
                     else {
                         assert(false);
                     }
@@ -1103,12 +1066,115 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     sgSparseConnectHandler(os, sg, popSubs);
                 }
             });
-    }
-    os << std::endl;
+        os << std::endl;
 
-    // Because the previous block of code may have used two sequences per thread,
-    // add padding before the first sequence used for initialization of sparse connectivity
-    const size_t staticInitSequenceEnd = idInitStart + numConnectivityThreads;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Synapse groups with procedural connectivity" << std::endl;
+        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
+            [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike(), m_KernelBlockSizes[KernelInitialize]); },
+            [](const SynapseGroupInternal &sg){ return isProceduralInitRequired(sg); },
+            [&model, numProceduralThreads, sgProceduralInitHandler, sgSparseConnectHandler, this]
+            (CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+            {
+                const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
+                const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
+
+                // Determine the index of the presynaptic neuron this thread is responsible for
+                if(sg.getNumThreadsPerSpike() > 1) {
+                    os << "const unsigned int preInd = " << popSubs["id"] << " / " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+                    os << "const unsigned int thread = " << popSubs["id"] << " % " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+                }
+                else {
+                    os << "const unsigned int preInd = " << popSubs["id"] << ";" << std::endl;
+                }
+
+                os << "// only do this for existing presynaptic neurons" << std::endl;
+                os << "if(preInd < " << numSrcNeurons << ")";
+                {
+                    CodeStream::Scope b(os);
+                    popSubs.addVarSubstitution("id_pre", "preInd");
+
+                    // If we are using more than one thread to process each row
+                    if(sg.getNumThreadsPerSpike() > 1) {
+                        // Calculate how long the sub-row to process on each thread is
+                        const unsigned int numPostPerThread = Utils::ceilDivide(numTrgNeurons, sg.getNumThreadsPerSpike());
+
+                        os << "const unsigned int idPostStart = thread * " << numPostPerThread << ";" << std::endl;
+
+                        // If number of post neurons per thread directly divides total number of postsynaptic neurons
+                        if((numTrgNeurons % numPostPerThread) == 0) {
+                            os << "const unsigned int idPostEnd = idPostStart + " << numPostPerThread << ";" << std::endl;
+                        }
+                        // Otherwise clamp
+                        else {
+                            os << "const unsigned int idPostEnd = umin(idPostStart + " << numPostPerThread << ", " << numTrgNeurons << ");" << std::endl;
+                        }
+
+                        popSubs.addVarSubstitution("id_post_begin", "idPostStart");
+                        popSubs.addVarSubstitution("id_post_end", "idPostEnd");
+
+                    }
+                    // Otherwise, set the beginning and end ID to the entire range of postsynaptic neurons
+                    else {
+                        popSubs.addVarSubstitution("id_post_begin", "0");
+                        popSubs.addVarSubstitution("id_post_end", std::to_string(numTrgNeurons));
+                    }
+
+                    // **TODO** make generic
+                    // Generate value initialisation code into new stream
+                    std::ostringstream valueInitStream;
+                    CodeStream valueInit(valueInitStream);
+
+                    // If this state variable requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id,
+                    // offsetting past those used for procedural connectivity
+                    if(sg.isWUInitRNGRequired()) {
+                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)(" << numProceduralThreads << " + id), &initRNG);" << std::endl;
+                    }
+
+                    // Create new substition stack for initializing synaptic variables
+                    Substitutions initSubs(popSubs);
+                    initSubs.addVarSubstitution("id_post", "$(0)");
+                    initSubs.addVarSubstitution("id_syn", "idx");
+
+                    // Add new substition for RNG
+                    if(sg.isWUInitRNGRequired()) {
+                        initSubs.addVarSubstitution("rng", "&initRNG");
+                    }
+
+                    // Call handler to initialise synapse
+                    sgProceduralInitHandler(valueInit, sg, initSubs);
+
+                    // After initialising all variables associated with this synapse, advance to next
+                    valueInit << "idx++;" << std::endl;
+
+                    // Calculate synapse index for first row
+                    os << "unsigned int idx = preInd * " << sg.getMaxConnections() << ";" << std::endl;
+
+                    // Substitute our value initialization code for the addSynapse function
+                    popSubs.addFuncSubstitution("addSynapse", 1, valueInitStream.str());
+
+                    // If this connectivity requires an RNG for initialisation,
+                    // make copy of global phillox RNG and skip ahead by thread id
+                    // **NOTE** not LOCAL id
+                    if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                        os << "curandStatePhilox4_32_10_t connectivityRNG = dd_rng[0];" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)id, &connectivityRNG);" << std::endl;
+
+                        // Add substitution for RNG
+                        popSubs.addVarSubstitution("rng", "&connectivityRNG");
+                    }
+
+                    sgSparseConnectHandler(os, sg, popSubs);
+                }
+            });
+        os << std::endl;
+    }
+
+    // Because the previous block of code may have used two sequences per thread, add padding before
+    // the first sequence used for initialization of variables associated with procedural connectivity
+    const size_t staticInitSequenceEnd = idInitStart + numProceduralThreads;
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
@@ -2079,6 +2145,18 @@ size_t Backend::getProceduralConnectivitySequence(const SynapseGroupInternal &sg
                                  }
                              });
 
+    // Add on total number of threads used to initialize sparse connectivity
+    thread = std::accumulate(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), thread,
+                             [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
+                             {
+                                 if(s.second.isSparseConnectivityInitRequired()) {
+                                     return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]));
+                                 }
+                                 else {
+                                     return acc;
+                                 }
+                             });
+
     // Find the synapse group we're interested in in map
     const auto sgIter = model.getLocalSynapseGroups().find(sg.getName());
     assert(sgIter != model.getLocalSynapseGroups().cend());
@@ -2087,8 +2165,8 @@ size_t Backend::getProceduralConnectivitySequence(const SynapseGroupInternal &sg
     return std::accumulate(model.getLocalSynapseGroups().cbegin(), sgIter, thread,
                            [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
                            {
-                               if(s.second.isSparseConnectivityInitRequired() || isProceduralInitRequired(s.second)) {
-                                   return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]));
+                               if(isProceduralInitRequired(s.second)) {
+                                   return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getNumThreadsPerSpike(), m_KernelBlockSizes[KernelInitialize]));
                                }
                                else {
                                    return acc;
