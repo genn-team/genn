@@ -16,6 +16,11 @@
 class ModelSpecInternal;
 class SynapseGroupInternal;
 
+namespace CodeGenerator
+{
+class Substitutions;
+}
+
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
@@ -49,56 +54,6 @@ struct FunctionTemplate
 };
 
 //--------------------------------------------------------------------------
-// StructNameConstIter
-//--------------------------------------------------------------------------
-//! Custom iterator for iterating through the containers of structs with 'name' members
-template<typename BaseIter>
-class StructNameConstIter : public BaseIter
-{
-private:
-public:
-    StructNameConstIter() {}
-    StructNameConstIter(BaseIter iter) : BaseIter(iter) {}
-
-    //--------------------------------------------------------------------------
-    // Operators
-    //--------------------------------------------------------------------------
-    const std::string *operator->() const
-    {
-        return static_cast<const std::string*>(&BaseIter::operator->()->name);
-    }
-
-    const std::string &operator*() const
-    {
-        return BaseIter::operator*().name;
-    }
-};
-
-//----------------------------------------------------------------------------
-// NameIterCtx
-//----------------------------------------------------------------------------
-template<typename Container>
-struct NameIterCtx
-{
-    typedef StructNameConstIter<typename Container::const_iterator> NameIter;
-
-    NameIterCtx(const Container &c) :
-        container(c), nameBegin(std::begin(container)), nameEnd(std::end(container)){}
-
-    const Container container;
-    const NameIter nameBegin;
-    const NameIter nameEnd;
-};
-
-//----------------------------------------------------------------------------
-// Typedefines
-//----------------------------------------------------------------------------
-typedef NameIterCtx<Models::Base::VarVec> VarNameIterCtx;
-typedef NameIterCtx<Snippet::Base::EGPVec> EGPNameIterCtx;
-typedef NameIterCtx<Snippet::Base::DerivedParamVec> DerivedParamNameIterCtx;
-typedef NameIterCtx<Snippet::Base::ParamValVec> ParamValIterCtx;
-
-//--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
 void substitute(std::string &s, const std::string &trg, const std::string &rep);
@@ -126,27 +81,6 @@ bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::stri
 //--------------------------------------------------------------------------
 void functionSubstitute(std::string &code, const std::string &funcName,
                         unsigned int numParams, const std::string &replaceFuncTemplate);
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets.
-//--------------------------------------------------------------------------
-template<typename NameIter>
-inline void name_substitutions(std::string &code, const std::string &prefix, NameIter namesBegin, NameIter namesEnd, const std::string &postfix= "", const std::string &ext = "")
-{
-    for (NameIter n = namesBegin; n != namesEnd; n++) {
-        substitute(code,
-                   "$(" + *n + ext + ")",
-                   prefix + *n + postfix);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of name substitutions for variables in code snippets.
-//--------------------------------------------------------------------------
-inline void name_substitutions(std::string &code, const std::string &prefix, const std::vector<std::string> &names, const std::string &postfix= "", const std::string &ext = "")
-{
-    name_substitutions(code, prefix, names.cbegin(), names.cend(), postfix, ext);
-}
 
 //--------------------------------------------------------------------------
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
@@ -187,31 +121,6 @@ std::string writePreciseString(T value)
 }
 
 //--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets.
-//--------------------------------------------------------------------------
-template<typename NameIter>
-inline void value_substitutions(std::string &code, NameIter namesBegin, NameIter namesEnd, const std::vector<double> &values, const std::string &ext = "")
-{
-    NameIter n = namesBegin;
-    auto v = values.cbegin();
-    for (;n != namesEnd && v != values.cend(); n++, v++) {
-        std::stringstream stream;
-        writePreciseString(stream, *v);
-        substitute(code,
-                   "$(" + *n + ext + ")",
-                   "(" + stream.str() + ")");
-    }
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function performs a list of value substitutions for parameters in code snippets.
-//--------------------------------------------------------------------------
-inline void value_substitutions(std::string &code, const std::vector<std::string> &names, const std::vector<double> &values, const std::string &ext = "")
-{
-    value_substitutions(code, names.cbegin(), names.cend(), values, ext);
-}
-
-//--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */
 //--------------------------------------------------------------------------
@@ -225,7 +134,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type);
 void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
 
 void preNeuronSubstitutionsInSynapticCode(
-    std::string &wCode, //!< the code string to work on
+    Substitutions &substitutions,
     const SynapseGroupInternal &sg,
     const std::string &offset,
     const std::string &axonalDelayOffset,
@@ -235,7 +144,7 @@ void preNeuronSubstitutionsInSynapticCode(
     const std::string &preVarSuffix = "");   //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
 void postNeuronSubstitutionsInSynapticCode(
-    std::string &wCode, //!< the code string to work on
+    Substitutions &substitutions,
     const SynapseGroupInternal &sg,
     const std::string &offset,
     const std::string &backPropDelayOffset,
@@ -250,7 +159,7 @@ void postNeuronSubstitutionsInSynapticCode(
 */
 //-------------------------------------------------------------------------
 void neuronSubstitutionsInSynapticCode(
-    std::string &wCode,                      //!< the code string to work on
+    Substitutions &substitutions,
     const SynapseGroupInternal &sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
     const std::string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const std::string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)

@@ -10,6 +10,7 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
+#include "code_generator/substitutions.h"
 
 using namespace CodeGenerator;
 
@@ -63,12 +64,11 @@ protected:
     {
         // Substitute variable for value
         m_Code = "$(test)";
-        std::vector<std::string> names = {"test"};
-        std::vector<double> values = { GetParam() };
-        value_substitutions(m_Code, names, values);
 
-        // For safety, value_substitutions adds brackets around substituted values - trim these out
-        m_Code = m_Code.substr(1, m_Code.size() - 2);
+        // Substitute test parameter for value
+        Substitutions subs;
+        subs.addParamValueSubstitution({"test"}, { GetParam() });
+        subs.apply(m_Code);
     }
 
     //--------------------------------------------------------------------------
