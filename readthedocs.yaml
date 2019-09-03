@@ -5,6 +5,9 @@
 # Required
 version: 2
 
+# Base directory
+base: doxyrest/
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
     configuration: doxyrest/conf.py
