@@ -120,8 +120,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                     else {
                         bat script:"rmdir /S /Q genn", returnStatus:true;
                     }
-                    
-                    echo scm.branches;
 
                     dir("genn") {
                         // Checkout GeNN into it
@@ -348,7 +346,8 @@ node("master") {
             ./makedoc
             git add doxyrest/source/
             git commit -m "automatic commit of doxyrest documentation [ci skip]"
-            git push
+            git pull
+            git push --set-upstream origin ${scm.branches[0]}
             """
 
             def docStatusCode = sh script:script, returnStatus:true
