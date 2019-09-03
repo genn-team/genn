@@ -125,7 +125,12 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // Checkout GeNN into it
                         // **NOTE** because we're using multi-branch project URL is substituted here
                         // **NOTE** for some reason without extensions, Jenkins leaves branch with detached head (https://stackoverflow.com/questions/44006070/jenkins-gitscm-finishes-the-clone-in-a-detached-head-state-how-can-i-make-sure)
-                        checkout([$class: "GitSCM", extensions: [[$class: "LocalBranch", localBranch: "**"]]]);
+                        checkout([$class: "GitSCM",
+                            branches: scm.branches,
+                            doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                            extensions: scm.extensions + [[$class: "LocalBranch", localBranch: "**"]],
+                            userRemoteConfigs: scm.userRemoteConfigs
+                        ])
                     }
                     
                     // **NOTE** only try and set build status AFTER checkout
