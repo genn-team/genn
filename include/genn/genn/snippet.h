@@ -129,17 +129,9 @@ public:
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
-        ParamVal()
-        {}
-        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
-        {}
-
-        ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, std::to_string(v))
-        {}
-
         std::string name;
         std::string type;
-        std::string value;
+        double value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value

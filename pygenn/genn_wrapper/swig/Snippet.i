@@ -51,6 +51,17 @@
     }
 };
 
+%extend Snippet::Base::ParamVal {
+    ParamVal(const std::string &name, const std::string &type, double value) 
+    {
+        Snippet::Base::ParamVal* v = new Snippet::Base::ParamVal();
+        v->name = name;
+        v->type = type;
+        v->value = value;
+        return v;
+    }
+};
+
 %extend Snippet::Base::DerivedParam {
     DerivedParam(const std::string &name, std::function<double(const std::vector<double> &, double)> func) 
     {
