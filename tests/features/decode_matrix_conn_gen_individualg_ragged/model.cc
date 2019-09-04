@@ -18,7 +18,7 @@ public:
     DECLARE_SNIPPET(Decoder, 0);
 
     SET_ROW_BUILD_CODE(
-        "if(j < $(id_post_end)) {\n"
+        "if(j < $(num_post)) {\n"
         "   const unsigned int jValue = (1 << j);\n"
         "   if((($(id_pre) + 1) & jValue) != 0)\n"
         "   {\n"
@@ -29,7 +29,7 @@ public:
         "   $(endRow);\n"
         "}\n"
         "j++;\n");
-    SET_ROW_BUILD_STATE_VARS({{"j", "unsigned int", "$(id_post_begin)"}});
+    SET_ROW_BUILD_STATE_VARS({{"j", "unsigned int", 0}});
 };
 IMPLEMENT_SNIPPET(Decoder);
 
