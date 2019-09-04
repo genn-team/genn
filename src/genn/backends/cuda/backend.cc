@@ -550,23 +550,18 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                         os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
-                    // If we are going to accumulate postsynaptic input into a register, copy current value into register from global memory
+                    // If we are going to accumulate postsynaptic input into a register, zero register value
                     if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
                         os << "// only do this for existing neurons" << std::endl;
-                        os << model.getPrecision() << " linSyn;" << std::endl;
-                        os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "linSyn = dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "];" << std::endl;
-                        }
+                        os << model.getPrecision() << " linSyn = 0;" << std::endl;
                     }
-                    // Otherwise, if we are going to accumulate into shared memory, copy current value into correct array index
+                    // Otherwise, if we are going to accumulate into shared memory, zero entry in array for each target neuron
                     // **NOTE** is ok as number of target neurons <= synapseBlkSz
                     else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
                         os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
                             CodeStream::Scope b(os);
-                            os << "shLg[threadIdx.x] = dd_inSyn" << sg.getName() << "[threadIdx.x];"<< std::endl;
+                            os << "shLg[threadIdx.x] = 0;"<< std::endl;
                         }
                         os << "__syncthreads();" << std::endl;
                     }
@@ -593,7 +588,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                         os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
                             CodeStream::Scope b(os);
-                            os << "dd_inSyn" << sg.getName() << "[" << popSubs["id"] << "] = linSyn;" << std::endl;
+                            const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[" + popSubs["id"] + "]";
+                            if(sg.isPSModelMerged()) {
+                                os << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
+                            }
+                            else {
+                                os << inSyn << " += linSyn;" << std::endl;
+                            }
                         }
                     }
                     // Otherwise, if we have been accumulating into shared memory, write value back to global memory
@@ -603,7 +604,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                         os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                         {
                             CodeStream::Scope b(os);
-                            os << "dd_inSyn" << sg.getName() << "[threadIdx.x] = shLg[threadIdx.x];"<< std::endl;
+                            const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[threadIdx.x]";
+                            if(sg.isPSModelMerged()) {
+                                os << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[threadIdx.x]);" << std::endl;
+                            }
+                            else {
+                                os << inSyn << " += shLg[threadIdx.x];" << std::endl;
+                            }
                         }
                     }
                 }
