@@ -29,7 +29,7 @@ popd
 pushd $TESTS_DIR
 
 # Loop through feature tests
-for f in features/* ; do
+for f in features/*/ ; do
     echo "Running test $f..."
 
     # Push feature directory
