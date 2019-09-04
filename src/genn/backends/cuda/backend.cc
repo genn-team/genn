@@ -1018,6 +1018,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     CodeStream::Scope b(os);
                     popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                     popSubs.addVarSubstitution("id_post_begin", "0");
+                    popSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
                     
                     // If the synapse group has bitmask connectivity
                     if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -1096,27 +1097,27 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     // If we are using more than one thread to process each row
                     if(sg.getNumThreadsPerSpike() > 1) {
                         // Calculate how long the sub-row to process on each thread is
-                        const unsigned int numPostPerThread = Utils::ceilDivide(numTrgNeurons, sg.getNumThreadsPerSpike());
+                        const size_t numPostPerThread = Utils::ceilDivide(numTrgNeurons, sg.getNumThreadsPerSpike());
 
                         os << "const unsigned int idPostStart = thread * " << numPostPerThread << ";" << std::endl;
 
                         // If number of post neurons per thread directly divides total number of postsynaptic neurons
                         if((numTrgNeurons % numPostPerThread) == 0) {
-                            os << "const unsigned int idPostEnd = idPostStart + " << numPostPerThread << ";" << std::endl;
+                            popSubs.addVarSubstitution("num_post", std::to_string(numPostPerThread));
                         }
                         // Otherwise clamp
                         else {
-                            os << "const unsigned int idPostEnd = umin(idPostStart + " << numPostPerThread << ", " << numTrgNeurons << ");" << std::endl;
+                            os << "const unsigned int numPost = (thread == " << (sg.getNumThreadsPerSpike() - 1) << ") ? " << (numTrgNeurons % numPostPerThread) << " : " << numPostPerThread << ";" << std::endl;
+                            popSubs.addVarSubstitution("num_post", "numPost");
                         }
 
-                        popSubs.addVarSubstitution("id_post_begin", "idPostStart");
-                        popSubs.addVarSubstitution("id_post_end", "idPostEnd");
+                        popSubs.addVarSubstitution("id_post_begin", "idPostStart");                        
 
                     }
                     // Otherwise, set the beginning and end ID to the entire range of postsynaptic neurons
                     else {
                         popSubs.addVarSubstitution("id_post_begin", "0");
-                        popSubs.addVarSubstitution("id_post_end", std::to_string(numTrgNeurons));
+                        popSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
                     }
 
                     // **TODO** make generic

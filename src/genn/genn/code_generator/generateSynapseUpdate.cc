@@ -108,7 +108,6 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
         // Procedural connectivity
         [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
         {
-            baseSubs.addVarSubstitution("num_post", std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
             baseSubs.addFuncSubstitution("endRow", 0, "break");
 
             // Initialise row building state variables for procedural connectivity
