@@ -97,18 +97,16 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 os << model.getPrecision() << " Isyn = 0;" << std::endl;
             }
 
-            // Initialise any additional input variables supported by neuron model
-            for (const auto &a : nm->getAdditionalInputVars()) {
-                std::string value = a.value;
-                popSubs.apply(value);
-                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
-            }
-
             Substitutions neuronSubs(&popSubs);
             neuronSubs.addVarSubstitution("Isyn", "Isyn");
             neuronSubs.addVarSubstitution("sT", "lsT");
             addNeuronModelSubstitutions(neuronSubs, ng);
-            
+
+            // Initialise any additional input variables supported by neuron model
+            for (const auto &a : nm->getAdditionalInputVars()) {
+                os << a.type << " " << a.name<< " = " << a.value << ";" << std::endl;
+            }
+
             for (const auto &m : ng.getMergedInSyn()) {
                 const auto *sg = m.first;
                 const auto *psm = sg->getPSModel();

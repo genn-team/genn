@@ -10,7 +10,6 @@
 
 // CUDA backend includes
 #include "backend.h"
-#include "utils.h"
 
 //----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan
