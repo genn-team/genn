@@ -89,7 +89,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
 
             // Get event threshold condition code
             std::string code = sg.getWUModel()->getEventThresholdConditionCode();
-            baseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
+            synapseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
             code = ensureFtype(code, model.getPrecision());
             os << code;
         },
