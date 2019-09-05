@@ -18,30 +18,6 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void applyVarInitSnippetSubstitutions(std::string &code, const Models::VarInit &varInit)
-{
-    using namespace CodeGenerator;
-
-    // Substitue derived and standard parameters into init code
-    DerivedParamNameIterCtx viDerivedParams(varInit.getSnippet()->getDerivedParams());
-    value_substitutions(code, varInit.getSnippet()->getParamNames(), varInit.getParams());
-    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, varInit.getDerivedParams());
-}
-//--------------------------------------------------------------------------
-void applySparsConnectInitSnippetSubstitutions(std::string &code, const SynapseGroupInternal &sg)
-{
-    using namespace CodeGenerator;
-
-    const auto connectInit = sg.getConnectivityInitialiser();
-
-    // Substitue derived and standard parameters into init code
-    DerivedParamNameIterCtx viDerivedParams(connectInit.getSnippet()->getDerivedParams());
-    EGPNameIterCtx viExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams());
-    value_substitutions(code, connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-    value_substitutions(code, viDerivedParams.nameBegin, viDerivedParams.nameEnd, connectInit.getDerivedParams());
-    name_substitutions(code, "", viExtraGlobalParams.nameBegin, viExtraGlobalParams.nameEnd, sg.getName());
-}
-//--------------------------------------------------------------------------
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
                        const CodeGenerator::Substitutions &popSubs, const NeuronGroupInternal &ng, bool spikeEvent)
 {
@@ -137,17 +113,19 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                 [&backend, &vars, &varInit, &popName, &ftype, k, count, isVarQueueRequired, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
+                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
+
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
                         // Generate initial value into temporary variable
                         os << vars[k].type << " initVal;" << std::endl;
                         varSubs.addVarSubstitution("value", "initVal");
 
+
                         std::string code = varInit.getSnippet()->getCode();
-                        applyVarInitSnippetSubstitutions(code, varInit);
-                        varSubs.apply(code);
+                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + popName);
                         code = ensureFtype(code, ftype);
-                        checkUnreplacedVariables(code, "initVar");
                         os << code << std::endl;
 
                         // Copy this into all delay slots
@@ -161,10 +139,8 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + popName + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
-                        applyVarInitSnippetSubstitutions(code, varInit);
-                        varSubs.apply(code);
+                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + popName);
                         code = ensureFtype(code, ftype);
-                        checkUnreplacedVariables(code, "initVar");
                         os << code << std::endl;
                     }
                 });
@@ -202,12 +178,12 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
+                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
 
                     std::string code = varInit.getSnippet()->getCode();
-                    varSubs.apply(code);
-                    applyVarInitSnippetSubstitutions(code, varInit);
+                    varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + sg.getName());
                     code = ensureFtype(code, ftype);
-                    checkUnreplacedVariables(code, "initVar");
                     os << code << std::endl;
                 });
         }
@@ -361,12 +337,14 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             {
                 CodeStream::Scope b(os);
 
-                // Apply substitutions
+                // Add substitutions
+                popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+                popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+                popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "", sg.getName());
+
                 std::string code = connectInit.getSnippet()->getRowBuildCode();
-                applySparsConnectInitSnippetSubstitutions(code, sg);
-                popSubs.apply(code);
+                popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : " + sg.getName());
                 code = ensureFtype(code, model.getPrecision());
-                checkUnreplacedVariables(code, "initSparseConnectivity");
 
                 // Write out code
                 os << code << std::endl;

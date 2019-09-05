@@ -5,6 +5,9 @@
 #include <stdexcept>
 #include <string>
 
+// PLOG includes
+#include <plog/Log.h>
+
 // Standard C includes
 #include <cassert>
 
@@ -36,6 +39,61 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
+    template<typename T>
+    void addVarNameSubstitution(const std::vector<T> &variables, const std::string &sourceSuffix = "",
+                                const std::string &destPrefix = "", const std::string &destSuffix = "")
+    {
+        for(const auto &v : variables) {
+            addVarSubstitution(v.name + sourceSuffix,
+                               destPrefix + v.name + destSuffix);
+        }
+    }
+
+    void addParamNameSubstitution(const std::vector<std::string> &paramNames, const std::string &sourceSuffix = "",
+                                  const std::string &destPrefix = "", const std::string &destSuffix = "")
+    {
+        for(const auto &p : paramNames) {
+            addVarSubstitution(p + sourceSuffix,
+                               destPrefix + p + destSuffix);
+        }
+    }
+
+    template<typename T>
+    void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
+                                 const std::string &sourceSuffix = "")
+    {
+        if(variables.size() != values.size()) {
+            throw std::runtime_error("Number of variables does not match number of values");
+        }
+
+        auto var = variables.cbegin();
+        auto val = values.cbegin();
+        for (;var != variables.cend() && val != values.cend(); var++, val++) {
+            std::stringstream stream;
+            writePreciseString(stream, *val);
+            addVarSubstitution(var->name + sourceSuffix,
+                               stream.str());
+        }
+    }
+
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values,
+                                   const std::string &sourceSuffix = "")
+    {
+        if(paramNames.size() != values.size()) {
+            throw std::runtime_error("Number of parameters does not match number of values");
+        }
+
+        auto param = paramNames.cbegin();
+        auto val = values.cbegin();
+        for (;param != paramNames.cend() && val != values.cend(); param++, val++) {
+            std::stringstream stream;
+            writePreciseString(stream, *val);
+            addVarSubstitution(*param + sourceSuffix,
+                               stream.str());
+        }
+
+    }
+
     void addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride = false)
     {
         auto res = m_VarSubstitutions.emplace(source, destionation);
@@ -81,6 +139,12 @@ public:
         applyVars(code);
     }
 
+    void applyCheckUnreplaced(std::string &code, const std::string &context) const
+    {
+        apply(code);
+        checkUnreplacedVariables(code, context);
+    }
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -110,6 +174,7 @@ private:
     {
         // Apply variable substitutions
         for(const auto &v : m_VarSubstitutions) {
+            LOGD << "Substituting '$(" << v.first << ")' for '" << v.second << "'";
             substitute(code, "$(" + v.first + ")", v.second);
         }
 
