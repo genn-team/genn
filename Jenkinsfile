@@ -346,7 +346,7 @@ node("master") {
                     // Make documentation, add generated rst files to git and push
                     script = """
                     ./makedoc
-                    git add docs/source/
+                    git add docs/source/*.rst
                     git commit -m "automatic commit of doxyrest documentation"
                     git pull
                     git push --set-upstream https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/genn-team/genn.git ${scm.branches[0]}

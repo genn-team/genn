@@ -13,7 +13,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("sphinx"))
+sys.path.insert(0, os.path.abspath("../sphinx"))
 
 # -- Project information -----------------------------------------------------
 
@@ -51,4 +51,4 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 # The document name of the "master" document, that is, the document that contains the root toctree directive.
-master_doc = "source/index"
+master_doc = "index"
