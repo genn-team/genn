@@ -564,7 +564,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInte
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &, const ModelSpecInternal &model) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const
 {
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
     if(isGlobalRNGRequired(model)) {
