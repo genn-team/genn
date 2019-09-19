@@ -6,12 +6,14 @@ genn_help () {
     echo "genn-create-user-project.sh [ih] project usercode..."
     echo "-h                shows this help message"
     echo "-i includepath    add additional include directory"
+    echo "-u                add userproject/include directory"
 }
 
 # Parse flags
-while getopts ":i:h" option; do
+while getopts ":i:hu" option; do
     case $option in
         i) INCLUDES="$INCLUDES -I$OPTARG";;
+        u) INCLUDES="$INCLUDES -I\$(GENN_PATH)"; INCLUDE_USER_PROJECT=1;;
         h) genn_help; exit;;
         ?) genn_help; exit;;
         :) genn_help; exit;;
@@ -30,6 +32,9 @@ SOURCE_FILES="$@"
 
 # Write out Makefile
 echo "GENERATED_CODE_DIR	:=${PROJECT_NAME}_CODE" > Makefile
+if [[ -n "$INCLUDE_USER_PROJECT" ]]; then
+    echo "GENN_PATH :=\$(abspath \$(dir \$(shell which genn-buildmodel.sh))../userproject/include)" >> Makefile
+fi
 echo "CXXFLAGS 		+=-std=c++11 -Wall -Wpedantic -Wextra" >> Makefile
 echo -en "\n" >> Makefile
 echo ".PHONY: all clean generated_code" >> Makefile
