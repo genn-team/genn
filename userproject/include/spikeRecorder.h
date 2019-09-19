@@ -13,8 +13,8 @@
 class SpikeRecorder
 {
 public:
-    SpikeRecorder(const std::string &filename, const unsigned int *spkCnt, const unsigned int *spk)
-    :   m_Stream(filename), m_SpkCnt(spkCnt), m_Spk(spk), m_Sum(0)
+    SpikeRecorder(const std::string &filename, const unsigned int *spkCnt, const unsigned int *spk, const std::string &delimiter=" ")
+    :   m_Stream(filename), m_SpkCnt(spkCnt), m_Spk(spk), m_Delimiter(delimiter), m_Sum(0)
     {
         // Set precision 
         m_Stream.precision(16);
@@ -28,7 +28,7 @@ public:
         m_Sum += m_SpkCnt[0];
 
         for(unsigned int i = 0; i < m_SpkCnt[0]; i++) {
-            m_Stream << t << " " << m_Spk[i] << std::endl;
+            m_Stream << t << m_Delimiter << m_Spk[i] << std::endl;
         }
     }
 
@@ -41,6 +41,7 @@ private:
     std::ofstream m_Stream;
     const unsigned int *m_SpkCnt;
     const unsigned int *m_Spk;
+    const std::string m_Delimiter;
     unsigned int m_Sum;
 };
 
@@ -51,8 +52,10 @@ class SpikeRecorderDelay
 {
 public:
     SpikeRecorderDelay(const std::string &filename, unsigned int popSize,
-                       const unsigned int &spkQueuePtr, const unsigned int *spkCnt, const unsigned int *spk)
-    :   m_Stream(filename), m_SpkQueuePtr(spkQueuePtr), m_SpkCnt(spkCnt), m_Spk(spk), m_PopSize(popSize), m_Sum(0)
+                       const unsigned int &spkQueuePtr, const unsigned int *spkCnt, const unsigned int *spk,
+                       const std::string &delimiter=" ")
+    :   m_Stream(filename), m_SpkQueuePtr(spkQueuePtr), m_SpkCnt(spkCnt), m_Spk(spk), m_PopSize(popSize),
+        m_Delimiter(delimiter), m_Sum(0)
     {
         // Set precision
         m_Stream.precision(16);
@@ -66,7 +69,7 @@ public:
         const unsigned int *currentSpk = getCurrentSpk();
         m_Sum += getCurrentSpkCnt();
         for(unsigned int i = 0; i < getCurrentSpkCnt(); i++) {
-            m_Stream << t << " " << currentSpk[i] << std::endl;
+            m_Stream << t << m_Delimiter << currentSpk[i] << std::endl;
         }
     }
 
@@ -94,6 +97,7 @@ private:
     const unsigned int *m_SpkCnt;
     const unsigned int *m_Spk;
     const unsigned int m_PopSize;
+    const std::string m_Delimiter;
     unsigned int m_Sum;
 };
 
