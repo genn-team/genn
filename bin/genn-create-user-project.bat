@@ -15,9 +15,8 @@ IF [%1]==[-i] (
 ) ELSE (
     REM Otherwise, if this argument is enabling user project include directory
     IF [%1]==[-u] (
-        SET "INCLUDE_DIRS=!INCLUDE_DIRS!;$(GeNNPath)"
+        SET "INCLUDE_DIRS=!INCLUDE_DIRS!;$(GeNNUserProject)"
         SET "INCLUDE_USER_PROJECT=1"
-        SHIFT
     ) ELSE (
         REM Otherwise, if no project name is yet set
         IF "%PROJECT_NAME%"=="" (
@@ -78,9 +77,6 @@ FOR %%S IN (%SOURCE_FILES%) DO (
 @ECHO     ^<PlatformToolset^>$(DefaultPlatformToolset)^</PlatformToolset^>>> %PROJECT_FILE%
 @ECHO     ^<WholeProgramOptimization Condition="'$(Configuration)'=='Release'"^>true^</WholeProgramOptimization^>>> %PROJECT_FILE%
 @ECHO     ^<CharacterSet^>MultiByte^</CharacterSet^>>> %PROJECT_FILE%
-IF DEFINED INCLUDE_USER_PROJECT (
-    @ECHO     ^<GeNNPath^>WOOP^</GeNNPath^>>> %PROJECT_FILE%
-)
 @ECHO   ^</PropertyGroup^>>> %PROJECT_FILE%
 @ECHO   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" /^>>> %PROJECT_FILE%
 @ECHO   ^<ImportGroup Label="ExtensionSettings"^>>> %PROJECT_FILE%
@@ -115,6 +111,17 @@ IF DEFINED INCLUDE_USER_PROJECT (
 @ECHO   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /^>>> %PROJECT_FILE%
 @ECHO   ^<ImportGroup Label="ExtensionTargets"^>>> %PROJECT_FILE%
 @ECHO   ^</ImportGroup^>>> %PROJECT_FILE%
+IF DEFINED INCLUDE_USER_PROJECT (
+    @ECHO   ^<Target Name="FindUserProjects" BeforeTargets="PrepareForBuild"^>>> %PROJECT_FILE%
+    @ECHO     ^<Exec Command="where genn-buildmodel.bat" ConsoleToMsBuild="true"^>>> %PROJECT_FILE%
+    @ECHO       ^<Output TaskParameter="ConsoleOutput" PropertyName="GeNNBuildModelPath" /^>>> %PROJECT_FILE%
+    @ECHO     ^</Exec^>>> %PROJECT_FILE%
+    @ECHO     ^<PropertyGroup^>>> %PROJECT_FILE%
+    @ECHO       ^<GeNNUserProject^>$^([System.IO.Path]::GetFullPath^($^([System.IO.Path]::GetDirectoryName^($^(GeNNBuildModelPath^)^)^)\..\userproject\include^)^)^</GeNNUserProject^>>> %PROJECT_FILE%
+    @ECHO     ^</PropertyGroup^>>> %PROJECT_FILE%
+    @ECHO     ^<Message Text="Found GeNN user projects $(GeNNUserProject)"/^>>> %PROJECT_FILE%
+    @ECHO   ^</Target^>>> %PROJECT_FILE%
+)
 @ECHO ^</Project^>>> %PROJECT_FILE%
 
 REM Write out MSBuild solution
