@@ -282,3 +282,17 @@ public:
     }
 };
 
+//----------------------------------------------------------------------------
+// SpikeRecorderDelayCached
+//----------------------------------------------------------------------------
+class SpikeRecorderDelayCached : public SpikeRecorderBase<SpikeReaderDelayed, SpikeWriterTextCached>
+{
+public:
+    SpikeRecorderDelayCached(const std::string &filename, unsigned int popSize,
+                             const unsigned int &spkQueuePtr, const unsigned int *spkCnt, const unsigned int *spk,
+                             const std::string &delimiter = " ", bool header =  false)
+    :   SpikeRecorderBase<SpikeReaderDelayed, SpikeWriterTextCached>(std::forward_as_tuple(popSize, spkQueuePtr, spkCnt, spk),
+                                                                     std::forward_as_tuple(filename, delimiter, header))
+    {
+    }
+};
