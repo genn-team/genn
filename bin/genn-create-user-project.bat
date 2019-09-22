@@ -15,7 +15,6 @@ IF [%1]==[-i] (
 ) ELSE (
     REM Otherwise, if this argument is enabling user project include directory
     IF [%1]==[-u] (
-        SET "INCLUDE_DIRS=!INCLUDE_DIRS!;$(GeNNUserProject)"
         SET "INCLUDE_USER_PROJECT=1"
     ) ELSE (
         REM Otherwise, if no project name is yet set
@@ -116,10 +115,11 @@ IF DEFINED INCLUDE_USER_PROJECT (
     @ECHO     ^<Exec Command="where genn-buildmodel.bat" ConsoleToMsBuild="true"^>>> %PROJECT_FILE%
     @ECHO       ^<Output TaskParameter="ConsoleOutput" PropertyName="GeNNBuildModelPath" /^>>> %PROJECT_FILE%
     @ECHO     ^</Exec^>>> %PROJECT_FILE%
-    @ECHO     ^<PropertyGroup^>>> %PROJECT_FILE%
-    @ECHO       ^<GeNNUserProject^>$^([System.IO.Path]::GetFullPath^($^([System.IO.Path]::GetDirectoryName^($^(GeNNBuildModelPath^)^)^)\..\userproject\include^)^)^</GeNNUserProject^>>> %PROJECT_FILE%
-    @ECHO     ^</PropertyGroup^>>> %PROJECT_FILE%
-    @ECHO     ^<Message Text="Found GeNN user projects $(GeNNUserProject)"/^>>> %PROJECT_FILE%
+    @ECHO     ^<ItemGroup^>>> %PROJECT_FILE%
+	@ECHO       ^<ClCompile^>>> %PROJECT_FILE%
+	 @ECHO        ^<AdditionalIncludeDirectories^>%%^(AdditionalIncludeDirectories^)^;$^([System.IO.Path]::GetFullPath^($([System.IO.Path]::GetDirectoryName^($^(GeNNBuildModelPath^)^)^)\..\userproject\include^)^)^</AdditionalIncludeDirectories^>>> %PROJECT_FILE%
+	@ECHO       ^</ClCompile^>>> %PROJECT_FILE%
+	@ECHO     ^</ItemGroup^>>> %PROJECT_FILE%
     @ECHO   ^</Target^>>> %PROJECT_FILE%
 )
 @ECHO ^</Project^>>> %PROJECT_FILE%
