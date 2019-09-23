@@ -13,11 +13,16 @@ IF [%1]==[-i] (
     SET "INCLUDE_DIRS=!INCLUDE_DIRS!;%2"
     SHIFT
 ) ELSE (
-    REM If no project name is yet set
-    IF "%PROJECT_NAME%"=="" (
-        SET "PROJECT_NAME=%1"
+    REM Otherwise, if this argument is enabling user project include directory
+    IF [%1]==[-u] (
+        SET "INCLUDE_USERPROJECT=1"
     ) ELSE (
-        SET "SOURCE_FILES=!SOURCE_FILES! %1"
+        REM Otherwise, if no project name is yet set
+        IF "%PROJECT_NAME%"=="" (
+            SET "PROJECT_NAME=%1"
+        ) ELSE (
+            SET "SOURCE_FILES=!SOURCE_FILES! %1"
+        )
     )
 )
 
@@ -105,6 +110,18 @@ FOR %%S IN (%SOURCE_FILES%) DO (
 @ECHO   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /^>>> %PROJECT_FILE%
 @ECHO   ^<ImportGroup Label="ExtensionTargets"^>>> %PROJECT_FILE%
 @ECHO   ^</ImportGroup^>>> %PROJECT_FILE%
+IF DEFINED INCLUDE_USERPROJECT (
+    @ECHO   ^<Target Name="FindUserProjects" BeforeTargets="PrepareForBuild"^>>> %PROJECT_FILE%
+    @ECHO     ^<Exec Command="where genn-buildmodel.bat" ConsoleToMsBuild="true"^>>> %PROJECT_FILE%
+    @ECHO       ^<Output TaskParameter="ConsoleOutput" PropertyName="GeNNBuildModelPath" /^>>> %PROJECT_FILE%
+    @ECHO     ^</Exec^>>> %PROJECT_FILE%
+    @ECHO     ^<ItemGroup^>>> %PROJECT_FILE%
+	@ECHO       ^<ClCompile^>>> %PROJECT_FILE%
+	 @ECHO        ^<AdditionalIncludeDirectories^>%%^(AdditionalIncludeDirectories^)^;$^([System.IO.Path]::GetFullPath^($([System.IO.Path]::GetDirectoryName^($^(GeNNBuildModelPath^)^)^)\..\userproject\include^)^)^</AdditionalIncludeDirectories^>>> %PROJECT_FILE%
+	@ECHO       ^</ClCompile^>>> %PROJECT_FILE%
+	@ECHO     ^</ItemGroup^>>> %PROJECT_FILE%
+    @ECHO   ^</Target^>>> %PROJECT_FILE%
+)
 @ECHO ^</Project^>>> %PROJECT_FILE%
 
 REM Write out MSBuild solution
