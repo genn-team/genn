@@ -44,6 +44,7 @@ public:
 
 private:
     // Hide C++ based public API
-    //using SharedLibraryModel<scalar>::getArray;
-    //using SharedLibraryModel<scalar>::getScalar;
+    using SharedLibraryModel<scalar>::getSymbol;
+    using SharedLibraryModel<scalar>::getArray;
+    using SharedLibraryModel<scalar>::getScalar;
 };

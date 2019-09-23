@@ -318,6 +318,31 @@ public:
         *m_Timestep = iT;
     }
 
+    void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr)
+    {
+#ifdef _WIN32
+        void *symbol = GetProcAddress(m_Library, symbolName.c_str());
+#else
+        void *symbol = dlsym(m_Library, symbolName.c_str());
+#endif
+
+        // If this symbol's missing
+        if(symbol == nullptr) {
+            // If this isn't allowed, throw error
+            if(!allowMissing) {
+                throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
+            }
+            // Otherwise, return default
+            else {
+                return defaultSymbol;
+            }
+        }
+        // Otherwise, return symbolPopulationFuncs
+        else {
+            return symbol;
+        }
+    }
+
 private:
     //----------------------------------------------------------------------------
     // Typedefines
@@ -377,31 +402,6 @@ private:
 
             // Return newly functions
             return newPopEGP.first->second;
-        }
-    }
-
-    void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr)
-    {
-#ifdef _WIN32
-        void *symbol = GetProcAddress(m_Library, symbolName.c_str());
-#else
-        void *symbol = dlsym(m_Library, symbolName.c_str());
-#endif
-
-        // If this symbol's missing
-        if(symbol == nullptr) {
-            // If this isn't allowed, throw error
-            if(!allowMissing) {
-                throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
-            }
-            // Otherwise, return default
-            else {
-                return defaultSymbol;
-            }
-        }
-        // Otherwise, return symbolPopulationFuncs
-        else {
-            return symbol;
         }
     }
 
