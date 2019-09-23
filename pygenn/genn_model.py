@@ -52,7 +52,7 @@ from six import iteritems, itervalues
 
 # pygenn imports
 from . import genn_wrapper
-from .genn_wrapper import SharedLibraryModel as slm
+from .genn_wrapper import SharedLibraryModelNumpy as slm
 from .genn_wrapper.Models import (Var, VarInit, VarVector)
 from .genn_wrapper.InitSparseConnectivitySnippet import Init
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
@@ -101,20 +101,16 @@ class GeNNModel(object):
         self._scalar = precision
         if precision == "float":
             genn_float_type = "GENN_FLOAT"
-            self._slm = slm.SharedLibraryModel_f()
+            self._slm = slm.SharedLibraryModelNumpy_f()
             self._np_type = np.float32
         elif precision == "double":
             genn_float_type = "GENN_DOUBLE"
-            self._slm = slm.SharedLibraryModel_d()
+            self._slm = slm.SharedLibraryModelNumpy_d()
             self._np_type = np.float64
-        elif precision == "long double":
-            genn_float_type = "GENN_LONG_DOUBLE"
-            self._slm = slm.SharedLibraryModel_ld()
-            self._np_type = np.float128
         else:
             raise ValueError(
-                "Supported precisions are float, double and "
-                "long double, but '{1}' was given".format(precision))
+                "Supported precisions are float and double, "
+                "but '{1}' was given".format(precision))
 
         self._built = False
         self._loaded = False
@@ -189,20 +185,20 @@ class GeNNModel(object):
     @property
     def t(self):
         """Simulation time in ms"""
-        return self._T[0]
+        return self._slm.get_time()
 
     @t.setter
     def t(self, t):
-        self._T[0] = t
+        self._slm.set_time(t)
 
     @property
     def timestep(self):
         """Simulation time step"""
-        return self._TS[0]
+        return self._slm.get_timestep()
 
     @timestep.setter
     def timestep(self, timestep):
-        self._TS[0] = timestep
+        self._slm.set_timestep(timestep)
 
     @property
     def dT(self):
@@ -396,14 +392,6 @@ class GeNNModel(object):
 
         self._slm.allocate_mem()
         self._slm.initialize()
-
-        if self._scalar == "float":
-            self._T = self._slm.assign_external_pointer_single_f("t")
-        if self._scalar == "double":
-            self.T = self._slm.assign_external_pointer_single_d("t")
-        if self._scalar == "long double":
-            self._T = self._slm.assign_external_pointer_single_ld("t")
-        self._TS = self._slm.assign_external_pointer_single_ull("iT")
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):

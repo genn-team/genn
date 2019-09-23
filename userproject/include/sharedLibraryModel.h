@@ -41,7 +41,7 @@ public:
         }
     }
 
-    ~SharedLibraryModel()
+    virtual ~SharedLibraryModel()
     {
         // Close model library if loaded successfully
         if(m_Library) {
@@ -426,9 +426,3 @@ private:
     scalar *m_T;
     unsigned long long *m_Timestep;
 };
-
-//----------------------------------------------------------------------------
-// Typedefines
-//----------------------------------------------------------------------------
-typedef SharedLibraryModel<float> SharedLibraryModelFloat;
-typedef SharedLibraryModel<double> SharedLibraryModelDouble;

@@ -269,30 +269,27 @@ def generateBuiltInGetter( models ):
 
 
 def generateSharedLibraryModelInterface( swigPath ):
-    '''Generates SharedLibraryModel.i file'''
-    with SwigModuleGenerator('SharedLibraryModel',
-            os.path.join( swigPath, 'SharedLibraryModel.i' ) ) as mg:
+    '''Generates SharedLibraryModelNumpy.i file'''
+    with SwigModuleGenerator('SharedLibraryModelNumpy',
+            os.path.join( swigPath, 'SharedLibraryModelNumpy.i' ) ) as mg:
         mg.addAutoGenWarning()
         mg.addSwigModuleHeadline()
         with SwigAsIsScope( mg ):
             mg.write( '#define SWIG_FILE_WITH_INIT // for numpy\n' )
-            mg.addCppInclude( '"SharedLibraryModel.h"' )
+            mg.addCppInclude( '"sharedLibraryModelNumpy.h"' )
 
         mg.addSwigInclude( '<std_string.i>' )
         mg.addSwigInclude( '"numpy.i"' )
-        mg.write( '%numpy_typemaps(long double, NPY_LONGDOUBLE, int) ')
         with SwigInitScope( mg ):
             mg.write( 'import_array();\n')
 
         # These are all data types supported by numpy SWIG interface (at least by default) plus long double
-        npDTypes = (
-                'signed char', 'unsigned char',
-                'short', 'unsigned short',
-                'int', 'unsigned int',
-                'long', 'unsigned long',
-                'long long', 'unsigned long long',
-                'float', 'double', 'long double'
-        )
+        npDTypes = ('signed char', 'unsigned char',
+                    'short', 'unsigned short',
+                    'int', 'unsigned int',
+                    'long', 'unsigned long',
+                    'long long', 'unsigned long long',
+                    'float', 'double')
 
         for dataType in [dt+'*' for dt in npDTypes]:
             mg.write( generateNumpyApplyArgoutviewArray1D( dataType, 'varPtr', 'n1' ) )
@@ -300,17 +297,20 @@ def generateSharedLibraryModelInterface( swigPath ):
         mg.write( generateNumpyApplyInArray1D( 'float*', '_g', 'nG' ) )
 
         mg.addSwigEnableUnderCaseConvert()
-        mg.addSwigInclude( '"SharedLibraryModel.h"' )
+        mg.addSwigInclude( '"../../../userproject/include/sharedLibraryModel.h"' )
+        mg.addSwigInclude( '"sharedLibraryModelNumpy.h"' )
         for dtShort, dataType in zip( [ "".join([dt_[0] for dt_ in dt.split()]) for dt in npDTypes],
                 npDTypes ):
-            mg.addSwigTemplate( 'SharedLibraryModel::assignExternalPointerArray<{}>'.format( dataType ),
+            mg.addSwigTemplate( 'SharedLibraryModelNumpy::assignExternalPointerArray<{}>'.format( dataType ),
                 'assign_external_pointer_array_' + dtShort )
-            mg.addSwigTemplate( 'SharedLibraryModel::assignExternalPointerSingle<{}>'.format( dataType ),
+            mg.addSwigTemplate( 'SharedLibraryModelNumpy::assignExternalPointerSingle<{}>'.format( dataType ),
                 'assign_external_pointer_single_' + dtShort )
 
-        for dtShort, dataType in zip( ('f', 'd', 'ld'), ('float', 'double', 'long double') ):
+        for dtShort, dataType in zip(('f', 'd'), ('float', 'double')):
             mg.addSwigTemplate( 'SharedLibraryModel<{}>'.format( dataType ),
                 'SharedLibraryModel_' + dtShort )
+            mg.addSwigTemplate( 'SharedLibraryModelNumpy<{}>'.format( dataType ),
+                'SharedLibraryModelNumpy_' + dtShort )
 
 
 def generateStlContainersInterface( swigPath ):
