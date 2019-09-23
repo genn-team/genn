@@ -15,7 +15,7 @@ IF [%1]==[-i] (
 ) ELSE (
     REM Otherwise, if this argument is enabling user project include directory
     IF [%1]==[-u] (
-        SET "INCLUDE_USER_PROJECT=1"
+        SET "INCLUDE_USERPROJECT=1"
     ) ELSE (
         REM Otherwise, if no project name is yet set
         IF "%PROJECT_NAME%"=="" (
@@ -110,7 +110,7 @@ FOR %%S IN (%SOURCE_FILES%) DO (
 @ECHO   ^<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" /^>>> %PROJECT_FILE%
 @ECHO   ^<ImportGroup Label="ExtensionTargets"^>>> %PROJECT_FILE%
 @ECHO   ^</ImportGroup^>>> %PROJECT_FILE%
-IF DEFINED INCLUDE_USER_PROJECT (
+IF DEFINED INCLUDE_USERPROJECT (
     @ECHO   ^<Target Name="FindUserProjects" BeforeTargets="PrepareForBuild"^>>> %PROJECT_FILE%
     @ECHO     ^<Exec Command="where genn-buildmodel.bat" ConsoleToMsBuild="true"^>>> %PROJECT_FILE%
     @ECHO       ^<Output TaskParameter="ConsoleOutput" PropertyName="GeNNBuildModelPath" /^>>> %PROJECT_FILE%
