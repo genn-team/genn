@@ -16,7 +16,7 @@
 #endif
 
 // CLI11 includes
-#include "CLI11.hpp"
+#include "../../include/genn/third_party/CLI11.hpp"
 
 //------------------------------------------------------------------------
 // GenerateRunBase
