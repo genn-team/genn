@@ -326,6 +326,9 @@ int main(int argc, char *argv[])
         model.setDT(dt);
         model.setName(networkName);
 
+        // **TODO** control with command line
+        model.setTiming(true);
+
         // Loop through populations once to build neuron populations
         for(auto population : spineML.children("LL:Population")) {
             auto neuron = population.child("LL:Neuron");
