@@ -812,7 +812,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         // Launch synapse dynamics kernel if required
         if(idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
-            Timer t(os, "synapseDynamicsTime", model.isTimingEnabled());
+            Timer t(os, "synapseDynamics", model.isTimingEnabled());
 
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
             os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
