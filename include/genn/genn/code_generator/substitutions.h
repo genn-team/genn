@@ -72,7 +72,7 @@ public:
             std::stringstream stream;
             writePreciseString(stream, *val);
             addVarSubstitution(var->name + sourceSuffix,
-                               stream.str());
+                               "(" + stream.str() + ")");
         }
     }
 
@@ -89,7 +89,7 @@ public:
             std::stringstream stream;
             writePreciseString(stream, *val);
             addVarSubstitution(*param + sourceSuffix,
-                               stream.str());
+                               "(" + stream.str() + ")");
         }
 
     }
