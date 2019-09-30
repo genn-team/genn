@@ -1,7 +1,7 @@
 #pragma once
 
 // Standard C++ includes
-#include <utility>
+#include <tuple>
 
 // GeNN includes
 #include "initSparseConnectivitySnippet.h"
@@ -55,9 +55,16 @@ namespace AllToAll
 //----------------------------------------------------------------------------
 namespace List
 {
+    enum class DelayType
+    {
+        None,
+        Homogeneous,
+        Heterogeneous,
+    };
+
     SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
-    std::pair<unsigned int, float> readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
-                                                            unsigned int numPre, unsigned int numPost);
+    std::tuple<unsigned int, DelayType, float> readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                                        unsigned int numPre, unsigned int numPost);
 }   // namespace List
 }   // namespace Connectors
 }   // namespace SpineMLGenerator

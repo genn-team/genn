@@ -138,27 +138,27 @@ unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 }
 //----------------------------------------------------------------------------
 // Helper function to determine the correct type of GeNN projection to use for a SpineML 'Synapse' node
-std::tuple<SynapseMatrixType, unsigned int, unsigned int, InitSparseConnectivitySnippet::Init> getSynapticMatrixType(const filesystem::path &basePath, const pugi::xml_node &node,
-                                                                                                                     unsigned int numPre, unsigned int numPost, bool globalG, double dt)
+std::tuple<SynapseMatrixType, bool, unsigned int, unsigned int, InitSparseConnectivitySnippet::Init> getSynapticMatrixType(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                                                                                           unsigned int numPre, unsigned int numPost, bool globalG, double dt)
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
         return std::make_tuple(Connectors::OneToOne::getMatrixType(oneToOne, numPre, numPost, globalG),
-                               readDelaySteps(oneToOne, dt), 0,
+                               false, readDelaySteps(oneToOne, dt), 0,
                                Connectors::OneToOne::getConnectivityInit(oneToOne));
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
         return std::make_tuple(Connectors::AllToAll::getMatrixType(allToAll, numPre, numPost, globalG),
-                               readDelaySteps(allToAll, dt), 0,
+                               false, readDelaySteps(allToAll, dt), 0,
                                uninitialisedConnectivity());
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
         return std::make_tuple(Connectors::FixedProbability::getMatrixType(fixedProbability, numPre, numPost, globalG),
-                               readDelaySteps(fixedProbability, dt), 0,
+                               false, readDelaySteps(fixedProbability, dt), 0,
                                Connectors::FixedProbability::getConnectivityInit(fixedProbability));
     }
 
@@ -166,14 +166,17 @@ std::tuple<SynapseMatrixType, unsigned int, unsigned int, InitSparseConnectivity
     if(connectionList) {
         // Read maximum row length and any explicit delay from connector
         unsigned int maxRowLength;
-        double explicitDelay;
-        std::tie(maxRowLength, explicitDelay) = Connectors::List::readMaxRowLengthAndDelay(basePath, connectionList,
-                                                                                           numPre, numPost);
+        Connectors::List::DelayType delayType;
+        float maxDelay;
+        std::tie(maxRowLength, delayType, maxDelay) = Connectors::List::readMaxRowLengthAndDelay(basePath, connectionList,
+                                                                                                 numPre, numPost);
+
+        // If connector didn't specify delay, read it from delay child. Otherwise convert max delay to timesteps
+        const unsigned int delay = (delayType == Connectors::List::DelayType::None) ? readDelaySteps(connectionList, dt) : (unsigned int)std::round(maxDelay / dt);
 
         // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
-        unsigned int delay = std::isnan(explicitDelay) ? readDelaySteps(connectionList, dt) : (unsigned int)std::round(explicitDelay / dt);
         return std::make_tuple(Connectors::List::getMatrixType(connectionList, numPre, numPost, globalG),
-                               delay, maxRowLength, uninitialisedConnectivity());
+                               delayType == Connectors::List::DelayType::Heterogeneous, delay, maxRowLength, uninitialisedConnectivity());
     }
 
     throw std::runtime_error("No supported connection type found for projection");
@@ -488,17 +491,17 @@ int main(int argc, char *argv[])
 
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
-                    auto synapsePop = model.addSynapsePopulation(weightUpdateName, std::get<0>(synapseMatrixType), std::get<1>(synapseMatrixType), 
+                    auto synapsePop = model.addSynapsePopulation(weightUpdateName, std::get<0>(synapseMatrixType), std::get<2>(synapseMatrixType),
                                                                  popName, trgPopName,
                                                                  &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel), {}, {},
                                                                  &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
-                                                                 std::get<3>(synapseMatrixType));
+                                                                 std::get<4>(synapseMatrixType));
 
                     // If matrix uses sparse connectivity and no initialiser is specified
                     if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE
-                        && std::get<3>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
+                        && std::get<4>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
                     {
-                        synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
+                        synapsePop->setMaxConnections(std::get<3>(synapseMatrixType));
                     }
                 }
             }
