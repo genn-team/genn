@@ -21,6 +21,9 @@
 #include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
+// CLI11 includes
+#include "CLI11.hpp"
+
 // GeNN includes
 #include "modelSpecInternal.h"
 
@@ -200,23 +203,30 @@ int main(int argc, char *argv[])
 {
     try
     {
-        if(argc < 2) {
-            throw std::runtime_error("Expected experiment XML file passed as argument");
-        }
+        CLI::App app{"SpineML generator for GeNN"};
 
-        // Read min log severity from command line
-        const plog::Severity minSeverity = (argc > 3) ? (plog::Severity)std::stoi(argv[3]) : plog::info;
+        std::string experimentFilename;
+        std::string outputDirectory;
+        bool timing = false;
+        unsigned int logLevel = plog::info;
+
+        app.add_option("experiment,-e,--experiment", experimentFilename, "Experiment xml file")->required();
+        app.add_option("output,-o,--output", outputDirectory, "Output directory for generated code");
+        app.add_flag("-t,--timing", timing, "Generate GeNN timing code, allowing more fine-grained profiling");
+        app.add_flag("--log-error{2},--log-warning{3},--log-info{4},--log-debug{5}", logLevel, "Verbosity of logging to show");
+
+        CLI11_PARSE(app, argc, argv);
 
         // Initialise log channels, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init(minSeverity, &consoleAppender);
+        plog::init((plog::Severity)logLevel, &consoleAppender);
 
         // Use filesystem library to get parent path of the network XML file
-        const auto experimentPath = filesystem::path(argv[1]).make_absolute();
+        const auto experimentPath = filesystem::path(experimentFilename).make_absolute();
         const auto basePath = experimentPath.parent_path();
 
         // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
-        const auto outputPath = (argc > 2) ? filesystem::path(argv[2]).make_absolute() : basePath.parent_path();
+        const auto outputPath = outputDirectory.empty() ? basePath.parent_path() : filesystem::path(outputDirectory).make_absolute();
 
         LOGI << "Output path:" << outputPath.str();
         LOGI << "Parsing experiment '" << experimentPath.str() << "'";
@@ -325,9 +335,7 @@ int main(int argc, char *argv[])
         ModelSpecInternal model;
         model.setDT(dt);
         model.setName(networkName);
-
-        // **TODO** control with command line
-        model.setTiming(true);
+        model.setTiming(timing);
 
         // Loop through populations once to build neuron populations
         for(auto population : spineML.children("LL:Population")) {
