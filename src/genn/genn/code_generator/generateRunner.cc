@@ -352,12 +352,16 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // If there's any synapse groups
         if(!model.getLocalSynapseGroups().empty()) {
-            // Add presynaptic update timer
-            backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             runnerStepTimeFinalise, "presynapticUpdate", true);
+            // If any synapse groups process spikes or spike-like events, add a timer
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                           [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()); }))
+            {
+                backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 runnerStepTimeFinalise, "presynapticUpdate", true);
+            }
 
             // Add sparse initialisation timer
-            // **NOTE** this may not be required but it's not super-important
+            // **FIXME** this will cause problems if no sparse initialization kernel is required
             backend.genTimer(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "initSparse", false);
 

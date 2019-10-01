@@ -382,6 +382,36 @@ InputValue::External *Simulator::getExternalInput(const std::string &name) const
     }
 }
 //----------------------------------------------------------------------------
+double Simulator::getNeuronUpdateTime() const
+{
+    return *(double*)getLibrarySymbol("neuronUpdateTime");
+}
+//----------------------------------------------------------------------------
+double Simulator::getInitTime() const
+{
+    return *(double*)getLibrarySymbol("initTime");
+}
+//----------------------------------------------------------------------------
+double Simulator::getPresynapticUpdateTime() const
+{
+    return *(double*)getLibrarySymbol("presynapticUpdateTime");
+}
+//----------------------------------------------------------------------------
+double Simulator::getPostsynapticUpdateTime() const
+{
+    return *(double*)getLibrarySymbol("postsynapticUpdateTime");
+}
+//----------------------------------------------------------------------------
+double Simulator::getSynapseDynamicsTime() const
+{
+    return *(double*)getLibrarySymbol("synapseDynamicsTime");
+}
+//----------------------------------------------------------------------------
+double Simulator::getInitSparseTime() const
+{
+    return *(double*)getLibrarySymbol("initSparseTime");
+}
+//----------------------------------------------------------------------------
 void *Simulator::getLibrarySymbol(const char *name, bool allowMissing) const
 {
 #ifdef _WIN32
