@@ -221,12 +221,13 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
             // Find row lengths, indices and max row length associated with sparse connection
             unsigned int **rowLength = (unsigned int**)getLibrarySymbol(("rowLength" + geNNSynPopName).c_str(), true);
             unsigned int **ind = (unsigned int**)getLibrarySymbol(("ind" + geNNSynPopName).c_str(), true);
+			uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
             const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(("maxRowLength" + geNNSynPopName).c_str(), true);
 
             // Create connector
             std::vector<unsigned int> remapIndices;
-            Connectors::create(input, srcPopSize, popSize,
-                                rowLength, ind, maxRowLength,
+            Connectors::create(input, getDT(), srcPopSize, popSize,
+                                rowLength, ind, delay, maxRowLength,
                                 basePath, remapIndices);
         }
 
@@ -260,12 +261,13 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
                 // Find row lengths, indices and max row length associated with sparse connection
                 unsigned int **rowLength = (unsigned int**)getLibrarySymbol(("rowLength" + geNNSynPopName).c_str(), true);
                 unsigned int **ind = (unsigned int**)getLibrarySymbol(("ind" + geNNSynPopName).c_str(), true);
+				uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
                 const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(("maxRowLength" + geNNSynPopName).c_str(), true);
 
                 // Create connector
                 std::vector<unsigned int> remapIndices;
-                const unsigned int synapseVarSize = Connectors::create(synapse, popSize, trgPopSize,
-                                                                       rowLength, ind, maxRowLength,
+                const unsigned int synapseVarSize = Connectors::create(synapse, getDT(), popSize, trgPopSize,
+                                                                       rowLength, ind, delay, maxRowLength,
                                                                        basePath, remapIndices);
 
                 // Add postsynapse properties to dictionary
