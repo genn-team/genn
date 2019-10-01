@@ -38,7 +38,7 @@ public:
                       const pugi::xml_node &componentClass,
                       const NeuronModel *srcNeuronModel,
                       const NeuronModel *trgNeuronModel,
-					  bool heterogeneousDelay);
+					  unsigned int maxDendriticDelay);
 
     //------------------------------------------------------------------------
     // Typedefines

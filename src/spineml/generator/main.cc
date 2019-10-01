@@ -452,6 +452,10 @@ int main(int argc, char *argv[])
                     assert(synapseMatrixProps.maxRowLength != 0);
                     synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                 }
+				
+				// Set maximum dendritic delay for synapse population
+				assert(synapseMatrixProps.maxDendriticDelay >= 1);
+				synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
             }
 
             // Loop through outgoing projections
@@ -481,9 +485,6 @@ int main(int argc, char *argv[])
                                                                            trgNeuronGroup->getNumNeurons(),
                                                                            dt);
 
-					// Are heterogeneous delays required
-					const bool heterogeneousDelay = (synapseMatrixProps.maxDendriticDelay > 1);
-				
                     // Get sets of external input and overriden properties for this weight update
                     const auto *weightUpdateExternalInputPorts = getNamedSet(externalInputs, weightUpdateName);
                     const auto *weightUpdateOverridenPropertyNames = getNamedSet(overridenProperties, weightUpdateName);
@@ -498,7 +499,7 @@ int main(int argc, char *argv[])
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                                   neuronModel, trgNeuronModel, heterogeneousDelay);
+                                                                   neuronModel, trgNeuronModel, synapseMatrixProps.maxDendriticDelay);
 
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");
@@ -543,6 +544,10 @@ int main(int argc, char *argv[])
 						assert(synapseMatrixProps.maxRowLength != 0);
 						synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                     }
+					
+					// Set maximum dendritic delay for synapse population
+					assert(synapseMatrixProps.maxDendriticDelay >= 1);
+					synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
                 }
             }
         }
