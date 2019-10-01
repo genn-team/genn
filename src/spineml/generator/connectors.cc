@@ -30,17 +30,17 @@ namespace SpineMLGenerator
 {
 namespace Connectors
 {
-SynapseMatrixType FixedProbability::getMatrixType(const pugi::xml_node &node, unsigned int, unsigned int, bool globalG)
+SynapseMatrixConnectivity FixedProbability::getMatrixConnectivity(const pugi::xml_node &node, unsigned int, unsigned int)
 {
     const double connectionProbability = node.attribute("probability").as_double();
 
     // If we're implementing a fully-connected matrix use DENSE format
     if(connectionProbability == 1.0) {
         LOGD << "\tFully-connected FixedProbability connector implemented as DENSE";
-        return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
+        return SynapseMatrixConnectivity::DENSE;
     }
     else {
-        return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
+        return SynapseMatrixConnectivity::SPARSE;
     }
 }
 //----------------------------------------------------------------------------
@@ -55,9 +55,9 @@ InitSparseConnectivitySnippet::Init FixedProbability::getConnectivityInit(const 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::OneToOne
 //----------------------------------------------------------------------------
-SynapseMatrixType OneToOne::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
+SynapseMatrixConnectivity OneToOne::getMatrixConnectivity(const pugi::xml_node&, unsigned int, unsigned int)
 {
-    return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
+    return SynapseMatrixConnectivity::SPARSE;
 }
 //----------------------------------------------------------------------------
 InitSparseConnectivitySnippet::Init OneToOne::getConnectivityInit(const pugi::xml_node &)
@@ -68,17 +68,17 @@ InitSparseConnectivitySnippet::Init OneToOne::getConnectivityInit(const pugi::xm
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::AllToAll
 //----------------------------------------------------------------------------
-SynapseMatrixType AllToAll::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
+SynapseMatrixConnectivity AllToAll::getMatrixConnectivity(const pugi::xml_node&, unsigned int, unsigned int)
 {
-    return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
+    return SynapseMatrixConnectivity::DENSE;
 }
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::List
 //----------------------------------------------------------------------------
-SynapseMatrixType List::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
+SynapseMatrixConnectivity List::getMatrixConnectivity(const pugi::xml_node&, unsigned int, unsigned int)
 {
-    return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
+    return SynapseMatrixConnectivity::SPARSE;
 }
 //----------------------------------------------------------------------------
 std::tuple<unsigned int, List::DelayType, float> List::readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
