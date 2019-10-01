@@ -163,9 +163,12 @@ std::tuple<unsigned int, List::DelayType, float> List::readMaxRowLengthAndDelay(
             // Increment connections counter
             numConnections++;
 
-            // If this synapse has a delay, set explicit delay flag and add delay to total
+            // If this synapse has a delay
             auto delay = c.attribute("delay");
             if(delay) {
+				// Set explicit delay flag 
+				explicitDelay = true;
+				
                 // If this is our first delay, use this as initial maximum
                 if(std::isnan(maxDelayMs)) {
                     maxDelayMs = delay.as_float();
