@@ -500,7 +500,7 @@ int main(int argc, char *argv[])
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                                   neuronModel, trgNeuronModel, synapseMatrixProps.maxDendriticDelay);
+                                                                   neuronModel, trgNeuronModel);
 
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");

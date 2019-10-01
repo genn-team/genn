@@ -110,6 +110,11 @@ public:
                  std::map<std::string, Models::VarInit> &varInitialisers,
 				 unsigned int maxDendriticDelay);
 	
+	//----------------------------------------------------------------- -----------
+    // Public API
+    //----------------------------------------------------------------------------
+	unsigned int getMaxDendriticDelay() const{ return m_MaxDendriticDelay; }
+	
 	//----------------------------------------------------------------------------
     // Operators
     //----------------------------------------------------------------------------

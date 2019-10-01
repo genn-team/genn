@@ -106,11 +106,10 @@ const char *SpineMLGenerator::WeightUpdateModel::componentClassName = "weight_up
 SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::WeightUpdate &params,
                                                        const pugi::xml_node &componentClass,
                                                        const NeuronModel *srcNeuronModel,
-                                                       const NeuronModel *trgNeuronModel,
-													   unsigned int maxDendriticDelay)
+                                                       const NeuronModel *trgNeuronModel)
 {
 	// Are heterogeneous delays required?
-	const bool heterogeneousDelay = (maxDendriticDelay > 1);
+	const bool heterogeneousDelay = (params.getMaxDendriticDelay() > 1);
 	
     // Read aliases
     std::map<std::string, std::string> aliases;
@@ -236,20 +235,12 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
 	
-	// If model has multiple regimes, add 8-bit unsigned delay to vars
+	// If model has heterogeneos delays, add 8-bit unsigned delay to vars
     if(heterogeneousDelay) {
-		if(maxDendriticDelay < 0xFF) {
-			LOGD << "\t\tUsing uint8_t for dendritic delay";
-			m_Vars.push_back({"_delay", "uint8_t"});
-		}
-		else if(maxDendriticDelay < 0xFFFF) {
-			LOGD << "\t\tUsing uint16_t for dendritic delay";
-			m_Vars.push_back({"_delay", "uint8_t"});
-		}
-		else {
-			LOGD << "\t\tUsing uint32_t for dendritic delay";
-			m_Vars.push_back({"_delay", "uint32_t"});
-		}
+		assert(params.getMaxDendriticDelay() < 0xFF);
+		
+		LOGD << "\t\tUsing uint8_t for dendritic delay";
+		m_Vars.push_back({"_delay", "uint8_t"});
     }
 	
     // Add any derived parameters required for time-derivative
