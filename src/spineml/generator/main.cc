@@ -412,19 +412,19 @@ int main(int argc, char *argv[])
                                                                      true, dt);
 
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
-                auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, std::get<0>(synapseMatrixType), std::get<1>(synapseMatrixType), 
+                auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, std::get<0>(synapseMatrixType), std::get<2>(synapseMatrixType), 
                                                              srcPopName, popName,
                                                              &passthroughWeightUpdateModel, {}, {}, {}, {},
                                                              &passthroughPostsynapticModel, {}, {},
-                                                             std::get<3>(synapseMatrixType));
+                                                             std::get<4>(synapseMatrixType));
 
                 // If matrix uses sparse connectivity and no initialiser is specified
                 if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE
-                    && std::get<3>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
+                    && std::get<4>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
                 {
                     // Check that max connections has been specified
-                    assert(std::get<2>(synapseMatrixType) != 0);
-                    synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
+                    assert(std::get<3>(synapseMatrixType) != 0);
+                    synapsePop->setMaxConnections(std::get<3>(synapseMatrixType));
                 }
             }
 
@@ -499,6 +499,8 @@ int main(int argc, char *argv[])
                                                                          neuronGroup->getNumNeurons(),
                                                                          trgNeuronGroup->getNumNeurons(),
                                                                          globalG, dt);
+
+                    const bool heterogeneousDelay = std::get<1>(synapseMatrixType);
 
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
