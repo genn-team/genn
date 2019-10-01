@@ -147,7 +147,7 @@ SpineMLGenerator::ModelParams::WeightUpdate::WeightUpdate(const filesystem::path
                                                           const std::set<std::string> *externalInputPorts,
                                                           const std::set<std::string> *overridenPropertyNames,
                                                           std::map<std::string, Models::VarInit> &varInitialisers,
-														  unsigned int maxDendriticDelay)
+                                                          unsigned int maxDendriticDelay)
 : Base(basePath, node, externalInputPorts, overridenPropertyNames, varInitialisers), m_MaxDendriticDelay(maxDendriticDelay)
 {
     // If an input src and destination port are specified add them to input port mapping

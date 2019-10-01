@@ -59,11 +59,11 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
         const bool explicitDelay = (binaryFile.attribute("explicit_delay_flag").as_uint() != 0);
         const unsigned int wordsPerSynapse = explicitDelay ? 3 : 2;
 
-		// If this connection has explict delays and no delay array was found, error
-		if(explicitDelay && delay == nullptr) {
-			throw std::runtime_error("Cannot build list connector with explicit delay - delay variable not found");
-		}
-		
+        // If this connection has explict delays and no delay array was found, error
+        if(explicitDelay && delay == nullptr) {
+            throw std::runtime_error("Cannot build list connector with explicit delay - delay variable not found");
+        }
+        
         // Read binary connection filename from node
         std::string filename = (basePath / binaryFile.attribute("file_name").value()).str();
 
@@ -95,14 +95,14 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
                 ind[index] = post;
                 originalOrder[index] = i++;
 
-				// If this file contains explicit delays
+                // If this file contains explicit delays
                 if(explicitDelay) {
                     // Cast delay word to float
                     const float *synDelay = reinterpret_cast<float*>(&connectionBuffer[w + 2]);
-					
-					// Store in delay array
-					(*delay)[index] = (uint8_t)std::round(*synDelay / dt);
-				}
+                    
+                    // Store in delay array
+                    (*delay)[index] = (uint8_t)std::round(*synDelay / dt);
+                }
 
                 // Increment row length
                 rowLength[pre]++;
@@ -126,19 +126,19 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
             const size_t index = (pre * maxRowLength) + rowLength[pre];
             ind[index] = post;
             originalOrder[index] = i++;
-			
-			// If this synapse has a delay
+            
+            // If this synapse has a delay
             auto delayAttr = c.attribute("delay");
             if(delayAttr) {
-				// However, if no delay array was found, error
-				if(delay == nullptr) {
-					throw std::runtime_error("Cannot build list connector with explicit delay - delay variable not found");
-				}
-				
-				// Store in delay array
-				(*delay)[index] = (uint8_t)std::round(delayAttr.as_float() / dt);
+                // However, if no delay array was found, error
+                if(delay == nullptr) {
+                    throw std::runtime_error("Cannot build list connector with explicit delay - delay variable not found");
+                }
+                
+                // Store in delay array
+                (*delay)[index] = (uint8_t)std::round(delayAttr.as_float() / dt);
             }
-			
+            
             // Increment row length
             rowLength[pre]++;
             assert(rowLength[pre] <= maxRowLength);
@@ -153,8 +153,8 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
     // Create array of row indices to use for sorting each row
     std::vector<unsigned int> rowOrder(maxRowLength);
     std::vector<unsigned int> rowIndCopy(maxRowLength);
-	std::vector<uint8_t> rowDelayCopy(maxRowLength);
-	
+    std::vector<uint8_t> rowDelayCopy(maxRowLength);
+
     // Loop through rows
     for(unsigned int i = 0; i < numPre; i++) {
         // Get pointer to start of row indices
@@ -182,20 +182,20 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
         std::transform(rowOrder.cbegin(), rowOrder.cend(), rowIndBegin,
                        [&rowIndCopy](unsigned int ord){ return rowIndCopy[ord]; });
 
-		// If a delay array is present
-		if(delay) {
-			// Get pointer to start of row delays
-			uint8_t *rowDelayBegin = &(*delay)[i * maxRowLength];
+        // If a delay array is present
+        if(delay) {
+            // Get pointer to start of row delays
+            uint8_t *rowDelayBegin = &(*delay)[i * maxRowLength];
 
-			// Copy row indices into vector
-			// **NOTE** reordering in place is non-trivial
-			std::copy_n(rowDelayBegin, rowLength[i], rowDelayCopy.begin());
-			
-			// Use row order to re-order row delays back into original data structure
-			std::transform(rowOrder.cbegin(), rowOrder.cend(), rowDelayBegin,
-						   [&rowDelayCopy](unsigned int ord){ return rowDelayCopy[ord]; });
-		}
-		
+            // Copy row indices into vector
+            // **NOTE** reordering in place is non-trivial
+            std::copy_n(rowDelayBegin, rowLength[i], rowDelayCopy.begin());
+            
+            // Use row order to re-order row delays back into original data structure
+            std::transform(rowOrder.cbegin(), rowOrder.cend(), rowDelayBegin,
+                           [&rowDelayCopy](unsigned int ord){ return rowDelayCopy[ord]; });
+        }
+        
         // Loop through synapses in newly reorderd row and set the remap index in the 
         // synapse's ORIGINAL location to its new index in the ragged array
         for(unsigned int j = 0; j < rowLength[i]; j++) {
@@ -215,10 +215,10 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, do
     // One to one connectors are initialised using sparse connectivity initialisation
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-		if(delay != nullptr) {
-			throw std::runtime_error("OneToOneConnection does not support heterogeneous delays");
-		}
-		
+        if(delay != nullptr) {
+            throw std::runtime_error("OneToOneConnection does not support heterogeneous delays");
+        }
+        
         if(rowLength != nullptr && ind != nullptr && maxRowLength != nullptr) {
             return numPre;
         }
@@ -230,10 +230,10 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, do
     // All to all connectors are initialised using sparse connectivity initialisation
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
-		if(delay != nullptr) {
-			throw std::runtime_error("AllToAllConnection does not support heterogeneous delays");
-		}
-		
+        if(delay != nullptr) {
+            throw std::runtime_error("AllToAllConnection does not support heterogeneous delays");
+        }
+        
         if(rowLength == nullptr && ind == nullptr && maxRowLength == nullptr) {
             return numPre * numPost;
         }
@@ -245,10 +245,10 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, do
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
-		if(delay != nullptr) {
-			throw std::runtime_error("FixedProbabilityConnection does not support heterogeneous delays");
-		}
-		
+        if(delay != nullptr) {
+            throw std::runtime_error("FixedProbabilityConnection does not support heterogeneous delays");
+        }
+        
         if(maxRowLength != nullptr) {
             return numPre * (*maxRowLength);
         }

@@ -27,8 +27,8 @@ void checkOneToOne(const unsigned int *rowLength, const unsigned int *ind, unsig
 
 void checkOneToOne(const unsigned int *rowLength, const unsigned int *ind, const uint8_t *delay, unsigned int numPre)
 {
-	checkOneToOne(rowLength, ind, numPre);
-	
+    checkOneToOne(rowLength, ind, numPre);
+
     for(unsigned int i = 0; i < numPre; i++) {
         EXPECT_EQ(delay[i], (i + 1));
     }
@@ -47,8 +47,8 @@ void checkTriangle(const unsigned int *rowLength, const unsigned int *ind, unsig
 
 void checkTriangle(const unsigned int *rowLength, const unsigned int *ind, const uint8_t *delay, unsigned int maxRowLength, unsigned int numPre)
 {
-	checkTriangle(rowLength, ind, maxRowLength, numPre);
-	
+    checkTriangle(rowLength, ind, maxRowLength, numPre);
+
     for(unsigned int i = 0; i < numPre; i++) {
         for(unsigned int j = 0; j < rowLength[i]; j++){
             EXPECT_EQ(delay[(i * maxRowLength) + j], i);
@@ -124,11 +124,11 @@ TEST(FixedProbabilityConnectionTest, DendriticDelayDeath) {
 
     // Parse XML and create sparse connector
     filesystem::path basePath;
-	const unsigned int maxRowLength = 42;
+    const unsigned int maxRowLength = 42;
     unsigned int *rowLength = new unsigned int[42];
     unsigned int *ind = new unsigned int[42 * maxRowLength];
-	uint8_t *delay = new uint8_t[42 * maxRowLength];
-	
+    uint8_t *delay = new uint8_t[42 * maxRowLength];
+
     try
     {
         std::vector<unsigned int> remapIndices;
@@ -140,10 +140,10 @@ TEST(FixedProbabilityConnectionTest, DendriticDelayDeath) {
     catch(const std::runtime_error &)
     {
     }
-	
-	delete [] rowLength;
-	delete [] ind;
-	delete [] delay;
+
+    delete [] rowLength;
+    delete [] ind;
+    delete [] delay;
 }
 
 //------------------------------------------------------------------------
@@ -219,7 +219,7 @@ TEST(AllToAllConnectionTest, DendriticDelayDeath) {
     connectorDocument.load_string(connectorXML);
     auto synapse = connectorDocument.child("LL:Synapse");
 
-	uint8_t *delay = new uint8_t[100 * 100];
+    uint8_t *delay = new uint8_t[100 * 100];
 
     // Parse XML and check connector creation correctly realises
     // this should be implemented as dense matrix and thus
@@ -228,17 +228,17 @@ TEST(AllToAllConnectionTest, DendriticDelayDeath) {
     std::vector<unsigned int> remapIndices;
     try
     {
-		Connectors::create(synapse, 1.0, 100, 100,
-						   nullptr, nullptr, &delay, nullptr,
+        Connectors::create(synapse, 1.0, 100, 100,
+                           nullptr, nullptr, &delay, nullptr,
                            basePath, remapIndices);
-		FAIL();
+        FAIL();
     }
     catch(const std::runtime_error &)
     {
     }
-    
-	
-	delete[] delay;
+
+
+    delete[] delay;
 }
 
 //------------------------------------------------------------------------
@@ -285,7 +285,7 @@ TEST(OneToOneConnectionTest, DendriticDelayDeath) {
     connectorDocument.load_string(connectorXML);
     auto synapse = connectorDocument.child("LL:Synapse");
 
-	uint8_t *delay = new uint8_t[100 * 100];
+    uint8_t *delay = new uint8_t[100 * 100];
 
     // Parse XML and check connector creation correctly realises
     // this should be implemented as dense matrix and thus
@@ -302,8 +302,8 @@ TEST(OneToOneConnectionTest, DendriticDelayDeath) {
     catch(const std::runtime_error &)
     {
     }
-	
-	delete [] delay;
+
+    delete [] delay;
 }
 
 //------------------------------------------------------------------------
@@ -407,7 +407,7 @@ TEST(ConnectionListTest, InlineOneToOneSparseDelay) {
     const unsigned int maxRowLength = 1;
     unsigned int *rowLength = new unsigned int[10];
     unsigned int *ind = new unsigned int[10 * maxRowLength];
-	uint8_t *delay = new uint8_t[10 * maxRowLength];
+    uint8_t *delay = new uint8_t[10 * maxRowLength];
     Connectors::create(synapse, 1.0, 10, 10,
                        &rowLength, &ind, &delay, &maxRowLength,
                        basePath, remapIndices);
@@ -415,7 +415,7 @@ TEST(ConnectionListTest, InlineOneToOneSparseDelay) {
     // Check number of connections matches XML
     EXPECT_EQ(remapIndices.size(), 10);
     checkOneToOne(rowLength, ind, delay, 10);
-	delete [] delay;
+    delete [] delay;
     delete [] ind;
     delete [] rowLength;
 }
@@ -449,14 +449,14 @@ TEST(ConnectionListTest, InlineOneToOneNoDelayDeath) {
     const unsigned int maxRowLength = 1;
     unsigned int *rowLength = new unsigned int[10];
     unsigned int *ind = new unsigned int[10 * maxRowLength];
-	try
+    try
     {
-		Connectors::create(synapse, 1.0, 10, 10,
-						   &rowLength, &ind, nullptr, &maxRowLength,
-						   basePath, remapIndices);
-		FAIL();
-	}
-	catch(const std::runtime_error &)
+        Connectors::create(synapse, 1.0, 10, 10,
+                           &rowLength, &ind, nullptr, &maxRowLength,
+                           basePath, remapIndices);
+        FAIL();
+    }
+    catch(const std::runtime_error &)
     {
     }
 }
@@ -586,7 +586,7 @@ TEST(ConnectionListTest, InlineShuffleTriangleSparseDelay) {
     const unsigned int maxRowLength = 4;
     unsigned int *rowLength = new unsigned int[5];
     unsigned int *ind = new unsigned int[5 * maxRowLength];
-	uint8_t *delay = new uint8_t[5 * maxRowLength];
+    uint8_t *delay = new uint8_t[5 * maxRowLength];
     Connectors::create(synapse, 1.0, 5, 5,
                        &rowLength, &ind, &delay, &maxRowLength,
                        basePath, remapIndices);
@@ -607,7 +607,7 @@ TEST(ConnectionListTest, InlineShuffleTriangleSparseDelay) {
     EXPECT_EQ(remapIndices[8], (2 * maxRowLength) + 1);
     EXPECT_EQ(remapIndices[9], (3 * maxRowLength) + 2);
 
-	delete [] delay;
+    delete [] delay;
     delete [] ind;
     delete [] rowLength;
 }

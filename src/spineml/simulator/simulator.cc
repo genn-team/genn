@@ -174,8 +174,8 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
     if(!networkSpineML) {
         throw std::runtime_error("XML file:" + networkPath.str() + " is not a low-level SpineML network - it has no root SpineML node");
     }
-	
-	auto simulation = experiment.child("Simulation");
+
+    auto simulation = experiment.child("Simulation");
     if(!simulation) {
         throw std::runtime_error("No 'Simulation' node found in experiment");
     }
@@ -239,7 +239,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
             // Find row lengths, indices and max row length associated with sparse connection
             unsigned int **rowLength = (unsigned int**)getLibrarySymbol(("rowLength" + geNNSynPopName).c_str(), true);
             unsigned int **ind = (unsigned int**)getLibrarySymbol(("ind" + geNNSynPopName).c_str(), true);
-			uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
+            uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
             const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(("maxRowLength" + geNNSynPopName).c_str(), true);
 
             // Create connector
@@ -279,7 +279,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
                 // Find row lengths, indices and max row length associated with sparse connection
                 unsigned int **rowLength = (unsigned int**)getLibrarySymbol(("rowLength" + geNNSynPopName).c_str(), true);
                 unsigned int **ind = (unsigned int**)getLibrarySymbol(("ind" + geNNSynPopName).c_str(), true);
-				uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
+                uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
                 const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(("maxRowLength" + geNNSynPopName).c_str(), true);
 
                 // Create connector

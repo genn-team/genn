@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 {
     try
     {
-		CLI::App app{"SpineML simulator for GeNN"};
+        CLI::App app{"SpineML simulator for GeNN"};
 
         std::string experimentFilename;
         std::string outputDirectory;

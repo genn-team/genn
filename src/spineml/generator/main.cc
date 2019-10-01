@@ -57,11 +57,11 @@ namespace
 {
 struct SynapseMatrixProps
 {
-	SynapseMatrixConnectivity connectivityType;
-	unsigned int axonalDelay;
-	unsigned int maxDendriticDelay;
-	unsigned int maxRowLength;
-	InitSparseConnectivitySnippet::Init connectivityInitSnippet;
+    SynapseMatrixConnectivity connectivityType;
+    unsigned int axonalDelay;
+    unsigned int maxDendriticDelay;
+    unsigned int maxRowLength;
+    InitSparseConnectivitySnippet::Init connectivityInitSnippet;
 };
 
 // Helper function to either find existing model that provides desired parameters or create new one
@@ -151,27 +151,27 @@ unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 //----------------------------------------------------------------------------
 // Helper function to determine the correct type of GeNN projection to use for a SpineML 'Synapse' node
 SynapseMatrixProps getSynapticMatrixProps(const filesystem::path &basePath, const pugi::xml_node &node, 
-										  unsigned int numPre, unsigned int numPost, double dt)
+                                          unsigned int numPre, unsigned int numPost, double dt)
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-		return {Connectors::OneToOne::getMatrixConnectivity(oneToOne, numPre, numPost),
-				readDelaySteps(oneToOne, dt), 1, 0,
-				Connectors::OneToOne::getConnectivityInit(oneToOne)};
+        return {Connectors::OneToOne::getMatrixConnectivity(oneToOne, numPre, numPost),
+                readDelaySteps(oneToOne, dt), 1, 0,
+                Connectors::OneToOne::getConnectivityInit(oneToOne)};
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
         return {Connectors::AllToAll::getMatrixConnectivity(allToAll, numPre, numPost),
-				readDelaySteps(allToAll, dt), 1, 0,
-				uninitialisedConnectivity()};
+                readDelaySteps(allToAll, dt), 1, 0,
+                uninitialisedConnectivity()};
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
         return {Connectors::FixedProbability::getMatrixConnectivity(fixedProbability, numPre, numPost),
-				readDelaySteps(fixedProbability, dt), 1, 0,
-				Connectors::FixedProbability::getConnectivityInit(fixedProbability)};
+                readDelaySteps(fixedProbability, dt), 1, 0,
+                Connectors::FixedProbability::getConnectivityInit(fixedProbability)};
     }
 
     auto connectionList = node.child("ConnectionList");
@@ -184,21 +184,21 @@ SynapseMatrixProps getSynapticMatrixProps(const filesystem::path &basePath, cons
                                                                                                  numPre, numPost);
 
         // If connector didn't specify delay, read it from delay child. Otherwise convert max delay to timesteps
-		unsigned int axonalDelay = NO_DELAY;
-		unsigned int maxDendriticDelay = 1;
-		if(delayType == Connectors::List::DelayType::None) {
-			axonalDelay = readDelaySteps(connectionList, dt);
-		}
-		else if(delayType == Connectors::List::DelayType::Homogeneous) {
-			axonalDelay = (unsigned int)std::round(maxDelay / dt);
-		}
-		else {
-			maxDendriticDelay = (unsigned int)std::round(maxDelay / dt);
-		}
+        unsigned int axonalDelay = NO_DELAY;
+        unsigned int maxDendriticDelay = 1;
+        if(delayType == Connectors::List::DelayType::None) {
+            axonalDelay = readDelaySteps(connectionList, dt);
+        }
+        else if(delayType == Connectors::List::DelayType::Homogeneous) {
+            axonalDelay = (unsigned int)std::round(maxDelay / dt);
+        }
+        else {
+            maxDendriticDelay = (unsigned int)std::round(maxDelay / dt);
+        }
         
         // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
         return {Connectors::List::getMatrixConnectivity(connectionList, numPre, numPost),
-				axonalDelay, maxDendriticDelay, maxRowLength, uninitialisedConnectivity()};
+                axonalDelay, maxDendriticDelay, maxRowLength, uninitialisedConnectivity()};
     }
 
     throw std::runtime_error("No supported connection type found for projection");
@@ -416,15 +416,15 @@ int main(int argc, char *argv[])
 
                 LOGD << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")";
 
-				// Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
+                // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
                 const auto synapseMatrixProps = getSynapticMatrixProps(basePath, input,
                                                                        srcNeuronGroup->getNumNeurons(),
                                                                        neuronGroup->getNumNeurons(),
                                                                        dt);
-				
-				// Are heterogeneous delays required
-				const bool heterogeneousDelay = (synapseMatrixProps.maxDendriticDelay > 1);
-				
+                
+                // Are heterogeneous delays required
+                const bool heterogeneousDelay = (synapseMatrixProps.maxDendriticDelay > 1);
+                
                 // Either get existing passthrough weight update model or create new one of no suitable models are available
                 const auto &passthroughWeightUpdateModel = getCreatePassthroughModel(srcPort, passthroughWeightUpdateModels,
                                                                                      srcNeuronModel, heterogeneousDelay);
@@ -434,11 +434,11 @@ int main(int argc, char *argv[])
                                                                                      neuronModel);
 
                 
-				// Create synapse population
+                // Create synapse population
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
                 auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, 
-															 SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
-															 synapseMatrixProps.axonalDelay, 
+                                                             SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
+                                                             synapseMatrixProps.axonalDelay, 
                                                              srcPopName, popName,
                                                              &passthroughWeightUpdateModel, {}, {}, {}, {},
                                                              &passthroughPostsynapticModel, {}, {},
@@ -452,10 +452,10 @@ int main(int argc, char *argv[])
                     assert(synapseMatrixProps.maxRowLength != 0);
                     synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                 }
-				
-				// Set maximum dendritic delay for synapse population
-				assert(synapseMatrixProps.maxDendriticDelay >= 1);
-				synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
+                
+                // Set maximum dendritic delay for synapse population
+                assert(synapseMatrixProps.maxDendriticDelay >= 1);
+                synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
             }
 
             // Loop through outgoing projections
@@ -479,7 +479,7 @@ int main(int argc, char *argv[])
                     // Get name of weight update
                     const std::string weightUpdateName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
 
-					// Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
+                    // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
                     const auto synapseMatrixProps = getSynapticMatrixProps(basePath, synapse,
                                                                            neuronGroup->getNumNeurons(),
                                                                            trgNeuronGroup->getNumNeurons(),
@@ -496,7 +496,7 @@ int main(int argc, char *argv[])
                                                                       weightUpdateExternalInputPorts,
                                                                       weightUpdateOverridenPropertyNames,
                                                                       weightUpdateVarInitialisers,
-																	  synapseMatrixProps.maxDendriticDelay);
+                                                                      synapseMatrixProps.maxDendriticDelay);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
@@ -530,8 +530,8 @@ int main(int argc, char *argv[])
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
                     auto synapsePop = model.addSynapsePopulation(weightUpdateName, 
-																 SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
-															     synapseMatrixProps.axonalDelay, 
+                                                                 SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
+                                                                 synapseMatrixProps.axonalDelay, 
                                                                  popName, trgPopName,
                                                                  &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel), {}, {},
                                                                  &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
@@ -542,13 +542,13 @@ int main(int argc, char *argv[])
                         && synapseMatrixProps.connectivityInitSnippet.getSnippet()->getRowBuildCode().empty())
                     {
                         // Check that max connections has been specified
-						assert(synapseMatrixProps.maxRowLength != 0);
-						synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
+                        assert(synapseMatrixProps.maxRowLength != 0);
+                        synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                     }
-					
-					// Set maximum dendritic delay for synapse population
-					assert(synapseMatrixProps.maxDendriticDelay >= 1);
-					synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
+                    
+                    // Set maximum dendritic delay for synapse population
+                    assert(synapseMatrixProps.maxDendriticDelay >= 1);
+                    synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
                 }
             }
         }

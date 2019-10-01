@@ -47,5 +47,5 @@ inline bool operator & (SynapseMatrixType type, SynapseMatrixWeight weightType)
 
 inline SynapseMatrixType operator | (SynapseMatrixWeight weightType, SynapseMatrixConnectivity connType)
 {
-	return static_cast<SynapseMatrixType>(static_cast<unsigned int>(weightType) | static_cast<unsigned int>(connType));
+    return static_cast<SynapseMatrixType>(static_cast<unsigned int>(weightType) | static_cast<unsigned int>(connType));
 }
