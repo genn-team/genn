@@ -215,7 +215,9 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, do
     // One to one connectors are initialised using sparse connectivity initialisation
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-		assert(delay == nullptr);
+		if(delay != nullptr) {
+			throw std::runtime_error("OneToOneConnection does not support heterogeneous delays");
+		}
 		
         if(rowLength != nullptr && ind != nullptr && maxRowLength != nullptr) {
             return numPre;
@@ -228,7 +230,9 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, do
     // All to all connectors are initialised using sparse connectivity initialisation
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
-		assert(delay == nullptr);
+		if(delay != nullptr) {
+			throw std::runtime_error("AllToAllConnection does not support heterogeneous delays");
+		}
 		
         if(rowLength == nullptr && ind == nullptr && maxRowLength == nullptr) {
             return numPre * numPost;
@@ -241,7 +245,9 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, do
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
-		assert(delay == nullptr);
+		if(delay != nullptr) {
+			throw std::runtime_error("FixedProbabilityConnection does not support heterogeneous delays");
+		}
 		
         if(maxRowLength != nullptr) {
             return numPre * (*maxRowLength);
