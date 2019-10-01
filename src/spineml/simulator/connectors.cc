@@ -136,7 +136,7 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
 				}
 				
 				// Store in delay array
-				(*delay)[index] = (unsigned int)std::round(delayAttr.as_float() / dt);
+				(*delay)[index] = (uint8_t)std::round(delayAttr.as_float() / dt);
             }
 			
             // Increment row length
