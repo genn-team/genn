@@ -58,7 +58,6 @@ namespace
 struct SynapseMatrixProps
 {
 	SynapseMatrixConnectivity connectivityType;
-	bool heterogeneousDelay;
 	unsigned int axonalDelay;
 	unsigned int maxDendriticDelay;
 	unsigned int maxRowLength;
@@ -157,21 +156,21 @@ SynapseMatrixProps getSynapticMatrixProps(const filesystem::path &basePath, cons
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
 		return {Connectors::OneToOne::getMatrixConnectivity(oneToOne, numPre, numPost),
-				false, readDelaySteps(oneToOne, dt), 1, 0,
+				readDelaySteps(oneToOne, dt), 1, 0,
 				Connectors::OneToOne::getConnectivityInit(oneToOne)};
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
         return {Connectors::AllToAll::getMatrixConnectivity(allToAll, numPre, numPost),
-				false, readDelaySteps(allToAll, dt), 1, 0,
+				readDelaySteps(allToAll, dt), 1, 0,
 				uninitialisedConnectivity()};
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
         return {Connectors::FixedProbability::getMatrixConnectivity(fixedProbability, numPre, numPost),
-				false, readDelaySteps(fixedProbability, dt), 1, 0,
+				readDelaySteps(fixedProbability, dt), 1, 0,
 				Connectors::FixedProbability::getConnectivityInit(fixedProbability)};
     }
 
@@ -185,7 +184,6 @@ SynapseMatrixProps getSynapticMatrixProps(const filesystem::path &basePath, cons
                                                                                                  numPre, numPost);
 
         // If connector didn't specify delay, read it from delay child. Otherwise convert max delay to timesteps
-		bool heterogeneousDelay = false;
 		unsigned int axonalDelay = NO_DELAY;
 		unsigned int maxDendriticDelay = 1;
 		if(delayType == Connectors::List::DelayType::None) {
@@ -195,13 +193,12 @@ SynapseMatrixProps getSynapticMatrixProps(const filesystem::path &basePath, cons
 			axonalDelay = (unsigned int)std::round(maxDelay / dt);
 		}
 		else {
-			heterogeneousDelay = true;
 			maxDendriticDelay = (unsigned int)std::round(maxDelay / dt);
 		}
         
         // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
         return {Connectors::List::getMatrixConnectivity(connectionList, numPre, numPost),
-				heterogeneousDelay, axonalDelay, maxDendriticDelay, maxRowLength, uninitialisedConnectivity()};
+				axonalDelay, maxDendriticDelay, maxRowLength, uninitialisedConnectivity()};
     }
 
     throw std::runtime_error("No supported connection type found for projection");
@@ -425,9 +422,12 @@ int main(int argc, char *argv[])
                                                                        neuronGroup->getNumNeurons(),
                                                                        dt);
 				
+				// Are heterogeneous delays required
+				const bool heterogeneousDelay = (synapseMatrixProps.maxDendriticDelay > 1);
+				
                 // Either get existing passthrough weight update model or create new one of no suitable models are available
                 const auto &passthroughWeightUpdateModel = getCreatePassthroughModel(srcPort, passthroughWeightUpdateModels,
-                                                                                     srcNeuronModel, synapseMatrixProps.heterogeneousDelay);
+                                                                                     srcNeuronModel, heterogeneousDelay);
 
                 // Either get existing passthrough postsynaptic model or create new one of no suitable models are available
                 const auto &passthroughPostsynapticModel = getCreatePassthroughModel(dstPort, passthroughPostsynapticModels,
@@ -481,6 +481,9 @@ int main(int argc, char *argv[])
                                                                            trgNeuronGroup->getNumNeurons(),
                                                                            dt);
 
+					// Are heterogeneous delays required
+					const bool heterogeneousDelay = (synapseMatrixProps.maxDendriticDelay > 1);
+				
                     // Get sets of external input and overriden properties for this weight update
                     const auto *weightUpdateExternalInputPorts = getNamedSet(externalInputs, weightUpdateName);
                     const auto *weightUpdateOverridenPropertyNames = getNamedSet(overridenProperties, weightUpdateName);
@@ -495,7 +498,7 @@ int main(int argc, char *argv[])
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
-                                                                   neuronModel, trgNeuronModel);
+                                                                   neuronModel, trgNeuronModel, heterogeneousDelay);
 
                     // Get post synapse
                     auto postSynapse = synapse.child("LL:PostSynapse");

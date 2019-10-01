@@ -37,7 +37,8 @@ public:
     WeightUpdateModel(const ModelParams::WeightUpdate &params,
                       const pugi::xml_node &componentClass,
                       const NeuronModel *srcNeuronModel,
-                      const NeuronModel *trgNeuronModel);
+                      const NeuronModel *trgNeuronModel,
+					  bool heterogeneousDelay);
 
     //------------------------------------------------------------------------
     // Typedefines
