@@ -495,7 +495,8 @@ int main(int argc, char *argv[])
                                                                       popName, trgPopName,
                                                                       weightUpdateExternalInputPorts,
                                                                       weightUpdateOverridenPropertyNames,
-                                                                      weightUpdateVarInitialisers);
+                                                                      weightUpdateVarInitialisers,
+																	  synapseMatrixProps.maxDendriticDelay);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
