@@ -56,8 +56,8 @@ TEST(FixedProbabilityConnectionTest, LowProbabilityDenseDeath) {
     try
     {
         std::vector<unsigned int> remapIndices;
-        Connectors::create(synapse, 42, 42,
-                           nullptr, nullptr, nullptr,
+        Connectors::create(synapse, 1.0, 42, 42,
+                           nullptr, nullptr, nullptr, nullptr,
                            basePath, remapIndices);
         FAIL();
     }
@@ -83,8 +83,8 @@ TEST(FixedProbabilityConnectionTest, FullyConnectedDense) {
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
-    unsigned int n = Connectors::create(synapse, 100, 100,
-                                        nullptr, nullptr, nullptr,
+    unsigned int n = Connectors::create(synapse, 1.0, 100, 100,
+                                        nullptr, nullptr, nullptr, nullptr,
                                         basePath, remapIndices);
     EXPECT_EQ(n, 100 * 100);
 }
@@ -109,8 +109,8 @@ TEST(AllToAllConnectionTest, Dense) {
     // doesn't require SparseProjection or allocation function
     filesystem::path basePath;
     std::vector<unsigned int> remapIndices;
-    unsigned int n = Connectors::create(synapse, 100, 100,
-                                        nullptr, nullptr, nullptr,
+    unsigned int n = Connectors::create(synapse, 1.0, 100, 100,
+                                        nullptr, nullptr, nullptr, nullptr,
                                         basePath, remapIndices);
     EXPECT_EQ(n, 100 * 100);
 }
@@ -137,8 +137,8 @@ TEST(AllToAllConnectionTest, SparseDeath) {
     unsigned int *ind = new unsigned int[42 * maxRowLength];
     try
     {
-        Connectors::create(synapse, 42, 42,
-                           &rowLength, &ind, &maxRowLength,
+        Connectors::create(synapse, 1.0, 42, 42,
+                           &rowLength, &ind, nullptr, &maxRowLength,
                            basePath, remapIndices);
         FAIL();
     }
@@ -172,8 +172,8 @@ TEST(OneToOneConnectionTest, DenseDeath) {
     std::vector<unsigned int> remapIndices;
     try
     {
-        Connectors::create(synapse, 100, 100,
-                           nullptr, nullptr, nullptr,
+        Connectors::create(synapse, 1.0, 100, 100,
+                           nullptr, nullptr, nullptr, nullptr,
                            basePath, remapIndices);
         FAIL();
     }
@@ -204,8 +204,8 @@ TEST(ConnectionListTest, DenseDeath) {
     std::vector<unsigned int> remapIndices;
     try
     {
-        Connectors::create(synapse, 42, 42,
-                           nullptr, nullptr, nullptr,
+        Connectors::create(synapse, 1.0, 42, 42,
+                           nullptr, nullptr, nullptr, nullptr,
                            basePath, remapIndices);
         FAIL();
     }
@@ -243,8 +243,8 @@ TEST(ConnectionListTest, InlineOneToOneSparse) {
     const unsigned int maxRowLength = 1;
     unsigned int *rowLength = new unsigned int[10];
     unsigned int *ind = new unsigned int[10 * maxRowLength];
-    Connectors::create(synapse, 10, 10,
-                       &rowLength, &ind, &maxRowLength,
+    Connectors::create(synapse, 1.0, 10, 10,
+                       &rowLength, &ind, nullptr, &maxRowLength,
                        basePath, remapIndices);
 
     // Check number of connections matches XML
@@ -286,8 +286,8 @@ TEST(ConnectionListTest, InlineTriangleSparse) {
     const unsigned int maxRowLength = 4;
     unsigned int *rowLength = new unsigned int[5];
     unsigned int *ind = new unsigned int[5 * maxRowLength];
-    Connectors::create(synapse, 5, 5,
-                       &rowLength, &ind, &maxRowLength,
+    Connectors::create(synapse, 1.0, 5, 5,
+                       &rowLength, &ind, nullptr, &maxRowLength,
                        basePath, remapIndices);
 
     // Check number of connections matches XML
@@ -326,8 +326,8 @@ TEST(ConnectionListTest, InlineShuffleTriangleSparse) {
     const unsigned int maxRowLength = 4;
     unsigned int *rowLength = new unsigned int[5];
     unsigned int *ind = new unsigned int[5 * maxRowLength];
-    Connectors::create(synapse, 5, 5,
-                       &rowLength, &ind, &maxRowLength,
+    Connectors::create(synapse, 1.0, 5, 5,
+                       &rowLength, &ind, nullptr, &maxRowLength,
                        basePath, remapIndices);
 
     // Check that resultant connectivity is triangle
@@ -379,8 +379,8 @@ TEST(ConnectionListTest, InlineShuffleOneToOneSparse) {
     const unsigned int maxRowLength = 1;
     unsigned int *rowLength = new unsigned int[10];
     unsigned int *ind = new unsigned int[10 * maxRowLength];
-    Connectors::create(synapse, 10, 10,
-                       &rowLength, &ind, &maxRowLength,
+    Connectors::create(synapse, 1.0, 10, 10,
+                       &rowLength, &ind, nullptr, &maxRowLength,
                        basePath, remapIndices);
 
     // Check that resultant connectivity is one-to-one
@@ -423,8 +423,8 @@ TEST(ConnectionListTest, BinaryFileSparse) {
     const unsigned int maxRowLength = 42;
     unsigned int *rowLength = new unsigned int[42];
     unsigned int *ind = new unsigned int[42 * maxRowLength];
-    Connectors::create(synapse, 42, 42,
-                       &rowLength, &ind, &maxRowLength,
+    Connectors::create(synapse, 1.0, 42, 42,
+                       &rowLength, &ind, nullptr, &maxRowLength,
                        basePath, remapIndices);
 
     // Check number of connections matches XML
