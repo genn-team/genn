@@ -174,6 +174,24 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
     if(!networkSpineML) {
         throw std::runtime_error("XML file:" + networkPath.str() + " is not a low-level SpineML network - it has no root SpineML node");
     }
+	
+	auto simulation = experiment.child("Simulation");
+    if(!simulation) {
+        throw std::runtime_error("No 'Simulation' node found in experiment");
+    }
+
+    auto eulerIntegration = simulation.child("EulerIntegration");
+    if(!eulerIntegration) {
+        throw std::runtime_error("GeNN only currently supports Euler integration scheme");
+    }
+
+    // Read integration timestep
+    m_DT = eulerIntegration.attribute("dt").as_double(0.1);
+    LOGI << "DT = " << m_DT << "ms";
+
+    // Read duration from simulation and convert to timesteps
+    m_DurationMs = simulation.attribute("duration").as_double() * 1000.0;
+
 
     std::map<std::string, unsigned int> componentSizes;
     std::map<std::string, std::string> componentURLs;
@@ -287,24 +305,6 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
         Timer t("Initialize sparse:");
         initializeSparse();
     }
-
-    auto simulation = experiment.child("Simulation");
-    if(!simulation) {
-        throw std::runtime_error("No 'Simulation' node found in experiment");
-    }
-
-    auto eulerIntegration = simulation.child("EulerIntegration");
-    if(!eulerIntegration) {
-        throw std::runtime_error("GeNN only currently supports Euler integration scheme");
-    }
-
-    // Read integration timestep
-    m_DT = eulerIntegration.attribute("dt").as_double(0.1);
-    LOGI << "DT = " << m_DT << "ms";
-
-    // Read duration from simulation and convert to timesteps
-    m_DurationMs = simulation.attribute("duration").as_double() * 1000.0;
-
 
     // Create directory for logs (if required)
     const auto logPath = outputPath / "log";
