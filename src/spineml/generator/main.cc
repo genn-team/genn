@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <thread>
 
 // Standard C includes
 #include <cassert>
@@ -585,7 +586,7 @@ int main(int argc, char *argv[])
         }
 
         // Generate command to build using msbuild
-        const std::string buildCommand = "msbuild /p:Configuration=Release  /verbosity:minimal \"" + (codePath / "runner.vcxproj").str() + "\"";
+        const std::string buildCommand = "msbuild /m /p:Configuration=Release  /verbosity:minimal \"" + (codePath / "runner.vcxproj").str() + "\"";
 #else
         // Create makefile to compile and link all generated modules
         // **NOTE** scope requiredso it gets closed before being built
@@ -594,8 +595,10 @@ int main(int argc, char *argv[])
             CodeGenerator::generateMakefile(makefile, backend, moduleNames);
         }
 
-        // Generate command to build using make
-        const std::string buildCommand = "make -C \"" + codePath.str() + "\"";
+        // Generate command to build using make, using as many threads as possible
+        const unsigned int numThreads = std::thread::hardware_concurrency();
+        LOGD << "Using " << numThreads << " threads to build model";
+        const std::string buildCommand = "make -C \"" + codePath.str() + "\" -j " + std::to_string(numThreads);
 #endif
 
         // Execute build command
