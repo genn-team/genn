@@ -563,7 +563,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 [&]()
                 {
                     if(delayRequired) {
-                        runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ")" << std::endl;
+                        runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ");" << std::endl;
                     }
                     else {
                         runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
