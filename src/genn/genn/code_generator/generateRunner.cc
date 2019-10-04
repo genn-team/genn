@@ -131,6 +131,24 @@ void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
     }
 }
 //-------------------------------------------------------------------------
+void genVarGetterScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerGetterFunc,
+                       VarLocation loc, const std::string &description, const std::string &type, std::function<void()> handler)
+{
+    // If this variable has a location that allows pushing and pulling and hence getting a host pointer
+    if(canPushPullVar(loc)) {
+        // Export getter
+        definitionsFunc << "EXPORT_FUNC " << type << " *get" << description << "();" << std::endl;
+
+        // Define getter
+        runnerGetterFunc << type << " *get" << description << "()";
+        {
+            CodeGenerator::CodeStream::Scope a(runnerGetterFunc);
+            handler();
+        }
+        runnerGetterFunc << std::endl;
+    }
+}
+//-------------------------------------------------------------------------
 void genStatePushPull(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
                       const std::string &name, std::vector<std::string> &statePushPullFunction)
 {
@@ -286,6 +304,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     std::stringstream runnerExtraGlobalParamFuncStream;
     std::stringstream runnerPushFuncStream;
     std::stringstream runnerPullFuncStream;
+    std::stringstream runnerGetterFuncStream;
     std::stringstream runnerStepTimeFinaliseStream;
     std::stringstream definitionsVarStream;
     std::stringstream definitionsFuncStream;
@@ -295,6 +314,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     CodeStream runnerExtraGlobalParamFunc(runnerExtraGlobalParamFuncStream);
     CodeStream runnerPushFunc(runnerPushFuncStream);
     CodeStream runnerPullFunc(runnerPullFuncStream);
+    CodeStream runnerGetterFunc(runnerGetterFuncStream);
     CodeStream runnerStepTimeFinalise(runnerStepTimeFinaliseStream);
     CodeStream definitionsVar(definitionsVarStream);
     CodeStream definitionsFunc(definitionsFuncStream);
@@ -536,9 +556,23 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                                    n.second.getVarLocation(i));
                 });
 
+            // Write getter to get access to correct pointer
+            const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
+            genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
+                              "Current" + vars[i].name + n.first, vars[i].type,
+                [&]()
+                {
+                    if(delayRequired) {
+                        runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ")" << std::endl;
+                    }
+                    else {
+                        runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
+                    }
+                });
+
             // Write macro for easy access to current variable value
             definitionsVar << "#define current" << vars[i].name + n.first;
-            if (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired()) {
+            if (delayRequired) {
                 definitionsVar << " (" << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "))";
             }
             else {
@@ -804,6 +838,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "// copying things from device" << std::endl;
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPullFuncStream.str();
+    runner << std::endl;
+
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << "// helper getter functions" << std::endl;
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << runnerGetterFuncStream.str();
     runner << std::endl;
 
     // ---------------------------------------------------------------------
