@@ -66,7 +66,7 @@ void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &
     // convenience macro for accessing spikes
     os << "#define spike" << eventMacroSuffix << "_" << ng.getName();
     if (delayRequired) {
-        os << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << "))";
+        os << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "))";
     }
     else {
         os << " glbSpk" << eventSuffix << ng.getName();
@@ -128,6 +128,24 @@ void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
     // Add function to vector if push pull function was actually required
     if(genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, loc, description, handler)) {
         statePushPullFunction.push_back(description);
+    }
+}
+//-------------------------------------------------------------------------
+void genVarGetterScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerGetterFunc,
+                       VarLocation loc, const std::string &description, const std::string &type, std::function<void()> handler)
+{
+    // If this variable has a location that allows pushing and pulling and hence getting a host pointer
+    if(canPushPullVar(loc)) {
+        // Export getter
+        definitionsFunc << "EXPORT_FUNC " << type << " *get" << description << "();" << std::endl;
+
+        // Define getter
+        runnerGetterFunc << type << " *get" << description << "()";
+        {
+            CodeGenerator::CodeStream::Scope a(runnerGetterFunc);
+            handler();
+        }
+        runnerGetterFunc << std::endl;
     }
 }
 //-------------------------------------------------------------------------
@@ -286,6 +304,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     std::stringstream runnerExtraGlobalParamFuncStream;
     std::stringstream runnerPushFuncStream;
     std::stringstream runnerPullFuncStream;
+    std::stringstream runnerGetterFuncStream;
     std::stringstream runnerStepTimeFinaliseStream;
     std::stringstream definitionsVarStream;
     std::stringstream definitionsFuncStream;
@@ -295,6 +314,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     CodeStream runnerExtraGlobalParamFunc(runnerExtraGlobalParamFuncStream);
     CodeStream runnerPushFunc(runnerPushFuncStream);
     CodeStream runnerPullFunc(runnerPullFuncStream);
+    CodeStream runnerGetterFunc(runnerGetterFuncStream);
     CodeStream runnerStepTimeFinalise(runnerStepTimeFinaliseStream);
     CodeStream definitionsVar(definitionsVarStream);
     CodeStream definitionsFunc(definitionsFuncStream);
@@ -527,6 +547,42 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + n.first,
                                n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
+
+            // Current variable push and pull functions
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
+                                "Current" + vars[i].name + n.first,
+                [&]()
+                {
+
+                    backend.genCurrentVariablePull(runnerPushFunc, n.second, vars[i].type, vars[i].name,
+                                                   n.second.getVarLocation(i));
+                    backend.genCurrentVariablePush(runnerPullFunc, n.second, vars[i].type, vars[i].name,
+                                                   n.second.getVarLocation(i));
+                });
+
+            // Write getter to get access to correct pointer
+            const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
+            genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
+                              "Current" + vars[i].name + n.first, vars[i].type,
+                [&]()
+                {
+                    if(delayRequired) {
+                        runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ");" << std::endl;
+                    }
+                    else {
+                        runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
+                    }
+                });
+
+            // Write macro for easy access to current variable value
+            definitionsVar << "#define current" << vars[i].name + n.first;
+            if (delayRequired) {
+                definitionsVar << " (" << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "))";
+            }
+            else {
+                definitionsVar << " " << vars[i].name << n.first;
+            }
+            definitionsVar << std::endl;
         }
 
         // Add helper function to push and pull entire neuron state
@@ -786,6 +842,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "// copying things from device" << std::endl;
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPullFuncStream.str();
+    runner << std::endl;
+
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << "// helper getter functions" << std::endl;
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << runnerGetterFuncStream.str();
     runner << std::endl;
 
     // ---------------------------------------------------------------------
