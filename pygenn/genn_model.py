@@ -87,7 +87,7 @@ class GeNNModel(object):
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 enable_debug=False, backend=None):
+                 enable_debug=False, backend=None, selected_gpu=None):
         """Init GeNNModel
         Keyword args:
         precision       --  string precision as string ("float", "double"
@@ -96,6 +96,8 @@ class GeNNModel(object):
         enable_debug    --  boolean enable debug mode. Disabled by default.
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
+        selected_gpu    --  integer specifying the id of the gpu in which the
+                            simulator wil run; None will select automatically
         """
         precision = "float" if precision is not None else precision
         self._scalar = precision
@@ -119,6 +121,7 @@ class GeNNModel(object):
         self._built = False
         self._loaded = False
         self.use_backend = backend
+        self.selected_gpu = selected_gpu
         self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
 
@@ -128,6 +131,17 @@ class GeNNModel(object):
         self.synapse_populations = {}
         self.current_sources = {}
         self.dT = 0.1
+
+    @property
+    def selected_gpu(self):
+        return self._selected_gpu
+
+    @selected_gpu.setter
+    def selected_gpu(self, v):
+        if self.use_backend == "CUDA":
+            self._selected_gpu = v
+        else:
+            self._use_backend = None
 
     @property
     def use_backend(self):
@@ -365,6 +379,11 @@ class GeNNModel(object):
 
         # Create suitable preferences object for backend
         preferences = self._backend_module.Preferences()
+
+        if self.selected_gpu is not None:
+            preferences.deviceSelectMethod = self._backend_module.DeviceSelect_MANUAL
+
+            preferences.manualDeviceID = self.selected_gpu
 
         # Create backend
         backend = self._backend_module.create_backend(self._model, output_path, 0, preferences);
