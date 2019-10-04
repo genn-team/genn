@@ -523,6 +523,18 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + n.first,
                                n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
+
+            // Current variable push and pull functions
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
+                                "Current" + vars[i].name + n.first,
+                [&]()
+                {
+
+                    backend.genCurrentVariablePull(runnerPushFunc, n.second, vars[i].type, vars[i].name,
+                                                   n.second.getVarLocation(i));
+                    backend.genCurrentVariablePush(runnerPullFunc, n.second, vars[i].type, vars[i].name,
+                                                   n.second.getVarLocation(i));
+                });
         }
 
         // Add helper function to push and pull entire neuron state
