@@ -66,7 +66,7 @@ void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &
     // convenience macro for accessing spikes
     os << "#define spike" << eventMacroSuffix << "_" << ng.getName();
     if (delayRequired) {
-        os << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << "))";
+        os << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "))";
     }
     else {
         os << " glbSpk" << eventSuffix << ng.getName();
@@ -535,6 +535,16 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                     backend.genCurrentVariablePush(runnerPullFunc, n.second, vars[i].type, vars[i].name,
                                                    n.second.getVarLocation(i));
                 });
+
+            // Write macro for easy access to current variable value
+            definitionsVar << "#define current" << vars[i].name + n.first;
+            if (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired()) {
+                definitionsVar << " (" << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "))";
+            }
+            else {
+                definitionsVar << " " << vars[i].name << n.first;
+            }
+            definitionsVar << std::endl;
         }
 
         // Add helper function to push and pull entire neuron state
