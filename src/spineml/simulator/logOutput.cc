@@ -167,7 +167,6 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned long lon
 
         // If no indices are specified, directly write out data from model property
         if(getIndices().empty()) {
-            LOGD << *getStateVarBegin();
             m_File.write(reinterpret_cast<const char*>(getStateVarBegin()), sizeof(scalar) * getModelPropertySize());
         }
         // Otherwise
