@@ -167,6 +167,7 @@ void SpineMLSimulator::LogOutput::AnalogueFile::record(double, unsigned long lon
 
         // If no indices are specified, directly write out data from model property
         if(getIndices().empty()) {
+            LOGD << *getStateVarBegin();
             m_File.write(reinterpret_cast<const char*>(getStateVarBegin()), sizeof(scalar) * getModelPropertySize());
         }
         // Otherwise
@@ -298,7 +299,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
                                           const std::string &port, unsigned int popSize,
                                           const filesystem::path &logPath, unsigned int *spikeQueuePtr,
                                           unsigned int *hostSpikeCount, unsigned int *hostSpikes,
-                                          ModelProperty::Base::PullFunc pullCurrentSpikesFunc)
+                                          void (*pullCurrentSpikesFunc)(void))
     : Base(node, dt), m_PopSize(popSize), m_SpikeQueuePtr(spikeQueuePtr),
       m_HostSpikeCount(hostSpikeCount), m_HostSpikes(hostSpikes), m_PullCurrentSpikesFunc(pullCurrentSpikesFunc)
 {

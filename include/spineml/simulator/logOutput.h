@@ -71,8 +71,8 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    const scalar *getStateVarBegin() const{ return m_ModelProperty->getHostStateVarBegin(); }
-    const scalar *getStateVarEnd() const{ return m_ModelProperty->getHostStateVarEnd(); }
+    const scalar *getStateVarBegin() const{ return m_ModelProperty->getHostStateVar(); }
+    const scalar *getStateVarEnd() const{ return (m_ModelProperty->getHostStateVar() + m_ModelProperty->getSize()); }
 
     unsigned int getModelPropertySize() const{ return m_ModelProperty->getSize(); }
 
@@ -195,7 +195,7 @@ public:
           const std::string &port, unsigned int popSize,
           const filesystem::path &logPath, unsigned int *spikeQueuePtr,
           unsigned int *hostSpikeCount, unsigned int *hostSpikes,
-          ModelProperty::Base::PullFunc pullCurrentSpikesFunc);
+          void (*pullCurrentSpikesFunc)(void));
 
     //----------------------------------------------------------------------------
     // Base virtuals
@@ -215,7 +215,7 @@ private:
     unsigned int *m_HostSpikeCount;
     unsigned int *m_HostSpikes;
 
-    ModelProperty::Base::PullFunc m_PullCurrentSpikesFunc;
+    void (*m_PullCurrentSpikesFunc)(void);
 
     std::set<unsigned int> m_Indices;
 };

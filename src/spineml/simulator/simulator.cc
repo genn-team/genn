@@ -1,6 +1,7 @@
 #include "simulator.h"
 
 // Standard C++ includes
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -42,6 +43,7 @@ extern "C"
 #include "inputValue.h"
 #include "logOutput.h"
 #include "modelProperty.h"
+#include "stateVar.h"
 #include "timer.h"
 
 using namespace SpineMLCommon;
@@ -471,21 +473,21 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
     // Get map to hold properties associated with this component
     auto &componentProperties = m_ComponentProperties[spineMLName];
 
+    // Bind ths to getLibrarySymbol to get free function we can pass to StateVar constructor
+    // **NOTE** using functions rather than just passing around Simulator objects is more to break circular dependencies than anything else
+    auto getLibrarySymbolFunc = std::bind(&Simulator::getLibrarySymbol, this,
+                                          std::placeholders::_1, std::placeholders::_2);
+
     // Loop through properties in network
     for(auto param : node.children("Property")) {
         std::string paramName = param.attribute("name").value();
 
-        // Get pointers to state vars in model library
-        scalar **hostStateVar;
-        ModelProperty::Base::PushFunc pushFunc;
-        ModelProperty::Base::PullFunc pullFunc;
-        std::tie(hostStateVar, pushFunc, pullFunc) = getStateVar<scalar*>(paramName + geNNPopName);
+        // Find state var in model library
+        StateVar<scalar> stateVar(paramName + geNNPopName, getLibrarySymbolFunc);
 
-        // If it's found
+        // If it's accessible
         // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
-        if(hostStateVar != nullptr) {
-            LOGD << "\t" << paramName;
-
+        if(stateVar.isAccessible()) {
             // If any properties are overriden
             pugi::xml_node overridenParam;
             if(overridenProperties) {
@@ -506,16 +508,9 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
             // If property is overriden then the value types will be in 'UL:' namespace otherwise root
             const std::string valueNamespace = overridenParam ? "UL:" : "";
 
-            if(pushFunc == nullptr || pullFunc == nullptr) {
-                throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
-            }
-
-            LOGD << "\t\tState variable found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc;
-
             // Create model property object
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param,
-                                                                *hostStateVar, pushFunc, pullFunc, popSize,
+                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param, stateVar, popSize,
                                                                 skipGeNNInitialised, basePath, valueNamespace, remapIndices)));
         }
     }
@@ -554,26 +549,14 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
         const std::string paramName = analoguePort.node().attribute("name").value();
         const std::string portType = analoguePort.node().name();
         if(componentProperties.find(paramName) == componentProperties.end()) {
-            // Get pointers to state vars in model library
-            scalar **hostStateVar;
-            ModelProperty::Base::PushFunc pushFunc;
-            ModelProperty::Base::PullFunc pullFunc;
-            std::tie(hostStateVar, pushFunc, pullFunc) = getStateVar<scalar*>(paramName + geNNPopName);
+            StateVar<scalar> stateVar(paramName + geNNPopName, getLibrarySymbolFunc);
 
             // If it's found
             // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
-            if(hostStateVar != nullptr) {
-                LOGD << "\t" << paramName;
-
-                if(pushFunc == nullptr || pullFunc == nullptr) {
-                    throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
-                }
-
-                LOGD << "\t\t" << portType << " found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc;
-
+            if(stateVar.isAccessible()) {
                 // Create model property object
                 componentProperties.insert(
-                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(*hostStateVar, pushFunc, pullFunc, popSize))));
+                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(stateVar, popSize))));
             }
         }
     }
