@@ -194,7 +194,9 @@ class Aliases
 public:
     Aliases(const pugi::xml_node &componentClass);
 
+    void setSendPortAlias(const std::string &name);
     void add(std::string &code) const;
+    bool isAlias(const std::string &name) const;
 private:
     struct Alias;
     typedef std::map<std::string, Alias> AliasMap;
@@ -202,12 +204,13 @@ private:
 
     struct Alias
     {
-        Alias(const std::string &c) : code(c)
+        Alias(const std::string &c) : code(c), sendPort(false)
         {
         }
 
         std::string code;
         std::vector<AliasIter> dependencies;
+        bool sendPort;
     };
     AliasMap m_Aliases;
 };

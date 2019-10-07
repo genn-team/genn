@@ -1,9 +1,10 @@
 #include "modelCommon.h"
 
 // Standard C++ includes
-#include <deque>
 #include <iostream>
+#include <list>
 #include <regex>
+#include <unordered_set>
 
 // PLOG includes
 #include <plog/Log.h>
@@ -123,25 +124,28 @@ SpineMLGenerator::Aliases::Aliases(const pugi::xml_node &componentClass)
         }
     }
 }
-/*1  procedure BFS(G,start_v):
-2      let Q be a queue
-3      label start_v as discovered
-4      Q.enqueue(start_v)
-5      while Q is not empty
-6          v = Q.dequeue()
-7          if v is the goal:
-8              return v
-9          for all edges from v to w in G.adjacentEdges(v) do
-10             if w is not labeled as discovered:
-11                 label w as discovered
-12                 w.parent = v
-13                 Q.enqueue(w) */
+//----------------------------------------------------------------------------
+void SpineMLGenerator::Aliases::setSendPortAlias(const std::string &name)
+{
+    auto alias = m_Aliases.find(name);
+    if(alias == m_Aliases.end()) {
+        throw std::runtime_error("Cannot set non-existent alias as send port");
+    }
+    else {
+        alias->second.sendPort = true;
+    }
+}
 //----------------------------------------------------------------------------
 void SpineMLGenerator::Aliases::add(std::string &code) const
 {
-    std::vector<AliasIter> requiredAliases;
-    std::set<std::string> discoveredAliases;
-    std::deque<AliasIter> aliasQueue;
+    // Output list of required aliases in correct order
+    std::list<AliasIter> allRequiredAliases;
+
+    // Set of string hashes used to implement depth-first-search
+    std::unordered_set<size_t> discoveredAliases;
+
+    // Stack used to implment depth-first search
+    std::vector<AliasIter> aliasStack;
 
     LOGD << "\t\t\tCode alias requirements:";
     // Loop through aliases
@@ -151,41 +155,49 @@ void SpineMLGenerator::Aliases::add(std::string &code) const
         // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
         const std::regex regex("(^|[^0-9a-zA-Z_])" + alias->first + "(?=$|[^a-zA-Z0-9_])");
 
-        // If code references alias, add to vector
+        // If code references alias
         if(std::regex_search(code, regex)) {
-            aliasQueue.push_back(alias);
-            discoveredAliases.insert(alias->first);
+            assert(aliasStack.empty());
 
-            LOGD << "\t\t\t\t" << alias->first;
-        }
-    }
+            // Add starting alias to vector
+            aliasStack.push_back(alias);
+            LOGD << "\t\t\t\tStart:" << alias->first;
 
-    // Where there are aliases in queue
-    while(!aliasQueue.empty()) {
-        const auto &alias = aliasQueue.front();
+            std::list<AliasIter> requiredAliases;
+            while(!aliasStack.empty()) {
+                auto v = aliasStack.back();
+                aliasStack.pop_back();
 
-        // Add this alias to the (ordered) list of requirements
-        requiredAliases.push_back(alias);
-
-        // Loop through alias's dependencies
-        for(const auto &d : alias->second.dependencies) {
-            // Mark dependency as discovered. If it wasn't already discovered add it to the back of the queue
-            if(discoveredAliases.insert(d->first).second) {
-                aliasQueue.push_back(d);
+                if(discoveredAliases.insert(std::hash<std::string>{}(v->first)).second) {
+                    requiredAliases.push_front(v);
+                    for(auto d : v->second.dependencies) {
+                        aliasStack.push_back(d);
+                    }
+                }
             }
+
+            // Splice all elements out of the ordered list of dependencies for this alias into main list
+            allRequiredAliases.splice(allRequiredAliases.end(), requiredAliases);
+
         }
-
-        // Removed processed alias from front of queue
-        aliasQueue.pop_front();
     }
 
-    for(const auto &r : requiredAliases) {
-        LOGD << "const scalar " << r->first << " = " << r->second.code << ";";
+    // Use stringstream to generate alias code
+    std::stringstream aliasStream;
+    for(const auto &r : allRequiredAliases) {
+        if(!r->second.sendPort) {
+            aliasStream << "const scalar ";
+        }
+        aliasStream << r->first << " = " << r->second.code << ";" << std::endl;
     }
 
-
+    // Prepend code with generated aliases
+    code = aliasStream.str() + code;
 }
-
+bool SpineMLGenerator::Aliases::isAlias(const std::string &name) const
+{
+    return (m_Aliases.find(name) != m_Aliases.end());
+}
 //----------------------------------------------------------------------------
 // Helper functions
 //----------------------------------------------------------------------------
