@@ -30,7 +30,7 @@ void SpineMLGenerator::ObjectHandler::Condition::onObject(const pugi::xml_node &
 
     // Expand out any aliases
     std::string triggerCodeString = triggerCode.text().get();
-    expandAliases(triggerCodeString, m_Aliases);
+    //expandAliases(triggerCodeString, m_Aliases);
 
     // Write trigger condition
     m_CodeStream << "if(" << triggerCodeString << ")" << CodeStream::OB(2);
@@ -39,7 +39,7 @@ void SpineMLGenerator::ObjectHandler::Condition::onObject(const pugi::xml_node &
     for(auto stateAssign : node.children("StateAssignment")) {
         // Expand out any aliases in code string
         std::string stateAssignCodeString = stateAssign.child_value("MathInline");
-        expandAliases(stateAssignCodeString, m_Aliases);
+        //expandAliases(stateAssignCodeString, m_Aliases);
 
         // Write state assignement
         m_CodeStream << stateAssign.attribute("variable").value() << " = " << stateAssignCodeString << ";" << std::endl;
@@ -62,7 +62,7 @@ void SpineMLGenerator::ObjectHandler::TimeDerivative::onObject(const pugi::xml_n
 {
     // Expand out any aliases in code string
     std::string codeString = node.child_value("MathInline");
-    expandAliases(codeString, m_Aliases);
+    //expandAliases(codeString, m_Aliases);
 
     // Find name of state variable
     const std::string stateVariable = node.attribute("variable").value();

@@ -1,6 +1,7 @@
 #include "modelCommon.h"
 
 // Standard C++ includes
+#include <deque>
 #include <iostream>
 #include <regex>
 
@@ -80,6 +81,109 @@ void SpineMLGenerator::CodeStream::flush()
 
     // Clear current regime code stream
     m_CurrentRegimeStream.str("");
+}
+
+//----------------------------------------------------------------------------
+// SpineMLGenerator::Aliases
+//----------------------------------------------------------------------------
+SpineMLGenerator::Aliases::Aliases(const pugi::xml_node &componentClass)
+{
+    LOGD << "\t\tAliases:";
+
+    // Loop through aliases and add to map
+    auto dynamics = componentClass.child("Dynamics");
+    for(auto alias : dynamics.children("Alias")) {
+        const std::string name = alias.attribute("name").value();
+        const std::string code = alias.child_value("MathInline");
+
+        LOGD << "\t\t\t" << name;
+
+        m_Aliases.emplace(name, code);
+    }
+
+
+    LOGD << "\t\t\tDependencies:";
+    // Loop through aliases
+    for(auto alias = m_Aliases.begin(); alias != m_Aliases.end(); alias++) {
+        // Loop through other aliases
+        for(auto otherAlias = m_Aliases.cbegin(); otherAlias != m_Aliases.cend(); otherAlias++) {
+            if(otherAlias != alias) {
+                // Build a regex to find alias name with at least one character that
+                // can't be in a variable name on either side (or an end/beginning of string)
+                // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
+                const std::regex regex("(^|[^0-9a-zA-Z_])" + otherAlias->first + "(?=$|[^a-zA-Z0-9_])");
+
+                // If 'alias' references 'otherAlias', add to set
+                if(std::regex_search(alias->second.code, regex)) {
+                    LOGD << "\t\t\t\t" << alias->first << " depends on " << otherAlias->first;
+                    alias->second.dependencies.push_back(otherAlias);
+                }
+
+            }
+        }
+    }
+}
+/*1  procedure BFS(G,start_v):
+2      let Q be a queue
+3      label start_v as discovered
+4      Q.enqueue(start_v)
+5      while Q is not empty
+6          v = Q.dequeue()
+7          if v is the goal:
+8              return v
+9          for all edges from v to w in G.adjacentEdges(v) do
+10             if w is not labeled as discovered:
+11                 label w as discovered
+12                 w.parent = v
+13                 Q.enqueue(w) */
+//----------------------------------------------------------------------------
+void SpineMLGenerator::Aliases::add(std::string &code) const
+{
+    std::vector<AliasIter> requiredAliases;
+    std::set<std::string> discoveredAliases;
+    std::deque<AliasIter> aliasQueue;
+
+    LOGD << "\t\t\tCode alias requirements:";
+    // Loop through aliases
+    for(auto alias = m_Aliases.cbegin(); alias != m_Aliases.cend(); alias++) {
+        // Build a regex to find alias name with at least one character that
+        // can't be in a variable name on either side (or an end/beginning of string)
+        // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
+        const std::regex regex("(^|[^0-9a-zA-Z_])" + alias->first + "(?=$|[^a-zA-Z0-9_])");
+
+        // If code references alias, add to vector
+        if(std::regex_search(code, regex)) {
+            aliasQueue.push_back(alias);
+            discoveredAliases.insert(alias->first);
+
+            LOGD << "\t\t\t\t" << alias->first;
+        }
+    }
+
+    // Where there are aliases in queue
+    while(!aliasQueue.empty()) {
+        const auto &alias = aliasQueue.front();
+
+        // Add this alias to the (ordered) list of requirements
+        requiredAliases.push_back(alias);
+
+        // Loop through alias's dependencies
+        for(const auto &d : alias->second.dependencies) {
+            // Mark dependency as discovered. If it wasn't already discovered add it to the back of the queue
+            if(discoveredAliases.insert(d->first).second) {
+                aliasQueue.push_back(d);
+            }
+        }
+
+        // Removed processed alias from front of queue
+        aliasQueue.pop_front();
+    }
+
+    for(const auto &r : requiredAliases) {
+        LOGD << "const scalar " << r->first << " = " << r->second.code << ";";
+    }
+
+
 }
 
 //----------------------------------------------------------------------------

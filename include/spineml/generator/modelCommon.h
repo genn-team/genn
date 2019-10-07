@@ -188,6 +188,30 @@ private:
     std::string m_Name;
 };
 
+//
+class Aliases
+{
+public:
+    Aliases(const pugi::xml_node &componentClass);
+
+    void add(std::string &code) const;
+private:
+    struct Alias;
+    typedef std::map<std::string, Alias> AliasMap;
+    typedef AliasMap::const_iterator AliasIter;
+
+    struct Alias
+    {
+        Alias(const std::string &c) : code(c)
+        {
+        }
+
+        std::string code;
+        std::vector<AliasIter> dependencies;
+    };
+    AliasMap m_Aliases;
+};
+
 //------------------------------------------------------------------------
 // Helper functions
 //------------------------------------------------------------------------

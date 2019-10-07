@@ -108,7 +108,7 @@ public:
             // Add current regime and trigger condition to map
             // **NOTE** cannot build code immediately as we don't know if there are multiple regimes
             std::string triggerCodeString = node.child("Trigger").child("MathInline").text().get();
-            SpineMLGenerator::expandAliases(triggerCodeString, getAliases());
+            //SpineMLGenerator::expandAliases(triggerCodeString, getAliases());
             m_RegimeThresholds.addTriggerCode(currentRegimeID, triggerCodeString);
         }
     }
@@ -206,6 +206,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     std::map<std::string, std::string> aliases;
     readAliases(componentClass, aliases);
 
+    Aliases aliasesTest(componentClass);
     // Loop through send ports
     LOGD << "\t\tSend ports:";
     std::vector<std::string> sendPortAliases;
@@ -336,6 +337,7 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     m_SimCode = simCodeStream.str();
     m_ThresholdConditionCode = regimeThresholds.getThresholdCode(multipleRegimes);
 
+    aliasesTest.add(m_SimCode);
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, variableParams, multipleRegimes);
 
