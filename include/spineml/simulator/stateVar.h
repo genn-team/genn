@@ -39,7 +39,6 @@ public:
                 m_Indirect.pushFunc = reinterpret_cast<PushCurrentFunc>(getLibrarySymbolFunc(("pushCurrent" + stateVarName + "ToDevice").c_str(), false));
                 m_PullFunc = reinterpret_cast<PullFunc>(getLibrarySymbolFunc(("pullCurrent" + stateVarName + "FromDevice").c_str(), false));
 
-                LOGD << *hostStateVar;
                 LOGD << "\t\tIndirect with get function:" << m_Indirect.getFunc << ", push function:" << m_Indirect.pushFunc << ", pull function:" << m_PullFunc;
             }
             // Otherwise
