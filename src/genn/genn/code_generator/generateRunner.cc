@@ -553,11 +553,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                 "Current" + vars[i].name + n.first,
                 [&]()
                 {
-
-                    backend.genCurrentVariablePull(runnerPushFunc, n.second, vars[i].type, vars[i].name,
-                                                   n.second.getVarLocation(i));
-                    backend.genCurrentVariablePush(runnerPullFunc, n.second, vars[i].type, vars[i].name,
-                                                   n.second.getVarLocation(i));
+                    backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
+                                                       vars[i].name, n.second.getVarLocation(i));
                 });
 
             // Write getter to get access to correct pointer

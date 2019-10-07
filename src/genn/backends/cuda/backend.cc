@@ -1784,7 +1784,7 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
 {
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
-        // Generate memcpy fo copy only current timestep's data
+        // Generate memcpy to copy only current timestep's data
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
         os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
         os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
@@ -1799,9 +1799,9 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
 {
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
-        // Generate memcpy fo copy only current timestep's data
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        // Generate memcpy to copy only current timestep's data
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
         os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
     }
     // Otherwise, generate standard pull

@@ -275,6 +275,14 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
+    //! Helper function to generate matching push and pull functions for the current state of a variable
+    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull,
+                                    const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+    {
+        genCurrentVariablePush(push, ng, type, name, loc);
+        genCurrentVariablePull(pull, ng, type, name, loc);
+    }
+
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
     MemAlloc genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                               const std::string &type, const std::string &name, VarLocation loc, size_t count) const
