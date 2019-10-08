@@ -137,16 +137,58 @@ void genVarGetterScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator
     // If this variable has a location that allows pushing and pulling and hence getting a host pointer
     if(canPushPullVar(loc)) {
         // Export getter
-        definitionsFunc << "EXPORT_FUNC " << type << " *get" << description << "();" << std::endl;
+        definitionsFunc << "EXPORT_FUNC " << type << " get" << description << "();" << std::endl;
 
         // Define getter
-        runnerGetterFunc << type << " *get" << description << "()";
+        runnerGetterFunc << type << " get" << description << "()";
         {
             CodeGenerator::CodeStream::Scope a(runnerGetterFunc);
             handler();
         }
         runnerGetterFunc << std::endl;
     }
+}
+//-------------------------------------------------------------------------
+void genSpikeGetters(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerGetterFunc,
+                     const NeuronGroupInternal &ng, bool trueSpike)
+{
+    const std::string eventSuffix = trueSpike ? "" : "Evnt";
+    const bool delayRequired = trueSpike
+        ? (ng.isDelayRequired() && ng.isTrueSpikeRequired())
+        : ng.isDelayRequired();
+    const VarLocation loc = trueSpike ? ng.getSpikeLocation() : ng.getSpikeEventLocation();
+
+    // Generate getter for current spike counts
+    genVarGetterScope(definitionsFunc, runnerGetterFunc,
+                      loc, trueSpike ? "CurrentSpikes" : "CurrentSpikeEvents", "unsigned int*",
+                      [&]()
+                      {
+                          runnerGetterFunc << "return ";
+                          if (delayRequired) {
+                              runnerGetterFunc << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "))";
+                          }
+                          else {
+                              runnerGetterFunc << " glbSpk" << eventSuffix << ng.getName();
+                          }
+                          runnerGetterFunc << std::endl;
+                      });
+
+    // Generate getter for current spikes
+    genVarGetterScope(definitionsFunc, runnerGetterFunc,
+                      loc, trueSpike ? "CurrentSpikeCount" : "CurrentSpikeEventCount", "unsigned int",
+                      [&]()
+                      {
+                          runnerGetterFunc << "return glbSpkCnt" << eventSuffix << ng.getName();
+                          if (delayRequired) {
+                              runnerGetterFunc << "[spkQuePtr" << ng.getName() << "]";
+                          }
+                          else {
+                              runnerGetterFunc << "[0]";
+                          }
+                          runnerGetterFunc << std::endl;
+                      });
+
+
 }
 //-------------------------------------------------------------------------
 void genStatePushPull(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
@@ -437,6 +479,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                     backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
                     backend.genCurrentTrueSpikePull(runnerPullFunc, n.second);
                 });
+
+            // Current true spike getter functions
+            genSpikeGetters(definitionsFunc, runnerGetterFunc, n.second, true);
         }
     }
     allVarStreams << std::endl;
@@ -475,6 +520,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 backend.genCurrentTrueSpikePull(runnerPullFunc, n.second);
             });
 
+        // Current true spike getter functions
+        genSpikeGetters(definitionsFunc, runnerGetterFunc, n.second, true);
+
         // If neuron ngroup eeds to emit spike-like events
         if (n.second.isSpikeEventRequired()) {
             // Write convenience macros to access spike-like events
@@ -506,6 +554,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                     backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second);
                     backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second);
                 });
+
+            // Current true spike getter functions
+            genSpikeGetters(definitionsFunc, runnerGetterFunc, n.second, false);
         }
 
         // If neuron group has axonal delays
@@ -556,7 +607,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             // Write getter to get access to correct pointer
             const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
             genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
-                              "Current" + vars[i].name + n.first, vars[i].type,
+                              "Current" + vars[i].name + n.first, vars[i].type + "*",
                 [&]()
                 {
                     if(delayRequired) {
