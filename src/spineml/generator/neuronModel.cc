@@ -87,8 +87,8 @@ private:
 class ObjectHandlerCondition : public SpineMLGenerator::ObjectHandler::Condition
 {
 public:
-    ObjectHandlerCondition(SpineMLGenerator::CodeStream &codeStream, const std::map<std::string, std::string> &aliases, const std::string &sendPortSpike, RegimeThresholds &regimeThresholds)
-        : SpineMLGenerator::ObjectHandler::Condition(codeStream, aliases), m_SendPortSpike(sendPortSpike), m_RegimeThresholds(regimeThresholds){}
+    ObjectHandlerCondition(SpineMLGenerator::CodeStream &codeStream, const std::string &sendPortSpike, RegimeThresholds &regimeThresholds)
+        : SpineMLGenerator::ObjectHandler::Condition(codeStream), m_SendPortSpike(sendPortSpike), m_RegimeThresholds(regimeThresholds){}
 
     //----------------------------------------------------------------------------
     // SpineMLGenerator::ObjectHandler::Condition virtuals
@@ -107,9 +107,7 @@ public:
         if(spikeEventOut) {
             // Add current regime and trigger condition to map
             // **NOTE** cannot build code immediately as we don't know if there are multiple regimes
-            std::string triggerCodeString = node.child("Trigger").child("MathInline").text().get();
-            //SpineMLGenerator::expandAliases(triggerCodeString, getAliases());
-            m_RegimeThresholds.addTriggerCode(currentRegimeID, triggerCodeString);
+            m_RegimeThresholds.addTriggerCode(currentRegimeID, node.child("Trigger").child("MathInline").text().get());
         }
     }
 
@@ -203,28 +201,21 @@ const char *SpineMLGenerator::NeuronModel::componentClassName = "neuron_body";
 SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, const pugi::xml_node &componentClass)
 {
     // Read aliases
-    //std::map<std::string, std::string> aliases;
-    //readAliases(componentClass, aliases);
-
-    Aliases aliasesTest(componentClass);
-
-    auto variableParams = params.getVariableParams();
+    Aliases aliases(componentClass);
 
     // Loop through send ports
     LOGD << "\t\tSend ports:";
-    //std::vector<std::string> sendPortAliases;
+    std::unordered_set<std::string> sendPortAliases;
     for(auto sendPort : componentClass.select_nodes(SpineMLUtils::xPathNodeHasSuffix("SendPort").c_str())) {
         std::string nodeType = sendPort.node().name();
         const char *portName = sendPort.node().attribute("name").value();
         if(nodeType == "AnalogSendPort") {
-            // If there is an alias matching this port name, add alias code to map to resolve later
-            if(aliasesTest.isAlias(portName)) {
+            // If there is an alias matching this port name
+            if(aliases.isAlias(portName)) {
                 LOGD << "\t\t\tImplementing analogue send port '" << portName << "' as an alias";
-                //sendPortAliases.push_back(portName);
-                aliasesTest.setSendPortAlias(portName);
 
-                // Add this state variable to variable params set
-                variableParams.insert(portName);
+                // Add it to the list of send port aliases
+                sendPortAliases.insert(portName);
             }
             else {
                 LOGD << "\t\t\tImplementing analogue send port '" << portName << "' using a GeNN model variable";
@@ -313,9 +304,9 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     // Generate model code using specified condition handler
     RegimeThresholds regimeThresholds;
     bool multipleRegimes;
-    ObjectHandlerCondition objectHandlerCondition(simCodeStream, {}, m_SendPortSpike, regimeThresholds);
+    ObjectHandlerCondition objectHandlerCondition(simCodeStream,  m_SendPortSpike, regimeThresholds);
     ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream, regimeThresholds);
-    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream, {});
+    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(simCodeStream);
     std::tie(multipleRegimes, m_InitialRegimeID) = generateModelCode(componentClass,
                                                                      {
                                                                          {trueSpikeReceivePort, &objectHandlerTrueSpike},
@@ -324,6 +315,20 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
                                                                      {},
                                                                      &objectHandlerTimeDerivative,
                                                                      regimeEndFunc);
+
+    auto variableParams = params.getVariableParams();
+
+    // Loop through send ports which send an alias
+    if(!sendPortAliases.empty()) {
+        simCodeStream << "// Send port aliases" << std::endl;
+    }
+    for(const auto &s : sendPortAliases) {
+        // Add simulation code to calculate send port value and store in state variable
+        simCodeStream << s << " = " << aliases.getAliasCode(s) << ";" << std::endl;
+
+        // Add this state variable to variable params set
+        variableParams.insert(s);
+    }
 
     // Add state variables for external input ports
     for(const auto &p : externalInputPorts) {
@@ -334,7 +339,13 @@ SpineMLGenerator::NeuronModel::NeuronModel(const ModelParams::Neuron &params, co
     m_SimCode = simCodeStream.str();
     m_ThresholdConditionCode = regimeThresholds.getThresholdCode(multipleRegimes);
 
-    aliasesTest.add(m_SimCode);
+    // Generate aliases required for sim code and threshold
+    std::stringstream aliasStream;
+    aliases.genAliases(aliasStream, {m_SimCode, m_ThresholdConditionCode}, sendPortAliases);
+
+    // Prepend simcode with aliases
+    m_SimCode = aliasStream.str() + m_SimCode;
+
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, variableParams, multipleRegimes);
 

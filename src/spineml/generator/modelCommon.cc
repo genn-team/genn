@@ -4,7 +4,6 @@
 #include <iostream>
 #include <list>
 #include <regex>
-#include <unordered_set>
 
 // PLOG includes
 #include <plog/Log.h>
@@ -125,18 +124,8 @@ SpineMLGenerator::Aliases::Aliases(const pugi::xml_node &componentClass)
     }
 }
 //----------------------------------------------------------------------------
-void SpineMLGenerator::Aliases::setSendPortAlias(const std::string &name)
-{
-    auto alias = m_Aliases.find(name);
-    if(alias == m_Aliases.end()) {
-        throw std::runtime_error("Cannot set non-existent alias as send port");
-    }
-    else {
-        alias->second.sendPort = true;
-    }
-}
-//----------------------------------------------------------------------------
-void SpineMLGenerator::Aliases::add(std::string &code) const
+void SpineMLGenerator::Aliases::genAliases(std::ostream &os, std::initializer_list<std::string> codeStrings,
+                                           const std::unordered_set<std::string> &excludeAliases) const
 {
     // Output list of required aliases in correct order
     std::list<AliasIter> allRequiredAliases;
@@ -155,23 +144,34 @@ void SpineMLGenerator::Aliases::add(std::string &code) const
         // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
         const std::regex regex("(^|[^0-9a-zA-Z_])" + alias->first + "(?=$|[^a-zA-Z0-9_])");
 
-        // If alias provides send port output or code references alias
-        if(alias->second.sendPort || std::regex_search(code, regex)) {
+        // If this alias isn't in the exclude set and if any code strings references it
+        if((excludeAliases.find(alias->first) == excludeAliases.cend()) &&
+            std::any_of(codeStrings.begin(), codeStrings.end(),
+                        [&regex](const std::string &code){ return std::regex_search(code, regex); }))
+        {
             assert(aliasStack.empty());
 
             // Add starting alias to vector
             aliasStack.push_back(alias);
             LOGD << "\t\t\t\tStart:" << alias->first;
 
+            // While there are aliases on the stack
             std::list<AliasIter> requiredAliases;
             while(!aliasStack.empty()) {
+                // Pop alias off top of stack
                 auto v = aliasStack.back();
                 aliasStack.pop_back();
 
+                // If this alias hasn't already been discovered
                 if(discoveredAliases.insert(std::hash<std::string>{}(v->first)).second) {
+                    // Add it to the front of the required aliases list
                     requiredAliases.push_front(v);
+
+                    // Push alias's non-excluded dependencies onto the top of the stack
                     for(auto d : v->second.dependencies) {
-                        aliasStack.push_back(d);
+                        if(excludeAliases.find(d->first) == excludeAliases.cend()) {
+                            aliasStack.push_back(d);
+                        }
                     }
                 }
             }
@@ -182,22 +182,31 @@ void SpineMLGenerator::Aliases::add(std::string &code) const
         }
     }
 
-    // Use stringstream to generate alias code
-    std::stringstream aliasStream;
-    for(const auto &r : allRequiredAliases) {
-        if(!r->second.sendPort) {
-            aliasStream << "const scalar ";
+    // If ANY aliases are required
+    if(!allRequiredAliases.empty()) {
+        os << "// Aliases" << std::endl;
+        // Use stringstream to generate alias code
+        for(const auto &r : allRequiredAliases) {
+            os << "const scalar " << r->first << " = " << r->second.code << ";" << std::endl;
         }
-        aliasStream << r->first << " = " << r->second.code << ";" << std::endl;
+        os << std::endl;
     }
-
-    // Prepend code with generated aliases
-    code = aliasStream.str() + code;
 }
 //----------------------------------------------------------------------------
 bool SpineMLGenerator::Aliases::isAlias(const std::string &name) const
 {
     return (m_Aliases.find(name) != m_Aliases.end());
+}
+//----------------------------------------------------------------------------
+const std::string &SpineMLGenerator::Aliases::getAliasCode(const std::string &name) const
+{
+    auto alias = m_Aliases.find(name);
+    if(alias == m_Aliases.end()) {
+        throw std::runtime_error("Cannot find alias '" + name + "'");
+    }
+    else {
+       return alias->second.code;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -397,79 +406,5 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
         wrapAndReplaceVariableNames(*c, "randomUniform", "gennrand_uniform");
 
         // **TODO** random.binomial(N,P), random.poisson(L), random.exponential(L)
-    }
-}
-//----------------------------------------------------------------------------
-void SpineMLGenerator::readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases)
-{
-    LOGD << "\t\tAliases:";
-    
-    // Loop through aliases and add to map
-    auto dynamics = componentClass.child("Dynamics");
-    for(auto alias : dynamics.children("Alias")) {
-        const std::string name = alias.attribute("name").value();
-        const std::string code = alias.child_value("MathInline");
-
-        LOGD << "\t\t\t" << name;
-
-        aliases.emplace(name, code);
-    }
-
-    // Loop through aliases
-    for(auto &alias : aliases) {
-        // Loop to handle multiple levels of alias recursion
-        // **NOTE** this is somewhat naive but number of recursive aliases is likely to be very small
-        for(unsigned int r = 0;; r++) {
-            // Attempt to expand any references to other aliases within alias - if there are no more stop
-            if(!expandAliases(alias.second, aliases)) {
-                break;
-            }
-            // Otherwise if recursion limit is reached
-            // **THINK** is this a sane limit for recursion?
-            else if(r > aliases.size()) {
-                throw std::runtime_error("Expanding alias " + alias.first + " results in an infinite loop of alias references");
-            }
-        }
-    }
-    
-    
-}
-//----------------------------------------------------------------------------
-bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::string, std::string> &aliases)
-{
-    // Replace all alias names with their code string
-    bool aliasesExpanded = false;
-    for(const auto &alias : aliases) {
-        aliasesExpanded |= CodeGenerator::regexVarSubstitute(code, alias.first, alias.second);
-    }
-    return aliasesExpanded;
-}
-//----------------------------------------------------------------------------
-std::string SpineMLGenerator::getSendPortCode(const std::map<std::string, std::string> &aliases,
-                                              const Models::Base::VarVec &vars,
-                                              const std::string &sendPortName)
-{
-    LOGD << "\t\tAnalogue send port:" << sendPortName;
-
-    // If this send port corresponds to a state variable
-    auto correspondingVar = std::find_if(vars.begin(), vars.end(),
-                                         [sendPortName](const Models::Base::Var &v)
-                                         {
-                                             return (v.name == sendPortName);
-                                        });
-    if(correspondingVar != vars.end()) {
-        return correspondingVar->name;
-    }
-    // Otherwise
-    else {
-        // If an alias matching send port is found, return alias code
-        const auto alias = aliases.find(sendPortName);
-        if(alias != aliases.end()){
-            return alias->second;
-        }
-        // Otherwise throw exception
-        else {
-            throw std::runtime_error("Cannot find alias:" + sendPortName);
-        }
     }
 }

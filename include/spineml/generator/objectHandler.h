@@ -41,7 +41,7 @@ public:
 class Condition : public Base
 {
 public:
-    Condition(CodeStream &codeStream, const std::map<std::string, std::string> &aliases) : m_CodeStream(codeStream), m_Aliases(aliases){}
+    Condition(CodeStream &codeStream) : m_CodeStream(codeStream){}
 
     //------------------------------------------------------------------------
     // ObjectHandler virtuals
@@ -49,18 +49,11 @@ public:
     virtual void onObject(const pugi::xml_node &node, unsigned int currentRegimeID,
                           unsigned int targetRegimeID) override;
 
-protected:
-    //------------------------------------------------------------------------
-    // Protected API
-    //------------------------------------------------------------------------
-    const std::map<std::string, std::string> &getAliases() const{ return m_Aliases; }
-
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     CodeStream &m_CodeStream;
-    const std::map<std::string, std::string> &m_Aliases;
 };
 
 //------------------------------------------------------------------------
@@ -69,8 +62,7 @@ private:
 class TimeDerivative : public Base
 {
 public:
-    TimeDerivative(CodeStream &codeStream, const std::map<std::string, std::string> &aliases)
-        : m_CodeStream(codeStream), m_Aliases(aliases){}
+    TimeDerivative(CodeStream &codeStream) : m_CodeStream(codeStream){}
 
     //------------------------------------------------------------------------
     // ObjectHandler virtuals
@@ -90,7 +82,6 @@ private:
     //------------------------------------------------------------------------
     std::string m_ClosedFormTauParamName;
     CodeStream &m_CodeStream;
-    const std::map<std::string, std::string> &m_Aliases;
 };
 }   // namespace ObjectHandler
 }   // namespace SpineMLGenerator
