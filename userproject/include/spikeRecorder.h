@@ -128,7 +128,7 @@ template<typename Writer = SpikeWriterText>
 class SpikeRecorder
 {
 public:
-    typedef unsigned int (*GetCurrentSpikeCountFunc)();
+    typedef unsigned int& (*GetCurrentSpikeCountFunc)();
     typedef unsigned int* (*GetCurrentSpikesFunc)();
     
     template<typename... WriterArgs>

@@ -175,7 +175,7 @@ void genSpikeGetters(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::
 
     // Generate getter for current spikes
     genVarGetterScope(definitionsFunc, runnerGetterFunc,
-                      loc, ng.getName() + (trueSpike ? "CurrentSpikeCount" : "CurrentSpikeEventCount"), "unsigned int",
+                      loc, ng.getName() + (trueSpike ? "CurrentSpikeCount" : "CurrentSpikeEventCount"), "unsigned int&",
                       [&]()
                       {
                           runnerGetterFunc << "return glbSpkCnt" << eventSuffix << ng.getName();
