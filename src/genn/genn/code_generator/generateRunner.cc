@@ -19,7 +19,7 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void writeTypeRange(CodeGenerator::CodeStream &os, const std::string &precision, const std::string &prefix)
+void genTypeRange(CodeGenerator::CodeStream &os, const std::string &precision, const std::string &prefix)
 {
     using namespace CodeGenerator;
 
@@ -45,7 +45,7 @@ void writeTypeRange(CodeGenerator::CodeStream &os, const std::string &precision,
     os << std::endl;
 }
 //-------------------------------------------------------------------------
-void writeSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
+void genSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
 {
     const bool delayRequired = trueSpike
         ? (ng.isDelayRequired() && ng.isTrueSpikeRequired())
@@ -283,8 +283,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     definitions << "typedef " << model.getPrecision() << " scalar;" << std::endl;
 
     // Write ranges of scalar and time types
-    writeTypeRange(definitions, model.getPrecision(), "SCALAR");
-    writeTypeRange(definitions, model.getTimePrecision(), "TIME");
+    genTypeRange(definitions, model.getPrecision(), "SCALAR");
+    genTypeRange(definitions, model.getTimePrecision(), "TIME");
 
     definitions << "// ------------------------------------------------------------------------" << std::endl;
     definitions << "// bit tool macros" << std::endl;
@@ -411,7 +411,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         definitionsVar << "#define " << n.first << "_REMOTE" << std::endl;
 
         // Write convenience macros to access spikes
-        writeSpikeMacros(definitionsVar, n.second, true);
+        genSpikeMacros(definitionsVar, n.second, true);
 
         // If this neuron group has outputs to local host
         if(n.second.hasOutputToHost(localHostID)) {
@@ -446,7 +446,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Write convenience macros to access spikes
-        writeSpikeMacros(definitionsVar, n.second, true);
+        genSpikeMacros(definitionsVar, n.second, true);
 
         // True spike variables
         const size_t numSpikeCounts = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
@@ -478,7 +478,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         // If neuron ngroup eeds to emit spike-like events
         if (n.second.isSpikeEventRequired()) {
             // Write convenience macros to access spike-like events
-            writeSpikeMacros(definitionsVar, n.second, false);
+            genSpikeMacros(definitionsVar, n.second, false);
 
             // Spike-like event variables
             mem += backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -566,16 +566,6 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                         runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
                     }
                 });
-
-            // Write macro for easy access to current variable value
-            definitionsVar << "#define current" << vars[i].name + n.first;
-            if (delayRequired) {
-                definitionsVar << " (" << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << "))";
-            }
-            else {
-                definitionsVar << " " << vars[i].name << n.first;
-            }
-            definitionsVar << std::endl;
         }
 
         // Add helper function to push and pull entire neuron state
