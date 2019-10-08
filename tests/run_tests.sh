@@ -73,9 +73,19 @@ pushd spineml/simulator
 make clean all
 
 # Run SpineML simulator tests
-./test --gtest_output="xml:test_results_spineml.xml"
+./test --gtest_output="xml:test_results_spineml_simulator.xml"
 
 popd    # spineml/simulator
+
+pushd spineml/generator
+
+# Clean and build
+make clean all
+
+# Run SpineML simulator tests
+./test --gtest_output="xml:test_results_spineml_generator.xml"
+
+popd    # spineml/generator
 
 if [[ "$(uname)" = "Darwin" ]]; then
     # Loop through features and build list of raw profile output files
