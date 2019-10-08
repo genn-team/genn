@@ -160,30 +160,30 @@ void genSpikeGetters(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::
 
     // Generate getter for current spike counts
     genVarGetterScope(definitionsFunc, runnerGetterFunc,
-                      loc, trueSpike ? "CurrentSpikes" : "CurrentSpikeEvents", "unsigned int*",
+                      loc, ng.getName() +  (trueSpike ? "CurrentSpikes" : "CurrentSpikeEvents"), "unsigned int*",
                       [&]()
                       {
                           runnerGetterFunc << "return ";
                           if (delayRequired) {
-                              runnerGetterFunc << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "))";
+                              runnerGetterFunc << " (glbSpk" << eventSuffix << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "));";
                           }
                           else {
-                              runnerGetterFunc << " glbSpk" << eventSuffix << ng.getName();
+                              runnerGetterFunc << " glbSpk" << eventSuffix << ng.getName() << ";";
                           }
                           runnerGetterFunc << std::endl;
                       });
 
     // Generate getter for current spikes
     genVarGetterScope(definitionsFunc, runnerGetterFunc,
-                      loc, trueSpike ? "CurrentSpikeCount" : "CurrentSpikeEventCount", "unsigned int",
+                      loc, ng.getName() + (trueSpike ? "CurrentSpikeCount" : "CurrentSpikeEventCount"), "unsigned int",
                       [&]()
                       {
                           runnerGetterFunc << "return glbSpkCnt" << eventSuffix << ng.getName();
                           if (delayRequired) {
-                              runnerGetterFunc << "[spkQuePtr" << ng.getName() << "]";
+                              runnerGetterFunc << "[spkQuePtr" << ng.getName() << "];";
                           }
                           else {
-                              runnerGetterFunc << "[0]";
+                              runnerGetterFunc << "[0];";
                           }
                           runnerGetterFunc << std::endl;
                       });
