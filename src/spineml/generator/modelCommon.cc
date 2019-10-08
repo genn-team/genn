@@ -155,8 +155,8 @@ void SpineMLGenerator::Aliases::add(std::string &code) const
         // **NOTE** the suffix is non-capturing so two instances of variables separated by a single character are matched e.g. a*a
         const std::regex regex("(^|[^0-9a-zA-Z_])" + alias->first + "(?=$|[^a-zA-Z0-9_])");
 
-        // If code references alias
-        if(std::regex_search(code, regex)) {
+        // If alias provides send port output or code references alias
+        if(alias->second.sendPort || std::regex_search(code, regex)) {
             assert(aliasStack.empty());
 
             // Add starting alias to vector
@@ -194,10 +194,12 @@ void SpineMLGenerator::Aliases::add(std::string &code) const
     // Prepend code with generated aliases
     code = aliasStream.str() + code;
 }
+//----------------------------------------------------------------------------
 bool SpineMLGenerator::Aliases::isAlias(const std::string &name) const
 {
     return (m_Aliases.find(name) != m_Aliases.end());
 }
+
 //----------------------------------------------------------------------------
 // Helper functions
 //----------------------------------------------------------------------------
