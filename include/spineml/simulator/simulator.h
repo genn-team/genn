@@ -50,6 +50,14 @@ public:
     double getSimulateMs() const{ return m_SimulateMs; }
     double getLogMs() const{ return m_LogMs; }
 
+    //! Timings of individual kernels provided by GeNN
+    double getNeuronUpdateTime() const;
+    double getInitTime() const;
+    double getPresynapticUpdateTime() const;
+    double getPostsynapticUpdateTime() const;
+    double getSynapseDynamicsTime() const;
+    double getInitSparseTime() const;
+
     //! Calculate duration of simulation read from experiment in timesteps
     unsigned long long calcNumTimesteps() const
     {

@@ -1,4 +1,3 @@
-
 #pragma once
 
 // Standard C++ includes
@@ -11,10 +10,10 @@
 #include <unordered_map>
 #include <bitset>
 
+// Platform includes
 #ifdef _WIN32
 #include <windows.h>
 #else
-// POSIX C includes
 extern "C"
 {
 #include <dlfcn.h>
@@ -24,6 +23,7 @@ extern "C"
 //----------------------------------------------------------------------------
 // SharedLibraryModel
 //----------------------------------------------------------------------------
+// Interface for spike recorders
 template<typename scalar = float>
 class SharedLibraryModel
 {
@@ -41,7 +41,7 @@ public:
         }
     }
 
-    ~SharedLibraryModel()
+    virtual ~SharedLibraryModel()
     {
         // Close model library if loaded successfully
         if(m_Library) {
@@ -77,6 +77,8 @@ public:
 
             m_StepTime = (VoidFunction)getSymbol("stepTime");
 
+            m_T = (scalar*)getSymbol("t");
+            m_Timestep = (unsigned long long*)getSymbol("iT");
             return true;
         }
         else {
@@ -124,7 +126,7 @@ public:
         // Call pull
         pushPull.second();
     }
-    
+
     void pullSpikesFromDevice(const std::string &popName)
     {
         // Get push and pull spikes functions and check pull exists
@@ -136,7 +138,7 @@ public:
         // Call pull
         pushPull.second();
     }
-    
+
     void pullCurrentSpikesFromDevice(const std::string &popName)
     {
         // Get push and pull spikes functions and check pull exists
@@ -257,27 +259,18 @@ public:
         std::get<2>(funcs)(count);
     }
 
-    // Assign symbol from shared model to the provided pointer.
-    // The symbol is supposed to be an array
-    // When used with numpy, wrapper automatically provides varPtr and n1
-    template <typename T>
-    void assignExternalPointerArray( const std::string &varName,
-                                     const int varSize,
-                                     T** varPtr, int* n1 )
+    // Gets a pointer to an array in the shared library
+    template<typename T>
+    T *getArray(const std::string &varName)
     {
-        *varPtr = *( static_cast<T**>( getSymbol( varName ) ) );
-        *n1 = varSize;
+        return *(static_cast<T**>(getSymbol(varName)));
     }
-    
-    // Assign symbol from shared model to the provided pointer.
-    // The symbol is supposed to be a single value
-    // When used with numpy, wrapper automatically provides varPtr and n1
-    template <typename T>
-    void assignExternalPointerSingle( const std::string &varName,
-                                      T** varPtr, int* n1 )
+
+    // Gets a scalar from the shared library
+    template<typename T>
+    T *getScalar(const std::string &varName)
     {
-      *varPtr = static_cast<T*>( getSymbol( varName ) );
-      *n1 = 1;
+        return (static_cast<T*>(getSymbol(varName)));
     }
 
     void allocateMem()
@@ -303,6 +296,51 @@ public:
     void stepTime()
     {
         m_StepTime();
+    }
+
+    scalar getTime() const
+    {
+        return *m_T;
+    }
+
+    unsigned long long getTimestep() const
+    {
+        return *m_Timestep;
+    }
+
+    void setTime(scalar t)
+    {
+        *m_T = t;
+    }
+
+    void setTimestep(unsigned long long iT)
+    {
+        *m_Timestep = iT;
+    }
+
+    void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr)
+    {
+#ifdef _WIN32
+        void *symbol = GetProcAddress(m_Library, symbolName.c_str());
+#else
+        void *symbol = dlsym(m_Library, symbolName.c_str());
+#endif
+
+        // If this symbol's missing
+        if(symbol == nullptr) {
+            // If this isn't allowed, throw error
+            if(!allowMissing) {
+                throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
+            }
+            // Otherwise, return default
+            else {
+                return defaultSymbol;
+            }
+        }
+        // Otherwise, return symbolPopulationFuncs
+        else {
+            return symbol;
+        }
     }
 
 private:
@@ -367,31 +405,6 @@ private:
         }
     }
 
-    void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr)
-    {
-#ifdef _WIN32
-        void *symbol = GetProcAddress(m_Library, symbolName.c_str());
-#else
-        void *symbol = dlsym(m_Library, symbolName.c_str());
-#endif
-
-        // If this symbol's missing
-        if(symbol == nullptr) {
-            // If this isn't allowed, throw error
-            if(!allowMissing) {
-                throw std::runtime_error("Cannot find symbol '" + symbolName + "'");
-            }
-            // Otherwise, return default
-            else {
-                return defaultSymbol;
-            }
-        }
-        // Otherwise, return symbolPopulationFuncs
-        else {
-            return symbol;
-        }
-    }
-
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
@@ -406,7 +419,10 @@ private:
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
-    
+
     std::unordered_map<std::string, PushPullFunc> m_PopulationVars;
     std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
+
+    scalar *m_T;
+    unsigned long long *m_Timestep;
 };
