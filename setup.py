@@ -140,6 +140,6 @@ setup(name = "pygenn",
       ext_modules=ext_modules,
 
       # Requirements
-      install_requires=["numpy>1.6", "six"],
+      install_requires=["numpy>1.6, < 1.15", "six"],
       zip_safe=False,  # Partly for performance reasons
 )
