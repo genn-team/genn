@@ -1780,6 +1780,36 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    // If this variable requires queuing and isn't zero-copy
+    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+        // Generate memcpy to copy only current timestep's data
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+    }
+    // Otherwise, generate standard push
+    else {
+        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    // If this variable requires queuing and isn't zero-copy
+    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+        // Generate memcpy to copy only current timestep's data
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+    }
+    // Otherwise, generate standard pull
+    else {
+        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons());
+    }
+}
+//--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &) const
 {
     // Create a single Philox4_32_10 RNG
@@ -2031,12 +2061,12 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
         const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
 
         if (delayRequired) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << "+spkQuePtr" << ng.getName();
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
             os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
             os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName() << " + (spkQuePtr" << ng.getName() << "*" << ng.getNumNeurons() << ")";
             os << ", " << spikePrefix << ng.getName();
-            os << "+(spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+            os << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
             os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
         }
         else {

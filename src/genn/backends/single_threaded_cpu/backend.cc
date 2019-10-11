@@ -666,6 +666,13 @@ void Backend::genVariablePull(CodeStream&, const std::string&, const std::string
 {
 }
 //--------------------------------------------------------------------------
+void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
+{
+}
+void Backend::genCurrentVariablePull(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
+{
+}
+//--------------------------------------------------------------------------
 void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&) const
 {
 }

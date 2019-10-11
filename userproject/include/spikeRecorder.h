@@ -9,93 +9,13 @@
 #include <vector>
 
 //----------------------------------------------------------------------------
-// SpikeReader
-//----------------------------------------------------------------------------
-//! Class to read spikes from neuron groups without axonal delays
-class SpikeReader
-{
-public:
-    SpikeReader(const unsigned int *spkCnt, const unsigned int *spk)
-    :   m_SpkCnt(spkCnt), m_Spk(spk)
-    {
-    }
-
-    SpikeReader(const std::tuple<const unsigned int*, const unsigned int*> &args)
-    :   SpikeReader(std::get<0>(args), std::get<1>(args))
-    {
-    }
-
-protected:
-    //----------------------------------------------------------------------------
-    // Protected API
-    //----------------------------------------------------------------------------
-    const unsigned int *getCurrentSpikes() const
-    {
-        return m_Spk;
-    }
-
-    unsigned int getCurrentSpikeCount() const
-    {
-        return m_SpkCnt[0];
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const unsigned int *m_SpkCnt;
-    const unsigned int *m_Spk;
-};
-
-//----------------------------------------------------------------------------
-// SpikeReaderDelayed
-//----------------------------------------------------------------------------
-//! Class to read spikes from neuron groups with axonal delays
-class SpikeReaderDelayed
-{
-public:
-    SpikeReaderDelayed(unsigned int popSize, const unsigned int &spkQueuePtr,
-                       const unsigned int *spkCnt, const unsigned int *spk)
-    :   m_PopSize(popSize), m_SpkQueuePtr(spkQueuePtr), m_SpkCnt(spkCnt), m_Spk(spk)
-    {
-    }
-    SpikeReaderDelayed(const std::tuple<unsigned int, const unsigned int&, const unsigned int*, const unsigned int*> &args)
-    :   SpikeReaderDelayed(std::get<0>(args), std::get<1>(args), std::get<2>(args), std::get<3>(args))
-    {
-    }
-
-protected:
-    //----------------------------------------------------------------------------
-    // Protected API
-    //----------------------------------------------------------------------------
-    const unsigned int *getCurrentSpikes() const
-    {
-        return &m_Spk[m_SpkQueuePtr * m_PopSize];
-    }
-
-    unsigned int getCurrentSpikeCount() const
-    {
-        return m_SpkCnt[m_SpkQueuePtr];
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const unsigned int m_PopSize;
-    const unsigned int &m_SpkQueuePtr;
-    const unsigned int *m_SpkCnt;
-    const unsigned int *m_Spk;
-};
-
-//----------------------------------------------------------------------------
 // SpikeWriterText
 //----------------------------------------------------------------------------
 //! Class to write spikes to text file
 class SpikeWriterText
 {
 public:
-    SpikeWriterText(const std::string &filename, const std::string &delimiter, bool header)
+    SpikeWriterText(const std::string &filename, const std::string &delimiter = " ", bool header = false)
     :   m_Stream(filename), m_Delimiter(delimiter)
     {
         // Set precision
@@ -111,9 +31,8 @@ public:
     {
     }
 
-protected:
     //----------------------------------------------------------------------------
-    // Protected API
+    // Public API
     //----------------------------------------------------------------------------
     void recordSpikes(double t, unsigned int spikeCount, const unsigned int *currentSpikes)
     {
@@ -137,7 +56,7 @@ private:
 class SpikeWriterTextCached
 {
 public:
-    SpikeWriterTextCached(const std::string &filename, const std::string &delimiter, bool header)
+    SpikeWriterTextCached(const std::string &filename, const std::string &delimiter = " ", bool header = false)
     :   m_Stream(filename), m_Delimiter(delimiter)
     {
         // Set precision
@@ -176,10 +95,6 @@ public:
         m_Cache.clear();
     }
 
-protected:
-    //----------------------------------------------------------------------------
-    // Protected API
-    //----------------------------------------------------------------------------
     void recordSpikes(double t, unsigned int spikeCount, const unsigned int *currentSpikes)
     {
         // Add a new entry to the cache
@@ -208,16 +123,19 @@ private:
 //----------------------------------------------------------------------------
 // SpikeRecorderBase
 //----------------------------------------------------------------------------
-//! Base class for a spike reader, using policy-based design to combine a Reader and Writer class in parallel
-/*! **NOTE** while it would be possible to write some fairly hardcore boilerplate to unpack the tuples
-    (see http://cpptruths.blogspot.com/2012/06/perfect-forwarding-of-parameter-groups.html), it's not really worth it */
-template<typename Reader, typename Writer>
-class SpikeRecorderBase : public Reader, public Writer
+//! Class to read spikes from neuron groups
+template<typename Writer = SpikeWriterText>
+class SpikeRecorder
 {
 public:
-    template<typename... ReaderArgs, typename... WriterArgs>
-    SpikeRecorderBase(std::tuple<ReaderArgs...> readerArgs, std::tuple<WriterArgs...> writerArgs)
-    :   Reader(readerArgs), Writer(writerArgs)
+    typedef unsigned int& (*GetCurrentSpikeCountFunc)();
+    typedef unsigned int* (*GetCurrentSpikesFunc)();
+    
+    template<typename... WriterArgs>
+    SpikeRecorder(GetCurrentSpikesFunc getCurrentSpikes, GetCurrentSpikeCountFunc getCurrentSpikeCount,
+                  WriterArgs &&... writerArgs)
+    :   m_GetCurrentSpikes(getCurrentSpikes), m_GetCurrentSpikeCount(getCurrentSpikeCount),
+        m_Writer(std::forward<WriterArgs>(writerArgs)...), m_Sum(0)
     {
     }
 
@@ -226,73 +144,19 @@ public:
     //----------------------------------------------------------------------------
     void record(double t)
     {
-        m_Sum += this->getCurrentSpikeCount();
-        this->recordSpikes(t, this->getCurrentSpikeCount(), this->getCurrentSpikes());
+        const unsigned int spikeCount = m_GetCurrentSpikeCount();
+        m_Sum += spikeCount;
+        m_Writer.recordSpikes(t, spikeCount, m_GetCurrentSpikes());
     }
-
+    
     unsigned int getSum() const{ return m_Sum; }
 
 private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    GetCurrentSpikesFunc m_GetCurrentSpikes;
+    GetCurrentSpikeCountFunc m_GetCurrentSpikeCount;
+    Writer m_Writer;
     unsigned int m_Sum;
-};
-
-//----------------------------------------------------------------------------
-// SpikeRecorder
-//----------------------------------------------------------------------------
-class SpikeRecorder : public SpikeRecorderBase<SpikeReader, SpikeWriterText>
-{
-public:
-    SpikeRecorder(const std::string &filename, const unsigned int *spkCnt, const unsigned int *spk,
-                  const std::string &delimiter = " ", bool header = false)
-    :   SpikeRecorderBase<SpikeReader, SpikeWriterText>(std::forward_as_tuple(spkCnt, spk),
-                                                         std::forward_as_tuple(filename, delimiter, header))
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// SpikeRecorderCached
-//----------------------------------------------------------------------------
-class SpikeRecorderCached : public SpikeRecorderBase<SpikeReader, SpikeWriterTextCached>
-{
-public:
-    SpikeRecorderCached(const std::string &filename, const unsigned int *spkCnt, const unsigned int *spk,
-                        const std::string &delimiter = " ", bool header = false)
-    :   SpikeRecorderBase<SpikeReader, SpikeWriterTextCached>(std::forward_as_tuple(spkCnt, spk),
-                                                              std::forward_as_tuple(filename, delimiter, header))
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// SpikeRecorderDelay
-//----------------------------------------------------------------------------
-class SpikeRecorderDelay : public SpikeRecorderBase<SpikeReaderDelayed, SpikeWriterText>
-{
-public:
-    SpikeRecorderDelay(const std::string &filename, unsigned int popSize,
-                       const unsigned int &spkQueuePtr, const unsigned int *spkCnt, const unsigned int *spk,
-                       const std::string &delimiter = " ", bool header =  false)
-    :   SpikeRecorderBase<SpikeReaderDelayed, SpikeWriterText>(std::forward_as_tuple(popSize, spkQueuePtr, spkCnt, spk),
-                                                               std::forward_as_tuple(filename, delimiter, header))
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// SpikeRecorderDelayCached
-//----------------------------------------------------------------------------
-class SpikeRecorderDelayCached : public SpikeRecorderBase<SpikeReaderDelayed, SpikeWriterTextCached>
-{
-public:
-    SpikeRecorderDelayCached(const std::string &filename, unsigned int popSize,
-                             const unsigned int &spkQueuePtr, const unsigned int *spkCnt, const unsigned int *spk,
-                             const std::string &delimiter = " ", bool header =  false)
-    :   SpikeRecorderBase<SpikeReaderDelayed, SpikeWriterTextCached>(std::forward_as_tuple(popSize, spkQueuePtr, spkCnt, spk),
-                                                                     std::forward_as_tuple(filename, delimiter, header))
-    {
-    }
 };
