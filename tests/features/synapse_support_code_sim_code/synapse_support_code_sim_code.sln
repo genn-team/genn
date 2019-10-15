@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "synapse_support_code_sim_code", "synapse_support_code_sim_code.vcxproj", "{6CFD4F04-0A98-42F1-A030-81D541C81AED}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7CFF2A2C-8E3C-427E-9777-BB9116558426} = {7CFF2A2C-8E3C-427E-9777-BB9116558426}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "synapse_support_code_sim_code_CODE\runner.vcxproj", "{7CFF2A2C-8E3C-427E-9777-BB9116558426}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6CFD4F04-0A98-42F1-A030-81D541C81AED}.Debug|x64.ActiveCfg = Debug|x64
+		{6CFD4F04-0A98-42F1-A030-81D541C81AED}.Debug|x64.Build.0 = Debug|x64
+		{6CFD4F04-0A98-42F1-A030-81D541C81AED}.Release|x64.ActiveCfg = Release|x64
+		{6CFD4F04-0A98-42F1-A030-81D541C81AED}.Release|x64.Build.0 = Release|x64
+		{7CFF2A2C-8E3C-427E-9777-BB9116558426}.Debug|x64.ActiveCfg = Debug|x64
+		{7CFF2A2C-8E3C-427E-9777-BB9116558426}.Debug|x64.Build.0 = Debug|x64
+		{7CFF2A2C-8E3C-427E-9777-BB9116558426}.Release|x64.ActiveCfg = Release|x64
+		{7CFF2A2C-8E3C-427E-9777-BB9116558426}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

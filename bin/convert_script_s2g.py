@@ -201,10 +201,10 @@ else:
 
     if not os.path.isfile(os.path.join(genn_path,"bin", generate_executable)):
         print("Compiling Generate tool")
-        os.system("cd " + os.path.join(genn_path,"src", "spineml_generator") + " && make -f " + makefile)
+        os.system("cd " + os.path.join(genn_path,"src", "spineml", "generator") + " && make -f " + makefile)
     if not os.path.isfile(os.path.join(genn_path,"bin", simulate_executable)):
         print("Compiling Simulate tool")
-        os.system("cd " + os.path.join(genn_path,"src", "spineml_simulator") + " && make")
+        os.system("cd " + os.path.join(genn_path,"src", "spineml", "standalone_simulator") + " && make")
 
 # Recompile if needed
 if recompile is True:

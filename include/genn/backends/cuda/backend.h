@@ -20,6 +20,9 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 
+// CUDA backend includes
+#include "presynapticUpdateStrategy.h"
+
 // Forward declarations
 namespace filesystem
 {
@@ -152,6 +155,10 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+
+    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
+
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const override
     {
         genCurrentSpikePush(os, ng, false);
@@ -203,12 +210,20 @@ public:
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
 
+    std::string getFloatAtomicAdd(const std::string &ftype) const;
+
+    size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
+
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
     static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
+
+    //! Register a new presynaptic update strategy
+    /*! This function should be called with strategies in ascending order of preference */
+    static void addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base* strategy);
 
     //--------------------------------------------------------------------------
     // Constants
@@ -276,18 +291,13 @@ private:
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
 
-    void genPresynapticUpdatePreSpan(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                                     SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
-    void genPresynapticUpdatePostSpan(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                                      SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
-
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
-    bool shouldAccumulateInLinSyn(const SynapseGroupInternal &sg) const;
-
-    bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg) const;
-
-    std::string getFloatAtomicAdd(const std::string &ftype) const;
+    //--------------------------------------------------------------------------
+    // Private static methods
+    //--------------------------------------------------------------------------
+    // Get appropriate presynaptic update strategy to use for this synapse group
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg);
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);
@@ -308,6 +318,11 @@ private:
 
     //! Types that are only supported on device i.e. should never be exposed to user code
     std::unordered_set<std::string> m_DeviceTypes;
+
+    //--------------------------------------------------------------------------
+    // Static members
+    //--------------------------------------------------------------------------
+    static std::vector<PresynapticUpdateStrategy::Base*> s_PresynapticUpdateStrategies;
 };
 }   // CUDA
 }   // CodeGenerator

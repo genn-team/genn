@@ -78,7 +78,7 @@ public:
         // Populate this vector with either values from map or 0s
         std::transform(modelVars.begin(), modelVars.end(),
                        std::back_inserter(varValues),
-                       [this](const Snippet::Base::Var &n)
+                       [this](const Models::Base::Var &n)
                        {
                            if(n.name == "_regimeID") {
                                return Models::VarInit(InitVarSnippet::Constant::getInstance(),

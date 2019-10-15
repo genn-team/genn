@@ -73,7 +73,7 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
 
     if model_family == genn_wrapper.WeightUpdateModels:
         pre_var_names = [vnt.name for vnt in m_instance.get_pre_vars()]
-        if set(iterkeys(pre_var_space)) != set(pre_var_names):
+        if pre_var_space is not None and set(iterkeys(pre_var_space)) != set(pre_var_names):
             raise ValueError("Invalid presynaptic variable initializers "
                              "for {0}".format(model_family.__name__))
         pre_var_dict = {
@@ -81,9 +81,9 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
             for vnt in m_instance.get_pre_vars()}
 
         post_var_names = [vnt.name for vnt in m_instance.get_post_vars()]
-        if set(iterkeys(post_var_space)) != set(post_var_names):
+        if post_var_space is not None and set(iterkeys(post_var_space)) != set(post_var_names):
             raise ValueError("Invalid postsynaptic variable initializers "
-                             "for {0}".format(model_family.__name__))
+                            "for {0}".format(model_family.__name__))
         post_var_dict = {
             vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name])
             for vnt in m_instance.get_post_vars()}

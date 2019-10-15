@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "decode_matrix_merged_globalg_ragged", "decode_matrix_merged_globalg_ragged.vcxproj", "{466654DE-116E-43CB-9F90-AB96DCF11E54}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BEF400A5-17E6-4F16-90C2-6FB26A53E5FE} = {BEF400A5-17E6-4F16-90C2-6FB26A53E5FE}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "decode_matrix_merged_globalg_ragged_CODE\runner.vcxproj", "{BEF400A5-17E6-4F16-90C2-6FB26A53E5FE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{466654DE-116E-43CB-9F90-AB96DCF11E54}.Debug|x64.ActiveCfg = Debug|x64
+		{466654DE-116E-43CB-9F90-AB96DCF11E54}.Debug|x64.Build.0 = Debug|x64
+		{466654DE-116E-43CB-9F90-AB96DCF11E54}.Release|x64.ActiveCfg = Release|x64
+		{466654DE-116E-43CB-9F90-AB96DCF11E54}.Release|x64.Build.0 = Release|x64
+		{BEF400A5-17E6-4F16-90C2-6FB26A53E5FE}.Debug|x64.ActiveCfg = Debug|x64
+		{BEF400A5-17E6-4F16-90C2-6FB26A53E5FE}.Debug|x64.Build.0 = Debug|x64
+		{BEF400A5-17E6-4F16-90C2-6FB26A53E5FE}.Release|x64.ActiveCfg = Release|x64
+		{BEF400A5-17E6-4F16-90C2-6FB26A53E5FE}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

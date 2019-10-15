@@ -201,7 +201,7 @@ SpineMLSimulator::LogOutput::AnalogueExternal::AnalogueExternal(const pugi::xml_
     // Otherwise
     else {
         // Check we're not trying to use an external timestep smaller than GeNN timestep
-        assert(externalTimestepMs > dt);
+        assert(externalTimestepMs >= dt);
 
         // Calculate how many GeNN timesteps to count down before logging
         // **NOTE** subtract one because we are checking BEFORE we subtract

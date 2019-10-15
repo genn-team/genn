@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="backend.cc" />
+    <ClCompile Include="presynapticUpdateStrategy.cc" />
     <ClCompile Include="optimiser.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
