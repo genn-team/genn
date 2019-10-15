@@ -223,7 +223,8 @@ protected:
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, VarLocation defaultSparseConnectivityLocation);
+                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
+                 VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled);
 
     //------------------------------------------------------------------------
     // Protected methods

@@ -37,7 +37,8 @@
 ModelSpec::ModelSpec()
 :   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
-    m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_ShouldMergePostsynapticModels(false)
+    m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
+    m_ShouldMergePostsynapticModels(false)
 {
     setPrecision(GENN_FLOAT);
 }

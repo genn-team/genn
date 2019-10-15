@@ -161,9 +161,13 @@ public:
     /*! Historically, everything was allocated on both the host AND device */
     void setDefaultSparseConnectivityLocation(VarLocation loc){ m_DefaultSparseConnectivityLocation = loc; }
 
+    //! Sets default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices
+    void setDefaultNarrowSparseIndEnabled(bool enabled){ m_DefaultNarrowSparseIndEnabled = enabled; }
+
     //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
+
 
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return m_Name; }
@@ -315,7 +319,8 @@ public:
                                   wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp,
-                                  connectivityInitialiser, m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, m_DefaultSparseConnectivityLocation));
+                                  connectivityInitialiser, m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
+                                  m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
 
         if(!result.second) {
             throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
@@ -544,6 +549,9 @@ private:
 
     //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
     VarLocation m_DefaultSparseConnectivityLocation; 
+
+    //! The default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices
+    bool m_DefaultNarrowSparseIndEnabled;
 
     //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
