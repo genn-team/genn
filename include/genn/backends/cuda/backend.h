@@ -293,17 +293,17 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
-    //--------------------------------------------------------------------------
-    // Private static methods
-    //--------------------------------------------------------------------------
-    // Get appropriate presynaptic update strategy to use for this synapse group
-    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg);
-
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;
+
+    //--------------------------------------------------------------------------
+    // Private static methods
+    //--------------------------------------------------------------------------
+    // Get appropriate presynaptic update strategy to use for this synapse group
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg);
 
     //--------------------------------------------------------------------------
     // Members

@@ -156,6 +156,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
+    // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
     addDeviceType("curandState", 44);
     addDeviceType("curandStatePhilox4_32_10_t", 64);
     addDeviceType("half", 2);
@@ -2134,20 +2135,6 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     }
 }
 //--------------------------------------------------------------------------
-const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
-{
-    // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
-    // **NOTE** this is done backwards so that user-registered strategies get first priority
-    for(auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
-        if((*s)->isCompatible(sg)) {
-            return *s;
-        }
-    }
-
-    throw std::runtime_error("Unable to find a suitable presynaptic update strategy for synapse group '" + sg.getName() + "'");
-    return nullptr;
-}
-//--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string &type, size_t size)
 {
     addType(type, size);
@@ -2161,6 +2148,20 @@ bool Backend::isDeviceType(const std::string &type) const
 
     // Return true if it is in device types set
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
+}
+//--------------------------------------------------------------------------
+const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
+{
+    // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
+    // **NOTE** this is done backwards so that user-registered strategies get first priority
+    for(auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
+        if((*s)->isCompatible(sg)) {
+            return *s;
+        }
+    }
+
+    throw std::runtime_error("Unable to find a suitable presynaptic update strategy for synapse group '" + sg.getName() + "'");
+    return nullptr;
 }
 }   // namespace CUDA
 }   // namespace CodeGenerator
