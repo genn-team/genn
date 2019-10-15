@@ -285,7 +285,7 @@ public:
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
     MemAlloc genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                              const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+                      const std::string &type, const std::string &name, VarLocation loc, size_t count) const
     {
         genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
         genVariableImplementation(runner, type + "*", name, loc);
