@@ -37,4 +37,5 @@ public:
     using SynapseGroup::getPresynapticAxonalDelaySlot;
     using SynapseGroup::getPostsynapticBackPropDelaySlot;
     using SynapseGroup::getDendriticDelayOffset;
+    using SynapseGroup::getSparseIndType;
 };
