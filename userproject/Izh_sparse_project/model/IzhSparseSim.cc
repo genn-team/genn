@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
 
     std::cout << "# We are running with fixed time step " <<  DT << std::endl;;
 
-    SpikeRecorder excSpikes(outDir + "/" + outLabel + "_exc_st", glbSpkCntPExc, glbSpkPExc);
-    SpikeRecorder inhSpikes(outDir + "/" + outLabel + "_inh_st", glbSpkCntPInh, glbSpkPInh);
+    SpikeRecorder<> excSpikes(&getPExcCurrentSpikes, &getPExcCurrentSpikeCount, outDir + "/" + outLabel + "_exc_st");
+    SpikeRecorder<> inhSpikes(&getPInhCurrentSpikes, &getPInhCurrentSpikeCount, outDir + "/" + outLabel + "_inh_st");
 
     while(t < TOTAL_TIME) {
         stepTime();
