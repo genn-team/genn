@@ -26,21 +26,25 @@
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::FixedProbability
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::FixedProbability::getMatrixType(const pugi::xml_node &node, unsigned int, unsigned int, bool globalG)
+namespace SpineMLGenerator
+{
+namespace Connectors
+{
+SynapseMatrixConnectivity FixedProbability::getMatrixConnectivity(const pugi::xml_node &node, unsigned int, unsigned int)
 {
     const double connectionProbability = node.attribute("probability").as_double();
 
     // If we're implementing a fully-connected matrix use DENSE format
     if(connectionProbability == 1.0) {
         LOGD << "\tFully-connected FixedProbability connector implemented as DENSE";
-        return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
+        return SynapseMatrixConnectivity::DENSE;
     }
     else {
-        return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
+        return SynapseMatrixConnectivity::SPARSE;
     }
 }
 //----------------------------------------------------------------------------
-InitSparseConnectivitySnippet::Init SpineMLGenerator::Connectors::FixedProbability::getConnectivityInit(const pugi::xml_node &node)
+InitSparseConnectivitySnippet::Init FixedProbability::getConnectivityInit(const pugi::xml_node &node)
 {
     const double connectionProbability = node.attribute("probability").as_double();
     LOGD << "\tFixed probability:" << connectionProbability;
@@ -51,12 +55,12 @@ InitSparseConnectivitySnippet::Init SpineMLGenerator::Connectors::FixedProbabili
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::OneToOne
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::OneToOne::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
+SynapseMatrixConnectivity OneToOne::getMatrixConnectivity(const pugi::xml_node&, unsigned int, unsigned int)
 {
-    return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
+    return SynapseMatrixConnectivity::SPARSE;
 }
 //----------------------------------------------------------------------------
-InitSparseConnectivitySnippet::Init SpineMLGenerator::Connectors::OneToOne::getConnectivityInit(const pugi::xml_node &)
+InitSparseConnectivitySnippet::Init OneToOne::getConnectivityInit(const pugi::xml_node &)
 {
     return InitSparseConnectivitySnippet::Init(InitSparseConnectivitySnippet::OneToOne::getInstance(), {});;
 }
@@ -64,28 +68,29 @@ InitSparseConnectivitySnippet::Init SpineMLGenerator::Connectors::OneToOne::getC
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::AllToAll
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::AllToAll::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
+SynapseMatrixConnectivity AllToAll::getMatrixConnectivity(const pugi::xml_node&, unsigned int, unsigned int)
 {
-    return globalG ? SynapseMatrixType::DENSE_GLOBALG : SynapseMatrixType::DENSE_INDIVIDUALG;
+    return SynapseMatrixConnectivity::DENSE;
 }
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::List
 //----------------------------------------------------------------------------
-SynapseMatrixType SpineMLGenerator::Connectors::List::getMatrixType(const pugi::xml_node&, unsigned int, unsigned int, bool globalG)
+SynapseMatrixConnectivity List::getMatrixConnectivity(const pugi::xml_node&, unsigned int, unsigned int)
 {
-    return globalG ? SynapseMatrixType::SPARSE_GLOBALG : SynapseMatrixType::SPARSE_INDIVIDUALG;
+    return SynapseMatrixConnectivity::SPARSE;
 }
 //----------------------------------------------------------------------------
-std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
-                                                                                            unsigned int numPre, unsigned int)
+std::tuple<unsigned int, List::DelayType, float> List::readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                                                unsigned int numPre, unsigned int)
 {
     // If connectivity should be read from a binary file
     std::vector<unsigned int> rowLengths(numPre, 0);
     auto binaryFile = node.child("BinaryFile");
 
     bool explicitDelay = false;
-    float sumDelayMs = 0.0;
+    bool heterogenousDelay = false;
+    float maxDelayMs = std::numeric_limits<float>::quiet_NaN();
     unsigned int numConnections = 0;
 
     if(binaryFile) {
@@ -130,8 +135,18 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
                     // Cast delay word to float
                     const float *synapseDelay = reinterpret_cast<float*>(&connectionBuffer[w + 2]);
 
-                    // Add to total
-                    sumDelayMs += *synapseDelay;
+                    // If this is our first delay, use this as initial maximum
+                    if(std::isnan(maxDelayMs)) {
+                        maxDelayMs = *synapseDelay;
+                    }
+                    // Otherwise, if this delay isn't the same as our current max
+                    else if(maxDelayMs != *synapseDelay) {
+                        // Delays must be heterogenous
+                        heterogenousDelay = true;
+
+                        // Update maximum delay
+                        maxDelayMs = std::max(maxDelayMs, *synapseDelay);
+                    }
                 }
             }
 
@@ -148,11 +163,24 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
             // Increment connections counter
             numConnections++;
 
-            // If this synapse has a delay, set explicit delay flag and add delay to total
+            // If this synapse has a delay
             auto delay = c.attribute("delay");
             if(delay) {
+                // Set explicit delay flag 
                 explicitDelay = true;
-                sumDelayMs += delay.as_float();
+                
+                // If this is our first delay, use this as initial maximum
+                if(std::isnan(maxDelayMs)) {
+                    maxDelayMs = delay.as_float();
+                }
+                // Otherwise, if this delay isn't the same as our current max
+                else if(maxDelayMs != delay.as_float()) {
+                    // Delays must be heterogenous
+                    heterogenousDelay = true;
+
+                    // Update maximum delay
+                    maxDelayMs = std::max(maxDelayMs, delay.as_float());
+                }
             }
             // Otherwise, if previous synapses have had specific delays, error
             else if(explicitDelay) {
@@ -166,17 +194,19 @@ std::pair<unsigned int, float> SpineMLGenerator::Connectors::List::readMaxRowLen
 
     // If there are explicit delays
     if(explicitDelay) {
-        // Calculate mean delay
-        const float meanDelay = sumDelayMs / (float)numConnections;
-
-        // Give warning regarding how they will actually be implemented
-        LOGW << "\tGeNN doesn't support heterogenous synaptic delays - mean delay of " << meanDelay << "ms will be used for all synapses";
-
-        // Return size of largest histogram bin and explicit delay value
-        return std::make_pair(maxRowLength, meanDelay);
+        if(heterogenousDelay) {
+            LOGD << "Using heterogenous delay up to a maximum of " << maxDelayMs << "ms";
+            return std::make_tuple(maxRowLength, DelayType::Heterogeneous, maxDelayMs);
+        }
+        else {
+            LOGD << "Using homogeneous delay of " << maxDelayMs << "ms";
+            return std::make_tuple(maxRowLength, DelayType::Homogeneous, maxDelayMs);
+        }
     }
-    // Otherwise, return NaN to signal that no explicit delays are set
+    // Otherwise, return delay type of none
     else {
-        return std::make_pair(maxRowLength, std::numeric_limits<float>::quiet_NaN());
+        return std::make_tuple(maxRowLength, DelayType::None, 0.0f);
     }
 }
+}   // namespace Connectors
+}   // namespace SpineMLGenerator

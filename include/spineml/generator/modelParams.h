@@ -107,7 +107,31 @@ public:
                  const std::string &srcPopName, const std::string &trgPopName,
                  const std::set<std::string> *externalInputPorts,
                  const std::set<std::string> *overridenPropertyNames,
-                 std::map<std::string, Models::VarInit> &varInitialisers);
+                 std::map<std::string, Models::VarInit> &varInitialisers,
+                 unsigned int maxDendriticDelay);
+    //----------------------------------------------------------------- -----------
+    // Public API
+    //----------------------------------------------------------------------------
+    unsigned int getMaxDendriticDelay() const{ return m_MaxDendriticDelay; }
+
+    //----------------------------------------------------------------------------
+    // Operators
+    //----------------------------------------------------------------------------
+    bool operator < (const WeightUpdate &other) const
+    {
+        if(Base::operator < (other)) {
+            return true;
+        }
+        else {
+            return m_MaxDendriticDelay < other.m_MaxDendriticDelay;
+        }
+    }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const unsigned int m_MaxDendriticDelay;
 };
 
 //----------------------------------------------------------------------------

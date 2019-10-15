@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <thread>
 
 // Standard C includes
 #include <cassert>
@@ -55,6 +56,15 @@ using namespace SpineMLGenerator;
 //----------------------------------------------------------------------------
 namespace
 {
+struct SynapseMatrixProps
+{
+    SynapseMatrixConnectivity connectivityType;
+    unsigned int axonalDelay;
+    unsigned int maxDendriticDelay;
+    unsigned int maxRowLength;
+    InitSparseConnectivitySnippet::Init connectivityInitSnippet;
+};
+
 // Helper function to either find existing model that provides desired parameters or create new one
 template<typename Param, typename Model, typename ...Args>
 const Model &getCreateModel(const Param &params, std::map<Param, Model> &models, Args... args)
@@ -141,42 +151,55 @@ unsigned int readDelaySteps(const pugi::xml_node &node, double dt)
 }
 //----------------------------------------------------------------------------
 // Helper function to determine the correct type of GeNN projection to use for a SpineML 'Synapse' node
-std::tuple<SynapseMatrixType, unsigned int, unsigned int, InitSparseConnectivitySnippet::Init> getSynapticMatrixType(const filesystem::path &basePath, const pugi::xml_node &node,
-                                                                                                                     unsigned int numPre, unsigned int numPost, bool globalG, double dt)
+SynapseMatrixProps getSynapticMatrixProps(const filesystem::path &basePath, const pugi::xml_node &node, 
+                                          unsigned int numPre, unsigned int numPost, double dt)
 {
     auto oneToOne = node.child("OneToOneConnection");
     if(oneToOne) {
-        return std::make_tuple(Connectors::OneToOne::getMatrixType(oneToOne, numPre, numPost, globalG),
-                               readDelaySteps(oneToOne, dt), 0,
-                               Connectors::OneToOne::getConnectivityInit(oneToOne));
+        return {Connectors::OneToOne::getMatrixConnectivity(oneToOne, numPre, numPost),
+                readDelaySteps(oneToOne, dt), 1, 0,
+                Connectors::OneToOne::getConnectivityInit(oneToOne)};
     }
 
     auto allToAll = node.child("AllToAllConnection");
     if(allToAll) {
-        return std::make_tuple(Connectors::AllToAll::getMatrixType(allToAll, numPre, numPost, globalG),
-                               readDelaySteps(allToAll, dt), 0,
-                               uninitialisedConnectivity());
+        return {Connectors::AllToAll::getMatrixConnectivity(allToAll, numPre, numPost),
+                readDelaySteps(allToAll, dt), 1, 0,
+                uninitialisedConnectivity()};
     }
 
     auto fixedProbability = node.child("FixedProbabilityConnection");
     if(fixedProbability) {
-        return std::make_tuple(Connectors::FixedProbability::getMatrixType(fixedProbability, numPre, numPost, globalG),
-                               readDelaySteps(fixedProbability, dt), 0,
-                               Connectors::FixedProbability::getConnectivityInit(fixedProbability));
+        return {Connectors::FixedProbability::getMatrixConnectivity(fixedProbability, numPre, numPost),
+                readDelaySteps(fixedProbability, dt), 1, 0,
+                Connectors::FixedProbability::getConnectivityInit(fixedProbability)};
     }
 
     auto connectionList = node.child("ConnectionList");
     if(connectionList) {
         // Read maximum row length and any explicit delay from connector
         unsigned int maxRowLength;
-        double explicitDelay;
-        std::tie(maxRowLength, explicitDelay) = Connectors::List::readMaxRowLengthAndDelay(basePath, connectionList,
-                                                                                           numPre, numPost);
+        Connectors::List::DelayType delayType;
+        float maxDelay;
+        std::tie(maxRowLength, delayType, maxDelay) = Connectors::List::readMaxRowLengthAndDelay(basePath, connectionList,
+                                                                                                 numPre, numPost);
 
+        // If connector didn't specify delay, read it from delay child. Otherwise convert max delay to timesteps
+        unsigned int axonalDelay = NO_DELAY;
+        unsigned int maxDendriticDelay = 1;
+        if(delayType == Connectors::List::DelayType::None) {
+            axonalDelay = readDelaySteps(connectionList, dt);
+        }
+        else if(delayType == Connectors::List::DelayType::Homogeneous) {
+            axonalDelay = (unsigned int)std::round(maxDelay / dt);
+        }
+        else {
+            maxDendriticDelay = (unsigned int)std::round(maxDelay / dt);
+        }
+        
         // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
-        unsigned int delay = std::isnan(explicitDelay) ? readDelaySteps(connectionList, dt) : (unsigned int)std::round(explicitDelay / dt);
-        return std::make_tuple(Connectors::List::getMatrixType(connectionList, numPre, numPost, globalG),
-                               delay, maxRowLength, uninitialisedConnectivity());
+        return {Connectors::List::getMatrixConnectivity(connectionList, numPre, numPost),
+                axonalDelay, maxDendriticDelay, maxRowLength, uninitialisedConnectivity()};
     }
 
     throw std::runtime_error("No supported connection type found for projection");
@@ -394,35 +417,46 @@ int main(int argc, char *argv[])
 
                 LOGD << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")";
 
+                // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
+                const auto synapseMatrixProps = getSynapticMatrixProps(basePath, input,
+                                                                       srcNeuronGroup->getNumNeurons(),
+                                                                       neuronGroup->getNumNeurons(),
+                                                                       dt);
+                
+                // Are heterogeneous delays required
+                const bool heterogeneousDelay = (synapseMatrixProps.maxDendriticDelay > 1);
+                
                 // Either get existing passthrough weight update model or create new one of no suitable models are available
                 const auto &passthroughWeightUpdateModel = getCreatePassthroughModel(srcPort, passthroughWeightUpdateModels,
-                                                                                     srcNeuronModel);
+                                                                                     srcNeuronModel, heterogeneousDelay);
 
                 // Either get existing passthrough postsynaptic model or create new one of no suitable models are available
                 const auto &passthroughPostsynapticModel = getCreatePassthroughModel(dstPort, passthroughPostsynapticModels,
                                                                                      neuronModel);
 
-                // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
-                const auto synapseMatrixType = getSynapticMatrixType(basePath, input,
-                                                                     srcNeuronGroup->getNumNeurons(),
-                                                                     neuronGroup->getNumNeurons(),
-                                                                     true, dt);
-
+                
+                // Create synapse population
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
-                auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, std::get<0>(synapseMatrixType), std::get<1>(synapseMatrixType), 
+                auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, 
+                                                             SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
+                                                             synapseMatrixProps.axonalDelay, 
                                                              srcPopName, popName,
                                                              &passthroughWeightUpdateModel, {}, {}, {}, {},
                                                              &passthroughPostsynapticModel, {}, {},
-                                                             std::get<3>(synapseMatrixType));
+                                                             synapseMatrixProps.connectivityInitSnippet);
 
                 // If matrix uses sparse connectivity and no initialiser is specified
-                if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE
-                    && std::get<3>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
+                if(synapseMatrixProps.connectivityType == SynapseMatrixConnectivity::SPARSE
+                    && synapseMatrixProps.connectivityInitSnippet.getSnippet()->getRowBuildCode().empty())
                 {
                     // Check that max connections has been specified
-                    assert(std::get<2>(synapseMatrixType) != 0);
-                    synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
+                    assert(synapseMatrixProps.maxRowLength != 0);
+                    synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                 }
+                
+                // Set maximum dendritic delay for synapse population
+                assert(synapseMatrixProps.maxDendriticDelay >= 1);
+                synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
             }
 
             // Loop through outgoing projections
@@ -446,6 +480,12 @@ int main(int argc, char *argv[])
                     // Get name of weight update
                     const std::string weightUpdateName = SpineMLUtils::getSafeName(weightUpdate.attribute("name").value());
 
+                    // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
+                    const auto synapseMatrixProps = getSynapticMatrixProps(basePath, synapse,
+                                                                           neuronGroup->getNumNeurons(),
+                                                                           trgNeuronGroup->getNumNeurons(),
+                                                                           dt);
+
                     // Get sets of external input and overriden properties for this weight update
                     const auto *weightUpdateExternalInputPorts = getNamedSet(externalInputs, weightUpdateName);
                     const auto *weightUpdateOverridenPropertyNames = getNamedSet(overridenProperties, weightUpdateName);
@@ -456,7 +496,8 @@ int main(int argc, char *argv[])
                                                                       popName, trgPopName,
                                                                       weightUpdateExternalInputPorts,
                                                                       weightUpdateOverridenPropertyNames,
-                                                                      weightUpdateVarInitialisers);
+                                                                      weightUpdateVarInitialisers,
+                                                                      synapseMatrixProps.maxDendriticDelay);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
                     const auto &weightUpdateModel = getCreateModel(weightUpdateModelParams, weightUpdateModels,
@@ -487,30 +528,28 @@ int main(int argc, char *argv[])
                     const auto &postsynapticModel = getCreateModel(postsynapticModelParams, postsynapticModels,
                                                                    trgNeuronModel, &weightUpdateModel);
 
-                    // Global weight value can be used if there are no state variables
-                    // **TODO** seperate individualness for PSM and WUM should be used here
-                    const bool globalG = weightUpdateModel.getVars().empty() && postsynapticModel.getVars().empty();
-
-                    // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
-                    const auto synapseMatrixType = getSynapticMatrixType(basePath, synapse,
-                                                                         neuronGroup->getNumNeurons(),
-                                                                         trgNeuronGroup->getNumNeurons(),
-                                                                         globalG, dt);
-
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
-                    auto synapsePop = model.addSynapsePopulation(weightUpdateName, std::get<0>(synapseMatrixType), std::get<1>(synapseMatrixType), 
+                    auto synapsePop = model.addSynapsePopulation(weightUpdateName, 
+                                                                 SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
+                                                                 synapseMatrixProps.axonalDelay, 
                                                                  popName, trgPopName,
                                                                  &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel), {}, {},
                                                                  &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
-                                                                 std::get<3>(synapseMatrixType));
+                                                                 synapseMatrixProps.connectivityInitSnippet);
 
                     // If matrix uses sparse connectivity and no initialiser is specified
-                    if(std::get<0>(synapseMatrixType) & SynapseMatrixConnectivity::SPARSE
-                        && std::get<3>(synapseMatrixType).getSnippet()->getRowBuildCode().empty())
+                    if(synapseMatrixProps.connectivityType == SynapseMatrixConnectivity::SPARSE
+                        && synapseMatrixProps.connectivityInitSnippet.getSnippet()->getRowBuildCode().empty())
                     {
-                        synapsePop->setMaxConnections(std::get<2>(synapseMatrixType));
+                        // Check that max connections has been specified
+                        assert(synapseMatrixProps.maxRowLength != 0);
+                        synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                     }
+                    
+                    // Set maximum dendritic delay for synapse population
+                    assert(synapseMatrixProps.maxDendriticDelay >= 1);
+                    synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
                 }
             }
         }
@@ -547,7 +586,7 @@ int main(int argc, char *argv[])
         }
 
         // Generate command to build using msbuild
-        const std::string buildCommand = "msbuild /p:Configuration=Release  /verbosity:minimal \"" + (codePath / "runner.vcxproj").str() + "\"";
+        const std::string buildCommand = "msbuild /m /p:Configuration=Release  /verbosity:minimal \"" + (codePath / "runner.vcxproj").str() + "\"";
 #else
         // Create makefile to compile and link all generated modules
         // **NOTE** scope requiredso it gets closed before being built
@@ -556,8 +595,10 @@ int main(int argc, char *argv[])
             CodeGenerator::generateMakefile(makefile, backend, moduleNames);
         }
 
-        // Generate command to build using make
-        const std::string buildCommand = "make -C \"" + codePath.str() + "\"";
+        // Generate command to build using make, using as many threads as possible
+        const unsigned int numThreads = std::thread::hardware_concurrency();
+        LOGD << "Using " << numThreads << " threads to build model";
+        const std::string buildCommand = "make -C \"" + codePath.str() + "\" -j " + std::to_string(numThreads);
 #endif
 
         // Execute build command

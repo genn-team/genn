@@ -20,8 +20,8 @@ namespace SpineMLGenerator
 class PassthroughWeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    PassthroughWeightUpdateModel(const std::string &srcPortName,
-                                 const NeuronModel *srcNeuronModel);
+    PassthroughWeightUpdateModel(const std::string &srcPortName, const NeuronModel *srcNeuronModel,
+                                 bool heterogeneousDelay);
 
     //------------------------------------------------------------------------
     // Typedefines

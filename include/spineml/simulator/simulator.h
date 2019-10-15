@@ -85,11 +85,6 @@ private:
     /*! hostSpikeCount, *hostSpikes, spikeQueuePtr, pushFunc, pullFunc */
     typedef std::tuple<unsigned int*, unsigned int*, unsigned int*, VoidFunction, VoidFunction> NeuronPopSpikeVars;
 
-    //! Tuple containing variables and functions for accesing component state variable
-    /*! pointer, pushFunc, pullFunc */
-    template<typename T>
-    using ComponentStateVar = std::tuple<T*, ModelProperty::Base::PushFunc, ModelProperty::Base::PullFunc>;
-
     //------------------------------------------------------------------------
     // Private functions
     //------------------------------------------------------------------------
@@ -135,23 +130,6 @@ private:
     void addEventPorts(const filesystem::path &basePath, const pugi::xml_node &node,
                        std::map<std::string, std::string> &componentURLs,
                        ComponentEventPorts &componentEventPorts);
-
-    //! Helper function to get pointers to state variable as well as push and pull functions
-    template <typename T>
-    ComponentStateVar<T> getStateVar(const std::string &stateVarName) const
-    {
-        // Get host statevar
-        T *hostStateVar = reinterpret_cast<T*>(getLibrarySymbol(stateVarName.c_str(), true));
-
-        // Get push and pull functions
-        auto pushFunc = (ModelProperty::Base::PushFunc)getLibrarySymbol(("push" + stateVarName + "ToDevice").c_str(),
-                                                                        true);
-        auto pullFunc = (ModelProperty::Base::PullFunc)getLibrarySymbol(("pull" + stateVarName + "FromDevice").c_str(),
-                                                                        true);
-
-        // Return in tuple
-        return std::make_tuple(hostStateVar, pushFunc, pullFunc);
-    }
 
     //------------------------------------------------------------------------
     // Members

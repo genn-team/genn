@@ -322,7 +322,7 @@ bool SpineMLGenerator::expandAliases(std::string &code, const std::map<std::stri
     // Replace all alias names with their code string
     bool aliasesExpanded = false;
     for(const auto &alias : aliases) {
-        aliasesExpanded |= CodeGenerator::regexVarSubstitute(code, alias.first, alias.second);
+        aliasesExpanded |= CodeGenerator::regexVarSubstitute(code, alias.first, "(" + alias.second + ")");
     }
     return aliasesExpanded;
 }

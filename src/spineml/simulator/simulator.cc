@@ -1,6 +1,7 @@
 #include "simulator.h"
 
 // Standard C++ includes
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -42,6 +43,7 @@ extern "C"
 #include "inputValue.h"
 #include "logOutput.h"
 #include "modelProperty.h"
+#include "stateVar.h"
 #include "timer.h"
 
 using namespace SpineMLCommon;
@@ -175,6 +177,24 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
         throw std::runtime_error("XML file:" + networkPath.str() + " is not a low-level SpineML network - it has no root SpineML node");
     }
 
+    auto simulation = experiment.child("Simulation");
+    if(!simulation) {
+        throw std::runtime_error("No 'Simulation' node found in experiment");
+    }
+
+    auto eulerIntegration = simulation.child("EulerIntegration");
+    if(!eulerIntegration) {
+        throw std::runtime_error("GeNN only currently supports Euler integration scheme");
+    }
+
+    // Read integration timestep
+    m_DT = eulerIntegration.attribute("dt").as_double(0.1);
+    LOGI << "DT = " << m_DT << "ms";
+
+    // Read duration from simulation and convert to timesteps
+    m_DurationMs = simulation.attribute("duration").as_double() * 1000.0;
+
+
     std::map<std::string, unsigned int> componentSizes;
     std::map<std::string, std::string> componentURLs;
     ComponentEventPorts componentEventPorts;
@@ -221,12 +241,13 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
             // Find row lengths, indices and max row length associated with sparse connection
             unsigned int **rowLength = (unsigned int**)getLibrarySymbol(("rowLength" + geNNSynPopName).c_str(), true);
             unsigned int **ind = (unsigned int**)getLibrarySymbol(("ind" + geNNSynPopName).c_str(), true);
+            uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
             const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(("maxRowLength" + geNNSynPopName).c_str(), true);
 
             // Create connector
             std::vector<unsigned int> remapIndices;
-            Connectors::create(input, srcPopSize, popSize,
-                                rowLength, ind, maxRowLength,
+            Connectors::create(input, getDT(), srcPopSize, popSize,
+                                rowLength, ind, delay, maxRowLength,
                                 basePath, remapIndices);
         }
 
@@ -260,12 +281,13 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
                 // Find row lengths, indices and max row length associated with sparse connection
                 unsigned int **rowLength = (unsigned int**)getLibrarySymbol(("rowLength" + geNNSynPopName).c_str(), true);
                 unsigned int **ind = (unsigned int**)getLibrarySymbol(("ind" + geNNSynPopName).c_str(), true);
+                uint8_t **delay = (uint8_t**)getLibrarySymbol(("_delay" + geNNSynPopName).c_str(), true);
                 const unsigned int *maxRowLength = (const unsigned int*)getLibrarySymbol(("maxRowLength" + geNNSynPopName).c_str(), true);
 
                 // Create connector
                 std::vector<unsigned int> remapIndices;
-                const unsigned int synapseVarSize = Connectors::create(synapse, popSize, trgPopSize,
-                                                                       rowLength, ind, maxRowLength,
+                const unsigned int synapseVarSize = Connectors::create(synapse, getDT(), popSize, trgPopSize,
+                                                                       rowLength, ind, delay, maxRowLength,
                                                                        basePath, remapIndices);
 
                 // Add postsynapse properties to dictionary
@@ -285,24 +307,6 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
         Timer t("Initialize sparse:");
         initializeSparse();
     }
-
-    auto simulation = experiment.child("Simulation");
-    if(!simulation) {
-        throw std::runtime_error("No 'Simulation' node found in experiment");
-    }
-
-    auto eulerIntegration = simulation.child("EulerIntegration");
-    if(!eulerIntegration) {
-        throw std::runtime_error("GeNN only currently supports Euler integration scheme");
-    }
-
-    // Read integration timestep
-    m_DT = eulerIntegration.attribute("dt").as_double(0.1);
-    LOGI << "DT = " << m_DT << "ms";
-
-    // Read duration from simulation and convert to timesteps
-    m_DurationMs = simulation.attribute("duration").as_double() * 1000.0;
-
 
     // Create directory for logs (if required)
     const auto logPath = outputPath / "log";
@@ -469,21 +473,21 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
     // Get map to hold properties associated with this component
     auto &componentProperties = m_ComponentProperties[spineMLName];
 
+    // Bind ths to getLibrarySymbol to get free function we can pass to StateVar constructor
+    // **NOTE** using functions rather than just passing around Simulator objects is more to break circular dependencies than anything else
+    auto getLibrarySymbolFunc = std::bind(&Simulator::getLibrarySymbol, this,
+                                          std::placeholders::_1, std::placeholders::_2);
+
     // Loop through properties in network
     for(auto param : node.children("Property")) {
         std::string paramName = param.attribute("name").value();
 
-        // Get pointers to state vars in model library
-        scalar **hostStateVar;
-        ModelProperty::Base::PushFunc pushFunc;
-        ModelProperty::Base::PullFunc pullFunc;
-        std::tie(hostStateVar, pushFunc, pullFunc) = getStateVar<scalar*>(paramName + geNNPopName);
+        // Find state var in model library
+        StateVar<scalar> stateVar(paramName + geNNPopName, getLibrarySymbolFunc);
 
-        // If it's found
+        // If it's accessible
         // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
-        if(hostStateVar != nullptr) {
-            LOGD << "\t" << paramName;
-
+        if(stateVar.isAccessible()) {
             // If any properties are overriden
             pugi::xml_node overridenParam;
             if(overridenProperties) {
@@ -504,16 +508,9 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
             // If property is overriden then the value types will be in 'UL:' namespace otherwise root
             const std::string valueNamespace = overridenParam ? "UL:" : "";
 
-            if(pushFunc == nullptr || pullFunc == nullptr) {
-                throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
-            }
-
-            LOGD << "\t\tState variable found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc;
-
             // Create model property object
             componentProperties.insert(
-                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param,
-                                                                *hostStateVar, pushFunc, pullFunc, popSize,
+                std::make_pair(paramName, ModelProperty::create(overridenParam ? overridenParam : param, stateVar, popSize,
                                                                 skipGeNNInitialised, basePath, valueNamespace, remapIndices)));
         }
     }
@@ -552,26 +549,14 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
         const std::string paramName = analoguePort.node().attribute("name").value();
         const std::string portType = analoguePort.node().name();
         if(componentProperties.find(paramName) == componentProperties.end()) {
-            // Get pointers to state vars in model library
-            scalar **hostStateVar;
-            ModelProperty::Base::PushFunc pushFunc;
-            ModelProperty::Base::PullFunc pullFunc;
-            std::tie(hostStateVar, pushFunc, pullFunc) = getStateVar<scalar*>(paramName + geNNPopName);
+            StateVar<scalar> stateVar(paramName + geNNPopName, getLibrarySymbolFunc);
 
             // If it's found
             // **NOTE** it not being found is not an error condition - it just suggests that it was optimised out by generator
-            if(hostStateVar != nullptr) {
-                LOGD << "\t" << paramName;
-
-                if(pushFunc == nullptr || pullFunc == nullptr) {
-                    throw std::runtime_error("Cannot find push and pull functions for property:" + paramName);
-                }
-
-                LOGD << "\t\t" << portType << " found host pointer:" << *hostStateVar << ", push function:" << pushFunc << ", pull function:" << pullFunc;
-
+            if(stateVar.isAccessible()) {
                 // Create model property object
                 componentProperties.insert(
-                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(*hostStateVar, pushFunc, pullFunc, popSize))));
+                    std::make_pair(paramName, std::unique_ptr<ModelProperty::Base>(new ModelProperty::Base(stateVar, popSize))));
             }
         }
     }

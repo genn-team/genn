@@ -40,15 +40,15 @@ struct SpineMLTypeName<float>
     static const char *name;
 };
 
-template<>
+/*template<>
 struct SpineMLTypeName<double>
 {
     static const char *name;
-};
+};*/
 
 // **YUCK** Visual C++ doesn't support constexpr so need to do this the old way
 const char *SpineMLTypeName<float>::name = "float";
-const char *SpineMLTypeName<double>::name = "double";
+//const char *SpineMLTypeName<double>::name = "double";
 }
 
 //----------------------------------------------------------------------------
@@ -298,7 +298,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
                                           const std::string &port, unsigned int popSize,
                                           const filesystem::path &logPath, unsigned int *spikeQueuePtr,
                                           unsigned int *hostSpikeCount, unsigned int *hostSpikes,
-                                          ModelProperty::Base::PullFunc pullCurrentSpikesFunc)
+                                          void (*pullCurrentSpikesFunc)(void))
     : Base(node, dt), m_PopSize(popSize), m_SpikeQueuePtr(spikeQueuePtr),
       m_HostSpikeCount(hostSpikeCount), m_HostSpikes(hostSpikes), m_PullCurrentSpikesFunc(pullCurrentSpikesFunc)
 {

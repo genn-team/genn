@@ -34,7 +34,9 @@ namespace
 class ObjectHandlerEvent : public SpineMLGenerator::ObjectHandler::Base
 {
 public:
-    ObjectHandlerEvent(SpineMLGenerator::CodeStream &codeStream) : m_CodeStream(codeStream){}
+    ObjectHandlerEvent(SpineMLGenerator::CodeStream &codeStream, bool heterogeneousDelay) 
+    :   m_CodeStream(codeStream), m_HeterogeneousDelay(heterogeneousDelay) 
+    {}
 
     //------------------------------------------------------------------------
     // ObjectHandler::Base virtuals
@@ -46,7 +48,13 @@ public:
         auto outgoingImpulses = node.children("ImpulseOut");
         const size_t numOutgoingImpulses = std::distance(outgoingImpulses.begin(), outgoingImpulses.end());
         if(numOutgoingImpulses == 1) {
-            m_CodeStream << "$(addToInSyn, " << outgoingImpulses.begin()->attribute("port").value() << ");" << std::endl;
+            const std::string weightPort = outgoingImpulses.begin()->attribute("port").value();
+            if(m_HeterogeneousDelay) {
+                m_CodeStream << "$(addToInSynDelay, " << weightPort << ",  _delay);" << std::endl;
+            }
+            else {
+                m_CodeStream << "$(addToInSyn, " << weightPort << ");" << std::endl;
+            }
         }
         // Otherwise, throw an exception
         else if(numOutgoingImpulses > 1) {
@@ -57,7 +65,12 @@ public:
         auto outgoingEvents = node.children("EventOut");
         const size_t numOutgoingEvents = std::distance(outgoingEvents.begin(), outgoingEvents.end());
         if(numOutgoingEvents == 1) {
-            m_CodeStream << "$(addToInSyn, 1.0);" << std::endl;
+            if(m_HeterogeneousDelay) {
+                m_CodeStream << "$(addToInSynDelay, 1.0,  _delay);" << std::endl;
+            }
+            else {
+                m_CodeStream << "$(addToInSyn, 1.0);" << std::endl;
+            }
         }
         // Otherwise, throw an exception
         else if(numOutgoingEvents > 1) {
@@ -80,6 +93,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     SpineMLGenerator::CodeStream &m_CodeStream;
+    const bool m_HeterogeneousDelay;
 };
 }
 
@@ -94,6 +108,9 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
                                                        const NeuronModel *srcNeuronModel,
                                                        const NeuronModel *trgNeuronModel)
 {
+    // Are heterogeneous delays required?
+    const bool heterogeneousDelay = (params.getMaxDendriticDelay() > 1);
+
     // Read aliases
     std::map<std::string, std::string> aliases;
     readAliases(componentClass, aliases);
@@ -203,8 +220,8 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     // Generate model code using specified condition handler
     bool multipleRegimes;
     ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream, aliases);
-    ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream);
-    ObjectHandlerEvent objectHandlerSpikeLikeEvent(simCodeStream);
+    ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream, heterogeneousDelay);
+    ObjectHandlerEvent objectHandlerSpikeLikeEvent(simCodeStream, heterogeneousDelay);
     ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream, aliases);
     std::tie(multipleRegimes, m_InitialRegimeID) = generateModelCode(componentClass,
                                                                      {
@@ -218,12 +235,25 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     // Build the final vectors of parameter names and variables from model
     tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
 
+    // If model has heterogeneos delays, add 8-bit unsigned delay to vars
+    if(heterogeneousDelay) {
+        assert(params.getMaxDendriticDelay() < 0xFF);
+        
+        LOGD << "\t\tUsing uint8_t for dendritic delay";
+        m_Vars.push_back({"_delay", "uint8_t"});
+    }
+
     // Add any derived parameters required for time-derivative
     objectHandlerTimeDerivative.addDerivedParams(m_ParamNames, m_DerivedParams);
 
     // If we have an analogue send port, add code to apply it to synapse dynamics
     if(!m_SendPortAnalogue.empty()) {
-        synapseDynamicsStream << "$(addToInSyn, " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ");" << std::endl;
+        if(heterogeneousDelay) {
+            synapseDynamicsStream << "$(addToInSynDelay, " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ", _delay);" << std::endl;
+        }
+        else {
+            synapseDynamicsStream << "$(addToInSyn, " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ");" << std::endl;
+        }
     }
 
     // Store generated code in class

@@ -84,6 +84,9 @@ public:
                                return Models::VarInit(InitVarSnippet::Constant::getInstance(),
                                                          {(double)m_Model.getInitialRegimeID()});
                            }
+                           else if(n.name == "_delay") {
+                               return Models::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
+                           }
                            else {
                                auto v = m_VarInitialisers.find(n.name);
                                if(v == m_VarInitialisers.end()) {
