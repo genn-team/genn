@@ -9,6 +9,7 @@
 
 // CUDA backend includes
 #include "backend.h"
+#include "utils.h"
 
 //----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan
@@ -96,10 +97,10 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
         }
 
         if(sg.getNumThreadsPerSpike() > 1) {
-            os << "unsigned int synAddress = (preInd * " << std::to_string(sg.getMaxConnections()) << ") + thread;" << std::endl;
+            os << "unsigned int synAddress = (preInd * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ") + thread;" << std::endl;
         }
         else {
-            os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
+            os << "unsigned int synAddress = preInd * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ";" << std::endl;
         }
         os << "const unsigned int npost = dd_rowLength" << sg.getName() << "[preInd];" << std::endl;
 
@@ -168,6 +169,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 //----------------------------------------------------------------------------
 size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
+    // **NOTE** we don't really care about extra padding i.e. stride here
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxConnections();
     }
@@ -281,24 +283,24 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
                 }
 
+                os << "const unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ") + " + popSubs["id"] + ";" << std::endl;
+
                 Substitutions synSubs(&popSubs);
                 synSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
+                synSubs.addVarSubstitution("id_syn", "synAddress");
+
                 if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    os << "unsigned int synAddress = shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
+
                     os << "const unsigned int npost = shRowLength[j];" << std::endl;
 
                     os << "if (" << popSubs["id"] << " < npost)" << CodeStream::OB(140);
-                    os << "synAddress += " << popSubs["id"] << ";" << std::endl;
                     os << "const unsigned int ipost = dd_ind" << sg.getName() << "[synAddress];" << std::endl;
 
                     synSubs.addVarSubstitution("id_post", "ipost");
                 }
                 else { // DENSE
-                    os << "unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + " + popSubs["id"] + ";" << std::endl;
-
                     synSubs.addVarSubstitution("id_post", popSubs["id"]);
                 }
-                synSubs.addVarSubstitution("id_syn", "synAddress");
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {

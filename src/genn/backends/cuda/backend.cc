@@ -700,13 +700,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                                 Substitutions synSubs(&popSubs);
                                 if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    os << "if (" << popSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
+                                    os << "if (" << synSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
                                     os << "const unsigned int synAddress = dd_remap" + sg.getName() + "[(shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs["id"] << "];" << std::endl;
-                                    os << "const unsigned int ipre = synAddress / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
+                                    os << "const unsigned int ipre = synAddress / " + std::to_string(getSynapticMatrixRowStride(sg)) + ";" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", "ipre");
                                 }
                                 else {
-                                    os << "const unsigned int synAddress = (" << popSubs["id"] << " * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + shSpk[j];" << std::endl;
+                                    os << "const unsigned int synAddress = (" << synSubs["id"] << " * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + shSpk[j];" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", synSubs["id"]);
                                 }
 
@@ -773,13 +773,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                             // Determine synapse and presynaptic indices for this thread
                             os << "const unsigned int s = dd_synRemap" << sg.getName() << "[1 + " << popSubs["id"] << "];" << std::endl;
 
-                            synSubs.addVarSubstitution("id_pre", "s / " + std::to_string(sg.getMaxConnections()));
+                            synSubs.addVarSubstitution("id_pre", "s / " + std::to_string(getSynapticMatrixRowStride(sg)));
                             synSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[s]");
                             synSubs.addVarSubstitution("id_syn", "s");
                         }
                         else {
-                            synSubs.addVarSubstitution("id_pre", popSubs["id"] + " / " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
-                            synSubs.addVarSubstitution("id_post", popSubs["id"] + " % " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+                            synSubs.addVarSubstitution("id_pre", popSubs["id"] + " / " + std::to_string(getSynapticMatrixRowStride(sg)));
+                            synSubs.addVarSubstitution("id_post", popSubs["id"] + " % " + std::to_string(getSynapticMatrixRowStride(sg)));
                             synSubs.addVarSubstitution("id_syn", popSubs["id"]);
                         }
 
@@ -985,7 +985,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
-            [sgSparseConnectHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+            [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
@@ -1031,7 +1031,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                         // Build function template to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    ind + "[(" + popSubs["id"] + " * " + std::to_string(sg.getMaxConnections()) + ") + (" + rowLength + "++)] = $(0)");
+                                                    ind + "[(" + popSubs["id"] + " * " + std::to_string(getSynapticMatrixRowStride(sg)) + ") + (" + rowLength + "++)] = $(0)");
                     }
                     else {
                         assert(false);
@@ -1068,7 +1068,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 os << "__shared__ unsigned int shRowStart[" << m_KernelBlockSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
             }
 
-            // Initialise weight update variables for synapse groups with dense connectivity
+            // Initialise weight update variables for synapse groups with sparse connectivity
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
                 [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
                 [](const SynapseGroupInternal &sg){ return isSparseInitRequired(sg); },
@@ -1189,7 +1189,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                             }
 
                             // If matrix is ragged, advance index to next row by adding stride
-                            os << "idx += " << sg.getMaxConnections() << ";" << std::endl;
+                            os << "idx += " << getSynapticMatrixRowStride(sg) << ";" << std::endl;
                         }
                     }
                 });
@@ -1276,6 +1276,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
         }
+    }
+}
+//--------------------------------------------------------------------------
+size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return Utils::padSize(sg.getMaxConnections(), getPresynapticUpdateVectorWidth(sg));
+    }
+    else {
+        return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), getPresynapticUpdateVectorWidth(sg));
     }
 }
 //--------------------------------------------------------------------------
@@ -1751,7 +1761,7 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
     assert(kernelSubs.hasVarSubstitution("id_post"));
 
     Substitutions varSubs(&kernelSubs);
-     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getMaxConnections()) + ") + " + kernelSubs["id"]);
     }
     else {

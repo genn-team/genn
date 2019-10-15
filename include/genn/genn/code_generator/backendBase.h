@@ -159,6 +159,9 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
+    
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/
     virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
