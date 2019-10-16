@@ -1,0 +1,76 @@
+%{
+--------------------------------------------------------------------------------
+--
+--  This file is part of the Doxyrest toolkit.
+--
+--  Doxyrest is distributed under the MIT license.
+--  For details see accompanying license.txt file,
+--  the public copy of which is also available at:
+--  http://tibbo.com/downloads/archive/doxyrest/license.txt
+--
+--------------------------------------------------------------------------------
+
+local argArray = table.pack(...)
+local compound = argArray[1]
+local variableSectionName = string.lower(argArray[2])
+local functionSectionName = string.lower(argArray[3])
+}
+.. ref-code-block:: lua
+	:class: doxyrest-overview-code-block
+
+%{
+if compound.compoundKind ~= "struct" then
+	if #compound.enumArray > 0 then
+		includeFile("overview_enums.rst.in", compound)
+		emit("\n")
+	end -- if
+
+	if #compound.structArray > 0 then
+		includeFile("overview_structs.rst.in", compound)
+		emit("\n")
+	end -- if
+
+	if #compound.variableArray > 0 then
+		includeFile("overview_variables.rst.in", compound, variableSectionName)
+		emit("\n")
+	end -- if
+
+	if #compound.functionArray > 0 then
+		includeFile("overview_functions.rst.in", compound, functionSectionName)
+		emit("\n")
+	end
+else
+}
+	$(compound.name) =$g_preBodySpace{
+		-- fields
+
+%{
+	includeFileWithIndent("\t", "overview_variables.rst.in", compound, nil, ",")
+
+	if compound.baseTypeArray and #compound.baseTypeArray > 0 then
+
+		-- always link inherited members (even when no documentation)
+
+		local prevHasItemDocumentation = hasItemDocumentation
+		hasItemDocumentation = function(item)
+			return true
+		end
+
+		for i = 1, #compound.baseTypeArray do
+			local baseType = compound.baseTypeArray[i]
+}
+
+		-- inherited from :ref:`$(baseType.name)<doxid-$(baseType.id)>`
+
+%{
+			includeFileWithIndent("\t", "overview_variables.rst.in", baseType, nil, ",")
+		end -- for
+
+		hasItemDocumentation = prevHasItemDocumentation
+	end -- if
+}
+	}
+
+%{
+end -- if
+}
