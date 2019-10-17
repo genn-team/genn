@@ -1930,6 +1930,7 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>" << std::endl;
     os << "\t\t\t<CodeGeneration>compute_" << virtualArchitecture <<",sm_" << architecture << "</CodeGeneration>" << std::endl;
     os << "\t\t\t<FastMath>" << (m_Preferences.optimizeCode ? "true" : "false") << "</FastMath>" << std::endl;
+    os << "\t\t\t<GenerateLineInfo>" << (m_Preferences.generateLineInfo ? "true" : "false") << "</GenerateLineInfo>" << std::endl;
     os << "\t\t</CudaCompile>" << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -1984,14 +1985,17 @@ std::string Backend::getNVCCFlags() const
 #endif
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
-    if (m_Preferences.optimizeCode) {
+    if(m_Preferences.optimizeCode) {
         nvccFlags += " -O3 -use_fast_math";
     }
-    if (m_Preferences.debugCode) {
+    if(m_Preferences.debugCode) {
         nvccFlags += " -O0 -g -G";
     }
-    if (m_Preferences.showPtxInfo) {
+    if(m_Preferences.showPtxInfo) {
         nvccFlags += " -Xptxas \"-v\"";
+    }
+    if(m_Preferences.generateLineInfo) {
+        nvccFlags += " --generate-line-info";
     }
 #ifdef MPI_ENABLE
     // If MPI is enabled, add MPI include path
