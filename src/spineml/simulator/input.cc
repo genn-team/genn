@@ -246,8 +246,9 @@ void SpineMLSimulator::Input::Analogue::apply(double dt, unsigned long long time
     // If we should apply updated this timestep and there are any to apply
     if(shouldApply(timestep) && m_PropertyUpdateRequired) {
         // Loop through current values and update corresponding model property values
+        scalar *hostStateVar = m_ModelProperty->getHostStateVar();
         for(const auto &v : m_CurrentValues) {
-            m_ModelProperty->getHostStateVarBegin()[v.first] = (scalar)v.second;
+           hostStateVar[v.first] = (scalar)v.second;
         }
 
         // Upload model property if required

@@ -69,6 +69,9 @@ protected:
         Substitutions subs;
         subs.addParamValueSubstitution({"test"}, { GetParam() });
         subs.apply(m_Code);
+
+        // For safety, value_substitutions adds brackets around substituted values - trim these out
+        m_Code = m_Code.substr(1, m_Code.size() - 2);
     }
 
     //--------------------------------------------------------------------------

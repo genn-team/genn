@@ -1,7 +1,7 @@
 #pragma once
 
 // Standard C++ includes
-#include <utility>
+#include <tuple>
 
 // GeNN includes
 #include "initSparseConnectivitySnippet.h"
@@ -17,7 +17,7 @@ namespace filesystem
     class path;
 }
 
-enum class SynapseMatrixType : unsigned int;
+enum class SynapseMatrixConnectivity : unsigned int;
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::FixedProbability
@@ -28,7 +28,7 @@ namespace Connectors
 {
 namespace FixedProbability
 {
-    SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
+    SynapseMatrixConnectivity getMatrixConnectivity(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
     InitSparseConnectivitySnippet::Init getConnectivityInit(const pugi::xml_node &node);
 }   // namespace FixedProbability
 
@@ -37,7 +37,7 @@ namespace FixedProbability
 //----------------------------------------------------------------------------
 namespace OneToOne
 {
-    SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
+    SynapseMatrixConnectivity getMatrixConnectivity(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
     InitSparseConnectivitySnippet::Init getConnectivityInit(const pugi::xml_node &node);
 }   // namespace OneToOne
 
@@ -47,7 +47,7 @@ namespace OneToOne
 //----------------------------------------------------------------------------
 namespace AllToAll
 {
-    SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
+    SynapseMatrixConnectivity getMatrixConnectivity(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
 }   // namespace AllToAll
 
 //----------------------------------------------------------------------------
@@ -55,9 +55,16 @@ namespace AllToAll
 //----------------------------------------------------------------------------
 namespace List
 {
-    SynapseMatrixType getMatrixType(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost, bool globalG);
-    std::pair<unsigned int, float> readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
-                                                            unsigned int numPre, unsigned int numPost);
+    enum class DelayType
+    {
+        None,
+        Homogeneous,
+        Heterogeneous,
+    };
+
+    SynapseMatrixConnectivity getMatrixConnectivity(const pugi::xml_node &node, unsigned int numPre, unsigned int numPost);
+    std::tuple<unsigned int, DelayType, float> readMaxRowLengthAndDelay(const filesystem::path &basePath, const pugi::xml_node &node,
+                                                                        unsigned int numPre, unsigned int numPost);
 }   // namespace List
 }   // namespace Connectors
 }   // namespace SpineMLGenerator

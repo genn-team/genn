@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
             pullIzh1CurrentSpikesFromDevice();
 
             // Sum spikes
-            sumPN += glbSpkCntPN[0];
-            sumIzh1 += glbSpkCntIzh1[0];
+            sumPN += getPNCurrentSpikeCount();
+            sumIzh1 += getIzh1CurrentSpikeCount();
 
             // Record voltages
             //izhVoltage.record(t);

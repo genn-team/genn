@@ -131,16 +131,11 @@ int main(int argc, char *argv[])
 
     std::cout << "# We are running with fixed time step " << DT << std::endl;
     //timer.startTimer();
-    SpikeRecorder pnSpikes(outDir + "/" + outLabel + ".pn.st", glbSpkCntPN, glbSpkPN);
-    SpikeRecorder lhiSpikes(outDir + "/" + outLabel + ".lhi.st", glbSpkCntLHI, glbSpkLHI);
+    SpikeRecorder<> pnSpikes(&getPNCurrentSpikes, &getPNCurrentSpikeCount, outDir + "/" + outLabel + ".pn.st");
+    SpikeRecorder<> lhiSpikes(&getLHICurrentSpikes, &getLHICurrentSpikeCount, outDir + "/" + outLabel + ".lhi.st");
+    SpikeRecorder<> kcSpikes(&getKCCurrentSpikes, &getKCCurrentSpikeCount, outDir + "/" + outLabel + ".kc.st");
+    SpikeRecorder<> dnSpikes(&getDNCurrentSpikes, &getDNCurrentSpikeCount, outDir + "/" + outLabel + ".dn.st");
 
-#ifdef DELAYED_SYNAPSES
-    SpikeRecorderDelay kcSpikes(_NKC, spkQueuePtrKC, outDir + "/" + outLabel + ".kc.st", glbSpkCntKC, glbSpkKC);
-    SpikeRecorderDelay dnSpikes(_NDN, spkQueuePtrDN, outDir + "/" + outLabel + ".dn.st", glbSpkCntDN, glbSpkDN);
-#else
-    SpikeRecorder kcSpikes(outDir + "/" + outLabel + ".kc.st", glbSpkCntKC, glbSpkKC);
-    SpikeRecorder dnSpikes(outDir + "/" + outLabel + ".dn.st", glbSpkCntDN, glbSpkDN);
-#endif
 
     double simTime = 0.0;
     {

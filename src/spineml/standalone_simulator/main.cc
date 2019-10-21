@@ -1,3 +1,10 @@
+// PLOG includes
+#include <plog/Log.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
+// CLI11 includes
+#include "CLI11.hpp"
+
 // SpineML simulator includes
 #include "simulator.h"
 
@@ -7,16 +14,21 @@ int main(int argc, char *argv[])
 {
     try
     {
-        if(argc < 2) {
-            throw std::runtime_error("Expected experiment XML file passed as arguments");
-        }
+        CLI::App app{"SpineML simulator for GeNN"};
 
-        // Read min log severity from command line
-        const plog::Severity minSeverity = (argc > 3) ? (plog::Severity)std::stoi(argv[3]) : plog::info;
+        std::string experimentFilename;
+        std::string outputDirectory;
+        unsigned int logLevel = plog::info;
+
+        app.add_option("experiment,-e,--experiment", experimentFilename, "Experiment xml file")->required();
+        app.add_option("output,-o,--output", outputDirectory, "Output directory for generated code");
+        app.add_flag("--log-error{2},--log-warning{3},--log-info{4},--log-debug{5}", logLevel, "Verbosity of logging to show");
+
+        CLI11_PARSE(app, argc, argv);
 
         // Initialise log channels, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init(minSeverity, &consoleAppender);
+        plog::init((plog::Severity)logLevel, &consoleAppender);
 
 #ifdef _WIN32
         // Startup WinSock 2
@@ -28,7 +40,7 @@ int main(int argc, char *argv[])
 #endif  // _WIN32
 
         // Create simulator
-        Simulator simulator(argv[1], (argc > 2) ? argv[2] : "");
+        Simulator simulator(experimentFilename,outputDirectory);
 
         const unsigned long long numTimeSteps = simulator.calcNumTimesteps();
         LOGI << "Simulating for " << numTimeSteps << " " << simulator.getDT() << "ms timesteps";
