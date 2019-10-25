@@ -156,9 +156,10 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
-    // Add sizes of CUDA-specific types
-    addType("curandState", 44);
-    addType("curandStatePhilox4_32_10_t", 64);
+    // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
+    addDeviceType("curandState", 44);
+    addDeviceType("curandStatePhilox4_32_10_t", 64);
+    addDeviceType("half", 2);
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
@@ -1287,12 +1288,6 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "// Standard C includes" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << std::endl;
-    os << "// Forward declare cuRAND structures" << std::endl;
-    os << "struct curandStatePhilox4_32_10;" << std::endl;
-    os << "struct curandStateXORWOW;" << std::endl;
-    os << "typedef struct curandStatePhilox4_32_10 curandStatePhilox4_32_10_t;" << std::endl;
-    os << "typedef struct curandStateXORWOW curandState;" << std::endl;
-    os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking CUDA calls" << std::endl;
     os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
@@ -1307,6 +1302,9 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
 {
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
+    if(getRuntimeVersion() >= 9000) {
+        os <<"#include <cuda_fp16.h>" << std::endl;
+    }
     os << std::endl;
     os << "#define SUPPORT_CODE_FUNC __device__ __host__ inline" << std::endl;
     os << std::endl;
@@ -1573,13 +1571,22 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInterna
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const
 {
+    const bool deviceType = isDeviceType(type);
+
     if(loc & VarLocation::HOST) {
+        if(deviceType) {
+            throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
+        }
+
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
     if(loc & VarLocation::DEVICE) {
         // If the type is a pointer type we need a host and a device pointer
         if(::Utils::isTypePointer(type)) {
-            definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+            // Write host definition to internal definitions stream if type is device only
+            CodeStream &d = deviceType ? definitionsInternal : definitions;
+            d << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+
             definitionsInternal << "EXPORT_VAR __device__ " << type << " dd_" << name << ";" << std::endl;
         }
         // Otherwise we just need a device variable, made volatile for safety
@@ -2130,6 +2137,21 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
         os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+void Backend::addDeviceType(const std::string &type, size_t size)
+{
+    addType(type, size);
+    m_DeviceTypes.emplace(type);
+}
+//--------------------------------------------------------------------------
+bool Backend::isDeviceType(const std::string &type) const
+{
+    // Get underlying type
+    const std::string underlyingType = ::Utils::isTypePointer(type) ? ::Utils::getUnderlyingType(type) : type;
+
+    // Return true if it is in device types set
+    return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)

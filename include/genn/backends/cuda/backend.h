@@ -6,6 +6,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <unordered_set>
 
 // CUDA includes
 #include <cuda.h>
@@ -295,6 +296,12 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
+    //! Adds a type - both to backend base's list of sized types but also to device types set
+    void addDeviceType(const std::string &type, size_t size);
+
+    //! Is type a a device only type?
+    bool isDeviceType(const std::string &type) const;
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------
@@ -311,6 +318,9 @@ private:
     cudaDeviceProp m_ChosenDevice;
 
     int m_RuntimeVersion;
+
+    //! Types that are only supported on device i.e. should never be exposed to user code
+    std::unordered_set<std::string> m_DeviceTypes;
 
     //--------------------------------------------------------------------------
     // Static members
