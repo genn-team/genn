@@ -87,8 +87,11 @@ struct Preferences : public PreferencesBase
         std::fill(manualBlockSizes.begin(), manualBlockSizes.end(), 32);
     }
 
-    //! Should PTX assembler information be displayed for each CUDA kernel during compilation
+    //! Should PTX assembler information be displayed for each CUDA kernel during compilation?
     bool showPtxInfo = false;
+
+    //! Should line info be included in resultant executable for debugging/profiling purposes?
+    bool generateLineInfo = false;
 
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
