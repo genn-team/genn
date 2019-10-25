@@ -26,13 +26,9 @@ public:
         }
     }
 
-    SpikeWriterText(const std::tuple<const std::string&, const std::string&, bool> &args)
-    :   SpikeWriterText(std::get<0>(args), std::get<1>(args), std::get<2>(args))
-    {
-    }
-
+protected:
     //----------------------------------------------------------------------------
-    // Public API
+    // Protected API
     //----------------------------------------------------------------------------
     void recordSpikes(double t, unsigned int spikeCount, const unsigned int *currentSpikes)
     {
@@ -67,11 +63,6 @@ public:
         }
     }
 
-    SpikeWriterTextCached(const std::tuple<const std::string&, const std::string&, bool> &args)
-    :   SpikeWriterTextCached(std::get<0>(args), std::get<1>(args), std::get<2>(args))
-    {
-    }
-
     ~SpikeWriterTextCached()
     {
         writeCache();
@@ -95,6 +86,10 @@ public:
         m_Cache.clear();
     }
 
+protected:
+    //----------------------------------------------------------------------------
+    // Protected API
+    //----------------------------------------------------------------------------
     void recordSpikes(double t, unsigned int spikeCount, const unsigned int *currentSpikes)
     {
         // Add a new entry to the cache
@@ -125,7 +120,7 @@ private:
 //----------------------------------------------------------------------------
 //! Class to read spikes from neuron groups
 template<typename Writer = SpikeWriterText>
-class SpikeRecorder
+class SpikeRecorder : public Writer
 {
 public:
     typedef unsigned int& (*GetCurrentSpikeCountFunc)();
@@ -134,8 +129,8 @@ public:
     template<typename... WriterArgs>
     SpikeRecorder(GetCurrentSpikesFunc getCurrentSpikes, GetCurrentSpikeCountFunc getCurrentSpikeCount,
                   WriterArgs &&... writerArgs)
-    :   m_GetCurrentSpikes(getCurrentSpikes), m_GetCurrentSpikeCount(getCurrentSpikeCount),
-        m_Writer(std::forward<WriterArgs>(writerArgs)...), m_Sum(0)
+    :   Writer(std::forward<WriterArgs>(writerArgs)...), m_GetCurrentSpikes(getCurrentSpikes),
+        m_GetCurrentSpikeCount(getCurrentSpikeCount), m_Sum(0)
     {
     }
 
@@ -146,7 +141,7 @@ public:
     {
         const unsigned int spikeCount = m_GetCurrentSpikeCount();
         m_Sum += spikeCount;
-        m_Writer.recordSpikes(t, spikeCount, m_GetCurrentSpikes());
+        this->recordSpikes(t, spikeCount, m_GetCurrentSpikes());
     }
     
     unsigned int getSum() const{ return m_Sum; }
@@ -157,6 +152,5 @@ private:
     //----------------------------------------------------------------------------
     GetCurrentSpikesFunc m_GetCurrentSpikes;
     GetCurrentSpikeCountFunc m_GetCurrentSpikeCount;
-    Writer m_Writer;
     unsigned int m_Sum;
 };

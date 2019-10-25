@@ -102,6 +102,9 @@ public:
     //! Sets the number of delay steps used to delay postsynaptic spikes travelling back along dendrites to synapses
     void setBackPropDelaySteps(unsigned int timesteps);
 
+    //! Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices
+    void setNarrowSparseIndEnabled(bool enabled);
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -220,7 +223,8 @@ protected:
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, VarLocation defaultSparseConnectivityLocation);
+                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
+                 VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -263,6 +267,9 @@ protected:
 
     std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
+    //! Get the type to use for sparse connectivity indices for synapse group
+    std::string getSparseIndType() const;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -303,6 +310,9 @@ private:
     //! Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool m_EventThresholdReTestRequired;
+
+    //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
+    bool m_NarrowSparseIndEnabled;
 
     //! Variable mode used for variables used to combine input from this synapse group
     VarLocation m_InSynLocation;

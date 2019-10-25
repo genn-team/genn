@@ -127,7 +127,7 @@ void SynapseGroup::setSpanType(SpanType spanType)
         m_SpanType = spanType;
     }
     else {
-        throw std::runtime_error("setSpanType: This function is not enabled for dense connectivity type.");
+        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse connectivity.");
     }
 }
 //----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ void SynapseGroup::setNumThreadsPerSpike(unsigned int numThreadsPerSpike)
         m_NumThreadsPerSpike = numThreadsPerSpike;
     }
     else {
-        throw std::runtime_error("setSpanType: This function is not enabled for dense connectivity type.");
+        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with a presynaptic span type.");
     }
 }
 //----------------------------------------------------------------------------
@@ -146,6 +146,16 @@ void SynapseGroup::setBackPropDelaySteps(unsigned int timesteps)
     m_BackPropDelaySteps = timesteps;
 
     m_TrgNeuronGroup->checkNumDelaySlots(m_BackPropDelaySteps);
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setNarrowSparseIndEnabled(bool enabled)
+{
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        m_NarrowSparseIndEnabled = enabled;
+    }
+    else {
+        throw std::runtime_error("setNarrowSparseIndEnabled: This function can only be used on synapse groups with sparse connectivity.");
+    }
 }
 //----------------------------------------------------------------------------
 int SynapseGroup::getClusterHostID() const
@@ -297,10 +307,11 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
-                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, VarLocation defaultSparseConnectivityLocation)
+                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
+                           VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
-        m_EventThresholdReTestRequired(false),
+        m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
         m_PSModel(ps), m_PSParams(psParams), m_PSVarInitialisers(psVarInitialisers),
@@ -415,4 +426,24 @@ std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, 
     else {
         return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + std::to_string(getMaxDendriticDelayTimesteps()) + ") * " + std::to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
     }
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroup::getSparseIndType() const
+{
+    // If narrow sparse inds are enabled
+    if(m_NarrowSparseIndEnabled) {
+        // If number of target neurons can be represented using a uint8, use this type
+        const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
+        if(numTrgNeurons <= std::numeric_limits<uint8_t>::max()) {
+            return "uint8_t";
+        }
+        // Otherwise, if they can be represented as a uint16, use this type
+        else if(numTrgNeurons <= std::numeric_limits<uint16_t>::max()) {
+            return "uint16_t";
+        }
+    }
+
+    // Otherwise, use 32-bit int
+    return "uint32_t";
+
 }

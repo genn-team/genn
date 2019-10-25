@@ -718,7 +718,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
             // Target indices
             mem += backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "ind" + s.first, varLoc, size);
+                                    s.second.getSparseIndType(), "ind" + s.first, varLoc, size);
 
             // **TODO** remap is not always required
             if(backend.isSynRemapRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
