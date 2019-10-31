@@ -532,6 +532,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
+size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return sg.getMaxConnections();
+    }
+    else {
+        return sg.getTrgNeuronGroup();
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os) const
 {
     os << "// Standard C++ includes" << std::endl;
