@@ -698,7 +698,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
         if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+            const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second) / 32 + 1;
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.first,
                                s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
