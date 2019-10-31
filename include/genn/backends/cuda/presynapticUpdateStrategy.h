@@ -39,16 +39,17 @@ public:
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg) const = 0;
 
-    //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
-
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
+
+    virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const = 0;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
                            const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
+
+    virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -70,16 +71,17 @@ public:
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
-    //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
-
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
+
+    virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
                            const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+
+    virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -101,16 +103,17 @@ public:
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
-    //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
-
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
+
+    virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
                            const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+
+    virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -132,16 +135,49 @@ public:
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
-    //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
-
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
+
+    virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
                            const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+
+    virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask
+//--------------------------------------------------------------------------
+//! Postsynaptic parallelism
+class PostSpanBitmask : public Base
+{
+public:
+    //------------------------------------------------------------------------
+    // PresynapticUpdateStrategy::Base virtuals
+    //------------------------------------------------------------------------
+    //! Get the number of threads that presynaptic updates should be parallelised across
+    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
+    //! Is this presynaptic update strategy compatible with a given synapse group?
+    virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
+
+    //! How many neurons does each thread accumulate the outputs of into shared memory
+    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
+
+    virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
+
+    //! Generate presynaptic update code
+    virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                           const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                           BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+
+    virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const override;
 };
 }   // namespace PresynapticUpdateStrategy
 }   // namespace CUDA

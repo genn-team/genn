@@ -142,6 +142,7 @@ std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrate
     new PresynapticUpdateStrategy::PreSpan,
     new PresynapticUpdateStrategy::PostSpan,
     new PresynapticUpdateStrategy::PreSpanBitmask,
+    new PresynapticUpdateStrategy::PostSpanBitmask,
 };
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
@@ -557,23 +558,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                         os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
-                    // If we are going to accumulate postsynaptic input into a register, zero register value
-                    const size_t sharedMemPerThread = presynapticUpdateStrategy->getSharedMemoryPerThread(sg, *this);
-                    if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
-                        os << "// only do this for existing neurons" << std::endl;
-                        os << model.getPrecision() << " linSyn = 0;" << std::endl;
-                    }
-                    // Otherwise, if we are going to accumulate into shared memory, zero entry in array for each target neuron
-                    // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                    else if(sharedMemPerThread > 0) {
-                        os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "shLg[threadIdx.x] = 0;"<< std::endl;
-                        }
-                        os << "__syncthreads();" << std::endl;
-                    }
-
+                    // Generate preamble
+                    presynapticUpdateStrategy->genPreamble(os, model, sg, *this);
+                  
                     // If spike events should be processed
                     if (sg.isSpikeEventRequired()) {
                         CodeStream::Scope b(os);
@@ -590,48 +577,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
                     os << std::endl;
 
-                    // If we have been accumulating into a register, write value back to global memory
-                    if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
-                        os << "// only do this for existing neurons" << std::endl;
-                        os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                        {
-                            CodeStream::Scope b(os);
-                            const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[" + popSubs["id"] + "]";
-                            if(sg.isPSModelMerged()) {
-                                os << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
-                            }
-                            else {
-                                os << inSyn << " += linSyn;" << std::endl;
-                            }
-                        }
-                    }
-                    // Otherwise, if we have been accumulating into shared memory, write value back to global memory
-                    // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                    else if(sharedMemPerThread > 0) {
-                        os << "__syncthreads();" << std::endl;
-                        os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-                        {
-                            CodeStream::Scope b(os);
-                            for (size_t i = 0; i < sharedMemPerThread; i++) {
-                                // Calculate index in shared memory thread should access
-                                // **NOTE** this is ordered to result in coalesced reads across the thread block
-                                std::string index = "threadIdx.x";
-                                if (sharedMemPerThread > 1) {
-                                    index = std::to_string(i * sharedMemPerThread) + " + " + index;
-                                }
-
-                                // Calculate address in shared memory
-                                const std::string shared = "shLg[" + index + "]";
-                                const std::string global = "dd_inSyn" + sg.getPSModelTargetName() + "[(" + std::to_string(m_KernelBlockSizes[KernelPresynapticUpdate]) + " * blockIdx.x) + " + index + "]";
-                                if (sg.isPSModelMerged()) {
-                                    os << getFloatAtomicAdd(model.getPrecision()) << "(&" << global << ", " << shared << ");" << std::endl;
-                                }
-                                else {
-                                    os << global << " += " << shared << ";" << std::endl;
-                                }
-                            }
-                        }
-                    }
+                    // Generate pre-amble
+                    presynapticUpdateStrategy->genPostamble(os, model, sg, *this);
                 }
             );
         }
