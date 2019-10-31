@@ -27,6 +27,11 @@ size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
     return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
+size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    return sg.getMaxConnections();
+}
+//----------------------------------------------------------------------------
 bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
@@ -170,6 +175,16 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
     // **NOTE** we don't really care about extra padding i.e. stride here
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return sg.getMaxConnections();
+    }
+    else {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//----------------------------------------------------------------------------
+size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxConnections();
     }

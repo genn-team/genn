@@ -1281,12 +1281,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 //--------------------------------------------------------------------------
 size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
-    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        return Utils::padSize(sg.getMaxConnections(), getPresynapticUpdateVectorWidth(sg));
-    }
-    else {
-        return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), getPresynapticUpdateVectorWidth(sg));
-    }
+    return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg);
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os) const
