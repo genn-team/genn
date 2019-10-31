@@ -170,6 +170,193 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 }
 
 //----------------------------------------------------------------------------
+// CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanBitmask
+//----------------------------------------------------------------------------
+size_t PreSpanBitmask::getNumThreads(const SynapseGroupInternal &sg) const
+{
+    // Use a thread for each presynaptic neuron
+    // **YUCK** really should only launch a thread per-spike
+    return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
+}
+//----------------------------------------------------------------------------
+size_t PreSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    // Pad each row to a word boundary
+    return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+}
+//----------------------------------------------------------------------------
+bool PreSpanBitmask::isCompatible(const SynapseGroupInternal &sg) const
+{
+    // Presynaptic parallelism can be used when synapse groups request it and they have bitmask connectivity
+    return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK);
+}
+//----------------------------------------------------------------------------
+bool PreSpanBitmask::shouldAccumulateInRegister(const SynapseGroupInternal &, const Backend &) const
+{
+    // When presynaptic parallelism is used
+    return false;
+}
+//----------------------------------------------------------------------------
+bool PreSpanBitmask::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
+{
+    // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
+    // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
+    if (backend.getChosenCUDADevice().major < 5) {
+        return false;
+    }
+    // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
+    else if (sg.isDendriticDelayRequired()) {
+        return false;
+    }
+    // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
+    // and the output population is small enough that input to it can be stored in a shared memory array
+    else {
+        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate));
+    }
+}
+//----------------------------------------------------------------------------
+void PreSpanBitmask::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                        BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+{
+    // Get suffix based on type of events
+    const std::string eventSuffix = trueSpike ? "" : "Evnt";
+    const auto *wu = sg.getWUModel();
+
+    if (sg.getNumThreadsPerSpike() > 1) {
+        os << "const unsigned int spike = " << popSubs["id"] << " / " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+        os << "const unsigned int thread = " << popSubs["id"] << " % " << sg.getNumThreadsPerSpike() << ";" << std::endl;
+    }
+    else {
+        os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
+    }
+
+    os << "if (spike < ";
+    if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[preReadDelaySlot])";
+    }
+    else {
+        os << "dd_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[0])";
+    }
+    {
+        CodeStream::Scope b(os);
+
+        if (!wu->getSimSupportCode().empty()) {
+            os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
+        }
+
+        if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+            os << "const unsigned int preInd = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName();
+            os << "[(preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ") + spike];" << std::endl;
+        }
+        else {
+            os << "const unsigned int preInd = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName();
+            os << "[spike];" << std::endl;
+        }
+
+/*if (sg.getNumThreadsPerSpike() > 1) {
+            os << "unsigned int synAddress = (preInd * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ") + thread;" << std::endl;
+        }
+        else {
+            os << "unsigned int synAddress = preInd * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ";" << std::endl;
+        }*/
+
+        // Determine the number of words in each row
+        const size_t rowWords = Utils::ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+
+        // Determine the number of words to process with each thread
+        //const size_t numWordsPerSpike = Utils::ceilDivide(rowWords, sg.getNumThreadsPerSpike());
+
+        if (!trueSpike && sg.isEventThresholdReTestRequired()) {
+            os << "if(";
+
+            Substitutions threshSubs(&popSubs);
+            threshSubs.addVarSubstitution("id_pre", "preInd");
+
+            // Generate weight update threshold condition
+            wumThreshHandler(os, sg, threshSubs);
+
+            // end code substitutions ----
+            os << ")";
+
+            os << CodeStream::OB(130);
+        }
+
+        // Create outer loop through words in rows
+        // **NOTE** if multiple threads are used, this will results in coalesced reads
+        if (sg.getNumThreadsPerSpike() > 1) {
+            os << "for(unsigned int w = thread; w < " << rowWords << "; w += " << sg.getNumThreadsPerSpike() << ")";
+        }
+        else {
+            os << "for(unsigned int w = 0; w < " << rowWords << "; w++)";
+        }
+        {
+            CodeStream::Scope b(os);
+
+            // Read row word
+            os << "uint32_t connectivityWord = dd_gp" << sg.getName() << "[(preInd * " << rowWords << ") + w];" << std::endl;
+            
+            // Set ipost to first synapse in connectivity word
+            os << "unsigned int ipost = w * 32;" << std::endl;
+
+            // While there any bits left
+            os << "while(connectivityWord != 0)";
+            {
+                CodeStream::Scope b(os);
+
+                // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
+                os << "const int numLZ = __clz(connectivityWord);" << std::endl;
+
+                // Shift off zeros and the one just discovered
+                os << "connectivityWord <<= (numLZ + 1);" << std::endl;
+
+                // Add to ipost
+                os << "ipost += numLZ;" << std::endl;
+
+                // If we aren't in padding region
+                // **TODO** don't bother checking if there is no padding
+                os << "if(ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                {
+                    CodeStream::Scope b(os);
+                    // Code substitutions ----------------------------------------------------------------------------------
+                    std::string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
+
+                    Substitutions synSubs(&popSubs);
+                    synSubs.addVarSubstitution("id_pre", "preInd");
+                    synSubs.addVarSubstitution("id_post", "ipost");
+                    //synSubs.addVarSubstitution("id_syn", "synAddress");
+
+                    // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                    if (sg.isDendriticDelayRequired()) {
+                        synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "ipost], $(0))");
+                    }
+                    // Otherwise
+                    else {
+                        // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
+                        if (shouldAccumulateInSharedMemory(sg, backend)) {
+                            synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
+                        }
+                        // Otherwise, substitute global memory array for $(inSyn)
+                        else {
+                            synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
+                        }
+                    }
+
+                    wumSimHandler(os, sg, synSubs);
+                }
+
+                // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
+                os << "ipost++;" << std::endl;
+            }
+        }
+
+        if (!trueSpike && sg.isEventThresholdReTestRequired()) {
+            os << CodeStream::CB(130);
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan
 //----------------------------------------------------------------------------
 size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
