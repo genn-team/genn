@@ -988,7 +988,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
-                const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
+                const size_t synapticMatrixRowStride = getSynapticMatrixRowStride(sg);
 
                 os << "// only do this for existing presynaptic neurons" << std::endl;
                 os << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
@@ -1009,12 +1009,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // Calculate indices of bits at start and end of row
                         os << "// Calculate indices" << std::endl;
-                        const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
+                        const size_t maxSynapses = numSrcNeurons * synapticMatrixRowStride;
                         if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                            os << "const uint64_t rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << "ull;" << std::endl;
+                            os << "const uint64_t rowStartGID = " << popSubs["id"] << " * " << synapticMatrixRowStride << "ull;" << std::endl;
                         }
                         else {
-                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << ";" << std::endl;
+                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << synapticMatrixRowStride << ";" << std::endl;
                         }
 
                         // Build function template to set correct bit in bitmask
@@ -1031,7 +1031,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                         // Build function template to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    ind + "[(" + popSubs["id"] + " * " + std::to_string(getSynapticMatrixRowStride(sg)) + ") + (" + rowLength + "++)] = $(0)");
+                                                    ind + "[(" + popSubs["id"] + " * " + std::to_string(synapticMatrixRowStride) + ") + (" + rowLength + "++)] = $(0)");
                     }
                     else {
                         assert(false);
@@ -1231,7 +1231,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         for(const auto &s : model.getLocalSynapseGroups()) {
             // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
             if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                const size_t gpSize = Utils::ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
                 os << "CHECK_CUDA_ERRORS(cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
             }
             // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
