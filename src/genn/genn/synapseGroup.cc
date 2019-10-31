@@ -123,11 +123,11 @@ void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayT
 //----------------------------------------------------------------------------
 void SynapseGroup::setSpanType(SpanType spanType)
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if ((getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
         m_SpanType = spanType;
     }
     else {
-        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse connectivity.");
+        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse or bitmask connectivity.");
     }
 }
 //----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ void SynapseGroup::setNumThreadsPerSpike(unsigned int numThreadsPerSpike)
         m_NumThreadsPerSpike = numThreadsPerSpike;
     }
     else {
-        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with a presynaptic span type.");
+        throw std::runtime_error("setNumThreadsPerSpike: This function can only be used on synapse groups with a presynaptic span type.");
     }
 }
 //----------------------------------------------------------------------------
