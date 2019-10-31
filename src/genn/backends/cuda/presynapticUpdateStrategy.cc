@@ -44,27 +44,31 @@ bool PreSpan::shouldAccumulateInRegister(const SynapseGroupInternal &, const Bac
     return false;
 }
 //----------------------------------------------------------------------------
-bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
+size_t PreSpan::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const
 {
     // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
     if(backend.getChosenCUDADevice().major < 5) {
-        return false;
+        return 0;
     }
     // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
     else if(sg.isDendriticDelayRequired()) {
-        return false;
+        return 0;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
+    else if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+             && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate)) {
+        return 1;
+    }
     else {
-        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-                && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate));
+        return 0;
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                      BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PreSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
+                        const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                        BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -151,7 +155,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             // Otherwise
             else {
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
-                if(shouldAccumulateInSharedMemory(sg, backend)) {
+                if(getSharedMemoryPerThread(sg, backend) > 0) {
                     synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
@@ -197,27 +201,32 @@ bool PreSpanBitmask::shouldAccumulateInRegister(const SynapseGroupInternal &, co
     return false;
 }
 //----------------------------------------------------------------------------
-bool PreSpanBitmask::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
+size_t PreSpanBitmask::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const
 {
     // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
     if (backend.getChosenCUDADevice().major < 5) {
-        return false;
+        return 0;
     }
     // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
     else if (sg.isDendriticDelayRequired()) {
-        return false;
+        return 0;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
+    else if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate))
+    {
+        return 1;
+    }
     else {
-        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-                && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate));
+        return 0;
     }
 }
 //----------------------------------------------------------------------------
-void PreSpanBitmask::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                        BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PreSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
+                               const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                               BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -333,7 +342,7 @@ void PreSpanBitmask::genCode(CodeStream &os, const ModelSpecInternal &model, con
                     // Otherwise
                     else {
                         // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
-                        if (shouldAccumulateInSharedMemory(sg, backend)) {
+                        if (getSharedMemoryPerThread(sg, backend) > 0) {
                             synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
                         }
                         // Otherwise, substitute global memory array for $(inSyn)
@@ -394,22 +403,27 @@ bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg, const 
             || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
 }
 //----------------------------------------------------------------------------
-bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
+size_t PostSpan::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const
 {
     // If dendritic delays are required, shared memory approach cannot be used so return false
     if(sg.isDendriticDelayRequired()) {
-        return false;
+        return 0;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
+    else if((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+            && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate))
+    {
+        return 1;
+    }
     else {
-        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-                && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate));
+        return 0;
     }
 }
 //----------------------------------------------------------------------------
-void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+void PostSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -512,7 +526,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                 else {
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
                         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-                        if (shouldAccumulateInSharedMemory(sg, backend)) {
+                        if (getSharedMemoryPerThread(sg, backend) > 0) {
                             synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs["id_post"] + "] += $(0)");
                         }
                         else {
