@@ -36,7 +36,7 @@ public:
                 const unsigned int j_value = (1 << j);
 
                 // If this postsynaptic neuron should be connected, add 1.0 otherwise 0.0
-                unsigned int gid = ((i * 4) + j);
+                unsigned int gid = ((i * 32) + j);
                 if(((i + 1) & j_value) != 0) {
                     setB(gpSyn[gid >> 5], gid & 31);
                 }
