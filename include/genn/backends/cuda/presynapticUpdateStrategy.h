@@ -43,15 +43,15 @@ public:
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                             const Substitutions &popSubs, const Backend &backend) const = 0;
+                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const = 0;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                              const Substitutions &popSubs, const Backend &backend) const = 0;
+                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -77,15 +77,15 @@ public:
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                             const Substitutions &popSubs, const Backend &backend) const override;
+                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                              const Substitutions &popSubs, const Backend &backend) const override;
+                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -111,15 +111,15 @@ public:
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                             const Substitutions &popSubs, const Backend &backend) const override;
+                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                              const Substitutions &popSubs, const Backend &backend) const override;
+                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -145,15 +145,15 @@ public:
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                             const Substitutions &popSubs, const Backend &backend) const override;
+                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                              const Substitutions &popSubs, const Backend &backend) const override;
+                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 
 private:
     //--------------------------------------------------------------------------
@@ -187,15 +187,15 @@ public:
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                             const Substitutions &popSubs, const Backend &backend) const override;
+                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                            BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                              const Substitutions &popSubs, const Backend &backend) const override;
+                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
 };
 }   // namespace PresynapticUpdateStrategy
 }   // namespace CUDA
