@@ -12,6 +12,60 @@
 #include "utils.h"
 
 //----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+bool isSmallSharedMemoryPop(const SynapseGroupInternal &sg, const CodeGenerator::CUDA::Backend &backend)
+{
+    // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
+    // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
+    if(backend.getChosenCUDADevice().major < 5) {
+        return false;
+    }
+    // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
+    else if(sg.isDendriticDelayRequired()) {
+        return false;
+    }
+    // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if the output
+    // population is small enough that input to it can be stored in a shared memory array
+    else if(sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(CodeGenerator::CUDA::KernelPresynapticUpdate)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
+void genSmallSharedMemoryPopPreamble(CodeGenerator::CodeStream &os, const SynapseGroupInternal &sg)
+{
+    os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+    {
+        CodeGenerator::CodeStream::Scope b(os);
+        os << "shLg[threadIdx.x] = 0;" << std::endl;
+    }
+    os << "__syncthreads();" << std::endl;
+}
+//----------------------------------------------------------------------------
+void genSmallSharedMemoryPopPostamble(CodeGenerator::CodeStream &os, const ModelSpecInternal &model,
+                                      const SynapseGroupInternal &sg, const CodeGenerator::CUDA::Backend &backend)
+{
+    os << "__syncthreads();" << std::endl;
+    os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+    {
+        CodeGenerator::CodeStream::Scope b(os);
+        const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[threadIdx.x]";
+        if (sg.isPSModelMerged()) {
+            os << backend.getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[threadIdx.x]);" << std::endl;
+        }
+        else {
+            os << inSyn << " += shLg[threadIdx.x];" << std::endl;
+        }
+    }
+}
+}   // Anonymous namespace
+
+//----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan
 //----------------------------------------------------------------------------
 namespace CodeGenerator
@@ -40,35 +94,15 @@ bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
 //----------------------------------------------------------------------------
 size_t PreSpan::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const
 {
-    // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
-    // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
-    if(backend.getChosenCUDADevice().major < 5) {
-        return 0;
-    }
-    // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
-    else if(sg.isDendriticDelayRequired()) {
-        return 0;
-    }
-    // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
-    // and the output population is small enough that input to it can be stored in a shared memory array
-    else if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-             && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate)) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
+    // One element is required per thread if small shared memory optimization should be used for sg
+    return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+void PreSpan::genPreamble(CodeStream &os, const ModelSpecInternal &, const SynapseGroupInternal &sg,
+                          const Substitutions &, const Backend &backend) const
 {
-    if (getSharedMemoryPerThread(sg, backend) > 0) {
-        os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-        {
-            CodeStream::Scope b(os);
-            os << "shLg[threadIdx.x] = 0;" << std::endl;
-        }
-        os << "__syncthreads();" << std::endl;
+    if (isSmallSharedMemoryPop(sg, backend)) {
+        genSmallSharedMemoryPopPreamble(os, sg);
     }
 }
 //----------------------------------------------------------------------------
@@ -161,7 +195,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const Sy
             // Otherwise
             else {
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
-                if(getSharedMemoryPerThread(sg, backend) > 0) {
+                if(isSmallSharedMemoryPop(sg, backend)) {
                     synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
@@ -179,21 +213,11 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const Sy
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+void PreSpan::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                           const Substitutions &, const Backend &backend) const
 {
-    if (getSharedMemoryPerThread(sg, backend) > 0) {
-        os << "__syncthreads();" << std::endl;
-        os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-        {
-            CodeStream::Scope b(os);
-            const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[threadIdx.x]";
-            if (sg.isPSModelMerged()) {
-                os << backend.getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[threadIdx.x]);" << std::endl;
-            }
-            else {
-                os << inSyn << " += shLg[threadIdx.x];" << std::endl;
-            }
-        }
+    if (isSmallSharedMemoryPop(sg, backend)) {
+        genSmallSharedMemoryPopPostamble(os, model, sg, backend);
     }
 }
 
@@ -219,15 +243,17 @@ bool PreSpanBitmask::isCompatible(const SynapseGroupInternal &sg) const
     return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK);
 }
 //----------------------------------------------------------------------------
-void PreSpanBitmask::genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+size_t PreSpanBitmask::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const
 {
-    if (getSharedMemoryPerThread(sg, backend) > 0) {
-        os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-        {
-            CodeStream::Scope b(os);
-            os << "shLg[threadIdx.x] = 0;" << std::endl;
-        }
-        os << "__syncthreads();" << std::endl;
+    // One element is required per thread if small shared memory optimization should be used for sg
+    return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
+}
+//----------------------------------------------------------------------------
+void PreSpanBitmask::genPreamble(CodeStream &os, const ModelSpecInternal &, const SynapseGroupInternal &sg,
+                                 const Substitutions &, const Backend &backend) const
+{
+    if (isSmallSharedMemoryPop(sg, backend)) {
+        genSmallSharedMemoryPopPreamble(os, sg);
     }
 }
 //----------------------------------------------------------------------------
@@ -372,23 +398,14 @@ void PreSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, c
     }
 }
 //----------------------------------------------------------------------------
-void PreSpanBitmask::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+void PreSpanBitmask::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                                  const Substitutions &, const Backend &backend) const
 {
-    if (getSharedMemoryPerThread(sg, backend) > 0) {
-        os << "__syncthreads();" << std::endl;
-        os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-        {
-            CodeStream::Scope b(os);
-            const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[threadIdx.x]";
-            if (sg.isPSModelMerged()) {
-                os << backend.getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[threadIdx.x]);" << std::endl;
-            }
-            else {
-                os << inSyn << " += shLg[threadIdx.x];" << std::endl;
-            }
-        }
+    if (isSmallSharedMemoryPop(sg, backend)) {
+        genSmallSharedMemoryPopPostamble(os, model, sg, backend);
     }
 }
+
 //----------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan
 //----------------------------------------------------------------------------
@@ -419,40 +436,22 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
     return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
 }
 //----------------------------------------------------------------------------
-void PostSpan::genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+void PostSpan::genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                           const Substitutions &, const Backend &backend) const
 {
     // If data structure is dense, we can accumulate output directly into register
-    if ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-        || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
-    {
+    if (shouldAccumulateInRegister(sg)) {
         os << model.getPrecision() << " linSyn = 0;" << std::endl;
     }
-    else if (getSharedMemoryPerThread(sg, backend) > 0) {
-        os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-        {
-            CodeStream::Scope b(os);
-            os << "shLg[threadIdx.x] = 0;" << std::endl;
-        }
-        os << "__syncthreads();" << std::endl;
+    else if(isSmallSharedMemoryPop(sg, backend)) {
+        genSmallSharedMemoryPopPreamble(os, sg);
     }
 }
 //----------------------------------------------------------------------------
 size_t PostSpan::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const
 {
-    // If dendritic delays are required, shared memory approach cannot be used so return false
-    if(sg.isDendriticDelayRequired()) {
-        return 0;
-    }
-    // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
-    // and the output population is small enough that input to it can be stored in a shared memory array
-    else if((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-            && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate))
-    {
-        return 1;
-    }
-    else {
-        return 0;
-    }
+    // One element is required per thread if small shared memory optimization should be used for sg
+    return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
 void PostSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
@@ -558,17 +557,18 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const S
                 }
                 // Otherwise
                 else {
-                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-                        // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-                        if (getSharedMemoryPerThread(sg, backend) > 0) {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs["id_post"] + "] += $(0)");
-                        }
-                        else {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
-                        }
-                    }
-                    else {
+                    // If we should accumulate in register, add parameter to register
+                    if(shouldAccumulateInRegister(sg)) {
                         synSubs.addFuncSubstitution("addToInSyn", 1, "linSyn += $(0)");
+                    }
+                    // Otherwise, if we should use shared memory, add to shared memory
+                    // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
+                    else if(isSmallSharedMemoryPop(sg, backend)) {
+                        synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs["id_post"] + "] += $(0)");
+                    }
+                    // Otherwise, use global memory atomic
+                    else {
+                        synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
                     }
                 }
 
@@ -589,12 +589,11 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const S
     }
 }
 //----------------------------------------------------------------------------
-void PostSpan::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+void PostSpan::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                            const Substitutions &popSubs, const Backend &backend) const
 {
-    // If data structure is dense, we can accumulate output directly into register
-    if ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-        || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK))
-    {
+    // If we should accumulate output directly into register
+    if (shouldAccumulateInRegister(sg)) {
         os << "// only do this for existing neurons" << std::endl;
         os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
         {
@@ -608,20 +607,17 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecInternal &model, cons
             }
         }
     }
-    else if (getSharedMemoryPerThread(sg, backend) > 0) {
-        os << "__syncthreads();" << std::endl;
-        os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
-        {
-            CodeStream::Scope b(os);
-            const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[threadIdx.x]";
-            if (sg.isPSModelMerged()) {
-                os << backend.getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[threadIdx.x]);" << std::endl;
-            }
-            else {
-                os << inSyn << " += shLg[threadIdx.x];" << std::endl;
-            }
-        }
+    // Otherwise, if we should accumulate into shared memory
+    else if (isSmallSharedMemoryPop(sg, backend)) {
+        genSmallSharedMemoryPopPostamble(os, model, sg, backend);
     }
+}
+// ----------------------------------------------------------------------------
+bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg) const
+{
+    // If no dendritic delays are required and data structure is dense, we can accumulate output directly into register
+    return (!sg.isDendriticDelayRequired()
+            && ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)));
 }
 
 // ----------------------------------------------------------------------------
@@ -646,18 +642,16 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg) const
             && !sg.isDendriticDelayRequired());
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                                  const Substitutions &popSubs, const Backend &backend) const
 {
     os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
     {
         CodeStream::Scope b(os);
-        for (size_t i = 0; i < sharedMemPerThread; i++) {
+        for (size_t i = 0; i < 32; i++) {
             // Calculate index in shared memory thread should access
             // **NOTE** this is ordered to result in coalesced reads across the thread block
-            std::string index = "threadIdx.x";
-            if (sharedMemPerThread > 1) {
-                index = std::to_string(i * sg.getTrgNeuronGroup()->getNumNeurons()) + " + " + index;
-            }
+            const std::string index = std::to_string(i * sg.getTrgNeuronGroup()->getNumNeurons()) + " + threadIdx.x";
             os << "shLg[" << index << "] = 0;" << std::endl;
         }
     }
@@ -718,7 +712,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, 
                 }
                 if (!trueSpike && sg.isEventThresholdReTestRequired()) {
                     os << "if(";
-                   
+
                     Substitutions threshSubs(&popSubs);
                     threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
 
@@ -729,7 +723,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, 
                     os << ")";
                     os << CodeStream::OB(130);
                 }
-                
+
                 // Read row word
                 os << "uint32_t connectivityWord = dd_gp" << sg.getName() << "[(shSpk" << eventSuffix << "[j] * " << rowWords << ") + " << popSubs["id"] << "];" << std::endl;
 
@@ -747,7 +741,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, 
 
                     // Add to bit index
                     os << "ibit += numLZ;" << std::endl;
-                    
+
                     // Calculate postsynaptic index
                     os << "const unsigned int ipost = ibit + (" << popSubs["id"] << " * 32);" << std::endl;
 
@@ -760,7 +754,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, 
 
                     os << "ibit++;" << std::endl;
                 }
-               
+
 
                 if (!trueSpike && sg.isEventThresholdReTestRequired()) {
                     os << CodeStream::CB(130); // end if (eCode)
@@ -770,20 +764,17 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, 
     }
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Backend &backend) const
+void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
+                                   const Substitutions &popSubs, const Backend &backend) const
 {
     os << "__syncthreads();" << std::endl;
     os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
     {
         CodeStream::Scope b(os);
-        const size_t sharedMemPerThread = getSharedMemoryPerThread(sg, backend);
-        for (size_t i = 0; i < sharedMemPerThread; i++) {
+        for (size_t i = 0; i < 32; i++) {
             // Calculate index in shared memory thread should access
             // **NOTE** this is ordered to result in coalesced reads across the thread block
-            std::string index = "threadIdx.x";
-            if (sharedMemPerThread > 1) {
-                index = std::to_string(i * sg.getTrgNeuronGroup()->getNumNeurons()) + " + " + index;
-            }
+            const std::string index = std::to_string(i * sg.getTrgNeuronGroup()->getNumNeurons()) + " + threadIdx.x";
 
             // Calculate address in shared memory
             const std::string shared = "shLg[" + index + "]";

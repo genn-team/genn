@@ -559,7 +559,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     }
 
                     // Generate preamble
-                    presynapticUpdateStrategy->genPreamble(os, model, sg, *this);
+                    presynapticUpdateStrategy->genPreamble(os, model, sg, popSubs, *this);
                   
                     // If spike events should be processed
                     if (sg.isSpikeEventRequired()) {
@@ -578,7 +578,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     os << std::endl;
 
                     // Generate pre-amble
-                    presynapticUpdateStrategy->genPostamble(os, model, sg, *this);
+                    presynapticUpdateStrategy->genPostamble(os, model, sg, popSubs, *this);
                 }
             );
         }
