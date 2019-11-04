@@ -278,14 +278,14 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             LOGD << "\tCandidate block size:" << blockThreads;
 
             // Estimate shared memory for block size and padd
-            const size_t reqSharedMemBytes = Utils::padSize((reqSharedMemBytesA * blockThreads) + reqSharedMemBytesB, smemAllocGran);
+            const size_t reqSharedMemBytes = padSize((reqSharedMemBytesA * blockThreads) + reqSharedMemBytesB, smemAllocGran);
             LOGD << "\t\tEstimated shared memory required:" << reqSharedMemBytes << " bytes (padded)";
 
             // Calculate number of blocks the groups used by this kernel will require
             const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), size_t{0},
                                                         [blockThreads](size_t acc, size_t size)
                                                         {
-                                                            return acc + Utils::ceilDivide(size, blockThreads);
+                                                            return acc + ceilDivide(size, blockThreads);
                                                         });
             LOGD << "\t\tBlocks required (according to padded sum):" << reqBlocks;
 
@@ -299,10 +299,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // If register allocation is per-block
             if (deviceProps.major == 1) {
                 // Pad size of block based on warp allocation granularity
-                const size_t paddedNumBlockWarps = Utils::padSize(blockWarps, warpAllocGran);
+                const size_t paddedNumBlockWarps = padSize(blockWarps, warpAllocGran);
 
                 // Calculate number of registers per block and pad with register allocation granularity
-                const size_t paddedNumRegPerBlock = Utils::padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
+                const size_t paddedNumRegPerBlock = padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
 
                 // Update limit based on maximum registers available on SM
                 smBlockLimit = std::min(smBlockLimit, deviceProps.regsPerBlock / paddedNumRegPerBlock);
@@ -310,10 +310,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // Otherwise, if register allocation is per-warp
             else {
                 // Caculate number of registers per warp and pad with register allocation granularity
-                const size_t paddedNumRegPerWarp = Utils::padSize(reqNumRegs * warpSize, regAllocGran);
+                const size_t paddedNumRegPerWarp = padSize(reqNumRegs * warpSize, regAllocGran);
 
                 // Determine how many warps can therefore be simultaneously run on SM
-                const size_t paddedNumWarpsPerSM = Utils::padSize(deviceProps.regsPerBlock / paddedNumRegPerWarp, warpAllocGran);
+                const size_t paddedNumWarpsPerSM = padSize(deviceProps.regsPerBlock / paddedNumRegPerWarp, warpAllocGran);
 
                 // Update limit based on the number of warps required
                 smBlockLimit = std::min(smBlockLimit, paddedNumWarpsPerSM / blockWarps);

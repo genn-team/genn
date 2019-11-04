@@ -295,7 +295,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
 
         // Parallelise over neuron groups
         genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
-            [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
+            [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
             [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
                 // If axonal delays are required
@@ -539,7 +539,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
             // Parallelise over synapse groups
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
-                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences), m_KernelBlockSizes[KernelPresynapticUpdate]); },
+                [this](const SynapseGroupInternal &sg){ return padSize(getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences), m_KernelBlockSizes[KernelPresynapticUpdate]); },
                 [](const SynapseGroupInternal &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
                 [&idPresynapticStart, wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
@@ -613,7 +613,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
             // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
-                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
+                [this](const SynapseGroupInternal &sg){ return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
                 [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
                 [postLearnHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
@@ -709,7 +709,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
             // Parallelise over synapse groups whose weight update models have code for synapse dynamics
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
-                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
+                [this](const SynapseGroupInternal &sg){ return padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
                 [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
                 [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
@@ -871,7 +871,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Remote neuron groups" << std::endl;
         genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
-            [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [this](const NeuronGroupInternal &ng){ return ng.hasOutputToHost(getLocalHostID()); },
             [this, remoteNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
@@ -888,7 +888,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
-            [this](const NeuronGroupInternal &ng){ return Utils::padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [this](const NeuronGroupInternal &){ return true; },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
             {
@@ -920,7 +920,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with dense connectivity" << std::endl;
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
-            [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const SynapseGroupInternal &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [](const SynapseGroupInternal &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
             [sgDenseInitHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
@@ -948,7 +948,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
-            [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this](const SynapseGroupInternal &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
             [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
@@ -1035,7 +1035,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
             // Initialise weight update variables for synapse groups with sparse connectivity
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
-                [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
+                [this](const SynapseGroupInternal &sg){ return padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
                 [](const SynapseGroupInternal &sg){ return isSparseInitRequired(sg); },
                 [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
                 {
@@ -1054,7 +1054,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                     // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
                     const unsigned int numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
-                    const size_t numBlocks = Utils::ceilDivide(numSrcNeurons, m_KernelBlockSizes[KernelInitializeSparse]);
+                    const size_t numBlocks = ceilDivide(numSrcNeurons, m_KernelBlockSizes[KernelInitializeSparse]);
 
                     // Loop through blocks
                     os << "for(unsigned int r = 0; r < " << numBlocks << "; r++)";
@@ -1196,7 +1196,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         for(const auto &s : model.getLocalSynapseGroups()) {
             // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
             if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = Utils::ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
+                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
                 os << "CHECK_CUDA_ERRORS(cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
             }
             // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
@@ -2092,7 +2092,7 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
 void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const
 {
     // Calculate grid size
-    const size_t gridSize = Utils::ceilDivide(numThreads, m_KernelBlockSizes[kernel]);
+    const size_t gridSize = ceilDivide(numThreads, m_KernelBlockSizes[kernel]);
     os << "const dim3 threads(" << m_KernelBlockSizes[kernel] << ", 1);" << std::endl;
 
     if (gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]) {

@@ -7,12 +7,12 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 
 // CUDA backend includes
 #include "backend.h"
-#include "utils.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -237,7 +237,7 @@ size_t PreSpanBitmask::getNumThreads(const SynapseGroupInternal &sg) const
 size_t PreSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
     // Pad each row to a word boundary
-    return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+    return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
 bool PreSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &preferences) const
@@ -310,10 +310,7 @@ void PreSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, c
         }*/
 
         // Determine the number of words in each row
-        const size_t rowWords = Utils::ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
-
-        // Determine the number of words to process with each thread
-        //const size_t numWordsPerSpike = Utils::ceilDivide(rowWords, sg.getNumThreadsPerSpike());
+        const size_t rowWords = ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << "if(";
@@ -356,6 +353,8 @@ void PreSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &model, c
                 os << "const int numLZ = __clz(connectivityWord);" << std::endl;
 
                 // Shift off zeros and the one just discovered
+                // **NOTE** if numLZ == 31, undefined behaviour results in C++ BUT in CUDA this PRESUMABLY emits
+                // In a 'shl' PTX instruction where "Shift amounts greater than the register width N are clamped to N."
                 os << "connectivityWord <<= (numLZ + 1);" << std::endl;
 
                 // Add to ipost
@@ -631,13 +630,13 @@ bool PostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg) const
 //----------------------------------------------------------------------------
 size_t PostSpanBitmask::getNumThreads(const SynapseGroupInternal & sg) const
 {
-    return Utils::ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+    return ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
 size_t PostSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
     // Pad each row to a word boundary
-    return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+    return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
 bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &preferences) const
@@ -709,7 +708,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &, const
         os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(os);
-            const size_t rowWords = Utils::ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+            const size_t rowWords = ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
             os << "// only work on existing neurons" << std::endl;
             os << "if (" << popSubs["id"] << " < " << rowWords << ")";
             {
@@ -745,6 +744,8 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &, const
                     os << "const int numLZ = __clz(connectivityWord);" << std::endl;
 
                     // Shift off zeros and the one just discovered
+                    // **NOTE** if numLZ == 31, undefined behaviour results in C++, BUT in CUDA this PRESUMABLY emits
+                    // In a 'shl' PTX instruction where "Shift amounts greater than the register width N are clamped to N."
                     os << "connectivityWord <<= (numLZ + 1);" << std::endl;
 
                     // Add to bit index
