@@ -82,7 +82,7 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
+void calcGroupSizes(const cudaDeviceProp &deviceProps, const ModelSpecInternal &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -99,7 +99,7 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getLocalSynapseGroups()) {
-        groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second));
+        groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps));
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
             groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
@@ -132,8 +132,9 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
-                                           const CodeGenerator::CUDA::Preferences &preferences, int localHostID, const filesystem::path &outputPath)
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
+                                           CodeGenerator::CUDA::KernelBlockSize &blockSize, const CodeGenerator::CUDA::Preferences &preferences,
+                                           int localHostID, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -143,7 +144,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
 
     // Calculate model group sizes
     std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(model, groupSizes);
+    calcGroupSizes(deviceProps, model, groupSizes);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;
@@ -243,10 +244,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
 
     // Destroy context
     CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
-
-    // Get device properties
-    cudaDeviceProp deviceProps;
-    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
 
     // Get properties of device architecture
     size_t warpAllocGran;
@@ -383,7 +380,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Ker
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences, localHostID, outputPath);
+        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, localHostID, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -506,9 +503,13 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
         // If we should pick kernel block sizes based on occupancy
         if(preferences.blockSizeSelectMethod == BlockSizeSelect::OCCUPANCY) {
+            // Get properties
+            cudaDeviceProp deviceProps;
+            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
+
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, localHostID, outputPath);
+            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, localHostID, outputPath);
 
             // Create backend
             return Backend(cudaBlockSize, preferences, localHostID, model.getPrecision(), deviceID);

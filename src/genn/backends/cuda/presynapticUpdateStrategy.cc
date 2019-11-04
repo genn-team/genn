@@ -1,5 +1,8 @@
 #include "presynapticUpdateStrategy.h"
 
+// CUDA includes
+#include <cuda_runtime.h>
+
 // GeNN includes
 #include "modelSpecInternal.h"
 
@@ -86,7 +89,7 @@ size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
+bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
     return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
@@ -237,7 +240,7 @@ size_t PreSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &sg
     return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-bool PreSpanBitmask::isCompatible(const SynapseGroupInternal &sg) const
+bool PreSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have bitmask connectivity
     return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK);
@@ -430,7 +433,7 @@ size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) cons
     }
 }
 //----------------------------------------------------------------------------
-bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
+bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
     return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
@@ -634,7 +637,7 @@ size_t PostSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &s
     return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg) const
+bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
     return ((sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC) 

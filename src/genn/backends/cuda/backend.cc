@@ -539,7 +539,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
             // Parallelise over synapse groups
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
-                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
+                [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg, m_ChosenDevice), m_KernelBlockSizes[KernelPresynapticUpdate]); },
                 [](const SynapseGroupInternal &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
                 [&idPresynapticStart, wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
@@ -1990,9 +1990,9 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
     }
 }
 //--------------------------------------------------------------------------
-size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
+size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps)
 {
-     return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);
+     return getPresynapticUpdateStrategy(sg, deviceProps)->getNumThreads(sg);
 }
 //--------------------------------------------------------------------------
 size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg)
@@ -2120,12 +2120,13 @@ bool Backend::isDeviceType(const std::string &type) const
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
 }
 //--------------------------------------------------------------------------
-const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
+const PresynapticUpdateStrategy::Base *Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
+                                                                             const cudaDeviceProp &deviceProps)
 {
     // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
     // **NOTE** this is done backwards so that user-registered strategies get first priority
     for(auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
-        if((*s)->isCompatible(sg)) {
+        if((*s)->isCompatible(sg, deviceProps)) {
             return *s;
         }
     }

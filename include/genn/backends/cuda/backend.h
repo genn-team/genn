@@ -227,7 +227,7 @@ public:
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
-    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg);
+    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
 
@@ -312,11 +312,18 @@ private:
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;
 
+    // Get appropriate presynaptic update strategy to use for this synapse group
+    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
+    {
+        return getPresynapticUpdateStrategy(sg, m_ChosenDevice);
+    }
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------
     // Get appropriate presynaptic update strategy to use for this synapse group
-    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg);
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
+                                                                               const cudaDeviceProp &deviceProps);
 
     //--------------------------------------------------------------------------
     // Members
