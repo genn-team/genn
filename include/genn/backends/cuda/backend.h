@@ -94,10 +94,6 @@ struct Preferences : public PreferencesBase
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
 
-    //! New optimizations made to kernels for simulating synapse groups with BITMASK connectivity
-    //! Improve performance but break backward compatibility due to word-padding each row
-    bool enableBitmaskOptimisations = false;
-
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 

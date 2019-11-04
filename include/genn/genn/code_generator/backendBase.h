@@ -39,6 +39,10 @@ struct PreferencesBase
     //! Generate code with debug symbols
     bool debugCode = false;
 
+    //! New optimizations made to kernels for simulating synapse groups with BITMASK connectivity
+    //! Improve performance but break backward compatibility due to word-padding each row
+    bool enableBitmaskOptimisations = false;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
