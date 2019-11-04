@@ -54,7 +54,7 @@ public:
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os) const override;
