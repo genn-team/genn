@@ -82,7 +82,8 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const cudaDeviceProp &deviceProps, const ModelSpecInternal &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
+void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA::Preferences &preferences, const ModelSpecInternal &model,
+                    std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -99,7 +100,9 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const ModelSpecInternal &
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getLocalSynapseGroups()) {
-        groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps));
+        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps, preferences));
+        }
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
             groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
@@ -144,7 +147,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
     // Calculate model group sizes
     std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(deviceProps, model, groupSizes);
+    calcGroupSizes(deviceProps, preferences, model, groupSizes);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;

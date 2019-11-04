@@ -14,6 +14,7 @@ namespace CodeGenerator
 namespace CUDA
 {
 class Backend;
+class Preferences;
 }
 }
 
@@ -39,7 +40,7 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const = 0;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const = 0;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
@@ -73,7 +74,7 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
@@ -107,7 +108,7 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
@@ -141,7 +142,7 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
@@ -183,7 +184,7 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;

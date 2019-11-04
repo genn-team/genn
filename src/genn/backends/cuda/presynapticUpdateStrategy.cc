@@ -89,7 +89,7 @@ size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
+bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
     return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE);
@@ -240,10 +240,13 @@ size_t PreSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &sg
     return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-bool PreSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
+bool PreSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &preferences) const
 {
-    // Presynaptic parallelism can be used when synapse groups request it and they have bitmask connectivity
-    return (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC) && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK);
+    // Presynaptic bitmask parallelism can be used if bitmask optimisations are enabled and
+    // if synapse groups with bitmask connectivity request presynaptic parallelism
+    return (preferences.enableBitmaskOptimisations
+            && (sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC)
+            && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
 }
 //----------------------------------------------------------------------------
 size_t PreSpanBitmask::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const
@@ -433,7 +436,7 @@ size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) cons
     }
 }
 //----------------------------------------------------------------------------
-bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
+bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
     return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
@@ -637,10 +640,12 @@ size_t PostSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &s
     return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
+bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &preferences) const
 {
-    // Postsynatic parallelism can be used when synapse groups request it
-    return ((sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC) 
+    // Postsynaptic bitmask parallelism can be used if bitmask optimisations are enabled and
+    // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
+    return (preferences.enableBitmaskOptimisations
+            && (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
             && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
             && !sg.isDendriticDelayRequired());
 }
@@ -768,7 +773,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &, const
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                                   const Substitutions &popSubs, const Backend &backend, size_t idStart) const
+                                   const Substitutions &, const Backend &backend, size_t idStart) const
 {
     os << "__syncthreads();" << std::endl;
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
