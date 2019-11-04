@@ -2095,7 +2095,7 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     const size_t gridSize = Utils::ceilDivide(numThreads, m_KernelBlockSizes[kernel]);
     os << "const dim3 threads(" << m_KernelBlockSizes[kernel] << ", 1);" << std::endl;
 
-    if (gridSize < (size_t)getChosenCUDADevice().maxGridSize[1]) {
+    if (gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]) {
         os << "const dim3 grid(" << gridSize << ", 1);" << std::endl;
     }
     else {
