@@ -116,7 +116,7 @@ User-defined model variables originate from classes derived off the NeuronModels
 SET_VARS({{"V", "scalar"}});
 \endcode
 When a neuron or synapse population using this model is added to the model, the full GeNN name of the variable will be obtained by concatenating the variable name with the name of the population.
-For example if we a add a population called `Pop` using a model which contains our `V` variable, a variable `VPop` of type `scalar*` will be available in the global namespace of the simulation program. GeNN will pre-allocate this C array to the correct size of elements corresponding to the size of the neuron population. GeNN will also free these variables when the provided function `freeMem()` is called. Users can otherwise manipulate these variable arrays as they wish.
+For example if we add a population called `Pop` using a model which contains our `V` variable, a variable `VPop` of type `scalar*` will be available in the global namespace of the simulation program. GeNN will pre-allocate this C array to the correct size of elements corresponding to the size of the neuron population. GeNN will also free these variables when the provided function `freeMem()` is called. Users can otherwise manipulate these variable arrays as they wish.
 For convenience, GeNN provides functions to copy each state variable from the device into host memory and vice versa e.g. `pullVPopFromDevice()` and `pushVPoptoDevice()`.
 Alternatively, all state variables associated with a population can be copied using a single call E.g.
 \code
