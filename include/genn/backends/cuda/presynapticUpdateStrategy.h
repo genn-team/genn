@@ -14,7 +14,7 @@ namespace CodeGenerator
 namespace CUDA
 {
 class Backend;
-class Preferences;
+struct Preferences;
 }
 }
 
