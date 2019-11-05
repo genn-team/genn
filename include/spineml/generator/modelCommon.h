@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <vector>
 
 // pugixml includes
@@ -192,6 +193,54 @@ private:
 };
 
 //------------------------------------------------------------------------
+// Aliases
+//------------------------------------------------------------------------
+//! Helper class for handling aliases
+class Aliases
+{
+public:
+    Aliases(const pugi::xml_node &componentClass);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Generate aliases required for code strings
+    void genAliases(std::ostream &os, std::initializer_list<std::string> codeStrings,
+                    const std::unordered_set<std::string> &excludeAliases = {}) const;
+
+    //! Tests whether a named alias exists
+    bool isAlias(const std::string &name) const;
+
+    const std::string &getAliasCode(const std::string &name) const;
+private:
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    struct Alias;
+    typedef std::map<std::string, Alias> AliasMap;
+    typedef AliasMap::const_iterator AliasIter;
+
+    //------------------------------------------------------------------------
+    // Alias
+    //------------------------------------------------------------------------
+    //! Struct containing a single alias
+    struct Alias
+    {
+        Alias(const std::string &c) : code(c)
+        {
+        }
+
+        std::string code;
+        std::vector<AliasIter> dependencies;
+    };
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    AliasMap m_Aliases;
+};
+
+//------------------------------------------------------------------------
 // Helper functions
 //------------------------------------------------------------------------
 //!< Generate model code from 'componentClass' node using specified object handlers
@@ -220,16 +269,5 @@ void substituteModelVariables(const Models::Base::StringVec &paramNames,
                               const Models::Base::VarVec &vars,
                               const Models::Base::DerivedParamVec &derivedParams,
                               const std::vector<std::string*> &codeStrings);
-
-// Read aliases into map
-void readAliases(const pugi::xml_node &componentClass, std::map<std::string, std::string> &aliases);
-
-// Expand out any aliases within code string
-bool expandAliases(std::string &code, const std::map<std::string, std::string> &aliases);
-
-//! Return code to implement send port - will either return a variable directly or will expand an alias
-std::string getSendPortCode(const std::map<std::string, std::string> &aliases,
-                            const Models::Base::VarVec &vars,
-                            const std::string &sendPortName);
 
 }   // namespace SpineMLGenerator

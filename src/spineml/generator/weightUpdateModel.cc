@@ -112,8 +112,7 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     const bool heterogeneousDelay = (params.getMaxDendriticDelay() > 1);
 
     // Read aliases
-    std::map<std::string, std::string> aliases;
-    readAliases(componentClass, aliases);
+    Aliases aliases(componentClass);
 
     // Loop through send ports
     LOGD << "\t\tSend ports:";
@@ -127,6 +126,8 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
         }
         else if(nodeType == "AnalogSendPort" && m_SendPortSpikeImpulse.empty() && m_SendPortAnalogue.empty()) {
             LOGD << "\t\t\tImplementing analogue send port '" << portName << "' as a GeNN linear synapse";
+
+            // Mark this as the analogue send port
             m_SendPortAnalogue = portName;
         }
         else if(nodeType == "EventSendPort" && m_SendPortSpikeImpulse.empty() && m_SendPortAnalogue.empty()) {
@@ -219,10 +220,10 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
 
     // Generate model code using specified condition handler
     bool multipleRegimes;
-    ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream, aliases);
+    ObjectHandler::Condition objectHandlerCondition(synapseDynamicsStream);
     ObjectHandlerEvent objectHandlerTrueSpike(simCodeStream, heterogeneousDelay);
     ObjectHandlerEvent objectHandlerSpikeLikeEvent(simCodeStream, heterogeneousDelay);
-    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream, aliases);
+    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(synapseDynamicsStream);
     std::tie(multipleRegimes, m_InitialRegimeID) = generateModelCode(componentClass,
                                                                      {
                                                                          {trueSpikeReceivePort, &objectHandlerTrueSpike},
@@ -246,19 +247,44 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     // Add any derived parameters required for time-derivative
     objectHandlerTimeDerivative.addDerivedParams(m_ParamNames, m_DerivedParams);
 
-    // If we have an analogue send port, add code to apply it to synapse dynamics
+    // If we have an analogue send port
+    std::unordered_set<std::string> excludeSynapseDynamicsAliases;
     if(!m_SendPortAnalogue.empty()) {
-        if(heterogeneousDelay) {
-            synapseDynamicsStream << "$(addToInSynDelay, " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ", _delay);" << std::endl;
+        // If it's an alias, use alias value as output
+        // **NOTE** this will cause any dependencies of the aliases to be included
+        if(aliases.isAlias(m_SendPortAnalogue)) {
+            excludeSynapseDynamicsAliases.insert(m_SendPortAnalogue);
+            if(heterogeneousDelay) {
+                synapseDynamicsStream << "$(addToInSynDelay, "<< aliases.getAliasCode(m_SendPortAnalogue) << ", _delay);" << std::endl;
+            }
+            else {
+                synapseDynamicsStream << "$(addToInSyn, " << aliases.getAliasCode(m_SendPortAnalogue) << ");" << std::endl;
+            }
         }
+        // Otherwise, just insert variable name, it'll be wrapped later
         else {
-            synapseDynamicsStream << "$(addToInSyn, " << getSendPortCode(aliases, m_Vars, m_SendPortAnalogue) << ");" << std::endl;
+            if(heterogeneousDelay) {
+                synapseDynamicsStream << "$(addToInSynDelay, "<< m_SendPortAnalogue << ", _delay);" << std::endl;
+            }
+            else {
+                synapseDynamicsStream << "$(addToInSyn, " << m_SendPortAnalogue << ");" << std::endl;
+            }
         }
     }
 
     // Store generated code in class
     m_SimCode = simCodeStream.str();
     m_SynapseDynamicsCode = synapseDynamicsStream.str();
+
+    // Generate aliases required for sim code
+    std::stringstream simCodeAliasStream;
+    aliases.genAliases(simCodeAliasStream, {m_SimCode});
+    m_SimCode = simCodeAliasStream.str() + m_SimCode;
+
+    // Generate aliases required for sim code and threshold
+    std::stringstream synapseDynamicsAliasStream;
+    aliases.genAliases(synapseDynamicsAliasStream, {m_SynapseDynamicsCode}, excludeSynapseDynamicsAliases);
+    m_SynapseDynamicsCode = synapseDynamicsAliasStream.str() + m_SynapseDynamicsCode;
 
     // Correctly wrap and replace references to receive port variable in code string
     for(const auto &r : receivePortVariableMap) {
