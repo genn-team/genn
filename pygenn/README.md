@@ -1,5 +1,5 @@
 # A Python interface to GeNN
-PyGeNN wraps the C++ GeNN APU using SWIG, allowing GeNN to be used either directly from Python or as a backend for higher-level Python APIs such as [PyNN](https://github.com/genn-team/pynn_genn). Building PyGeNN is a little involved so we recommend installing a prebuilt binary wheel from our Releases page or direct from our [build server](https://gen-ci.inf.sussex.ac.uk/job/GeNN/job/genn/).
+PyGeNN wraps the C++ GeNN API using SWIG, allowing GeNN to be used either directly from Python or as a backend for higher-level Python APIs such as [PyNN](https://github.com/genn-team/pynn_genn). Building PyGeNN is a little involved so we recommend installing a prebuilt binary wheel from our Releases page or direct from our [build server](https://gen-ci.inf.sussex.ac.uk/job/GeNN/job/genn/).
 
 ### Installing PyGeNN from binary wheels
  - Select a suitable wheel from the Releases page (all wheels are build for CUDA 10 except for on Mac OS which is built for CUDA 9). For example, if you have a Linux system with Python 3.7 you would pick ``pygenn-0.2.1-cp37-cp37m-linux_x86_64.whl``. If you do not have CUDA installed, ignore the CUDA version and pick the wheel that otherwise matches your platform.
