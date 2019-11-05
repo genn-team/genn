@@ -571,7 +571,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
     os << "int inline gennCLZ(unsigned int value)";
     {
         CodeStream::Scope b(os);
-        os << "DWORD leadingZero = 0;" << std::endl;
+        os << "unsigned long leadingZero = 0;" << std::endl;
         os << "if( _BitScanReverse(&leadingZero, value))";
         {
             CodeStream::Scope b(os);
