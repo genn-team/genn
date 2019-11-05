@@ -6,8 +6,8 @@ The ``pygenn.genn_model.GeNNModel`` class provides a thin wrapper around ``Model
 ``SynapseGroup``, ``NeuronGroup`` and ``CurrentSource`` are similarly wrapped by the ``pygenn.genn_groups.SynapseGroup``, ``pygenn.genn_groups.NeuronGroup`` and ``pygenn.genn_groups.CurrentSource`` classes respectively.
 
 PyGeNN can be built from source on Windows, Mac and Linux following the instructions in the README file in the pygenn directory of the GeNN repository. 
-However, if you have a relatively recent version of Python and CUDA, we recommend that you instead downloading a suitable 'wheel' from our releases page.
-These can then be installed using e.g. ``pip install cuda10-pygenn-0.2-cp27-cp27mu-linux_x86_64.whl`` for a Linux system with CUDA 10 and Python 2.7.
+However, if you have a relatively recent version of Python and CUDA, we recommend that you instead downloading a suitable 'wheel' from our releases page (all wheels are build for CUDA 10 except for on Mac OS which is built for CUDA 9).
+These can then be installed using e.g. ``pip install pygenn-0.2.1-cp27-cp27mu-linux_x86_64.whl`` for a Linux system with Python 2.7.
 On Windows we recommend using the Python 3 version of [Anaconda](https://www.anaconda.com/distribution/).
 
 The following example shows how PyGeNN can be easily interfaced with standard Python packages such as numpy and matplotlib to plot 4 different Izhikevich neuron regimes:
