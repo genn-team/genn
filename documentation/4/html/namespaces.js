@@ -8,8 +8,10 @@ var namespaces =
     [ "Models", "dd/d20/namespaceModels.html", null ],
     [ "NeuronModels", "da/dac/namespaceNeuronModels.html", null ],
     [ "PostsynapticModels", "db/dcb/namespacePostsynapticModels.html", null ],
+    [ "pugi", "d3/d68/namespacepugi.html", null ],
     [ "pygenn", "da/d6d/namespacepygenn.html", "da/d6d/namespacepygenn" ],
     [ "Snippet", "df/daa/namespaceSnippet.html", null ],
+    [ "SpineMLSimulator", "d5/dc1/namespaceSpineMLSimulator.html", "d5/dc1/namespaceSpineMLSimulator" ],
     [ "Utils", "d4/d3d/namespaceUtils.html", null ],
     [ "WeightUpdateModels", "da/d80/namespaceWeightUpdateModels.html", null ]
 ];

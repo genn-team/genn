@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -115,7 +115,7 @@ How to use GeNN for New Projects</h1>
 <ol type="1">
 <li>Either use external programs to generate connectivity and input files to be loaded into the user side code at runtime or generate these matrices directly inside the user side code.</li>
 <li>Generating the model simulation code using <code>genn-buildmodel.sh</code> (On Linux or Mac) or <code>genn-buildmodel.bat</code> (on Windows). For example, inside the <code>generate_run</code> engine used by the MBody1_project, the following command is executed on Linux: <div class="fragment"><div class="line">genn-buildmodel.sh MBody1.cc</div></div><!-- fragment --> or, if you don't have an NVIDIA GPU and are running GeNN in CPU_ONLY mode, the following command is executed: <div class="fragment"><div class="line">genn-buildmodel.sh -c MBody1.cc</div></div><!-- fragment --> The <code>genn-buildmodel</code> script compiles the GeNN code generator in conjunction with the user-provided model description <code>model/MBody1.cc</code>. It then executes the GeNN code generator to generate the complete model simulation code for the model.</li>
-<li>Provide a build script to compile the generated model simulation and the user side code into a simulator executable (in the case of the MBody1 example this consists the file <code>MBody1Sim.cc</code>). On Linux or Mac a suitable GNU makefile can be created by running: <div class="fragment"><div class="line">genn-create-user-project.sh MBody1 MBody1Sim.cc</div></div><!-- fragment --> And on Windows an MSBuild project can be created by running: <div class="fragment"><div class="line">genn-create-user-project.bat MBody1 MBody1Sim.cc</div></div><!-- fragment --></li>
+<li>Provide a build script to compile the generated model simulation and the user side code into a simulator executable (in the case of the MBody1 example this consists the file <code>MBody1Sim.cc</code>). On Linux or Mac a suitable GNU makefile can be created by running: <div class="fragment"><div class="line">genn-<a class="code" href="../../df/d40/namespaceSpineMLSimulator_1_1Connectors.html#af06aa90e9c8dccddaece647a4c0834de">create</a>-user-project.sh MBody1 MBody1Sim.cc</div></div><!-- fragment --> And on Windows an MSBuild project can be created by running: <div class="fragment"><div class="line">genn-<a class="code" href="../../df/d40/namespaceSpineMLSimulator_1_1Connectors.html#af06aa90e9c8dccddaece647a4c0834de">create</a>-user-project.bat MBody1 MBody1Sim.cc</div></div><!-- fragment --></li>
 <li>Compile the simulator executable by invoking GNU make on Linux or Mac: <div class="fragment"><div class="line">make clean all</div></div><!-- fragment --> or MSbuild on Windows: <div class="fragment"><div class="line">msbuild MBody1.sln /t:MBody1 /p:Configuration=Release</div></div><!-- fragment --></li>
 <li>Finally, run the resulting stand-alone simulator executable. In the MBody1 example, this is called <code>MBody1</code> on Linux and <code>MBody1_Release.exe</code> on Windows.</li>
 </ol>
@@ -147,7 +147,7 @@ Defining a New Model in GeNN</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:09 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:29:44 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

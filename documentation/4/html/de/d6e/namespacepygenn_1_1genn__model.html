@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -504,7 +504,12 @@ Variables</h2></td></tr>
     <tr><td class="paramname">class_name</td><td>name of the new class</td></tr>
     <tr><td class="paramname">param_names</td><td>list of strings with param names of the model </td></tr>
     <tr><td class="paramname">var_name_types</td><td>list of pairs of strings with varible names and types of the model </td></tr>
-    <tr><td class="paramname">derived_params</td><td>list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from <div class="fragment"><div class="line">                                   ``pygenn.genn_wrapper.Snippet.DerivedParamFunc``</div><div class="line">@param     sim_code    string with the simulation code</div><div class="line">@param     threshold_condition_code    string with the threshold condition code</div><div class="line">@param     reset_code  string with the reset code</div><div class="line">@param     support_code    string with the support code</div><div class="line">@param     extra_global_params list of pairs of strings with names <span class="keywordflow">and</span></div></div><!-- fragment --> types of additional parameters </td></tr>
+    <tr><td class="paramname">derived_params</td><td>list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from <code>pygenn.genn_wrapper.Snippet.DerivedParamFunc</code> </td></tr>
+    <tr><td class="paramname">sim_code</td><td>string with the simulation code </td></tr>
+    <tr><td class="paramname">threshold_condition_code</td><td>string with the threshold condition code </td></tr>
+    <tr><td class="paramname">reset_code</td><td>string with the reset code </td></tr>
+    <tr><td class="paramname">support_code</td><td>string with the support code </td></tr>
+    <tr><td class="paramname">extra_global_params</td><td>list of pairs of strings with names and types of additional parameters </td></tr>
     <tr><td class="paramname">additional_input_vars</td><td>list of tuples with names and types as strings and initial values of additional local input variables </td></tr>
     <tr><td class="paramname">is_auto_refractory_required</td><td>does this model require auto-refractory logic to be generated? </td></tr>
     <tr><td class="paramname">custom_body</td><td>dictionary with additional attributes and methods of the new class </td></tr>
@@ -848,7 +853,10 @@ Variables</h2></td></tr>
     <tr><td class="paramname">var_name_types</td><td>list of pairs of strings with variable names and types of the model </td></tr>
     <tr><td class="paramname">pre_var_name_types</td><td>list of pairs of strings with presynaptic variable names and types of the model </td></tr>
     <tr><td class="paramname">post_var_name_types</td><td>list of pairs of strings with postsynaptic variable names and types of the model </td></tr>
-    <tr><td class="paramname">derived_params</td><td>list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from <div class="fragment"><div class="line">                                       ``pygenn.genn_wrapper.DerivedParamFunc``</div><div class="line">@param     sim_code    string with the simulation code</div><div class="line">@param     event_code  string with the event code</div><div class="line">@param     learn_post_code string with the code to include <span class="keywordflow">in</span></div></div><!-- fragment --> learn_synapse_post kernel/function </td></tr>
+    <tr><td class="paramname">derived_params</td><td>list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of a class which inherits from <code>pygenn.genn_wrapper.DerivedParamFunc</code> </td></tr>
+    <tr><td class="paramname">sim_code</td><td>string with the simulation code </td></tr>
+    <tr><td class="paramname">event_code</td><td>string with the event code </td></tr>
+    <tr><td class="paramname">learn_post_code</td><td>string with the code to include in learn_synapse_post kernel/function </td></tr>
     <tr><td class="paramname">synapse_dynamics_code</td><td>string with the synapse dynamics code </td></tr>
     <tr><td class="paramname">event_threshold_condition_code</td><td>string with the event threshold condition code </td></tr>
     <tr><td class="paramname">pre_spike_code</td><td>string with the code run once per spiking presynaptic neuron </td></tr>
@@ -1001,7 +1009,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html">genn_model</a></li>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:14 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:30:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

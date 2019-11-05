@@ -34,6 +34,7 @@ var classModelSpec =
     [ "operator=", "da/dfd/classModelSpec.html#aaf415f0379159d74d57d18126cf2982e", null ],
     [ "scalarExpr", "da/dfd/classModelSpec.html#ac484371c3488217f91da83fa93f713b3", null ],
     [ "setDefaultExtraGlobalParamLocation", "da/dfd/classModelSpec.html#aa0d462099083f12bc9f98b9b0fb86d64", null ],
+    [ "setDefaultNarrowSparseIndEnabled", "da/dfd/classModelSpec.html#a8215fd67ea3fa331f9648650904f4a96", null ],
     [ "setDefaultSparseConnectivityLocation", "da/dfd/classModelSpec.html#a9bc61e7c5dce757de3a9b7479852ca72", null ],
     [ "setDefaultVarLocation", "da/dfd/classModelSpec.html#a55c87917355d34463a3c19fc6887e67a", null ],
     [ "setDT", "da/dfd/classModelSpec.html#a329236a3b07044b82bfda5b4f741d8e1", null ],

@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['datatype',['DataType',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a9dd377f02bbae3d25c227bd306841823',1,'SpineMLSimulator::NetworkClient']]],
   ['dc',['DC',['../d7/da1/classCurrentSourceModels_1_1DC.html',1,'CurrentSourceModels']]],
   ['debugcode',['debugCode',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a58b816a5e133a98fa9aa88ec71890a89',1,'CodeGenerator::PreferencesBase']]],
   ['declare_5fmodel',['DECLARE_MODEL',['../d4/d13/models_8h.html#ae0c817e85c196f39cf62d608883cda13',1,'models.h']]],
@@ -15,7 +16,6 @@ var searchData=
   ['dense_5fglobalg_5findividual_5fpsm',['DENSE_GLOBALG_INDIVIDUAL_PSM',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca05bf2ba82e234d9d8ba1b92b6287945e',1,'synapseMatrixType.h']]],
   ['dense_5findividualg',['DENSE_INDIVIDUALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cac125fea63eb10ca9b8951ddbe787d7ce',1,'synapseMatrixType.h']]],
   ['derivedparam',['DerivedParam',['../d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html',1,'Snippet::Base']]],
-  ['derivedparamnameiterctx',['DerivedParamNameIterCtx',['../d0/d02/namespaceCodeGenerator.html#a2f5a042f1f8291773cbfbead4f5fa054',1,'CodeGenerator']]],
   ['derivedparamvec',['DerivedParamVec',['../db/d97/classSnippet_1_1Base.html#ad14217cebf11eddffa751a4d5c4792cb',1,'Snippet::Base']]],
   ['device',['device',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#a07e73ba804957f36166395d41f89640c',1,'CodeGenerator::MemAlloc::device()'],['../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae10b6ab6a278644ce40631f62f360b6d',1,'DEVICE():&#160;variableMode.h']]],
   ['deviceselect',['DeviceSelect',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0',1,'CodeGenerator::CUDA']]],

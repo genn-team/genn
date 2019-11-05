@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['sparse',['SPARSE',['../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e',1,'synapseMatrixType.h']]],
-  ['sparse_5fglobalg',['SPARSE_GLOBALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d',1,'synapseMatrixType.h']]],
-  ['sparse_5fglobalg_5findividual_5fpsm',['SPARSE_GLOBALG_INDIVIDUAL_PSM',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca4caebb15c1a09f263b6f223241bde1ac',1,'synapseMatrixType.h']]],
-  ['sparse_5findividualg',['SPARSE_INDIVIDUALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cae7658b74f700d52b421afc540c892d2e',1,'synapseMatrixType.h']]]
+  ['occupancy',['OCCUPANCY',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7abad835e9b82eae5eafdd8c3cb305a7d7a5',1,'CodeGenerator::CUDA']]],
+  ['optimal',['OPTIMAL',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0af00c8dbdd6e1f11bdae06be94277d293',1,'CodeGenerator::CUDA']]]
 ];

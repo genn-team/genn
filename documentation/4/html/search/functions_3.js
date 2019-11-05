@@ -1,10 +1,15 @@
 var searchData=
 [
+  ['calcnumtimesteps',['calcNumTimesteps',['../db/d3e/classSpineMLSimulator_1_1Simulator.html#aa8da540022d23b78400ca692ebc13ac0',1,'SpineMLSimulator::Simulator']]],
   ['cb',['CB',['../d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html#a1bdb3de24897472fac38d36a60783347',1,'CodeGenerator::CodeStream::CB']]],
   ['ceildivide',['ceilDivide',['../d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils.html#a6d52dbaf0ad3f57b18c7ad4ad3cfa37a',1,'CodeGenerator::CUDA::Utils']]],
   ['checknumdelayslots',['checkNumDelaySlots',['../d7/d3b/classNeuronGroup.html#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce',1,'NeuronGroup']]],
   ['checkunreplacedvariables',['checkUnreplacedVariables',['../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf',1,'CodeGenerator']]],
   ['codestream',['CodeStream',['../d9/df8/classCodeGenerator_1_1CodeStream.html#a04a5a264774068dd66b7cd84d2e7a816',1,'CodeGenerator::CodeStream::CodeStream()'],['../d9/df8/classCodeGenerator_1_1CodeStream.html#aa16ba20eb1d2da8dc23045ed8ca74d59',1,'CodeGenerator::CodeStream::CodeStream(std::ostream &amp;stream)']]],
+  ['connect',['connect',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a6111895b6da82c76e96e465568ec62ed',1,'SpineMLSimulator::NetworkClient']]],
+  ['constant',['Constant',['../d8/d0c/classSpineMLSimulator_1_1InputValue_1_1Constant.html#ab67148bac8b6248c2a253e4df58fa125',1,'SpineMLSimulator::InputValue::Constant']]],
+  ['constantarray',['ConstantArray',['../dd/d78/classSpineMLSimulator_1_1InputValue_1_1ConstantArray.html#a31ccb0b1aaffe89728ffad4d9830f68f',1,'SpineMLSimulator::InputValue::ConstantArray']]],
+  ['create',['create',['../df/d40/namespaceSpineMLSimulator_1_1Connectors.html#af06aa90e9c8dccddaece647a4c0834de',1,'SpineMLSimulator::Connectors::create()'],['../dc/df0/namespaceSpineMLSimulator_1_1InputValue.html#a177611255a4e05562bd77cfd6efa099b',1,'SpineMLSimulator::InputValue::create()'],['../d1/df5/namespaceSpineMLSimulator_1_1ModelProperty.html#afd51c1c17bb96390a5d594cabc5b8f40',1,'SpineMLSimulator::ModelProperty::create()']]],
   ['create_5fcmlf_5fclass',['create_cmlf_class',['../de/d6e/namespacepygenn_1_1genn__model.html#acd7310ba25ce86ad93d8fc54debf0e68',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fcurrent_5fsource_5fclass',['create_custom_current_source_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a1cd795d295c4cc4f05968f04dbf5b9d3',1,'pygenn::genn_model']]],
   ['create_5fcustom_5finit_5fvar_5fsnippet_5fclass',['create_custom_init_var_snippet_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a432e3d1d2c6c4745a1d79ee147b88fff',1,'pygenn::genn_model']]],

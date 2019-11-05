@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['zero_5fcopy',['ZERO_COPY',['../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae5f97fff9c755d0906f1a4dcdb48ef57',1,'variableMode.h']]]
+  ['postsynaptic',['POSTSYNAPTIC',['../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2a39711e1ac5d5263471a6184f362dc02f',1,'SynapseGroup']]],
+  ['presynaptic',['PRESYNAPTIC',['../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2ac583511247567bdc79915d057babba12',1,'SynapseGroup']]]
 ];

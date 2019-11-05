@@ -1,6 +1,6 @@
 var classpygenn_1_1genn__model_1_1GeNNModel =
 [
-    [ "__init__", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a97af74b8965a23e3ff5ccf76997e07c5", null ],
+    [ "__init__", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4e421b0c21896e8809fe44e61145db4d", null ],
     [ "add_current_source", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a20b03cbc0200038e8dd9950553fe5152", null ],
     [ "add_neuron_population", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a100324e214546094fced5e66fb0582d4", null ],
     [ "add_synapse_population", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab573f92c82ec25d5c80f94070b6008c0", null ],
@@ -26,6 +26,8 @@ var classpygenn_1_1genn__model_1_1GeNNModel =
     [ "push_state_to_device", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afc6a5ef4b76997365450b40eaca00db0", null ],
     [ "push_var_to_device", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a8217fc38ecb1bbbd249bfee27455ac90", null ],
     [ "reinitialise", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a475a22c65205debb202eb98d4dc929f2", null ],
+    [ "selected_gpu", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a0a26b41f070dbefbdc7b15cced886739", null ],
+    [ "selected_gpu", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ae98ebab7eaa67a5062b002c967fcefea", null ],
     [ "step_time", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6d71c8d91805b64c5a69fc62ea3dfbdb", null ],
     [ "t", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a48193c41cf24f25cdd2970cab7c88e87", null ],
     [ "t", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a290cab59495dd92ea26f6d379ba3c373", null ],
@@ -38,7 +40,7 @@ var classpygenn_1_1genn__model_1_1GeNNModel =
     [ "dT", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afa2abcf499adbe2380463cc68ec614db", null ],
     [ "model_name", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab1164b8374a4b390e77bc32effed638c", null ],
     [ "neuron_populations", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a64509d979db91e40ebb1c92e0e246e94", null ],
+    [ "selected_gpu", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a70807821d1fb04f61c36a7b2a71e2861", null ],
     [ "synapse_populations", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a97cca022c95e6744c4b0f6ea8f770565", null ],
-    [ "T", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#aa448edf34424822972747029870f73c7", null ],
     [ "use_backend", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab652ad87ca9dcdef1991307bf907be53", null ]
 ];

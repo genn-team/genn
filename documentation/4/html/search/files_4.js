@@ -1,16 +1,8 @@
 var searchData=
 [
-  ['backend_2ecc',['backend.cc',['../d2/d57/cuda_2backend_8cc.html',1,'']]],
-  ['backend_2eh',['backend.h',['../d4/d0e/cuda_2backend_8h.html',1,'']]],
-  ['codegenutils_2ecc',['codeGenUtils.cc',['../d4/dba/codeGenUtils_8cc.html',1,'']]],
-  ['codegenutils_2eh',['codeGenUtils.h',['../de/d99/codeGenUtils_8h.html',1,'']]],
-  ['codestream_2ecc',['codeStream.cc',['../db/dfd/codeStream_8cc.html',1,'']]],
-  ['codestream_2eh',['codeStream.h',['../d0/dbb/codeStream_8h.html',1,'']]],
-  ['currentsource_2ecc',['currentSource.cc',['../d7/d8c/currentSource_8cc.html',1,'']]],
-  ['currentsource_2eh',['currentSource.h',['../da/db7/currentSource_8h.html',1,'']]],
-  ['currentsourceinternal_2eh',['currentSourceInternal.h',['../d2/d1a/currentSourceInternal_8h.html',1,'']]],
-  ['currentsourcemodels_2ecc',['currentSourceModels.cc',['../d4/d8a/currentSourceModels_8cc.html',1,'']]],
-  ['currentsourcemodels_2eh',['currentSourceModels.h',['../da/d49/currentSourceModels_8h.html',1,'']]],
-  ['optimiser_2ecc',['optimiser.cc',['../d7/dff/cuda_2optimiser_8cc.html',1,'']]],
-  ['optimiser_2eh',['optimiser.h',['../d5/d50/cuda_2optimiser_8h.html',1,'']]]
+  ['backendbase_2ecc',['backendBase.cc',['../d7/df6/backendBase_8cc.html',1,'']]],
+  ['backendbase_2eh',['backendBase.h',['../d9/d67/backendBase_8h.html',1,'']]],
+  ['backendexport_2eh',['backendExport.h',['../d5/d83/backendExport_8h.html',1,'']]],
+  ['binomial_2ecc',['binomial.cc',['../d6/d24/binomial_8cc.html',1,'']]],
+  ['binomial_2eh',['binomial.h',['../d4/d59/binomial_8h.html',1,'']]]
 ];

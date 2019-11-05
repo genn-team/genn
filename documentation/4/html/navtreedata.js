@@ -86,7 +86,6 @@ var NAVTREE =
       [ "File Members", "globals.html", [
         [ "All", "globals.html", null ],
         [ "Functions", "globals_func.html", null ],
-        [ "Variables", "globals_vars.html", null ],
         [ "Typedefs", "globals_type.html", null ],
         [ "Enumerations", "globals_enum.html", null ],
         [ "Enumerator", "globals_eval.html", null ],
@@ -99,11 +98,12 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d3/d15/classCodeGenerator_1_1BackendBase.html#a48febc23266ae499c211af7d8c4b52d3",
-"d6/d08/classNeuronModels_1_1TraubMilesNStep.html#a55b5664bf554d2cb756710afa41827ce",
-"da/d16/generateMPI_8h.html",
-"dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0e0da2c47058822597a9a802380e762f",
-"de/db7/genn__model_8py.html#acd4074f475e3e48c21d1c31d1a28597b"
+"d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a40596c73833e8fa6ae25208dc4bfd039",
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html",
+"d7/d3b/classNeuronGroup.html#acf9b709abcfb87f8bdc2375796aa8b78",
+"da/dfd/classModelSpec.html#a7508ff35c5957bf8a4385168fed50e2c",
+"dc/dbc/neuronModels_8cc.html#ad113264e7d6a28ae18c92d2953e2d669",
+"de/d4c/classSpineMLSimulator_1_1LogOutput_1_1AnalogueNetwork.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

@@ -3,7 +3,7 @@ var snippet_8h =
     [ "ValueBase", "da/d76/classSnippet_1_1ValueBase.html", "da/d76/classSnippet_1_1ValueBase" ],
     [ "ValueBase< 0 >", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4" ],
     [ "Base", "db/d97/classSnippet_1_1Base.html", "db/d97/classSnippet_1_1Base" ],
-    [ "Var", "d3/dba/structSnippet_1_1Base_1_1Var.html", "d3/dba/structSnippet_1_1Base_1_1Var" ],
+    [ "EGP", "dd/d5d/structSnippet_1_1Base_1_1EGP.html", "dd/d5d/structSnippet_1_1Base_1_1EGP" ],
     [ "ParamVal", "d7/dda/structSnippet_1_1Base_1_1ParamVal.html", "d7/dda/structSnippet_1_1Base_1_1ParamVal" ],
     [ "DerivedParam", "d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html", "d9/d0c/structSnippet_1_1Base_1_1DerivedParam" ],
     [ "Init", "d8/df6/classSnippet_1_1Init.html", "d8/df6/classSnippet_1_1Init" ],

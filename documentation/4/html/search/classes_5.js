@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['gamma',['Gamma',['../d0/d54/classInitVarSnippet_1_1Gamma.html',1,'InitVarSnippet']]],
-  ['gaussiannoise',['GaussianNoise',['../d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html',1,'CurrentSourceModels']]],
-  ['gennmodel',['GeNNModel',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html',1,'pygenn::genn_model']]],
-  ['group',['Group',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html',1,'pygenn::genn_groups']]]
+  ['fixed',['Fixed',['../d5/d2a/classSpineMLSimulator_1_1ModelProperty_1_1Fixed.html',1,'SpineMLSimulator::ModelProperty']]],
+  ['fixedprobability',['FixedProbability',['../df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html',1,'InitSparseConnectivitySnippet']]],
+  ['fixedprobabilitybase',['FixedProbabilityBase',['../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html',1,'InitSparseConnectivitySnippet']]],
+  ['fixedprobabilitynoautapse',['FixedProbabilityNoAutapse',['../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html',1,'InitSparseConnectivitySnippet']]],
+  ['functiontemplate',['FunctionTemplate',['../dc/df1/structCodeGenerator_1_1FunctionTemplate.html',1,'CodeGenerator']]]
 ];

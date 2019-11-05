@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -139,10 +139,15 @@ Creating and simulating a network model</h1>
 <li><code>pull&lt;neuron name&gt;CurrentSpikesFromDevice()</code></li>
 <li><code>push&lt;neuron name&gt;CurrentSpikesEventsToDevice()</code></li>
 <li><code>pull&lt;neuron name&gt;CurrentSpikesEventsFromDevice()</code></li>
+<li><code>get&lt;neuron name&gt;CurrentSpikes()</code></li>
+<li><code>get&lt;neuron name&gt;CurrentSpikeCount()</code></li>
 <li><code>pull&lt;synapse name&gt;ConnectivityFromDevice()</code></li>
 <li><code>push&lt;synapse name&gt;ConnectivityToDevice()</code></li>
 <li><code>pull&lt;var name&gt;&lt;neuron or synapse name&gt;FromDevice()</code></li>
 <li><code>push&lt;var name&gt;&lt;neuron or synapse name&gt;ToDevice()</code></li>
+<li><code>pushCurrent&lt;var name&gt;&lt;neuron name&gt;ToDevice()</code></li>
+<li><code>pullCurrent&lt;var name&gt;&lt;neuron name&gt;FromDevice()</code></li>
+<li><code>getCurrent&lt;var name&gt;&lt;neuron name&gt;()</code></li>
 <li><code>copyStateToDevice()</code></li>
 <li><code>copyStateFromDevice()</code></li>
 <li><code>copyCurrentSpikesFromDevice()</code></li>
@@ -150,7 +155,7 @@ Creating and simulating a network model</h1>
 <li><code>stepTime()</code></li>
 <li><code>freeMem()</code></li>
 </ul>
-<p>You can use the <code>push&lt;neuron or synapse name&gt;StateToDevice()</code> to copy from the host to the GPU. At the end of your simulation, if you want to access the variables you need to copy them back from the device using the <code>pull&lt;neuron or synapse name&gt;StateFromDevice()</code> function or one of the more fine-grained functions listed above. <b>Copying elements between the GPU and the host memory is very costly in terms of performance and should only be done when needed and the amount of data being copied should be minimized.</b></p>
+<p>You can use the <code>push&lt;neuron or synapse name&gt;StateToDevice()</code> to copy from the host to the GPU. At the end of your simulation, if you want to access the variables you need to copy them back from the device using the <code>pull&lt;neuron or synapse name&gt;StateFromDevice()</code> function or one of the more fine-grained functions listed above. In order to correctly access neuron state and spikes for the current timestep, correctly accounting for delay buffering etc, you can use the <code>getCurrent&lt;var name&gt;&lt;neuron name&gt;()</code>, <code>get&lt;neuron name&gt;CurrentSpikes()</code> and `<code>get&lt;neuron name&gt;CurrentSpikeCount()</code> functions. <b>Copying elements between the GPU and the host memory is very costly in terms of performance and should only be done when needed and the amount of data being copied should be minimized.</b></p>
 <h2><a class="anchor" id="extraGlobalParamSim"></a>
 Extra Global Parameters</h2>
 <p>If extra global parameters have a "scalar" type such as <code>float</code> they can be set directly from simulation code. For example the extra global parameter "reward" of population "Pop" could be set with: </p><div class="fragment"><div class="line">rewardPop = 5.0f;</div></div><!-- fragment --><p> However, if extra global parameters have a pointer type such as <code>float*</code>, GeNN generates additional functions to allocate, free and copy these variables between host and device:</p><ul>
@@ -169,7 +174,7 @@ Floating point precision</h1>
 Working with variables in GeNN</h1>
 <h2><a class="anchor" id="modelVars"></a>
 Model variables</h2>
-<p>User-defined model variables originate from classes derived off the <a class="el" href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. ">NeuronModels::Base</a>, <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a> or <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a> classes. The name of model variable is defined in the model type, i.e. with a statement such as </p><div class="fragment"><div class="line"><a class="code" href="../../d4/d13/models_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa">SET_VARS</a>({{<span class="stringliteral">&quot;V&quot;</span>, <span class="stringliteral">&quot;scalar&quot;</span>}});</div></div><!-- fragment --><p> When a neuron or synapse population using this model is added to the model, the full GeNN name of the variable will be obtained by concatenating the variable name with the name of the population. For example if we a add a population called <code>Pop</code> using a model which contains our <code>V</code> variable, a variable <code>VPop</code> of type <code>scalar*</code> will be available in the global namespace of the simulation program. GeNN will pre-allocate this C array to the correct size of elements corresponding to the size of the neuron population. GeNN will also free these variables when the provided function <code>freeMem()</code> is called. Users can otherwise manipulate these variable arrays as they wish. For convenience, GeNN provides functions to copy each state variable from the device into host memory and vice versa e.g. <code>pullVPopFromDevice()</code> and <code>pushVPoptoDevice()</code>. Alternatively, all state variables associated with a population can be copied using a single call E.g. </p><div class="fragment"><div class="line">pullPopStateFromDevice();</div></div><!-- fragment --><p>These conventions also apply to the the variables of postsynaptic and weight update models. </p><dl class="section note"><dt>Note</dt><dd>Be aware that the above naming conventions do assume that variables from the weightupdate models and the postSynModels that are used together in a synapse population are unique. If both the weightupdate model and the postSynModel have a variable of the same name, the behaviour is undefined.</dd></dl>
+<p>User-defined model variables originate from classes derived off the <a class="el" href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. ">NeuronModels::Base</a>, <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. ">WeightUpdateModels::Base</a> or <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a> classes. The name of model variable is defined in the model type, i.e. with a statement such as </p><div class="fragment"><div class="line"><a class="code" href="../../d4/d13/models_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa">SET_VARS</a>({{<span class="stringliteral">&quot;V&quot;</span>, <span class="stringliteral">&quot;scalar&quot;</span>}});</div></div><!-- fragment --><p> When a neuron or synapse population using this model is added to the model, the full GeNN name of the variable will be obtained by concatenating the variable name with the name of the population. For example if we add a population called <code>Pop</code> using a model which contains our <code>V</code> variable, a variable <code>VPop</code> of type <code>scalar*</code> will be available in the global namespace of the simulation program. GeNN will pre-allocate this C array to the correct size of elements corresponding to the size of the neuron population. GeNN will also free these variables when the provided function <code>freeMem()</code> is called. Users can otherwise manipulate these variable arrays as they wish. For convenience, GeNN provides functions to copy each state variable from the device into host memory and vice versa e.g. <code>pullVPopFromDevice()</code> and <code>pushVPoptoDevice()</code>. Alternatively, all state variables associated with a population can be copied using a single call E.g. </p><div class="fragment"><div class="line">pullPopStateFromDevice();</div></div><!-- fragment --><p>These conventions also apply to the the variables of postsynaptic and weight update models. </p><dl class="section note"><dt>Note</dt><dd>Be aware that the above naming conventions do assume that variables from the weightupdate models and the postSynModels that are used together in a synapse population are unique. If both the weightupdate model and the postSynModel have a variable of the same name, the behaviour is undefined.</dd></dl>
 <h2><a class="anchor" id="predefinedVars"></a>
 Built-in Variables in GeNN</h2>
 <p>GeNN has no explicitly hard-coded synapse and neuron variables. Users are free to name the variable of their models as they want. However, there are some reserved variables that are used for intermediary calculations and communication between different parts of the generated code. They can be used in the user defined code but no other variables should be defined with these names.</p>
@@ -195,7 +200,7 @@ Debugging suggestions</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:09 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:29:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

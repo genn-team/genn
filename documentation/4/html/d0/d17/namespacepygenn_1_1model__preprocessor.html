@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -388,12 +388,16 @@ Variables</h2></td></tr>
 <p>Prepare a model by checking its validity and extracting information about variables and parameters. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">model</td><td>string or instance of a class derived from <code>pygenn.genn_wrapper.NeuronModels.Custom</code> or <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> or <div class="fragment"><div class="line">                       ``pygenn.genn_wrapper.CurrentSourceModels.Custom``</div><div class="line">@param     param_space dict with model parameters</div><div class="line">@param     var_space   dict with model variables</div><div class="line">@param     pre_var_space   optional dict with (weight update) model</div></div><!-- fragment --> presynaptic variables </td></tr>
+    <tr><td class="paramname">model</td><td>string or instance of a class derived from <code>pygenn.genn_wrapper.NeuronModels.Custom</code> or <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> or <code>pygenn.genn_wrapper.CurrentSourceModels.Custom</code> </td></tr>
+    <tr><td class="paramname">param_space</td><td>dict with model parameters </td></tr>
+    <tr><td class="paramname">var_space</td><td>dict with model variables </td></tr>
+    <tr><td class="paramname">pre_var_space</td><td>optional dict with (weight update) model presynaptic variables </td></tr>
     <tr><td class="paramname">post_var_space</td><td>optional dict with (weight update) model postsynaptic variables </td></tr>
-    <tr><td class="paramname">model_family</td><td><code>pygenn.genn_wrapper.NeuronModels</code> or <code>pygenn.genn_wrapper.WeightUpdateModels</code> or <div class="fragment"><div class="line">                       ``pygenn.genn_wrapper.CurrentSourceModels``</div><div class="line"></div><div class="line">@<span class="keywordflow">return</span></div></div><!-- fragment --> tuple consisting of (model instance, model type, model parameter names, model parameters, list of variable names, dict mapping names of variables to instances of class <a class="el" href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html" title="Class holding information about GeNN variables. ">Variable</a>) </td></tr>
+    <tr><td class="paramname">model_family</td><td><code>pygenn.genn_wrapper.NeuronModels</code> or <code>pygenn.genn_wrapper.WeightUpdateModels</code> or <code>pygenn.genn_wrapper.CurrentSourceModels</code></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>tuple consisting of (model instance, model type, model parameter names, model parameters, list of variable names, dict mapping names of variables to instances of class <a class="el" href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html" title="Class holding information about GeNN variables. ">Variable</a>) </dd></dl>
 
 </div>
 </div>
@@ -432,10 +436,13 @@ Variables</h2></td></tr>
 <p>Prepare a snippet by checking its validity and extracting information about parameters. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">snippet</td><td>string or instance of a class derived from <code>pygenn.genn_wrapper.InitVarSnippet.Custom</code> or <div class="fragment"><div class="line">                       ``pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom``</div><div class="line">@param     param_space dict with model parameters</div><div class="line">@param     snippet_family  ``pygenn.genn_wrapper.InitVarSnippet`` <span class="keywordflow">or</span></div><div class="line">                       ``pygenn.genn_wrapper.InitSparseConnectivitySnippet``</div><div class="line"></div><div class="line">@<span class="keywordflow">return</span></div></div><!-- fragment --> tuple consisting of (snippet instance, snippet type, snippet parameter names, snippet parameters) </td></tr>
+    <tr><td class="paramname">snippet</td><td>string or instance of a class derived from <code>pygenn.genn_wrapper.InitVarSnippet.Custom</code> or <code>pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom</code> </td></tr>
+    <tr><td class="paramname">param_space</td><td>dict with model parameters </td></tr>
+    <tr><td class="paramname">snippet_family</td><td><code>pygenn.genn_wrapper.InitVarSnippet</code> or <code>pygenn.genn_wrapper.InitSparseConnectivitySnippet</code></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>tuple consisting of (snippet instance, snippet type, snippet parameter names, snippet parameters) </dd></dl>
 
 </div>
 </div>
@@ -498,7 +505,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html">model_preprocessor</a></li>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:14 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:30:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

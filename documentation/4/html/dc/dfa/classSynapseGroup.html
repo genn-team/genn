@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -169,13 +169,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a97cfec638d856e6e07628bc19490690c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a97cfec638d856e6e07628bc19490690c">setSpanType</a> (<a class="el" href="../../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2">SpanType</a> spanType)</td></tr>
 <tr class="memdesc:a97cfec638d856e6e07628bc19490690c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set how CUDA implementation is parallelised.  <a href="#a97cfec638d856e6e07628bc19490690c">More...</a><br /></td></tr>
 <tr class="separator:a97cfec638d856e6e07628bc19490690c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50da6b80e10ac9175f34e901b252803d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a50da6b80e10ac9175f34e901b252803d">setNumThreadsPerSpike</a> (unsigned int numThreadsPerSpike)</td></tr>
+<tr class="memdesc:a50da6b80e10ac9175f34e901b252803d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set how many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC.  <a href="#a50da6b80e10ac9175f34e901b252803d">More...</a><br /></td></tr>
+<tr class="separator:a50da6b80e10ac9175f34e901b252803d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac080d0115f8d3aa274e9f95898b1a443"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ac080d0115f8d3aa274e9f95898b1a443">setBackPropDelaySteps</a> (unsigned int timesteps)</td></tr>
 <tr class="memdesc:ac080d0115f8d3aa274e9f95898b1a443"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the number of delay steps used to delay postsynaptic spikes travelling back along dendrites to synapses.  <a href="#ac080d0115f8d3aa274e9f95898b1a443">More...</a><br /></td></tr>
 <tr class="separator:ac080d0115f8d3aa274e9f95898b1a443"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c52c9daf780b36515263af1cdb3524e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a4c52c9daf780b36515263af1cdb3524e">setNarrowSparseIndEnabled</a> (bool enabled)</td></tr>
+<tr class="memdesc:a4c52c9daf780b36515263af1cdb3524e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices.  <a href="#a4c52c9daf780b36515263af1cdb3524e">More...</a><br /></td></tr>
+<tr class="separator:a4c52c9daf780b36515263af1cdb3524e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a775e738338993cc2523af0af086527e8"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a775e738338993cc2523af0af086527e8">getName</a> () const</td></tr>
 <tr class="separator:a775e738338993cc2523af0af086527e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4c8ae8472813f9f77d09e80c6927491"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2">SpanType</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ad4c8ae8472813f9f77d09e80c6927491">getSpanType</a> () const</td></tr>
 <tr class="separator:ad4c8ae8472813f9f77d09e80c6927491"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2f28afff3f0748f9df31e59e2cca004"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ad2f28afff3f0748f9df31e59e2cca004">getNumThreadsPerSpike</a> () const</td></tr>
+<tr class="separator:ad2f28afff3f0748f9df31e59e2cca004"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46792ae6aadf1948ccc42450175a1c42"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a46792ae6aadf1948ccc42450175a1c42">getDelaySteps</a> () const</td></tr>
 <tr class="separator:a46792ae6aadf1948ccc42450175a1c42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaddfca073f33dadfc1766689bf0b15f4"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aaddfca073f33dadfc1766689bf0b15f4">getBackPropDelaySteps</a> () const</td></tr>
@@ -289,8 +297,8 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a359b7b0e7278cb9490aef9cb8c5997a1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a359b7b0e7278cb9490aef9cb8c5997a1">SynapseGroup</a> (const std::string name, <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> matrixType, unsigned int delaySteps, const <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html">WeightUpdateModels::Base</a> *wu, const std::vector&lt; double &gt; &amp;wuParams, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;wuVarInitialisers, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;wuPreVarInitialisers, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;wuPostVarInitialisers, const <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html">PostsynapticModels::Base</a> *ps, const std::vector&lt; double &gt; &amp;psParams, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;psVarInitialisers, <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> *srcNeuronGroup, <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> *trgNeuronGroup, const <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a> &amp;connectivityInitialiser, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultVarLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultExtraGlobalParamLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultSparseConnectivityLocation)</td></tr>
-<tr class="separator:a359b7b0e7278cb9490aef9cb8c5997a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adae78dfe85576080a3154ecef9e816c2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#adae78dfe85576080a3154ecef9e816c2">SynapseGroup</a> (const std::string name, <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> matrixType, unsigned int delaySteps, const <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html">WeightUpdateModels::Base</a> *wu, const std::vector&lt; double &gt; &amp;wuParams, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;wuVarInitialisers, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;wuPreVarInitialisers, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;wuPostVarInitialisers, const <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html">PostsynapticModels::Base</a> *ps, const std::vector&lt; double &gt; &amp;psParams, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;psVarInitialisers, <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> *srcNeuronGroup, <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> *trgNeuronGroup, const <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a> &amp;connectivityInitialiser, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultVarLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultExtraGlobalParamLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)</td></tr>
+<tr class="separator:adae78dfe85576080a3154ecef9e816c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40f0d1eae3b977f1f41dd1d4f1da0565"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a40f0d1eae3b977f1f41dd1d4f1da0565">getSrcNeuronGroup</a> ()</td></tr>
 <tr class="separator:a40f0d1eae3b977f1f41dd1d4f1da0565"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d1d61a12436e603e6443b4d6d788a00"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a4d1d61a12436e603e6443b4d6d788a00">getTrgNeuronGroup</a> ()</td></tr>
@@ -322,6 +330,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a63868e19fce778fbd322ea541d51a693"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad9dedbac316af1258ab9a9ff0cc41ef1"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ad9dedbac316af1258ab9a9ff0cc41ef1">getDendriticDelayOffset</a> (const std::string &amp;devPrefix, const std::string &amp;offset=&quot;&quot;) const</td></tr>
 <tr class="separator:ad9dedbac316af1258ab9a9ff0cc41ef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a822567755aa123506880e402d93bb92f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a822567755aa123506880e402d93bb92f">getSparseIndType</a> () const</td></tr>
+<tr class="memdesc:a822567755aa123506880e402d93bb92f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the type to use for sparse connectivity indices for synapse group.  <a href="#a822567755aa123506880e402d93bb92f">More...</a><br /></td></tr>
+<tr class="separator:a822567755aa123506880e402d93bb92f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a3da23a0e726b05a12e95c3d58645b1a2"></a>
@@ -402,8 +413,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a359b7b0e7278cb9490aef9cb8c5997a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a359b7b0e7278cb9490aef9cb8c5997a1">&#9670;&nbsp;</a></span>SynapseGroup() <span class="overload">[3/3]</span></h2>
+<a id="adae78dfe85576080a3154ecef9e816c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adae78dfe85576080a3154ecef9e816c2">&#9670;&nbsp;</a></span>SynapseGroup() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -511,7 +522,13 @@ Protected Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
-          <td class="paramname"><em>defaultSparseConnectivityLocation</em>&#160;</td>
+          <td class="paramname"><em>defaultSparseConnectivityLocation</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>defaultNarrowSparseIndEnabled</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -822,6 +839,31 @@ Protected Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">const std::string&amp; SynapseGroup::getName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad2f28afff3f0748f9df31e59e2cca004"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad2f28afff3f0748f9df31e59e2cca004">&#9670;&nbsp;</a></span>getNumThreadsPerSpike()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int SynapseGroup::getNumThreadsPerSpike </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1231,6 +1273,33 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get variable mode used for sparse connectivity. </p>
+
+</div>
+</div>
+<a id="a822567755aa123506880e402d93bb92f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a822567755aa123506880e402d93bb92f">&#9670;&nbsp;</a></span>getSparseIndType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string SynapseGroup::getSparseIndType </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the type to use for sparse connectivity indices for synapse group. </p>
 
 </div>
 </div>
@@ -2087,6 +2156,46 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a4c52c9daf780b36515263af1cdb3524e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c52c9daf780b36515263af1cdb3524e">&#9670;&nbsp;</a></span>setNarrowSparseIndEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::setNarrowSparseIndEnabled </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices. </p>
+
+</div>
+</div>
+<a id="a50da6b80e10ac9175f34e901b252803d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50da6b80e10ac9175f34e901b252803d">&#9670;&nbsp;</a></span>setNumThreadsPerSpike()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::setNumThreadsPerSpike </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>numThreadsPerSpike</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set how many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC. </p>
+
+</div>
+</div>
 <a id="a90b0bda40690467d37ce993f12236e39"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a90b0bda40690467d37ce993f12236e39">&#9670;&nbsp;</a></span>setPSExtraGlobalParamLocation()</h2>
 
@@ -2390,7 +2499,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a></li>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:10 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:29:47 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

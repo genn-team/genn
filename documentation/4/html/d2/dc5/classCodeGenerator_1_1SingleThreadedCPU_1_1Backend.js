@@ -6,6 +6,8 @@ var classCodeGenerator_1_1SingleThreadedCPU_1_1Backend =
     [ "genCurrentSpikeLikeEventPush", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a9647828ee55e8598c9f17f1139e4527d", null ],
     [ "genCurrentTrueSpikePull", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a755c0ac34d4cd0a16fa864a2b6f44184", null ],
     [ "genCurrentTrueSpikePush", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#aeecfeed41f2beaabba61e4d282332fa9", null ],
+    [ "genCurrentVariablePull", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a1092fe89582d48952d2ceaff70f66e19", null ],
+    [ "genCurrentVariablePush", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a40596c73833e8fa6ae25208dc4bfd039", null ],
     [ "genDefinitionsInternalPreamble", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a6260cee10a850044b490e006b8144285", null ],
     [ "genDefinitionsPreamble", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a9b6b41568cb02ada0e55bd7907bfec07", null ],
     [ "genExtraGlobalParamAllocation", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a9059b19c801525d33bbbdd676b92762f", null ],

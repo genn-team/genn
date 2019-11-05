@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['init',['Init',['../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html',1,'InitSparseConnectivitySnippet::Init'],['../d8/df6/classSnippet_1_1Init.html',1,'Snippet::Init&lt; SnippetBase &gt;']]],
-  ['init_3c_20base_20_3e',['Init&lt; Base &gt;',['../d8/df6/classSnippet_1_1Init.html',1,'Snippet']]],
-  ['init_3c_20initvarsnippet_3a_3abase_20_3e',['Init&lt; InitVarSnippet::Base &gt;',['../d8/df6/classSnippet_1_1Init.html',1,'Snippet']]],
-  ['izhikevich',['Izhikevich',['../d7/d0a/classNeuronModels_1_1Izhikevich.html',1,'NeuronModels']]],
-  ['izhikevichvariable',['IzhikevichVariable',['../dc/d87/classNeuronModels_1_1IzhikevichVariable.html',1,'NeuronModels']]]
+  ['gamma',['Gamma',['../d0/d54/classInitVarSnippet_1_1Gamma.html',1,'InitVarSnippet']]],
+  ['gaussiannoise',['GaussianNoise',['../d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html',1,'CurrentSourceModels']]],
+  ['generaterunbase',['GenerateRunBase',['../d4/d40/classGenerateRunBase.html',1,'']]],
+  ['gennmodel',['GeNNModel',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html',1,'pygenn::genn_model']]],
+  ['group',['Group',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html',1,'pygenn::genn_groups']]]
 ];

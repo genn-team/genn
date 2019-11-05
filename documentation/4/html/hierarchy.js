@@ -1,5 +1,6 @@
 var hierarchy =
 [
+    [ "AnalogueRecorder< T >", "dc/d01/classAnalogueRecorder.html", null ],
     [ "CodeGenerator::BackendBase", "d3/d15/classCodeGenerator_1_1BackendBase.html", [
       [ "CodeGenerator::CUDA::Backend", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html", null ],
       [ "CodeGenerator::SingleThreadedCPU::Backend", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html", null ]
@@ -55,15 +56,55 @@ var hierarchy =
         ] ]
       ] ]
     ] ],
-    [ "BaseIter", null, [
-      [ "CodeGenerator::StructNameConstIter< BaseIter >", "d7/d76/classCodeGenerator_1_1StructNameConstIter.html", null ]
+    [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::Base", "d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html", [
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html", null ],
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html", null ]
+    ] ],
+    [ "SpineMLSimulator::Input::Base", "d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html", [
+      [ "SpineMLSimulator::Input::Analogue", "d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html", null ],
+      [ "SpineMLSimulator::Input::SpikeBase", "d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html", [
+        [ "SpineMLSimulator::Input::InterSpikeIntervalBase", "dd/dfb/classSpineMLSimulator_1_1Input_1_1InterSpikeIntervalBase.html", [
+          [ "SpineMLSimulator::Input::PoissonSpikeRate", "db/d06/classSpineMLSimulator_1_1Input_1_1PoissonSpikeRate.html", null ],
+          [ "SpineMLSimulator::Input::RegularSpikeRate", "d0/d79/classSpineMLSimulator_1_1Input_1_1RegularSpikeRate.html", null ]
+        ] ],
+        [ "SpineMLSimulator::Input::SpikeTime", "da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html", null ]
+      ] ]
+    ] ],
+    [ "SpineMLSimulator::InputValue::Base", "d1/d5e/classSpineMLSimulator_1_1InputValue_1_1Base.html", [
+      [ "SpineMLSimulator::InputValue::ConstantArray", "dd/d78/classSpineMLSimulator_1_1InputValue_1_1ConstantArray.html", null ],
+      [ "SpineMLSimulator::InputValue::External", "df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html", [
+        [ "SpineMLSimulator::InputValue::ExternalNetwork", "d2/d70/classSpineMLSimulator_1_1InputValue_1_1ExternalNetwork.html", null ]
+      ] ],
+      [ "SpineMLSimulator::InputValue::ScalarBase", "db/d2c/classSpineMLSimulator_1_1InputValue_1_1ScalarBase.html", [
+        [ "SpineMLSimulator::InputValue::Constant", "d8/d0c/classSpineMLSimulator_1_1InputValue_1_1Constant.html", null ],
+        [ "SpineMLSimulator::InputValue::TimeVarying", "d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html", null ]
+      ] ],
+      [ "SpineMLSimulator::InputValue::TimeVaryingArray", "d9/d04/classSpineMLSimulator_1_1InputValue_1_1TimeVaryingArray.html", null ]
+    ] ],
+    [ "SpineMLSimulator::LogOutput::Base", "db/d9c/classSpineMLSimulator_1_1LogOutput_1_1Base.html", [
+      [ "SpineMLSimulator::LogOutput::AnalogueBase", "d2/d8b/classSpineMLSimulator_1_1LogOutput_1_1AnalogueBase.html", [
+        [ "SpineMLSimulator::LogOutput::AnalogueExternal", "d1/dfa/classSpineMLSimulator_1_1LogOutput_1_1AnalogueExternal.html", [
+          [ "SpineMLSimulator::LogOutput::AnalogueNetwork", "de/d4c/classSpineMLSimulator_1_1LogOutput_1_1AnalogueNetwork.html", null ]
+        ] ],
+        [ "SpineMLSimulator::LogOutput::AnalogueFile", "df/dc2/classSpineMLSimulator_1_1LogOutput_1_1AnalogueFile.html", null ]
+      ] ],
+      [ "SpineMLSimulator::LogOutput::Event", "d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event.html", null ]
+    ] ],
+    [ "SpineMLSimulator::ModelProperty::Base", "dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html", [
+      [ "SpineMLSimulator::ModelProperty::ExponentialDistribution", "d7/d82/classSpineMLSimulator_1_1ModelProperty_1_1ExponentialDistribution.html", null ],
+      [ "SpineMLSimulator::ModelProperty::Fixed", "d5/d2a/classSpineMLSimulator_1_1ModelProperty_1_1Fixed.html", null ],
+      [ "SpineMLSimulator::ModelProperty::NormalDistribution", "d2/d6f/classSpineMLSimulator_1_1ModelProperty_1_1NormalDistribution.html", null ],
+      [ "SpineMLSimulator::ModelProperty::UniformDistribution", "de/d2c/classSpineMLSimulator_1_1ModelProperty_1_1UniformDistribution.html", null ],
+      [ "SpineMLSimulator::ModelProperty::ValueList", "d9/d11/classSpineMLSimulator_1_1ModelProperty_1_1ValueList.html", null ]
     ] ],
     [ "CodeGenerator::CodeStream::CB", "d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html", null ],
     [ "CurrentSource", "d1/d48/classCurrentSource.html", [
       [ "CurrentSourceInternal", "d6/de6/classCurrentSourceInternal.html", null ]
     ] ],
     [ "Snippet::Base::DerivedParam", "d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html", null ],
+    [ "Snippet::Base::EGP", "dd/d5d/structSnippet_1_1Base_1_1EGP.html", null ],
     [ "CodeGenerator::FunctionTemplate", "dc/df1/structCodeGenerator_1_1FunctionTemplate.html", null ],
+    [ "GenerateRunBase", "d4/d40/classGenerateRunBase.html", null ],
     [ "Snippet::Init< SnippetBase >", "d8/df6/classSnippet_1_1Init.html", null ],
     [ "Snippet::Init< Base >", "d8/df6/classSnippet_1_1Init.html", [
       [ "InitSparseConnectivitySnippet::Init", "d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html", null ]
@@ -85,7 +126,7 @@ var hierarchy =
     [ "ModelSpec", "da/dfd/classModelSpec.html", [
       [ "ModelSpecInternal", "dc/dfa/classModelSpecInternal.html", null ]
     ] ],
-    [ "CodeGenerator::NameIterCtx< Container >", "df/d6f/structCodeGenerator_1_1NameIterCtx.html", null ],
+    [ "SpineMLSimulator::NetworkClient", "db/db9/classSpineMLSimulator_1_1NetworkClient.html", null ],
     [ "NeuronGroup", "d7/d3b/classNeuronGroup.html", [
       [ "NeuronGroupInternal", "dc/da3/classNeuronGroupInternal.html", null ]
     ] ],
@@ -106,6 +147,12 @@ var hierarchy =
       [ "CodeGenerator::SingleThreadedCPU::Preferences", "d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html", null ]
     ] ],
     [ "CodeGenerator::CodeStream::Scope", "d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html", null ],
+    [ "SharedLibraryModel< scalar >", "d9/d7e/classSharedLibraryModel.html", null ],
+    [ "SpineMLSimulator::Simulator", "db/d3e/classSpineMLSimulator_1_1Simulator.html", null ],
+    [ "SpikeWriterText", "d5/dbb/classSpikeWriterText.html", null ],
+    [ "SpikeWriterTextCached", "d9/d5d/classSpikeWriterTextCached.html", null ],
+    [ "SpineMLSimulator::StateVar< T >", "dc/db2/classSpineMLSimulator_1_1StateVar.html", null ],
+    [ "SpineMLSimulator::StateVar< scalar >", "dc/db2/classSpineMLSimulator_1_1StateVar.html", null ],
     [ "streambuf", null, [
       [ "CodeGenerator::TeeBuf", "d8/d5e/classCodeGenerator_1_1TeeBuf.html", null ]
     ] ],
@@ -113,9 +160,16 @@ var hierarchy =
     [ "SynapseGroup", "dc/dfa/classSynapseGroup.html", [
       [ "SynapseGroupInternal", "dd/d48/classSynapseGroupInternal.html", null ]
     ] ],
+    [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
+    [ "Timer", "dc/dea/classTimer.html", null ],
+    [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
+    [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
     [ "Snippet::ValueBase< NumVars >", "da/d76/classSnippet_1_1ValueBase.html", null ],
     [ "Snippet::ValueBase< 0 >", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html", null ],
-    [ "Snippet::Base::Var", "d3/dba/structSnippet_1_1Base_1_1Var.html", null ],
+    [ "Models::Base::Var", "d5/d42/structModels_1_1Base_1_1Var.html", null ],
     [ "Models::VarInitContainerBase< NumVars >", "d6/d24/classModels_1_1VarInitContainerBase.html", null ],
-    [ "Models::VarInitContainerBase< 0 >", "db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html", null ]
+    [ "Models::VarInitContainerBase< 0 >", "db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html", null ],
+    [ "Writer", null, [
+      [ "SpikeRecorder< Writer >", "dd/d9b/classSpikeRecorder.html", null ]
+    ] ]
 ];

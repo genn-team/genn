@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -149,7 +149,7 @@ Macros</h2></td></tr>
 <tr class="separator:a338915170111c85ba647e848d28ee2a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9d72764eb9a910bba6d4a1776717ba02"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#a9d72764eb9a910bba6d4a1776717ba02">SET_MAX_COL_LENGTH</a>(MAX_COL_LENGTH)&#160;&#160;&#160;virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector&lt;double&gt; &amp;){ return MAX_COL_LENGTH; }; }</td></tr>
 <tr class="separator:a9d72764eb9a910bba6d4a1776717ba02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa33e3634a531794ddac1ad49bde09071"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>(...)&#160;&#160;&#160;virtual VarVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td></tr>
+<tr class="memitem:aa33e3634a531794ddac1ad49bde09071"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>(...)&#160;&#160;&#160;virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:aa33e3634a531794ddac1ad49bde09071"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
@@ -200,7 +200,7 @@ Macros</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>...</em></td><td>)</td>
-          <td>&#160;&#160;&#160;virtual VarVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td>
+          <td>&#160;&#160;&#160;virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -285,7 +285,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html">initSparseConnectivitySnippet.h</a></li>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:09 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:29:43 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

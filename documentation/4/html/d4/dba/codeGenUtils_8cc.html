@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -105,6 +105,7 @@ $(document).ready(function(){initNavTree('d4/dba/codeGenUtils_8cc.html','../../'
 <code>#include &lt;regex&gt;</code><br />
 <code>#include &lt;cstring&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../dc/de1/modelSpec_8h_source.html">modelSpec.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d9/d7a/substitutions_8h_source.html">code_generator/substitutions.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
@@ -137,15 +138,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a10af4d74175240a715403e6b5f2103cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf">CodeGenerator::checkUnreplacedVariables</a> (const std::string &amp;code, const std::string &amp;codeName)</td></tr>
 <tr class="memdesc:a10af4d74175240a715403e6b5f2103cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function checks for unknown variable definitions and returns a gennError if any are found.  <a href="../../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf">More...</a><br /></td></tr>
 <tr class="separator:a10af4d74175240a715403e6b5f2103cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a50a3d09c47901d799d7732f4ed6d2f58"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a50a3d09c47901d799d7732f4ed6d2f58">CodeGenerator::preNeuronSubstitutionsInSynapticCode</a> (std::string &amp;wCode, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;offset, const std::string &amp;axonalDelayOffset, const std::string &amp;postIdx, const std::string &amp;devPrefix, const std::string &amp;preVarPrefix=&quot;&quot;, const std::string &amp;preVarSuffix=&quot;&quot;)</td></tr>
-<tr class="memdesc:a50a3d09c47901d799d7732f4ed6d2f58"><td class="mdescLeft">&#160;</td><td class="mdescRight">suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX)  <a href="../../d0/d02/namespaceCodeGenerator.html#a50a3d09c47901d799d7732f4ed6d2f58">More...</a><br /></td></tr>
-<tr class="separator:a50a3d09c47901d799d7732f4ed6d2f58"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d9105793919659e85634fe4a3d94900"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a1d9105793919659e85634fe4a3d94900">CodeGenerator::postNeuronSubstitutionsInSynapticCode</a> (std::string &amp;wCode, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;offset, const std::string &amp;backPropDelayOffset, const std::string &amp;preIdx, const std::string &amp;devPrefix, const std::string &amp;postVarPrefix=&quot;&quot;, const std::string &amp;postVarSuffix=&quot;&quot;)</td></tr>
-<tr class="memdesc:a1d9105793919659e85634fe4a3d94900"><td class="mdescLeft">&#160;</td><td class="mdescRight">suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX)  <a href="../../d0/d02/namespaceCodeGenerator.html#a1d9105793919659e85634fe4a3d94900">More...</a><br /></td></tr>
-<tr class="separator:a1d9105793919659e85634fe4a3d94900"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab792dd23b63e89e1fce0947a3c2aaba7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#ab792dd23b63e89e1fce0947a3c2aaba7">CodeGenerator::neuronSubstitutionsInSynapticCode</a> (std::string &amp;wCode, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;preIdx, const std::string &amp;postIdx, const std::string &amp;devPrefix, double dt, const std::string &amp;preVarPrefix=&quot;&quot;, const std::string &amp;preVarSuffix=&quot;&quot;, const std::string &amp;postVarPrefix=&quot;&quot;, const std::string &amp;postVarSuffix=&quot;&quot;)</td></tr>
-<tr class="memdesc:ab792dd23b63e89e1fce0947a3c2aaba7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="../../d0/d02/namespaceCodeGenerator.html#ab792dd23b63e89e1fce0947a3c2aaba7">More...</a><br /></td></tr>
-<tr class="separator:ab792dd23b63e89e1fce0947a3c2aaba7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f111f70eb87a0fae09fc1bf755fea9b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a6f111f70eb87a0fae09fc1bf755fea9b">CodeGenerator::preNeuronSubstitutionsInSynapticCode</a> (Substitutions &amp;substitutions, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;offset, const std::string &amp;axonalDelayOffset, const std::string &amp;postIdx, const std::string &amp;devPrefix, const std::string &amp;preVarPrefix=&quot;&quot;, const std::string &amp;preVarSuffix=&quot;&quot;)</td></tr>
+<tr class="memdesc:a6f111f70eb87a0fae09fc1bf755fea9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX)  <a href="../../d0/d02/namespaceCodeGenerator.html#a6f111f70eb87a0fae09fc1bf755fea9b">More...</a><br /></td></tr>
+<tr class="separator:a6f111f70eb87a0fae09fc1bf755fea9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc546df68c6a87e2e08a6935fa0e68f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#acc546df68c6a87e2e08a6935fa0e68f7">CodeGenerator::postNeuronSubstitutionsInSynapticCode</a> (Substitutions &amp;substitutions, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;offset, const std::string &amp;backPropDelayOffset, const std::string &amp;preIdx, const std::string &amp;devPrefix, const std::string &amp;postVarPrefix=&quot;&quot;, const std::string &amp;postVarSuffix=&quot;&quot;)</td></tr>
+<tr class="memdesc:acc546df68c6a87e2e08a6935fa0e68f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX)  <a href="../../d0/d02/namespaceCodeGenerator.html#acc546df68c6a87e2e08a6935fa0e68f7">More...</a><br /></td></tr>
+<tr class="separator:acc546df68c6a87e2e08a6935fa0e68f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeffa872d440945d9d6170adff0fc8c11"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#aeffa872d440945d9d6170adff0fc8c11">CodeGenerator::neuronSubstitutionsInSynapticCode</a> (Substitutions &amp;substitutions, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;preIdx, const std::string &amp;postIdx, const std::string &amp;devPrefix, double dt, const std::string &amp;preVarPrefix=&quot;&quot;, const std::string &amp;preVarSuffix=&quot;&quot;, const std::string &amp;postVarPrefix=&quot;&quot;, const std::string &amp;postVarSuffix=&quot;&quot;)</td></tr>
+<tr class="memdesc:aeffa872d440945d9d6170adff0fc8c11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="../../d0/d02/namespaceCodeGenerator.html#aeffa872d440945d9d6170adff0fc8c11">More...</a><br /></td></tr>
+<tr class="separator:aeffa872d440945d9d6170adff0fc8c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="a36f6ba9b5dd081f9a244f9a4edb3e460"></a>
@@ -168,7 +169,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="../../dir_50ec77cb1e446fad877f3e377597ea8d.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_41836ccd157275f9bbab23043f985dae.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_168b0d4666365afeb6b12d79186b0932.html">code_generator</a></li><li class="navelem"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html">codeGenUtils.cc</a></li>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:09 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:29:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

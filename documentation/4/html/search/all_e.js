@@ -1,7 +1,8 @@
 var searchData=
 [
   ['m',['m',['../de/d6e/namespacepygenn_1_1genn__model.html#a0ae588c769b098f97bc66450ab28011c',1,'pygenn::genn_model']]],
-  ['main',['main',['../dd/d90/generator_8cc.html#a0ddf1224851353fc92bfbff6f499fa97',1,'generator.cc']]],
+  ['m_5fdirect',['m_Direct',['../dc/db2/classSpineMLSimulator_1_1StateVar.html#adb46f517e10a5a315509959ed175f25e',1,'SpineMLSimulator::StateVar']]],
+  ['m_5findirect',['m_Indirect',['../dc/db2/classSpineMLSimulator_1_1StateVar.html#a4a610bfd3668dd8e08053fe5e9df729c',1,'SpineMLSimulator::StateVar']]],
   ['manual',['MANUAL',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()'],['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7abaa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()']]],
   ['manualblocksizes',['manualBlockSizes',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda',1,'CodeGenerator::CUDA::Preferences']]],
   ['manualdeviceid',['manualDeviceID',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d',1,'CodeGenerator::CUDA::Preferences']]],
@@ -10,8 +11,11 @@ var searchData=
   ['max_5frow_5flength',['max_row_length',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2208fcc9522823d65c1f95775fa27982',1,'pygenn::genn_groups::SynapseGroup']]],
   ['memalloc',['MemAlloc',['../d2/d06/classCodeGenerator_1_1MemAlloc.html',1,'CodeGenerator']]],
   ['mergeincomingpsm',['mergeIncomingPSM',['../d7/d3b/classNeuronGroup.html#a78122b3ec7116cd38cbb3ad9fca04fbf',1,'NeuronGroup']]],
+  ['mode',['Mode',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#af183b028ead473c3b08e4961edd6e66b',1,'SpineMLSimulator::NetworkClient']]],
   ['model_5fname',['model_name',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab1164b8374a4b390e77bc32effed638c',1,'pygenn.genn_model.GeNNModel.model_name()'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a657e703ee01779146f1ccb8351ede55b',1,'pygenn.genn_model.GeNNModel.model_name(self)'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4e21fa1268613abb29d4d85de6084638',1,'pygenn.genn_model.GeNNModel.model_name(self, model_name)']]],
   ['model_5fpreprocessor_2epy',['model_preprocessor.py',['../d2/d3e/model__preprocessor_8py.html',1,'']]],
+  ['modelproperty_2ecc',['modelProperty.cc',['../d2/d42/modelProperty_8cc.html',1,'']]],
+  ['modelproperty_2eh',['modelProperty.h',['../d8/df1/modelProperty_8h.html',1,'']]],
   ['models',['Models',['../dd/d20/namespaceModels.html',1,'']]],
   ['models_2eh',['models.h',['../d4/d13/models_8h.html',1,'']]],
   ['modelspec',['ModelSpec',['../da/dfd/classModelSpec.html',1,'ModelSpec'],['../da/dfd/classModelSpec.html#a5f71e866bd0b2af2abf2b1e8dde7d6d4',1,'ModelSpec::ModelSpec()'],['../da/dfd/classModelSpec.html#ab5f3d20c830593a4452be5878e43bba8',1,'ModelSpec::ModelSpec(const ModelSpec &amp;)=delete']]],

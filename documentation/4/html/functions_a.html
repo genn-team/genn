@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -96,6 +96,9 @@ $(document).ready(function(){initNavTree('functions_a.html','');});
 <div class="textblock">Here is a list of all class members with links to the classes they belong to:</div>
 
 <h3><a id="index_a"></a>- a -</h3><ul>
+<li>access
+: <a class="el" href="d5/d42/structModels_1_1Base_1_1Var.html#a43fa55b9b858bb7b6fd9927267aa61ae">Models::Base::Var</a>
+</li>
 <li>add_current_source()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a20b03cbc0200038e8dd9950553fe5152">pygenn.genn_model.GeNNModel</a>
 </li>
@@ -130,6 +133,15 @@ $(document).ready(function(){initNavTree('functions_a.html','');});
 <li>addOutSyn()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a4b073fc74ad5b0ba60811487525569ee">NeuronGroup</a>
 </li>
+<li>addParamNameSubstitution()
+: <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#a6923e685a841769d7473736f6f0b4aa8">CodeGenerator::Substitutions</a>
+</li>
+<li>addParamValueSubstitution()
+: <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#a6e00e02a190497748561fed0e4c937b0">CodeGenerator::Substitutions</a>
+</li>
+<li>addPresynapticUpdateStrategy()
+: <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a7b408f27067e5ac5962567925a3c62cb">CodeGenerator::CUDA::Backend</a>
+</li>
 <li>addSpkEventCondition()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a4b0aa0380df4cf7d51ec68caf9a703c2">NeuronGroup</a>
 </li>
@@ -139,11 +151,51 @@ $(document).ready(function(){initNavTree('functions_a.html','');});
 <li>addType()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a70d012f95c388904a7ea64a5509ee124">CodeGenerator::BackendBase</a>
 </li>
+<li>addVarNameSubstitution()
+: <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#ace9f2d94bf7832f0f538c53d27063540">CodeGenerator::Substitutions</a>
+</li>
 <li>addVarSubstitution()
 : <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#ae3ed06630ef19dce975fd16651768c32">CodeGenerator::Substitutions</a>
 </li>
+<li>addVarValueSubstitution()
+: <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#a2f2f923e25cbc9d17819cc4453482dc8">CodeGenerator::Substitutions</a>
+</li>
+<li>allocateExtraGlobalParam()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#ad001c93e5f2632c5d6f191af52931223">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>allocateMem()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a1d7f439db16acbf066a76bc2be30075d">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>Analogue()
+: <a class="el" href="d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html#a29fc54b3c109d83421e18f5f2d90c961">SpineMLSimulator::Input::Analogue</a>
+</li>
+<li>AnalogueBase()
+: <a class="el" href="d2/d8b/classSpineMLSimulator_1_1LogOutput_1_1AnalogueBase.html#a7bb17eef387e82dba225a7b45100de82">SpineMLSimulator::LogOutput::AnalogueBase</a>
+</li>
+<li>AnalogueExternal()
+: <a class="el" href="d1/dfa/classSpineMLSimulator_1_1LogOutput_1_1AnalogueExternal.html#a17ac8f85cae3775ff58d41a2f03bad4b">SpineMLSimulator::LogOutput::AnalogueExternal</a>
+</li>
+<li>AnalogueFile()
+: <a class="el" href="df/dc2/classSpineMLSimulator_1_1LogOutput_1_1AnalogueFile.html#a1055aee43dc7c09332a93d4f37687a9d">SpineMLSimulator::LogOutput::AnalogueFile</a>
+</li>
+<li>AnalogueNetwork()
+: <a class="el" href="de/d4c/classSpineMLSimulator_1_1LogOutput_1_1AnalogueNetwork.html#a9655fc7355dac87a4ce60f60b5171c7b">SpineMLSimulator::LogOutput::AnalogueNetwork</a>
+</li>
+<li>AnalogueRecorder()
+: <a class="el" href="dc/d01/classAnalogueRecorder.html#acdaededa951813385b581b2287462fd7">AnalogueRecorder&lt; T &gt;</a>
+</li>
 <li>apply()
 : <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#ae2f104d7fb3d30afa560f4ea00eed80a">CodeGenerator::Substitutions</a>
+, <a class="el" href="d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html#a49a674f2bdf809c2849e984cc65d9eff">SpineMLSimulator::Input::Analogue</a>
+, <a class="el" href="d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html#a1fc34201554a5e0c237e6d7a81c4dbe9">SpineMLSimulator::Input::Base</a>
+, <a class="el" href="dd/dfb/classSpineMLSimulator_1_1Input_1_1InterSpikeIntervalBase.html#ac6c2c8049945a6af671074d75c2561ca">SpineMLSimulator::Input::InterSpikeIntervalBase</a>
+, <a class="el" href="da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html#ae7988567b772bd21f7ecf7af2e62ef4c">SpineMLSimulator::Input::SpikeTime</a>
+</li>
+<li>applyCheckUnreplaced()
+: <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#a3d1c276cee79640a15949258e9643afc">CodeGenerator::Substitutions</a>
+</li>
+<li>applyScalar()
+: <a class="el" href="db/d2c/classSpineMLSimulator_1_1InputValue_1_1ScalarBase.html#aec0760f8685f667a294b38430cf879e2">SpineMLSimulator::InputValue::ScalarBase</a>
 </li>
 </ul>
 </div><!-- contents -->
@@ -151,7 +203,7 @@ $(document).ready(function(){initNavTree('functions_a.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:15 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:30:10 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

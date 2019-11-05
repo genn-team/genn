@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -119,6 +119,12 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 <li>ParamValVec
 : <a class="el" href="db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48">Snippet::Base</a>
 </li>
+<li>parseCommandLine()
+: <a class="el" href="d4/d40/classGenerateRunBase.html#aa53bee3e317ce87b21fb44b774426d4a">GenerateRunBase</a>
+</li>
+<li>PoissonSpikeRate()
+: <a class="el" href="db/d06/classSpineMLSimulator_1_1Input_1_1PoissonSpikeRate.html#abe6ac796ba51eaedfb8932a36ab0c6ff">SpineMLSimulator::Input::PoissonSpikeRate</a>
+</li>
 <li>pop
 : <a class="el" href="da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a8559a76c85d0c217d97c7797b38e8411">pygenn.genn_groups.CurrentSource</a>
 , <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a4a569b27b4c1517027d02a588079091b">pygenn.genn_groups.NeuronGroup</a>
@@ -179,6 +185,9 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 <li>psm_vars
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a1e4d53dd8d45f5af69098c3def912bbd">pygenn.genn_groups.SynapseGroup</a>
 </li>
+<li>pull()
+: <a class="el" href="dc/db2/classSpineMLSimulator_1_1StateVar.html#acbf04da234254ca52b3d3854a24d400a">SpineMLSimulator::StateVar&lt; T &gt;</a>
+</li>
 <li>pull_connectivity_from_device()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a915100ccf83beff4923c503475aad46a">pygenn.genn_model.GeNNModel</a>
 </li>
@@ -193,6 +202,33 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 </li>
 <li>pull_var_from_device()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9a24190a85b0e01e1f22e030a4a6a42b">pygenn.genn_model.GeNNModel</a>
+</li>
+<li>pullConnectivityFromDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a4b7f7e6f05a42324a7313f0459e3f99b">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pullCurrentSpikesFromDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#af6c7b50f91a08ddaf3f6c62553cc3707">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pullExtraGlobalParam()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a3c80e8caf4ef55b8879f57d9f7e30efa">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pullFromDevice()
+: <a class="el" href="dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html#a2a562a5ba0478fdfbeedd6007b9f3306">SpineMLSimulator::ModelProperty::Base</a>
+</li>
+<li>pullModelPropertyFromDevice()
+: <a class="el" href="d2/d8b/classSpineMLSimulator_1_1LogOutput_1_1AnalogueBase.html#a39663b19aeb4e63e8e9d01306bece125">SpineMLSimulator::LogOutput::AnalogueBase</a>
+</li>
+<li>pullSpikesFromDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a3a511a379b48ef2dd185846047d3210f">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pullStateFromDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#ac2e8b0538bef3905ae636174d70661b4">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pullVarFromDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#af99fed274b4d6e768b7f2c23416685fe">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>push()
+: <a class="el" href="dc/db2/classSpineMLSimulator_1_1StateVar.html#aed36de4b931134711d1ff9310693d476">SpineMLSimulator::StateVar&lt; T &gt;</a>
 </li>
 <li>push_connectivity_to_device()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a88a9e18417e48815a2534a2e6dead826">pygenn.genn_model.GeNNModel</a>
@@ -209,13 +245,37 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 <li>push_var_to_device()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a8217fc38ecb1bbbd249bfee27455ac90">pygenn.genn_model.GeNNModel</a>
 </li>
+<li>pushConnectivityToDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a47221b4935e105ca2a09d0dfc0c58394">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>PushCurrentSpikesFunc
+: <a class="el" href="d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#ab2f884afe4c5dba8f4e34a42ca8ddad0">SpineMLSimulator::Input::SpikeBase</a>
+</li>
+<li>pushCurrentSpikesToDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a554acb235be4a8267b80108c8e673b4e">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pushExtraGlobalParam()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a9a81bc0052cc4f74d3c1dca19d2e0784">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pushSpikesToDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a38b5f014414ec355b06d60349797df22">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pushStateToDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#ab965f7b4609f77e1a78ad2cbdedc6591">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
+<li>pushToDevice()
+: <a class="el" href="dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html#ad07f41074e0cdfbe35e08d0ef5bd46bc">SpineMLSimulator::ModelProperty::Base</a>
+</li>
+<li>pushVarToDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#aeb55925d39439c5b6d073fef80a60045">SharedLibraryModel&lt; scalar &gt;</a>
+</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:15 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:30:10 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

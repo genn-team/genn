@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.0.2</span>
+   &#160;<span id="projectnumber">4.1.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -124,8 +124,11 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:ad8e937d78148dcd94e8174b3fba45e86"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad8e937d78148dcd94e8174b3fba45e86">showPtxInfo</a> = false</td></tr>
-<tr class="memdesc:ad8e937d78148dcd94e8174b3fba45e86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should PTX assembler information be displayed for each <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> kernel during compilation.  <a href="#ad8e937d78148dcd94e8174b3fba45e86">More...</a><br /></td></tr>
+<tr class="memdesc:ad8e937d78148dcd94e8174b3fba45e86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should PTX assembler information be displayed for each <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> kernel during compilation?  <a href="#ad8e937d78148dcd94e8174b3fba45e86">More...</a><br /></td></tr>
 <tr class="separator:ad8e937d78148dcd94e8174b3fba45e86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28f276f8498add4713f59850c153e522"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522">generateLineInfo</a> = false</td></tr>
+<tr class="memdesc:a28f276f8498add4713f59850c153e522"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should line info be included in resultant executable for debugging/profiling purposes?  <a href="#a28f276f8498add4713f59850c153e522">More...</a><br /></td></tr>
+<tr class="separator:a28f276f8498add4713f59850c153e522"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3f7e871cfa06d52cdff493f80a9289e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0">DeviceSelect</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e">deviceSelectMethod</a> = <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0af00c8dbdd6e1f11bdae06be94277d293">DeviceSelect::OPTIMAL</a></td></tr>
 <tr class="memdesc:ab3f7e871cfa06d52cdff493f80a9289e"><td class="mdescLeft">&#160;</td><td class="mdescRight">How to select GPU device.  <a href="#ab3f7e871cfa06d52cdff493f80a9289e">More...</a><br /></td></tr>
 <tr class="separator:ab3f7e871cfa06d52cdff493f80a9289e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -219,6 +222,22 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a28f276f8498add4713f59850c153e522"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28f276f8498add4713f59850c153e522">&#9670;&nbsp;</a></span>generateLineInfo</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CodeGenerator::CUDA::Preferences::generateLineInfo = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Should line info be included in resultant executable for debugging/profiling purposes? </p>
+
+</div>
+</div>
 <a id="a24e6c8b33837783988259baa53fd4dda"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a24e6c8b33837783988259baa53fd4dda">&#9670;&nbsp;</a></span>manualBlockSizes</h2>
 
@@ -263,7 +282,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Should PTX assembler information be displayed for each <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> kernel during compilation. </p>
+<p>Should PTX assembler information be displayed for each <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> kernel during compilation? </p>
 
 </div>
 </div>
@@ -292,7 +311,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a></li><li class="navelem"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html">Preferences</a></li>
-    <li class="footer">Generated on Tue Aug 27 2019 22:40:10 for GeNN by
+    <li class="footer">Generated on Tue Nov 5 2019 14:29:49 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

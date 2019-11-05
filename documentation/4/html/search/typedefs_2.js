@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['grouphandler',['GroupHandler',['../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2',1,'CodeGenerator::BackendBase']]]
+  ['egpvec',['EGPVec',['../db/d97/classSnippet_1_1Base.html#a43ece29884e2c6cabffe9abf985807c6',1,'Snippet::Base']]]
 ];

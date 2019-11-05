@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['genn_5flong_5fdouble',['GENN_LONG_DOUBLE',['../dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08ae401c6285be90f3a255c38f422b1a60c',1,'modelSpec.h']]],
-  ['global',['GLOBAL',['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334',1,'synapseMatrixType.h']]]
+  ['events',['Events',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a9dd377f02bbae3d25c227bd306841823a87f9f735a1d36793ceaecd4e47124b63',1,'SpineMLSimulator::NetworkClient']]]
 ];

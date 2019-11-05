@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['connections_5fset',['connections_set',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af92bed3adac69c3fe0701aa312fd07b5',1,'pygenn::genn_groups::SynapseGroup']]],
-  ['connectivity_5finitialiser',['connectivity_initialiser',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a48893828585d570d55f9c488e9690dd2',1,'pygenn::genn_groups::SynapseGroup']]],
-  ['container',['container',['../df/d6f/structCodeGenerator_1_1NameIterCtx.html#a7fb1b7953fa37ee52a8076519ec02b94',1,'CodeGenerator::NameIterCtx']]],
-  ['current_5fsource_5fmodel',['current_source_model',['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#aa2e59cb8e23e22392bc2c15dd571fe47',1,'pygenn::genn_groups::CurrentSource']]],
-  ['current_5fsources',['current_sources',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a93daad6952a3dd9e66bc292617ae1830',1,'pygenn::genn_model::GeNNModel']]]
+  ['backend_5fmodules',['backend_modules',['../de/d6e/namespacepygenn_1_1genn__model.html#a0378993ab51a2871fc274bddf7b55bcd',1,'pygenn::genn_model']]],
+  ['blocksizeselectmethod',['blockSizeSelectMethod',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad9ddce1e46c8707bf1c30116f9a799be',1,'CodeGenerator::CUDA::Preferences']]]
 ];
