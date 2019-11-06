@@ -141,7 +141,6 @@ const char *Backend::KernelNames[KernelMax] = {
 std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategy::PreSpan,
     new PresynapticUpdateStrategy::PostSpan,
-    new PresynapticUpdateStrategy::PreSpanBitmask,
     new PresynapticUpdateStrategy::PostSpanBitmask,
 };
 //--------------------------------------------------------------------------

@@ -123,7 +123,7 @@ void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayT
 //----------------------------------------------------------------------------
 void SynapseGroup::setSpanType(SpanType spanType)
 {
-    if ((getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         m_SpanType = spanType;
     }
     else {

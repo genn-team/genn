@@ -92,40 +92,6 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanBitmask
-//--------------------------------------------------------------------------
-//! Presynaptic parallelism with optimizations for BITMASK connectivity
-class PreSpanBitmask : public Base
-{
-public:
-    //------------------------------------------------------------------------
-    // PresynapticUpdateStrategy::Base virtuals
-    //------------------------------------------------------------------------
-    //! Get the number of threads that presynaptic updates should be parallelised across
-    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
-
-    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
-
-    //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
-
-    //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const Backend &backend) const override;
-
-    virtual void genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
-
-    //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, 
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
-                           BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
-
-    virtual void genPostamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
-};
-
-//--------------------------------------------------------------------------
 // CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan
 //--------------------------------------------------------------------------
 //! Postsynaptic parallelism
