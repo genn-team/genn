@@ -74,9 +74,16 @@ fi
 # **NOTE** setting CUDA_PATH is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
 export CUDA_PATH=${CUDA_PATH-/usr/local/cuda} 
 
+# Count cores using approach lifted from https://stackoverflow.com/questions/6481005/how-to-obtain-the-number-of-cpus-cores-in-linux-from-the-command-line
+if [[ $(uname) = "Darwin" ]]; then
+    CORE_COUNT=$(sysctl -n hw.physicalcpu_max)
+else
+    CORE_COUNT=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
+fi
+
 # generate model code
 BASEDIR=$(dirname "$0")
-make -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
+make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$MPI_ENABLE" ]]; then
     cp "$GENERATOR" "$GENERATOR"_"$OMPI_COMM_WORLD_RANK"
