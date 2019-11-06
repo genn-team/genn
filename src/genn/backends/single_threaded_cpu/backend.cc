@@ -408,7 +408,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             if(!s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
                 os << "// synapse group " << s.first << std::endl;
                 const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-                const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t synapticMatrixRowStride = getSynapticMatrixRowStride(s.second);
 
                 // If matrix connectivity is ragged
