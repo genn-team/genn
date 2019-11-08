@@ -1649,7 +1649,9 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
         }
     }
     else {
-        
+        if(loc & VarLocation::HOST) {
+            os << type << " " << name << ";" << std::endl;
+        }
         if(loc & VarLocation::DEVICE) {
             // If the type is a pointer type we need a host and a device pointer
             if(::Utils::isTypePointer(type)) {
