@@ -606,10 +606,12 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, VarLocation) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, VarLocation) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
@@ -660,33 +662,42 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
+//--------------------------------------------------------------------------
 void Backend::genCurrentVariablePull(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroupInternal&) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroupInternal&) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInternal&) const
 {
+    assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const ModelSpecInternal &model) const
