@@ -5,6 +5,9 @@
 #include <random>
 #include <vector>
 
+// SpineML simulator includes
+#include "stateVar.h"
+
 // Forward declarations
 namespace pugi
 {
@@ -27,36 +30,45 @@ namespace ModelProperty
 class Base
 {
 public:
-    typedef void (*PushFunc)(bool);
-    typedef void (*PullFunc)(void);
-
-    Base(scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size)
-        : m_HostStateVar(hostStateVar), m_PushFunc(pushFunc), m_PullFunc(pullFunc), m_Size(size)
+    Base(const StateVar<scalar> &stateVar, unsigned int size)
+    :   m_StateVar(stateVar), m_Size(size)
     {
     }
+
     virtual ~Base(){}
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    scalar *getHostStateVarBegin() { return &m_HostStateVar[0]; }
-    scalar *getHostStateVarEnd() { return &m_HostStateVar[m_Size]; }
+    scalar *getHostStateVar()
+    {
+        return m_StateVar.get();
+    }
 
-    const scalar *getHostStateVarBegin() const{ return &m_HostStateVar[0]; }
-    const scalar *getHostStateVarEnd() const{ return &m_HostStateVar[m_Size]; }
+    const scalar *getHostStateVar() const
+    {
+        return m_StateVar.get();
+    }
 
-    void pushToDevice() const;
-    void pullFromDevice() const;
+    void pushToDevice() const
+    {
+        m_StateVar.push();
+    }
+    void pullFromDevice() const
+    {
+        m_StateVar.pull();
+    }
 
-    unsigned int getSize() const{ return m_Size; }
+    unsigned int getSize() const
+    {
+        return m_Size;
+    }
 
 private:
     //------------------------------------------------------------------------
     // Private members
     //------------------------------------------------------------------------
-    scalar *m_HostStateVar;
-    PushFunc m_PushFunc;
-    PullFunc m_PullFunc;
+    StateVar<scalar> m_StateVar;
     unsigned int m_Size;
 };
 
@@ -66,10 +78,8 @@ private:
 class Fixed : public Base
 {
 public:
-    Fixed(const pugi::xml_node &node,
-          scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
-    Fixed(double value,
-          scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
+    Fixed(const pugi::xml_node &node, const StateVar<scalar> &stateVar, unsigned int size);
+    Fixed(double value, const StateVar<scalar> &stateVar, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -90,7 +100,7 @@ class ValueList : public Base
 {
 public:
     ValueList(const pugi::xml_node &node, const filesystem::path &basePath, const std::vector<unsigned int> *remapIndices,
-              scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
+              const StateVar<scalar> &stateVar, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -110,8 +120,7 @@ private:
 class UniformDistribution : public Base
 {
 public:
-    UniformDistribution(const pugi::xml_node &node,
-                        scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
+    UniformDistribution(const pugi::xml_node &node, const StateVar<scalar> &stateVar, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -132,8 +141,7 @@ private:
 class NormalDistribution : public Base
 {
 public:
-    NormalDistribution(const pugi::xml_node &node,
-                       scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
+    NormalDistribution(const pugi::xml_node &node, const StateVar<scalar> &stateVar, unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -154,8 +162,7 @@ private:
 class ExponentialDistribution : public Base
 {
 public:
-    ExponentialDistribution(const pugi::xml_node &node,
-                            scalar *hostStateVar, PushFunc pushFunc, PullFunc pullFunc, unsigned int size);
+    ExponentialDistribution(const pugi::xml_node &node, const StateVar<scalar> &stateVar,  unsigned int size);
 
     //------------------------------------------------------------------------
     // Public API
@@ -174,7 +181,7 @@ private:
 // Functions
 //----------------------------------------------------------------------------
 std::unique_ptr<Base> create(const pugi::xml_node &node,
-                             scalar *hostStateVar, Base::PushFunc pushFunc, Base::PullFunc pullFunc, unsigned int size,
+                             const StateVar<scalar> &stateVar, unsigned int size,
                              bool skipGeNNInitialised, const filesystem::path &basePath,
                              const std::string &valueNamespace, const std::vector<unsigned int> *remapIndices);
 

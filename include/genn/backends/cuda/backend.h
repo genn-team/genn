@@ -6,6 +6,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <unordered_set>
 
 // CUDA includes
 #include <cuda.h>
@@ -87,8 +88,11 @@ struct Preferences : public PreferencesBase
         std::fill(manualBlockSizes.begin(), manualBlockSizes.end(), 32);
     }
 
-    //! Should PTX assembler information be displayed for each CUDA kernel during compilation
+    //! Should PTX assembler information be displayed for each CUDA kernel during compilation?
     bool showPtxInfo = false;
+
+    //! Should line info be included in resultant executable for debugging/profiling purposes?
+    bool generateLineInfo = false;
 
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
@@ -155,6 +159,10 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+
+    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
+
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const override
     {
         genCurrentSpikePush(os, ng, false);
@@ -293,6 +301,12 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
+    //! Adds a type - both to backend base's list of sized types but also to device types set
+    void addDeviceType(const std::string &type, size_t size);
+
+    //! Is type a a device only type?
+    bool isDeviceType(const std::string &type) const;
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------
@@ -309,6 +323,9 @@ private:
     cudaDeviceProp m_ChosenDevice;
 
     int m_RuntimeVersion;
+
+    //! Types that are only supported on device i.e. should never be exposed to user code
+    std::unordered_set<std::string> m_DeviceTypes;
 
     //--------------------------------------------------------------------------
     // Static members

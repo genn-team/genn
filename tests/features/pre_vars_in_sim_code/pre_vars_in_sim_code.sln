@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pre_vars_in_sim_code", "pre_vars_in_sim_code.vcxproj", "{0F3F2D20-2718-4A06-A975-B40CF3F91F60}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3570508D-D92E-46A3-8ED1-C690339883D} = {3570508D-D92E-46A3-8ED1-C690339883D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "pre_vars_in_sim_code_CODE\runner.vcxproj", "{3570508D-D92E-46A3-8ED1-C690339883D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0F3F2D20-2718-4A06-A975-B40CF3F91F60}.Debug|x64.ActiveCfg = Debug|x64
+		{0F3F2D20-2718-4A06-A975-B40CF3F91F60}.Debug|x64.Build.0 = Debug|x64
+		{0F3F2D20-2718-4A06-A975-B40CF3F91F60}.Release|x64.ActiveCfg = Release|x64
+		{0F3F2D20-2718-4A06-A975-B40CF3F91F60}.Release|x64.Build.0 = Release|x64
+		{3570508D-D92E-46A3-8ED1-C690339883D}.Debug|x64.ActiveCfg = Debug|x64
+		{3570508D-D92E-46A3-8ED1-C690339883D}.Debug|x64.Build.0 = Debug|x64
+		{3570508D-D92E-46A3-8ED1-C690339883D}.Release|x64.ActiveCfg = Release|x64
+		{3570508D-D92E-46A3-8ED1-C690339883D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

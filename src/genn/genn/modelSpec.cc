@@ -37,7 +37,8 @@
 ModelSpec::ModelSpec()
 :   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
-    m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_ShouldMergePostsynapticModels(false)
+    m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
+    m_ShouldMergePostsynapticModels(false)
 {
     setPrecision(GENN_FLOAT);
 }
@@ -148,45 +149,6 @@ void ModelSpec::setPrecision(FloatType floattype /**<  */)
 
 void ModelSpec::finalize()
 {
-    // Loop through neuron populations and their outgoing synapse populations
-    for(auto &n : m_LocalNeuronGroups) {
-        for(auto *sg : n.second.getOutSyn()) {
-            const auto *wu = sg->getWUModel();
-
-            if (!wu->getEventCode().empty()) {
-                using namespace CodeGenerator;
-                assert(!wu->getEventThresholdConditionCode().empty());
-
-                // do an early replacement of parameters, derived parameters and extra global parameters
-                // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
-                Substitutions thresholdSubs;
-                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
-                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
-                thresholdSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg->getName());
-
-                std::string eCode = wu->getEventThresholdConditionCode();
-                thresholdSubs.apply(eCode);
-
-                // Add code and name of
-                std::string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?
-                    "" : sg->getName() + "_weightupdate_simCode";
-
-                // Add code and name of support code namespace to set
-                n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
-
-                // analyze which neuron variables need queues
-                n.second.updatePreVarQueues(wu->getEventCode());
-            }
-        }
-        if (n.second.getSpikeEventCondition().size() > 1) {
-            for(auto *sg : n.second.getOutSyn()) {
-                if (!sg->getWUModel()->getEventCode().empty()) {
-                    sg->setEventThresholdReTestRequired(true);
-                }
-            }
-        }
-    }
-
     // NEURON GROUPS
     for(auto &n : m_LocalNeuronGroups) {
         // Initialize derived parameters
@@ -227,6 +189,45 @@ void ModelSpec::finalize()
     for(auto &n : m_LocalNeuronGroups) {
         if(!n.second.getInSyn().empty()) {
             n.second.mergeIncomingPSM(m_ShouldMergePostsynapticModels);
+        }
+    }
+
+    // Loop through neuron populations and their outgoing synapse populations
+    for(auto &n : m_LocalNeuronGroups) {
+        for(auto *sg : n.second.getOutSyn()) {
+            const auto *wu = sg->getWUModel();
+
+            if (!wu->getEventCode().empty()) {
+                using namespace CodeGenerator;
+                assert(!wu->getEventThresholdConditionCode().empty());
+
+                // do an early replacement of parameters, derived parameters and extra global parameters
+                // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
+                Substitutions thresholdSubs;
+                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
+                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
+                thresholdSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg->getName());
+
+                std::string eCode = wu->getEventThresholdConditionCode();
+                thresholdSubs.apply(eCode);
+
+                // Add code and name of
+                std::string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?
+                    "" : sg->getName() + "_weightupdate_simCode";
+
+                // Add code and name of support code namespace to set
+                n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
+
+                // analyze which neuron variables need queues
+                n.second.updatePreVarQueues(wu->getEventCode());
+            }
+        }
+        if (n.second.getSpikeEventCondition().size() > 1) {
+            for(auto *sg : n.second.getOutSyn()) {
+                if (!sg->getWUModel()->getEventCode().empty()) {
+                    sg->setEventThresholdReTestRequired(true);
+                }
+            }
         }
     }
 }

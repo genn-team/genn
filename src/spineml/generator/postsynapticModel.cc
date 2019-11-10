@@ -125,6 +125,9 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
                                                        const NeuronModel *trgNeuronModel,
                                                        const WeightUpdateModel *weightUpdateModel)
 {
+    // Read aliases
+    Aliases aliases(componentClass);
+
     // Loop through send ports
     LOGD << "\t\tSend ports:";
     std::vector<std::tuple<std::string, std::string, bool>> sendPortVariables;
@@ -164,10 +167,6 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         ImpulseReceive,
         EventReceive,
     };
-
-    // Read aliases
-    std::map<std::string, std::string> aliases;
-    readAliases(componentClass, aliases);
 
     // Loop through receive ports
     LOGD << "\t\tReceive ports:";
@@ -238,10 +237,10 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 
     // Generate model code using specified condition handler
     bool multipleRegimes;
-    ObjectHandler::Condition objectHandlerCondition(decayCodeStream, aliases);
+    ObjectHandler::Condition objectHandlerCondition(decayCodeStream);
     ObjectHandlerImpulse objectHandlerImpulse(wumInputPort.getName(WUMInputType::ImpulseReceive));
     ObjectHandlerEvent objectHandlerEvent;
-    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(decayCodeStream, aliases);
+    ObjectHandler::TimeDerivative objectHandlerTimeDerivative(decayCodeStream);
     std::tie(multipleRegimes, m_InitialRegimeID) = generateModelCode(componentClass,
                                                                      {
                                                                          { wumInputPort.getName(WUMInputType::EventReceive), &objectHandlerEvent }
@@ -265,6 +264,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
     const std::string &impulseAssignStateVar = objectHandlerImpulse.getImpulseAssignStateVar();
 
     // Loop through send port variables
+    std::unordered_set<std::string> excludeAliases;
     for(const auto s : sendPortVariables) {
         // If this is an event send port
         if(std::get<2>(s)) {
@@ -272,8 +272,17 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         }
         // Otherwise, if it's an analogue send port
         else {
-            // Resolve any aliases to get value to send through this send port
-            std::string inputCode = getSendPortCode(aliases, m_Vars, std::get<1>(s));
+            // If send port is an alias, use alias code as output, otherwise portname
+            // **NOTE** this will cause any dependencies of the aliases to be included
+            const std::string port = std::get<1>(s);
+            const bool isSendPortAlias = aliases.isAlias(port);
+            std::string inputCode = isSendPortAlias ? aliases.getAliasCode(port) : port;
+
+            // If this port uses a send port alias, add it to the exclude set so
+            // it doesn't also get automatically generated
+            if(isSendPortAlias) {
+                excludeAliases.insert(port);
+            }
 
             // If input to postsynaptic model is provided as an impulse, use the
             // internal $(inSyn) variable in place of the state variable input is added to
@@ -319,6 +328,13 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
             m_Vars.erase(stateVar);
         }
     }
+
+    // Generate aliases required for apply input and decay code
+    std::stringstream aliasStream;
+    aliases.genAliases(aliasStream, {m_ApplyInputCode, m_DecayCode}, excludeAliases);
+
+    // Prepend apply input code with aliases
+    m_ApplyInputCode = aliasStream.str() + m_ApplyInputCode;
 
     // Correctly wrap and replace references to receive port variable in code string
     for(const auto &r : receivePortVariableMap) {

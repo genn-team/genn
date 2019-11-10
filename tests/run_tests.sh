@@ -20,6 +20,13 @@ done
 TESTS_DIR=$(dirname "$0")
 GENN_PATH=$TESTS_DIR/../
 
+# Count cores using approach lifted from https://stackoverflow.com/questions/6481005/how-to-obtain-the-number-of-cpus-cores-in-linux-from-the-command-line
+if [[ $(uname) = "Darwin" ]]; then
+    CORE_COUNT=$(sysctl -n hw.physicalcpu_max)
+else
+    CORE_COUNT=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
+fi
+
 # Clean GeNN library
 pushd $GENN_PATH
 make clean COVERAGE=1
@@ -29,7 +36,7 @@ popd
 pushd $TESTS_DIR
 
 # Loop through feature tests
-for f in features/* ; do
+for f in features/*/ ; do
     echo "Running test $f..."
 
     # Push feature directory
@@ -45,7 +52,7 @@ for f in features/* ; do
     # Run code generator once, generating coverage
     if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
         # Build test
-        if make SIM_CODE=$c; then
+        if make -j $CORE_COUNT SIM_CODE=$c; then
             # Run tests
             ./test --gtest_output="xml:test_results$s.xml"
         fi
@@ -60,7 +67,7 @@ done;
 pushd unit
 
 # Clean and build
-make clean all COVERAGE=1
+make clean all -j $CORE_COUNT COVERAGE=1
 
 # Run tests
 ./test_coverage --gtest_output="xml:test_results_unit.xml"
@@ -70,12 +77,22 @@ popd    # unit
 pushd spineml/simulator
 
 # Clean and build
-make clean all
+make -j $CORE_COUNT clean all
 
 # Run SpineML simulator tests
-./test --gtest_output="xml:test_results_spineml.xml"
+./test --gtest_output="xml:test_results_spineml_simulator.xml"
 
 popd    # spineml/simulator
+
+pushd spineml/generator
+
+# Clean and build
+make -j $CORE_COUNT clean all
+
+# Run SpineML simulator tests
+./test --gtest_output="xml:test_results_spineml_generator.xml"
+
+popd    # spineml/generator
 
 if [[ "$(uname)" = "Darwin" ]]; then
     # Loop through features and build list of raw profile output files

@@ -93,7 +93,16 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
             }
             os << std::endl;
 
-            if (!ng.getMergedInSyn().empty() || (nm->getSimCode().find("Isyn") != std::string::npos)) {
+            // If neuron model sim code references ISyn (could still be the case if there are no incoming synapses)
+            // OR any incoming synapse groups have post synaptic models which reference $(inSyn), declare it
+            if (nm->getSimCode().find("$(Isyn)") != std::string::npos ||
+                std::any_of(ng.getMergedInSyn().cbegin(), ng.getMergedInSyn().cend(),
+                            [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &p)
+                            {
+                                return (p.first->getPSModel()->getApplyInputCode().find("$(inSyn)") != std::string::npos
+                                        || p.first->getPSModel()->getDecayCode().find("$(inSyn)") != std::string::npos);
+                            }))
+            {
                 os << model.getPrecision() << " Isyn = 0;" << std::endl;
             }
 
@@ -191,11 +200,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 os << " using namespace " << ng.getName() << "_neuron;" << std::endl;
             }
 
+            // If a threshold condition is provided
             std::string thCode = nm->getThresholdConditionCode();
-            if (thCode.empty()) { // no condition provided
-                LOGW << "No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!";
-            }
-            else {
+            if (!thCode.empty()) {
                 os << "// test whether spike condition was fulfilled previously" << std::endl;
 
                 neuronSubs.applyCheckUnreplaced(thCode, "thresholdConditionCode : " + ng.getName());
@@ -204,6 +211,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 if (nm->isAutoRefractoryRequired()) {
                     os << "const bool oldSpike= (" << thCode << ");" << std::endl;
                 }
+            }
+            // Otherwise, if any outgoing synapse groups have spike-processing code
+            else if(std::any_of(ng.getOutSyn().cbegin(), ng.getOutSyn().cend(),
+                                [](const SynapseGroupInternal *sg){ return !sg->getWUModel()->getSimCode().empty(); }))
+            {
+                LOGW << "No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!";
             }
 
             os << "// calculate membrane potential" << std::endl;

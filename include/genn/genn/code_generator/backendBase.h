@@ -198,11 +198,28 @@ public:
     virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
                                            const Substitutions &kernelSubs, Handler handler) const = 0;
 
+    //! Generate code for pushing a variable to the 'device'
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
+
+    //! Generate code for pulling a variable from the 'device'
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
+
+    //! Generate code for pushing a variable's value in the current timestep to the 'device'
+    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+
+    //! Generate code for pulling a variable's value in the current timestep from the 'device'
+    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+
+    //! Generate code for pushing true spikes emitted by a neuron group in the current timestep to the 'device'
     virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
+
+    //! Generate code for pulling true spikes emitted by a neuron group in the current timestep from the 'device'
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
+
+    //! Generate code for pushing spike-like events emitted by a neuron group in the current timestep to the 'device'
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
+
+    //! Generate code for pulling spike-like events emitted by a neuron group in the current timestep from the 'device'
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
 
     //! Generate a single RNG instance
@@ -246,7 +263,11 @@ public:
 
     //! Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?
     virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const = 0;
+
+    //! Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure?
     virtual bool isSynRemapRequired() const = 0;
+
+    //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
 
     //! How many bytes of memory does 'device' have
@@ -263,9 +284,17 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
+    //! Helper function to generate matching push and pull functions for the current state of a variable
+    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull,
+                                    const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+    {
+        genCurrentVariablePush(push, ng, type, name, loc);
+        genCurrentVariablePull(pull, ng, type, name, loc);
+    }
+
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
     MemAlloc genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                              const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+                      const std::string &type, const std::string &name, VarLocation loc, size_t count) const
     {
         genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
         genVariableImplementation(runner, type + "*", name, loc);

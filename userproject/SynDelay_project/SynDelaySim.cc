@@ -43,9 +43,9 @@ int main(int argc, char *argv[])
     fileV.open((outLabel + "_Vm").c_str(), std::ios::out | std::ios::trunc);
 
     {
-        SpikeRecorderDelay inputSpikes(outLabel + "_input_st", 500, spkQuePtrInput, glbSpkCntInput, glbSpkInput);
-        SpikeRecorder interSpikes(outLabel + "_inter_st", glbSpkCntInter, glbSpkInter);
-        SpikeRecorder outputSpikes(outLabel + "_output_st", glbSpkCntOutput, glbSpkOutput);
+        SpikeRecorder<> inputSpikes(&getInputCurrentSpikes, &getInputCurrentSpikeCount, outLabel + "_input_st");
+        SpikeRecorder<> interSpikes(&getInterCurrentSpikes, &getInterCurrentSpikeCount, outLabel + "_inter_st");
+        SpikeRecorder<> outputSpikes(&getOutputCurrentSpikes, &getOutputCurrentSpikeCount, outLabel + "_output_st");
 
         std::cout << "# DT " << DT << std::endl;
         std::cout << "# TOTAL_TIME " << TOTAL_TIME << std::endl;

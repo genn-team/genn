@@ -16,7 +16,7 @@
 #endif
 
 // CLI11 includes
-#include "CLI11.hpp"
+#include "../../include/genn/third_party/CLI11.hpp"
 
 //------------------------------------------------------------------------
 // GenerateRunBase
@@ -176,7 +176,7 @@ private:
             cmd += " -c";
         }
 
-        cmd += " && msbuild " + m_ProjectName + ".sln /t:" + m_ProjectName + " /p:Configuration=";
+        cmd += " && msbuild /verbosity:minimal /m " + m_ProjectName + ".sln /t:" + m_ProjectName + " /p:Configuration=";
         if (m_Debug) {
             cmd += "Debug";
         }

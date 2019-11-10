@@ -18,7 +18,7 @@ FOR /D %%F IN (*) DO (
 	CALL genn-buildmodel.bat %BUILD_FLAGS% model.cc
 	
 	REM Build model
-	msbuild "%%F.sln" /t:%%F /p:BuildProjectReferences=true /p:Configuration=Release
+	msbuild "%%F.sln" /m /t:%%F /p:BuildProjectReferences=true /verbosity:minimal /p:Configuration=Release
 	
 	REM Run tests
     test.exe --gtest_output="xml:test_results.xml"

@@ -43,7 +43,7 @@ from collections import OrderedDict
 from importlib import import_module
 from os import path
 from platform import system
-from subprocess import check_call   # to call make
+from subprocess import check_call  # to call make
 from textwrap import dedent
 
 # 3rd party imports
@@ -52,7 +52,7 @@ from six import iteritems, itervalues
 
 # pygenn imports
 from . import genn_wrapper
-from .genn_wrapper import SharedLibraryModel as slm
+from .genn_wrapper import SharedLibraryModelNumpy as slm
 from .genn_wrapper.Models import (Var, VarInit, VarVector)
 from .genn_wrapper.InitSparseConnectivitySnippet import Init
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
@@ -80,14 +80,14 @@ for b in ["CUDA", "SingleThreadedCPU"]:
     else:
         backend_modules[b] = m
 
-class GeNNModel(object):
 
+class GeNNModel(object):
     """GeNNModel class
     This class helps to define, build and run a GeNN model from python
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 enable_debug=False, backend=None):
+                 enable_debug=False, backend=None, selected_gpu=None):
         """Init GeNNModel
         Keyword args:
         precision       --  string precision as string ("float", "double"
@@ -96,29 +96,28 @@ class GeNNModel(object):
         enable_debug    --  boolean enable debug mode. Disabled by default.
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
+        selected_gpu    --  integer specifying the id of the gpu in which the
+                            simulator wil run; None will select automatically
         """
         precision = "float" if precision is not None else precision
         self._scalar = precision
         if precision == "float":
             genn_float_type = "GENN_FLOAT"
-            self._slm = slm.SharedLibraryModel_f()
+            self._slm = slm.SharedLibraryModelNumpy_f()
             self._np_type = np.float32
         elif precision == "double":
             genn_float_type = "GENN_DOUBLE"
-            self._slm = slm.SharedLibraryModel_d()
+            self._slm = slm.SharedLibraryModelNumpy_d()
             self._np_type = np.float64
-        elif precision == "long double":
-            genn_float_type = "GENN_LONG_DOUBLE"
-            self._slm = slm.SharedLibraryModel_ld()
-            self._np_type = np.float128
         else:
             raise ValueError(
-                "Supported precisions are float, double and "
-                "long double, but '{1}' was given".format(precision))
+                "Supported precisions are float and double, "
+                "but '{1}' was given".format(precision))
 
         self._built = False
         self._loaded = False
         self.use_backend = backend
+        self.selected_gpu = selected_gpu
         self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
 
@@ -128,6 +127,18 @@ class GeNNModel(object):
         self.synapse_populations = {}
         self.current_sources = {}
         self.dT = 0.1
+
+    @property
+    def selected_gpu(self):
+        return self._selected_gpu
+
+    @selected_gpu.setter
+    def selected_gpu(self, v):
+        if self.use_backend == "CUDA":
+            self._selected_gpu = v
+        elif v is not None:
+            raise Exception("Selecting a GPU is only compatible with the CUDA backend "
+                            "but the {} backend was chosen.".format(self.use_backend))
 
     @property
     def use_backend(self):
@@ -152,7 +163,7 @@ class GeNNModel(object):
         """Default variable location - defines
         where state variables are initialised"""
         assert False
-        #return self._model.get_default
+        # return self._model.get_default
 
     @default_var_location.setter
     def default_var_location(self, location):
@@ -166,7 +177,7 @@ class GeNNModel(object):
         """Default sparse connectivity mode - where
         connectivity is initialised"""
         assert False
-        #return genn_wrapper.GeNNPreferences.cvar.defaultSparseConnectivityMode
+        # return genn_wrapper.GeNNPreferences.cvar.defaultSparseConnectivityMode
 
     @default_sparse_connectivity_location.setter
     def default_sparse_connectivity_location(self, location):
@@ -189,20 +200,20 @@ class GeNNModel(object):
     @property
     def t(self):
         """Simulation time in ms"""
-        return self._T[0]
+        return self._slm.get_time()
 
     @t.setter
     def t(self, t):
-        self._T[0] = t
+        self._slm.set_time(t)
 
     @property
     def timestep(self):
         """Simulation time step"""
-        return self._TS[0]
+        return self._slm.get_timestep()
 
     @timestep.setter
     def timestep(self, timestep):
-        self._TS[0] = timestep
+        self._slm.set_timestep(timestep)
 
     @property
     def dT(self):
@@ -356,15 +367,20 @@ class GeNNModel(object):
         if self._built:
             raise Exception("GeNN model already built")
         self._path_to_model = path_to_model
-        
+
         # Create output path
         output_path = path.join(path_to_model, self.model_name + "_CODE")
-        
+
         # Finalize model
         self._model.finalize()
 
         # Create suitable preferences object for backend
         preferences = self._backend_module.Preferences()
+
+        if self.selected_gpu is not None:
+            preferences.deviceSelectMethod = self._backend_module.DeviceSelect_MANUAL
+
+            preferences.manualDeviceID = self.selected_gpu
 
         # Create backend
         backend = self._backend_module.create_backend(self._model, output_path, 0, preferences);
@@ -377,7 +393,7 @@ class GeNNModel(object):
 
         # Build code
         if system() == "Windows":
-            check_call(["msbuild", "/p:Configuration=Release", 
+            check_call(["msbuild", "/p:Configuration=Release",
                         path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-C", output_path])
@@ -396,14 +412,6 @@ class GeNNModel(object):
 
         self._slm.allocate_mem()
         self._slm.initialize()
-
-        if self._scalar == "float":
-            self._T = self._slm.assign_external_pointer_single_f("t")
-        if self._scalar == "double":
-            self.T = self._slm.assign_external_pointer_single_d("t")
-        if self._scalar == "long double":
-            self._T = self._slm.assign_external_pointer_single_ld("t")
-        self._TS = self._slm.assign_external_pointer_single_ull("iT")
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
@@ -546,7 +554,7 @@ def init_var(init_var_snippet, param_space):
     param_space         --  dict with param values for the InitVarSnippet class
     """
     # Prepare snippet
-    (s_instance, s_type, param_names, params) =\
+    (s_instance, s_type, param_names, params) = \
         prepare_snippet(init_var_snippet, param_space,
                         genn_wrapper.InitVarSnippet)
 
@@ -567,7 +575,7 @@ def init_connectivity(init_sparse_connect_snippet, param_space):
                                     InitSparseConnectivitySnippet class
     """
     # Prepare snippet
-    (s_instance, s_type, param_names, params) =\
+    (s_instance, s_type, param_names, params) = \
         prepare_snippet(init_sparse_connect_snippet, param_space,
                         genn_wrapper.InitSparseConnectivitySnippet)
 
@@ -583,7 +591,6 @@ def create_custom_neuron_class(class_name, param_names=None,
                                additional_input_vars=None,
                                is_auto_refractory_required=None,
                                custom_body=None):
-
     """This helper function creates a custom NeuronModel class.
     See also:
     create_custom_postsynaptic_class
@@ -628,7 +635,7 @@ def create_custom_neuron_class(class_name, param_names=None,
         body["get_sim_code"] = lambda self: dedent(sim_code)
 
     if threshold_condition_code is not None:
-        body["get_threshold_condition_code"] =\
+        body["get_threshold_condition_code"] = \
             lambda self: dedent(threshold_condition_code)
 
     if reset_code is not None:
@@ -638,17 +645,17 @@ def create_custom_neuron_class(class_name, param_names=None,
         body["get_support_code"] = lambda self: dedent(support_code)
 
     if extra_global_params is not None:
-        body["get_extra_global_params"] =\
+        body["get_extra_global_params"] = \
             lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 
     if additional_input_vars:
-        body["get_additional_input_vars"] =\
+        body["get_additional_input_vars"] = \
             lambda self: ParamValVector([ParamVal(a[0], a[1], a[2])
                                          for a in additional_input_vars])
 
     if is_auto_refractory_required is not None:
-        body["is_auto_refractory_required"] =\
+        body["is_auto_refractory_required"] = \
             lambda self: is_auto_refractory_required
 
     if custom_body is not None:
@@ -797,7 +804,7 @@ def create_custom_weight_update_class(class_name, param_names=None,
         body["get_synapse_dynamics_code"] = lambda self: dedent(synapse_dynamics_code)
 
     if event_threshold_condition_code is not None:
-        body["get_event_threshold_condition_code"] =\
+        body["get_event_threshold_condition_code"] = \
             lambda self: dedent(event_threshold_condition_code)
 
     if pre_spike_code is not None:
@@ -810,34 +817,34 @@ def create_custom_weight_update_class(class_name, param_names=None,
         body["get_sim_support_code"] = lambda self: dedent(sim_support_code)
 
     if learn_post_support_code is not None:
-        body["get_learn_post_support_code"] =\
+        body["get_learn_post_support_code"] = \
             lambda self: dedent(learn_post_support_code)
 
     if synapse_dynamics_suppport_code is not None:
-        body["get_synapse_dynamics_suppport_code"] =\
+        body["get_synapse_dynamics_suppport_code"] = \
             lambda self: dedent(synapse_dynamics_suppport_code)
 
     if extra_global_params is not None:
-        body["get_extra_global_params"] =\
+        body["get_extra_global_params"] = \
             lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 
     if pre_var_name_types is not None:
-        body["get_pre_vars"] =\
+        body["get_pre_vars"] = \
             lambda self: VarVector([Var(*vn)
                                     for vn in pre_var_name_types])
 
     if post_var_name_types is not None:
-        body["get_post_vars"] =\
+        body["get_post_vars"] = \
             lambda self: VarVector([Var(*vn)
                                     for vn in post_var_name_types])
 
     if is_pre_spike_time_required is not None:
-        body["is_pre_spike_time_required"] =\
+        body["is_pre_spike_time_required"] = \
             lambda self: is_pre_spike_time_required
 
     if is_post_spike_time_required is not None:
-        body["is_post_spike_time_required"] =\
+        body["is_post_spike_time_required"] = \
             lambda self: is_post_spike_time_required
 
     if custom_body is not None:
@@ -888,7 +895,7 @@ def create_custom_current_source_class(class_name, param_names=None,
         body["get_injection_code"] = lambda self: dedent(injection_code)
 
     if extra_global_params is not None:
-        body["get_extra_global_params"] =\
+        body["get_extra_global_params"] = \
             lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 
@@ -926,23 +933,24 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
                         ``pygenn.genn_wrapper.DerivedParamFunc`` class
     custom_body     --  dictionary with attributes and methods of the new class
     """
+
     def ctor(self):
         base.__init__(self)
 
     body = {
-            "__init__": ctor,
+        "__init__": ctor,
     }
 
     if param_names is not None:
         body["get_param_names"] = lambda self: StringVector(param_names)
 
     if var_name_types is not None:
-        body["get_vars"] =\
+        body["get_vars"] = \
             lambda self: VarVector([Var(*vn)
                                     for vn in var_name_types])
 
     if derived_params is not None:
-        body["get_derived_params"] =\
+        body["get_derived_params"] = \
             lambda self: DerivedParamVector([DerivedParam(dp[0], make_dpf(dp[1]))
                                              for dp in derived_params])
 
@@ -953,7 +961,6 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
 
 
 def create_dpf_class(dp_func):
-
     """Helper function to create derived parameter function class
 
     Args:
@@ -1083,20 +1090,20 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
         body["get_row_build_code"] = lambda self: dedent(row_build_code)
 
     if row_build_state_vars is not None:
-        body["get_row_build_state_vars"] =\
+        body["get_row_build_state_vars"] = \
             lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
                                          for r in row_build_state_vars])
 
     if calc_max_row_len_func is not None:
-        body["get_calc_max_row_length_func"] =\
+        body["get_calc_max_row_length_func"] = \
             lambda self: make_cmlf(calc_max_row_len_func)
 
     if calc_max_col_len_func is not None:
-        body["get_calc_max_col_length_func"] =\
+        body["get_calc_max_col_length_func"] = \
             lambda self: make_cmlf(calc_max_col_len_func)
 
     if extra_global_params is not None:
-        body["get_extra_global_params"] =\
+        body["get_extra_global_params"] = \
             lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
 

@@ -90,7 +90,7 @@ generateConfigs(genn_path, backends)
 
 # Create list of extension modules required to wrap utilities and various libGeNN namespaces
 ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),
-               Extension('_SharedLibraryModel', ["pygenn/genn_wrapper/generated/SharedLibraryModel.i"], **extension_kwargs),
+               Extension('_SharedLibraryModelNumpy', ["pygenn/genn_wrapper/generated/SharedLibraryModelNumpy.i"], **extension_kwargs),
                Extension('_genn_wrapper', ["pygenn/genn_wrapper/generated/genn_wrapper.i"], **genn_extension_kwargs),
                Extension('_Snippet', ["pygenn/genn_wrapper/swig/Snippet.i"], **genn_extension_kwargs),
                Extension('_Models', ["pygenn/genn_wrapper/swig/Models.i"], **genn_extension_kwargs),
@@ -129,7 +129,7 @@ for filename, namespace, kwargs in backends:
                                  **backend_extension_kwargs))
 
 setup(name = "pygenn",
-      version = "0.2",
+      version = "0.2.1",
       packages = find_packages(),
       package_data={"pygenn": package_data},
 

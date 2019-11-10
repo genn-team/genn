@@ -199,10 +199,10 @@ For convenience the methods this class should implement can be implemented using
     If defined as `NAME` here, they can then be referenced as \$(NAME) in the code string. 
     The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. 
     Parameters are assumed to be always of type double.
-- SET_VARS() defines the names and type strings (e.g. "float", "double", etc) 
+- SET_VARS() defines the names, type strings (e.g. "float", "double", etc) and (optionally) access mode
     of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model with ModelSpec::setPrecision.
     The variables defined here as `NAME` can then be used in the
-    syntax \$(NAME) in the code string. 
+    syntax \$(NAME) in the code string. If the access mode is set to ``VarAccess::READ_ONLY``, GeNN applies additional optimisations and models should not write to it.
 - SET_NEEDS_AUTO_REFRACTORY() defines whether the neuron should include an automatic refractory period to prevent it emitting spikes in successive timesteps.
 
 For example, using these macros, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
@@ -219,7 +219,7 @@ public:
     
     SET_PARAM_NAMES({"tau"});
     
-    SET_VARS({{"V", "scalar"}});
+    SET_VARS({{"V", "scalar", VarAccess::READ_WRITE}});
 };
 \endcode
 
@@ -242,7 +242,7 @@ public:
     
     SET_PARAM_NAMES({"tau"});
     
-    SET_VARS({{"V", "scalar"}});
+    SET_VARS({{"V", "scalar", VarAccess::READ_WRITE}});
     
     SET_DERIVED_PARAMS({
         {"ExpTC", [](const vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
