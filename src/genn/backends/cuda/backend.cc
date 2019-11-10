@@ -1856,7 +1856,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
+MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &) const
 {
     // Create a single Philox4_32_10 RNG
     genVariableDefinition(definitions, definitionsInternal, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
