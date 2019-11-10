@@ -157,7 +157,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
 
                 synSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
                 synSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
-                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", sg.getName());
+                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "", sg.getName());
 
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();
                 synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : " + sg.getName());
