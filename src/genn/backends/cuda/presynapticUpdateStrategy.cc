@@ -350,9 +350,10 @@ size_t PreSpanProcedural::getNumThreads(const SynapseGroupInternal &sg) const
 //----------------------------------------------------------------------------
 bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg) const
 {
-    // Presynaptic procedural parallelism can be used when synapse groups have procedural connectivity
+    // Presynaptic procedural parallelism can be used when synapse groups have 
+    // procedural connectivity and weights are either GLOBAL or PROCEDURAL
     return ((sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
-            && (sg.getMatrixType() & SynapseMatrixWeight::GLOBAL));;
+            && ((sg.getMatrixType() & SynapseMatrixWeight::GLOBAL) || (sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL)));
 }
 //----------------------------------------------------------------------------
 bool PreSpanProcedural::shouldAccumulateInRegister(const SynapseGroupInternal &, const Backend &) const
@@ -471,8 +472,8 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         // If we are using more than one thread to process each row
         if(sg.getNumThreadsPerSpike() > 1) {
             // Calculate how long the sub-row to process on each thread is
-            const unsigned int numPostPerThread = Utils::ceilDivide(numTrgNeurons,
-                                                                    sg.getNumThreadsPerSpike());
+            const size_t numPostPerThread = Utils::ceilDivide(numTrgNeurons,
+                                                              sg.getNumThreadsPerSpike());
             os << "const unsigned int idPostStart = thread * " << numPostPerThread << ";" << std::endl;
 
             // If number of post neurons per thread directly divides total number of postsynaptic neurons
