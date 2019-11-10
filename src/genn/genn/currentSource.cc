@@ -65,7 +65,7 @@ bool CurrentSource::isSimRNGRequired() const
 bool CurrentSource::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
-    if(Utils::isInitRNGRequired(getVarInitialisers())) {
+    if(Utils::isRNGRequired(getVarInitialisers())) {
         return true;
     }
 

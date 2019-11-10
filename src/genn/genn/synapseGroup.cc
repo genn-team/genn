@@ -275,13 +275,13 @@ bool SynapseGroup::isProceduralConnectivityRNGRequired() const
 bool SynapseGroup::isPSInitRNGRequired() const
 {
     // If initialising the postsynaptic variables require an RNG, return true
-    return Utils::isInitRNGRequired(m_PSVarInitialisers);
+    return Utils::isRNGRequired(m_PSVarInitialisers);
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUInitRNGRequired() const
 {
     // If initialising the weight update variables require an RNG, return true
-    if(Utils::isInitRNGRequired(m_WUVarInitialisers)) {
+    if(Utils::isRNGRequired(m_WUVarInitialisers)) {
         return true;
     }
 

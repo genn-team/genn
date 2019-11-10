@@ -132,7 +132,7 @@ bool NeuronGroup::isSimRNGRequired() const
 bool NeuronGroup::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
-    if(Utils::isInitRNGRequired(m_VarInitialisers)) {
+    if(Utils::isRNGRequired(m_VarInitialisers)) {
         return true;
     }
 
