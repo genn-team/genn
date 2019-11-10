@@ -27,7 +27,7 @@ namespace PresynapticUpdateStrategy
 size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
     // Use specified number of threads for each presynaptic neuron
-    return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
+    return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * (size_t)sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
 bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
@@ -348,7 +348,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
 size_t PreSpanProcedural::getNumThreads(const SynapseGroupInternal &sg) const
 {
     // Use specified number of threads for each presynaptic neuron
-    return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
+    return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * (size_t)sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
 bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg) const
@@ -425,30 +425,9 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
             os << "[spike];" << std::endl;
         }
 
-        // Add presynaptic index to substitution stack
-        Substitutions procPopSubs(&popSubs);
-        procPopSubs.addVarSubstitution("id_pre", "preInd");
-
-        // If this connectivity requires an RNG for initialisation,
-        // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
-        // **TODO** probably skip over ids previously used for initialization
-        if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-            // Get the number of RNG streams required for initialisation of the mkodel
-            const size_t numInitRNGStreams = backend.getNumInitialisationRNGStreams(model);
-
-            os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
-            os << "skipahead_sequence((unsigned long long)";
-            if(sg.getNumThreadsPerSpike() > 1) {
-                os << "(preInd * " << sg.getNumThreadsPerSpike() << ") + thread + " << numInitRNGStreams;
-            }
-            else {
-                os << "preInd + " << numInitRNGStreams;
-            }
-            os << ", &connectRNG);" << std::endl;
-
-            // Add substitution for RNGwumProceduralConnectHandler
-            procPopSubs.addVarSubstitution("rng", "&connectRNG");
-        }
+        // Create substitution stack and add presynaptic index
+        Substitutions synSubs(&popSubs);
+        synSubs.addVarSubstitution("id_pre", "preInd");
 
         if (!wu->getSimSupportCode().empty()) {
             os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
@@ -459,7 +438,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
             os << "if(";
 
             // Generate weight update threshold condition
-            Substitutions threshSubs(&procPopSubs);
+            Substitutions threshSubs(&synSubs);
             wumThreshHandler(os, sg, threshSubs);
 
             // end code substitutions ----
@@ -468,15 +447,30 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
             os << CodeStream::OB(130);
         }
 
-        // Create substitution stack for generating presynaptic simulation code
-        Substitutions synSubs(&procPopSubs);
+        // Create substitution stack for generating procedural connectivity code
+        Substitutions connSubs(&synSubs);
 
-        // Replace $(id_post) with first 'function' parameter as simulation code is
-        // going to be, in turn, substituted into procedural connectivity generation code
-        synSubs.addVarSubstitution("id_post", "$(0)");
+        // If this connectivity requires an RNG for initialisation,
+        // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
+        // **TODO** probably skip over ids previously used for initialization
+        if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+            // Only start using streams after those that may have been used for initialisation
+            const size_t rngStreamOffset = backend.getNumInitialisationRNGStreams(model);
 
-        // Create second substitution stack for generating procedural connectivity code
-        Substitutions connSubs(&procPopSubs);
+            // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
+            os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
+            os << "skipahead_sequence((unsigned long long)";
+            if(sg.getNumThreadsPerSpike() > 1) {
+                os << "(preInd * " << sg.getNumThreadsPerSpike() << ") + thread + " << rngStreamOffset;
+            }
+            else {
+                os << "preInd + " << rngStreamOffset;
+            }
+            os << ", &connectRNG);" << std::endl;
+
+            // Add substitution for connection generation code
+            connSubs.addVarSubstitution("rng", "&connectRNG");
+        }
 
         // If we are using more than one thread to process each row
         if(sg.getNumThreadsPerSpike() > 1) {
@@ -502,26 +496,55 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
             connSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
         }
         
+        // Create another substitution stack for generating presynaptic simulation code
+        Substitutions presynapticUpdateSubs(&synSubs);
+
+        // If this synapse group has procedural connectivity and any of it's variables require an RNG
+        if((sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL)
+           && ::Utils::isRNGRequired(sg.getWUVarInitialisers())) 
+        {
+            // Only start using streams after those that may have been used for initialisation or procedural connectivity
+            const size_t rngStreamOffset = backend.getNumInitialisationRNGStreams(model) + backend.getNumPresynapticUpdateRNGStreams(model);
+            
+            // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
+            os << "curandStatePhilox4_32_10_t synRNG = dd_rng[0];" << std::endl;
+            os << "skipahead_sequence((unsigned long long)";
+            if(sg.getNumThreadsPerSpike() > 1) {
+                os << "(preInd * " << sg.getNumThreadsPerSpike() << ") + thread + " << rngStreamOffset;
+            }
+            else {
+                os << "preInd + " << rngStreamOffset;
+            }
+            os << ", &synRNG);" << std::endl;
+
+            // Add substitution for presynaptic update code
+            presynapticUpdateSubs.addVarSubstitution("rng", "&synRNG");
+        }
+
+        // Replace $(id_post) with first 'function' parameter as simulation code is
+        // going to be, in turn, substituted into procedural connectivity generation code
+        presynapticUpdateSubs.addVarSubstitution("id_post", "$(0)");
+
         // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
         if(sg.isDendriticDelayRequired()) {
-            synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "$(id_post)], $(0))");
+            presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "$(id_post)], $(0))");
         }
         // Otherwise
         else {
             // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
             if(shouldAccumulateInSharedMemory(sg, backend)) {
-                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[$(id_post)], $(0))");
+                presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[$(id_post)], $(0))");
             }
             // Otherwise, substitute global memory array for $(inSyn)
             else {
-                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[$(id_post)], $(0))");
+                presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[$(id_post)], $(0))");
             }
         }
 
-        // Generate presynaptic simulation code into new stream
+        // Generate presynaptic simulation code into new stringstream-backed code stream
         std::ostringstream presynapticUpdateStream;
         CodeStream presynapticUpdate(presynapticUpdateStream);
-        wumSimHandler(presynapticUpdate, sg, synSubs);
+        wumSimHandler(presynapticUpdate, sg, presynapticUpdateSubs);
 
         // When a synapse should be 'added', substitute in presynaptic update code
         connSubs.addFuncSubstitution("addSynapse", 1, presynapticUpdateStream.str());

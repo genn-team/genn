@@ -2047,7 +2047,7 @@ size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) c
 {
     // Start by counting remote neuron groups
     size_t numInitThreads = std::accumulate(
-        model.getRemoteNeuronGroups().cbegin(), model.getRemoteNeuronGroups().cend(), 0,
+        model.getRemoteNeuronGroups().cbegin(), model.getRemoteNeuronGroups().cend(), size_t{0},
         [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
         {
             if (n.second.hasOutputToHost(getLocalHostID())) {
@@ -2095,6 +2095,21 @@ size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) c
         });
 
     return numInitThreads;
+}
+//--------------------------------------------------------------------------
+size_t Backend::getNumPresynapticUpdateRNGStreams(const ModelSpecInternal &model) const
+{
+    return std::accumulate(
+        model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), size_t{0},
+        [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
+        {
+            // Add presynaptic update threads
+            if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+                acc += Utils::padSize(getNumPresynapticUpdateThreads(s.second), getKernelBlockSize(KernelPresynapticUpdate));
+            }
+            
+            return acc;
+        });
 }
 //--------------------------------------------------------------------------
 size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)

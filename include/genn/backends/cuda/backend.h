@@ -217,9 +217,14 @@ public:
     std::string getFloatAtomicAdd(const std::string &ftype) const;
 
     //! Get total number of RNG streams potentially used to initialise model
-    // **NOTE** because there are 2^64 streams we are overly conservative
+    /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
     size_t getNumInitialisationRNGStreams(const ModelSpecInternal &model) const;
 
+    //! Get total number of RNG streams potentially used for procedural connectivity
+    /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
+    size_t getNumPresynapticUpdateRNGStreams(const ModelSpecInternal &model) const;
+
+    //! Gets the block size of specific kernel
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 
     //--------------------------------------------------------------------------
