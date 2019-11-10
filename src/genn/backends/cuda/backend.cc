@@ -91,11 +91,6 @@ bool isSparseInitRequired(const SynapseGroupInternal &sg)
             && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
 }
 //-----------------------------------------------------------------------
-bool isProceduralInitRequired(const SynapseGroupInternal &sg)
-{
-    return ((sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) && sg.isWUVarInitRequired());
-}
-//-----------------------------------------------------------------------
 void updateExtraGlobalParams(const std::string &varSuffix, const std::string &codeSuffix, const Snippet::Base::EGPVec &extraGlobalParameters,
                              std::map<std::string, std::string> &kernelParameters, const std::vector<std::string> &codeStrings)
 {
@@ -895,18 +890,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << std::endl;
     }
 
-    // Count the number of threads that will be used to initialize connectivity or initialize state variables for procedural connectivity
-    const size_t numProceduralThreads = std::accumulate(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), 0,
-                                                        [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
-                                                        {
-                                                            if(isProceduralInitRequired(s.second)) {
-                                                                return (acc + Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getNumThreadsPerSpike(), m_KernelBlockSizes[KernelInitialize]));
-                                                            }
-                                                            else {
-                                                                return acc;
-                                                            }
-                                                        });
-
     // Build map of extra global parameters for init kernel
     std::map<std::string, std::string> initKernelParameters;
     for(const auto &s : model.getLocalSynapseGroups()) {
@@ -1076,10 +1059,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             });
         os << std::endl;
     }
-
-    // Because the previous block of code may have used two sequences per thread, add padding before
-    // the first sequence used for initialization of variables associated with procedural connectivity
-    const size_t staticInitSequenceEnd = idInitStart + numProceduralThreads;
+    const size_t numStaticInitThreads = idInitStart;
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
@@ -1108,14 +1088,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
                 [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
                 [](const SynapseGroupInternal &sg){ return isSparseInitRequired(sg); },
-                [this, &model, sgSparseInitHandler, staticInitSequenceEnd](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+                [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
                 {
                     // If this post synapse requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
                     if(sg.isWUInitRNGRequired()) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
-                        os << "skipahead_sequence((unsigned long long)" << staticInitSequenceEnd << " + id, &initRNG);" << std::endl;
+                        os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
 
                         // Add substitution for RNG
                         popSubs.addVarSubstitution("rng", "&initRNG");
@@ -1856,7 +1836,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &) const
+MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
 {
     // Create a single Philox4_32_10 RNG
     genVariableDefinition(definitions, definitionsInternal, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);

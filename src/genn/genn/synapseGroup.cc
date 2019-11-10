@@ -340,12 +340,18 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         if(!m_WUModel->getLearnPostCode().empty()) {
             throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
         }
+
+        // If weight update model has code for continuous synapse dynamics, give error
+        // **THINK** this would actually be pretty trivial to implement
+        if (!m_WUModel->getSynapseDynamicsCode().empty()) {
+            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
+        }
     }
 
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse or procedural connectivity as this should not be set for bitmasks
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
-    if(calcMaxRowLengthFunc && ((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL))) {
+    if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
         m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
                                                 m_ConnectivityInitialiser.getParams());
     }
@@ -355,9 +361,9 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     }
 
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse or procedural connectivity as this should not be set for bitmasks
+    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
-    if(calcMaxColLengthFunc && ((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL))) {
+    if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
         m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
                                                       m_ConnectivityInitialiser.getParams());
     }
