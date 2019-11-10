@@ -161,7 +161,7 @@ public:
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                         SynapseGroupHandler sgProceduralInitHandler, SynapseGroupHandler sgSparseInitHandler) const = 0;
+                         SynapseGroupHandler sgSparseInitHandler) const = 0;
 
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/

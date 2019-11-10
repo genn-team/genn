@@ -132,7 +132,7 @@ public:
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                         SynapseGroupHandler sgProceduralInitHandler, SynapseGroupHandler sgSparseInitHandler) const override;
+                         SynapseGroupHandler sgSparseInitHandler) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
@@ -217,10 +217,6 @@ public:
     std::string getFloatAtomicAdd(const std::string &ftype) const;
 
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
-
-    //! Calculate the starting sequence number to use for this synapse group's procedural connectivity
-    /*! This is used so that procedural connectivity RNGs are seeded the same way in both initialization and presynaptic updating code */
-    size_t getProceduralConnectivitySequence(const SynapseGroupInternal &sg, const ModelSpecInternal &model) const;
 
     //--------------------------------------------------------------------------
     // Static API

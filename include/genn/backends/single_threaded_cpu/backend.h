@@ -52,7 +52,7 @@ public:
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                         SynapseGroupHandler sgProceduralInitHandler, SynapseGroupHandler sgSparseInitHandler) const override;
+                         SynapseGroupHandler sgSparseInitHandler) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;

@@ -330,7 +330,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                       NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                      SynapseGroupHandler, SynapseGroupHandler sgSparseInitHandler) const
+                      SynapseGroupHandler sgSparseInitHandler) const
 {
     os << "void initialize()";
     {
