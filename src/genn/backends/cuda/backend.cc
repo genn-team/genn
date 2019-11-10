@@ -968,7 +968,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// Synapse groups with dense connectivity" << std::endl;
         genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal &sg){ return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroupInternal &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
+            [](const SynapseGroupInternal &sg){ return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired(); },
             [sgDenseInitHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing postsynaptic neurons" << std::endl;
@@ -2043,6 +2043,60 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
     }
 }
 //--------------------------------------------------------------------------
+size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) const
+{
+    // Start by counting remote neuron groups
+    size_t numInitThreads = std::accumulate(
+        model.getRemoteNeuronGroups().cbegin(), model.getRemoteNeuronGroups().cend(), 0,
+        [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
+        {
+            if (n.second.hasOutputToHost(getLocalHostID())) {
+                return acc + Utils::padSize(n.second.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
+            }
+            else {
+                return acc;
+            }
+        });
+
+    // Then local neuron groups
+    numInitThreads = std::accumulate(
+        model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(), numInitThreads,
+        [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
+        {
+            return acc + Utils::padSize(n.second.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
+        });
+
+
+    // Then synapse neuron groups
+    numInitThreads = std::accumulate(
+        model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), numInitThreads,
+        [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
+        {
+            const size_t initBlockSize = getKernelBlockSize(Kernel::KernelInitialize);
+            const size_t initSparseBlockSize = getKernelBlockSize(Kernel::KernelInitializeSparse);
+
+            // Add number of threads required for variable initialisation of dense matrices
+            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && s.second.isWUVarInitRequired()) {
+                acc += Utils::padSize(s.second.getTrgNeuronGroup()->getNumNeurons(), initBlockSize);
+            }
+
+            // Any for sparse connectivity initialisation
+            if (s.second.isSparseConnectivityInitRequired()) {
+                acc += Utils::padSize(s.second.getSrcNeuronGroup()->getNumNeurons(), initBlockSize);
+            }
+
+            // And, finally, any require for variable initialisation of sparse matrices
+            if (isSparseInitRequired(s.second)) {
+                acc += Utils::padSize(s.second.getMaxConnections(), initSparseBlockSize);
+            }
+
+            return acc;
+
+        });
+
+    return numInitThreads;
+}
+//--------------------------------------------------------------------------
 size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
 {
      return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);
@@ -2061,10 +2115,10 @@ size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg)
 size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 {
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
+        return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * (size_t)sg.getMaxConnections();
     }
     else {
-        return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
+        return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * (size_t)sg.getTrgNeuronGroup()->getNumNeurons();
     }
 }
 //--------------------------------------------------------------------------

@@ -1,5 +1,8 @@
 #include "presynapticUpdateStrategy.h"
 
+// Standard C++ includes
+#include <numeric>
+
 // GeNN includes
 #include "gennUtils.h"
 #include "modelSpecInternal.h"
@@ -385,6 +388,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
                                 BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                                 BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const
 {
+    
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
@@ -429,13 +433,18 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
         // **TODO** probably skip over ids previously used for initialization
         if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+            // Get the number of RNG streams required for initialisation of the mkodel
+            const size_t numInitRNGStreams = backend.getNumInitialisationRNGStreams(model);
+
             os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
+            os << "skipahead_sequence((unsigned long long)";
             if(sg.getNumThreadsPerSpike() > 1) {
-                os << "skipahead_sequence((unsigned long long)(preInd * " << sg.getNumThreadsPerSpike() << ") + thread, &connectRNG);" << std::endl;
+                os << "(preInd * " << sg.getNumThreadsPerSpike() << ") + thread + " << numInitRNGStreams;
             }
             else {
-                os << "skipahead_sequence((unsigned long long)preInd, &connectRNG);" << std::endl;
+                os << "preInd + " << numInitRNGStreams;
             }
+            os << ", &connectRNG);" << std::endl;
 
             // Add substitution for RNGwumProceduralConnectHandler
             procPopSubs.addVarSubstitution("rng", "&connectRNG");

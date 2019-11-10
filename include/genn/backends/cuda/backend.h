@@ -216,6 +216,10 @@ public:
 
     std::string getFloatAtomicAdd(const std::string &ftype) const;
 
+    //! Get total number of RNG streams potentially used to initialise model
+    // **NOTE** because there are 2^64 streams we are overly conservative
+    size_t getNumInitialisationRNGStreams(const ModelSpecInternal &model) const;
+
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 
     //--------------------------------------------------------------------------
