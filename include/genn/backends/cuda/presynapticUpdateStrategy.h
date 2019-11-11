@@ -44,7 +44,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                          BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                          BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const = 0;
 };
@@ -73,7 +73,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                          BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                          BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const override;
 };
@@ -102,7 +102,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                          BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                          BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const override;
 };
@@ -131,7 +131,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                         const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                         const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                          BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                          BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const override;
 };

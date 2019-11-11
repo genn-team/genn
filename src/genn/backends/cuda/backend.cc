@@ -545,7 +545,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
                 [this](const SynapseGroupInternal &sg){ return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPresynapticUpdate]); },
                 [](const SynapseGroupInternal &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
-                [wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &model, this]
+                [&idPresynapticStart, wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &model, this]
                 (CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
                 {
                     // Get presynaptic update strategy to use for this synapse group
@@ -582,14 +582,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                     // If spike events should be processed
                     if (sg.isSpikeEventRequired()) {
                         CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, false,
+                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, false, idPresynapticStart,
                                                            wumThreshHandler, wumEventHandler, wumProceduralConnectHandler);
                     }
 
                     // If true spikes should be processed
                     if (sg.isTrueSpikeRequired()) {
                         CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, true,
+                        presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, true, idPresynapticStart,
                                                            wumThreshHandler, wumSimHandler, wumProceduralConnectHandler);
                     }
 

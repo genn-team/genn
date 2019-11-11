@@ -61,7 +61,7 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, con
 }
 //----------------------------------------------------------------------------
 void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                      const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                      const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t,
                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                       BackendBase::SynapseGroupHandler) const
 {
@@ -208,7 +208,7 @@ bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, co
 }
 //----------------------------------------------------------------------------
 void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                       const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                       const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t,
                        BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                        BackendBase::SynapseGroupHandler) const
 {
@@ -384,7 +384,7 @@ bool PreSpanProcedural::shouldAccumulateInSharedMemory(const SynapseGroupInterna
 }
 //----------------------------------------------------------------------------
 void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg,
-                                const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+                                const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
                                 BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                                 BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const
 {
