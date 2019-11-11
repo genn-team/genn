@@ -430,6 +430,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         Substitutions popSubs(&funcSubs);
                         popSubs.addVarSubstitution("id_pre", "i");
                         popSubs.addVarSubstitution("id_post_begin", "0");
+                        popSubs.addVarSubstitution("id_thread", "0");
+                        popSubs.addVarSubstitution("num_threads", "1");
                         popSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
                         
                         // Add function to increment row length and insert synapse into ind array

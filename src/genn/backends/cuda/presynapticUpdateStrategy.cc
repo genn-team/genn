@@ -448,6 +448,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
 
         // Create substitution stack for generating procedural connectivity code
         Substitutions connSubs(&synSubs);
+        connSubs.addVarSubstitution("num_threads", std::to_string(sg.getNumThreadsPerSpike()));
 
         // If this connectivity requires an RNG for initialisation,
         // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
@@ -489,10 +490,12 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
                 connSubs.addVarSubstitution("num_post", "numPost");
             }
 
+            connSubs.addVarSubstitution("id_thread", "thread");
             connSubs.addVarSubstitution("id_post_begin", "idPostStart");
         }
         else {
             connSubs.addVarSubstitution("id_post_begin", "0");
+            connSubs.addVarSubstitution("id_thread", "0");
             connSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
         }
 

@@ -1009,6 +1009,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     CodeStream::Scope b(os);
                     popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                     popSubs.addVarSubstitution("id_post_begin", "0");
+                    popSubs.addVarSubstitution("id_thread", "0");
+                    popSubs.addVarSubstitution("num_threads", "1");
                     popSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
                     
                     // If the synapse group has bitmask connectivity
