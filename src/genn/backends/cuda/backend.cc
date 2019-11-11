@@ -2097,21 +2097,6 @@ size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) c
     return numInitThreads;
 }
 //--------------------------------------------------------------------------
-size_t Backend::getNumPresynapticUpdateRNGStreams(const ModelSpecInternal &model) const
-{
-    return std::accumulate(
-        model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), size_t{0},
-        [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
-        {
-            // Add presynaptic update threads
-            if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
-                acc += Utils::padSize(getNumPresynapticUpdateThreads(s.second), getKernelBlockSize(KernelPresynapticUpdate));
-            }
-            
-            return acc;
-        });
-}
-//--------------------------------------------------------------------------
 size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
 {
      return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);

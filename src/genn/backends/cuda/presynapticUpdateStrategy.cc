@@ -451,21 +451,22 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
 
         // If this connectivity requires an RNG for initialisation,
         // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
-        // **TODO** probably skip over ids previously used for initialization
-        if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+        if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())
+            || ((sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && ::Utils::isRNGRequired(sg.getWUVarInitialisers())))
+        {
             // Only start using streams after those that may have been used for initialisation
             const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(model);
 
             // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
             os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
-            os << "skipahead_sequence((unsigned long long)";
+            os << "skipahead_sequence((unsigned long long)(";
             if(sg.getNumThreadsPerSpike() > 1) {
                 os << "(preInd * " << sg.getNumThreadsPerSpike() << ") + thread + " << rngStreamOffset;
             }
             else {
                 os << "preInd + " << rngStreamOffset;
             }
-            os << ", &connectRNG);" << std::endl;
+            os << "), &connectRNG);" << std::endl;
 
             // Add substitution for connection generation code
             connSubs.addVarSubstitution("rng", "&connectRNG");
@@ -502,22 +503,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         if((sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL)
            && ::Utils::isRNGRequired(sg.getWUVarInitialisers())) 
         {
-            // Only start using streams after those that may have been used for initialisation or procedural connectivity
-            const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(model) + backend.getNumPresynapticUpdateRNGStreams(model);
-
-            // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
-            os << "curandStatePhilox4_32_10_t synRNG = dd_rng[0];" << std::endl;
-            os << "skipahead_sequence((unsigned long long)";
-            if(sg.getNumThreadsPerSpike() > 1) {
-                os << "(preInd * " << sg.getNumThreadsPerSpike() << ") + thread + " << rngStreamOffset;
-            }
-            else {
-                os << "preInd + " << rngStreamOffset;
-            }
-            os << ", &synRNG);" << std::endl;
-
-            // Add substitution for presynaptic update code
-            presynapticUpdateSubs.addVarSubstitution("rng", "&synRNG");
+            presynapticUpdateSubs.addVarSubstitution("rng", "&connectRNG");
         }
 
         // Replace $(id_post) with first 'function' parameter as simulation code is
