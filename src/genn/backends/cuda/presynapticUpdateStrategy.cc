@@ -388,7 +388,6 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
                                 BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler,
                                 BackendBase::SynapseGroupHandler wumProceduralConnectHandler) const
 {
-    
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
@@ -455,7 +454,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
         // **TODO** probably skip over ids previously used for initialization
         if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
             // Only start using streams after those that may have been used for initialisation
-            const size_t rngStreamOffset = backend.getNumInitialisationRNGStreams(model);
+            const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(model);
 
             // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
             os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
@@ -495,7 +494,7 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
             connSubs.addVarSubstitution("id_post_begin", "0");
             connSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
         }
-        
+
         // Create another substitution stack for generating presynaptic simulation code
         Substitutions presynapticUpdateSubs(&synSubs);
 
@@ -504,8 +503,8 @@ void PreSpanProcedural::genCode(CodeStream &os, const ModelSpecInternal &model, 
            && ::Utils::isRNGRequired(sg.getWUVarInitialisers())) 
         {
             // Only start using streams after those that may have been used for initialisation or procedural connectivity
-            const size_t rngStreamOffset = backend.getNumInitialisationRNGStreams(model) + backend.getNumPresynapticUpdateRNGStreams(model);
-            
+            const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(model) + backend.getNumPresynapticUpdateRNGStreams(model);
+
             // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
             os << "curandStatePhilox4_32_10_t synRNG = dd_rng[0];" << std::endl;
             os << "skipahead_sequence((unsigned long long)";
