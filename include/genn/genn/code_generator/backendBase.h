@@ -39,6 +39,9 @@ struct PreferencesBase
     //! Generate code with debug symbols
     bool debugCode = false;
 
+    //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
+    bool automaticCopy = false;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
@@ -260,6 +263,9 @@ public:
 
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
+
+    //! Is automatic copy mode enabled in the preferences?
+    virtual bool isAutomaticCopyEnabled() const = 0;
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
