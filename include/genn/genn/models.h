@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -155,6 +156,11 @@ public:
         Var() : Var("", "", VarAccess::READ_WRITE)
         {}
 
+        bool operator == (const Var &other) const
+        {
+            return ((name == other.name) && (type == other.type) && (access == other.access));
+        }
+
         std::string name;
         std::string type;
         VarAccess access;
@@ -188,6 +194,18 @@ public:
     size_t getExtraGlobalParamIndex(const std::string &paramName) const
     {
         return getNamedVecIndex(paramName, getExtraGlobalParams());
+    }
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    bool canBeMerged(const Base &other) const
+    {
+        // Return true if vars and egps match
+        return (Snippet::Base::canBeMerged(other)
+                && (getVars() == other.getVars())
+                && (getExtraGlobalParams() == other.getExtraGlobalParams()));
     }
 };
 } // Models

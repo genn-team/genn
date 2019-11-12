@@ -122,6 +122,11 @@ public:
     //! An extra global parameter has a name and a type
     struct EGP
     {
+        bool operator == (const EGP &other) const
+        {
+            return ((name == other.name) && (type == other.type));
+        }
+
         std::string name;
         std::string type;
     };
@@ -129,6 +134,11 @@ public:
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
+        bool operator == (const ParamVal &other) const
+        {
+            return ((name == other.name) && (type == other.type) && (value == other.value));
+        }
+
         std::string name;
         std::string type;
         double value;
@@ -137,6 +147,11 @@ public:
     //! A derived parameter has a name and a function for obtaining its value
     struct DerivedParam
     {
+        bool operator == (const DerivedParam &other) const
+        {
+            return (name == other.name);
+        }
+
         std::string name;
         std::function<double(const std::vector<double> &, double)> func;
     };
@@ -162,6 +177,15 @@ public:
 
 
 protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    bool canBeMerged(const Base &other) const
+    {
+        // Return true if parameters names and derived parameter names match
+        return ((getParamNames() == other.getParamNames()) && (getDerivedParams() == other.getDerivedParams()));
+    }
+
     //------------------------------------------------------------------------
     // Protected static helpers
     //------------------------------------------------------------------------
