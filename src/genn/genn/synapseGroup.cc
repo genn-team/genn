@@ -127,7 +127,7 @@ void SynapseGroup::setSpanType(SpanType spanType)
         m_SpanType = spanType;
     }
     else {
-        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse connectivity.");
+        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse or bitmask connectivity.");
     }
 }
 //----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ void SynapseGroup::setNumThreadsPerSpike(unsigned int numThreadsPerSpike)
         m_NumThreadsPerSpike = numThreadsPerSpike;
     }
     else {
-        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with a presynaptic span type.");
+        throw std::runtime_error("setNumThreadsPerSpike: This function can only be used on synapse groups with a presynaptic span type.");
     }
 }
 //----------------------------------------------------------------------------

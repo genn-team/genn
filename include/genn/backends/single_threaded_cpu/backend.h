@@ -54,6 +54,8 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const override;

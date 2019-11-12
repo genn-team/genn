@@ -82,7 +82,8 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
+void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA::Preferences &preferences, const ModelSpecInternal &model,
+                    std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -99,7 +100,9 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getLocalSynapseGroups()) {
-        groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second));
+        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps, preferences));
+        }
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
             groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
@@ -132,8 +135,9 @@ void calcGroupSizes(const ModelSpecInternal &model, std::vector<size_t> (&groupS
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
-                                           const CodeGenerator::CUDA::Preferences &preferences, int localHostID, const filesystem::path &outputPath)
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
+                                           CodeGenerator::CUDA::KernelBlockSize &blockSize, const CodeGenerator::CUDA::Preferences &preferences,
+                                           int localHostID, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -143,7 +147,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
 
     // Calculate model group sizes
     std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(model, groupSizes);
+    calcGroupSizes(deviceProps, preferences, model, groupSizes);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;
@@ -244,10 +248,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
     // Destroy context
     CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
 
-    // Get device properties
-    cudaDeviceProp deviceProps;
-    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
-
     // Get properties of device architecture
     size_t warpAllocGran;
     size_t regAllocGran;
@@ -278,14 +278,14 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
             LOGD << "\tCandidate block size:" << blockThreads;
 
             // Estimate shared memory for block size and padd
-            const size_t reqSharedMemBytes = Utils::padSize((reqSharedMemBytesA * blockThreads) + reqSharedMemBytesB, smemAllocGran);
+            const size_t reqSharedMemBytes = padSize((reqSharedMemBytesA * blockThreads) + reqSharedMemBytesB, smemAllocGran);
             LOGD << "\t\tEstimated shared memory required:" << reqSharedMemBytes << " bytes (padded)";
 
             // Calculate number of blocks the groups used by this kernel will require
             const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), size_t{0},
                                                         [blockThreads](size_t acc, size_t size)
                                                         {
-                                                            return acc + Utils::ceilDivide(size, blockThreads);
+                                                            return acc + ceilDivide(size, blockThreads);
                                                         });
             LOGD << "\t\tBlocks required (according to padded sum):" << reqBlocks;
 
@@ -299,10 +299,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
             // If register allocation is per-block
             if (deviceProps.major == 1) {
                 // Pad size of block based on warp allocation granularity
-                const size_t paddedNumBlockWarps = Utils::padSize(blockWarps, warpAllocGran);
+                const size_t paddedNumBlockWarps = padSize(blockWarps, warpAllocGran);
 
                 // Calculate number of registers per block and pad with register allocation granularity
-                const size_t paddedNumRegPerBlock = Utils::padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
+                const size_t paddedNumRegPerBlock = padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
 
                 // Update limit based on maximum registers available on SM
                 smBlockLimit = std::min(smBlockLimit, deviceProps.regsPerBlock / paddedNumRegPerBlock);
@@ -310,10 +310,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
             // Otherwise, if register allocation is per-warp
             else {
                 // Caculate number of registers per warp and pad with register allocation granularity
-                const size_t paddedNumRegPerWarp = Utils::padSize(reqNumRegs * warpSize, regAllocGran);
+                const size_t paddedNumRegPerWarp = padSize(reqNumRegs * warpSize, regAllocGran);
 
                 // Determine how many warps can therefore be simultaneously run on SM
-                const size_t paddedNumWarpsPerSM = Utils::padSize(deviceProps.regsPerBlock / paddedNumRegPerWarp, warpAllocGran);
+                const size_t paddedNumWarpsPerSM = padSize(deviceProps.regsPerBlock / paddedNumRegPerWarp, warpAllocGran);
 
                 // Update limit based on the number of warps required
                 smBlockLimit = std::min(smBlockLimit, paddedNumWarpsPerSM / blockWarps);
@@ -383,7 +383,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Ker
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences, localHostID, outputPath);
+        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, localHostID, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -506,9 +506,13 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
         // If we should pick kernel block sizes based on occupancy
         if(preferences.blockSizeSelectMethod == BlockSizeSelect::OCCUPANCY) {
+            // Get properties
+            cudaDeviceProp deviceProps;
+            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
+
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, model, cudaBlockSize, preferences, localHostID, outputPath);
+            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, localHostID, outputPath);
 
             // Create backend
             return Backend(cudaBlockSize, preferences, localHostID, model.getPrecision(), deviceID);

@@ -134,6 +134,9 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
@@ -225,7 +228,8 @@ public:
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
-    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg);
+    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps,
+                                                 const Preferences &preferences);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
 
@@ -301,17 +305,28 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
+    //! Get the stride used for accessing synapses, taking into account vectorization etc
+    size_t getMatrixRowStride(const SynapseGroupInternal &sg) const;
+
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;
 
+    // Get appropriate presynaptic update strategy to use for this synapse group
+    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
+    {
+        return getPresynapticUpdateStrategy(sg, m_ChosenDevice, m_Preferences);
+    }
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------
     // Get appropriate presynaptic update strategy to use for this synapse group
-    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg);
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
+                                                                               const cudaDeviceProp &deviceProps,
+                                                                               const Preferences &preferences);
 
     //--------------------------------------------------------------------------
     // Members

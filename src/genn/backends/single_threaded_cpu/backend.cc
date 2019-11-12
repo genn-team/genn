@@ -412,7 +412,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             if(!s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
                 os << "// synapse group " << s.first << std::endl;
                 const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-                const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+                const size_t synapticMatrixRowStride = getSynapticMatrixRowStride(s.second);
 
                 // If matrix connectivity is ragged
                 if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -436,7 +436,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                         
                         // Add function to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    ind + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "[i]++)] = $(0)");
+                                                    ind + "[(i * " + std::to_string(synapticMatrixRowStride) + ") + (" + rowLength + "[i]++)] = $(0)");
 
                         sgSparseConnectHandler(os, s.second, popSubs);
                     }
@@ -445,14 +445,15 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 // Otherwise, if matrix connectivity is a bitmask
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     // Zero memory before setting sparse bits
-                    os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << " * sizeof(uint32_t));" << std::endl;
+                    const size_t gpSize = ceilDivide((size_t)numSrcNeurons * synapticMatrixRowStride, 32);
+                    os << "memset(gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
 
                     // Loop through source neurons
                     os << "for(unsigned int i = 0; i < " << numSrcNeurons << "; i++)";
                     {
                         // Calculate index of bit at start of this row
                         CodeStream::Scope b(os);
-                        os << "const int64_t rowStartGID = i * " << numTrgNeurons << "ll;" << std::endl;
+                        os << "const int64_t rowStartGID = i * " << synapticMatrixRowStride << "ll;" << std::endl;
 
                         // Build function template to set correct bit in bitmask
                         Substitutions popSubs(&funcSubs);
@@ -542,6 +543,19 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
+size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return sg.getMaxConnections();
+    }
+    else if(m_Preferences.enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+        return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+    }
+    else {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const
 {
     os << "// Standard C++ includes" << std::endl;
@@ -566,6 +580,30 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &mo
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &) const
 {
     os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
+
+    // On windows, define an inline function, matching the signature of __builtin_clz which counts leading zeros
+#ifdef _WIN32
+    os << "#include <intrin.h>" << std::endl;
+    os << std::endl;
+    os << "int inline gennCLZ(unsigned int value)";
+    {
+        CodeStream::Scope b(os);
+        os << "unsigned long leadingZero = 0;" << std::endl;
+        os << "if( _BitScanReverse(&leadingZero, value))";
+        {
+            CodeStream::Scope b(os);
+            os << "return 31 - leadingZero;" << std::endl;
+        }
+        os << "else";
+        {
+            CodeStream::Scope b(os);
+            os << "return 32;" << std::endl;
+        }
+    }
+    // Otherwise, on *nix, use __builtin_clz intrinsic
+#else
+    os << "#define gennCLZ __builtin_clz" << std::endl;
+#endif
     os << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -876,49 +914,92 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &s
             os << CodeStream::OB(10);
         }
 
+        Substitutions synSubs(&popSubs);
+        synSubs.addVarSubstitution("id_pre", "ipre");
+        synSubs.addVarSubstitution("id_post", "ipost");
+        synSubs.addVarSubstitution("id_syn", "synAddress");
+
+        if(sg.isDendriticDelayRequired()) {
+            synSubs.addFuncSubstitution("addToInSynDelay", 2, "denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+        }
+        else {
+            synSubs.addFuncSubstitution("addToInSyn", 1, "inSyn" + sg.getPSModelTargetName() + "[ipost] += $(0)");
+        }
+
         if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "const unsigned int npost = rowLength" << sg.getName() << "[ipre];" << std::endl;
             os << "for (unsigned int j = 0; j < npost; j++)";
+            {
+                CodeStream::Scope b(os);
+
+                // **TODO** seperate stride from max connection
+                os << "const unsigned int synAddress = (ipre * " << sg.getMaxConnections() <<  ") + j;" << std::endl;
+                os << "const unsigned int ipost = ind" << sg.getName() << "[synAddress];" << std::endl;
+
+                wumSimHandler(os, sg, synSubs);
+            }
+        }
+        else if(m_Preferences.enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+            // Determine the number of words in each row
+            const size_t rowWords = ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+            os << "for(unsigned int w = 0; w < " << rowWords << "; w++)";
+            {
+                CodeStream::Scope b(os);
+
+                // Read row word
+                os << "uint32_t connectivityWord = gp" << sg.getName() << "[(ipre * " << rowWords << ") + w];" << std::endl;
+
+                // Set ipost to first synapse in connectivity word
+                os << "unsigned int ipost = w * 32;" << std::endl;
+
+                // While there any bits left
+                os << "while(connectivityWord != 0)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
+                    os << "const int numLZ = gennCLZ(connectivityWord);" << std::endl;
+
+                    // Shift off zeros and the one just discovered
+                    // **NOTE** << 32 appears to result in undefined behaviour
+                    os << "connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));" << std::endl;
+
+                    // Add to ipost
+                    os << "ipost += numLZ;" << std::endl;
+
+                    // If we aren't in padding region
+                    // **TODO** don't bother checking if there is no padding
+                    os << "if(ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    {
+                        CodeStream::Scope b(os);
+                        wumSimHandler(os, sg, synSubs);
+                    }
+
+                    // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
+                    os << "ipost++;" << std::endl;
+                }
+            }
         }
         // Otherwise (DENSE or BITMASK)
         else {
             os << "for (unsigned int ipost = 0; ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << "; ipost++)";
-        }
-        {
-            CodeStream::Scope b(os);
-            if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                // **TODO** seperate stride from max connection
-                os << "const unsigned int synAddress = (ipre * " << sg.getMaxConnections() << ") + j;" << std::endl;
-                os << "const unsigned int ipost = ind" << sg.getName() << "[synAddress];" << std::endl;
-            }
-            else {
+            {
+                CodeStream::Scope b(os);
+
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     os << "const uint64_t gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + ipost);" << std::endl;
                     os << "if (B(gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(20);
                 }
 
-                os << "const unsigned int synAddress = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << ") + ipost;" << std::endl;
-            }
+                os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + ipost;" << std::endl;
 
-            Substitutions synSubs(&popSubs);
-            synSubs.addVarSubstitution("id_pre", "ipre");
-            synSubs.addVarSubstitution("id_post", "ipost");
-            synSubs.addVarSubstitution("id_syn", "synAddress");
+                wumSimHandler(os, sg, synSubs);
 
-            if(sg.isDendriticDelayRequired()) {
-                synSubs.addFuncSubstitution("addToInSynDelay", 2, "denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
-            }
-            else {
-                synSubs.addFuncSubstitution("addToInSyn", 1, "inSyn" + sg.getPSModelTargetName() + "[ipost] += $(0)");
-
-            }
-            wumSimHandler(os, sg, synSubs);
-
-            if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                os << CodeStream::CB(20);
+                if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    os << CodeStream::CB(20);
+                }
             }
         }
-
         // If this is a spike-like event, close braces around threshold check
         if (!trueSpike) {
             os << CodeStream::CB(10);
