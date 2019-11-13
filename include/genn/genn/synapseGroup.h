@@ -273,6 +273,13 @@ protected:
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
 
+    //! Can weight update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUBeMerged(const SynapseGroup &other) const;
+
+    //! Can postsynaptic update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canPSBeMerged(const SynapseGroup &other) const;
 private:
     //------------------------------------------------------------------------
     // Members

@@ -474,3 +474,47 @@ std::string SynapseGroup::getSparseIndType() const
     return "uint32_t";
 
 }
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
+{
+    if(getWUModel()->canBeMerged(other.getWUModel())
+       && (getWUParams() == other.getWUParams())
+       && (getWUDerivedParams() == other.getWUDerivedParams())
+       && (getDelaySteps() == other.getDelaySteps())
+       && (getBackPropDelaySteps() == other.getBackPropDelaySteps())
+       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
+       && (getMatrixType() == other.getMatrixType()))
+    {
+        // If connectivity is either non-procedural or connectivity initialisers can be merged
+        if(!(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
+           || getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser()))
+        {
+            // If matrix weights are global, constantified init values must match
+            if(getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+                return (getWUConstInitVals() != other.getWUConstInitVals());
+            }
+            // Otherwise, if connectivity is procedural, all variable initialisers must be mergable
+            else if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+                return std::equal(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), other.getWUVarInitialisers().cbegin(),
+                                  [](const Models::VarInit &a, const Models::VarInit & b)
+                                  {
+                                      return a.canBeMerged(b);
+                                  });
+            }
+            // Otherwise, if matrix weights are individual, merging is unproblematic
+            else if(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
+{
+    return (getPSModel()->canBeMerged(other.getPSModel())
+            && (getPSParams() == other.getPSParams())
+            && (getPSDerivedParams() == other.getPSDerivedParams())
+            && ((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) == (other.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)));
+}
