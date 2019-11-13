@@ -120,6 +120,9 @@ public:
         return getNamedVecIndex(varName, getPostVars());
     }
 
+    //! Can this weight update model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
+
 };
 
 //----------------------------------------------------------------------------
