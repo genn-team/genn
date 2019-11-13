@@ -21,6 +21,12 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getCode() const{ return ""; }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
 };
 
 //----------------------------------------------------------------------------
