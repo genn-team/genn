@@ -180,10 +180,10 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    bool canBeMerged(const Base &other) const
+    bool canBeMerged(const Base *other) const
     {
         // Return true if parameters names and derived parameter names match
-        return ((getParamNames() == other.getParamNames()) && (getDerivedParams() == other.getDerivedParams()));
+        return ((getParamNames() == other->getParamNames()) && (getDerivedParams() == other->getDerivedParams()));
     }
 
     //------------------------------------------------------------------------

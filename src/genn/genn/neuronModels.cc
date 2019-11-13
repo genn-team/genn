@@ -17,13 +17,13 @@ IMPLEMENT_MODEL(NeuronModels::TraubMilesNStep);
 //----------------------------------------------------------------------------
 // NeuronModels::Base
 //----------------------------------------------------------------------------
-bool NeuronModels::Base::canBeMerged(const Base &other) const
+bool NeuronModels::Base::canBeMerged(const Base *other) const
 {
     return (Models::Base::canBeMerged(other)
-            && (getSimCode() == other.getSimCode())
-            && (getThresholdConditionCode() == other.getThresholdConditionCode())
-            && (getResetCode() == other.getResetCode())
-            && (getSupportCode() == other.getSupportCode())
-            && (isAutoRefractoryRequired() == other.isAutoRefractoryRequired())
-            && (getAdditionalInputVars() == other.getAdditionalInputVars()));
+            && (getSimCode() == other->getSimCode())
+            && (getThresholdConditionCode() == other->getThresholdConditionCode())
+            && (getResetCode() == other->getResetCode())
+            && (getSupportCode() == other->getSupportCode())
+            && (isAutoRefractoryRequired() == other->isAutoRefractoryRequired())
+            && (getAdditionalInputVars() == other->getAdditionalInputVars()));
 }
