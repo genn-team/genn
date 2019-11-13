@@ -236,6 +236,13 @@ public:
         }
     }
 
+    bool canBeMerged(const Init<SnippetBase> &other) const
+    {
+        return (getSnippet()->canBeMerged(other.getSnippet())
+                && (getParams() == other.getParams())
+                && (getDerivedParams() == other.getDerivedParams()));
+    }
+
 private:
     //----------------------------------------------------------------------------
     // Members
