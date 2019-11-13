@@ -20,4 +20,5 @@ public:
     using CurrentSource::getDerivedParams;
     using CurrentSource::isSimRNGRequired;
     using CurrentSource::isInitRNGRequired;
+    using CurrentSource::canBeMerged;
 };

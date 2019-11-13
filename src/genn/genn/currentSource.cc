@@ -71,3 +71,10 @@ bool CurrentSource::isInitRNGRequired() const
 
     return false;
 }
+//----------------------------------------------------------------------------
+bool CurrentSource::canBeMerged(const CurrentSource &other) const
+{
+    return (getCurrentSourceModel()->canBeMerged(other.getCurrentSourceModel())
+            && (getParams() == other.getParams())
+            && (getDerivedParams() == other.getDerivedParams()));
+}
