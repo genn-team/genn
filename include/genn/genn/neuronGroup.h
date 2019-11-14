@@ -170,6 +170,10 @@ protected:
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
+    //! Can this neuron group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canBeMerged(const NeuronGroup &other) const;
+
 private:
     //------------------------------------------------------------------------
     // Private methods

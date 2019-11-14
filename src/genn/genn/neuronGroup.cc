@@ -322,4 +322,70 @@ void NeuronGroup::updateVarQueues(const std::string &code, const std::string &su
         }
     }
 }
+//----------------------------------------------------------------------------
+bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
+{
+    if(getNeuronModel()->canBeMerged(other.getNeuronModel())
+       && (getParams() == other.getParams())
+       && (getDerivedParams() == other.getDerivedParams())
+       && (getSpikeEventCondition() == other.getSpikeEventCondition())
+       && (m_VarQueueRequired == other.m_VarQueueRequired))
+    {
+        // If both groups have the same NUMBER of current sources
+        if(getCurrentSources().size() == other.getCurrentSources().size()) {
+            // Make temporary copies of other neuron group's current sources
+            auto otherCurrentSources = other.getCurrentSources();
 
+            // Loop through our current sources
+            for(const auto *cs : getCurrentSources()) {
+                // If a compatible current source can be found amongst the other neuron group's current sources, remove it
+                const auto otherCS = std::find_if(otherCurrentSources.cbegin(), otherCurrentSources.cend(),
+                                                  [cs](CurrentSourceInternal *otherCS) 
+                                                  { 
+                                                      return cs->canBeMerged(*otherCS); 
+                                                  });
+                if(otherCS != otherCurrentSources.cend()) {
+                    otherCurrentSources.erase(otherCS);
+                }
+                // Otherwise, these can't be merged - return false
+                else {
+                    return false;
+                }
+            }
+        }
+        else {
+            return false;
+        }
+
+        // **TODO** if it's enabled linearly combine any of this and other neuron group's inSyn array
+        auto inSyn = getInSyn();
+        auto otherInSyn = other.getInSyn();
+
+        // If both groups have the same number of incoming synapse groups
+        if(inSyn.size() == otherInSyn.size()) {
+            // Loop through our incoming synapse groups
+            for(const auto *syn : inSyn) {
+                // If a compatible postsynaptic model can be found amongst the other neuron group's current sources, remove it
+                const auto otherSyn = std::find_if(otherInSyn.cbegin(), otherInSyn.cend(),
+                                                   [syn](SynapseGroupInternal *otherSyn) 
+                                                   { 
+                                                       return syn->canPSBeMerged(*otherSyn); 
+                                                   });
+                if(otherSyn != otherInSyn.cend()) {
+                    otherInSyn.erase(otherSyn);
+                }
+                // Otherwise, these can't be merged - return false
+                else {
+                    return false;
+                }
+            }
+        }
+        else {
+            return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}

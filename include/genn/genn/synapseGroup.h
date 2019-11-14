@@ -280,6 +280,11 @@ protected:
     //! Can postsynaptic update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canPSBeMerged(const SynapseGroup &other) const;
+
+    //! Can postsynaptic update component of this synapse group not only be merged with other, but combined so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    bool canPSBeLinearlyCombined(const SynapseGroup &other) const;
+
 private:
     //------------------------------------------------------------------------
     // Members
