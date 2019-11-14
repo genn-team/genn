@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 // GeNN includes
-#include "initSparseConnectivitySnippet.h"
+#include "modelSpec.h"
 
 //--------------------------------------------------------------------------
 // OneToOneCopy
@@ -32,4 +32,17 @@ TEST(InitSparseConnectivitySnippet, CompareCopyPasted)
 {
     OneToOneCopy oneToOneCopy;
     ASSERT_TRUE(InitSparseConnectivitySnippet::OneToOne::getInstance()->canBeMerged(&oneToOneCopy));
+}
+
+TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
+{
+    InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProbParamsA(0.1);
+    InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProbParamsB(0.4);
+
+    const auto connectivityInit0 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
+    const auto connectivityInit1 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
+    const auto connectivityInit2 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsB);
+
+    ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit1));
+    ASSERT_FALSE(connectivityInit0.canBeMerged(connectivityInit2));
 }
