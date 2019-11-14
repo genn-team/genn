@@ -28,6 +28,7 @@ namespace filesystem
 {
     class path;
 }
+class NeuronGroupMerged;
 
 //--------------------------------------------------------------------------
 // CodeGenerator::CUDA::DeviceSelectMethod
@@ -122,7 +123,8 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, 
+                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                   SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
@@ -290,12 +292,52 @@ private:
     }
 
     template<typename T>
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
+                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
+                          FilterGroupFunc<T> filter,
+                          GroupHandler<T> handler) const
+    {
+        // Loop through groups
+        for(const auto &g : groups) {
+            // If this group should be processed
+            Substitutions popSubs(&kernelSubs);
+            if(filter(g)) {
+                const size_t paddedSize = getPaddedSizeFunc(g);
+
+                os << "// merged" << g.getIndex() << std::endl;
+
+                // If this is the first  group
+                if(idStart == 0) {
+                    os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
+                }
+                else {
+                    os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
+                }
+
+                handler(os, g, popSubs);
+
+                idStart += paddedSize;
+                os << CodeStream::CB(1) << std::endl;
+            }
+        }
+    }
+
+    template<typename T>
     void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, T> &groups, size_t &idStart,
                           GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
                           GroupHandler<T> handler) const
     {
         genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
                             [](const T&){ return true; }, handler);
+    }
+
+    template<typename T>
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
+                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
+                          GroupHandler<T> handler) const
+    {
+        genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
+                            [](const T &) { return true; }, handler);
     }
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
@@ -305,8 +347,8 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
-    //! Get the stride used for accessing synapses, taking into account vectorization etc
-    size_t getMatrixRowStride(const SynapseGroupInternal &sg) const;
+    //! Calculate the number of threads required for merged neuron group
+    size_t getNeuronGroupMergedThreads(const NeuronGroupMerged &ng) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);

@@ -17,7 +17,9 @@
 
 // Forward declarations
 class NeuronGroupInternal;
+class NeuronGroupMerged;
 class ModelSpecInternal;
+class ModelSpecMerged;
 class SynapseGroupInternal;
 
 namespace CodeGenerator
@@ -118,13 +120,16 @@ public:
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified NeuronGroup to.
     typedef GroupHandler<NeuronGroupInternal> NeuronGroupHandler;
 
+    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified NeuronGroup to.
+    typedef GroupHandler<NeuronGroupMerged> NeuronGroupMergedHandler;
+
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
     typedef GroupHandler<SynapseGroupInternal> SynapseGroupHandler;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
-    typedef std::function <void(CodeStream &, const NeuronGroupInternal &, Substitutions&,
-                                NeuronGroupHandler, NeuronGroupHandler)> NeuronGroupSimHandler;
+    typedef std::function <void(CodeStream &, const NeuronGroupMerged &, Substitutions&,
+                                NeuronGroupMergedHandler, NeuronGroupMergedHandler)> NeuronGroupSimHandler;
     
     BackendBase(int localHostID, const std::string &scalarType);
     virtual ~BackendBase(){}
@@ -134,10 +139,11 @@ public:
     //--------------------------------------------------------------------------
     //! Generate platform-specific function to update the state of all neurons
     /*! \param os                       CodeStream to write function to
-        \param model                    model to generate code for
+        \param model                    merged model to generate code for
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const = 0;
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, 
+                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to

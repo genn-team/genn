@@ -9,7 +9,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
-#include "modelSpecInternal.h"
+#include "modelSpecMerged.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -165,8 +165,35 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     addDeviceType("half", 2);
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, 
+                              NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const
 {
+    // Loop through merged neuron groups
+    {
+        size_t id = 0;
+        for(const auto &m : model.getMergedLocalNeuronGroups()) {
+            // Declare array of indices (into mergedNeuronGroupXXX array)
+            os << "__device__ __constant__ uint16_t dd_neuronGroupBlockIndices" << m.getIndex() << "[] = {";
+            // Loop through neuron groups within merged neuron group
+            size_t n = 0;
+            for(const auto &ng : m.getNeuronGroups()) {
+                // Write index to this neuron group for each block used to simulate it
+                const size_t numBlocks = ceilDivide(ng.get().getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]);
+                std::fill_n(std::ostream_iterator<std::string>(os), numBlocks,
+                            std::to_string(n++) + ", ");
+            }
+            os << "};" << std::endl;
+
+            // Declare array of starting thread indices for each neuron group
+            os << "__device__ __constant__ unsigned int dd_neuronGroupStartID" << m.getIndex() << "[] = {";
+            for(const auto &ng : m.getNeuronGroups()) {
+                os << id << ", ";
+                id += padSize(ng.get().getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]);
+            }
+            os << "};" << std::endl;
+        }
+    }
+
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
     os << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "()";
@@ -176,7 +203,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         os << "unsigned int id = " << m_KernelBlockSizes[KernelPreNeuronReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // Loop through remote neuron groups
-        for(const auto &n : model.getRemoteNeuronGroups()) {
+        for(const auto &n : model.getModel().getRemoteNeuronGroups()) {
             if(n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
                 if(idPreNeuronReset > 0) {
                     os << "else ";
@@ -190,7 +217,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         }
 
         // Loop through local neuron groups
-        for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getModel().getLocalNeuronGroups()) {
             if(idPreNeuronReset > 0) {
                 os << "else ";
             }
@@ -221,48 +248,18 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         }
     }
 
-    // Add extra global parameters references by neuron models to map of kernel parameters
-    std::map<std::string, std::string> neuronKernelParameters;
-    for(const auto &n : model.getLocalNeuronGroups()) {
-        const auto *nm = n.second.getNeuronModel();
-        updateExtraGlobalParams(n.first, "", nm->getExtraGlobalParams(), neuronKernelParameters,
-                                {nm->getSimCode(), nm->getThresholdConditionCode(), nm->getResetCode()});
-    }
-
-    // Add extra global parameters references by current source models to map of kernel parameters
-    for(const auto &c : model.getLocalCurrentSources()) {
-        const auto *csm = c.second.getCurrentSourceModel();
-        updateExtraGlobalParams(c.first, "", csm->getExtraGlobalParams(), neuronKernelParameters,
-                                {csm->getInjectionCode()});
-    }
-
-    // Add extra global parameters referenced by postsynaptic models and
-    // event thresholds of weight update models to map of kernel parameters
-    for(const auto &s : model.getLocalSynapseGroups()) {
-        const auto *psm = s.second.getPSModel();
-        updateExtraGlobalParams(s.first, "", psm->getExtraGlobalParams(), neuronKernelParameters,
-                                {psm->getDecayCode(), psm->getApplyInputCode()});
-
-        const auto *wum = s.second.getWUModel();
-        updateExtraGlobalParams(s.first, "", wum->getExtraGlobalParams(), neuronKernelParameters,
-                                {wum->getEventThresholdConditionCode()});
-    }
-
     size_t idStart = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(";
-    for(const auto &p : neuronKernelParameters) {
-        os << p.second << " " << p.first << ", ";
-    }
-    os << model.getTimePrecision() << " t)" << std::endl;
+    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "("  << model.getTimePrecision() << " t)" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelNeuronUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
+        os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
         Substitutions kernelSubs(cudaFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
 
         // If any neuron groups emit spike events
-        if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+        if(std::any_of(model.getModel().getLocalNeuronGroups().cbegin(), model.getModel().getLocalNeuronGroups().cend(),
             [](const ModelSpec::NeuronGroupValueType &n){ return n.second.isSpikeEventRequired(); }))
         {
             os << "__shared__ volatile unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelNeuronUpdate] << "];" << std::endl;
@@ -278,7 +275,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         }
 
         // If any neuron groups emit true spikes
-        if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+        if(std::any_of(model.getModel().getLocalNeuronGroups().cbegin(), model.getModel().getLocalNeuronGroups().cend(),
             [](const ModelSpec::NeuronGroupValueType &n){ return !n.second.getNeuronModel()->getThresholdConditionCode().empty(); }))
         {
             os << "__shared__ volatile unsigned int shSpk[" << m_KernelBlockSizes[KernelNeuronUpdate] << "];" << std::endl;
@@ -295,37 +292,50 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         os << "__syncthreads();" << std::endl;
 
         // Parallelise over neuron groups
-        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getLocalNeuronGroups(), idStart,
-            [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelNeuronUpdate]); },
-            [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
+        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, model.getMergedLocalNeuronGroups(), idStart,
+            [this](const NeuronGroupMerged &ng){ return getNeuronGroupMergedThreads(ng); },
+            [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
             {
+                // Get the index of the neuron group within the merged group
+                os << "const unsigned int neuronGroupIndex = dd_neuronGroupBlockIndices" << ng.getIndex() << "[blk];" << std::endl;
+
+                // Use this to get reference to MergedNeuronGroup structure
+                // Get reference to neuron group that this block should be simulating
+                os << "const MergedNeuronGroup" << ng.getIndex() << " &neuronGroup = dd_mergedNeuronGroup" << ng.getIndex() << "[neuronGroupIndex]; " << std::endl;
+
+                // Use this and starting thread of merged group to calculate local id within neuron group
+                os << "const unsigned int lid = id - (dd_neuronGroupStartID" << ng.getIndex() << "[neuronGroupIndex]);" << std::endl;
+                popSubs.addVarSubstitution("id", "lid");
+
+                // **TODO** calculate 
                 // If axonal delays are required
-                if (ng.isDelayRequired()) {
+                if (ng.getArchetype().isDelayRequired()) {
+                    assert(false);
                     // We should READ from delay slot before spkQuePtr
-                    os << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset("dd_") << ";" << std::endl;
+                    os << "const unsigned int readDelayOffset = " << ng.getArchetype().getPrevQueueOffset("dd_") << ";" << std::endl;
 
                     // And we should WRITE to delay slot pointed to be spkQuePtr
-                    os << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset("dd_") << ";" << std::endl;
+                    os << "const unsigned int writeDelayOffset = " << ng.getArchetype().getCurrentQueueOffset("dd_") << ";" << std::endl;
                 }
                 os << std::endl;
 
                 // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
-                if(ng.isSimRNGRequired()) {
-                    popSubs.addVarSubstitution("rng", "&dd_rng" + ng.getName() + "[" + popSubs["id"] + "]");
+                if(ng.getArchetype().isSimRNGRequired()) {
+                    popSubs.addVarSubstitution("rng", "&neuronGroup._rng[" + popSubs["id"] + "]");
                 }
 
                 // Call handler to generate generic neuron code
-                os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
+                os << "if(" << popSubs["id"] << " < neuronGroup._numNeurons)";
                 {
                     CodeStream::Scope b(os);
                     simHandler(os, ng, popSubs,
                         // Emit true spikes
-                        [this](CodeStream &os, const NeuronGroupInternal &, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronGroupMerged &, Substitutions &subs)
                         {
                             genEmitSpike(os, subs, "");
                         },
                         // Emit spike-like events
-                        [this](CodeStream &os, const NeuronGroupInternal &, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronGroupMerged &, Substitutions &subs)
                         {
                             genEmitSpike(os, subs, "Evnt");
                         });
@@ -333,16 +343,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
 
                 os << "__syncthreads();" << std::endl;
 
-                if (ng.isSpikeEventRequired()) {
+                if (ng.getArchetype().isSpikeEventRequired()) {
                     os << "if (threadIdx.x == 1)";
                     {
                         CodeStream::Scope b(os);
                         os << "if (shSpkEvntCount > 0)";
                         {
                             CodeStream::Scope b(os);
-                            os << "shPosSpkEvnt = atomicAdd((unsigned int *) &dd_glbSpkCntEvnt" << ng.getName();
-                            if (ng.isDelayRequired()) {
-                                os << "[dd_spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
+                            os << "shPosSpkEvnt = atomicAdd((unsigned int *) &neurongroup.spkCntEvnt";
+                            if (ng.getArchetype().isDelayRequired()) {
+                                os << "[neuronGroup.spkQuePtr], shSpkEvntCount);" << std::endl;
                             }
                             else {
                                 os << "[0], shSpkEvntCount);" << std::endl;
@@ -352,16 +362,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
                     os << "__syncthreads();" << std::endl;
                 }
 
-                if (!ng.getNeuronModel()->getThresholdConditionCode().empty()) {
+                if (!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
                     os << "if (threadIdx.x == 0)";
                     {
                         CodeStream::Scope b(os);
                         os << "if (shSpkCount > 0)";
                         {
                             CodeStream::Scope b(os);
-                            os << "shPosSpk = atomicAdd((unsigned int *) &dd_glbSpkCnt" << ng.getName();
-                            if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
-                                os << "[dd_spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
+                            os << "shPosSpk = atomicAdd((unsigned int *) &neuronGroup.spkCnt";
+                            if (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
+                                os << "[neuronGroup.spkQuePtr], shSpkCount);" << std::endl;
                             }
                             else {
                                 os << "[0], shSpkCount);" << std::endl;
@@ -371,17 +381,18 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
                     os << "__syncthreads();" << std::endl;
                 }
 
-                const std::string queueOffset = ng.isDelayRequired() ? "writeDelayOffset + " : "";
-                if (ng.isSpikeEventRequired()) {
+                const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
+                if (ng.getArchetype().isSpikeEventRequired()) {
+                    assert(false);
                     os << "if (threadIdx.x < shSpkEvntCount)";
                     {
                         CodeStream::Scope b(os);
-                        os << "dd_glbSpkEvnt" << ng.getName() << "[" << queueOffset << "shPosSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << std::endl;
+                        os << "neuronGroup.spkEvnt[" << queueOffset << "shPosSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << std::endl;
                     }
                 }
 
-                if (!ng.getNeuronModel()->getThresholdConditionCode().empty()) {
-                    const std::string queueOffsetTrueSpk = ng.isTrueSpikeRequired() ? queueOffset : "";
+                if (!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
+                    const std::string queueOffsetTrueSpk = ng.getArchetype().isTrueSpikeRequired() ? queueOffset : "";
 
                     os << "if (threadIdx.x < shSpkCount)";
                     {
@@ -394,9 +405,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
                         wuSubs.addVarSubstitution("id", "n", true);
                         wuVarUpdateHandler(os, ng, wuSubs);
 
-                        os << "dd_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = n;" << std::endl;
-                        if (ng.isSpikeTimeRequired()) {
-                            os << "dd_sT" << ng.getName() << "[" << queueOffset << "n] = t;" << std::endl;
+                        os << "neuronGroup.spk[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = n;" << std::endl;
+                        if (ng.getArchetype().isSpikeTimeRequired()) {
+                            assert(false);
+                            //os << "dd_sT" << ng.getArchetype().getName() << "[" << queueOffset << "n] = t;" << std::endl;
                         }
                     }
                 }
@@ -415,14 +427,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         }
         if(idStart > 0) {
             CodeStream::Scope b(os);
-            Timer t(os, "neuronUpdate", model.isTimingEnabled());
+            Timer t(os, "neuronUpdate", model.getModel().isTimingEnabled());
 
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
-            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(";
-            for(const auto &p : neuronKernelParameters) {
-                gennExtraGlobalParamPass(os, p);
-            }
-            os << "t);" << std::endl;
+            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
@@ -2178,6 +2186,15 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
         os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+size_t Backend::getNeuronGroupMergedThreads(const NeuronGroupMerged &ng) const
+{
+    return std::accumulate(ng.getNeuronGroups().cbegin(), ng.getNeuronGroups().cend(), size_t{0},
+                           [this](size_t acc, std::reference_wrapper<const NeuronGroupInternal> n)
+                           {
+                               return (acc + padSize(n.get().getNumNeurons(), getKernelBlockSize(Kernel::KernelNeuronUpdate)));
+                           });
 }
 //--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string &type, size_t size)

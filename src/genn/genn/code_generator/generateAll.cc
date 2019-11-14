@@ -11,6 +11,9 @@
 // Filesystem includes
 #include "path.h"
 
+// GeNN includes
+#include "modelSpecMerged.h"
+
 // Code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/generateInit.h"
@@ -47,8 +50,10 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     CodeStream init(initStream);
     CodeStream runner(runnerStream);
 
+    ModelSpecMerged mergedModel(model);
+
     // Generate modules
-    generateNeuronUpdate(neuronUpdate, model, backend, standaloneModules);
+    generateNeuronUpdate(neuronUpdate, mergedModel, backend, standaloneModules);
     generateSynapseUpdate(synapseUpdate, model, backend, standaloneModules);
     generateInit(init, model, backend, standaloneModules);
     auto mem = generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
