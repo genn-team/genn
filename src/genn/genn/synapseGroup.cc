@@ -491,7 +491,7 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
         {
             // If matrix weights are global, constantified init values must match
             if(getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-                return (getWUConstInitVals() != other.getWUConstInitVals());
+                return (getWUConstInitVals() == other.getWUConstInitVals());
             }
             // Otherwise, if connectivity is procedural, all variable initialisers must be mergable
             else if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
