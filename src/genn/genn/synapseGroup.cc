@@ -483,6 +483,7 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
        && (getDelaySteps() == other.getDelaySteps())
        && (getBackPropDelaySteps() == other.getBackPropDelaySteps())
        && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
+       && (getSparseIndType() == other.getSparseIndType())
        && (getMatrixType() == other.getMatrixType()))
     {
         // If connectivity is either non-procedural or connectivity initialisers can be merged
