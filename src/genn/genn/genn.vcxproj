@@ -47,6 +47,44 @@
   <ItemGroup>
     <None Include="src\header.src" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\include\genn\genn\backendExport.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\binomial.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendBase.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeGenUtils.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateAll.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateInit.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMPI.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateNeuronUpdate.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSynapseUpdate.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\currentSourceModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\initVarSnippet.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\models.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\modelSpec.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\modelSpecInternal.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\neuronGroup.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\neuronGroupInternal.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\neuronModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\postsynapticModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\snippet.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\synapseGroup.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\synapseGroupInternal.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\synapseMatrixType.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\variableMode.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}</ProjectGuid>
     <RootNamespace>genn</RootNamespace>
@@ -58,7 +96,7 @@
     <UseDebugLibraries Condition=" $(Configuration.Contains('Release')) ">false</UseDebugLibraries>
     <UseDebugLibraries Condition=" $(Configuration.Contains('Debug')) ">true</UseDebugLibraries>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
-    <WholeProgramOptimization Condition=" $(Configuration.Contains('Release')) ">>true</WholeProgramOptimization>
+    <WholeProgramOptimization Condition=" $(Configuration.Contains('Release')) ">true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
