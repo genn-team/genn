@@ -23,6 +23,7 @@
     <ClCompile Include="neuronGroup.cc" />
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />
+    <ClCompile Include="synapseGroup.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="$(GTEST_DIR)/src/gtest-all.cc" />
     <ClCompile Include="$(GTEST_DIR)/src/gtest_main.cc" />
@@ -49,7 +50,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>.</OutDir>
+    <OutDir>.\</OutDir>
     <IntDir>$(GeneratePath)\$(Platform)\$(Configuration)\generator\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
