@@ -13,13 +13,12 @@
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
+#include "modelSpecMerged.h"
 #include "variableMode.h"
 
 // Forward declarations
 class NeuronGroupInternal;
-class NeuronGroupMerged;
 class ModelSpecInternal;
-class ModelSpecMerged;
 class SynapseGroupInternal;
 
 namespace CodeGenerator
@@ -126,6 +125,9 @@ public:
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
     typedef GroupHandler<SynapseGroupInternal> SynapseGroupHandler;
 
+    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
+    typedef GroupHandler<SynapseGroupMerged> SynapseGroupMergedHandler;
+
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
     typedef std::function <void(CodeStream &, const NeuronGroupMerged &, Substitutions&,
@@ -163,10 +165,10 @@ public:
         \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
-                                  SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
-                                  SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const = 0;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
+                                  SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
+                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const = 0;
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
@@ -174,7 +176,7 @@ public:
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupMerged &sgMerged, const SynapseGroupInternal &sg) const = 0;
     
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/

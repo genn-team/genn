@@ -154,7 +154,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
         os << "__device__  MergedNeuronGroup" << m.getIndex() << " " << backend.getVarPrefix() << "mergedNeuronGroup" << m.getIndex() << "[] = ";
         {
             CodeStream::Scope b(os);
-            for(const auto &ng : m.getNeuronGroups()) {
+            for(const auto &ng : m.getGroups()) {
                 os << "{";
                 os << ng.get().getNumNeurons() << ", ";
 
@@ -300,7 +300,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                         if(v.access == VarAccess::READ_ONLY) {
                             os << "const ";
                         }
-                        os << v.type << " lps" << v.name << i;
+                        os << v.type << " lps" << v.name;
                         os << " = (*neuronGroup." << v.name << i << ")[" << neuronSubs["id"] << "];" << std::endl;
                     }
                 }
@@ -311,12 +311,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
 
                 // Apply substitutions to current converter code
                 std::string psCode = psm->getApplyInputCode();
-                inSynSubs.applyCheckUnreplaced(psCode, "postSyntoCurrent : " + sg->getPSModelTargetName());
+                inSynSubs.applyCheckUnreplaced(psCode, "postSyntoCurrent : merged " + i);
                 psCode = ensureFtype(psCode, model.getPrecision());
 
                 // Apply substitutions to decay code
                 std::string pdCode = psm->getDecayCode();
-                inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : " + sg->getPSModelTargetName());
+                inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : merged " + i);
                 pdCode = ensureFtype(pdCode, model.getPrecision());
 
                 if (!psm->getSupportCode().empty()) {
@@ -336,7 +336,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << "(*neuronGroup." << v.name << i << ")[" << inSynSubs["id"] << "]" << " = lps" << v.name << sg->getPSModelTargetName() << ";" << std::endl;
+                        os << "(*neuronGroup." << v.name << i << ")[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
                     }
                 }
             }

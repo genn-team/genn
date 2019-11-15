@@ -5,6 +5,7 @@
 #include <array>
 #include <functional>
 #include <map>
+#include <numeric>
 #include <string>
 #include <unordered_set>
 
@@ -28,7 +29,6 @@ namespace filesystem
 {
     class path;
 }
-class NeuronGroupMerged;
 
 //--------------------------------------------------------------------------
 // CodeGenerator::CUDA::DeviceSelectMethod
@@ -126,10 +126,10 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, 
                                  NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
-                                  SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
-                                  SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const override;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
+                                  SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
+                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
                          NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
@@ -137,7 +137,7 @@ public:
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupMerged &sgMerged, const SynapseGroupInternal &sg) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
@@ -223,15 +223,15 @@ public:
 
     //! Get total number of RNG streams potentially used to initialise model
     /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
-    size_t getNumInitialisationRNGStreams(const ModelSpecInternal &model) const;
+    size_t getNumInitialisationRNGStreams(const ModelSpecMerged &model) const;
 
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
-    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps,
-                                                 const Preferences &preferences);
+    static size_t getNumPresynapticUpdateThreads(const SynapseGroupMerged &sgMerged, const SynapseGroupInternal &sg,
+                                                 const cudaDeviceProp &deviceProps, const Preferences &preferences);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
 
@@ -250,6 +250,9 @@ private:
     //--------------------------------------------------------------------------
     template<typename T>
     using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
+
+    template<typename T>
+    using GetPaddedMergedGroupSizeFunc = std::function<size_t(const GroupMerged<T>&, const T&)>;
 
     template<typename T>
     using FilterGroupFunc = std::function<bool(const T&)>;
@@ -292,19 +295,25 @@ private:
     }
 
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
-                          FilterGroupFunc<T> filter,
-                          GroupHandler<T> handler) const
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<GroupMerged<T>> &groups, size_t &idStart,
+                          GetPaddedMergedGroupSizeFunc<T> getPaddedSizeFunc,
+                          FilterGroupFunc<GroupMerged<T>> filter,
+                          GroupHandler<GroupMerged<T>> handler) const
     {
         // Loop through groups
-        for(const auto &g : groups) {
+        for(const auto &gMerge : groups) {
             // If this group should be processed
             Substitutions popSubs(&kernelSubs);
-            if(filter(g)) {
-                const size_t paddedSize = getPaddedSizeFunc(g);
+            if(filter(gMerge)) {
+                // Sum padded sizes of each group within merged group
+                const size_t paddedSize = std::accumulate(
+                    gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
+                    [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const T> g)
+                    {
+                        return (acc + getPaddedSizeFunc(gMerge, g));
+                    });
 
-                os << "// merged" << g.getIndex() << std::endl;
+                os << "// merged" << gMerge.getIndex() << std::endl;
 
                 // If this is the first  group
                 if(idStart == 0) {
@@ -314,7 +323,7 @@ private:
                     os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
                 }
 
-                handler(os, g, popSubs);
+                handler(os, gMerge, popSubs);
 
                 idStart += paddedSize;
                 os << CodeStream::CB(1) << std::endl;
@@ -332,9 +341,9 @@ private:
     }
 
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
-                          GroupHandler<T> handler) const
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<GroupMerged<T>> &groups, size_t &idStart,
+                          GetPaddedMergedGroupSizeFunc<T> getPaddedSizeFunc,
+                          GroupHandler<GroupMerged<T>> handler) const
     {
         genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
                             [](const T &) { return true; }, handler);
@@ -347,9 +356,6 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
-    //! Calculate the number of threads required for merged neuron group
-    size_t getNeuronGroupMergedThreads(const NeuronGroupMerged &ng) const;
-
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);
 
@@ -357,7 +363,7 @@ private:
     bool isDeviceType(const std::string &type) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
-    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
+    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupMerged &sg) const
     {
         return getPresynapticUpdateStrategy(sg, m_ChosenDevice, m_Preferences);
     }
@@ -366,7 +372,7 @@ private:
     // Private static methods
     //--------------------------------------------------------------------------
     // Get appropriate presynaptic update strategy to use for this synapse group
-    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupMerged &sg,
                                                                                const cudaDeviceProp &deviceProps,
                                                                                const Preferences &preferences);
 
