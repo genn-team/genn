@@ -42,4 +42,5 @@ public:
     using SynapseGroup::getSparseIndType;    
     using SynapseGroup::canWUBeMerged;
     using SynapseGroup::canPSBeMerged;
+    using SynapseGroup::canPSBeLinearlyCombined;
 };

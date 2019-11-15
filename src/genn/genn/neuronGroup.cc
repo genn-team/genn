@@ -230,23 +230,10 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         // Create a name for mmerged
         const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
 
-        // Cache useful bits from A
-        const auto &aParamsBegin = a->getPSParams().cbegin();
-        const auto &aParamsEnd = a->getPSParams().cend();
-        const auto &aDerivedParamsBegin = a->getPSDerivedParams().cbegin();
-        const auto &aDerivedParamsEnd = a->getPSDerivedParams().cend();
-        const auto aModelTypeHash = typeid(a->getPSModel()).hash_code();
-
-
         // Loop through remainder of incoming synapse populations
         for(auto b = inSyn.begin(); b != inSyn.end();) {
             // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
-            if(typeid((*b)->getPSModel()).hash_code() == aModelTypeHash
-                && a->getInSynLocation() == (*b)->getInSynLocation()
-                && a->getMaxDendriticDelayTimesteps() == (*b)->getMaxDendriticDelayTimesteps()
-                && std::equal(aParamsBegin, aParamsEnd, (*b)->getPSParams().cbegin())
-                && std::equal(aDerivedParamsBegin, aDerivedParamsEnd, (*b)->getPSDerivedParams().cbegin()))
-            {
+            if(a->canPSBeLinearlyCombined(**b)) {
                 LOGD << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
 
                 // Add to list of merged synapses
@@ -358,22 +345,19 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
             return false;
         }
 
-        // **TODO** if it's enabled linearly combine any of this and other neuron group's inSyn array
-        auto inSyn = getInSyn();
-        auto otherInSyn = other.getInSyn();
-
-        // If both groups have the same number of incoming synapse groups
-        if(inSyn.size() == otherInSyn.size()) {
+        // If both groups have the same number of incoming synapse groups after merging
+        auto otherMergedInSyn = other.getMergedInSyn();
+        if(getMergedInSyn().size() == otherMergedInSyn.size()) {
             // Loop through our incoming synapse groups
-            for(const auto *syn : inSyn) {
+            for(const auto &syn : getMergedInSyn()) {
                 // If a compatible postsynaptic model can be found amongst the other neuron group's current sources, remove it
-                const auto otherSyn = std::find_if(otherInSyn.cbegin(), otherInSyn.cend(),
-                                                   [syn](SynapseGroupInternal *otherSyn) 
+                const auto otherSyn = std::find_if(otherMergedInSyn.cbegin(), otherMergedInSyn.cend(),
+                                                   [syn](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &m)
                                                    { 
-                                                       return syn->canPSBeMerged(*otherSyn); 
+                                                       return syn.first->canPSBeMerged(*m.first);
                                                    });
-                if(otherSyn != otherInSyn.cend()) {
-                    otherInSyn.erase(otherSyn);
+                if(otherSyn != otherMergedInSyn.cend()) {
+                    otherMergedInSyn.erase(otherSyn);
                 }
                 // Otherwise, these can't be merged - return false
                 else {

@@ -322,11 +322,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
 
                 // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    popSubs.addVarSubstitution("rng", "&(*neuronGroup._rng)[" + popSubs["id"] + "]");
+                    popSubs.addVarSubstitution("rng", "&(*neuronGroup.rng)[" + popSubs["id"] + "]");
                 }
 
                 // Call handler to generate generic neuron code
-                os << "if(" << popSubs["id"] << " < neuronGroup._numNeurons)";
+                os << "if(" << popSubs["id"] << " < neuronGroup.numNeurons)";
                 {
                     CodeStream::Scope b(os);
                     simHandler(os, ng, popSubs,
