@@ -61,8 +61,11 @@ void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<
 ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model)
     : m_Model(model)
 {
-
     LOGD << "Merging neuron groups:";
     createMergedGroups(model.getLocalNeuronGroups(), m_MergedLocalNeuronGroups,
-                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b) { return a.canBeMerged(b);  });
+                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canBeMerged(b); });
+
+    LOGD << "Merging synapse groups:";
+    createMergedGroups(model.getLocalSynapseGroups(), m_MergedLocalSynapseGroups,
+                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
 }
