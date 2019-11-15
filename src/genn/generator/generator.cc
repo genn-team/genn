@@ -13,7 +13,7 @@
 #include "path.h"
 
 // GeNN includes
-#include "modelSpecInternal.h"
+#include "modelSpecMerged.h"
 
 // GeNN code generator includes
 #include "code_generator/generateAll.h"
@@ -79,11 +79,14 @@ int main(int argc,     //!< number of arguments; expected to be 2
         // Create output path
         filesystem::create_directory(outputPath);
 
+        // Perform merging
+        ModelSpecMerged modelMerged(model);
+
         // Create backend
-        auto backend = Optimiser::createBackend(model, outputPath, localHostID, GENN_PREFERENCES);
+        auto backend = Optimiser::createBackend(modelMerged, outputPath, localHostID, GENN_PREFERENCES);
         
         // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
+        const auto moduleNames = CodeGenerator::generateAll(modelMerged, backend, outputPath);
 
 #ifdef _WIN32
         // If runner GUID file doesn't exist

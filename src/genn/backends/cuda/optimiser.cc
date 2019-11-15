@@ -20,7 +20,7 @@
 #include "path.h"
 
 // GeNN includes
-#include "modelSpecInternal.h"
+#include "modelSpecMerged.h"
 
 // GeNN code generator includes
 #include "code_generator/generateAll.h"
@@ -82,14 +82,14 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA::Preferences &preferences, const ModelSpecInternal &model,
+void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA::Preferences &preferences, const ModelSpecMerged &model,
                     std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
 
     // Loop through neuron groups
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getModel().getLocalNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
         groupSizes[KernelNeuronUpdate].push_back(n.second.getNumNeurons());
 
@@ -99,43 +99,46 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
 
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
-    for(const auto &s : model.getLocalSynapseGroups()) {
-        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
-            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps, preferences));
-        }
-
-        if(!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
-        }
-
-        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
-        }
-
-        // If synapse group has individual weights and needs device initialisation
-        if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUVarInitRequired()) {
-            const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-            const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupSizes[KernelInitializeSparse].push_back(numSrcNeurons);
+    for(const auto &sMerge : model.getMergedLocalSynapseGroups()) {
+        for(const auto &s : sMerge.getGroups()) {
+            if(s.get().isSpikeEventRequired() || s.get().isTrueSpikeRequired()) {
+                groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(sMerge, s.get(),
+                                                                                                      deviceProps, preferences));
             }
-            else {
-                groupSizes[KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
+
+            if(!s.get().getWUModel()->getLearnPostCode().empty()) {
+                groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.get()));
             }
-        }
-        
-        // If this synapse group requires dendritic delay, it requires a pre-synapse reset
-        if(s.second.isDendriticDelayRequired()) {
-            numPreSynapseResetGroups++;
+
+            if (!s.get().getWUModel()->getLearnPostCode().empty()) {
+                groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.get()));
+            }
+
+            // If synapse group has individual weights and needs device initialisation
+            if((s.get().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.get().isWUVarInitRequired()) {
+                const size_t numSrcNeurons = s.get().getSrcNeuronGroup()->getNumNeurons();
+                const size_t numTrgNeurons = s.get().getTrgNeuronGroup()->getNumNeurons();
+                if(s.get().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    groupSizes[KernelInitializeSparse].push_back(numSrcNeurons);
+                }
+                else {
+                    groupSizes[KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
+                }
+            }
+
+            // If this synapse group requires dendritic delay, it requires a pre-synapse reset
+            if(s.get().isDendriticDelayRequired()) {
+                numPreSynapseResetGroups++;
+            }
         }
     }
 
     // Add group sizes for reset kernels
-    groupSizes[KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
+    groupSizes[KernelPreNeuronReset].push_back(model.getModel().getLocalNeuronGroups().size());
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecMerged &model,
                                            CodeGenerator::CUDA::KernelBlockSize &blockSize, const CodeGenerator::CUDA::Preferences &preferences,
                                            int localHostID, const filesystem::path &outputPath)
 {
@@ -358,7 +361,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     return kernelsToOptimise;
 }
 //--------------------------------------------------------------------------
-int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
+int chooseOptimalDevice(const ModelSpecMerged &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
                         const CodeGenerator::CUDA::Preferences &preferences, int localHostID, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
@@ -483,7 +486,7 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
+Backend createBackend(const ModelSpecMerged &model, const filesystem::path &outputPath, int localHostID,
                       const Preferences &preferences)
 {
     // If optimal device should be chosen

@@ -15,7 +15,7 @@ namespace CUDA
 {
 namespace Optimiser
 {
-BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
+BACKEND_EXPORT Backend createBackend(const ModelSpecMerged &model, const filesystem::path &outputPath, int localHostID,
                                      const Preferences &preferences);
 }   // namespace Optimiser
 }   // namespace CUDA
