@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <iterator>
 #include <numeric>
 
 // PLOG includes

@@ -18,7 +18,7 @@ void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<
     std::vector<std::reference_wrapper<const Group>> unmergedGroups;
     unmergedGroups.reserve(groups.size());
     std::transform(groups.cbegin(), groups.cend(), std::back_inserter(unmergedGroups),
-                    [](const std::map<std::string, Group>::value_type &g) { return std::cref(g.second); });
+                    [](const typename std::map<std::string, Group>::value_type &g) { return std::cref(g.second); });
 
     // Loop through un-merged  groups
     while(!unmergedGroups.empty()) {
