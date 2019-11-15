@@ -5,17 +5,17 @@
 #include <vector>
 
 // GeNN includes
-#include "neuronGroupInternal.h"
+#include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
-// NeuronGroupMerged
+// SynapseGroupMerged
 //----------------------------------------------------------------------------
-//! Very thin wrapper around a number of neuron groups which have been merged together
-class NeuronGroupMerged
+//! Very thin wrapper around a number of synapse groups which have been merged together
+class SynapseGroupMerged
 {
 public:
-    NeuronGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &neuronGroups)
-    :   m_Index(index), m_NeuronGroups(neuronGroups)
+    SynapseGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &synapseGroups)
+    :   m_Index(index), m_SynapseGroups(synapseGroups)
     {}
 
     //------------------------------------------------------------------------
@@ -24,15 +24,15 @@ public:
     size_t getIndex() const { return m_Index; }
 
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
-    const NeuronGroupInternal &getArchetype() const { return m_NeuronGroups.front().get(); }
+    const SynapseGroupInternal &getArchetype() const { return m_SynapseGroups.front().get(); }
 
-    //! Gets access to underlying vector of neuron groups which have been merged
-    const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &getNeuronGroups() const{ return m_NeuronGroups; }
+    //! Gets access to underlying vector of synapse groups which have been merged
+    const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &getSynapseGroups() const{ return m_SynapseGroups; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     const size_t m_Index;
-    std::vector<std::reference_wrapper<const NeuronGroupInternal>> m_NeuronGroups;
+    std::vector<std::reference_wrapper<const SynapseGroupInternal>> m_SynapseGroups;
 };
