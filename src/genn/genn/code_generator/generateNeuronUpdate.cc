@@ -81,39 +81,39 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
         {
             CodeStream::Scope b(os);
 
-            os << "const unsigned int _numNeurons;" << std::endl;
+            os << "unsigned int _numNeurons;" << std::endl;
 
             // Add spike arrays
             if(trueSpike) {
-                os << "unsigned int*& spkCnt;" << std::endl;
-                os << "unsigned int*& spk;" << std::endl;
+                os << "unsigned int** spkCnt;" << std::endl;
+                os << "unsigned int** spk;" << std::endl;
             }
 
             // Add spike like event arrays
             if(spikeLikeEvent) {
-                os << "unsigned int*& spkCntEvnt;" << std::endl;
-                os << "unsigned int*& spkEvnt;" << std::endl;
+                os << "unsigned int** spkCntEvnt;" << std::endl;
+                os << "unsigned int** spkEvnt;" << std::endl;
             }
             // Add delay pointer
             if(delay) {
-                os << "unsigned int& spkQuePtr;" << std::endl;
+                os << "unsigned int* spkQuePtr;" << std::endl;
             }
 
             // Add RNG state reference
             if(populationRNG) {
-                os << "curandState*& _rng;" << std::endl;
+                os << "curandState** _rng;" << std::endl;
             }
 
-            // Add references to var pointers to struct
+            // Add pointers to var pointers to struct
             os << "// Variables" << std::endl;
             for(const auto &v : nm->getVars()) {
-                os << v.type << "*& " << v.name << ";" << std::endl;
+                os << v.type << "** " << v.name << ";" << std::endl;
             }
 
-            // Add REFERENCES to EGPs to struct (as they might be scalars)
+            // Add pointers to EGPs to struct (as they might be scalars)
             os << "// Extra global parameters" << std::endl;
             for(const auto &e : nm->getExtraGlobalParams()) {
-                os << e.type << "& " << e.name << ";" << std::endl;
+                os << e.type << "* " << e.name << ";" << std::endl;
             }
         }
         os << ";" << std::endl;
@@ -128,25 +128,25 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 os << ng.get().getNumNeurons() << ", ";
 
                 if(trueSpike) {
-                    os << backend.getVarPrefix() << "glbSpkCnt" << ng.get().getName() << ", ";
-                    os << backend.getVarPrefix() << "glbSpk" << ng.get().getName() << ", ";
+                    os << "&" << backend.getVarPrefix() << "glbSpkCnt" << ng.get().getName() << ", ";
+                    os << "&" << backend.getVarPrefix() << "glbSpk" << ng.get().getName() << ", ";
                 }
 
                 if(spikeLikeEvent) {
-                    os << backend.getVarPrefix() << "glbSpkCntEvnt" << ng.get().getName() << ", ";
-                    os << backend.getVarPrefix() << "glbSpkEvnt" << ng.get().getName() << ", ";
+                    os << "&" << backend.getVarPrefix() << "glbSpkCntEvnt" << ng.get().getName() << ", ";
+                    os << "&" << backend.getVarPrefix() << "glbSpkEvnt" << ng.get().getName() << ", ";
                 }
 
                 if(delay) {
-                    os << backend.getVarPrefix() << "spkQuePtr" << ng.get().getName() << ", ";
+                    os << "&" << backend.getVarPrefix() << "spkQuePtr" << ng.get().getName() << ", ";
                 }
 
                 if(populationRNG) {
-                    os << backend.getVarPrefix() << "rng" << ng.get().getName() << ", ";
+                    os << "&" << backend.getVarPrefix() << "rng" << ng.get().getName() << ", ";
                 }
 
                 for(const auto &v : nm->getVars()) {
-                    os << backend.getVarPrefix() << v.name << ng.get().getName() << ", ";
+                    os << "&" << backend.getVarPrefix() << v.name << ng.get().getName() << ", ";
                 }
                 os << "}," << std::endl;
 
@@ -167,7 +167,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
             // Generate code to copy neuron state into local variable
             for(const auto &v : nm->getVars()) {
                 os << v.type << " l" << v.name << " = ";
-                os << "neuronGroup." << v.name << "[";
+                os << "(*neuronGroup." << v.name << ")[";
                 if (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
@@ -441,7 +441,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 // back to global state variables dd_V etc  
                 const bool delayed = (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired());
                 if((v.access == VarAccess::READ_WRITE) || delayed) {
-                    os << "neuronGroup." << v.name << "[";
+                    os << "(*neuronGroup." << v.name << ")[";
 
                     if (delayed) {
                         os << "writeDelayOffset + ";
