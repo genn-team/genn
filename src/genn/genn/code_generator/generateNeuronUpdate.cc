@@ -66,7 +66,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 
-    // Loop through merged neuron groups and declare structs
+    // Loop through merged neuron groups
     for(const auto &m : model.getMergedLocalNeuronGroups()) {
         const NeuronModels::Base *nm = m.getArchetype().getNeuronModel();
 
@@ -119,7 +119,6 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
         os << ";" << std::endl;
 
         // Write array of these structs containing individual neuron group pointers etc
-        // **TODO** make this __constant__ cudaMemcpyToSymbol
         os << "__device__  MergedNeuronGroup" << m.getIndex() << " " << backend.getVarPrefix() << "mergedNeuronGroup" << m.getIndex() << "[] = ";
         {
             CodeStream::Scope b(os);
