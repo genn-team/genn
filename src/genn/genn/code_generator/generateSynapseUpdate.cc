@@ -31,17 +31,17 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? synapseSubs["id_pre"] : "preReadDelayOffset + " + baseSubs["id_pre"];
-    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", backend.getVarPrefix(),
-                                       sg.getName() + "[" + delayedPreIdx + "]");
+    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "(*synapseGroup.",
+                                       ")[" + delayedPreIdx + "]");
 
     const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? synapseSubs["id_post"] : "postReadDelayOffset + " + baseSubs["id_post"];
-    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", backend.getVarPrefix(),
-                                       sg.getName() + "[" + delayedPostIdx + "]");
+    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "(*synapseGroup.",
+                                       ")[" + delayedPostIdx + "]");
 
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        synapseSubs.addVarNameSubstitution(wu->getVars(), "", backend.getVarPrefix(),
-                                           sg.getName() + "[" + synapseSubs["id_syn"] + "]");
+        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "(*synapseGroup.",
+                                           ")[" + synapseSubs["id_syn"] + "]");
     }
     // Otherwise, if weights are procedual
     else if (sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
