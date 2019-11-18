@@ -11,6 +11,7 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/backendBase.h"
+#include "code_generator/teeStream.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -31,17 +32,17 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? synapseSubs["id_pre"] : "preReadDelayOffset + " + baseSubs["id_pre"];
-    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "(*synapseGroup.",
-                                       ")[" + delayedPreIdx + "]");
+    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "synapseGroup.",
+                                       "[" + delayedPreIdx + "]");
 
     const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? synapseSubs["id_post"] : "postReadDelayOffset + " + baseSubs["id_post"];
-    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "(*synapseGroup.",
-                                       ")[" + delayedPostIdx + "]");
+    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "synapseGroup.",
+                                       "[" + delayedPostIdx + "]");
 
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "(*synapseGroup.",
-                                           ")[" + synapseSubs["id_syn"] + "]");
+        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "synapseGroup.",
+                                           "[" + synapseSubs["id_syn"] + "]");
     }
     // Otherwise, if weights are procedual
     else if (sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
@@ -106,142 +107,37 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
     os << std::endl;
 
     // Loop through merged neuron groups
-    for(const auto &m : model.getMergedLocalSynapseGroups()) {
-        const WeightUpdateModels::Base *wum = m.getArchetype().getWUModel();
+    std::stringstream mergedGroupArrayStream;
+    std::stringstream mergedGroupFuncStream;
+    CodeStream mergedGroupArray(mergedGroupArrayStream);
+    CodeStream mergedGroupFunc(mergedGroupFuncStream);
+    TeeStream mergedGroupStreams(mergedGroupArray, mergedGroupFunc);
+    for(const auto &sg : model.getMergedLocalSynapseGroups()) {
+        // Declare static array to hold merged synapse groups
+        const size_t idx = sg.getIndex();
+        const size_t numGroups = sg.getGroups().size();
 
-        const bool presynapticTrueSpike = m.getArchetype().isTrueSpikeRequired();
-        const bool presynapticSpikeLikeEvent = m.getArchetype().isSpikeEventRequired();
+        mergedGroupArray << "__device__ __constant__ MergedSynapseGroup" << idx << " dd_mergedSynapseGroup" << idx << "[" << numGroups << "];" << std::endl;
 
-        const bool dendriticDelay = m.getArchetype().isDendriticDelayRequired();
-        // Write struct
-        os << "struct MergedSynapseGroup" << m.getIndex() << std::endl;
+        // Write function to update
+        mergedGroupFunc << "void pushMergedSynapseGroup" << idx << "ToDevice(const MergedSynapseGroup" << idx << " *group)";
         {
-            CodeStream::Scope b(os);
-
-            os << "unsigned int rowStride;" << std::endl;
-            os << "unsigned int numTrgNeurons;" << std::endl;
-
-            if(dendriticDelay) {
-                os << model.getPrecision() <<"** denDelay;" << std::endl;
-                os << "volatile unsigned int *denDelayPtr;" << std::endl;
-            }
-            else {
-                os << model.getPrecision() << "** inSyn;" << std::endl;
-            }
-
-            os << std::endl;
-
-            // Add spike arrays
-            if(presynapticTrueSpike) {
-                os << "// Spikes" << std::endl;
-                os << "unsigned int** preSpkCnt;" << std::endl;
-                os << "unsigned int** preSpk;" << std::endl;
-                os << std::endl;
-            }
-
-            // Add spike like event arrays
-            if(presynapticSpikeLikeEvent) {
-                os << "// Spike-like events" << std::endl;
-                os << "unsigned int** preSpkCntEvnt;" << std::endl;
-                os << "unsigned int** preSpkEvnt;" << std::endl;
-                os << std::endl;
-            }
-
-            // Add delay pointer
-            /*f(delay) {
-                os << "// Delay pointer" << std::endl;
-                os << "unsigned int* spkQuePtr;" << std::endl;
-                os << std::endl;
-            }*/
-
-            // Add pointers to connectivity data
-            if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "// Sparse connectivity" << std::endl;
-                os << "unsigned int** rowLength;" << std::endl;
-                os << m.getArchetype().getSparseIndType() << "** ind;" << std::endl;
-            }
-            else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                os << "// Bitmask connectivity" << std::endl;
-                os << "uint32_t** gp;" << std::endl;
-            }
-
-            // Add pointers to var pointers to struct
-            if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                os << "// Variables" << std::endl;
-                for(const auto &v : wum->getVars()) {
-                    os << v.type << "** " << v.name << ";" << std::endl;
-                }
-                os << std::endl;
-            }
-
-            // Add pointers to EGPs to struct (as they might be scalars)
-            os << "// Extra global parameters" << std::endl;
-            for(const auto &e : wum->getExtraGlobalParams()) {
-                os << e.type << "* " << e.name << ";" << std::endl;
-            }
-            os << std::endl;
+            CodeStream::Scope b(mergedGroupFunc);
+            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_mergedSynapseGroup" << idx << ", group, " << numGroups << " * sizeof(MergedSynapseGroup" << idx << ")));" << std::endl;
         }
-        os << ";" << std::endl;
-
-        // Write array of these structs containing individual neuron group pointers etc
-        os << "__device__  MergedSynapseGroup" << m.getIndex() << " " << backend.getVarPrefix() << "mergedSynapseGroup" << m.getIndex() << "[] = ";
-        {
-            CodeStream::Scope b(os);
-            for(const auto &sg : m.getGroups()) {
-                os << "{";
-                os << backend.getSynapticMatrixRowStride(m, sg) << ", ";
-                os << sg.get().getTrgNeuronGroup()->getNumNeurons() << ", ";
-
-                // Add pointer to dendritic delay or inSyn
-                if(dendriticDelay) {
-                    os << "&" << backend.getVarPrefix() << "denDelay" << sg.get().getPSModelTargetName() << ", ";
-                    os << "&" << backend.getVarPrefix() << "denDelayPtr" << sg.get().getPSModelTargetName() << ", ";
-                }
-                else {
-                    os << "&" << backend.getVarPrefix() << "inSyn" << sg.get().getPSModelTargetName() << ", ";
-                }
-
-                if(presynapticTrueSpike) {
-                    os << "&" << backend.getVarPrefix() << "glbSpkCnt" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                    os << "&" << backend.getVarPrefix() << "glbSpk" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                }
-
-                if(presynapticSpikeLikeEvent) {
-                    os << "&" << backend.getVarPrefix() << "glbSpkCntEvnt" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                    os << "&" << backend.getVarPrefix() << "glbSpkEvnt" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                }
-
-                /*if(delay) {
-                    os << "&" << backend.getVarPrefix() << "spkQuePtr" << ng.get().getName() << ", ";
-                }
-
-                if(populationRNG) {
-                    os << "&" << backend.getVarPrefix() << "rng" << ng.get().getName() << ", ";
-                }*/
-
-                if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    os << "&" << backend.getVarPrefix() << "rowLength" << sg.get().getName() << ", ";
-                    os << "&" << backend.getVarPrefix() << "ind" << sg.get().getName() << ", ";
-                }
-                else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "&" << backend.getVarPrefix() << "gp" << sg.get().getName() << ", ";
-                }
-
-                if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                    for(const auto &v : wum->getVars()) {
-                        os << "&" << backend.getVarPrefix() << v.name << sg.get().getName() << ", ";
-                    }
-                }
-                for(const auto &e : wum->getExtraGlobalParams()) {
-                    os << "&" << e.name << sg.get().getName() << ", ";
-                }
-                os << "}," << std::endl;
-
-            }
-        }
-        os << ";" << std::endl;
     }
 
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// merged neuron group arrays" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << mergedGroupArrayStream.str();
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// merged neuron group functions" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << mergedGroupFuncStream.str();
+    os << std::endl;
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, model,
