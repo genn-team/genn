@@ -181,3 +181,24 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
     ASSERT_FALSE(ng0Internal->canBeMerged(*ng3));
 }
+
+TEST(NeuronGroup, InitCompareDifferentVars)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramValsA(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::ParamValues paramValsB(0.02, 0.2, -65.0, 4.0);
+    NeuronModels::Izhikevich::VarValues varValsA(initVar<InitVarSnippet::Uniform>({0.0, 1.0}), 0.0);
+    NeuronModels::Izhikevich::VarValues varValsB(0.0, initVar<InitVarSnippet::Uniform>({0.0, 1.0}));
+    NeuronModels::Izhikevich::VarValues varValsC(0.0, 0.0);
+    auto *ng0 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramValsA, varValsA);
+    auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramValsA, varValsB);
+    auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons2", 10, paramValsB, varValsC);
+
+    model.finalize();
+
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
+    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
+    ASSERT_FALSE(ng0Internal->canBeMerged(*ng2));
+}

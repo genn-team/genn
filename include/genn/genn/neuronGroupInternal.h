@@ -37,4 +37,5 @@ public:
     using NeuronGroup::getPrevQueueOffset;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::canBeMerged;
+    using NeuronGroup::canInitBeMerged;
 };
