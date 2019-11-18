@@ -17,6 +17,7 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
+#include "code_generator/teeStream.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -30,7 +31,7 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
     substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams());
     substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams());
-    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "(*neuronGroup.", ")");
+    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "neuronGroup.");
     substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
 }
 //--------------------------------------------------------------------------
@@ -67,158 +68,37 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
     os << std::endl;
 
     // Loop through merged neuron groups
-    for(const auto &m : model.getMergedLocalNeuronGroups()) {
-        const NeuronModels::Base *nm = m.getArchetype().getNeuronModel();
+    std::stringstream mergedGroupArrayStream;
+    std::stringstream mergedGroupFuncStream;
+    CodeStream mergedGroupArray(mergedGroupArrayStream);
+    CodeStream mergedGroupFunc(mergedGroupFuncStream);
+    TeeStream mergedGroupStreams(mergedGroupArray, mergedGroupFunc);
+    for(const auto &ng : model.getMergedLocalNeuronGroups()) {
+        // Declare static array to hold merged neuron groups
+        const size_t idx = ng.getIndex();
+        const size_t numGroups = ng.getGroups().size();
 
-        // **TODO** only include this if backend uses population RNGs
-        const bool populationRNG = m.getArchetype().isSimRNGRequired();
-        const bool trueSpike = !m.getArchetype().getNeuronModel()->getThresholdConditionCode().empty();
-        const bool spikeLikeEvent = m.getArchetype().isSpikeEventRequired();
-        const bool delay = m.getArchetype().isDelayRequired();
+        mergedGroupArray << "__device__ __constant__ MergedNeuronGroup" << idx << " dd_mergedNeuronGroup" << idx << "[" << numGroups << "];" << std::endl;
 
-        // Write struct 
-        os << "struct MergedNeuronGroup" << m.getIndex() << std::endl;
+        // Write function to update
+        mergedGroupFunc << "void pushMergedNeuronGroup" << idx << "ToDevice(const MergedNeuronGroup" << idx << " *group)";
         {
-            CodeStream::Scope b(os);
-
-            os << "unsigned int numNeurons;" << std::endl;
-            os << std::endl;
-            // Add spike arrays
-            if(trueSpike) {
-                os << "// Spikes" << std::endl;
-                os << "unsigned int** spkCnt;" << std::endl;
-                os << "unsigned int** spk;" << std::endl;
-                os << std::endl;
-            }
-
-            // Add spike like event arrays
-            if(spikeLikeEvent) {
-                os << "// Spike-like events" << std::endl;
-                os << "unsigned int** spkCntEvnt;" << std::endl;
-                os << "unsigned int** spkEvnt;" << std::endl;
-                os << std::endl;
-            }
-            // Add delay pointer
-            if(delay) {
-                os << "// Delay pointer" << std::endl;
-                os << "volatile unsigned int* spkQuePtr;" << std::endl;
-                os << std::endl;
-            }
-
-            // Add RNG state reference
-            if(populationRNG) {
-                os << "// Population RNG" << std::endl;
-                os << "curandState** rng;" << std::endl;
-                os << std::endl;
-            }
-
-            // Add pointers to var pointers to struct
-            os << "// Variables" << std::endl;
-            for(const auto &v : nm->getVars()) {
-                os << v.type << "** " << v.name << ";" << std::endl;
-            }
-            os << std::endl;
-
-            // Add pointers to EGPs to struct (as they might be scalars)
-            os << "// Extra global parameters" << std::endl;
-            for(const auto &e : nm->getExtraGlobalParams()) {
-                os << e.type << "* " << e.name << ";" << std::endl;
-            }
-            os << std::endl;
-
-            // Loop through merged synaptic inputs in archetypical neuron group
-            for(size_t i = 0; i < m.getArchetype().getMergedInSyn().size(); i++) {
-                const SynapseGroupInternal *sg = m.getArchetype().getMergedInSyn()[i].first;
-                os << "// Synaptic input " << i << std::endl;
-
-                // Add pointer to insyn
-                os << model.getModel().getPrecision() << "** inSyn" << i << ";" << std::endl;
-
-                // Add pointer to dendritic delay buffer if required
-                if (sg->isDendriticDelayRequired()) {
-                    os << model.getModel().getPrecision() << "** denDelay" << i << ";" << std::endl;
-                    os << "volatile unsigned int *denDelayPtr" << i << ";" << std::endl;
-                }
-
-                // Add pointers to state variables
-                if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    for (const auto &v : sg->getPSModel()->getVars()) {
-                        os << v.type << "** " << v.name << i << ";" << std::endl;
-                    }
-                }
-                os << std::endl;
-            }
+            CodeStream::Scope b(mergedGroupFunc);
+            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_mergedNeuronGroup" << idx << ", group, " << numGroups << " * sizeof(MergedNeuronGroup" << idx << ")));" << std::endl;
         }
-        os << ";" << std::endl;
-
-        // Write array of these structs containing individual neuron group pointers etc
-        os << "__device__  MergedNeuronGroup" << m.getIndex() << " " << backend.getVarPrefix() << "mergedNeuronGroup" << m.getIndex() << "[] = ";
-        {
-            CodeStream::Scope b(os);
-            for(const auto &ng : m.getGroups()) {
-                os << "{";
-                os << ng.get().getNumNeurons() << ", ";
-
-                if(trueSpike) {
-                    os << "&" << backend.getVarPrefix() << "glbSpkCnt" << ng.get().getName() << ", ";
-                    os << "&" << backend.getVarPrefix() << "glbSpk" << ng.get().getName() << ", ";
-                }
-
-                if(spikeLikeEvent) {
-                    os << "&" << backend.getVarPrefix() << "glbSpkCntEvnt" << ng.get().getName() << ", ";
-                    os << "&" << backend.getVarPrefix() << "glbSpkEvnt" << ng.get().getName() << ", ";
-                }
-
-                if(delay) {
-                    os << "&" << backend.getVarPrefix() << "spkQuePtr" << ng.get().getName() << ", ";
-                }
-
-                if(populationRNG) {
-                    os << "&" << backend.getVarPrefix() << "rng" << ng.get().getName() << ", ";
-                }
-
-                for(const auto &v : nm->getVars()) {
-                    os << "&" << backend.getVarPrefix() << v.name << ng.get().getName() << ", ";
-                }
-
-                for(const auto &e : nm->getExtraGlobalParams()) {
-                    os << "&" << e.name << ng.get().getName() << ", ";
-                }
-
-                // Loop through merged synaptic inputs in the archetypical neuron group
-                for (const auto &m : m.getArchetype().getMergedInSyn()) {
-                    const SynapseGroupInternal *archetypeSG = m.first;
-
-                    // Find merged synapse group in THIS neuron group which is compatible with archetype
-                    const auto otherSyn = std::find_if(ng.get().getMergedInSyn().cbegin(), ng.get().getMergedInSyn().cend(),
-                                                       [archetypeSG](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &m)
-                                                       {
-                                                           return m.first->canPSBeMerged(*archetypeSG);
-                                                       });
-                    assert(otherSyn != ng.get().getMergedInSyn().cend());
-
-                    os << "&" << backend.getVarPrefix() << "inSyn" << otherSyn->first->getPSModelTargetName() << ", ";
-
-                    // Add pointer to dendritic delay buffer if required
-                    if (otherSyn->first->isDendriticDelayRequired()) {
-                        os << "&" << backend.getVarPrefix() << "denDelay" << otherSyn->first->getPSModelTargetName() << ", ";
-                        os << "&" << backend.getVarPrefix() << "denDelayPtr" << otherSyn->first->getPSModelTargetName() << ", ";
-                    }
-
-                    // Add pointers to state variables
-                    if (otherSyn->first->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                        for (const auto &v : otherSyn->first->getPSModel()->getVars()) {
-                            os << "&" << backend.getVarPrefix() << v.name << otherSyn->first->getPSModelTargetName() << ", ";
-                        }
-                    }
-
-                }
-                os << "}," << std::endl;
-
-            }
-        }
-        os << ";" << std::endl;
     }
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// merged neuron group arrays" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << mergedGroupArrayStream.str();
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// merged neuron group functions" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << mergedGroupFuncStream.str();
+    os << std::endl;
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, model,
@@ -235,7 +115,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                     os << "const ";
                 }
                 os << v.type << " l" << v.name << " = ";
-                os << "(*neuronGroup." << v.name << ")[";
+                os << "neuronGroup." << v.name << "[";
                 if (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
@@ -284,13 +164,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn = (*neuronGroup.inSyn" << i << ")[" << popSubs["id"] << "];" << std::endl;
+                os << model.getPrecision() << " linSyn = neuronGroup.inSyn" << i << "[" << popSubs["id"] << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
                     os << model.getPrecision() << " &denDelayFront" << i << " = ";
-                    os << "(*neuronGroup.denDelay" << i << ")[(*neuronGroup.denDelayPtr" << i << " * neuronGroup.numNeurons) + " << popSubs["id"] << "];" << std::endl;
+                    os << "neuronGroup.denDelay" << i << "[(*neuronGroup.denDelayPtr" << i << " * neuronGroup.numNeurons) + " << popSubs["id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn += denDelayFront" << i << ";" << std::endl;
@@ -307,7 +187,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                             os << "const ";
                         }
                         os << v.type << " lps" << v.name;
-                        os << " = (*neuronGroup." << v.name << i << ")[" << neuronSubs["id"] << "];" << std::endl;
+                        os << " = neuronGroup." << v.name << i << "[" << neuronSubs["id"] << "];" << std::endl;
                     }
                 }
 
@@ -337,12 +217,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 }
 
                 // Write back linSyn
-                os << "(*neuronGroup.inSyn"  << i << ")[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
+                os << "neuronGroup.inSyn"  << i << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << "(*neuronGroup." << v.name << i << ")[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
+                        os << "neuronGroup." << v.name << i << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -533,7 +413,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 // back to global state variables dd_V etc  
                 const bool delayed = (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired());
                 if((v.access == VarAccess::READ_WRITE) || delayed) {
-                    os << "(*neuronGroup." << v.name << ")[";
+                    os << "neuronGroup." << v.name << "[";
 
                     if (delayed) {
                         os << "writeDelayOffset + ";

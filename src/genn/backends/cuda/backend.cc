@@ -341,7 +341,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
 
                 // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    popSubs.addVarSubstitution("rng", "&(*neuronGroup.rng)[" + popSubs["id"] + "]");
+                    popSubs.addVarSubstitution("rng", "&neuronGroup.rng[" + popSubs["id"] + "]");
                 }
 
                 // Call handler to generate generic neuron code
@@ -370,7 +370,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
                         os << "if (shSpkEvntCount > 0)";
                         {
                             CodeStream::Scope b(os);
-                            os << "shPosSpkEvnt = atomicAdd((unsigned int *) &(*neurongroup.spkCntEvnt)";
+                            os << "shPosSpkEvnt = atomicAdd((unsigned int*)&neurongroup.spkCntEvnt";
                             if (ng.getArchetype().isDelayRequired()) {
                                 os << "[*neuronGroup.spkQuePtr], shSpkEvntCount);" << std::endl;
                             }
@@ -389,7 +389,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
                         os << "if (shSpkCount > 0)";
                         {
                             CodeStream::Scope b(os);
-                            os << "shPosSpk = atomicAdd((unsigned int *) &(*neuronGroup.spkCnt)";
+                            os << "shPosSpk = atomicAdd((unsigned int*)&neuronGroup.spkCnt";
                             if (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
                                 os << "[*neuronGroup.spkQuePtr], shSpkCount);" << std::endl;
                             }
@@ -407,7 +407,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
                     os << "if (threadIdx.x < shSpkEvntCount)";
                     {
                         CodeStream::Scope b(os);
-                        os << "(*neuronGroup.spkEvnt([" << queueOffset << "shPosSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << std::endl;
+                        os << "neuronGroup.spkEvnt[" << queueOffset << "shPosSpkEvnt + threadIdx.x] = shSpkEvnt[threadIdx.x];" << std::endl;
                     }
                 }
 
@@ -425,7 +425,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
                         wuSubs.addVarSubstitution("id", "n", true);
                         wuVarUpdateHandler(os, ng, wuSubs);
 
-                        os << "(*neuronGroup.spk)[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = n;" << std::endl;
+                        os << "neuronGroup.spk[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = n;" << std::endl;
                         if (ng.getArchetype().isSpikeTimeRequired()) {
                             assert(false);
                             //os << "dd_sT" << ng.getArchetype().getName() << "[" << queueOffset << "n] = t;" << std::endl;
@@ -1548,6 +1548,16 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) 
         }
         os << std::endl;
     }
+
+    os << "template<class T>" << std::endl;
+    os << "T *getSymbolAddress(const T &devSymbol)";
+    {
+        CodeStream::Scope b(os);
+        os << "void *devPtr;" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, devSymbol));" << std::endl;
+        os << "return reinterpret_cast<T*>(devPtr);" << std::endl;
+    }
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const
