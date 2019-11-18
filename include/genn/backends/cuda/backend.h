@@ -123,10 +123,10 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, 
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
                                  NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                   SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                   SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
                                   SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const override;
@@ -223,7 +223,7 @@ public:
 
     //! Get total number of RNG streams potentially used to initialise model
     /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
-    size_t getNumInitialisationRNGStreams(const ModelSpecMerged &model) const;
+    size_t getNumInitialisationRNGStreams(const ModelSpecInternal &model) const;
 
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 

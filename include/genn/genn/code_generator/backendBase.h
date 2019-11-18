@@ -13,13 +13,14 @@
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
-#include "modelSpecMerged.h"
 #include "variableMode.h"
 
 // Forward declarations
 class NeuronGroupInternal;
+class NeuronGroupMerged;
 class ModelSpecInternal;
 class SynapseGroupInternal;
+class SynapseGroupMerged;
 
 namespace CodeGenerator
 {
@@ -144,7 +145,7 @@ public:
         \param model                    merged model to generate code for
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, 
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
                                  NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
@@ -165,7 +166,7 @@ public:
         \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                   SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                   SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
                                   SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const = 0;

@@ -177,6 +177,7 @@ protected:
     //! Can the initialisation of these neuron groups be merged together? i.e. can they be initialised using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canInitBeMerged(const NeuronGroup &other) const;
+
 private:
     //------------------------------------------------------------------------
     // Private methods

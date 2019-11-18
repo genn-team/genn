@@ -287,7 +287,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
 // CodeGenerator
 //--------------------------------------------------------------------------
 CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                                      const ModelSpecMerged &model, const BackendBase &backend, int localHostID)
+                                                      const ModelSpecInternal &model, const BackendBase &backend, int localHostID)
 {
     // Track memory allocations, initially starting from zero
     auto mem = MemAlloc::zero();
@@ -307,12 +307,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     definitions << "#define EXPORT_VAR extern" << std::endl;
     definitions << "#define EXPORT_FUNC" << std::endl;
 #endif
-    backend.genDefinitionsPreamble(definitions, model.getModel());
+    backend.genDefinitionsPreamble(definitions, model);
 
     // Write definitions internal preamble
     definitionsInternal << "#pragma once" << std::endl;
     definitionsInternal << "#include \"definitions.h\"" << std::endl << std::endl;
-    backend.genDefinitionsInternalPreamble(definitionsInternal, model.getModel());
+    backend.genDefinitionsInternalPreamble(definitionsInternal, model);
     
     // write DT macro
     if (model.getTimePrecision() == "float") {
@@ -337,7 +337,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Write runner preamble
     runner << "#include \"definitionsInternal.h\"" << std::endl << std::endl;
-    backend.genRunnerPreamble(runner, model.getModel());
+    backend.genRunnerPreamble(runner, model);
 
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
@@ -384,14 +384,14 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runnerVarDecl << model.getTimePrecision() << " t;" << std::endl;
 
     // If backend requires a global RNG to simulate (or initialize) this model
-    if(backend.isGlobalRNGRequired(model.getModel())) {
+    if(backend.isGlobalRNGRequired(model)) {
         mem += backend.genGlobalRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
     }
     allVarStreams << std::endl;
 
     // Generate preamble for the final stage of time step
     // **NOTE** this is done now as there can be timing logic here
-    backend.genStepTimeFinalisePreamble(runnerStepTimeFinalise, model.getModel());
+    backend.genStepTimeFinalisePreamble(runnerStepTimeFinalise, model);
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// timers" << std::endl;
@@ -417,9 +417,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                          runnerStepTimeFinalise, "init", false);
 
         // If there's any synapse groups
-        if(!model.getModel().getLocalSynapseGroups().empty()) {
+        if(!model.getLocalSynapseGroups().empty()) {
             // If any synapse groups process spikes or spike-like events, add a timer
-            if(std::any_of(model.getModel().getLocalSynapseGroups().cbegin(), model.getModel().getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()); }))
             {
                 backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -432,7 +432,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                              runnerStepTimeFinalise, "initSparse", false);
 
             // If any synapse groups have weight update models with postsynaptic learning, add a timer
-            if(std::any_of(model.getModel().getLocalSynapseGroups().cbegin(), model.getModel().getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
             {
                 backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -440,7 +440,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
 
             // If any synapse groups have weight update models with synapse dynamics, add a timer
-            if(std::any_of(model.getModel().getLocalSynapseGroups().cbegin(), model.getModel().getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
             {
                 backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -455,7 +455,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> currentSpikePullFunctions;
     std::vector<std::string> currentSpikeEventPullFunctions;
-    for(const auto &n : model.getModel().getRemoteNeuronGroups()) {
+    for(const auto &n : model.getRemoteNeuronGroups()) {
         // Write macro so whether a neuron group is remote or not can be determined at compile time
         // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
         definitionsVar << "#define " << n.first << "_REMOTE" << std::endl;
@@ -497,7 +497,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// local neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // Write convenience macros to access spikes
         genSpikeMacros(definitionsVar, n.second, true);
 
@@ -666,7 +666,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// postsynaptic variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // Loop through merged incoming synaptic populations
         // **NOTE** because of merging we need to loop through postsynaptic models in this
         for(const auto &m : n.second.getMergedInSyn()) {
@@ -936,11 +936,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 definitionsInternal << "// Synaptic input " << i << std::endl;
 
                 // Add pointer to insyn
-                definitionsInternal << model.getModel().getPrecision() << "* inSyn" << i << ";" << std::endl;
+                definitionsInternal << model.getPrecision() << "* inSyn" << i << ";" << std::endl;
 
                 // Add pointer to dendritic delay buffer if required
                 if (sg->isDendriticDelayRequired()) {
-                    definitionsInternal << model.getModel().getPrecision() << "* denDelay" << i << ";" << std::endl;
+                    definitionsInternal << model.getPrecision() << "* denDelay" << i << ";" << std::endl;
                     definitionsInternal << "volatile unsigned int *denDelayPtr" << i << ";" << std::endl;
                 }
 
@@ -1206,15 +1206,15 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "void copyStateToDevice(bool uninitialisedOnly)";
     {
         CodeStream::Scope b(runner);
-         for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+         for(const auto &n : model.getLocalNeuronGroups()) {
             runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
 
-        for(const auto &cs : model.getModel().getLocalCurrentSources()) {
+        for(const auto &cs : model.getLocalCurrentSources()) {
             runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
 
-        for(const auto &s : model.getModel().getLocalSynapseGroups()) {
+        for(const auto &s : model.getLocalSynapseGroups()) {
             runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
     }
@@ -1236,15 +1236,15 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "void copyStateFromDevice()";
     {
         CodeStream::Scope b(runner);
-        for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+        for(const auto &n : model.getLocalNeuronGroups()) {
             runner << "pull" << n.first << "StateFromDevice();" << std::endl;
         }
 
-        for(const auto &cs : model.getModel().getLocalCurrentSources()) {
+        for(const auto &cs : model.getLocalCurrentSources()) {
             runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
         }
 
-        for(const auto &s : model.getModel().getLocalSynapseGroups()) {
+        for(const auto &s : model.getLocalSynapseGroups()) {
             runner << "pull" << s.first << "StateFromDevice();" << std::endl;
         }
     }
@@ -1281,7 +1281,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // Generate preamble -this is the first bit of generated code called by user simulations
         // so global initialisation is often performed here
-        backend.genAllocateMemPreamble(runner, model.getModel());
+        backend.genAllocateMemPreamble(runner, model);
 
         // Write variable allocations to runner
         runner << runnerVarAllocStream.str();
@@ -1309,12 +1309,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         runner << "updateSynapses(t);" << std::endl;
 
         // Generate code to advance host-side spike queues
-        for(const auto &n : model.getModel().getRemoteNeuronGroups()) {
+        for(const auto &n : model.getRemoteNeuronGroups()) {
             if(n.second.isDelayRequired() && n.second.hasOutputToHost(localHostID)) {
                 runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
             }
         }
-        for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+        for(const auto &n : model.getLocalNeuronGroups()) {
             if (n.second.isDelayRequired()) {
                 runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
             }
@@ -1324,7 +1324,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         runner << "updateNeurons(t);" << std::endl;
 
         // Generate code to advance host side dendritic delay buffers
-        for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+        for(const auto &n : model.getLocalNeuronGroups()) {
             // Loop through incoming synaptic populations
             for(const auto &m : n.second.getMergedInSyn()) {
                 const auto *sg = m.first;

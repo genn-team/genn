@@ -4,8 +4,8 @@
 #include <string>
 
 // GeNN includes
+#include "groupMerged.h"
 #include "modelSpecInternal.h"
-#include "modelSpecMerged.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -19,7 +19,7 @@
 namespace
 {
 void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext, const SynapseGroupInternal &sg,
-                               const CodeGenerator::Substitutions &baseSubs, const ModelSpecMerged &model, const CodeGenerator::BackendBase &backend)
+                               const CodeGenerator::Substitutions &baseSubs, const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
 {
     const auto *wu = sg.getWUModel();
 
@@ -94,7 +94,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged &model, const BackendBase &backend,
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
                                           bool standaloneModules)
 {
     if(standaloneModules) {

@@ -12,7 +12,7 @@
 #include "path.h"
 
 // GeNN includes
-#include "modelSpecMerged.h"
+#include "modelSpecInternal.h"
 
 // Code generator includes
 #include "code_generator/codeStream.h"
@@ -26,7 +26,7 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::vector<std::string> CodeGenerator::generateAll(const ModelSpecMerged &model, const BackendBase &backend,
+std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
                                                     const filesystem::path &outputPath, bool standaloneModules)
 {
     // Create directory for generated code
@@ -53,9 +53,9 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecMerged &model
     // Generate modules
     generateNeuronUpdate(neuronUpdate, model, backend, standaloneModules);
     generateSynapseUpdate(synapseUpdate, model, backend, standaloneModules);
-    generateInit(init, model.getModel(), backend, standaloneModules);
+    generateInit(init, model, backend, standaloneModules);
     auto mem = generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
-    generateSupportCode(supportCode, model.getModel());
+    generateSupportCode(supportCode, model);
 
     // Create basic list of modules
     std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};
@@ -64,7 +64,7 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecMerged &model
     std::ofstream mpiStream((outputPath / "mpi.cc").str());
     CodeStream mpi(mpiStream);
 
-    generateMPI(mpi, model.getModel(), backend, standaloneModules);
+    generateMPI(mpi, model, backend, standaloneModules);
 
     // Add MPI module
     modules.push_back("mpi");

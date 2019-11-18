@@ -20,7 +20,7 @@
 #include "path.h"
 
 // GeNN includes
-#include "modelSpecMerged.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/generateAll.h"
@@ -82,14 +82,14 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA::Preferences &preferences, const ModelSpecMerged &model,
+void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA::Preferences &preferences, const ModelSpecInternal &model,
                     std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
 {
     using namespace CodeGenerator;
     using namespace CUDA;
 
     // Loop through neuron groups
-    for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+    for(const auto &n : model.getLocalNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
         groupSizes[KernelNeuronUpdate].push_back(n.second.getNumNeurons());
 
@@ -134,11 +134,11 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
     }
 
     // Add group sizes for reset kernels
-    groupSizes[KernelPreNeuronReset].push_back(model.getModel().getLocalNeuronGroups().size());
+    groupSizes[KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecMerged &model,
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
                                            CodeGenerator::CUDA::KernelBlockSize &blockSize, const CodeGenerator::CUDA::Preferences &preferences,
                                            int localHostID, const filesystem::path &outputPath)
 {
@@ -361,7 +361,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     return kernelsToOptimise;
 }
 //--------------------------------------------------------------------------
-int chooseOptimalDevice(const ModelSpecMerged &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
+int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
                         const CodeGenerator::CUDA::Preferences &preferences, int localHostID, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
@@ -486,7 +486,7 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecMerged &model, const filesystem::path &outputPath, int localHostID,
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
                       const Preferences &preferences)
 {
     // If optimal device should be chosen

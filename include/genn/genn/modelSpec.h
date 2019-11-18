@@ -33,11 +33,11 @@ Part of the code generation and generated code sections.
 #endif
 
 // GeNN includes
+#include "currentSourceInternal.h"
 #include "gennExport.h"
+#include "groupMerged.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
-#include "currentSourceInternal.h"
-
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -495,6 +495,12 @@ protected:
     //! Get std::map containing remote named CurrentSource objects in model
     const std::map<std::string, CurrentSourceInternal> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
 
+    const std::vector<NeuronGroupMerged> &getMergedLocalNeuronGroups() const{ return m_MergedLocalNeuronGroups; }
+
+    const std::vector<SynapseGroupMerged> &getMergedLocalSynapseGroups() const{ return m_MergedLocalSynapseGroups; }
+
+    const std::vector<NeuronGroupMerged> &getMergedLocalNeuronInitGroups() const{ return m_MergedLocalNeuronInitGroups; }
+
 private:
     //--------------------------------------------------------------------------
     // Private methods
@@ -522,6 +528,16 @@ private:
 
     //! Named remote current sources
     std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
+
+    //! Neuron groups whose updating can be merged together
+    std::vector<NeuronGroupMerged> m_MergedLocalNeuronGroups;
+
+    //! Merged synapse groups
+    //! **THINK** does this need to be done at a finer grain i.e. dynamics, presynaptic and postsynaptic
+    std::vector<SynapseGroupMerged> m_MergedLocalSynapseGroups;
+
+    //! Neuron groups whose initialisation can be merged together
+    std::vector<NeuronGroupMerged> m_MergedLocalNeuronInitGroups;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;

@@ -21,4 +21,5 @@ public:
     using CurrentSource::isSimRNGRequired;
     using CurrentSource::isInitRNGRequired;
     using CurrentSource::canBeMerged;
+    using CurrentSource::canInitBeMerged;
 };

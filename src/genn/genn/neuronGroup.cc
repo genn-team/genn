@@ -404,6 +404,8 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
         else {
             return false;
         }
+
+        return true;
     }
     return false;
 }

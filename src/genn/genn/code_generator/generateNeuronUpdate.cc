@@ -10,7 +10,6 @@
 // GeNN includes
 #include "models.h"
 #include "modelSpecInternal.h"
-#include "modelSpecMerged.h"
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
@@ -55,7 +54,7 @@ void addPostsynapticModelSubstitutions(CodeGenerator::Substitutions &substitutio
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, const BackendBase &backend,
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
                                          bool standaloneModules)
 {
     if(standaloneModules) {

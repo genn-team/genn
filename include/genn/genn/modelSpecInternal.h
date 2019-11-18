@@ -19,6 +19,10 @@ public:
     using ModelSpec::getRemoteSynapseGroups;
     using ModelSpec::getLocalCurrentSources;
     using ModelSpec::getRemoteCurrentSources;
+    using ModelSpec::getMergedLocalNeuronGroups;
+    using ModelSpec::getMergedLocalSynapseGroups;
+    using ModelSpec::getMergedLocalNeuronInitGroups;
+
 
     using ModelSpec::finalize;
 

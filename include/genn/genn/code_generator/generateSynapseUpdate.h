@@ -1,7 +1,7 @@
 #pragma once
 
 // Forward declarations
-class ModelSpecMerged;
+class ModelSpecInternal;
 
 namespace CodeGenerator
 {
@@ -14,5 +14,5 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSynapseUpdate(CodeStream &os, const ModelSpecMerged &model, const BackendBase &backend, bool standaloneModules);
+void generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend, bool standaloneModules);
 }

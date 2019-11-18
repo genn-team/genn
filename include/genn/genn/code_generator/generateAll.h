@@ -8,7 +8,7 @@
 #include "gennExport.h"
 
 // Forward declarations
-class ModelSpecMerged;
+class ModelSpecInternal;
 
 namespace CodeGenerator
 {
@@ -25,5 +25,5 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-    GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecMerged &model, const BackendBase &backend, const filesystem::path &outputPath, bool standaloneModules=false);
+    GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, const filesystem::path &outputPath, bool standaloneModules=false);
 }

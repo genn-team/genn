@@ -9,7 +9,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
-#include "modelSpecMerged.h"
+#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -202,7 +202,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     addDeviceType("half", 2);
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model, 
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
                               NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const
 {
     // Generate data structure for accessing merged groups
@@ -220,7 +220,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelPreNeuronReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // Loop through remote neuron groups
-        for(const auto &n : model.getModel().getRemoteNeuronGroups()) {
+        for(const auto &n : model.getRemoteNeuronGroups()) {
             if(n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
                 if(idPreNeuronReset > 0) {
                     os << "else ";
@@ -234,7 +234,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
         }
 
         // Loop through local neuron groups
-        for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+        for(const auto &n : model.getLocalNeuronGroups()) {
             if(idPreNeuronReset > 0) {
                 os << "else ";
             }
@@ -447,7 +447,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
         }
         if(idStart > 0) {
             CodeStream::Scope b(os);
-            Timer t(os, "neuronUpdate", model.getModel().isTimingEnabled());
+            Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t);" << std::endl;
@@ -456,7 +456,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                                SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
                                SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const
@@ -474,7 +474,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPreSynapseReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
             // Loop through neuron groups
-            for(const auto &n : model.getModel().getLocalNeuronGroups()) {
+            for(const auto &n : model.getLocalNeuronGroups()) {
                 // Loop through incoming synaptic populations
                 for(const auto &m : n.second.getMergedInSyn()) {
                     const auto *sg = m.first;
@@ -2051,11 +2051,11 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
     }
 }
 //--------------------------------------------------------------------------
-size_t Backend::getNumInitialisationRNGStreams(const ModelSpecMerged &model) const
+size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) const
 {
     // Start by counting remote neuron groups
     size_t numInitThreads = std::accumulate(
-        model.getModel().getRemoteNeuronGroups().cbegin(), model.getModel().getRemoteNeuronGroups().cend(), size_t{0},
+        model.getRemoteNeuronGroups().cbegin(), model.getRemoteNeuronGroups().cend(), size_t{0},
         [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
         {
             if (n.second.hasOutputToHost(getLocalHostID())) {
@@ -2068,7 +2068,7 @@ size_t Backend::getNumInitialisationRNGStreams(const ModelSpecMerged &model) con
 
     // Then local neuron groups
     numInitThreads = std::accumulate(
-        model.getModel().getLocalNeuronGroups().cbegin(), model.getModel().getLocalNeuronGroups().cend(), numInitThreads,
+        model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(), numInitThreads,
         [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
         {
             return acc + padSize(n.second.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
@@ -2077,7 +2077,7 @@ size_t Backend::getNumInitialisationRNGStreams(const ModelSpecMerged &model) con
 
     // Then synapse neuron groups
     numInitThreads = std::accumulate(
-        model.getModel().getLocalSynapseGroups().cbegin(), model.getModel().getLocalSynapseGroups().cend(), numInitThreads,
+        model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), numInitThreads,
         [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
         {
             const size_t initBlockSize = getKernelBlockSize(Kernel::KernelInitialize);
