@@ -180,6 +180,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                     os << "&" << backend.getVarPrefix() << v.name << ng.get().getName() << ", ";
                 }
 
+                for(const auto &e : nm->getExtraGlobalParams()) {
+                    os << "&" << e.name << ng.get().getName() << ", ";
+                }
+
                 // Loop through merged synaptic inputs in the archetypical neuron group
                 for (const auto &m : m.getArchetype().getMergedInSyn()) {
                     const SynapseGroupInternal *archetypeSG = m.first;

@@ -91,12 +91,10 @@ void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::vec
                                    std::function<bool(const GroupMerged<Group>&)> filter,
                                    std::function<size_t(const GroupMerged<Group>&, const Group&)> getNumThreads)
 {
-    // Loop through merged groups
-    size_t id = 0;
+    // Declare array of indices (into mergedNeuronGroupXXX arrays)
+    os << "__device__ __constant__ uint16_t dd_" << prefix << "GroupBlockIndices[] = {";
     for(const auto &m : mergedGroups) {
         if(filter(m)) {
-            // Declare array of indices (into mergedNeuronGroupXXX array)
-            os << "__device__ __constant__ uint16_t dd_" << prefix << "GroupBlockIndices" << m.getIndex() << "[] = {";
             // Loop through neuron groups within merged neuron group
             size_t n = 0;
             for(const auto &ng : m.getGroups()) {
@@ -105,27 +103,23 @@ void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::vec
                 std::fill_n(std::ostream_iterator<std::string>(os), numBlocks,
                             std::to_string(n++) + ", ");
             }
-            os << "};" << std::endl;
+        }
+    };
+    os << "};" << std::endl;
 
+    // Loop through merged groups
+    size_t id = 0;
+    for(const auto &m : mergedGroups) {
+        if(filter(m)) {
             // Declare array of starting thread indices for each neuron group
             os << "__device__ __constant__ unsigned int dd_" << prefix << "GroupStartID" << m.getIndex() << "[] = {";
             for(const auto &ng : m.getGroups()) {
                 os << id << ", ";
-                id += CodeGenerator::padSize(getNumThreads(ng.get()), blockSize);
+                id += CodeGenerator::padSize(getNumThreads(m, ng.get()), blockSize);
             }
             os << "};" << std::endl;
         }
     }
-}
-//-----------------------------------------------------------------------
-template<typename Group>
-void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::vector<GroupMerged<Group>> &mergedGroups,
-                                   const std::string &prefix, size_t blockSize,
-                                   std::function<size_t(const GroupMerged<Group>&, const Group&)> getNumThreads)
-{
-    genMergedKernelDataStructures(os, mergedGroups, prefix, blockSize,
-                                  [](const GroupMerged<Group> &){ return true; },
-                                  getNumThreads);
 }
 //-----------------------------------------------------------------------
 bool isSparseInitRequired(const SynapseGroupInternal &sg)
@@ -214,6 +208,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
     // Generate data structure for accessing merged groups
     genMergedKernelDataStructures<NeuronGroupInternal>(
         os, model.getMergedLocalNeuronGroups(), "neuron", m_KernelBlockSizes[KernelNeuronUpdate],
+        [](const NeuronGroupMerged&){ return true; },
         [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
 
     // Generate reset kernel to be run before the neuron kernel
@@ -322,7 +317,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
             [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
             {
                 // Get the index of the neuron group within the merged group
-                os << "const unsigned int neuronGroupIndex = dd_neuronGroupBlockIndices" << ng.getIndex() << "[blk];" << std::endl;
+                os << "const unsigned int neuronGroupIndex = dd_neuronGroupBlockIndices[blk];" << std::endl;
 
                 // Use this to get reference to MergedNeuronGroup structure
                 // Get reference to neuron group that this block should be simulating
@@ -574,8 +569,19 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
                 },
                 [](const SynapseGroupMerged &sg){ return (sg.getArchetype().isSpikeEventRequired() || sg.getArchetype().isTrueSpikeRequired()); },
                 [&idPresynapticStart, wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &model, this]
-                (CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &popSubs)
+                (CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
+                    // Get the index of the neuron group within the merged group
+                    os << "const unsigned int synapticGroupIndex = dd_presynapticGroupBlockIndices[blk];" << std::endl;
+
+                    // Use this to get reference to MergedSynapseGroup structure
+                    // Get reference to neuron group that this block should be simulating
+                    os << "const MergedSynapseGroup" << sg.getIndex() << " &synapseGroup = dd_mergedSynapseGroup" << sg.getIndex() << "[synapticGroupIndex]; " << std::endl;
+
+                    // Use this and starting thread of merged group to calculate local id within neuron group
+                    os << "const unsigned int lid = id - (dd_presynapticGroupStartID" << sg.getIndex() << "[synapticGroupIndex]);" << std::endl;
+                    popSubs.addVarSubstitution("id", "lid");
+
                     // Get presynaptic update strategy to use for this synapse group
                     const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg);
                     LOGD << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";

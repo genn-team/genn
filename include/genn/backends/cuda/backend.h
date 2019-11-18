@@ -346,7 +346,7 @@ private:
                           GroupHandler<GroupMerged<T>> handler) const
     {
         genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
-                            [](const T &) { return true; }, handler);
+                            [](const GroupMerged<T> &) { return true; }, handler);
     }
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
