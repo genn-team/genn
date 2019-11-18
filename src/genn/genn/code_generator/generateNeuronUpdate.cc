@@ -30,7 +30,7 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
     substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams());
     substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams());
-    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "", ng.getName());
+    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "(*neuronGroup.", ")");
     substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
 }
 //--------------------------------------------------------------------------
