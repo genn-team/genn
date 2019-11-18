@@ -85,11 +85,11 @@ void gennExtraGlobalParamPass(CodeGenerator::CodeStream &os, const std::map<std:
     }
 }
 //-----------------------------------------------------------------------
-template<typename Group>
-void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::vector<GroupMerged<Group>> &mergedGroups,
+template<typename T>
+void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::vector<T> &mergedGroups,
                                    const std::string &prefix, size_t blockSize,
-                                   std::function<bool(const GroupMerged<Group>&)> filter,
-                                   std::function<size_t(const GroupMerged<Group>&, const Group&)> getNumThreads)
+                                   std::function<bool(const T&)> filter,
+                                   std::function<size_t(const T&, const typename T::GroupInternal&)> getNumThreads)
 {
     // Declare array of indices (into mergedNeuronGroupXXX arrays)
     os << "__device__ __constant__ uint16_t dd_" << prefix << "GroupBlockIndices[] = {";
@@ -206,7 +206,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
                               NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const
 {
     // Generate data structure for accessing merged groups
-    genMergedKernelDataStructures<NeuronGroupInternal>(
+    genMergedKernelDataStructures<NeuronGroupMerged>(
         os, model.getMergedLocalNeuronGroups(), "neuron", m_KernelBlockSizes[KernelNeuronUpdate],
         [](const NeuronGroupMerged&){ return true; },
         [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
@@ -309,7 +309,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &model,
         os << "__syncthreads();" << std::endl;
 
         // Parallelise over neuron groups
-        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getMergedLocalNeuronGroups(), idStart,
+        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, model.getMergedLocalNeuronGroups(), idStart,
             [this](const NeuronGroupMerged &, const NeuronGroupInternal &ng)
             {
                 return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelNeuronUpdate));
@@ -502,7 +502,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
                    [](const SynapseGroupMerged &s){ return (s.getArchetype().isSpikeEventRequired() || s.getArchetype().isTrueSpikeRequired()); }))
     {
         // Generate data structure for accessing merged groups
-        genMergedKernelDataStructures<SynapseGroupInternal>(
+        genMergedKernelDataStructures<SynapseGroupMerged>(
             os, model.getMergedLocalSynapseGroups(), "presynaptic", m_KernelBlockSizes[KernelPresynapticUpdate],
             [](const SynapseGroupMerged &sg){ return (sg.getArchetype().isSpikeEventRequired() || sg.getArchetype().isTrueSpikeRequired()); },
             [this](const SynapseGroupMerged &sgMerge, const SynapseGroupInternal &sg)
@@ -562,7 +562,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &model,
             }
 
             // Parallelise over synapse groups
-            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getMergedLocalSynapseGroups(), idPresynapticStart,
+            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedLocalSynapseGroups(), idPresynapticStart,
                 [this](const SynapseGroupMerged &sgMerge, const SynapseGroupInternal &sg)
                 {
                     return padSize(getNumPresynapticUpdateThreads(sgMerge, sg, m_ChosenDevice, m_Preferences), m_KernelBlockSizes[KernelPresynapticUpdate]);

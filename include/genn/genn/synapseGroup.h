@@ -260,15 +260,6 @@ protected:
     const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
     bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
 
-    //! Get the expression to calculate the delay slot for accessing
-    //! Presynaptic neuron state variables, taking into account axonal delay
-    std::string getPresynapticAxonalDelaySlot(const std::string &devPrefix) const;
-
-    //! Get the expression to calculate the delay slot for accessing
-    //! Postsynaptic neuron state variables, taking into account back propagation delay
-    std::string getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const;
-
-    std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;

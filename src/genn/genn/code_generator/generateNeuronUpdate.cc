@@ -101,7 +101,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
             // Add delay pointer
             if(delay) {
                 os << "// Delay pointer" << std::endl;
-                os << "unsigned int* spkQuePtr;" << std::endl;
+                os << "volatile unsigned int* spkQuePtr;" << std::endl;
                 os << std::endl;
             }
 
@@ -137,6 +137,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 // Add pointer to dendritic delay buffer if required
                 if (sg->isDendriticDelayRequired()) {
                     os << model.getModel().getPrecision() << "** denDelay" << i << ";" << std::endl;
+                    os << "volatile unsigned int *denDelayPtr" << i << ";" << std::endl;
                 }
 
                 // Add pointers to state variables
@@ -201,6 +202,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                     // Add pointer to dendritic delay buffer if required
                     if (otherSyn->first->isDendriticDelayRequired()) {
                         os << "&" << backend.getVarPrefix() << "denDelay" << otherSyn->first->getPSModelTargetName() << ", ";
+                        os << "&" << backend.getVarPrefix() << "denDelayPtr" << otherSyn->first->getPSModelTargetName() << ", ";
                     }
 
                     // Add pointers to state variables
@@ -288,7 +290,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
                     os << model.getPrecision() << " &denDelayFront" << i << " = ";
-                    os << "(*neuronGroup.denDelay" << i << ")[" << sg->getDendriticDelayOffset(backend.getVarPrefix()) << popSubs["id"] << "];" << std::endl;
+                    os << "(*neuronGroup.denDelay" << i << ")[(*neuronGroup.denDelayPtr" << i << " * neuronGroup.numNeurons) + " << popSubs["id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn += denDelayFront" << i << ";" << std::endl;

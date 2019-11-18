@@ -419,42 +419,6 @@ void SynapseGroup::initDerivedParams(double dt)
     m_ConnectivityInitialiser.initDerivedParams(dt);
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroup::getPresynapticAxonalDelaySlot(const std::string &devPrefix) const
-{
-    assert(getSrcNeuronGroup()->isDelayRequired());
-
-    if(getDelaySteps() == 0) {
-        return devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName();
-    }
-    else {
-        return "((" + devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName() + " + " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots() - getDelaySteps()) + ") % " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots()) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string SynapseGroup::getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const
-{
-    assert(getTrgNeuronGroup()->isDelayRequired());
-
-    if(getBackPropDelaySteps() == 0) {
-        return devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName();
-    }
-    else {
-        return "((" + devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName() + " + " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots() - getBackPropDelaySteps()) + ") % " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots()) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset) const
-{
-    assert(isDendriticDelayRequired());
-
-    if(offset.empty()) {
-        return "(" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " * " + std::to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
-    }
-    else {
-        return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + std::to_string(getMaxDendriticDelayTimesteps()) + ") * " + std::to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
-    }
-}
-//----------------------------------------------------------------------------
 std::string SynapseGroup::getSparseIndType() const
 {
     // If narrow sparse inds are enabled
@@ -488,7 +452,8 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
        && (isEventThresholdReTestRequired() == other.isEventThresholdReTestRequired())
        && (getSpanType() == other.getSpanType())
        && (isPSModelMerged() == other.isPSModelMerged())
-       && (getSrcNeuronGroup()->isDelayRequired() == other.getSrcNeuronGroup()->isDelayRequired())
+       && (getSrcNeuronGroup()->getNumDelaySlots() == other.getSrcNeuronGroup()->getNumDelaySlots())
+       && (getTrgNeuronGroup()->getNumDelaySlots() == other.getTrgNeuronGroup()->getNumDelaySlots())
        && (getMatrixType() == other.getMatrixType()))
     {
         // If connectivity is either non-procedural or connectivity initialisers can be merged

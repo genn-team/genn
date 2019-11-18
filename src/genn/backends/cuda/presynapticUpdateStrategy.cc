@@ -390,8 +390,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &model, const Syn
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.getArchetype().isDendriticDelayRequired()) {
-                    assert(false);
-                    //synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&(*synapseGroup.denDelay)[" + sg.getDendriticDelayOffset("$(1)") + synSubs["id_post"] + "], $(0))");
                 }
                 // Otherwise
                 else {

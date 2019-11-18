@@ -112,17 +112,25 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
         const bool presynapticTrueSpike = m.getArchetype().isTrueSpikeRequired();
         const bool presynapticSpikeLikeEvent = m.getArchetype().isSpikeEventRequired();
 
+        const bool dendriticDelay = m.getArchetype().isDendriticDelayRequired();
         // Write struct
         os << "struct MergedSynapseGroup" << m.getIndex() << std::endl;
         {
             CodeStream::Scope b(os);
 
             os << "unsigned int rowStride;" << std::endl;
+            os << "unsigned int numTrgNeurons;" << std::endl;
 
-            // Add pointer to inSyn
-            os << model.getPrecision() << "** inSyn;" << std::endl;
+            if(dendriticDelay) {
+                os << model.getPrecision() <<"** denDelay;" << std::endl;
+                os << "volatile unsigned int *denDelayPtr;" << std::endl;
+            }
+            else {
+                os << model.getPrecision() << "** inSyn;" << std::endl;
+            }
 
             os << std::endl;
+
             // Add spike arrays
             if(presynapticTrueSpike) {
                 os << "// Spikes" << std::endl;
@@ -138,6 +146,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
                 os << "unsigned int** preSpkEvnt;" << std::endl;
                 os << std::endl;
             }
+
             // Add delay pointer
             /*f(delay) {
                 os << "// Delay pointer" << std::endl;
@@ -181,9 +190,16 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
             for(const auto &sg : m.getGroups()) {
                 os << "{";
                 os << backend.getSynapticMatrixRowStride(m, sg) << ", ";
+                os << sg.get().getTrgNeuronGroup()->getNumNeurons() << ", ";
 
-                // Add pointer to inSyn
-                os << "&" << backend.getVarPrefix() << "inSyn" << sg.get().getPSModelTargetName() << ", ";
+                // Add pointer to dendritic delay or inSyn
+                if(dendriticDelay) {
+                    os << "&" << backend.getVarPrefix() << "denDelay" << sg.get().getPSModelTargetName() << ", ";
+                    os << "&" << backend.getVarPrefix() << "denDelayPtr" << sg.get().getPSModelTargetName() << ", ";
+                }
+                else {
+                    os << "&" << backend.getVarPrefix() << "inSyn" << sg.get().getPSModelTargetName() << ", ";
+                }
 
                 if(presynapticTrueSpike) {
                     os << "&" << backend.getVarPrefix() << "glbSpkCnt" << sg.get().getSrcNeuronGroup()->getName() << ", ";

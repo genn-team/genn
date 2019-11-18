@@ -13,10 +13,15 @@ class ModelSpecInternal;
 // GroupMerged
 //----------------------------------------------------------------------------
 //! Very thin wrapper around a number of groups which have been merged together
-template<typename GroupInternal>
+template<typename G>
 class GroupMerged
 {
 public:
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef G GroupInternal;
+
     GroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> &groups)
     :   m_Index(index), m_Groups(groups)
     {}
@@ -40,8 +45,32 @@ private:
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
 };
 
+//----------------------------------------------------------------------------
+// SynapseGroupMerged
+//----------------------------------------------------------------------------
+class SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
+{
+public:
+    SynapseGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   GroupMerged<SynapseGroupInternal>(index, groups)
+    {}
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Get the expression to calculate the delay slot for accessing
+    //! Presynaptic neuron state variables, taking into account axonal delay
+    std::string getPresynapticAxonalDelaySlot() const;
+
+    //! Get the expression to calculate the delay slot for accessing
+    //! Postsynaptic neuron state variables, taking into account back propagation delay
+    std::string getPostsynapticBackPropDelaySlot() const;
+
+    std::string getDendriticDelayOffset(const std::string &offset = "") const;
+
+};
+
 typedef GroupMerged<NeuronGroupInternal> NeuronGroupMerged;
-typedef GroupMerged<SynapseGroupInternal> SynapseGroupMerged;
 
 //----------------------------------------------------------------------------
 // ModelSpecMerged

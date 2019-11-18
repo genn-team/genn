@@ -252,7 +252,7 @@ private:
     using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
 
     template<typename T>
-    using GetPaddedMergedGroupSizeFunc = std::function<size_t(const GroupMerged<T>&, const T&)>;
+    using GetPaddedMergedGroupSizeFunc = std::function<size_t(const T&, const typename T::GroupInternal&)>;
 
     template<typename T>
     using FilterGroupFunc = std::function<bool(const T&)>;
@@ -295,10 +295,10 @@ private:
     }
 
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<GroupMerged<T>> &groups, size_t &idStart,
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
                           GetPaddedMergedGroupSizeFunc<T> getPaddedSizeFunc,
-                          FilterGroupFunc<GroupMerged<T>> filter,
-                          GroupHandler<GroupMerged<T>> handler) const
+                          FilterGroupFunc<T> filter,
+                          GroupHandler<T> handler) const
     {
         // Loop through groups
         for(const auto &gMerge : groups) {
@@ -308,9 +308,9 @@ private:
                 // Sum padded sizes of each group within merged group
                 const size_t paddedSize = std::accumulate(
                     gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
-                    [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const T> g)
+                    [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
                     {
-                        return (acc + getPaddedSizeFunc(gMerge, g));
+                        return (acc + getPaddedSizeFunc(gMerge, g.get()));
                     });
 
                 os << "// merged" << gMerge.getIndex() << std::endl;
@@ -341,12 +341,12 @@ private:
     }
 
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<GroupMerged<T>> &groups, size_t &idStart,
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
                           GetPaddedMergedGroupSizeFunc<T> getPaddedSizeFunc,
-                          GroupHandler<GroupMerged<T>> handler) const
+                          GroupHandler<T> handler) const
     {
         genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
-                            [](const GroupMerged<T> &) { return true; }, handler);
+                            [](const T &) { return true; }, handler);
     }
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;

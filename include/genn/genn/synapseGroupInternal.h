@@ -36,9 +36,6 @@ public:
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::isPSModelMerged;
-    using SynapseGroup::getPresynapticAxonalDelaySlot;
-    using SynapseGroup::getPostsynapticBackPropDelaySlot;
-    using SynapseGroup::getDendriticDelayOffset;
     using SynapseGroup::getSparseIndType;    
     using SynapseGroup::canWUBeMerged;
     using SynapseGroup::canPSBeMerged;
