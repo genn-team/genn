@@ -857,7 +857,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
-                      NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
+                      NeuronGroupMergedHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                       SynapseGroupHandler sgSparseInitHandler) const
 {
@@ -865,6 +865,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     os << "#include <random>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << std::endl;
+
+    // Generate data structure for accessing merged groups
+    genMergedKernelDataStructures<NeuronGroupMerged>(
+        os, model.getMergedLocalNeuronInitGroups(), "neuronInit", m_KernelBlockSizes[KernelInitialize],
+        [](const NeuronGroupMerged&){ return true; },
+        [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
 
     // If device RNG is required, generate kernel to initialise it
     if(isGlobalRNGRequired(model)) {
@@ -904,6 +910,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelInitialize] << " * blockIdx.x + threadIdx.x;" << std::endl;
+        os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Remote neuron groups" << std::endl;
@@ -924,24 +931,34 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
    
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
-        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
-            [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroupInternal &){ return true; },
-            [this, &model, localNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
+        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, model.getMergedLocalNeuronInitGroups(), idInitStart,
+            [this](const NeuronGroupMerged &, const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [this, &model, localNGHandler](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
             {
+                // Get the index of the neuron group within the merged group
+                os << "const unsigned int neuronGroupIndex = dd_neuronInitGroupBlockIndices[blk];" << std::endl;
+
+                // Use this to get reference to MergedNeuronInitGroup structure
+                // Get reference to neuron group that this block should be simulating
+                os << "const MergedNeuronInitGroup" << ng.getIndex() << " &neuronGroup = dd_mergedNeuronInitGroup" << ng.getIndex() << "[neuronGroupIndex]; " << std::endl;
+
+                // Use this and starting thread of merged group to calculate local id within neuron group
+                os << "const unsigned int lid = id - (dd_neuronInitGroupStartID" << ng.getIndex() << "[neuronGroupIndex]);" << std::endl;
+                popSubs.addVarSubstitution("id", "lid");
+
                 os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
+                os << "if(" << popSubs["id"] << " < neuronGroup.numNeurons)";
                 {
                     CodeStream::Scope b(os);
                     // If this neuron is going to require a simulation RNG, initialise one using GLOBAL thread id for sequence
-                    if(ng.isSimRNGRequired()) {
-                        os << "curand_init(deviceRNGSeed, id, 0, &dd_rng" << ng.getName() << "[" << popSubs["id"] << "]);" << std::endl;
+                    if(ng.getArchetype().isSimRNGRequired()) {
+                        os << "curand_init(deviceRNGSeed, id, 0, &neuronGroup.rng[" << popSubs["id"] << "]);" << std::endl;
                     }
 
                     // If this neuron requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
-                    if(ng.isInitRNGRequired()) {
+                    if(ng.getArchetype().isInitRNGRequired()) {
                         os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
@@ -1751,7 +1768,7 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitutions &kernelSubs, Handler handler) const
+void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
 
@@ -1763,7 +1780,7 @@ void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitution
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableInit(CodeStream &os, VarLocation, size_t, const std::string &countVarName,
+void Backend::genVariableInit(CodeStream &os, const std::string &, const std::string &countVarName,
                               const Substitutions &kernelSubs, Handler handler) const
 {
     // Variable should already be provided via parallelism
@@ -1773,7 +1790,7 @@ void Backend::genVariableInit(CodeStream &os, VarLocation, size_t, const std::st
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const SynapseGroupInternal &sg,
+void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupInternal &sg,
                                         const Substitutions &kernelSubs, Handler handler) const
 {
     // Pre and postsynaptic ID should already be provided via parallelism

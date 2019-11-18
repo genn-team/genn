@@ -19,37 +19,34 @@
 namespace
 {
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                       const CodeGenerator::Substitutions &popSubs, const NeuronGroupInternal &ng, bool spikeEvent)
+                       const CodeGenerator::Substitutions &popSubs, const NeuronGroupMerged &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
     // Is initialisation required at all
-    const bool initRequired = spikeEvent ? ng.isSpikeEventRequired() : true;
+    const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
-        // Get spike location
-        const VarLocation varLoc = spikeEvent ? ng.getSpikeEventLocation() : ng.getSpikeLocation();
-
         // Generate variable initialisation code
-        backend.genPopVariableInit(os, varLoc, popSubs,
+        backend.genPopVariableInit(os, popSubs,
             [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &)
             {
                 // Get variable name
-                const char *spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
+                const char *spikeCntName = spikeEvent ? "spkCntEvnt" : "spkCnt";
 
                 // Is delay required
                 const bool delayRequired = spikeEvent ?
-                    ng.isDelayRequired() :
-                    (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+                    ng.getArchetype().isDelayRequired() :
+                    (ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired());
 
                 if(delayRequired) {
-                    os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
+                    os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                     {
                         CodeStream::Scope b(os);
-                        os << backend.getVarPrefix() << spikeCntPrefix << ng.getName() << "[d] = 0;" << std::endl;
+                        os << "neuronGroup." << spikeCntName << "[d] = 0;" << std::endl;
                     }
                 }
                 else {
-                    os << backend.getVarPrefix() << spikeCntPrefix << ng.getName() << "[0] = 0;" << std::endl;
+                    os << "neuronGroup." << spikeCntName << "[0] = 0;" << std::endl;
                 }
             });
     }
@@ -57,60 +54,57 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
 }
 //--------------------------------------------------------------------------
 void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                   const CodeGenerator::Substitutions &popSubs, const NeuronGroupInternal &ng, bool spikeEvent)
+                   const CodeGenerator::Substitutions &popSubs, const NeuronGroupMerged &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
     // Is initialisation required at all
-    const bool initRequired = spikeEvent ? ng.isSpikeEventRequired() : true;
+    const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
-        // Get spike location
-        const VarLocation varLoc = spikeEvent ? ng.getSpikeEventLocation() : ng.getSpikeLocation();
-
         // Generate variable initialisation code
-        backend.genVariableInit(os, varLoc, ng.getNumNeurons(), "id", popSubs,
+        backend.genVariableInit(os, "neuronGroup.numNeurons", "id", popSubs,
             [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
             {
                 // Get variable name
-                const char *spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+                const char *spikeName = spikeEvent ? "spkEvnt" : "spk";
 
                 // Is delay required
                 const bool delayRequired = spikeEvent ?
-                    ng.isDelayRequired() :
-                    (ng.isTrueSpikeRequired() && ng.isDelayRequired());
+                    ng.getArchetype().isDelayRequired() :
+                    (ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired());
 
                 if(delayRequired) {
-                    os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
+                    os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                     {
                         CodeStream::Scope b(os);
-                        os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = 0;" << std::endl;
+                        os << "neuronGroup." << spikeName << "[(d * neuronGroup.numNeurons) + " + varSubs["id"] + "] = 0;" << std::endl;
                     }
                 }
                 else {
-                    os << backend.getVarPrefix() << spikePrefix << ng.getName() << "[" << varSubs["id"] << "] = 0;" << std::endl;
+                    os << "neuronGroup." << spikeName << "[" << varSubs["id"] << "] = 0;" << std::endl;
                 }
             });
     }
 }
 //------------------------------------------------------------------------
-template<typename I, typename M, typename Q>
+template<typename I, typename Q>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                          const Models::Base::VarVec &vars, size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
-                          I getVarInitialiser, M getVarLocation, Q isVarQueueRequired)
+                          const Models::Base::VarVec &vars, const std::string &groupStruct, const std::string &countMember, size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
+                          I getVarInitialiser, Q isVarQueueRequired)
 {
     using namespace CodeGenerator;
 
+    const std::string count = groupStruct + "." + countMember;
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
-        const VarLocation varLoc = getVarLocation(k);
 
         // If this variable has any initialisation code
         if(!varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
 
             // Generate target-specific code to initialise variable
-            backend.genVariableInit(os, varLoc, count, "id", popSubs,
-                [&backend, &vars, &varInit, &popName, &ftype, k, count, isVarQueueRequired, numDelaySlots]
+            backend.genVariableInit(os, count, "id", popSubs,
+                [&backend, &vars, &varInit, &groupStruct, &ftype, groupIndex, k, count, isVarQueueRequired, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
@@ -124,7 +118,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 
 
                         std::string code = varInit.getSnippet()->getCode();
-                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + popName);
+                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
                         code = ensureFtype(code, ftype);
                         os << code << std::endl;
 
@@ -132,14 +126,14 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
                         {
                             CodeStream::Scope b(os);
-                            os << backend.getVarPrefix() << vars[k].name << popName << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
+                            os << groupStruct + "." + vars[k].name << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
                         }
                     }
                     else {
-                        varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + popName + "[" + varSubs["id"] + "]");
+                        varSubs.addVarSubstitution("value", groupStruct + "." + vars[k].name + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
-                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + popName);
+                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
                         code = ensureFtype(code, ftype);
                         os << code << std::endl;
                     }
@@ -148,12 +142,13 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
     }
 }
 //------------------------------------------------------------------------
-template<typename I, typename M>
+template<typename I>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                          const Models::Base::VarVec &vars, size_t count, const std::string &popName, const std::string &ftype,
-                          I getVarInitialiser, M getVarMode)
+                          const Models::Base::VarVec &vars, const std::string &groupStruct, const std::string &countMember, const size_t groupIndex, const std::string &ftype,
+                          I getVarInitialiser)
 {
-    genInitNeuronVarCode(os, backend, popSubs, vars, count, 0, popName, ftype, getVarInitialiser, getVarMode,
+    genInitNeuronVarCode(os, backend, popSubs, vars, groupStruct, countMember, 0, groupIndex, ftype,
+                         getVarInitialiser,
                          [](size_t){ return false; });
 }
 //------------------------------------------------------------------------
@@ -166,14 +161,13 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
     const auto vars = sg.getWUModel()->getVars();
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = sg.getWUVarInitialisers().at(k);
-        const VarLocation varLoc = sg.getWUVarLocation(k);
 
         // If this variable has any initialisation code
         if(!varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
 
             // Generate target-specific code to initialise variable
-            backend.genSynapseVariableRowInit(os, varLoc, sg, popSubs,
+            backend.genSynapseVariableRowInit(os, sg, popSubs,
                 [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {
@@ -204,9 +198,12 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
         os << "#include \"definitionsInternal.h\"" << std::endl;
     }
 
+    // Generate functions to push merged synapse group structures
+    genMergedGroupPush(os, model.getMergedLocalNeuronInitGroups(), "NeuronInitGroup");
+
     backend.genInit(os, model,
         // Local neuron group initialisation
-        [&backend, &model](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
         {
             // Initialise spike counts
             genInitSpikeCount(os, backend, popSubs, ng, false);
@@ -217,97 +214,97 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             genInitSpikes(os, backend, popSubs, ng, true);
 
             // If spike times are required
-            if(ng.isSpikeTimeRequired()) {
+            if(ng.getArchetype().isSpikeTimeRequired()) {
                 // Generate variable initialisation code
-                backend.genVariableInit(os, ng.getSpikeTimeLocation(), ng.getNumNeurons(), "id", popSubs,
+                backend.genVariableInit(os, "neuronGroup.numNeurons", "id", popSubs,
                     [&backend, &ng] (CodeStream &os, Substitutions &varSubs)
                     {
                         // Is delay required
-                        if(ng.isDelayRequired()) {
-                            os << "for (unsigned int d = 0; d < " << ng.getNumDelaySlots() << "; d++)";
+                        if(ng.getArchetype().isDelayRequired()) {
+                            os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                os << backend.getVarPrefix() << "sT" << ng.getName() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
+                                os << "neuronGroup.sT[(d * neuronGroup.numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
                             }
                         }
                         else {
-                            os << backend.getVarPrefix() << "sT" << ng.getName() << "[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
+                            os << "neuronGroup.sT[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
                         }
                     });
             }
 
             // Initialise neuron variables
-            genInitNeuronVarCode(os, backend, popSubs, ng.getNeuronModel()->getVars(), ng.getNumNeurons(), ng.getNumDelaySlots(),
-                                 ng.getName(),  model.getPrecision(),
-                                 [&ng](size_t i){ return ng.getVarInitialisers().at(i); },
-                                 [&ng](size_t i){ return ng.getVarLocation(i); },
-                                 [&ng](size_t i){ return ng.isVarQueueRequired(i); });
+            genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), "neuronGroup", "numNeurons",
+                                 ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(),
+                                 [&ng](size_t i){ return ng.getArchetype().getVarInitialisers().at(i); },
+                                 [&ng](size_t i){ return ng.getArchetype().isVarQueueRequired(i); });
 
             // Loop through incoming synaptic populations
-            for(const auto &m : ng.getMergedInSyn()) {
-                const auto *sg = m.first;
+            for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
+                CodeStream::Scope b(os);
+
+                const auto *sg = ng.getArchetype().getMergedInSyn()[i].first;
 
                 // If this synapse group's input variable should be initialised on device
                 // Generate target-specific code to initialise variable
-                backend.genVariableInit(os, sg->getInSynLocation(), ng.getNumNeurons(), "id", popSubs,
-                    [&backend, &model, sg] (CodeStream &os, Substitutions &varSubs)
+                backend.genVariableInit(os, "neuronGroup.numNeurons", "id", popSubs,
+                    [&backend, &model, sg, i] (CodeStream &os, Substitutions &varSubs)
                     {
-                        os << backend.getVarPrefix() << "inSyn" << sg->getPSModelTargetName() << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << "neuronGroup.inSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                     });
 
                 // If dendritic delays are required
                 if(sg->isDendriticDelayRequired()) {
-                    backend.genVariableInit(os, sg->getDendriticDelayLocation(), ng.getNumNeurons(), "id", popSubs,
-                        [&backend, &model, sg](CodeStream &os, Substitutions &varSubs)
+                    backend.genVariableInit(os, "neuronGroup.numNeurons", "id", popSubs,
+                        [&backend, &model, sg, i](CodeStream &os, Substitutions &varSubs)
                         {
                             os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
                                 const std::string denDelayIndex = "(d * " + std::to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + " + varSubs["id"];
-                                os << backend.getVarPrefix() << "denDelay" << sg->getPSModelTargetName() << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                os << "neuronGroup.denDelay" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         });
                 }
 
                 // If postsynaptic model variables should be individual
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), ng.getNumNeurons(), sg->getName(), model.getPrecision(),
-                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
-                                         [sg](size_t i){ return sg->getPSVarLocation(i); });
+                    genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), "neuronGroup", "numNeurons",
+                                         i, model.getPrecision(),
+                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); });
                 }
             }
 
             // Loop through incoming synaptic populations
-            for(const auto *s : ng.getInSyn()) {
-                genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPostVars(), ng.getNumNeurons(), s->getTrgNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
+            /*for(const auto *s : ng.getInSyn()) {
+                genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPostVars(), "neuronGroup", "numNeurons", s->getTrgNeuronGroup()->getNumDelaySlots(), model.getPrecision(),
                                      [&s](size_t i){ return s->getWUPostVarInitialisers().at(i); },
-                                     [&s](size_t i){ return s->getWUPostVarLocation(i); },
                                      [&s](size_t){ return (s->getBackPropDelaySteps() != NO_DELAY); });
             }
 
             // Loop through outgoing synaptic populations
             for(const auto *s : ng.getOutSyn()) {
                 // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
-                genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPreVars(), ng.getNumNeurons(), s->getSrcNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
+                genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPreVars(), "neuronGroup", "numNeurons", s->getSrcNeuronGroup()->getNumDelaySlots(), model.getPrecision(),
                                      [&s](size_t i){ return s->getWUPreVarInitialisers().at(i); },
-                                     [&s](size_t i){ return s->getWUPreVarLocation(i); },
                                      [&s](size_t){ return (s->getDelaySteps() != NO_DELAY); });
-            }
+            }*/
 
             // Loop through current sources
             os << "// current source variables" << std::endl;
-            for (auto const *cs : ng.getCurrentSources()) {
-                genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), ng.getNumNeurons(), cs->getName(), model.getPrecision(),
-                                     [cs](size_t i){ return cs->getVarInitialisers().at(i); },
-                                     [cs](size_t i){ return cs->getVarLocation(i); });
-            }
+            /*for (auto const *cs : ng.getArchetype().getCurrentSources()) {
+                genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), "neuronGroup", "numNeurons",
+                                     model.getPrecision(),
+                                     [cs](size_t i){ return cs->getVarInitialisers().at(i); });
+            }*/
         },
         // Remote neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
         {
+            assert(false);
             // Initialise spike counts and spikes
-            genInitSpikeCount(os, backend, popSubs, ng, false);
-            genInitSpikes(os, backend, popSubs, ng, false);
+            //genInitSpikeCount(os, backend, popSubs, ng, false);
+            //genInitSpikes(os, backend, popSubs, ng, false);
         },
         // Dense syanptic matrix variable initialisation
         [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)

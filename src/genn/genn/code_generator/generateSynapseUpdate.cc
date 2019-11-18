@@ -106,38 +106,8 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 
-    // Loop through merged neuron groups
-    std::stringstream mergedGroupArrayStream;
-    std::stringstream mergedGroupFuncStream;
-    CodeStream mergedGroupArray(mergedGroupArrayStream);
-    CodeStream mergedGroupFunc(mergedGroupFuncStream);
-    TeeStream mergedGroupStreams(mergedGroupArray, mergedGroupFunc);
-    for(const auto &sg : model.getMergedLocalSynapseGroups()) {
-        // Declare static array to hold merged synapse groups
-        const size_t idx = sg.getIndex();
-        const size_t numGroups = sg.getGroups().size();
-
-        mergedGroupArray << "__device__ __constant__ MergedSynapseGroup" << idx << " dd_mergedSynapseGroup" << idx << "[" << numGroups << "];" << std::endl;
-
-        // Write function to update
-        mergedGroupFunc << "void pushMergedSynapseGroup" << idx << "ToDevice(const MergedSynapseGroup" << idx << " *group)";
-        {
-            CodeStream::Scope b(mergedGroupFunc);
-            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_mergedSynapseGroup" << idx << ", group, " << numGroups << " * sizeof(MergedSynapseGroup" << idx << ")));" << std::endl;
-        }
-    }
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// merged neuron group arrays" << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << mergedGroupArrayStream.str();
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// merged neuron group functions" << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << mergedGroupFuncStream.str();
-    os << std::endl;
+    // Generate functions to push merged synapse group structures
+    genMergedGroupPush(os, model.getMergedLocalSynapseGroups(), "SynapseGroup");
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, model,
@@ -149,7 +119,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
             // Make weight update model substitutions
             synapseSubs.addParamValueSubstitution(sg.getArchetype().getWUModel()->getParamNames(), sg.getArchetype().getWUParams());
             synapseSubs.addVarValueSubstitution(sg.getArchetype().getWUModel()->getDerivedParams(), sg.getArchetype().getWUDerivedParams());
-            synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "(*synapseGroup.", ")");
+            synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "synapseGroup.");
 
             // Get read offset if required
             //const std::string offset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";

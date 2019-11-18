@@ -66,38 +66,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 
-    // Loop through merged neuron groups
-    std::stringstream mergedGroupArrayStream;
-    std::stringstream mergedGroupFuncStream;
-    CodeStream mergedGroupArray(mergedGroupArrayStream);
-    CodeStream mergedGroupFunc(mergedGroupFuncStream);
-    TeeStream mergedGroupStreams(mergedGroupArray, mergedGroupFunc);
-    for(const auto &ng : model.getMergedLocalNeuronGroups()) {
-        // Declare static array to hold merged neuron groups
-        const size_t idx = ng.getIndex();
-        const size_t numGroups = ng.getGroups().size();
-
-        mergedGroupArray << "__device__ __constant__ MergedNeuronGroup" << idx << " dd_mergedNeuronGroup" << idx << "[" << numGroups << "];" << std::endl;
-
-        // Write function to update
-        mergedGroupFunc << "void pushMergedNeuronGroup" << idx << "ToDevice(const MergedNeuronGroup" << idx << " *group)";
-        {
-            CodeStream::Scope b(mergedGroupFunc);
-            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_mergedNeuronGroup" << idx << ", group, " << numGroups << " * sizeof(MergedNeuronGroup" << idx << ")));" << std::endl;
-        }
-    }
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// merged neuron group arrays" << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << mergedGroupArrayStream.str();
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// merged neuron group functions" << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << mergedGroupFuncStream.str();
-    os << std::endl;
+    // Generate functions to push merged neuron group structures
+    genMergedGroupPush(os, model.getMergedLocalNeuronGroups(), "NeuronGroup");
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, model,

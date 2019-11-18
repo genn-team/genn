@@ -380,29 +380,14 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
     if((isSpikeTimeRequired() == other.isSpikeTimeRequired())
        && (isSpikeEventRequired() == other.isSpikeEventRequired())
        && (getNumDelaySlots() == other.getNumDelaySlots())
-       && (m_VarQueueRequired == other.m_VarQueueRequired))
+       && (m_VarQueueRequired == other.m_VarQueueRequired)
+       && (getNeuronModel()->getVars() == other.getNeuronModel()->getVars()))
     {
-        // If both groups have the same number of variables
-        if(getVarInitialisers().size() == other.getVarInitialisers().size()) {
-            auto otherVarInitialisers = other.getVarInitialisers();
-            for(const auto &var : getVarInitialisers()) {
-                // If a compatible var can be found amongst the other neuron group's vars, remove it
-                const auto otherVar = std::find_if(otherVarInitialisers.cbegin(), otherVarInitialisers.cend(),
-                                                   [var](const Models::VarInit &v)
-                                                   {
-                                                       return var.canBeMerged(v);
-                                                   });
-                if(otherVar != otherVarInitialisers.cend()) {
-                    otherVarInitialisers.erase(otherVar);
-                }
-                // Otherwise, these can't be merged - return false
-                else {
-                    return false;
-                }
+        // if any of the variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getVarInitialisers().size(); i++) {
+            if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {
+                return false;
             }
-        }
-        else {
-            return false;
         }
 
         return true;

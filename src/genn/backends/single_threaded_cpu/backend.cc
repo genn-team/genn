@@ -682,11 +682,11 @@ void Backend::genPopVariableInit(CodeStream &os, VarLocation, const Substitution
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableInit(CodeStream &os, VarLocation, size_t count, const std::string &indexVarName,
+void Backend::genVariableInit(CodeStream &os, VarLocation, const std::string &count, const std::string &indexVarName,
                               const Substitutions &kernelSubs, Handler handler) const
 {
      // **TODO** loops like this should be generated like CUDA threads
-    os << "for (unsigned i = 0; i < " << count << "; i++)";
+    os << "for (unsigned i = 0; i < (" << count << "); i++)";
     {
         CodeStream::Scope b(os);
 

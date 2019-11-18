@@ -12,6 +12,10 @@
 #include "snippet.h"
 #include "variableMode.h"
 
+// GeNN code generator includes
+#include "codeStream.h"
+#include "teeStream.h"
+
 // Forward declarations
 class ModelSpecInternal;
 class SynapseGroupInternal;
@@ -130,6 +134,45 @@ inline size_t ceilDivide(size_t numerator, size_t denominator)
 inline size_t padSize(size_t size, size_t blockSize)
 {
     return ceilDivide(size, blockSize) * blockSize;
+}
+
+template<typename T>
+void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const std::string &suffix)
+{
+    // Loop through merged neuron groups
+    std::stringstream mergedGroupArrayStream;
+    std::stringstream mergedGroupFuncStream;
+    CodeStream mergedGroupArray(mergedGroupArrayStream);
+    CodeStream mergedGroupFunc(mergedGroupFuncStream);
+    TeeStream mergedGroupStreams(mergedGroupArray, mergedGroupFunc);
+    for(const auto &g : groups) {
+        // Declare static array to hold merged neuron groups
+        const size_t idx = g.getIndex();
+        const size_t numGroups = g.getGroups().size();
+
+        // **TODO** backend-specific
+        mergedGroupArray << "__device__ __constant__ Merged" << suffix << idx << " dd_merged" << suffix << idx << "[" << numGroups << "];" << std::endl;
+
+        // Write function to update
+        mergedGroupFunc << "void pushMerged" << suffix << idx << "ToDevice(const Merged" << suffix << idx << " *group)";
+        {
+            CodeStream::Scope b(mergedGroupFunc);
+            // **TODO** backend-specific
+            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_merged" << suffix << idx << ", group, " << numGroups << " * sizeof(Merged" << suffix << idx << ")));" << std::endl;
+        }
+    }
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// merged group arrays" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << mergedGroupArrayStream.str();
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// merged group functions" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << mergedGroupFuncStream.str();
+    os << std::endl;
 }
 
 //--------------------------------------------------------------------------
