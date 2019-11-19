@@ -859,7 +859,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     os << "#include <cstdint>" << std::endl;
     os << std::endl;
 
-    // Generate data structure for accessing merged groups
+    // Determine if sparse initialisation is required
+    const bool sparseInitRequired = std::any_of(model.getMergedLocalSynapseInitGroups().cbegin(), model.getMergedLocalSynapseInitGroups().cend(),
+                                                [](const SynapseGroupMerged &sg) { return isSparseInitRequired(sg.getArchetype()); });
+
+    // Generate data structure for accessing merged groups from within initialisation kernel
     genMergedKernelDataStructures(os, "init", m_KernelBlockSizes[KernelInitialize],
         model.getMergedLocalNeuronInitGroups(), "neuronInit",
         [](const NeuronGroupMerged&){ return true; },
@@ -871,10 +875,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         [](const SynapseGroupMerged &sg){ return sg.getArchetype().isSparseConnectivityInitRequired(); },
         [](const SynapseGroupMerged&, const SynapseGroupInternal &sg){ return sg.getSrcNeuronGroup()->getNumNeurons(); });
 
-    genMergedKernelDataStructures(os, "initSparse", m_KernelBlockSizes[KernelInitializeSparse],
-        model.getMergedLocalSynapseInitGroups(), "synapseSparseInit",
-        [this](const SynapseGroupMerged &sg){ return isSparseInitRequired(sg.getArchetype()); },
-        [](const SynapseGroupMerged&, const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
+    // If sparse initialisation is required, generate data structure for accessing merged groups from within sparse initialisation kernel
+    if(sparseInitRequired) {
+        genMergedKernelDataStructures(os, "initSparse", m_KernelBlockSizes[KernelInitializeSparse],
+            model.getMergedLocalSynapseInitGroups(), "synapseSparseInit",
+            [this](const SynapseGroupMerged &sg){ return isSparseInitRequired(sg.getArchetype()); },
+            [](const SynapseGroupMerged&, const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
+    }
 
     // If device RNG is required, generate kernel to initialise it
     if(isGlobalRNGRequired(model)) {
@@ -1087,9 +1094,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
-    if(std::any_of(model.getMergedLocalSynapseInitGroups().cbegin(), model.getMergedLocalSynapseInitGroups().cend(),
-        [](const SynapseGroupMerged &sg) { return isSparseInitRequired(sg.getArchetype()); }))
-    {
+    if(sparseInitRequired) {
         os << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
             CodeStream::Scope b(os);
