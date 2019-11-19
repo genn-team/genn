@@ -141,10 +141,10 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const Sy
 
     os << "if (spike < " ;
     if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "synapseGroup.preSpkCnt" << eventSuffix << "[preReadDelaySlot])";
+        os << "synapseGroup.srcSpkCnt" << eventSuffix << "[preReadDelaySlot])";
     }
     else {
-        os << "synapseGroup.preSpkCnt" << eventSuffix << "[0])";
+        os << "synapseGroup.srcSpkCnt" << eventSuffix << "[0])";
     }
     {
         CodeStream::Scope b(os);
@@ -153,7 +153,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const Sy
             os << "using namespace " << sg.getArchetype().getName() << "_weightupdate_simCode;" << std::endl;
         }
 
-        os << "const unsigned int preInd = synapseGroup.preSpk"  << eventSuffix;
+        os << "const unsigned int preInd = synapseGroup.srcSpk"  << eventSuffix;
         if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             os << "[(preReadDelaySlot * synapseGroup.numSrcNeurons) + spike];" << std::endl;
         }
@@ -292,7 +292,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const S
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
-    os << "const unsigned int numSpikes = synapseGroup.preSpkCnt" << eventSuffix;
+    os << "const unsigned int numSpikes = synapseGroup.srcSpkCnt" << eventSuffix;
     if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
         os << "[preReadDelaySlot];" << std::endl;
     }
@@ -313,7 +313,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecInternal &model, const S
         {
             CodeStream::Scope b(os);
             const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            os << "const unsigned int spk = synapseGroup.preSpk" << eventSuffix << "[" << queueOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + threadIdx.x];" << std::endl;
+            os << "const unsigned int spk = synapseGroup.srcSpk" << eventSuffix << "[" << queueOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength[threadIdx.x] = synapseGroup.rowLength[spk];" << std::endl;
@@ -518,7 +518,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecInternal &model
     }
 
     // If there is a spike for this thread to process
-    os << "if (spike < synapseGroup.preSpkCnt" << eventSuffix;
+    os << "if (spike < synapseGroup.srcSpkCnt" << eventSuffix;
     if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
         os << "[preReadDelaySlot])";
     }
@@ -529,7 +529,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecInternal &model
         CodeStream::Scope b(os);
 
         // Determine the index of the presynaptic neuron this thread is responsible for
-        os << "const unsigned int preInd = synapseGroup.preSpk"  << eventSuffix;
+        os << "const unsigned int preInd = synapseGroup.srcSpk"  << eventSuffix;
         if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
 
             os << "[(preReadDelaySlot * synapseGroup.numSrcNeurons) + spike];" << std::endl;
@@ -709,7 +709,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &, const
     // Get blocksize
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
 
-    os << "const unsigned int numSpikes = synapseGroup.preSpkCnt" << eventSuffix;
+    os << "const unsigned int numSpikes = synapseGroup.srcSpkCnt" << eventSuffix;
     if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
         os << "[preReadDelaySlot];" << std::endl;
     }
@@ -731,7 +731,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecInternal &, const
         {
             CodeStream::Scope b(os);
             const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            os << "const unsigned int spk = synapseGroup.preSpk" << eventSuffix << "[" << queueOffset << "(r * " << blockSize << ") + threadIdx.x];" << std::endl;
+            os << "const unsigned int spk = synapseGroup.srcSpk" << eventSuffix << "[" << queueOffset << "(r * " << blockSize << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
         }
         os << "__syncthreads();" << std::endl;
