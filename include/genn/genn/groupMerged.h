@@ -45,6 +45,24 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// NeuronGroupMerged
+//----------------------------------------------------------------------------
+class NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
+{
+public:
+    NeuronGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+    :   GroupMerged<NeuronGroupInternal>(index, groups)
+    {}
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Find the synapse group compatible with specified merged insyn in archetype
+    /*! **NOTE** this should only be called with neuron groups within merged group */
+    const SynapseGroupInternal *getCompatibleMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const;
+};
+
+//----------------------------------------------------------------------------
 // SynapseGroupMerged
 //----------------------------------------------------------------------------
 class SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
@@ -67,12 +85,4 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
-};
-
-class NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
-{
-public:
-    NeuronGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    :   GroupMerged<NeuronGroupInternal>(index, groups)
-    {}
 };

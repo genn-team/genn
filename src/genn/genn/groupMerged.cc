@@ -7,6 +7,21 @@
 #include "modelSpecInternal.h"
 
 //----------------------------------------------------------------------------
+// NeuronGroupMerged
+//----------------------------------------------------------------------------
+const SynapseGroupInternal *NeuronGroupMerged::getCompatibleMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const
+{
+    const SynapseGroupInternal *archetypeSG = getArchetype().getMergedInSyn()[archetypeMergedInSyn].first;
+    const auto otherSyn = std::find_if(ng.getMergedInSyn().cbegin(), ng.getMergedInSyn().cend(),
+                                       [archetypeSG](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &m)
+                                       {
+                                           return m.first->canPSBeMerged(*archetypeSG);
+                                       });
+    assert(otherSyn != ng.getMergedInSyn().cend());
+    return otherSyn->first;
+}
+
+//----------------------------------------------------------------------------
 // SynapseGroupMerged
 //----------------------------------------------------------------------------
 std::string SynapseGroupMerged::getPresynapticAxonalDelaySlot() const
