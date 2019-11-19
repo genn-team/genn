@@ -30,6 +30,22 @@ public:
         m_Fields.emplace_back(name, getFieldValue);
     }
 
+    void addVars(const std::vector<Models::Base::Var> &vars, const std::string &prefix)
+    {
+        for(const auto &v : vars) {
+            addField(v.type + "* " + v.name,
+                     [v, prefix](const typename T::GroupInternal &g){ return prefix + v.name + g.getName(); });
+        }
+    }
+
+    void addEGPs(const std::vector<Snippet::Base::EGP> &egps)
+    {
+        for(const auto &e : egps) {
+            addField(e.type + " " + e.name,
+                     [e](const typename T::GroupInternal &g){ return e.name + g.getName(); });
+        }
+    }
+
     void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
                   CodeGenerator::CodeStream &runnerVarAlloc, const std::string &name, const T &m)
     {
@@ -1066,60 +1082,35 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Loop through merged synapse connectivity initialisation groups
     for(const auto &m : model.getMergedLocalSynapseConnectivityInitGroups()) {
-        // Write struct declation to top of definitions internal
-        definitionsInternal << "struct MergedSynapseConnectivityInitGroup" << m.getIndex() << std::endl;
-        {
-            CodeStream::Scope b(definitionsInternal);
-            definitionsInternal << "unsigned int numSrcNeurons;" << std::endl;
-            definitionsInternal << "unsigned int numTrgNeurons;" << std::endl;
-            definitionsInternal << "unsigned int rowStride;" << std::endl;
+        MergedStructGenerator<SynapseGroupMerged> gen;
 
-            if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                definitionsInternal << "unsigned int *rowLength;" << std::endl;
-                definitionsInternal << m.getArchetype().getSparseIndType() << "* ind;" << std::endl;
-            }
-            else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                definitionsInternal << "uint32_t *gp;" << std::endl;
-            }
-            definitionsInternal << std::endl;
+        gen.addField("unsigned int numSrcNeurons",
+                     [](const SynapseGroupInternal &sg){ return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+        gen.addField("unsigned int numTrgNeurons",
+                     [](const SynapseGroupInternal &sg){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+        gen.addField("unsigned int rowStride",
+                     [&backend, m](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(m, sg)); });
+
+        if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            gen.addField("unsigned int *rowLength",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "rowLength" + sg.getName(); });
+            gen.addField(m.getArchetype().getSparseIndType() + " *ind",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "ind" + sg.getName(); });
+        }
+        else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            gen.addField("uint32_t *gp",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "gp" + sg.getName(); });
         }
 
-        definitionsInternal << ";" << std::endl;
+        // Add EGPs to struct
+        gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
 
-        // Write local array of these structs containing individual neuron group pointers etc
-        runnerVarAlloc << "MergedSynapseConnectivityInitGroup" << m.getIndex() << " mergedSynapseConnectivityInitGroup" << m.getIndex() << "[] = ";
-        {
-            CodeStream::Scope b(runnerVarAlloc);
-            for(const auto &sg : m.getGroups()) {
-                runnerVarAlloc << "{";
-                runnerVarAlloc << sg.get().getSrcNeuronGroup()->getNumNeurons() << ", ";
-                runnerVarAlloc << sg.get().getTrgNeuronGroup()->getNumNeurons() << ", ";
-                runnerVarAlloc << backend.getSynapticMatrixRowStride(m, sg.get()) << ", ";
-
-                if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    runnerVarAlloc << hack << "rowLength" << sg.get().getName() << ", ";
-                    runnerVarAlloc << hack << "ind" << sg.get().getName() << ", ";
-                }
-                else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    runnerVarAlloc << hack << "gp" << sg.get().getName() << ", ";
-                }
-                runnerVarAlloc << "}," << std::endl;
-            }
-        }
-        runnerVarAlloc << ";" << std::endl;
-
-        // Then generate call to function to copy local array to device
-        runnerVarAlloc << "pushMergedSynapseConnectivityInitGroup" << m.getIndex() << "ToDevice(mergedSynapseConnectivityInitGroup" << m.getIndex() << ");" << std::endl;
-
-        // Finally add declaration to function to definitions internal
-        definitionsInternalFunc << "EXPORT_FUNC void pushMergedSynapseConnectivityInitGroup" << m.getIndex() << "ToDevice(const MergedSynapseConnectivityInitGroup" << m.getIndex() << " *group);" << std::endl;
-
+        // Generate structure definitions and instantiation
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "SynapseConnectivityInit", m);
     }
 
     // Loop through merged neuron groups
     for(const auto &m : model.getMergedLocalNeuronGroups()) {
-        const NeuronModels::Base *nm = m.getArchetype().getNeuronModel();
-
         MergedStructGenerator<NeuronGroupMerged> gen;
         gen.addField("unsigned int numNeurons",
                      [](const NeuronGroupInternal &ng){ return std::to_string(ng.getNumNeurons()); });
@@ -1147,16 +1138,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Add pointers to variables
-        for(const auto &v : nm->getVars()) {
-            gen.addField(v.type + "* " + v.name,
-                         [hack, v](const NeuronGroupInternal &ng){ return hack + v.name + ng.getName(); });
-        }
-
-        // Add EGPs
-        for(const auto &e : nm->getExtraGlobalParams()) {
-            gen.addField(e.type + " " + e.name,
-                         [hack, e](const NeuronGroupInternal &ng){ return hack + e.name + ng.getName(); });
-        }
+        const NeuronModels::Base *nm = m.getArchetype().getNeuronModel();
+        gen.addVars(nm->getVars(), hack);
+        gen.addEGPs(nm->getExtraGlobalParams());
 
         // Loop through merged synaptic inputs in archetypical neuron group
         for(size_t i = 0; i < m.getArchetype().getMergedInSyn().size(); i++) {
@@ -1198,185 +1182,65 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // Generate structure definitions and instantiation
         gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "Neuron", m);
-/*
-
-
-                // Loop through merged synaptic inputs in the archetypical neuron group
-                for (const auto &m : m.getArchetype().getMergedInSyn()) {
-                    const SynapseGroupInternal *archetypeSG = m.first;
-
-                    // Find merged synapse group in THIS neuron group which is compatible with archetype
-                    const auto otherSyn = std::find_if(ng.get().getMergedInSyn().cbegin(), ng.get().getMergedInSyn().cend(),
-                                                       [archetypeSG](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &m)
-                                                       {
-                                                           return m.first->canPSBeMerged(*archetypeSG);
-                                                       });
-                    assert(otherSyn != ng.get().getMergedInSyn().cend());
-
-                    runnerVarAlloc << hack << "inSyn" << otherSyn->first->getPSModelTargetName() << ", ";
-
-                    // Add pointer to dendritic delay buffer if required
-                    if (otherSyn->first->isDendriticDelayRequired()) {
-                        runnerVarAlloc << hack << "denDelay" << otherSyn->first->getPSModelTargetName() << ", ";
-                        runnerVarAlloc << "getSymbolAddress(" << backend.getVarPrefix() << "denDelayPtr" << otherSyn->first->getPSModelTargetName() << "), ";
-                    }
-
-                    // Add pointers to state variables
-                    if (otherSyn->first->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                        for (const auto &v : otherSyn->first->getPSModel()->getVars()) {
-                            runnerVarAlloc << hack << v.name << otherSyn->first->getPSModelTargetName() << ", ";
-                        }
-                    }
-
-                }
-                runnerVarAlloc << "}," << std::endl;
-
-            }
-        }
-        runnerVarAlloc << ";" << std::endl;
-
-        // Then generate call to function to copy local array to device
-        runnerVarAlloc << "pushMergedNeuronGroup" << m.getIndex() << "ToDevice(mergedNeuronGroup" << m.getIndex() << ");" << std::endl;
-
-        // Finally add declaration to function to definitions internal
-        definitionsInternalFunc << "EXPORT_FUNC void pushMergedNeuronGroup" << m.getIndex() << "ToDevice(const MergedNeuronGroup" << m.getIndex() << " *group);" << std::endl;*/
     }
 
     // Loop through merged synapse groups
     for(const auto &m : model.getMergedLocalSynapseGroups()) {
+        MergedStructGenerator<SynapseGroupMerged> gen;
+
+        gen.addField("unsigned int rowStride",
+                     [m, &backend](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(m, sg)); });
+        gen.addField("unsigned int numTrgNeurons",
+                     [](const SynapseGroupInternal &sg){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+
+        if(m.getArchetype().isDendriticDelayRequired()) {
+            gen.addField(model.getPrecision() + " *denDelay",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "denDelay" + sg.getPSModelTargetName(); });
+            gen.addField("volatile unsigned int *denDelayPtr",
+                         [&backend](const SynapseGroupInternal &sg){ return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")"; });
+        }
+        else {
+            gen.addField(model.getPrecision() + " *inSyn",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "inSyn" + sg.getPSModelTargetName(); });
+        }
+
+        if(m.getArchetype().isTrueSpikeRequired()) {
+            gen.addField("unsigned int* preSpkCnt",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "glbSpkCnt" + sg.getSrcNeuronGroup()->getName(); });
+            gen.addField("unsigned int* preSpk",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "glbSpk" + sg.getSrcNeuronGroup()->getName(); });
+        }
+
+        if(m.getArchetype().isSpikeEventRequired()) {
+            gen.addField("unsigned int* preSpkCntEvnt",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "glbSpkCntEvnt" + sg.getSrcNeuronGroup()->getName(); });
+            gen.addField("unsigned int* preSpkEvnt",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "glbSpkEvnt" + sg.getSrcNeuronGroup()->getName(); });
+        }
+
+         // Add pointers to connectivity data
+        if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            gen.addField("unsigned int *rowLength",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "rowLength" + sg.getName(); });
+            gen.addField(m.getArchetype().getSparseIndType() + " *ind",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "ind" + sg.getName(); });
+        }
+        else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            gen.addField("uint32_t *gp",
+                         [hack](const SynapseGroupInternal &sg){ return hack + "gp" + sg.getName(); });
+        }
+
+        // Add pointers to var pointers to struct
         const WeightUpdateModels::Base *wum = m.getArchetype().getWUModel();
-
-        const bool presynapticTrueSpike = m.getArchetype().isTrueSpikeRequired();
-        const bool presynapticSpikeLikeEvent = m.getArchetype().isSpikeEventRequired();
-
-        const bool dendriticDelay = m.getArchetype().isDendriticDelayRequired();
-
-        // Write struct
-        definitionsInternal << "struct MergedSynapseGroup" << m.getIndex() << std::endl;
-        {
-            CodeStream::Scope b(definitionsInternal);
-
-            definitionsInternal << "unsigned int rowStride;" << std::endl;
-            definitionsInternal << "unsigned int numTrgNeurons;" << std::endl;
-
-            if(dendriticDelay) {
-                definitionsInternal << model.getPrecision() <<"* denDelay;" << std::endl;
-                definitionsInternal << "volatile unsigned int *denDelayPtr;" << std::endl;
-            }
-            else {
-                definitionsInternal << model.getPrecision() << "* inSyn;" << std::endl;
-            }
-
-            definitionsInternal << std::endl;
-
-            // Add spike arrays
-            if(presynapticTrueSpike) {
-                definitionsInternal << "// Spikes" << std::endl;
-                definitionsInternal << "unsigned int* preSpkCnt;" << std::endl;
-                definitionsInternal << "unsigned int* preSpk;" << std::endl;
-                definitionsInternal << std::endl;
-            }
-
-            // Add spike like event arrays
-            if(presynapticSpikeLikeEvent) {
-                definitionsInternal << "// Spike-like events" << std::endl;
-                definitionsInternal << "unsigned int* preSpkCntEvnt;" << std::endl;
-                definitionsInternal << "unsigned int* preSpkEvnt;" << std::endl;
-                definitionsInternal << std::endl;
-            }
-
-            // Add delay pointer
-            /*f(delay) {
-                os << "// Delay pointer" << std::endl;
-                os << "unsigned int* spkQuePtr;" << std::endl;
-                os << std::endl;
-            }*/
-
-            // Add pointers to connectivity data
-            if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                definitionsInternal << "// Sparse connectivity" << std::endl;
-                definitionsInternal << "unsigned int* rowLength;" << std::endl;
-                definitionsInternal << m.getArchetype().getSparseIndType() << "* ind;" << std::endl;
-            }
-            else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                definitionsInternal << "// Bitmask connectivity" << std::endl;
-                definitionsInternal << "uint32_t* gp;" << std::endl;
-            }
-
-            // Add pointers to var pointers to struct
-            if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                definitionsInternal << "// Variables" << std::endl;
-                for(const auto &v : wum->getVars()) {
-                    definitionsInternal << v.type << "* " << v.name << ";" << std::endl;
-                }
-                definitionsInternal << std::endl;
-            }
-
-            // Add pointers to EGPs to struct (as they might be scalars)
-            definitionsInternal << "// Extra global parameters" << std::endl;
-            for(const auto &e : wum->getExtraGlobalParams()) {
-                definitionsInternal << e.type << " " << e.name << ";" << std::endl;
-            }
-            definitionsInternal << std::endl;
+        if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+            gen.addVars(wum->getVars(), hack);
         }
-        definitionsInternal << ";" << std::endl;
 
-        // Write array of these structs containing individual neuron group pointers etc
-        runnerVarAlloc << "MergedSynapseGroup" << m.getIndex() << " mergedSynapseGroup" << m.getIndex() << "[] = ";
-        {
-            CodeStream::Scope b(runnerVarAlloc);
-            for(const auto &sg : m.getGroups()) {
-                runnerVarAlloc << "{";
-                runnerVarAlloc << backend.getSynapticMatrixRowStride(m, sg) << ", ";
-                runnerVarAlloc << sg.get().getTrgNeuronGroup()->getNumNeurons() << ", ";
+        // Add EGPs to struct
+        gen.addEGPs(wum->getExtraGlobalParams());
 
-                // Add pointer to dendritic delay or inSyn
-                if(dendriticDelay) {
-                    runnerVarAlloc << hack << "denDelay" << sg.get().getPSModelTargetName() << ", ";
-                    runnerVarAlloc << "getSymbolAddress(" << backend.getVarPrefix() << "denDelayPtr" << sg.get().getPSModelTargetName() << "), ";
-                }
-                else {
-                    runnerVarAlloc << hack << "inSyn" << sg.get().getPSModelTargetName() << ", ";
-                }
-
-                if(presynapticTrueSpike) {
-                    runnerVarAlloc << hack << "glbSpkCnt" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                    runnerVarAlloc << hack << "glbSpk" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                }
-
-                if(presynapticSpikeLikeEvent) {
-                    runnerVarAlloc << hack << "glbSpkCntEvnt" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                    runnerVarAlloc << hack << "glbSpkEvnt" << sg.get().getSrcNeuronGroup()->getName() << ", ";
-                }
-
-                if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    runnerVarAlloc << hack << "rowLength" << sg.get().getName() << ", ";
-                    runnerVarAlloc << hack << "ind" << sg.get().getName() << ", ";
-                }
-                else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    runnerVarAlloc << hack << "gp" << sg.get().getName() << ", ";
-                }
-
-                if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                    for(const auto &v : wum->getVars()) {
-                        runnerVarAlloc << hack << v.name << sg.get().getName() << ", ";
-                    }
-                }
-                for(const auto &e : wum->getExtraGlobalParams()) {
-                    runnerVarAlloc << e.name << sg.get().getName() << ", ";
-                }
-                runnerVarAlloc << "}," << std::endl;
-
-            }
-        }
-        runnerVarAlloc << ";" << std::endl;
-
-        // Then generate call to function to copy local array to device
-        runnerVarAlloc << "pushMergedSynapseGroup" << m.getIndex() << "ToDevice(mergedSynapseGroup" << m.getIndex() << ");" << std::endl;
-
-        // Finally add declaration to function to definitions internal
-        definitionsInternalFunc << "EXPORT_FUNC void pushMergedSynapseGroup" << m.getIndex() << "ToDevice(const MergedSynapseGroup" << m.getIndex() << " *group);" << std::endl;
-
+        // Generate structure definitions and instantiation
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "Synapse", m);
     }
 
     // End extern C block around variable declarations
