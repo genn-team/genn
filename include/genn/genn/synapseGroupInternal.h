@@ -40,4 +40,5 @@ public:
     using SynapseGroup::canWUBeMerged;
     using SynapseGroup::canPSBeMerged;
     using SynapseGroup::canPSBeLinearlyCombined;
+    using SynapseGroup::canConnectivityInitBeMerged;
 };

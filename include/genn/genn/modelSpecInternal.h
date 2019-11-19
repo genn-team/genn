@@ -22,6 +22,7 @@ public:
     using ModelSpec::getMergedLocalNeuronGroups;
     using ModelSpec::getMergedLocalSynapseGroups;
     using ModelSpec::getMergedLocalNeuronInitGroups;
+    using ModelSpec::getMergedLocalSynapseConnectivityInitGroups;
 
 
     using ModelSpec::finalize;

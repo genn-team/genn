@@ -1014,6 +1014,61 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     }
 
+    // Loop through merged synapse connectivity initialisation groups
+    for(const auto &m : model.getMergedLocalSynapseConnectivityInitGroups()) {
+        // Write struct declation to top of definitions internal
+        definitionsInternal << "struct MergedSynapseConnectivityInitGroup" << m.getIndex() << std::endl;
+        {
+            CodeStream::Scope b(definitionsInternal);
+            definitionsInternal << "unsigned int numSrcNeurons;" << std::endl;
+            definitionsInternal << "unsigned int numTrgNeurons;" << std::endl;
+            definitionsInternal << "unsigned int rowStride;" << std::endl;
+
+            if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                definitionsInternal << "unsigned int *rowLength;" << std::endl;
+                definitionsInternal << m.getArchetype().getSparseIndType() << "* ind;" << std::endl;
+            }
+            else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                definitionsInternal << "uint32_t *gp;" << std::endl;
+            }
+            definitionsInternal << std::endl;
+        }
+
+        definitionsInternal << ";" << std::endl;
+
+        // Write local array of these structs containing individual neuron group pointers etc
+        runnerVarAlloc << "MergedSynapseConnectivityInitGroup" << m.getIndex() << " mergedSynapseConnectivityInitGroup" << m.getIndex() << "[] = ";
+        {
+            CodeStream::Scope b(runnerVarAlloc);
+            for(const auto &sg : m.getGroups()) {
+                runnerVarAlloc << "{";
+                runnerVarAlloc << sg.get().getSrcNeuronGroup()->getNumNeurons() << ", ";
+                runnerVarAlloc << sg.get().getTrgNeuronGroup()->getNumNeurons() << ", ";
+                runnerVarAlloc << backend.getSynapticMatrixRowStride(m, sg.get()) << ", ";
+
+                if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    runnerVarAlloc << hack << "rowLength" << sg.get().getName() << ", ";
+                    runnerVarAlloc << hack << "ind" << sg.get().getName() << ", ";
+                }
+                else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    runnerVarAlloc << hack << "gp" << sg.get().getName() << ", ";
+                }
+                runnerVarAlloc << "}," << std::endl;
+            }
+        }
+        runnerVarAlloc << ";" << std::endl;
+
+        // Then generate call to function to copy local array to device
+        runnerVarAlloc << "pushMergedSynapseConnectivityInitGroup" << m.getIndex() << "ToDevice(mergedSynapseConnectivityInitGroup" << m.getIndex() << ");" << std::endl;
+
+        // Finally add declaration to function to definitions internal
+        definitionsInternalFunc << "EXPORT_FUNC void pushMergedSynapseConnectivityInitGroup" << m.getIndex() << "ToDevice(const MergedSynapseConnectivityInitGroup" << m.getIndex() << " *group);" << std::endl;
+
+    }
+
+
+
+
     // Loop through merged neuron groups
     for(const auto &m : model.getMergedLocalNeuronGroups()) {
         const NeuronModels::Base *nm = m.getArchetype().getNeuronModel();

@@ -85,14 +85,16 @@ void gennExtraGlobalParamPass(CodeGenerator::CodeStream &os, const std::map<std:
     }
 }
 //-----------------------------------------------------------------------
-template<typename T>
-void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::vector<T> &mergedGroups,
-                                   const std::string &prefix, size_t blockSize,
-                                   std::function<bool(const T&)> filter,
-                                   std::function<size_t(const T&, const typename T::GroupInternal&)> getNumThreads)
+void genGroupBlockIndices(CodeGenerator::CodeStream &, size_t)
 {
-    // Declare array of indices (into mergedNeuronGroupXXX arrays)
-    os << "__device__ __constant__ uint16_t dd_" << prefix << "GroupBlockIndices[] = {";
+}
+//-----------------------------------------------------------------------
+template<typename T, typename F, typename G, typename ...Args>
+void genGroupBlockIndices(CodeGenerator::CodeStream &os, size_t blockSize,
+                          const std::vector<T> &mergedGroups, const std::string &, F filter, G getNumThreads,
+                          Args... args)
+{
+    // Generate indices for these groups
     for(const auto &m : mergedGroups) {
         if(filter(m)) {
             // Loop through neuron groups within merged neuron group
@@ -105,21 +107,49 @@ void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::vec
             }
         }
     };
-    os << "};" << std::endl;
 
+    // Generate any remaining groups
+    genGroupBlockIndices(os, blockSize, args...);
+}
+//-----------------------------------------------------------------------
+void genGroupStartIDs(CodeGenerator::CodeStream &, size_t &, size_t)
+{
+}
+//-----------------------------------------------------------------------
+template<typename T, typename F, typename G, typename ...Args>
+void genGroupStartIDs(CodeGenerator::CodeStream &os, size_t &idStart, size_t blockSize,
+                      const std::vector<T> &mergedGroups, const std::string &groupStartPrefix, F filter, G getNumThreads,
+                      Args... args)
+{
     // Loop through merged groups
-    size_t id = 0;
     for(const auto &m : mergedGroups) {
         if(filter(m)) {
             // Declare array of starting thread indices for each neuron group
-            os << "__device__ __constant__ unsigned int dd_" << prefix << "GroupStartID" << m.getIndex() << "[] = {";
+            os << "__device__ __constant__ unsigned int dd_" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
             for(const auto &ng : m.getGroups()) {
-                os << id << ", ";
-                id += CodeGenerator::padSize(getNumThreads(m, ng.get()), blockSize);
+                os << idStart << ", ";
+                idStart += CodeGenerator::padSize(getNumThreads(m, ng.get()), blockSize);
             }
             os << "};" << std::endl;
         }
     }
+
+    // Generate any remaining groups
+    genGroupStartIDs(os, idStart, blockSize, args...);
+}
+//-----------------------------------------------------------------------
+template<typename ...Args>
+void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::string &blockIndicesPrefix, size_t blockSize,
+                                   Args... args)
+{
+    // Declare array of indices (into mergedNeuronGroupXXX arrays)
+    os << "__device__ __constant__ uint16_t dd_" << blockIndicesPrefix << "GroupBlockIndices[] = {";
+    genGroupBlockIndices(os, blockSize, args...);
+    os << "};" << std::endl;
+
+    // Generate group start id arrays
+    size_t idStart = 0;
+    genGroupStartIDs(os, std::ref(idStart), blockSize, args...);
 }
 //-----------------------------------------------------------------------
 bool isSparseInitRequired(const SynapseGroupInternal &sg)
@@ -206,8 +236,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
                               NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const
 {
     // Generate data structure for accessing merged groups
-    genMergedKernelDataStructures<NeuronGroupMerged>(
-        os, model.getMergedLocalNeuronGroups(), "neuron", m_KernelBlockSizes[KernelNeuronUpdate],
+    genMergedKernelDataStructures(
+        os, "neuron", m_KernelBlockSizes[KernelNeuronUpdate],
+        model.getMergedLocalNeuronGroups(), "neuron",
         [](const NeuronGroupMerged&){ return true; },
         [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
 
@@ -502,8 +533,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                    [](const SynapseGroupMerged &s){ return (s.getArchetype().isSpikeEventRequired() || s.getArchetype().isTrueSpikeRequired()); }))
     {
         // Generate data structure for accessing merged groups
-        genMergedKernelDataStructures<SynapseGroupMerged>(
-            os, model.getMergedLocalSynapseGroups(), "presynaptic", m_KernelBlockSizes[KernelPresynapticUpdate],
+        genMergedKernelDataStructures(
+            os, "presynaptic", m_KernelBlockSizes[KernelPresynapticUpdate],
+            model.getMergedLocalSynapseGroups(), "presynaptic",
             [](const SynapseGroupMerged &sg){ return (sg.getArchetype().isSpikeEventRequired() || sg.getArchetype().isTrueSpikeRequired()); },
             [this](const SynapseGroupMerged &sgMerge, const SynapseGroupInternal &sg)
             {
@@ -858,7 +890,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                       NeuronGroupMergedHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                      SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                      SynapseGroupHandler sgDenseInitHandler, SynapseGroupMergedHandler sgSparseConnectHandler,
                       SynapseGroupHandler sgSparseInitHandler) const
 {
     os << "#include <iostream>" << std::endl;
@@ -867,10 +899,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     os << std::endl;
 
     // Generate data structure for accessing merged groups
-    genMergedKernelDataStructures<NeuronGroupMerged>(
-        os, model.getMergedLocalNeuronInitGroups(), "neuronInit", m_KernelBlockSizes[KernelInitialize],
+    genMergedKernelDataStructures(os, "init", m_KernelBlockSizes[KernelInitialize],
+        model.getMergedLocalNeuronInitGroups(), "neuronInit",
         [](const NeuronGroupMerged&){ return true; },
-        [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
+        [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
+        model.getMergedLocalSynapseConnectivityInitGroups(), "synapseConnectivityInit",
+        [](const SynapseGroupMerged &sg){ return sg.getArchetype().isSparseConnectivityInitRequired(); },
+        [](const SynapseGroupMerged&, const SynapseGroupInternal &sg){ return sg.getSrcNeuronGroup()->getNumNeurons(); });
 
     // If device RNG is required, generate kernel to initialise it
     if(isGlobalRNGRequired(model)) {
@@ -936,10 +971,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
             {
                 // Get the index of the neuron group within the merged group
-                os << "const unsigned int neuronGroupIndex = dd_neuronInitGroupBlockIndices[blk];" << std::endl;
+                os << "const unsigned int neuronGroupIndex = dd_initGroupBlockIndices[blk];" << std::endl;
 
                 // Use this to get reference to MergedNeuronInitGroup structure
-                // Get reference to neuron group that this block should be simulating
+                // Get reference to neuron group that this block should be initialising
                 os << "const MergedNeuronInitGroup" << ng.getIndex() << " &neuronGroup = dd_mergedNeuronInitGroup" << ng.getIndex() << "[neuronGroupIndex]; " << std::endl;
 
                 // Use this and starting thread of merged group to calculate local id within neuron group
@@ -1001,54 +1036,63 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
-            [this](const SynapseGroupInternal &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
-            [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedLocalSynapseConnectivityInitGroups(), idInitStart,
+            [this](const SynapseGroupMerged &, const SynapseGroupInternal &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+            [](const SynapseGroupMerged &sg){ return sg.getArchetype().isSparseConnectivityInitRequired(); },
+            [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
             {
-                const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
-                const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
-                // **HACK**
-                //const size_t synapticMatrixRowStride = getSynapticMatrixRowStride(sg);
-                const size_t synapticMatrixRowStride = sg.getMaxConnections();
+                // Get the index of the synapse group within the merged group
+                os << "const unsigned int synapseGroupIndex = dd_initGroupBlockIndices[blk];" << std::endl;
+
+                // Use this to get reference to MergedSynapseConnectivityInitGroup structure
+                // Get reference to synapse group conenctivity that this block should be initialising
+                os << "const MergedSynapseConnectivityInitGroup" << sg.getIndex() << " &synapseGroup = dd_mergedSynapseConnectivityInitGroup" << sg.getIndex() << "[synapseGroupIndex]; " << std::endl;
+
+                // Use this and starting thread of merged group to calculate local id within synapse group
+                os << "const unsigned int lid = id - (dd_synapseConnectivityInitGroupStartID" << sg.getIndex() << "[synapseGroupIndex]);" << std::endl;
+                popSubs.addVarSubstitution("id", "lid");
 
                 os << "// only do this for existing presynaptic neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
+                os << "if(" << popSubs["id"] << " < synapseGroup.numSrcNeurons)";
                 {
                     CodeStream::Scope b(os);
                     popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                     popSubs.addVarSubstitution("id_post_begin", "0");
                     popSubs.addVarSubstitution("id_thread", "0");
                     popSubs.addVarSubstitution("num_threads", "1");
-                    popSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
+                    popSubs.addVarSubstitution("num_post", "synapseGroup.numTrgNeurons");
                     
                     // If the synapse group has bitmask connectivity
-                    if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                        // Calculate the maximum number of synapses in any groups
+                        size_t maxSynapses = 0;
+                        for(const auto &g : sg.getGroups()) {
+                            const size_t numSynapses = (size_t)g.get().getSrcNeuronGroup()->getNumNeurons() * (size_t)getSynapticMatrixRowStride(sg, g.get());
+                            maxSynapses = std::max(maxSynapses, numSynapses);
+                        }
+
                         // Calculate indices of bits at start and end of row
                         os << "// Calculate indices" << std::endl;
-                        const size_t maxSynapses = numSrcNeurons * synapticMatrixRowStride;
                         if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                            os << "const uint64_t rowStartGID = " << popSubs["id"] << " * " << synapticMatrixRowStride << "ull;" << std::endl;
+                            os << "const uint64_t rowStartGID = " << popSubs["id"] << " * (uint64_t)synapseGroup.rowStride;" << std::endl;
                         }
                         else {
-                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << synapticMatrixRowStride << ";" << std::endl;
+                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * synapseGroup.rowStride;" << std::endl;
                         }
 
                         // Build function template to set correct bit in bitmask
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    "atomicOr(&dd_gp" + sg.getName() + "[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
+                                                    "atomicOr(&synapseGroup.gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
                     }
                     // Otherwise, if synapse group has ragged connectivity
-                    else if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        const std::string rowLength = "dd_rowLength" + sg.getName() + "[" + popSubs["id"] + "]";
-                        const std::string ind = "dd_ind" + sg.getName();
-
+                    else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // Zero row length
+                        const std::string rowLength = "synapseGroup.rowLength[" + popSubs["id"] + "]";
                         os << rowLength << " = 0;" << std::endl;
 
                         // Build function template to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    ind + "[(" + popSubs["id"] + " * " + std::to_string(synapticMatrixRowStride) + ") + (" + rowLength + "++)] = $(0)");
+                                                    "synapseGroup.ind[(" + popSubs["id"] + " * synapseGroup.rowStride) + (" + rowLength + "++)] = $(0)");
                     }
                     else {
                         assert(false);
@@ -1057,7 +1101,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     // If this connectivity requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
-                    if(::Utils::isRNGRequired(sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                    if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
                         os << "curandStatePhilox4_32_10_t connectivityRNG = dd_rng[0];" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &connectivityRNG);" << std::endl;
 

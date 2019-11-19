@@ -133,7 +133,7 @@ public:
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
                          NeuronGroupMergedHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                         SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                         SynapseGroupHandler sgDenseInitHandler, SynapseGroupMergedHandler sgSparseConnectHandler,
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc

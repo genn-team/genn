@@ -514,3 +514,11 @@ bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
     return (canPSBeMerged(other)
             && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
+//----------------------------------------------------------------------------
+bool SynapseGroup::canConnectivityInitBeMerged(const SynapseGroup &other) const
+{
+    // Connectivity initialization can be merged if the type of connectivity is the same and the initialisers can be merged
+    return (getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser())
+            && (getSynapseMatrixConnectivity(getMatrixType()) == getSynapseMatrixConnectivity(other.getMatrixType()))
+            && (getSparseIndType() == other.getSparseIndType()));
+}

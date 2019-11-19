@@ -54,3 +54,16 @@ inline SynapseMatrixType operator | (SynapseMatrixWeight weightType, SynapseMatr
 {
     return static_cast<SynapseMatrixType>(static_cast<unsigned int>(weightType) | static_cast<unsigned int>(connType));
 }
+
+//----------------------------------------------------------------------------
+// Helpers
+//----------------------------------------------------------------------------
+inline SynapseMatrixConnectivity getSynapseMatrixConnectivity(SynapseMatrixType type)
+{
+    return static_cast<SynapseMatrixConnectivity>(static_cast<unsigned int>(type) & 0x15);
+}
+
+inline SynapseMatrixWeight getSynapseMatrixWeight(SynapseMatrixType type)
+{
+    return static_cast<SynapseMatrixWeight>(static_cast<unsigned int>(type) >> 5);
+}

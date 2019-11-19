@@ -293,6 +293,9 @@ void ModelSpec::finalize()
     createMergedGroups(getLocalNeuronGroups(), m_MergedLocalNeuronInitGroups,
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canInitBeMerged(b); });
 
+    LOGD << "Merging synapse connectivity initialisation groups:";
+    createMergedGroups(getLocalSynapseGroups(), m_MergedLocalSynapseConnectivityInitGroups,
+                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canConnectivityInitBeMerged(b); });
 }
 
 std::string ModelSpec::scalarExpr(double val) const
