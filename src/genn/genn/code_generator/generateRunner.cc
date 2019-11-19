@@ -939,6 +939,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Loop through merged neuron initialisation groups
     for(const auto &m : model.getMergedLocalNeuronInitGroups()) {
+        MergedStructGenerator<NeuronGroupMerged> gen;
+
         const NeuronModels::Base *nm = m.getArchetype().getNeuronModel();
 
         const bool populationRNG = m.getArchetype().isSimRNGRequired();

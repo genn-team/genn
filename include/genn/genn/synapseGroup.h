@@ -276,7 +276,15 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     bool canPSBeLinearlyCombined(const SynapseGroup &other) const;
 
-    //! Can connectivity initiasation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    //! Can initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can postsynaptic initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canPSInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can connectivity initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canConnectivityInitBeMerged(const SynapseGroup &other) const;
 

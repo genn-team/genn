@@ -154,29 +154,29 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                      const CodeGenerator::Substitutions &popSubs, const SynapseGroupInternal &sg, const std::string &ftype)
+                      const CodeGenerator::Substitutions &popSubs, const SynapseGroupMerged &sg, const std::string &ftype)
 {
     using namespace CodeGenerator;
 
-    const auto vars = sg.getWUModel()->getVars();
+    const auto vars = sg.getArchetype().getWUModel()->getVars();
     for (size_t k = 0; k < vars.size(); k++) {
-        const auto &varInit = sg.getWUVarInitialisers().at(k);
+        const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
 
         // If this variable has any initialisation code
         if(!varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
 
             // Generate target-specific code to initialise variable
-            backend.genSynapseVariableRowInit(os, sg, popSubs,
+            backend.genSynapseVariableRowInit(os, popSubs,
                 [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
+                    varSubs.addVarSubstitution("value", "synapseGroup." + vars[k].name + "[" + varSubs["id_syn"] +  "]");
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
 
                     std::string code = varInit.getSnippet()->getCode();
-                    varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + sg.getName());
+                    varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
                     code = ensureFtype(code, ftype);
                     os << code << std::endl;
                 });
@@ -308,10 +308,10 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             //genInitSpikes(os, backend, popSubs, ng, false);
         },
         // Dense syanptic matrix variable initialisation
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
         {
             // Loop through rows
-            os << "for(unsigned int i = 0; i < " << sg.getSrcNeuronGroup()->getNumNeurons() << "; i++)";
+            os << "for(unsigned int i = 0; i < synapseGroup.numSrcNeurons; i++)";
             {
                 CodeStream::Scope b(os);
                 popSubs.addVarSubstitution("id_pre", "i");
@@ -348,7 +348,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             }
         },
         // Sparse synaptic matrix var initialisation
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
         {
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         });

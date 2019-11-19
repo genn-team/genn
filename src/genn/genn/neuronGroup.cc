@@ -390,6 +390,30 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
             }
         }
 
+        // If both groups have the same number of incoming synapse groups after merging
+        auto otherMergedInSyn = other.getMergedInSyn();
+        if(getMergedInSyn().size() == otherMergedInSyn.size()) {
+            // Loop through our incoming synapse groups
+            for(const auto &syn : getMergedInSyn()) {
+                // If a compatible postsynaptic model can be found amongst the other neuron group's current sources, remove it
+                const auto otherSyn = std::find_if(otherMergedInSyn.cbegin(), otherMergedInSyn.cend(),
+                                                   [syn](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &m)
+                                                   {
+                                                       return syn.first->canPSInitBeMerged(*m.first);
+                                                   });
+                if(otherSyn != otherMergedInSyn.cend()) {
+                    otherMergedInSyn.erase(otherSyn);
+                }
+                // Otherwise, these can't be merged - return false
+                else {
+                    return false;
+                }
+            }
+        }
+        else {
+            return false;
+        }
+
         return true;
     }
     return false;

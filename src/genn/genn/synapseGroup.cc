@@ -515,6 +515,41 @@ bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
             && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canInitBeMerged(const SynapseGroup &other) const
+{
+    if((getMatrixType() == other.getMatrixType())
+       && (getWUModel()->getVars() == other.getWUModel()->getVars()))
+    {
+        // if any of the variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
+            if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canPSInitBeMerged(const SynapseGroup &other) const
+{
+    if((getPSModel()->getVars() == other.getPSModel()->getVars())
+       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps()))
+    {
+        // if any of the variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getPSVarInitialisers().size(); i++) {
+            if(!getPSVarInitialisers()[i].canBeMerged(other.getPSVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::canConnectivityInitBeMerged(const SynapseGroup &other) const
 {
     // Connectivity initialization can be merged if the type of connectivity is the same and the initialisers can be merged

@@ -60,6 +60,10 @@ public:
     //! Find the synapse group compatible with specified merged insyn in archetype
     /*! **NOTE** this should only be called with neuron groups within merged group */
     const SynapseGroupInternal *getCompatibleMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const;
+
+    //! Find the synapse group compatible with specified merged insyn in archetype
+    /*! **NOTE** this should only be called with neuron groups within merged group */
+    const SynapseGroupInternal *getCompatibleInitMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const;
 };
 
 //----------------------------------------------------------------------------

@@ -173,8 +173,8 @@ public:
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
                          NeuronGroupMergedHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                         SynapseGroupHandler sgDenseInitHandler, SynapseGroupMergedHandler sgSparseConnectHandler,
-                         SynapseGroupHandler sgSparseInitHandler) const = 0;
+                         SynapseGroupMergedHandler sgDenseInitHandler, SynapseGroupMergedHandler sgSparseConnectHandler,
+                         SynapseGroupMergedHandler sgSparseInitHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupMerged &sgMerged, const SynapseGroupInternal &sg) const = 0;
@@ -211,8 +211,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupInternal &sg,
-                                           const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;

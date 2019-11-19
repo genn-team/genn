@@ -501,6 +501,8 @@ protected:
 
     const std::vector<NeuronGroupMerged> &getMergedLocalNeuronInitGroups() const{ return m_MergedLocalNeuronInitGroups; }
 
+    const std::vector<SynapseGroupMerged> &getMergedLocalSynapseInitGroups() const{ return m_MergedLocalSynapseInitGroups; }
+
     const std::vector<SynapseGroupMerged> &getMergedLocalSynapseConnectivityInitGroups() const{ return m_MergedLocalSynapseConnectivityInitGroups; }
 
 private:
@@ -540,6 +542,9 @@ private:
 
     //! Neuron groups whose initialisation can be merged together
     std::vector<NeuronGroupMerged> m_MergedLocalNeuronInitGroups;
+
+    //! Synapse groups whose variable initialisation can be merged together
+    std::vector<SynapseGroupMerged> m_MergedLocalSynapseInitGroups;
 
     //! Synapse groups whose connectivity initialisation can be merged together
     std::vector<SynapseGroupMerged> m_MergedLocalSynapseConnectivityInitGroups;
