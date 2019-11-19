@@ -17,7 +17,6 @@
 // Code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/generateInit.h"
-#include "code_generator/generateMPI.h"
 #include "code_generator/generateNeuronUpdate.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateSynapseUpdate.h"
@@ -59,16 +58,6 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
 
     // Create basic list of modules
     std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};
-
-#ifdef MPI_ENABLE
-    std::ofstream mpiStream((outputPath / "mpi.cc").str());
-    CodeStream mpi(mpiStream);
-
-    generateMPI(mpi, model, backend, standaloneModules);
-
-    // Add MPI module
-    modules.push_back("mpi");
-#endif
 
     // If we aren't building standalone modules
     if(!standaloneModules) {

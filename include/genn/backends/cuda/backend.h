@@ -132,9 +132,8 @@ public:
                                   SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
-                         NeuronGroupMergedHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                         SynapseGroupMergedHandler sgDenseInitHandler, SynapseGroupMergedHandler sgSparseConnectHandler,
-                         SynapseGroupMergedHandler sgSparseInitHandler) const override;
+                         NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
+                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupMerged &sgMerged, const SynapseGroupInternal &sg) const override;

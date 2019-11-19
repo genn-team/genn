@@ -591,52 +591,10 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    allVarStreams << "// remote neuron groups" << std::endl;
+    allVarStreams << "// local neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> currentSpikePullFunctions;
     std::vector<std::string> currentSpikeEventPullFunctions;
-    for(const auto &n : model.getRemoteNeuronGroups()) {
-        // Write macro so whether a neuron group is remote or not can be determined at compile time
-        // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
-        definitionsVar << "#define " << n.first << "_REMOTE" << std::endl;
-
-        // Write convenience macros to access spikes
-        genSpikeMacros(definitionsVar, n.second, true);
-
-        // If this neuron group has outputs to local host
-        if(n.second.hasOutputToHost(localHostID)) {
-            // Check that, whatever variable mode is set for these variables,
-            // they are instantiated on host so they can be copied using MPI
-            if(!(n.second.getSpikeLocation() & VarLocation::HOST)) {
-                throw std::runtime_error("Remote neuron group '" + n.first + "' has its spike variable mode set so it is not instantiated on the host - this is not supported");
-            }
-
-            // True spike variables
-            const size_t numSpikeCounts = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
-            const size_t numSpikes = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeLocation(), numSpikeCounts);
-            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), numSpikes);
-
-            // True spike variable push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
-                                n.first + "CurrentSpikes", currentSpikePullFunctions,
-                [&]()
-                {
-                    backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
-                    backend.genCurrentTrueSpikePull(runnerPullFunc, n.second);
-                });
-
-            // Current true spike getter functions
-            genSpikeGetters(definitionsFunc, runnerGetterFunc, n.second, true);
-        }
-    }
-    allVarStreams << std::endl;
-
-    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    allVarStreams << "// local neuron groups" << std::endl;
-    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getLocalNeuronGroups()) {
         // Write convenience macros to access spikes
         genSpikeMacros(definitionsVar, n.second, true);
@@ -1342,11 +1300,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         runner << "updateSynapses(t);" << std::endl;
 
         // Generate code to advance host-side spike queues
-        for(const auto &n : model.getRemoteNeuronGroups()) {
-            if(n.second.isDelayRequired() && n.second.hasOutputToHost(localHostID)) {
-                runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-            }
-        }
+   
         for(const auto &n : model.getLocalNeuronGroups()) {
             if (n.second.isDelayRequired()) {
                 runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;

@@ -850,9 +850,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
-                      NeuronGroupMergedHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                      SynapseGroupMergedHandler sgDenseInitHandler, SynapseGroupMergedHandler sgSparseConnectHandler,
-                      SynapseGroupMergedHandler sgSparseInitHandler) const
+                      NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
+                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -911,23 +910,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelInitialize] << " * blockIdx.x + threadIdx.x;" << std::endl;
         os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Remote neuron groups" << std::endl;
-        genParallelGroup<NeuronGroupInternal>(os, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
-            [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this](const NeuronGroupInternal &ng){ return ng.hasOutputToHost(getLocalHostID()); },
-            [this, remoteNGHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
-            {
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
-                {
-                    CodeStream::Scope b(os);
-
-                    remoteNGHandler(os, ng, popSubs);
-                }
-            });
-        os << std::endl;
-   
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroupMerged>(os, kernelSubs, model.getMergedLocalNeuronInitGroups(), idInitStart,

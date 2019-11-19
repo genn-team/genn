@@ -24,7 +24,6 @@
     <ClCompile Include="code_generator\generateAll.cc" />
     <ClCompile Include="code_generator\generateInit.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
-    <ClCompile Include="code_generator\generateMPI.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateNeuronUpdate.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
@@ -57,7 +56,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateAll.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateInit.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMPI.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateNeuronUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />

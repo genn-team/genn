@@ -299,14 +299,6 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); });
             }*/
         },
-        // Remote neuron group initialisation
-        [&backend, &model](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &popSubs)
-        {
-            assert(false);
-            // Initialise spike counts and spikes
-            //genInitSpikeCount(os, backend, popSubs, ng, false);
-            //genInitSpikes(os, backend, popSubs, ng, false);
-        },
         // Dense syanptic matrix variable initialisation
         [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
         {
