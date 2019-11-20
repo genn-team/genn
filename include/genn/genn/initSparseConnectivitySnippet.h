@@ -79,6 +79,11 @@ public:
         : Snippet::Init<Base>(snippet, params)
     {
     }
+
+    bool canBeMerged(const Init &other) const
+    {
+        return Snippet::Init<Base>::canBeMerged(other, getSnippet()->getRowBuildCode());
+    }
 };
 
 //----------------------------------------------------------------------------
