@@ -128,8 +128,6 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    int getClusterHostID() const;
-
     //! Does synapse group need to handle 'true' spikes
     bool isTrueSpikeRequired() const;
 

@@ -149,17 +149,6 @@ bool NeuronGroup::isInitRNGRequired() const
                        [](const SynapseGroupInternal *sg){ return sg->isPSInitRNGRequired(); });
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::hasOutputToHost(int targetHostID) const
-{
-    // Return true if any of the outgoing synapse groups have target populations on specified host ID
-    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [targetHostID](SynapseGroupInternal *sg)
-                       {
-                           return (sg->getTrgNeuronGroup()->getClusterHostID() == targetHostID);
-                       });
-
-}
-//----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 {
     m_CurrentSources.push_back(src);

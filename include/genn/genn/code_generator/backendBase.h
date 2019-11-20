@@ -134,7 +134,7 @@ public:
     typedef std::function <void(CodeStream &, const NeuronGroupMerged &, Substitutions&,
                                 NeuronGroupMergedHandler, NeuronGroupMergedHandler)> NeuronGroupSimHandler;
     
-    BackendBase(int localHostID, const std::string &scalarType);
+    BackendBase(const std::string &scalarType);
     virtual ~BackendBase(){}
 
     //--------------------------------------------------------------------------
@@ -323,9 +323,6 @@ public:
         genVariableImplementation(runner, type, name, loc);
     }
 
-    //! Gets ID of local host backend is building code for
-    int getLocalHostID() const{ return m_LocalHostID; }
-
 protected:
     //--------------------------------------------------------------------------
     // Protected API
@@ -341,8 +338,6 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    const int m_LocalHostID;
-
     // Size of supported types in bytes - used for estimating memory usage
     std::unordered_map<std::string, size_t> m_TypeBytes;
 

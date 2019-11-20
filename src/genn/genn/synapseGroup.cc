@@ -158,11 +158,6 @@ void SynapseGroup::setNarrowSparseIndEnabled(bool enabled)
     }
 }
 //----------------------------------------------------------------------------
-int SynapseGroup::getClusterHostID() const
-{
-    return m_TrgNeuronGroup->getClusterHostID();
-}
-//----------------------------------------------------------------------------
 bool SynapseGroup::isTrueSpikeRequired() const
 {
     return !getWUModel()->getSimCode().empty();

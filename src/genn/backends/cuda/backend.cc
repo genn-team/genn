@@ -175,8 +175,8 @@ std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrate
 };
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
-                 int localHostID, const std::string &scalarType, int device)
-:   BackendBase(localHostID, scalarType), m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
+                 const std::string &scalarType, int device)
+:   BackendBase(scalarType), m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -210,20 +210,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelPreNeuronReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
-
-        // Loop through remote neuron groups
-        for(const auto &n : model.getRemoteNeuronGroups()) {
-            if(n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
-                if(idPreNeuronReset > 0) {
-                    os << "else ";
-                }
-                os << "if(id == " << (idPreNeuronReset++) << ")";
-                {
-                    CodeStream::Scope b(os);
-                    os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-                }
-            }
-        }
 
         // Loop through local neuron groups
         for(const auto &n : model.getLocalNeuronGroups()) {
@@ -2074,21 +2060,8 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
 //--------------------------------------------------------------------------
 size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) const
 {
-    // Start by counting remote neuron groups
-    size_t numInitThreads = std::accumulate(
-        model.getRemoteNeuronGroups().cbegin(), model.getRemoteNeuronGroups().cend(), size_t{0},
-        [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
-        {
-            if (n.second.hasOutputToHost(getLocalHostID())) {
-                return acc + padSize(n.second.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
-            }
-            else {
-                return acc;
-            }
-        });
-
     // Then local neuron groups
-    numInitThreads = std::accumulate(
+    size_t numInitThreads = std::accumulate(
         model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(), numInitThreads,
         [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
         {

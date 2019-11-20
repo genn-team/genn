@@ -118,7 +118,7 @@ class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
     Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
-            int localHostID, const std::string &scalarType, int device);
+            const std::string &scalarType, int device);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
