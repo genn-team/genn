@@ -91,9 +91,13 @@ TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
     InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProbParamsA(0.1);
     InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProbParamsB(0.4);
 
-    const auto connectivityInit0 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
-    const auto connectivityInit1 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
-    const auto connectivityInit2 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsB);
+    auto connectivityInit0 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
+    auto connectivityInit1 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
+    auto connectivityInit2 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsB);
+
+    connectivityInit0.initDerivedParams(0.1);
+    connectivityInit1.initDerivedParams(0.1);
+    connectivityInit2.initDerivedParams(0.1);
 
     ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit1));
     ASSERT_FALSE(connectivityInit0.canBeMerged(connectivityInit2));
@@ -104,8 +108,11 @@ TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
     FixedNumberTotalWithReplacement::ParamValues fixedNumberParamsA(1000);
     FixedNumberTotalWithReplacement::ParamValues fixedNumberParamsB(1200);
 
-    const auto connectivityInit0 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsA);
-    const auto connectivityInit1 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsB);
+    auto connectivityInit0 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsA);
+    auto connectivityInit1 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsB);
+
+    connectivityInit0.initDerivedParams(0.1);
+    connectivityInit1.initDerivedParams(0.1);
 
     ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit1));
 }
