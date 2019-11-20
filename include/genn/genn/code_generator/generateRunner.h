@@ -17,5 +17,5 @@ class CodeStream;
 namespace CodeGenerator
 {
 MemAlloc generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                        const ModelSpecInternal &model, const BackendBase &backend, int localHostID);
+                        const ModelSpecInternal &model, const BackendBase &backend);
 }

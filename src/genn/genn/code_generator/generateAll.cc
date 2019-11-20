@@ -53,7 +53,7 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     generateNeuronUpdate(neuronUpdate, model, backend, standaloneModules);
     generateSynapseUpdate(synapseUpdate, model, backend, standaloneModules);
     generateInit(init, model, backend, standaloneModules);
-    auto mem = generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
+    auto mem = generateRunner(definitions, definitionsInternal, runner, model, backend);
     generateSupportCode(supportCode, model);
 
     // Create basic list of modules
