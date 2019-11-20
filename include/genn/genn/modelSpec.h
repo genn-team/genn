@@ -428,10 +428,10 @@ protected:
     bool zeroCopyInUse() const;
 
     //! Get std::map containing local named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroupInternal> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
+    const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
 
     //! Get std::map containing local named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroupInternal> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
+    const std::map<std::string, SynapseGroupInternal> &getSynapseGroups() const{ return m_LocalSynapseGroups; }
 
     //! Get std::map containing local named CurrentSource objects in model
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }

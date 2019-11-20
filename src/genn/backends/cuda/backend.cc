@@ -212,7 +212,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelPreNeuronReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // Loop through local neuron groups
-        for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getNeuronGroups()) {
             if(idPreNeuronReset > 0) {
                 os << "else ";
             }
@@ -452,7 +452,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPreSynapseReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
             // Loop through neuron groups
-            for(const auto &n : model.getLocalNeuronGroups()) {
+            for(const auto &n : model.getNeuronGroups()) {
                 // Loop through incoming synaptic populations
                 for(const auto &m : n.second.getMergedInSyn()) {
                     const auto *sg = m.first;
@@ -606,7 +606,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
     // If any synapse groups require postsynaptic learning
     /*size_t idPostsynapticStart = 0;
-    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
         [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
     {
         os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
@@ -622,7 +622,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPostsynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
             os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPostsynapticUpdate] << "];" << std::endl;
-            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                 [&model](const ModelSpec::SynapseGroupValueType &s)
                 {
                     return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty());
@@ -632,7 +632,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             }
 
             // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
-            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
+            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getSynapseGroups(), idPostsynapticStart,
                 [this](const SynapseGroupInternal &sg){ return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
                 [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
                 [postLearnHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
@@ -712,7 +712,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
     }
 
     size_t idSynapseDynamicsStart = 0;
-    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
         [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
     {
         os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
@@ -728,7 +728,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             kernelSubs.addVarSubstitution("t", "t");
 
             // Parallelise over synapse groups whose weight update models have code for synapse dynamics
-            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
+            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getSynapseGroups(), idSynapseDynamicsStart,
                 [this](const SynapseGroupInternal &sg){ return padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
                 [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
                 [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs)
@@ -1076,7 +1076,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
             // **TODO** check actually required
             os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelInitializeSparse] << "];" << std::endl;
-            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s) { return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
             {
                 os << "__shared__ unsigned int shRowStart[" << m_KernelBlockSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
@@ -1253,7 +1253,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
-        for(const auto &s : model.getLocalSynapseGroups()) {
+        for(const auto &s : model.getSynapseGroups()) {
             // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
             if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 // **HACK**
@@ -1995,7 +1995,7 @@ bool Backend::isGlobalRNGRequired(const ModelSpecInternal &model) const
 {
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
-    if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+    if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
         [](const ModelSpec::NeuronGroupValueType &n)
         {
             return n.second.isInitRNGRequired();
@@ -2005,7 +2005,7 @@ bool Backend::isGlobalRNGRequired(const ModelSpecInternal &model) const
     }
 
     // If any synapse groups require an RNG for weight update model initialisation or procedural connectivity, return true
-    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
         [](const ModelSpec::SynapseGroupValueType &s)
         {
             return (s.second.isWUInitRNGRequired() || s.second.isProceduralConnectivityRNGRequired());
@@ -2062,7 +2062,7 @@ size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) c
 {
     // Then local neuron groups
     size_t numInitThreads = std::accumulate(
-        model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(), numInitThreads,
+        model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(), numInitThreads,
         [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
         {
             return acc + padSize(n.second.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
@@ -2071,7 +2071,7 @@ size_t Backend::getNumInitialisationRNGStreams(const ModelSpecInternal &model) c
 
     // Then synapse neuron groups
     numInitThreads = std::accumulate(
-        model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(), numInitThreads,
+        model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(), numInitThreads,
         [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
         {
             const size_t initBlockSize = getKernelBlockSize(Kernel::KernelInitialize);

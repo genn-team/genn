@@ -557,9 +557,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                          runnerStepTimeFinalise, "init", false);
 
         // If there's any synapse groups
-        if(!model.getLocalSynapseGroups().empty()) {
+        if(!model.getSynapseGroups().empty()) {
             // If any synapse groups process spikes or spike-like events, add a timer
-            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()); }))
             {
                 backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -572,7 +572,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                              runnerStepTimeFinalise, "initSparse", false);
 
             // If any synapse groups have weight update models with postsynaptic learning, add a timer
-            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
             {
                 backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -580,7 +580,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
 
             // If any synapse groups have weight update models with synapse dynamics, add a timer
-            if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                            [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
             {
                 backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -595,7 +595,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> currentSpikePullFunctions;
     std::vector<std::string> currentSpikeEventPullFunctions;
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getNeuronGroups()) {
         // Write convenience macros to access spikes
         genSpikeMacros(definitionsVar, n.second, true);
 
@@ -764,7 +764,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// postsynaptic variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getNeuronGroups()) {
         // Loop through merged incoming synaptic populations
         // **NOTE** because of merging we need to loop through postsynaptic models in this
         for(const auto &m : n.second.getMergedInSyn()) {
@@ -1197,7 +1197,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "void copyStateToDevice(bool uninitialisedOnly)";
     {
         CodeStream::Scope b(runner);
-         for(const auto &n : model.getLocalNeuronGroups()) {
+         for(const auto &n : model.getNeuronGroups()) {
             runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
 
@@ -1205,7 +1205,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
 
-        for(const auto &s : model.getLocalSynapseGroups()) {
+        for(const auto &s : model.getSynapseGroups()) {
             runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
     }
@@ -1227,7 +1227,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "void copyStateFromDevice()";
     {
         CodeStream::Scope b(runner);
-        for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getNeuronGroups()) {
             runner << "pull" << n.first << "StateFromDevice();" << std::endl;
         }
 
@@ -1235,7 +1235,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
         }
 
-        for(const auto &s : model.getLocalSynapseGroups()) {
+        for(const auto &s : model.getSynapseGroups()) {
             runner << "pull" << s.first << "StateFromDevice();" << std::endl;
         }
     }
@@ -1301,7 +1301,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // Generate code to advance host-side spike queues
    
-        for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getNeuronGroups()) {
             if (n.second.isDelayRequired()) {
                 runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
             }
@@ -1311,7 +1311,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         runner << "updateNeurons(t);" << std::endl;
 
         // Generate code to advance host side dendritic delay buffers
-        for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getNeuronGroups()) {
             // Loop through incoming synaptic populations
             for(const auto &m : n.second.getMergedInSyn()) {
                 const auto *sg = m.first;

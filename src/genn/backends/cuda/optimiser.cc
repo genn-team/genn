@@ -89,7 +89,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
     using namespace CUDA;
 
     // Loop through neuron groups
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
         groupSizes[KernelNeuronUpdate].push_back(n.second.getNumNeurons());
 
@@ -134,7 +134,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
     }
 
     // Add group sizes for reset kernels
-    groupSizes[KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
+    groupSizes[KernelPreNeuronReset].push_back(model.getNeuronGroups().size());
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------

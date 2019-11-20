@@ -13,8 +13,8 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    using ModelSpec::getLocalNeuronGroups;
-    using ModelSpec::getLocalSynapseGroups;
+    using ModelSpec::getNeuronGroups;
+    using ModelSpec::getSynapseGroups;
     using ModelSpec::getLocalCurrentSources;
     using ModelSpec::getMergedLocalNeuronGroups;
     using ModelSpec::getMergedLocalSynapseGroups;

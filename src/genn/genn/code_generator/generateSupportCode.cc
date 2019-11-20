@@ -19,7 +19,7 @@ void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecInternal 
     os << std::endl;
 
     os << "// support code for neuron groups" << std::endl;
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getNeuronGroups()) {
         if (!n.second.getNeuronModel()->getSupportCode().empty()) {
             os << "namespace " << n.first << "_neuron";
             {
@@ -30,7 +30,7 @@ void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecInternal 
     }
     os << std::endl;
     os << "// support code for synapse groups" << std::endl;
-    for(const auto &s : model.getLocalSynapseGroups()) {
+    for(const auto &s : model.getSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 

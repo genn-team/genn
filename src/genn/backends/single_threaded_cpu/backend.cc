@@ -77,7 +77,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
         Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
         // Update neurons
-        for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getNeuronGroups()) {
             os << "// neuron group " << n.first << std::endl;
             {
                 CodeStream::Scope b(os);
@@ -160,7 +160,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         // Synapse dynamics
         {
             Timer t(os, "synapseDynamics", model.isTimingEnabled());
-            for(const auto &s : model.getLocalSynapseGroups()) {
+            for(const auto &s : model.getSynapseGroups()) {
                 if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
                     os << "// synapse group " << s.first << std::endl;
                     CodeStream::Scope b(os);
@@ -228,7 +228,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         // Presynaptic update
         {
             Timer t(os, "presynapticUpdate", model.isTimingEnabled());
-            for(const auto &s : model.getLocalSynapseGroups()) {
+            for(const auto &s : model.getSynapseGroups()) {
                 if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
                     os << "// synapse group " << s.first << std::endl;
                     CodeStream::Scope b(os);
@@ -261,7 +261,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
         // Postsynaptic update
         {
             Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
-            for(const auto &s : model.getLocalSynapseGroups()) {
+            for(const auto &s : model.getSynapseGroups()) {
                 if(!s.second.getWUModel()->getLearnPostCode().empty()) {
                     os << "// synapse group " << s.first << std::endl;
                     CodeStream::Scope b(os);
@@ -385,7 +385,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
-        for(const auto &n : model.getLocalNeuronGroups()) {
+        for(const auto &n : model.getNeuronGroups()) {
             os << "// neuron group " << n.first << std::endl;
             CodeStream::Scope b(os);
 
@@ -395,7 +395,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with dense connectivity" << std::endl;
-        for(const auto &s : model.getLocalSynapseGroups()) {
+        for(const auto &s : model.getSynapseGroups()) {
             if((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
                 os << "// synapse group " << s.first << std::endl;
                 CodeStream::Scope b(os);
@@ -407,7 +407,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
-        for(const auto &s : model.getLocalSynapseGroups()) {
+        for(const auto &s : model.getSynapseGroups()) {
             // If this synapse group has a connectivity initialisation snippet
             if(!s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
                 os << "// synapse group " << s.first << std::endl;
@@ -489,7 +489,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
-        for(const auto &s : model.getLocalSynapseGroups()) {
+        for(const auto &s : model.getSynapseGroups()) {
             // If synapse group has sparse connectivity and either has variables that require initialising
             // or has postsynaptic learning, meaning that reverse lookup structures need building
             if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
@@ -854,7 +854,7 @@ bool Backend::isGlobalRNGRequired(const ModelSpecInternal &model) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
-    if(std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+    if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
         [](const ModelSpec::NeuronGroupValueType &n)
         {
             return n.second.isSimRNGRequired() || n.second.isInitRNGRequired();
@@ -864,7 +864,7 @@ bool Backend::isGlobalRNGRequired(const ModelSpecInternal &model) const
     }
 
     // If any synapse groups require an RNG for weight update model initialisation, return true
-    if(std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
         [](const ModelSpec::SynapseGroupValueType &s)
         {
             return s.second.isWUInitRNGRequired();
