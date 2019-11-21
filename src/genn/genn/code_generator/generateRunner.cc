@@ -796,7 +796,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// synapse connectivity" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> connectivityPushPullFunctions;
-    for(const auto &sMerge : model.getMergedLocalSynapseGroups()) {
+    for(const auto &sMerge : model.getMergedSynapseGroups()) {
         for(const auto &s : sMerge.getGroups()) {
             const bool autoInitialized = !s.get().getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
@@ -865,7 +865,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// synapse variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    for(const auto &sMerge : model.getMergedLocalSynapseGroups()) {
+    for(const auto &sMerge : model.getMergedSynapseGroups()) {
         for(const auto &s : sMerge.getGroups()) {
             const auto *wu = s.get().getWUModel();
             const auto *psm = s.get().getPSModel();
@@ -970,7 +970,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     const std::string hack = "d_";
 
     // Loop through merged neuron initialisation groups
-    for(const auto &m : model.getMergedLocalNeuronInitGroups()) {
+    for(const auto &m : model.getMergedNeuronInitGroups()) {
         MergedNeuronStructGenerator gen(m);
 
         gen.addField("unsigned int numNeurons",
@@ -1027,7 +1027,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged synapse connectivity initialisation groups
-    for(const auto &m : model.getMergedLocalSynapseConnectivityInitGroups()) {
+    for(const auto &m : model.getMergedSynapseConnectivityInitGroups()) {
         MergedSynapseStructGenerator gen(m);
 
         gen.addField("unsigned int numSrcNeurons",
@@ -1053,7 +1053,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged neuron groups
-    for(const auto &m : model.getMergedLocalNeuronGroups()) {
+    for(const auto &m : model.getMergedNeuronGroups()) {
         MergedNeuronStructGenerator gen(m);
 
         gen.addField("unsigned int numNeurons",
@@ -1110,7 +1110,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged synapse groups
-    for(const auto &m : model.getMergedLocalSynapseGroups()) {
+    for(const auto &m : model.getMergedSynapseGroups()) {
         MergedSynapseStructGenerator gen(m);
 
         gen.addField("unsigned int rowStride",

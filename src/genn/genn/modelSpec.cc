@@ -259,23 +259,23 @@ void ModelSpec::finalize()
     }
 
     LOGD << "Merging neuron groups:";
-    createMergedGroups(getNeuronGroups(), m_MergedLocalNeuronGroups,
+    createMergedGroups(getNeuronGroups(), m_MergedNeuronGroups,
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canBeMerged(b); });
 
     LOGD << "Merging synapse groups:";
-    createMergedGroups(getSynapseGroups(), m_MergedLocalSynapseGroups,
+    createMergedGroups(getSynapseGroups(), m_MergedSynapseGroups,
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
 
     LOGD << "Merging neuron initialization groups:";
-    createMergedGroups(getNeuronGroups(), m_MergedLocalNeuronInitGroups,
+    createMergedGroups(getNeuronGroups(), m_MergedNeuronInitGroups,
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canInitBeMerged(b); });
 
     LOGD << "Merging synapse initialization groups:";
-    createMergedGroups(getSynapseGroups(), m_MergedLocalSynapseInitGroups,
+    createMergedGroups(getSynapseGroups(), m_MergedSynapseInitGroups,
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canInitBeMerged(b); });
 
     LOGD << "Merging synapse connectivity initialisation groups:";
-    createMergedGroups(getSynapseGroups(), m_MergedLocalSynapseConnectivityInitGroups,
+    createMergedGroups(getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canConnectivityInitBeMerged(b); });
 }
 

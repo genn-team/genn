@@ -99,7 +99,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
 
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
-    for(const auto &sMerge : model.getMergedLocalSynapseGroups()) {
+    for(const auto &sMerge : model.getMergedSynapseGroups()) {
         for(const auto &s : sMerge.getGroups()) {
             if(s.get().isSpikeEventRequired() || s.get().isTrueSpikeRequired()) {
                 groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(sMerge, s.get(),

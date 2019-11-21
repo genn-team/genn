@@ -436,15 +436,15 @@ protected:
     //! Get std::map containing local named CurrentSource objects in model
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
-    const std::vector<NeuronGroupMerged> &getMergedLocalNeuronGroups() const{ return m_MergedLocalNeuronGroups; }
+    const std::vector<NeuronGroupMerged> &getMergedNeuronGroups() const{ return m_MergedNeuronGroups; }
 
-    const std::vector<SynapseGroupMerged> &getMergedLocalSynapseGroups() const{ return m_MergedLocalSynapseGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedSynapseGroups() const{ return m_MergedSynapseGroups; }
 
-    const std::vector<NeuronGroupMerged> &getMergedLocalNeuronInitGroups() const{ return m_MergedLocalNeuronInitGroups; }
+    const std::vector<NeuronGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
 
-    const std::vector<SynapseGroupMerged> &getMergedLocalSynapseInitGroups() const{ return m_MergedLocalSynapseInitGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedSynapseInitGroups() const{ return m_MergedSynapseInitGroups; }
 
-    const std::vector<SynapseGroupMerged> &getMergedLocalSynapseConnectivityInitGroups() const{ return m_MergedLocalSynapseConnectivityInitGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
 
 private:
     //--------------------------------------------------------------------------
@@ -469,20 +469,20 @@ private:
     std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
 
     //! Neuron groups whose updating can be merged together
-    std::vector<NeuronGroupMerged> m_MergedLocalNeuronGroups;
+    std::vector<NeuronGroupMerged> m_MergedNeuronGroups;
 
     //! Merged synapse groups
     //! **THINK** does this need to be done at a finer grain i.e. dynamics, presynaptic and postsynaptic
-    std::vector<SynapseGroupMerged> m_MergedLocalSynapseGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseGroups;
 
     //! Neuron groups whose initialisation can be merged together
-    std::vector<NeuronGroupMerged> m_MergedLocalNeuronInitGroups;
+    std::vector<NeuronGroupMerged> m_MergedNeuronInitGroups;
 
     //! Synapse groups whose variable initialisation can be merged together
-    std::vector<SynapseGroupMerged> m_MergedLocalSynapseInitGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseInitGroups;
 
     //! Synapse groups whose connectivity initialisation can be merged together
-    std::vector<SynapseGroupMerged> m_MergedLocalSynapseConnectivityInitGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityInitGroups;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;

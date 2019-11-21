@@ -199,8 +199,8 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
     }
 
     // Generate functions to push merged synapse group structures
-    genMergedGroupPush(os, model.getMergedLocalNeuronInitGroups(), "NeuronInitGroup");
-    genMergedGroupPush(os, model.getMergedLocalSynapseConnectivityInitGroups(), "SynapseConnectivityInitGroup");
+    genMergedGroupPush(os, model.getMergedNeuronInitGroups(), "NeuronInitGroup");
+    genMergedGroupPush(os, model.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInitGroup");
 
     backend.genInit(os, model,
         // Local neuron group initialisation

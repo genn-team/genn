@@ -16,11 +16,11 @@ public:
     using ModelSpec::getNeuronGroups;
     using ModelSpec::getSynapseGroups;
     using ModelSpec::getLocalCurrentSources;
-    using ModelSpec::getMergedLocalNeuronGroups;
-    using ModelSpec::getMergedLocalSynapseGroups;
-    using ModelSpec::getMergedLocalNeuronInitGroups;
-    using ModelSpec::getMergedLocalSynapseInitGroups;
-    using ModelSpec::getMergedLocalSynapseConnectivityInitGroups;
+    using ModelSpec::getMergedNeuronGroups;
+    using ModelSpec::getMergedSynapseGroups;
+    using ModelSpec::getMergedNeuronInitGroups;
+    using ModelSpec::getMergedSynapseInitGroups;
+    using ModelSpec::getMergedSynapseConnectivityInitGroups;
 
 
     using ModelSpec::finalize;
