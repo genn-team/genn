@@ -436,15 +436,29 @@ protected:
     //! Get std::map containing local named CurrentSource objects in model
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
-    const std::vector<NeuronGroupMerged> &getMergedNeuronGroups() const{ return m_MergedNeuronGroups; }
+    //! Get merged neuron groups which require updating
+    const std::vector<NeuronGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronGroups; }
 
-    const std::vector<SynapseGroupMerged> &getMergedSynapseGroups() const{ return m_MergedSynapseGroups; }
+    //! Get merged synapse groups which require presynaptic updates
+    const std::vector<SynapseGroupMerged> &getMergedPresynapticUpdateGroups() const{ return m_MergedPresynapticUpdateGroups; }
 
+    //! Get merged synapse groups which require postsynaptic updates
+    const std::vector<SynapseGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
+
+    //! Get merged synapse groups which require synapse dynamics update
+    const std::vector<SynapseGroupMerged> &getMergedSynapseDynamicsUpdateGroups() const{ return m_MergedSynapseDynamicsUpdateGroups; }
+
+    //! Get merged neuron groups which require initialisation
     const std::vector<NeuronGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
 
-    const std::vector<SynapseGroupMerged> &getMergedSynapseInitGroups() const{ return m_MergedSynapseInitGroups; }
+    //! Get merged synapse groups with dense connectivity which require initialisation
+    const std::vector<SynapseGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
 
+    //! Get merged synapse groups which require connectivity initialisation
     const std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
+
+    //! Get merged synapse groups with sparse connectivity which require initialisation
+    const std::vector<SynapseGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
 
 private:
     //--------------------------------------------------------------------------
@@ -468,21 +482,29 @@ private:
     //! Named remote current sources
     std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
 
-    //! Neuron groups whose updating can be merged together
+    //! Merged neuron groups which require updating
     std::vector<NeuronGroupMerged> m_MergedNeuronGroups;
 
-    //! Merged synapse groups
-    //! **THINK** does this need to be done at a finer grain i.e. dynamics, presynaptic and postsynaptic
-    std::vector<SynapseGroupMerged> m_MergedSynapseGroups;
+    //! Merged synapse groups which require presynaptic updates
+    std::vector<SynapseGroupMerged> m_MergedPresynapticUpdateGroups;
 
-    //! Neuron groups whose initialisation can be merged together
+    //! Merged synapse groups which require postsynaptic updates
+    std::vector<SynapseGroupMerged> m_MergedPostsynapticUpdateGroups;
+
+    //! Merged synapse groups which require synapse dynamics update
+    std::vector<SynapseGroupMerged> m_MergedSynapseDynamicsUpdateGroups;
+
+    //! Merged neuron groups which require initialisation
     std::vector<NeuronGroupMerged> m_MergedNeuronInitGroups;
 
-    //! Synapse groups whose variable initialisation can be merged together
-    std::vector<SynapseGroupMerged> m_MergedSynapseInitGroups;
+    //! Merged synapse groups with dense connectivity which require initialisation
+    std::vector<SynapseGroupMerged> m_MergedSynapseDenseInitGroups;
 
-    //! Synapse groups whose connectivity initialisation can be merged together
+    //! Merged synapse groups which require connectivity initialisation
     std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityInitGroups;
+
+    //! Merged synapse groups with sparse connectivity which require initialisation
+    std::vector<SynapseGroupMerged> m_MergedSynapseSparseInitGroups;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;

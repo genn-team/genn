@@ -796,7 +796,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// synapse connectivity" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> connectivityPushPullFunctions;
-    for(const auto &sMerge : model.getMergedSynapseGroups()) {
+    for(const auto &sMerge : model.getMergedPresynapticUpdateGroups()) {
         for(const auto &s : sMerge.getGroups()) {
             const bool autoInitialized = !s.get().getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
@@ -865,7 +865,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// synapse variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    for(const auto &sMerge : model.getMergedSynapseGroups()) {
+    for(const auto &sMerge : model.getMergedPresynapticUpdateGroups()) {
         for(const auto &s : sMerge.getGroups()) {
             const auto *wu = s.get().getWUModel();
             const auto *psm = s.get().getPSModel();
@@ -1053,7 +1053,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged neuron groups
-    for(const auto &m : model.getMergedNeuronGroups()) {
+    for(const auto &m : model.getMergedNeuronUpdateGroups()) {
         MergedNeuronStructGenerator gen(m);
 
         gen.addField("unsigned int numNeurons",
@@ -1110,7 +1110,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged synapse groups
-    for(const auto &m : model.getMergedSynapseGroups()) {
+    for(const auto &m : model.getMergedPresynapticUpdateGroups()) {
         MergedSynapseStructGenerator gen(m);
 
         gen.addField("unsigned int rowStride",

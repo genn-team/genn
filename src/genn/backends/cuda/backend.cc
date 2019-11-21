@@ -109,20 +109,18 @@ void genGroupStartIDs(CodeGenerator::CodeStream &, size_t &, size_t)
 //-----------------------------------------------------------------------
 template<typename T, typename F, typename G, typename ...Args>
 void genGroupStartIDs(CodeGenerator::CodeStream &os, size_t &idStart, size_t blockSize,
-                      const std::vector<T> &mergedGroups, const std::string &groupStartPrefix, F filter, G getNumThreads,
+                      const std::vector<T> &mergedGroups, const std::string &groupStartPrefix, G getNumThreads,
                       Args... args)
 {
     // Loop through merged groups
     for(const auto &m : mergedGroups) {
-        if(filter(m)) {
-            // Declare array of starting thread indices for each neuron group
-            os << "__device__ __constant__ unsigned int dd_" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
-            for(const auto &ng : m.getGroups()) {
-                os << idStart << ", ";
-                idStart += CodeGenerator::padSize(getNumThreads(m, ng.get()), blockSize);
-            }
-            os << "};" << std::endl;
+        // Declare array of starting thread indices for each neuron group
+        os << "__device__ __constant__ unsigned int dd_" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
+        for(const auto &ng : m.getGroups()) {
+            os << idStart << ", ";
+            idStart += CodeGenerator::padSize(getNumThreads(m, ng.get()), blockSize);
         }
+        os << "};" << std::endl;
     }
 
     // Generate any remaining groups
@@ -199,8 +197,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
     // Generate data structure for accessing merged groups
     genMergedKernelDataStructures(
         os, "neuron", m_KernelBlockSizes[KernelNeuronUpdate],
-        model.getMergedNeuronGroups(), "neuron",
-        [](const NeuronGroupMerged&){ return true; },
+        model.getMergedNeuronUpdateGroups(), "neuron",
         [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
 
     // Generate reset kernel to be run before the neuron kernel
@@ -254,7 +251,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
         kernelSubs.addVarSubstitution("t", "t");
 
         // If any neuron groups emit spike events
-        if(std::any_of(model.getMergedNeuronGroups().cbegin(), model.getMergedNeuronGroups().cend(),
+        if(std::any_of(model.getMergedNeuronUpdateGroups().cbegin(), model.getMergedNeuronUpdateGroups().cend(),
             [](const NeuronGroupMerged &n){ return n.getArchetype().isSpikeEventRequired(); }))
         {
             os << "__shared__ volatile unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelNeuronUpdate] << "];" << std::endl;
@@ -270,7 +267,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
         }
 
         // If any neuron groups emit true spikes
-        if(std::any_of(model.getMergedNeuronGroups().cbegin(), model.getMergedNeuronGroups().cend(),
+        if(std::any_of(model.getMergedNeuronUpdateGroups().cbegin(), model.getMergedNeuronUpdateGroups().cend(),
             [](const NeuronGroupMerged &n){ return !n.getArchetype().getNeuronModel()->getThresholdConditionCode().empty(); }))
         {
             os << "__shared__ volatile unsigned int shSpk[" << m_KernelBlockSizes[KernelNeuronUpdate] << "];" << std::endl;
@@ -287,7 +284,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
         os << "__syncthreads();" << std::endl;
 
         // Parallelise over neuron groups
-        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, model.getMergedNeuronGroups(), idStart,
+        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, model.getMergedNeuronUpdateGroups(), idStart,
             [this](const NeuronGroupMerged &, const NeuronGroupInternal &ng)
             {
                 return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelNeuronUpdate));
@@ -441,7 +438,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 {
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
-    if(std::any_of(model.getMergedSynapseGroups().cbegin(), model.getMergedSynapseGroups().cend(),
+    if(std::any_of(model.getMergedPresynapticUpdateGroups().cbegin(), model.getMergedPresynapticUpdateGroups().cend(),
                    [](const SynapseGroupMerged &s){ return s.getArchetype().isDendriticDelayRequired(); }))
     {
         // pre synapse reset kernel header
@@ -476,14 +473,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
 
     // If any synapse groups require spike-driven presynaptic updates
     size_t idPresynapticStart = 0;
-    if(std::any_of(model.getMergedSynapseGroups().cbegin(), model.getMergedSynapseGroups().cend(),
+    if(std::any_of(model.getMergedPresynapticUpdateGroups().cbegin(), model.getMergedPresynapticUpdateGroups().cend(),
                    [](const SynapseGroupMerged &s){ return (s.getArchetype().isSpikeEventRequired() || s.getArchetype().isTrueSpikeRequired()); }))
     {
         // Generate data structure for accessing merged groups
         genMergedKernelDataStructures(
             os, "presynaptic", m_KernelBlockSizes[KernelPresynapticUpdate],
-            model.getMergedSynapseGroups(), "presynaptic",
-            [](const SynapseGroupMerged &sg){ return (sg.getArchetype().isSpikeEventRequired() || sg.getArchetype().isTrueSpikeRequired()); },
+            model.getMergedPresynapticUpdateGroups(), "presynaptic",
             [this](const SynapseGroupMerged &sgMerge, const SynapseGroupInternal &sg)
             {
                 return getNumPresynapticUpdateThreads(sgMerge, sg, m_ChosenDevice, m_Preferences);
@@ -502,7 +498,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             // We need shLg if any synapse groups accumulate into shared memory
             // Determine the maximum shared memory outputs 
             size_t maxSharedMemPerThread = 0;
-            for (const auto &s : model.getMergedSynapseGroups()) {
+            for (const auto &s : model.getMergedPresynapticUpdateGroups()) {
                 if (s.getArchetype().isTrueSpikeRequired() || !s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
                     maxSharedMemPerThread = std::max(maxSharedMemPerThread,
                                                      getPresynapticUpdateStrategy(s)->getSharedMemoryPerThread(s, *this));
@@ -515,7 +511,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             }
 
             // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
-            if(std::any_of(model.getMergedSynapseGroups().cbegin(), model.getMergedSynapseGroups().cend(),
+            if(std::any_of(model.getMergedPresynapticUpdateGroups().cbegin(), model.getMergedPresynapticUpdateGroups().cend(),
                            [&model](const SynapseGroupMerged &s)
                            {
                                return (s.getArchetype().getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
@@ -525,7 +521,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
             }
 
-            if(std::any_of(model.getMergedSynapseGroups().cbegin(), model.getMergedSynapseGroups().cend(),
+            if(std::any_of(model.getMergedPresynapticUpdateGroups().cbegin(), model.getMergedPresynapticUpdateGroups().cend(),
                            [&model](const SynapseGroupMerged &s)
                            {
                                return (s.getArchetype().isTrueSpikeRequired() || !s.getArchetype().getWUModel()->getLearnPostCode().empty());
@@ -534,19 +530,18 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
             }
 
-            if(std::any_of(model.getMergedSynapseGroups().cbegin(), model.getMergedSynapseGroups().cend(),
+            if(std::any_of(model.getMergedPresynapticUpdateGroups().cbegin(), model.getMergedPresynapticUpdateGroups().cend(),
                            [](const SynapseGroupMerged &s){ return (s.getArchetype().isSpikeEventRequired()); }))
             {
                 os << "__shared__ unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
             }
 
             // Parallelise over synapse groups
-            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedSynapseGroups(), idPresynapticStart,
+            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedPresynapticUpdateGroups(), idPresynapticStart,
                 [this](const SynapseGroupMerged &sgMerge, const SynapseGroupInternal &sg)
                 {
                     return padSize(getNumPresynapticUpdateThreads(sgMerge, sg, m_ChosenDevice, m_Preferences), m_KernelBlockSizes[KernelPresynapticUpdate]);
                 },
-                [](const SynapseGroupMerged &sg){ return (sg.getArchetype().isSpikeEventRequired() || sg.getArchetype().isTrueSpikeRequired()); },
                 [&idPresynapticStart, wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &model, this]
                 (CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
@@ -844,27 +839,19 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     os << "#include <cstdint>" << std::endl;
     os << std::endl;
 
-    // Determine if sparse initialisation is required
-    const bool sparseInitRequired = std::any_of(model.getMergedSynapseInitGroups().cbegin(), model.getMergedSynapseInitGroups().cend(),
-                                                [](const SynapseGroupMerged &sg) { return isSparseInitRequired(sg.getArchetype()); });
-
     // Generate data structure for accessing merged groups from within initialisation kernel
     genMergedKernelDataStructures(os, "init", m_KernelBlockSizes[KernelInitialize],
         model.getMergedNeuronInitGroups(), "neuronInit",
-        [](const NeuronGroupMerged&){ return true; },
         [](const NeuronGroupMerged&, const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
-        model.getMergedSynapseInitGroups(), "synapseDenseInit",
-        [](const SynapseGroupMerged &sg){ return (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.getArchetype().isWUVarInitRequired(); },
+        model.getMergedSynapseDenseInitGroups(), "synapseDenseInit",
         [](const SynapseGroupMerged&, const SynapseGroupInternal &sg){ return sg.getTrgNeuronGroup()->getNumNeurons(); },
         model.getMergedSynapseConnectivityInitGroups(), "synapseConnectivityInit",
-        [](const SynapseGroupMerged &sg){ return sg.getArchetype().isSparseConnectivityInitRequired(); },
         [](const SynapseGroupMerged&, const SynapseGroupInternal &sg){ return sg.getSrcNeuronGroup()->getNumNeurons(); });
 
     // If sparse initialisation is required, generate data structure for accessing merged groups from within sparse initialisation kernel
-    if(sparseInitRequired) {
+    if(!model.getMergedSynapseSparseInitGroups().empty()) {
         genMergedKernelDataStructures(os, "initSparse", m_KernelBlockSizes[KernelInitializeSparse],
-            model.getMergedSynapseInitGroups(), "synapseSparseInit",
-            [this](const SynapseGroupMerged &sg){ return isSparseInitRequired(sg.getArchetype()); },
+            model.getMergedSynapseSparseInitGroups(), "synapseSparseInit",
             [](const SynapseGroupMerged&, const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
     }
 
@@ -940,9 +927,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with dense connectivity" << std::endl;
-        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedSynapseInitGroups(), idInitStart,
+        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedSynapseDenseInitGroups(), idInitStart,
             [this](const SynapseGroupMerged &, const SynapseGroupInternal &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroupMerged &sg){ return (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.getArchetype().isWUVarInitRequired(); },
             [sgDenseInitHandler](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
             {
                 // Get the index of the synapse group within the merged group
@@ -982,7 +968,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
         os << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedSynapseConnectivityInitGroups(), idInitStart,
             [this](const SynapseGroupMerged &, const SynapseGroupInternal &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [](const SynapseGroupMerged &sg){ return sg.getArchetype().isSparseConnectivityInitRequired(); },
             [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
             {
                 // Get the index of the synapse group within the merged group
@@ -1083,9 +1068,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
             }
 
             // Initialise weight update variables for synapse groups with sparse connectivity
-            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedSynapseInitGroups(), idSparseInitStart,
+            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, model.getMergedSynapseSparseInitGroups(), idSparseInitStart,
                 [this](const SynapseGroupMerged &, const SynapseGroupInternal &sg){ return padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
-                [](const SynapseGroupMerged &sg){ return isSparseInitRequired(sg.getArchetype()); },
                 [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
                     // Get the index of the synapse group within the merged group

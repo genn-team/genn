@@ -247,55 +247,14 @@ private:
     // Type definitions
     //--------------------------------------------------------------------------
     template<typename T>
-    using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
-
-    template<typename T>
     using GetPaddedMergedGroupSizeFunc = std::function<size_t(const T&, const typename T::GroupInternal&)>;
-
-    template<typename T>
-    using FilterGroupFunc = std::function<bool(const T&)>;
 
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, T> &groups, size_t &idStart,
-                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
-                          FilterGroupFunc<T> filter, 
-                          GroupHandler<T> handler) const
-    {
-        // Loop through groups
-        for (const auto &g : groups) {
-            // If this group should be processed
-            Substitutions popSubs(&kernelSubs);
-            if(filter(g.second)) {
-                const size_t paddedSize = getPaddedSizeFunc(g.second);
-
-                os << "// " << g.first << std::endl;
-
-                // If this is the first  group
-                if (idStart == 0) {
-                    os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
-                    popSubs.addVarSubstitution("id", "id");
-                }
-                else {
-                    os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
-                    os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
-                    popSubs.addVarSubstitution("id", "lid");
-                }
-
-                handler(os, g.second, popSubs);
-
-                idStart += paddedSize;
-                os << CodeStream::CB(1) << std::endl;
-            }
-        }
-    }
-
-    template<typename T>
     void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
                           GetPaddedMergedGroupSizeFunc<T> getPaddedSizeFunc,
-                          FilterGroupFunc<T> filter,
                           GroupHandler<T> handler) const
     {
         // Loop through groups
@@ -329,23 +288,6 @@ private:
         }
     }
 
-    template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::map<std::string, T> &groups, size_t &idStart,
-                          GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
-                          GroupHandler<T> handler) const
-    {
-        genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
-                            [](const T&){ return true; }, handler);
-    }
-
-    template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          GetPaddedMergedGroupSizeFunc<T> getPaddedSizeFunc,
-                          GroupHandler<T> handler) const
-    {
-        genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
-                            [](const T &) { return true; }, handler);
-    }
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
 
