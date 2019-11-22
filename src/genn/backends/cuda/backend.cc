@@ -139,10 +139,20 @@ void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::str
     genGroupStartIDs(os, std::ref(idStart), blockSize, args...);
 }
 //-----------------------------------------------------------------------
-bool isSparseInitRequired(const SynapseGroupInternal &sg)
+template<typename T, typename G>
+size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
 {
-    return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
-            && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
+    // Accumulate the accumulation of all groups in merged group
+    return std::accumulate(
+        groups.cbegin(), groups.cend(), 0,
+        [getNumThreads](size_t acc, const T &n)
+        {
+            return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
+                                   [getNumThreads](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+                                   {
+                                       return acc + getNumThreads(g.get());
+                                   });
+        });
 }
 }   // Anonymous namespace
 
@@ -2040,42 +2050,34 @@ std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
 //--------------------------------------------------------------------------
 size_t Backend::getNumInitialisationRNGStreams(const ModelSpecMerged &modelMerged) const
 {
-    // Then local neuron groups
-    const ModelSpecInternal &model = modelMerged.getModel();
-    size_t numInitThreads = std::accumulate(
-        model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(), 0,
-        [this](size_t acc, const ModelSpec::NeuronGroupValueType &n)
-        {
-            return acc + padSize(n.second.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
-        });
+    // Calculate total number of threads used for neuron initialisation group
+    size_t numInitThreads = getNumMergedGroupThreads(modelMerged.getMergedNeuronInitGroups(),
+                                                     [this](const NeuronGroupInternal &ng)
+                                                     {
+                                                         return padSize(ng.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
+                                                     });
 
 
-    // Then synapse neuron groups
-    numInitThreads = std::accumulate(
-        model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(), numInitThreads,
-        [this](size_t acc, const ModelSpec::SynapseGroupValueType &s)
-        {
-            const size_t initBlockSize = getKernelBlockSize(Kernel::KernelInitialize);
-            const size_t initSparseBlockSize = getKernelBlockSize(Kernel::KernelInitializeSparse);
+    // Add on total number of threads used for dense synapse initialisation
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseDenseInitGroups(),
+                                               [this](const SynapseGroupInternal &sg)
+                                               {
+                                                   return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
+                                               });
 
-            // Add number of threads required for variable initialisation of dense matrices
-            if ((s.second.getMatrixType() & SynapseMatrixConnectivity::DENSE) && s.second.isWUVarInitRequired()) {
-                acc += padSize(s.second.getTrgNeuronGroup()->getNumNeurons(), initBlockSize);
-            }
+    // Add on total number of threads used for synapse connectivity initialisation
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseConnectivityInitGroups(),
+                                               [this](const SynapseGroupInternal &sg)
+                                               {
+                                                   return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
+                                               });
 
-            // Any for sparse connectivity initialisation
-            if (s.second.isSparseConnectivityInitRequired()) {
-                acc += padSize(s.second.getSrcNeuronGroup()->getNumNeurons(), initBlockSize);
-            }
-
-            // And, finally, any require for variable initialisation of sparse matrices
-            if (isSparseInitRequired(s.second)) {
-                acc += padSize(s.second.getMaxConnections(), initSparseBlockSize);
-            }
-
-            return acc;
-
-        });
+    // Finally, add on total number of threads used for sparse synapse initialisation
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseDenseInitGroups(),
+                                               [this](const SynapseGroupInternal &sg)
+                                               {
+                                                   return padSize(sg.getMaxConnections(), getKernelBlockSize(Kernel::KernelInitializeSparse));
+                                               });
 
     return numInitThreads;
 }
