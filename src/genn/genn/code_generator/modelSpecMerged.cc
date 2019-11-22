@@ -6,6 +6,9 @@
 // GeNN includes
 #include "modelSpecInternal.h"
 
+// GeNN code generator includes
+#include "code_generator/backendBase.h"
+
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
@@ -66,7 +69,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
 {
     LOGD << "Merging neuron update groups:";
     createMergedGroups(model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
-                       [](const NeuronGroupInternal &ng){ return true; },
+                       [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canBeMerged(b); });
 
     LOGD << "Merging presynaptic update groups:";
@@ -86,7 +89,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
 
     LOGD << "Merging neuron initialization groups:";
     createMergedGroups(model.getNeuronGroups(), m_MergedNeuronInitGroups,
-                       [](const NeuronGroupInternal &ng){ return true; },
+                       [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canInitBeMerged(b); });
 
     LOGD << "Merging synapse dense initialization groups:";
@@ -102,14 +105,13 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canConnectivityInitBeMerged(b); });
 
-    // **NOTE** this is slightly conservative - some backends do not require synapse dynamics and/or postsynaptic data structures
     LOGD << "Merging synapse sparse initialization groups:";
     createMergedGroups(model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
-                       [](const SynapseGroupInternal &sg)
+                       [&backend](const SynapseGroupInternal &sg)
                        {
                            return (sg.isWUVarInitRequired()
-                                   || !sg.getWUModel()->getSynapseDynamicsCode().empty()
-                                   || !sg.getWUModel()->getLearnPostCode().empty());
+                                   || (backend.isSynRemapRequired() && !sg.getWUModel()->getSynapseDynamicsCode().empty())
+                                   || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty()));
                        },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canInitBeMerged(b); });
 
