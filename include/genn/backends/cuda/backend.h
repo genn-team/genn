@@ -136,7 +136,7 @@ public:
                          SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupMerged &sgMerged, const SynapseGroupInternal &sg) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
@@ -228,8 +228,8 @@ public:
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
-    static size_t getNumPresynapticUpdateThreads(const SynapseGroupMerged &sgMerged, const SynapseGroupInternal &sg,
-                                                 const cudaDeviceProp &deviceProps, const Preferences &preferences);
+    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps,
+                                                 const Preferences &preferences);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
 
@@ -247,44 +247,41 @@ private:
     // Type definitions
     //--------------------------------------------------------------------------
     template<typename T>
-    using GetPaddedMergedGroupSizeFunc = std::function<size_t(const T&, const typename T::GroupInternal&)>;
+    using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
 
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
     void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          GetPaddedMergedGroupSizeFunc<T> getPaddedSizeFunc,
+                          GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
                           GroupHandler<T> handler) const
     {
         // Loop through groups
         for(const auto &gMerge : groups) {
-            // If this group should be processed
-            Substitutions popSubs(&kernelSubs);
-            if(filter(gMerge)) {
-                // Sum padded sizes of each group within merged group
-                const size_t paddedSize = std::accumulate(
-                    gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
-                    [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
-                    {
-                        return (acc + getPaddedSizeFunc(gMerge, g.get()));
-                    });
+            // Sum padded sizes of each group within merged group
+            const size_t paddedSize = std::accumulate(
+                gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
+                [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+                {
+                    return (acc + getPaddedSizeFunc(g.get()));
+                });
 
-                os << "// merged" << gMerge.getIndex() << std::endl;
+            os << "// merged" << gMerge.getIndex() << std::endl;
 
-                // If this is the first  group
-                if(idStart == 0) {
-                    os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
-                }
-                else {
-                    os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
-                }
-
-                handler(os, gMerge, popSubs);
-
-                idStart += paddedSize;
-                os << CodeStream::CB(1) << std::endl;
+            // If this is the first  group
+            if(idStart == 0) {
+                os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
             }
+            else {
+                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
+            }
+
+            Substitutions popSubs(&kernelSubs);
+            handler(os, gMerge, popSubs);
+
+            idStart += paddedSize;
+            os << CodeStream::CB(1) << std::endl;
         }
     }
 
@@ -303,7 +300,7 @@ private:
     bool isDeviceType(const std::string &type) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
-    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupMerged &sg) const
+    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
     {
         return getPresynapticUpdateStrategy(sg, m_ChosenDevice, m_Preferences);
     }
@@ -312,7 +309,7 @@ private:
     // Private static methods
     //--------------------------------------------------------------------------
     // Get appropriate presynaptic update strategy to use for this synapse group
-    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupMerged &sg,
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
                                                                                const cudaDeviceProp &deviceProps,
                                                                                const Preferences &preferences);
 

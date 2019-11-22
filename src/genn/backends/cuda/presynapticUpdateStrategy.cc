@@ -100,11 +100,11 @@ size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-bool PreSpan::isCompatible(const SynapseGroupMerged &sg, const cudaDeviceProp &, const Preferences &) const
+bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
-    return ((sg.getArchetype().getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC)
-            && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE));
+    return ((sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC)
+            && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
 }
 //----------------------------------------------------------------------------
 size_t PreSpan::getSharedMemoryPerThread(const SynapseGroupMerged &sg, const Backend &backend) const
@@ -259,11 +259,11 @@ size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) cons
     }
 }
 //----------------------------------------------------------------------------
-bool PostSpan::isCompatible(const SynapseGroupMerged &sg, const cudaDeviceProp &, const Preferences &) const
+bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
-    return ((sg.getArchetype().getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
-            && !(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL));
+    return ((sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
+            && !(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL));
 }
 //----------------------------------------------------------------------------
 void PostSpan::genPreamble(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupMerged &sg,
@@ -471,11 +471,11 @@ size_t PreSpanProcedural::getSynapticMatrixRowStride(const SynapseGroupInternal 
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-bool PreSpanProcedural::isCompatible(const SynapseGroupMerged &sg, const cudaDeviceProp &, const Preferences &) const
+bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &) const
 {
     // Presynaptic procedural parallelism can be used when synapse groups have 
     // procedural connectivity and weights are either GLOBAL or PROCEDURAL
-    const auto matrixType = sg.getArchetype().getMatrixType();
+    const auto matrixType = sg.getMatrixType();
     return ((matrixType & SynapseMatrixConnectivity::PROCEDURAL)
             && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)));
 }
@@ -669,14 +669,14 @@ size_t PostSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &s
     return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-bool PostSpanBitmask::isCompatible(const SynapseGroupMerged &sg, const cudaDeviceProp &, const Preferences &preferences) const
+bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &, const Preferences &preferences) const
 {
     // Postsynaptic bitmask parallelism can be used if bitmask optimisations are enabled and
     // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
     return (preferences.enableBitmaskOptimisations
-            && (sg.getArchetype().getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
-            && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)
-            && !sg.getArchetype().isDendriticDelayRequired());
+            && (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
+            && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
+            && !sg.isDendriticDelayRequired());
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecInternal &, const SynapseGroupMerged &,

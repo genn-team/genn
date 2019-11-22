@@ -796,68 +796,66 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// synapse connectivity" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> connectivityPushPullFunctions;
-    for(const auto &sMerge : model.getMergedPresynapticUpdateGroups()) {
-        for(const auto &s : sMerge.getGroups()) {
-            const bool autoInitialized = !s.get().getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
+    for(const auto &s : model.getSynapseGroups()) {
+        const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
-            if (s.get().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = ((size_t)s.get().getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sMerge, s.get())) / 32 + 1;
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.get().getName(),
-                                s.get().getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
+        if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+            const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second)) / 32 + 1;
+            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                            runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
+                            s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
 
-            }
-            else if(s.get().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                const VarLocation varLoc = s.get().getSparseConnectivityLocation();
-                const size_t size = s.get().getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sMerge, s.get());
+        }
+        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            const VarLocation varLoc = s.second.getSparseConnectivityLocation();
+            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
 
-                // Maximum row length constant
-                definitionsVar << "EXPORT_VAR const unsigned int maxRowLength" << s.get().getName() << ";" << std::endl;
-                runnerVarDecl << "const unsigned int maxRowLength" << s.get().getName() << " = " << backend.getSynapticMatrixRowStride(sMerge, s.get()) << ";" << std::endl;
+            // Maximum row length constant
+            definitionsVar << "EXPORT_VAR const unsigned int maxRowLength" << s.second.getName() << ";" << std::endl;
+            runnerVarDecl << "const unsigned int maxRowLength" << s.second.getName() << " = " << backend.getSynapticMatrixRowStride(s.second) << ";" << std::endl;
 
-                // Row lengths
+            // Row lengths
+            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    "unsigned int", "rowLength" + s.second.getName(), varLoc, s.second.getSrcNeuronGroup()->getNumNeurons());
+
+            // Target indices
+            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size);
+
+            // **TODO** remap is not always required
+            if(backend.isSynRemapRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+                // Allocate synRemap
+                // **THINK** this is over-allocating
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                        "unsigned int", "rowLength" + s.get().getName(), varLoc, s.get().getSrcNeuronGroup()->getNumNeurons());
-
-                // Target indices
-                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                        s.get().getSparseIndType(), "ind" + s.get().getName(), varLoc, size);
-
-                // **TODO** remap is not always required
-                if(backend.isSynRemapRequired() && !s.get().getWUModel()->getSynapseDynamicsCode().empty()) {
-                    // Allocate synRemap
-                    // **THINK** this is over-allocating
-                    mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                            "unsigned int", "synRemap" + s.get().getName(), VarLocation::DEVICE, size + 1);
-                }
-
-                // **TODO** remap is not always required
-                if(backend.isPostsynapticRemapRequired() && !s.get().getWUModel()->getLearnPostCode().empty()) {
-                    const size_t postSize = (size_t)s.get().getTrgNeuronGroup()->getNumNeurons() * (size_t)s.get().getMaxSourceConnections();
-
-                    // Allocate column lengths
-                    mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                            "unsigned int", "colLength" + s.get().getName(), VarLocation::DEVICE, s.get().getTrgNeuronGroup()->getNumNeurons());
-
-                    // Allocate remap
-                    mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                            "unsigned int", "remap" + s.get().getName(), VarLocation::DEVICE, postSize);
-                }
-
-                // Generate push and pull functions for sparse connectivity
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc,
-                                    s.get().getSparseConnectivityLocation(), s.get().getName() + "Connectivity", connectivityPushPullFunctions,
-                    [&]()
-                    {
-                        // Row lengths
-                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                    "unsigned int", "rowLength" + s.get().getName(), s.get().getSparseConnectivityLocation(), autoInitialized, s.get().getSrcNeuronGroup()->getNumNeurons());
-
-                        // Target indices
-                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                    "unsigned int", "ind" + s.get().getName(), s.get().getSparseConnectivityLocation(), autoInitialized, size);
-                    });
+                                        "unsigned int", "synRemap" + s.second.getName(), VarLocation::DEVICE, size + 1);
             }
+
+            // **TODO** remap is not always required
+            if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
+                const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
+
+                // Allocate column lengths
+                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                        "unsigned int", "colLength" + s.second.getName(), VarLocation::DEVICE, s.second.getTrgNeuronGroup()->getNumNeurons());
+
+                // Allocate remap
+                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                        "unsigned int", "remap" + s.second.getName(), VarLocation::DEVICE, postSize);
+            }
+
+            // Generate push and pull functions for sparse connectivity
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                                s.second.getSparseConnectivityLocation(), s.second.getName() + "Connectivity", connectivityPushPullFunctions,
+                [&]()
+                {
+                    // Row lengths
+                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
+                                                "unsigned int", "rowLength" + s.second.getName(), s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
+
+                    // Target indices
+                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
+                                                "unsigned int", "ind" + s.second.getName(), s.second.getSparseConnectivityLocation(), autoInitialized, size);
+                });
         }
     }
     allVarStreams << std::endl;
@@ -865,96 +863,94 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// synapse variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    for(const auto &sMerge : model.getMergedPresynapticUpdateGroups()) {
-        for(const auto &s : sMerge.getGroups()) {
-            const auto *wu = s.get().getWUModel();
-            const auto *psm = s.get().getPSModel();
+    for(const auto &s : model.getSynapseGroups()) {
+        const auto *wu = s.second.getWUModel();
+        const auto *psm = s.second.getPSModel();
 
-            // If weight update variables should be individual
-            std::vector<std::string> synapseGroupStatePushPullFunctions;
-            if (s.get().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                const size_t size = s.get().getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sMerge, s.get());
+        // If weight update variables should be individual
+        std::vector<std::string> synapseGroupStatePushPullFunctions;
+        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
 
-                const auto wuVars = wu->getVars();
-                for(size_t i = 0; i < wuVars.size(); i++) {
-                    const bool autoInitialized = !s.get().getWUVarInitialisers()[i].getSnippet()->getCode().empty();
-                    mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.get().getName(),
-                                    s.get().getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
+            const auto wuVars = wu->getVars();
+            for(size_t i = 0; i < wuVars.size(); i++) {
+                const bool autoInitialized = !s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty();
+                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
+                                s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
+            }
+        }
+
+        // Presynaptic W.U.M. variables
+        const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
+                ? s.second.getSrcNeuronGroup()->getNumNeurons()
+                : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
+        const auto wuPreVars = wu->getPreVars();
+        for(size_t i = 0; i < wuPreVars.size(); i++) {
+            const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
+            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                            runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.second.getName(),
+                            s.second.getWUPreVarLocation(i), autoInitialized, preSize, synapseGroupStatePushPullFunctions);
+        }
+
+        // Postsynaptic W.U.M. variables
+        const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
+                ? s.second.getTrgNeuronGroup()->getNumNeurons()
+                : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
+        const auto wuPostVars = wu->getPostVars();
+        for(size_t i = 0; i < wuPostVars.size(); i++) {
+            const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
+            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                            runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.second.getName(),
+                            s.second.getWUPostVarLocation(i), autoInitialized, postSize, synapseGroupStatePushPullFunctions);
+        }
+
+        // If this synapse group's postsynaptic models hasn't been merged (which makes pulling them somewhat ambiguous)
+        // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
+        if(!s.second.isPSModelMerged()) {
+            // Add code to push and pull inSyn
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(), "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
+                [&]()
+                {
+                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.second.getName(), s.second.getInSynLocation(),
+                                                true, s.second.getTrgNeuronGroup()->getNumNeurons());
+                });
+
+            // If this synapse group has individual postsynaptic model variables
+            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                const auto psmVars = psm->getVars();
+                for(size_t i = 0; i < psmVars.size(); i++) {
+                    const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
+                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i), psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                        [&]()
+                        {
+                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.second.getName(), s.second.getPSVarLocation(i),
+                                                        autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
+                        });
                 }
             }
+        }
 
-            // Presynaptic W.U.M. variables
-            const size_t preSize = (s.get().getDelaySteps() == NO_DELAY)
-                    ? s.get().getSrcNeuronGroup()->getNumNeurons()
-                    : s.get().getSrcNeuronGroup()->getNumNeurons() * s.get().getSrcNeuronGroup()->getNumDelaySlots();
-            const auto wuPreVars = wu->getPreVars();
-            for(size_t i = 0; i < wuPreVars.size(); i++) {
-                const bool autoInitialized = !s.get().getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.get().getName(),
-                                s.get().getWUPreVarLocation(i), autoInitialized, preSize, synapseGroupStatePushPullFunctions);
-            }
+        // Add helper function to push and pull entire synapse group state
+        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getName(), synapseGroupStatePushPullFunctions);
 
-            // Postsynaptic W.U.M. variables
-            const size_t postSize = (s.get().getBackPropDelaySteps() == NO_DELAY)
-                    ? s.get().getTrgNeuronGroup()->getNumNeurons()
-                    : s.get().getTrgNeuronGroup()->getNumNeurons() * s.get().getTrgNeuronGroup()->getNumDelaySlots();
-            const auto wuPostVars = wu->getPostVars();
-            for(size_t i = 0; i < wuPostVars.size(); i++) {
-                const bool autoInitialized = !s.get().getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.get().getName(),
-                                s.get().getWUPostVarLocation(i), autoInitialized, postSize, synapseGroupStatePushPullFunctions);
-            }
+        const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
+        for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.second.getName(), s.second.getPSExtraGlobalParamLocation(i));
+        }
 
-            // If this synapse group's postsynaptic models hasn't been merged (which makes pulling them somewhat ambiguous)
-            // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
-            if(!s.get().isPSModelMerged()) {
-                // Add code to push and pull inSyn
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.get().getInSynLocation(), "inSyn" + s.get().getName(), synapseGroupStatePushPullFunctions,
-                    [&]()
-                    {
-                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.get().getName(), s.get().getInSynLocation(),
-                                                    true, s.get().getTrgNeuronGroup()->getNumNeurons());
-                    });
+        const auto wuExtraGlobalParams = wu->getExtraGlobalParams();
+        for(size_t i = 0; i < wuExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.second.getName(), s.second.getWUExtraGlobalParamLocation(i));
+        }
 
-                // If this synapse group has individual postsynaptic model variables
-                if (s.get().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    const auto psmVars = psm->getVars();
-                    for(size_t i = 0; i < psmVars.size(); i++) {
-                        const bool autoInitialized = !s.get().getPSVarInitialisers()[i].getSnippet()->getCode().empty();
-                        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.get().getPSVarLocation(i), psmVars[i].name + s.get().getName(), synapseGroupStatePushPullFunctions,
-                            [&]()
-                            {
-                                backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.get().getName(), s.get().getPSVarLocation(i),
-                                                            autoInitialized, s.get().getTrgNeuronGroup()->getNumNeurons());
-                            });
-                    }
-                }
-            }
-
-            // Add helper function to push and pull entire synapse group state
-            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.get().getName(), synapseGroupStatePushPullFunctions);
-
-            const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
-            for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.get().getName(), s.get().getPSExtraGlobalParamLocation(i));
-            }
-
-            const auto wuExtraGlobalParams = wu->getExtraGlobalParams();
-            for(size_t i = 0; i < wuExtraGlobalParams.size(); i++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.get().getName(), s.get().getWUExtraGlobalParamLocation(i));
-            }
-
-            const auto sparseConnExtraGlobalParams = s.get().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
-            for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.get().getName(),
-                                    s.get().getSparseConnectivityExtraGlobalParamLocation(i));
-            }
+        const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
+        for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.second.getName(),
+                                s.second.getSparseConnectivityExtraGlobalParamLocation(i));
         }
     }
     allVarStreams << std::endl;
@@ -1035,7 +1031,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         gen.addField("unsigned int numTrgNeurons",
                      [](const SynapseGroupInternal &sg){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
         gen.addField("unsigned int rowStride",
-                     [&backend, m](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(m, sg)); });
+                     [&backend, m](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
 
         if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             gen.addPointerField("unsigned int *rowLength", hack + "rowLength");
@@ -1114,7 +1110,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         MergedSynapseStructGenerator gen(m);
 
         gen.addField("unsigned int rowStride",
-                     [m, &backend](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(m, sg)); });
+                     [m, &backend](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
         gen.addField("unsigned int numTrgNeurons",
                      [](const SynapseGroupInternal &sg){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
 

@@ -99,37 +99,35 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
 
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
-    for(const auto &sMerge : model.getMergedPresynapticUpdateGroups()) {
-        for(const auto &s : sMerge.getGroups()) {
-            if(s.get().isSpikeEventRequired() || s.get().isTrueSpikeRequired()) {
-                groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(sMerge, s.get(),
-                                                                                                      deviceProps, preferences));
-            }
+    for(const auto &s : model.getSynapseGroups()) {
+        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps,
+                                                                                                  preferences));
+        }
 
-            if(!s.get().getWUModel()->getLearnPostCode().empty()) {
-                groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.get()));
-            }
+        if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+            groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
+        }
 
-            if (!s.get().getWUModel()->getLearnPostCode().empty()) {
-                groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.get()));
-            }
+        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
+            groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
+        }
 
-            // If synapse group has individual weights and needs device initialisation
-            if((s.get().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.get().isWUVarInitRequired()) {
-                const size_t numSrcNeurons = s.get().getSrcNeuronGroup()->getNumNeurons();
-                const size_t numTrgNeurons = s.get().getTrgNeuronGroup()->getNumNeurons();
-                if(s.get().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    groupSizes[KernelInitializeSparse].push_back(numSrcNeurons);
-                }
-                else {
-                    groupSizes[KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
-                }
+        // If synapse group has individual weights and needs device initialisation
+        if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUVarInitRequired()) {
+            const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
+            const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                groupSizes[KernelInitializeSparse].push_back(numSrcNeurons);
             }
+            else {
+                groupSizes[KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
+            }
+        }
 
-            // If this synapse group requires dendritic delay, it requires a pre-synapse reset
-            if(s.get().isDendriticDelayRequired()) {
-                numPreSynapseResetGroups++;
-            }
+        // If this synapse group requires dendritic delay, it requires a pre-synapse reset
+        if(s.second.isDendriticDelayRequired()) {
+            numPreSynapseResetGroups++;
         }
     }
 

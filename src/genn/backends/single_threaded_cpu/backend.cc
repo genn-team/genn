@@ -519,7 +519,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                     if(!s.second.getWUModel()->getLearnPostCode().empty()) {
                         os << "// Loop through synapses in corresponding matrix row" << std::endl;
                         os << "for(unsigned int j = 0; j < rowLength" << s.first << "[i]; j++)" << std::endl;
-                        {
+                        {s
                             CodeStream::Scope b(os);
 
                             // If postsynaptic learning is required, calculate column length and remapping
