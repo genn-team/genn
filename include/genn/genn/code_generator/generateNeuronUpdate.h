@@ -1,12 +1,11 @@
 #pragma once
 
 // Forward declarations
-class ModelSpecInternal;
-
 namespace CodeGenerator
 {
 class BackendBase;
 class CodeStream;
+class ModelSpecMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -14,5 +13,5 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend, bool standaloneModules);
+void generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend, bool standaloneModules);
 }

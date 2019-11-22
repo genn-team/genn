@@ -21,6 +21,7 @@
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateSynapseUpdate.h"
 #include "code_generator/generateRunner.h"
+#include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
@@ -49,12 +50,15 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     CodeStream init(initStream);
     CodeStream runner(runnerStream);
 
+    // Create merged model
+    ModelSpecMerged modelMerged(model, backend);
+
     // Generate modules
-    generateNeuronUpdate(neuronUpdate, model, backend, standaloneModules);
-    generateSynapseUpdate(synapseUpdate, model, backend, standaloneModules);
-    generateInit(init, model, backend, standaloneModules);
-    auto mem = generateRunner(definitions, definitionsInternal, runner, model, backend);
-    generateSupportCode(supportCode, model);
+    generateNeuronUpdate(neuronUpdate, modelMerged, backend, standaloneModules);
+    generateSynapseUpdate(synapseUpdate, modelMerged, backend, standaloneModules);
+    generateInit(init, modelMerged, backend, standaloneModules);
+    auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
+    generateSupportCode(supportCode, modelMerged);
 
     // Create basic list of modules
     std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};

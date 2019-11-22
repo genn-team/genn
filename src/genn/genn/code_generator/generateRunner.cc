@@ -6,13 +6,14 @@
 
 // GeNN includes
 #include "gennUtils.h"
-#include "modelSpecInternal.h"
 
 // GeNN code generator
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/groupMerged.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
+#include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -100,11 +101,11 @@ private:
     std::vector<std::pair<std::string, GetFieldValueFunc>> m_Fields;
 };
 
-class MergedNeuronStructGenerator : public MergedStructGenerator<NeuronGroupMerged>
+class MergedNeuronStructGenerator : public MergedStructGenerator<CodeGenerator::NeuronGroupMerged>
 {
 public:
-    MergedNeuronStructGenerator(const NeuronGroupMerged &mergedGroup)
-    :   MergedStructGenerator<NeuronGroupMerged>(mergedGroup)
+    MergedNeuronStructGenerator(const CodeGenerator::NeuronGroupMerged &mergedGroup)
+    :   MergedStructGenerator<CodeGenerator::NeuronGroupMerged>(mergedGroup)
     {
     }
 
@@ -135,11 +136,11 @@ public:
     }
 };
 
-class MergedSynapseStructGenerator : public MergedStructGenerator<SynapseGroupMerged>
+class MergedSynapseStructGenerator : public MergedStructGenerator<CodeGenerator::SynapseGroupMerged>
 {
 public:
-    MergedSynapseStructGenerator(const SynapseGroupMerged &mergedGroup)
-    :   MergedStructGenerator<SynapseGroupMerged>(mergedGroup)
+    MergedSynapseStructGenerator(const CodeGenerator::SynapseGroupMerged &mergedGroup)
+    :   MergedStructGenerator<CodeGenerator::SynapseGroupMerged>(mergedGroup)
     {
     }
 
@@ -427,7 +428,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
 // CodeGenerator
 //--------------------------------------------------------------------------
 CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                                      const ModelSpecInternal &model, const BackendBase &backend)
+                                                      const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     // Track memory allocations, initially starting from zero
     auto mem = MemAlloc::zero();
@@ -447,14 +448,15 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     definitions << "#define EXPORT_VAR extern" << std::endl;
     definitions << "#define EXPORT_FUNC" << std::endl;
 #endif
-    backend.genDefinitionsPreamble(definitions, model);
+    backend.genDefinitionsPreamble(definitions, modelMerged);
 
     // Write definitions internal preamble
     definitionsInternal << "#pragma once" << std::endl;
     definitionsInternal << "#include \"definitions.h\"" << std::endl << std::endl;
-    backend.genDefinitionsInternalPreamble(definitionsInternal, model);
+    backend.genDefinitionsInternalPreamble(definitionsInternal, modelMerged);
     
     // write DT macro
+    const ModelSpecInternal &model = modelMerged.getModel();
     if (model.getTimePrecision() == "float") {
         definitions << "#define DT " << std::to_string(model.getDT()) << "f" << std::endl;
     } else {
@@ -477,7 +479,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Write runner preamble
     runner << "#include \"definitionsInternal.h\"" << std::endl << std::endl;
-    backend.genRunnerPreamble(runner, model);
+    backend.genRunnerPreamble(runner, modelMerged);
 
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
@@ -524,14 +526,14 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runnerVarDecl << model.getTimePrecision() << " t;" << std::endl;
 
     // If backend requires a global RNG to simulate (or initialize) this model
-    if(backend.isGlobalRNGRequired(model)) {
+    if(backend.isGlobalRNGRequired(modelMerged)) {
         mem += backend.genGlobalRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
     }
     allVarStreams << std::endl;
 
     // Generate preamble for the final stage of time step
     // **NOTE** this is done now as there can be timing logic here
-    backend.genStepTimeFinalisePreamble(runnerStepTimeFinalise, model);
+    backend.genStepTimeFinalisePreamble(runnerStepTimeFinalise, modelMerged);
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// timers" << std::endl;
@@ -552,41 +554,34 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                          runnerStepTimeFinalise, "neuronUpdate", true);
 
+        // Add presynaptic update timer
+        if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 runnerStepTimeFinalise, "presynapticUpdate", true);
+        }
+
+        // Add postsynaptic update timer if required
+        if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
+            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 runnerStepTimeFinalise, "postsynapticUpdate", true);
+        }
+
+        // Add synapse dynamics update timer if required
+        if(!modelMerged.getMergedSynapseDynamicsUpdateGroups().empty()) {
+            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "synapseDynamics", true);
+        }
+
         // Create init timer
         backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                          runnerStepTimeFinalise, "init", false);
 
-        // If there's any synapse groups
-        if(!model.getSynapseGroups().empty()) {
-            // If any synapse groups process spikes or spike-like events, add a timer
-            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                           [](const ModelSpec::SynapseGroupValueType &s){ return (s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()); }))
-            {
-                backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 runnerStepTimeFinalise, "presynapticUpdate", true);
-            }
-
-            // Add sparse initialisation timer
-            // **FIXME** this will cause problems if no sparse initialization kernel is required
+        // Add sparse initialisation timer
+        if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
             backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "initSparse", false);
-
-            // If any synapse groups have weight update models with postsynaptic learning, add a timer
-            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                           [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getLearnPostCode().empty(); }))
-            {
-                backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 runnerStepTimeFinalise, "postsynapticUpdate", true);
-            }
-
-            // If any synapse groups have weight update models with synapse dynamics, add a timer
-            if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                           [](const ModelSpec::SynapseGroupValueType &s){ return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
-            {
-                backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 runnerStepTimeFinalise, "synapseDynamics", true);
-            }
         }
+
         allVarStreams << std::endl;
     }
 
@@ -966,7 +961,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     const std::string hack = "d_";
 
     // Loop through merged neuron initialisation groups
-    for(const auto &m : model.getMergedNeuronInitGroups()) {
+    for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
         MergedNeuronStructGenerator gen(m);
 
         gen.addField("unsigned int numNeurons",
@@ -1023,7 +1018,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged synapse connectivity initialisation groups
-    for(const auto &m : model.getMergedSynapseConnectivityInitGroups()) {
+    for(const auto &m : modelMerged.getMergedSynapseConnectivityInitGroups()) {
         MergedSynapseStructGenerator gen(m);
 
         gen.addField("unsigned int numSrcNeurons",
@@ -1049,7 +1044,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged neuron groups
-    for(const auto &m : model.getMergedNeuronUpdateGroups()) {
+    for(const auto &m : modelMerged.getMergedNeuronUpdateGroups()) {
         MergedNeuronStructGenerator gen(m);
 
         gen.addField("unsigned int numNeurons",
@@ -1106,7 +1101,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
 
     // Loop through merged synapse groups
-    for(const auto &m : model.getMergedPresynapticUpdateGroups()) {
+    for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
         MergedSynapseStructGenerator gen(m);
 
         gen.addField("unsigned int rowStride",
@@ -1268,7 +1263,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // Generate preamble -this is the first bit of generated code called by user simulations
         // so global initialisation is often performed here
-        backend.genAllocateMemPreamble(runner, model);
+        backend.genAllocateMemPreamble(runner, modelMerged);
 
         // Write variable allocations to runner
         runner << runnerVarAllocStream.str();

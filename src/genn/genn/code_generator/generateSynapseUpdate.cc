@@ -3,14 +3,12 @@
 // Standard C++ includes
 #include <string>
 
-// GeNN includes
-#include "groupMerged.h"
-#include "modelSpecInternal.h"
-
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/backendBase.h"
+#include "code_generator/groupMerged.h"
+#include "code_generator/modelSpecMerged.h"
 #include "code_generator/teeStream.h"
 
 //--------------------------------------------------------------------------
@@ -18,8 +16,9 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext, const SynapseGroupInternal &sg,
-                               const CodeGenerator::Substitutions &baseSubs, const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
+void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext,
+                               const SynapseGroupInternal &sg, const CodeGenerator::Substitutions &baseSubs,
+                               const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
 {
     const auto *wu = sg.getWUModel();
 
@@ -94,7 +93,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend,
                                           bool standaloneModules)
 {
     if(standaloneModules) {
@@ -107,10 +106,11 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
     os << std::endl;
 
     // Generate functions to push merged synapse group structures
-    genMergedGroupPush(os, model.getMergedPresynapticUpdateGroups(), "SynapseGroup");
+    const ModelSpecInternal &model = modelMerged.getModel();
+    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "SynapseGroup");
 
     // Synaptic update kernels
-    backend.genSynapseUpdate(os, model,
+    backend.genSynapseUpdate(os, modelMerged,
         // Presynaptic weight update threshold
         [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
         {

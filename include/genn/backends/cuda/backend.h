@@ -123,26 +123,26 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                                  NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                                   SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                   SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
                                   SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                          NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
                          SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
-    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -202,7 +202,7 @@ public:
 
     virtual std::string getVarPrefix() const override{ return "dd_"; }
 
-    virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const override;
+    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isSynRemapRequired() const override{ return true; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
@@ -221,7 +221,7 @@ public:
 
     //! Get total number of RNG streams potentially used to initialise model
     /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
-    size_t getNumInitialisationRNGStreams(const ModelSpecInternal &model) const;
+    size_t getNumInitialisationRNGStreams(const ModelSpecMerged &modelMerged) const;
 
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 

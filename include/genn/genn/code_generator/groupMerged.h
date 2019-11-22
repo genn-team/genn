@@ -9,9 +9,11 @@
 #include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
-// GroupMerged
+// CodeGenerator::GroupMerged
 //----------------------------------------------------------------------------
 //! Very thin wrapper around a number of groups which have been merged together
+namespace CodeGenerator
+{
 template<typename G>
 class GroupMerged
 {
@@ -45,7 +47,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// NeuronGroupMerged
+// CodeGenerator::NeuronGroupMerged
 //----------------------------------------------------------------------------
 class NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
@@ -67,7 +69,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// SynapseGroupMerged
+// CodeGenerator::SynapseGroupMerged
 //----------------------------------------------------------------------------
 class SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
@@ -90,3 +92,4 @@ public:
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
 };
+}   // namespace CodeGenerator

@@ -17,14 +17,14 @@
 
 // Forward declarations
 class NeuronGroupInternal;
-class NeuronGroupMerged;
-class ModelSpecInternal;
 class SynapseGroupInternal;
-class SynapseGroupMerged;
 
 namespace CodeGenerator
 {
+    class ModelSpecMerged;
+    class NeuronGroupMerged;
     class Substitutions;
+    class SynapseGroupMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -118,13 +118,7 @@ public:
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified NeuronGroup to.
-    typedef GroupHandler<NeuronGroupInternal> NeuronGroupHandler;
-
-    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified NeuronGroup to.
     typedef GroupHandler<NeuronGroupMerged> NeuronGroupMergedHandler;
-
-    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
-    typedef GroupHandler<SynapseGroupInternal> SynapseGroupHandler;
 
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
     typedef GroupHandler<SynapseGroupMerged> SynapseGroupMergedHandler;
@@ -145,7 +139,7 @@ public:
         \param model                    merged model to generate code for
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                                  NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
@@ -166,12 +160,12 @@ public:
         \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                                   SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                   SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
                                   SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const = 0;
 
-    virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                          NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
                          SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const = 0;
 
@@ -180,21 +174,21 @@ public:
     
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/
-    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
 
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
     //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! After all timestep logic is complete
-    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -276,7 +270,7 @@ public:
     virtual std::string getVarPrefix() const{ return ""; }
 
     //! Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?
-    virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const = 0;
+    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
 
     //! Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure?
     virtual bool isSynRemapRequired() const = 0;

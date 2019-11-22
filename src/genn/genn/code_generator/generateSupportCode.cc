@@ -3,44 +3,78 @@
 // Standard C++ includes
 #include <string>
 
-// GeNN includes
-#include "modelSpecInternal.h"
-
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecInternal &model)
+void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecMerged &modelMerged)
 {
     os << "#pragma once" << std::endl;
     os << std::endl;
 
-    os << "// support code for neuron groups" << std::endl;
-    for(const auto &n : model.getNeuronGroups()) {
-        if (!n.second.getNeuronModel()->getSupportCode().empty()) {
-            os << "namespace " << n.first << "_neuron";
+    os << "// support code for neuron update groups" << std::endl;
+    const ModelSpecInternal &model = modelMerged.getModel();
+    for(const auto &n : modelMerged.getMergedNeuronUpdateGroups()) {
+        const std::string supportCode = n.getArchetype().getNeuronModel()->getSupportCode();
+        if (!supportCode.empty()) {
+            os << "namespace merged" << n.getIndex() << "_neuron";
             {
                 CodeStream::Scope b(os);
-                os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.getPrecision()) << std::endl;
+                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
             }
         }
     }
     os << std::endl;
-    os << "// support code for synapse groups" << std::endl;
+
+    os << "// support code for presynaptic update groups" << std::endl;
+    for(const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
+        const std::string supportCode = s.getArchetype().getWUModel()->getSimSupportCode();
+        if (!supportCode.empty()) {
+            os << "namespace merged" << s.getIndex() << "_weightupdate_simCode";
+            {
+                CodeStream::Scope b(os);
+                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
+            }
+        }
+    }
+    os << std::endl;
+
+    os << "// support code for postsynaptic update groups" << std::endl;
+    for(const auto &s : modelMerged.getMergedPostsynapticUpdateGroups()) {
+        const std::string supportCode = s.getArchetype().getWUModel()->getLearnPostSupportCode();
+        if (!supportCode.empty()) {
+            os << "namespace merged" << s.getIndex() << "_weightupdate_simLearnPost";
+            {
+                CodeStream::Scope b(os);
+                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
+            }
+        }
+    }
+    os << std::endl;
+
+    os << "// support code for synapse dynamics update groups" << std::endl;
+    for(const auto &s : modelMerged.getMergedSynapseDynamicsUpdateGroups()) {
+        const std::string supportCode = s.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode();
+        if (!supportCode.empty()) {
+            os << "namespace merged" << s.getIndex() << "_weightupdate_synapseDynamics";
+            {
+                CodeStream::Scope b(os);
+                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
+            }
+        }
+    }
+    os << std::endl;
+
+    /*os << "// support code for synapse groups" << std::endl;
     for(const auto &s : model.getSynapseGroups()) {
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        if (!wu->getSimSupportCode().empty()) {
-            os << "namespace " << s.first << "_weightupdate_simCode";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(wu->getSimSupportCode(), model.getPrecision()) << std::endl;
-            }
-        }
+
         if (!wu->getLearnPostSupportCode().empty()) {
             os << "namespace " << s.first << "_weightupdate_simLearnPost";
             {
@@ -63,5 +97,5 @@ void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecInternal 
             }
         }
     }
-    os << std::endl;
+    os << std::endl;*/
 }

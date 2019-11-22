@@ -1,4 +1,4 @@
-#include "groupMerged.h"
+#include "code_generator/groupMerged.h"
 
 // PLOG includes
 #include <plog/Log.h>
@@ -7,9 +7,9 @@
 #include "modelSpecInternal.h"
 
 //----------------------------------------------------------------------------
-// NeuronGroupMerged
+// CodeGenerator::NeuronGroupMerged
 //----------------------------------------------------------------------------
-const SynapseGroupInternal *NeuronGroupMerged::getCompatibleMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const
+const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const
 {
     const SynapseGroupInternal *archetypeSG = getArchetype().getMergedInSyn()[archetypeMergedInSyn].first;
     const auto otherSyn = std::find_if(ng.getMergedInSyn().cbegin(), ng.getMergedInSyn().cend(),
@@ -21,7 +21,7 @@ const SynapseGroupInternal *NeuronGroupMerged::getCompatibleMergedInSyn(size_t a
     return otherSyn->first;
 }
 //----------------------------------------------------------------------------
-const SynapseGroupInternal *NeuronGroupMerged::getCompatibleInitMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const
+const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInitMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const
 {
     const SynapseGroupInternal *archetypeSG = getArchetype().getMergedInSyn()[archetypeMergedInSyn].first;
     const auto otherSyn = std::find_if(ng.getMergedInSyn().cbegin(), ng.getMergedInSyn().cend(),
@@ -34,9 +34,9 @@ const SynapseGroupInternal *NeuronGroupMerged::getCompatibleInitMergedInSyn(size
 }
 
 //----------------------------------------------------------------------------
-// SynapseGroupMerged
+// CodeGenerator::SynapseGroupMerged
 //----------------------------------------------------------------------------
-std::string SynapseGroupMerged::getPresynapticAxonalDelaySlot() const
+std::string CodeGenerator::SynapseGroupMerged::getPresynapticAxonalDelaySlot() const
 {
     assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
 
@@ -50,7 +50,7 @@ std::string SynapseGroupMerged::getPresynapticAxonalDelaySlot() const
     }
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroupMerged::getPostsynapticBackPropDelaySlot() const
+std::string CodeGenerator::SynapseGroupMerged::getPostsynapticBackPropDelaySlot() const
 {
     assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
 
@@ -64,7 +64,7 @@ std::string SynapseGroupMerged::getPostsynapticBackPropDelaySlot() const
     }
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroupMerged::getDendriticDelayOffset(const std::string &offset) const
+std::string CodeGenerator::SynapseGroupMerged::getDendriticDelayOffset(const std::string &offset) const
 {
     assert(getArchetype().isDendriticDelayRequired());
 

@@ -9,12 +9,12 @@
 
 // GeNN includes
 #include "models.h"
-#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/teeStream.h"
 
@@ -54,7 +54,7 @@ void addPostsynapticModelSubstitutions(CodeGenerator::Substitutions &substitutio
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend,
                                          bool standaloneModules)
 {
     if(standaloneModules) {
@@ -67,10 +67,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
     os << std::endl;
 
     // Generate functions to push merged neuron group structures
-    genMergedGroupPush(os, model.getMergedNeuronUpdateGroups(), "NeuronGroup");
+    const ModelSpecInternal &model = modelMerged.getModel();
+    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronGroup");
 
     // Neuron update kernel
-    backend.genNeuronUpdate(os, model,
+    backend.genNeuronUpdate(os, modelMerged,
         // Sim handler
         [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs,
                            BackendBase::NeuronGroupMergedHandler genEmitTrueSpike, 

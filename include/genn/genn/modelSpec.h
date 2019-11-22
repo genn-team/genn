@@ -32,7 +32,6 @@ Part of the code generation and generated code sections.
 // GeNN includes
 #include "currentSourceInternal.h"
 #include "gennExport.h"
-#include "groupMerged.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
@@ -164,7 +163,6 @@ public:
     //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
-
 
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return m_Name; }
@@ -436,29 +434,6 @@ protected:
     //! Get std::map containing local named CurrentSource objects in model
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
-    //! Get merged neuron groups which require updating
-    const std::vector<NeuronGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronGroups; }
-
-    //! Get merged synapse groups which require presynaptic updates
-    const std::vector<SynapseGroupMerged> &getMergedPresynapticUpdateGroups() const{ return m_MergedPresynapticUpdateGroups; }
-
-    //! Get merged synapse groups which require postsynaptic updates
-    const std::vector<SynapseGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
-
-    //! Get merged synapse groups which require synapse dynamics update
-    const std::vector<SynapseGroupMerged> &getMergedSynapseDynamicsUpdateGroups() const{ return m_MergedSynapseDynamicsUpdateGroups; }
-
-    //! Get merged neuron groups which require initialisation
-    const std::vector<NeuronGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
-
-    //! Get merged synapse groups with dense connectivity which require initialisation
-    const std::vector<SynapseGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
-
-    //! Get merged synapse groups which require connectivity initialisation
-    const std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
-
-    //! Get merged synapse groups with sparse connectivity which require initialisation
-    const std::vector<SynapseGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
 
 private:
     //--------------------------------------------------------------------------
@@ -481,30 +456,6 @@ private:
 
     //! Named remote current sources
     std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
-
-    //! Merged neuron groups which require updating
-    std::vector<NeuronGroupMerged> m_MergedNeuronGroups;
-
-    //! Merged synapse groups which require presynaptic updates
-    std::vector<SynapseGroupMerged> m_MergedPresynapticUpdateGroups;
-
-    //! Merged synapse groups which require postsynaptic updates
-    std::vector<SynapseGroupMerged> m_MergedPostsynapticUpdateGroups;
-
-    //! Merged synapse groups which require synapse dynamics update
-    std::vector<SynapseGroupMerged> m_MergedSynapseDynamicsUpdateGroups;
-
-    //! Merged neuron groups which require initialisation
-    std::vector<NeuronGroupMerged> m_MergedNeuronInitGroups;
-
-    //! Merged synapse groups with dense connectivity which require initialisation
-    std::vector<SynapseGroupMerged> m_MergedSynapseDenseInitGroups;
-
-    //! Merged synapse groups which require connectivity initialisation
-    std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityInitGroups;
-
-    //! Merged synapse groups with sparse connectivity which require initialisation
-    std::vector<SynapseGroupMerged> m_MergedSynapseSparseInitGroups;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;

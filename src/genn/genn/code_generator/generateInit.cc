@@ -5,11 +5,11 @@
 
 // GeNN includes
 #include "models.h"
-#include "modelSpecInternal.h"
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/backendBase.h"
 
@@ -19,7 +19,7 @@
 namespace
 {
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                       const CodeGenerator::Substitutions &popSubs, const NeuronGroupMerged &ng, bool spikeEvent)
+                       const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronGroupMerged &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
@@ -54,7 +54,7 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
 }
 //--------------------------------------------------------------------------
 void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                   const CodeGenerator::Substitutions &popSubs, const NeuronGroupMerged &ng, bool spikeEvent)
+                   const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronGroupMerged &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
@@ -154,7 +154,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                      const CodeGenerator::Substitutions &popSubs, const SynapseGroupMerged &sg, const std::string &ftype)
+                      const CodeGenerator::Substitutions &popSubs, const CodeGenerator::SynapseGroupMerged &sg, const std::string &ftype)
 {
     using namespace CodeGenerator;
 
@@ -188,7 +188,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
+void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend,
                                  bool standaloneModules)
 {
     if(standaloneModules) {
@@ -199,10 +199,11 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
     }
 
     // Generate functions to push merged synapse group structures
-    genMergedGroupPush(os, model.getMergedNeuronInitGroups(), "NeuronInitGroup");
-    genMergedGroupPush(os, model.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInitGroup");
+    const ModelSpecInternal &model = modelMerged.getModel();
+    genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInitGroup");
+    genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInitGroup");
 
-    backend.genInit(os, model,
+    backend.genInit(os, modelMerged,
         // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
         {
