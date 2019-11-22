@@ -13,6 +13,7 @@
 #include "code_generator/groupMerged.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
+#include "code_generator/mergedStructGenerator.h"
 #include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
@@ -20,146 +21,6 @@
 //--------------------------------------------------------------------------
 namespace
 {
-template<typename T>
-class MergedStructGenerator
-{
-public:
-    typedef std::function<std::string(const typename T::GroupInternal &)> GetFieldValueFunc;
-
-    MergedStructGenerator(const T &mergedGroup) : m_MergedGroup(mergedGroup)
-    {
-    }
-
-    void addField(const std::string &name, GetFieldValueFunc getFieldValue)
-    {
-        m_Fields.emplace_back(name, getFieldValue);
-    }
-
-    void addPointerField(const std::string &name, const std::string &prefix)
-    {
-        addField(name, [prefix](const typename T::GroupInternal &g){ return prefix + g.getName(); });
-    }
-
-    void addVars(const std::vector<Models::Base::Var> &vars, const std::string &prefix)
-    {
-        for(const auto &v : vars) {
-            addPointerField(v.type + " *" + v.name, prefix + v.name);
-        }
-    }
-
-    void addEGPs(const std::vector<Snippet::Base::EGP> &egps)
-    {
-        for(const auto &e : egps) {
-            addField(e.type + " " + e.name,
-                     [e](const typename T::GroupInternal &g){ return e.name + g.getName(); });
-        }
-    }
-
-    void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
-                  CodeGenerator::CodeStream &runnerVarAlloc, const std::string &name)
-    {
-        const size_t index = getMergedGroup().getIndex();
-
-        // Write struct declation to top of definitions internal
-        definitionsInternal << "struct Merged" << name << "Group" << index << std::endl;
-        {
-            CodeGenerator::CodeStream::Scope b(definitionsInternal);
-            for(const auto &f : m_Fields) {
-                definitionsInternal << f.first << ";" << std::endl;
-            }
-            definitionsInternal << std::endl;
-        }
-
-        definitionsInternal << ";" << std::endl;
-
-        // Write local array of these structs containing individual neuron group pointers etc
-        runnerVarAlloc << "Merged" << name << "Group" << index << " merged" << name <<  "Group" << index << "[] = ";
-        {
-            CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
-            for(const auto &sg : getMergedGroup().getGroups()) {
-                runnerVarAlloc << "{";
-                for(const auto &f : m_Fields) {
-                    runnerVarAlloc << f.second(sg) << ", ";
-                }
-                runnerVarAlloc << "}," << std::endl;
-            }
-        }
-        runnerVarAlloc << ";" << std::endl;
-
-        // Then generate call to function to copy local array to device
-        runnerVarAlloc << "pushMerged" << name << "Group" << index << "ToDevice(merged" << name << "Group" << index << ");" << std::endl;
-
-        // Finally add declaration to function to definitions internal
-        definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << index << "ToDevice(const Merged" << name << "Group" << index << " *group);" << std::endl;
-    }
-
-protected:
-    const T &getMergedGroup() const{ return m_MergedGroup; }
-
-private:
-    const T &m_MergedGroup;
-    std::vector<std::pair<std::string, GetFieldValueFunc>> m_Fields;
-};
-
-class MergedNeuronStructGenerator : public MergedStructGenerator<CodeGenerator::NeuronGroupMerged>
-{
-public:
-    MergedNeuronStructGenerator(const CodeGenerator::NeuronGroupMerged &mergedGroup)
-    :   MergedStructGenerator<CodeGenerator::NeuronGroupMerged>(mergedGroup)
-    {
-    }
-
-    void addMergedInSynPointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
-    {
-        if(init) {
-            addField(name + std::to_string(index),
-                    [this, index, prefix](const NeuronGroupInternal &ng)
-                    {
-                        return prefix + getMergedGroup().getCompatibleInitMergedInSyn(index, ng)->getPSModelTargetName();
-                    });
-        }
-        else {
-            addField(name + std::to_string(index),
-                    [this, index, prefix](const NeuronGroupInternal &ng)
-                    {
-                        return prefix + getMergedGroup().getCompatibleMergedInSyn(index, ng)->getPSModelTargetName();
-                    });
-        }
-    }
-
-    void addMergedInSynVars(const std::vector<Models::Base::Var> &vars, size_t index, bool init, const std::string &prefix)
-    {
-
-        for(const auto &v : vars) {
-            addMergedInSynPointerField(v.type + "* " + v.name, index, init, prefix + v.name);
-        }
-    }
-};
-
-class MergedSynapseStructGenerator : public MergedStructGenerator<CodeGenerator::SynapseGroupMerged>
-{
-public:
-    MergedSynapseStructGenerator(const CodeGenerator::SynapseGroupMerged &mergedGroup)
-    :   MergedStructGenerator<CodeGenerator::SynapseGroupMerged>(mergedGroup)
-    {
-    }
-
-    void addPSPointerField(const std::string &name, const std::string &prefix)
-    {
-        addField(name, [prefix](const SynapseGroupInternal &sg){ return prefix + sg.getPSModelTargetName(); });
-    }
-
-    void addSrcPointerField(const std::string &name, const std::string &prefix)
-    {
-        addField(name, [prefix](const SynapseGroupInternal &sg){ return prefix + sg.getSrcNeuronGroup()->getName(); });
-    }
-
-    void addTrgPointerField(const std::string &name, const std::string &prefix)
-    {
-        addField(name, [prefix](const SynapseGroupInternal &sg){ return prefix + sg.getTrgNeuronGroup()->getName(); });
-    }
-};
-
 void genTypeRange(CodeGenerator::CodeStream &os, const std::string &precision, const std::string &prefix)
 {
     using namespace CodeGenerator;
@@ -1002,7 +863,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 gen.addField("volatile unsigned int *denDelayPtr" + std::to_string(i),
                              [i, m, hack, &backend](const NeuronGroupInternal &ng)
                              {
-                                return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + m.getCompatibleMergedInSyn(i, ng)->getPSModelTargetName() + ")";
+                                return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + m.getCompatibleInitMergedInSyn(i, ng)->getPSModelTargetName() + ")";
                              });
             }
 
@@ -1013,7 +874,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "NeuronInit");
+        gen.generate("NeuronInit", definitionsInternal, definitionsInternalFunc, runnerVarAlloc);
 
     }
 
@@ -1040,7 +901,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "SynapseConnectivityInit");
+        gen.generate("SynapseConnectivityInit", definitionsInternal, definitionsInternalFunc, runnerVarAlloc);
     }
 
     // Loop through merged neuron groups
@@ -1097,7 +958,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "Neuron");
+        gen.generate("Neuron", definitionsInternal, definitionsInternalFunc, runnerVarAlloc);
     }
 
     // Loop through merged synapse groups
@@ -1146,7 +1007,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         gen.addEGPs(wum->getExtraGlobalParams());
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "Synapse");
+        gen.generate("Synapse", definitionsInternal, definitionsInternalFunc, runnerVarAlloc);
     }
 
     // End extern C block around variable declarations
