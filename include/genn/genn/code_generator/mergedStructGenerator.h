@@ -54,8 +54,8 @@ public:
         }
     }
 
-    void generate(const std::string &name, CodeGenerator::CodeStream &definitionsInternal,
-                  CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarAlloc)
+    void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
+                  CodeGenerator::CodeStream &runnerVarAlloc, const std::string &name)
     {
         const size_t index = getMergedGroup().getIndex();
 
@@ -135,14 +135,6 @@ public:
                     {
                         return prefix + getMergedGroup().getCompatibleMergedInSyn(index, ng)->getPSModelTargetName();
                     });
-        }
-    }
-
-    void addMergedInSynVars(const std::vector<Models::Base::Var> &vars, size_t index, bool init, const std::string &prefix)
-    {
-
-        for(const auto &v : vars) {
-            addMergedInSynPointerField(v.type + "* " + v.name, index, init, prefix + v.name);
         }
     }
 };
