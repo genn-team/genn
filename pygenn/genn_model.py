@@ -160,6 +160,14 @@ class GeNNModel(object):
             self._backend_module = backend_modules[backend]
 
     @property
+    def timing_enabled(self):
+        return self._model.is_timing_enabled()
+
+    @timing_enabled.setter
+    def timing_enabled(self, timing):
+        self._model.set_timing(timing)
+    
+    @property
     def default_var_location(self):
         """Default variable location - defines
         where state variables are initialised"""
@@ -226,6 +234,30 @@ class GeNNModel(object):
         if self._built:
             raise Exception("GeNN model already built")
         self._model.set_dt(dt)
+
+    @property
+    def neuron_update_time(self):
+        return self._slm.get_neuron_update_time()
+    
+    @property
+    def init_time(self):
+        return self._slm.get_init_time()
+        
+    @property
+    def presynaptic_update_time(self):
+        return self._slm.get_presynaptic_update_time()
+    
+    @property
+    def postsynaptic_update_time(self):
+        return self._slm.get_postsynaptic_update_time()
+
+    @property
+    def synapse_dynamics_time(self):
+        return self._slm.get_synapse_dynamics_time()
+
+    @property
+    def init_sparse_time(self):
+        return self._slm.get_init_sparse_time()
 
     def add_neuron_population(self, pop_name, num_neurons, neuron,
                               param_space, var_space):
