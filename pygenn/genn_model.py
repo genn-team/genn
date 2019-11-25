@@ -43,6 +43,7 @@ from collections import OrderedDict
 from importlib import import_module
 from os import path
 from platform import system
+from psutil import cpu_count
 from subprocess import check_call  # to call make
 from textwrap import dedent
 
@@ -393,10 +394,10 @@ class GeNNModel(object):
 
         # Build code
         if system() == "Windows":
-            check_call(["msbuild", "/p:Configuration=Release",
+            check_call(["msbuild", "/m", "/verbosity:minimal", "/p:Configuration=Release",
                         path.join(output_path, "runner.vcxproj")])
         else:
-            check_call(["make", "-C", output_path])
+            check_call(["make", "-j", cpu_count(logical=False), "-C", output_path])
 
         self._built = True
 
