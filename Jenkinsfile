@@ -282,7 +282,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             call activate
                             popd
 
-                            pip install numpy
+                            pip install "numpy>1.6, < 1.15"
 
                             copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
                             
