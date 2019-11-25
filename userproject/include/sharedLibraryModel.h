@@ -79,6 +79,7 @@ public:
 
             m_T = (scalar*)getSymbol("t");
             m_Timestep = (unsigned long long*)getSymbol("iT");
+
             return true;
         }
         else {
@@ -318,7 +319,14 @@ public:
         *m_Timestep = iT;
     }
 
-    void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr)
+    double getNeuronUpdateTime() const{ return *(double*)getSymbol("neuronUpdateTime"); }
+    double getInitTime() const{ return *(double*)getSymbol("initTime"); }
+    double getPresynapticUpdateTime() const{ return *(double*)getSymbol("presynapticUpdateTime"); }
+    double getPostsynapticUpdateTime() const{ return *(double*)getSymbol("postsynapticUpdateTime"); }
+    double getSynapseDynamicsTime() const{ return *(double*)getSymbol("synapseDynamicsTime"); }
+    double getInitSparseTime() const{ return *(double*)getSymbol("initSparseTime"); }
+    
+    void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr) const
     {
 #ifdef _WIN32
         void *symbol = GetProcAddress(m_Library, symbolName.c_str());
