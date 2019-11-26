@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="code_generator\backendBase.cc" />
+    <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
     <ClCompile Include="code_generator\generateAll.cc" />
     <ClCompile Include="code_generator\generateInit.cc" />
@@ -29,11 +30,11 @@
     <ClCompile Include="code_generator\generateRunner.cc" />
     <ClCompile Include="code_generator\generateSupportCode.cc" />
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
-    <ClCompile Include="code_generator\codeGenUtils.cc" />
+    <ClCompile Include="code_generator\groupMerged.cc" />
+    <ClCompile Include="code_generator\modelSpecMerged.cc" />
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
-    <ClCompile Include="groupMerged.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="modelSpec.cc" />
@@ -61,6 +62,8 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSynapseUpdate.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
@@ -68,7 +71,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\groupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initVarSnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\neuronGroupMerged.h" />
