@@ -57,7 +57,7 @@ void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecMerged &m
     os << std::endl;
 
     os << "// support code for synapse dynamics update groups" << std::endl;
-    for(const auto &s : modelMerged.getMergedSynapseDynamicsUpdateGroups()) {
+    for(const auto &s : modelMerged.getMergedSynapseDynamicsGroups()) {
         const std::string supportCode = s.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode();
         if (!supportCode.empty()) {
             os << "namespace merged" << s.getIndex() << "_weightupdate_synapseDynamics";

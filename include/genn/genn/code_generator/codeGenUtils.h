@@ -151,14 +151,15 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const std:
         const size_t numGroups = g.getGroups().size();
 
         // **TODO** backend-specific
-        mergedGroupArray << "__device__ __constant__ Merged" << suffix << idx << " dd_merged" << suffix << idx << "[" << numGroups << "];" << std::endl;
+        mergedGroupArray << "__device__ __constant__ Merged" << suffix << "Group" << idx << " dd_merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
 
         // Write function to update
-        mergedGroupFunc << "void pushMerged" << suffix << idx << "ToDevice(const Merged" << suffix << idx << " *group)";
+        mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(const Merged" << suffix << "Group" << idx << " *group)";
         {
             CodeStream::Scope b(mergedGroupFunc);
             // **TODO** backend-specific
-            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_merged" << suffix << idx << ", group, " << numGroups << " * sizeof(Merged" << suffix << idx << ")));" << std::endl;
+            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_merged" << suffix << "Group" << idx << ", group, ";
+            mergedGroupFunc << numGroups << " * sizeof(Merged" << suffix << "Group" << idx << ")));" << std::endl;
         }
     }
 

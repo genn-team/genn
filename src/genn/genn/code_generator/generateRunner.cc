@@ -164,10 +164,10 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
                  init ? "NeuronInit" : "NeuronUpdate");
 }
 //-------------------------------------------------------------------------
-void genMergedSynapseStruct(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
-                            CodeGenerator::CodeStream &runnerVarAlloc, const CodeGenerator::SynapseGroupMerged &m,
-                            const std::string &precision, const std::string &prefix, const std::string &name,
-                            bool init, bool srcSpikes, bool trgSpikes)
+void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal, 
+                            CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarAlloc, 
+                            const CodeGenerator::SynapseGroupMerged &m, const std::string &precision, const std::string &prefix, 
+                            const std::string &name, bool init, bool srcSpikes, bool trgSpikes)
 {
     CodeGenerator::MergedSynapseStructGenerator gen(m);
 
@@ -180,12 +180,12 @@ void genMergedSynapseStruct(CodeGenerator::CodeStream &definitionsInternal, Code
 
     if(!init) {
         if(m.getArchetype().isDendriticDelayRequired()) {
-            gen.addPSPointerField(model.getPrecision() + " *denDelay", prefix + "denDelay");
+            gen.addPSPointerField(precision + " *denDelay", prefix + "denDelay");
             gen.addField("volatile unsigned int *denDelayPtr",
                             [&backend](const SynapseGroupInternal &sg){ return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")"; });
         }
         else {
-            gen.addPSPointerField(model.getPrecision() + " *inSyn", prefix + "inSyn");
+            gen.addPSPointerField(precision + " *inSyn", prefix + "inSyn");
         }
     }
 
@@ -568,7 +568,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Add synapse dynamics update timer if required
-        if(!modelMerged.getMergedSynapseDynamicsUpdateGroups().empty()) {
+        if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
             backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "synapseDynamics", true);
         }
@@ -969,8 +969,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Loop through merged dense synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
-         genMergedSynapseStruct(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
-                               model.getPrecision(), hack, "SynapseDenseInit", true, false, false);
+         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
+                                model.getPrecision(), hack, "SynapseDenseInit", true, false, false);
     }
 
     // Loop through merged synapse connectivity initialisation groups
@@ -1001,8 +1001,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
-         genMergedSynapseStruct(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
-                               model.getPrecision(), hack, "SynapseSparseInit", true, false, false);
+         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
+                                model.getPrecision(), hack, "SynapseSparseInit", true, false, false);
     }
 
     // Loop through merged neuron update groups
@@ -1013,20 +1013,20 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Loop through merged presynaptic update groups
     for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
-        genMergedSynapseStruct(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
+        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
                                model.getPrecision(), hack, "PresynapticUpdate", false, true, false);
     }
 
-    // Loop through merged presynaptic update groups
+    // Loop through merged postsynaptic update groups
     for(const auto &m : modelMerged.getMergedPostsynapticUpdateGroups()) {
-        genMergedSynapseStruct(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
+        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
                                model.getPrecision(), hack, "PostsynapticUpdate", false, false, true);
     }
 
-    // Loop through merged presynaptic update groups
-    for(const auto &m : modelMerged.getMergedSynapseDynamicsUpdateGroups()) {
-        genMergedSynapseStruct(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
-                               model.getPrecision(), hack, "SynapseDynamicsUpdate", false, false, false);
+    // Loop through synapse dynamics groups
+    for(const auto &m : modelMerged.getMergedSynapseDynamicsGroups()) {
+        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc, m,
+                               model.getPrecision(), hack, "SynapseDynamics", false, false, false);
     }
 
     // End extern C block around variable declarations

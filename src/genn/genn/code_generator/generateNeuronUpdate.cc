@@ -30,7 +30,7 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
     substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams());
     substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams());
-    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "neuronGroup.");
+    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "group.");
     substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
 }
 //--------------------------------------------------------------------------
@@ -68,7 +68,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
 
     // Generate functions to push merged neuron group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronGroup");
+    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged,
@@ -85,7 +85,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                     os << "const ";
                 }
                 os << v.type << " l" << v.name << " = ";
-                os << "neuronGroup." << v.name << "[";
+                os << "group." << v.name << "[";
                 if (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
@@ -134,13 +134,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn = neuronGroup.inSyn" << i << "[" << popSubs["id"] << "];" << std::endl;
+                os << model.getPrecision() << " linSyn = group.inSyn" << i << "[" << popSubs["id"] << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
                     os << model.getPrecision() << " &denDelayFront" << i << " = ";
-                    os << "neuronGroup.denDelay" << i << "[(*neuronGroup.denDelayPtr" << i << " * neuronGroup.numNeurons) + " << popSubs["id"] << "];" << std::endl;
+                    os << "neuronGroup.denDelay" << i << "[(*group.denDelayPtr" << i << " * group.numNeurons) + " << popSubs["id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn += denDelayFront" << i << ";" << std::endl;
@@ -157,7 +157,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                             os << "const ";
                         }
                         os << v.type << " lps" << v.name;
-                        os << " = neuronGroup." << v.name << i << "[" << neuronSubs["id"] << "];" << std::endl;
+                        os << " = group." << v.name << i << "[" << neuronSubs["id"] << "];" << std::endl;
                     }
                 }
 
@@ -187,12 +187,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 }
 
                 // Write back linSyn
-                os << "neuronGroup.inSyn"  << i << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
+                os << "group.inSyn"  << i << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << "neuronGroup." << v.name << i << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
+                        os << "group." << v.name << i << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -383,7 +383,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 // back to global state variables dd_V etc  
                 const bool delayed = (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired());
                 if((v.access == VarAccess::READ_WRITE) || delayed) {
-                    os << "neuronGroup." << v.name << "[";
+                    os << "group." << v.name << "[";
 
                     if (delayed) {
                         os << "writeDelayOffset + ";

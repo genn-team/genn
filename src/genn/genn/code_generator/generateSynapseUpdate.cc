@@ -27,20 +27,20 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     // Substitute parameter and derived parameter names
     synapseSubs.addParamValueSubstitution(sg.getWUModel()->getParamNames(), sg.getWUParams());
     synapseSubs.addVarValueSubstitution(wu->getDerivedParams(), sg.getWUDerivedParams());
-    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "(*synapseGroup.", ")");
+    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "(*group.", ")");
 
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? synapseSubs["id_pre"] : "preReadDelayOffset + " + baseSubs["id_pre"];
-    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "synapseGroup.",
+    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group.",
                                        "[" + delayedPreIdx + "]");
 
     const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? synapseSubs["id_post"] : "postReadDelayOffset + " + baseSubs["id_post"];
-    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "synapseGroup.",
+    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "group.",
                                        "[" + delayedPostIdx + "]");
 
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "synapseGroup.",
+        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group.",
                                            "[" + synapseSubs["id_syn"] + "]");
     }
     // Otherwise, if weights are procedual
@@ -107,7 +107,9 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "SynapseGroup");
+    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate");
+    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate");
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics");
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, modelMerged,
@@ -119,7 +121,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
             // Make weight update model substitutions
             synapseSubs.addParamValueSubstitution(sg.getArchetype().getWUModel()->getParamNames(), sg.getArchetype().getWUParams());
             synapseSubs.addVarValueSubstitution(sg.getArchetype().getWUModel()->getDerivedParams(), sg.getArchetype().getWUDerivedParams());
-            synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "synapseGroup.");
+            synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "group.");
 
             // Get read offset if required
             //const std::string offset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
@@ -162,7 +164,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
 
                 synSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
                 synSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
-                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "(*synapseGroup.", ")");
+                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "(*group.", ")");
 
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();
                 synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + sg.getIndex());

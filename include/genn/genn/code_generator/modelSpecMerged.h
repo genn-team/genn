@@ -40,8 +40,8 @@ public:
     //! Get merged synapse groups which require postsynaptic updates
     const std::vector<SynapseGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
 
-    //! Get merged synapse groups which require synapse dynamics update
-    const std::vector<SynapseGroupMerged> &getMergedSynapseDynamicsUpdateGroups() const{ return m_MergedSynapseDynamicsUpdateGroups; }
+    //! Get merged synapse groups which require synapse dynamics
+    const std::vector<SynapseGroupMerged> &getMergedSynapseDynamicsGroups() const{ return m_MergedSynapseDynamicsGroups; }
 
     //! Get merged neuron groups which require initialisation
     const std::vector<NeuronGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
@@ -72,7 +72,7 @@ private:
     std::vector<SynapseGroupMerged> m_MergedPostsynapticUpdateGroups;
 
     //! Merged synapse groups which require synapse dynamics update
-    std::vector<SynapseGroupMerged> m_MergedSynapseDynamicsUpdateGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseDynamicsGroups;
 
     //! Merged neuron groups which require initialisation
     std::vector<NeuronGroupMerged> m_MergedNeuronInitGroups;
