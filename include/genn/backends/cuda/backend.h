@@ -271,17 +271,18 @@ private:
 
             // If this is the first  group
             if(idStart == 0) {
-                os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
+                os << "if(id < " << paddedSize << ")";
             }
             else {
-                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
+                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
             }
+            {
+                CodeStream::Scope b(os);
+                Substitutions popSubs(&kernelSubs);
+                handler(os, gMerge, popSubs);
 
-            Substitutions popSubs(&kernelSubs);
-            handler(os, gMerge, popSubs);
-
-            idStart += paddedSize;
-            os << CodeStream::CB(1) << std::endl;
+                idStart += paddedSize;
+            }
         }
     }
 
