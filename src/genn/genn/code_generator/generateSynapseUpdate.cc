@@ -80,8 +80,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     }
 
     neuronSubstitutionsInSynapticCode(synapseSubs, sg, synapseSubs["id_pre"],
-                                      synapseSubs["id_post"], backend.getVarPrefix(),
-                                      model.getDT());
+                                      synapseSubs["id_post"], model.getDT());
 
     synapseSubs.apply(code);
     //synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
@@ -124,8 +123,8 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
             synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "group.");
 
             // Get read offset if required
-            //const std::string offset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            //preNeuronSubstitutionsInSynapticCode(synapseSubs, sg, offset, "", baseSubs["id_pre"], backend.getVarPrefix());
+            const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+            preNeuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype(), offset, "", baseSubs["id_pre"]);
 
             // Get event threshold condition code
             std::string code = sg.getArchetype().getWUModel()->getEventThresholdConditionCode();

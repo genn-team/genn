@@ -398,7 +398,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                 const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
                 if (ng.getArchetype().isSpikeEventRequired()) {
-                    assert(false);
                     os << "if (threadIdx.x < shSpkEvntCount)";
                     {
                         CodeStream::Scope b(os);
@@ -422,8 +421,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                         os << "group.spk[" << queueOffsetTrueSpk << "shPosSpk + threadIdx.x] = n;" << std::endl;
                         if (ng.getArchetype().isSpikeTimeRequired()) {
-                            assert(false);
-                            //os << "dd_sT" << ng.getArchetype().getName() << "[" << queueOffset << "n] = t;" << std::endl;
+                            os << "group.sT[" << queueOffset << "n] = t;" << std::endl;
                         }
                     }
                 }
@@ -658,7 +656,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 [postLearnHandler, &model, this](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
                     // Generate kernel preamble for accessing group
-                    genMergedKernelPreamble(os, "PresynapticUpdate", sg.getIndex(), popSubs);
+                    genMergedKernelPreamble(os, "PostsynapticUpdate", sg.getIndex(), popSubs);
 
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
@@ -691,7 +689,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                         {
                             CodeStream::Scope b(os);
                             const std::string offsetTrueSpkPost = (sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
-                            os << "const unsigned int spk = group.TrgSpk[" << offsetTrueSpkPost << "(r * " << m_KernelBlockSizes[KernelPostsynapticUpdate] << ") + threadIdx.x];" << std::endl;
+                            os << "const unsigned int spk = group.trgSpk[" << offsetTrueSpkPost << "(r * " << m_KernelBlockSizes[KernelPostsynapticUpdate] << ") + threadIdx.x];" << std::endl;
                             os << "shSpk[threadIdx.x] = spk;" << std::endl;
 
                             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -713,6 +711,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                     os << "if (" << synSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
                                     os << "const unsigned int synAddress = group.remap[(shSpk[j] * group.colStride) + " << popSubs["id"] << "];" << std::endl;
+
+                                    // **OPTIMIZE** we can do a fast constant divide optimization here
                                     os << "const unsigned int ipre = synAddress / group.rowStride;" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", "ipre");
                                 }
@@ -788,6 +788,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                             synSubs.addVarSubstitution("id_syn", "s");
                         }
                         else {
+                            // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
                             synSubs.addVarSubstitution("id_pre", popSubs["id"] + " / group.rowStride");
                             synSubs.addVarSubstitution("id_post", popSubs["id"] + " % group.rowStride");
                             synSubs.addVarSubstitution("id_syn", popSubs["id"]);
@@ -821,18 +822,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         }
 
         // Launch synapse dynamics kernel if required
-        /*if(idSynapseDynamicsStart > 0) {
+        if(idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
             Timer t(os, "synapseDynamics", model.isTimingEnabled());
 
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
-            os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
-            for(const auto &p : synapseDynamicsKernelParameters) {
-                gennExtraGlobalParamPass(os, p);
-            }
-            os << "t);" << std::endl;
+            os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }*/
+        }
 
         // Launch presynaptic update kernel
         if(idPresynapticStart > 0) {
@@ -845,18 +842,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         }
 
         // Launch postsynaptic update kernel
-        /*if(idPostsynapticStart > 0) {
+        if(idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
             Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
 
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
-            os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(";
-            for(const auto &p : postsynapticKernelParameters) {
-                gennExtraGlobalParamPass(os, p);
-            }
-            os << "t);" << std::endl;
+            os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }*/
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -1509,39 +1502,6 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     // Setting /Ehs SHOULD solve this but CUDA rules don't give this option and it's not clear it gets through to the compiler anyway
     os << "#pragma warning(disable: 4297)" << std::endl;
 #endif
-
-    // **TODO** move these into a header file shipped with GeNN and copied into generated code along with non-uniform RNGs
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
-    os << std::endl;
-    os << "template<class T>" << std::endl;
-    os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)";
-    {
-        CodeStream::Scope b(os);
-        os << "void *devptr;" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaMalloc(hostPtr, size));" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devptr, devSymbol));" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(devptr, hostPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
-    }
-    os << std::endl;
-
-    // If the model requires zero-copy
-    if(modelMerged.getModel().zeroCopyInUse()) {
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Helper function for getting the device pointer corresponding to a zero-copied host pointer and assigning it to a symbol" << std::endl;
-        os << std::endl;
-        os << "template<class T>" << std::endl;
-        os << "void deviceZeroCopy(T hostPtr, const T *devPtr, const T &devSymbol)";
-        {
-            CodeStream::Scope b(os);
-            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)devPtr, (void*)hostPtr, 0));" << std::endl;
-            os << "void *devSymbolPtr;" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devSymbolPtr, devSymbol));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(devSymbolPtr, devPtr, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
-        }
-        os << std::endl;
-    }
-
     os << "template<class T>" << std::endl;
     os << "T *getSymbolAddress(const T &devSymbol)";
     {
@@ -1604,13 +1564,11 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
     if(loc & VarLocation::DEVICE) {
-        // If the type is a pointer type we need a host and a device pointer
+        // If the type is a pointer type we need a device pointer
         if(::Utils::isTypePointer(type)) {
             // Write host definition to internal definitions stream if type is device only
             CodeStream &d = deviceType ? definitionsInternal : definitions;
             d << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
-
-            definitionsInternal << "EXPORT_VAR __device__ " << type << " dd_" << name << ";" << std::endl;
         }
         // Otherwise we just need a device variable, made volatile for safety
         else {
@@ -1628,7 +1586,6 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
         // If the type is a pointer type we need a host and a device pointer
         if(::Utils::isTypePointer(type)) {
             os << type << " d_" << name << ";" << std::endl;
-            os << "__device__ " << type << " dd_" << name << ";" << std::endl;
         }
         // Otherwise we just need a device variable, made volatile for safety
         else {
@@ -1651,11 +1608,11 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
     if(loc & VarLocation::DEVICE) {
         // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
         if(loc & VarLocation::ZERO_COPY) {
-            os << "deviceZeroCopy(" << name << ", &d_" << name << ", dd_" << name << ");" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0);" << std::endl;
             allocation += MemAlloc::zeroCopy(count * getSize(type));
         }
         else {
-            os << "deviceMemAllocate(&d_" << name << ", dd_" << name << ", " << count << " * sizeof(" << type << "));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
             allocation += MemAlloc::device(count * getSize(type));
         }
     }
@@ -1836,11 +1793,25 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
 //--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
 {
-    // Create a single Philox4_32_10 RNG
-    genVariableDefinition(definitions, definitionsInternal, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
-    genVariableImplementation(runner, "curandStatePhilox4_32_10_t*", "rng", VarLocation::DEVICE);
+    // Define global Phillox RNG
+    // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
+    definitionsInternal << "EXPORT_VAR curandStatePhilox4_32_10_t *d_rng;" << std::endl;
+    definitionsInternal << "EXPORT_VAR __device__ curandStatePhilox4_32_10_t *dd_rng;" << std::endl;
+
+    // Implement global Phillox RNG
+    runner << "curandStatePhilox4_32_10_t *d_rng;" << std::endl;
+    runner << "__device__ curandStatePhilox4_32_10_t *dd_rng;" << std::endl;
+
+    // Allocate device memory for global Phillox RNG and copy to device symbol
+    allocations << "void *rngDevPtr;" << std::endl;
+    allocations << "CHECK_CUDA_ERRORS(cudaMalloc(&d_rng, sizeof(curandStatePhilox4_32_10_t)));" << std::endl;
+    allocations << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&rngDevPtr, dd_rng));" << std::endl;
+    allocations << "CHECK_CUDA_ERRORS(cudaMemcpy(rngDevPtr, &d_rng, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
+
+    // Add free call
     genVariableFree(free, "rng", VarLocation::DEVICE);
-    return genVariableAllocation(allocations, "curandStatePhilox4_32_10_t", "rng", VarLocation::DEVICE, 1);
+
+    return MemAlloc::device(getSize("curandStatePhilox4_32_10_t"));
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,

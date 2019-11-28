@@ -23,6 +23,7 @@ class SynapseGroupInternal;
 namespace CodeGenerator
 {
 class Substitutions;
+class SynapseGroupMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -163,17 +164,19 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const std:
         }
     }
 
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// merged group arrays" << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << mergedGroupArrayStream.str();
-    os << std::endl;
+    if(!groups.empty()) {
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// merged group arrays" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << mergedGroupArrayStream.str();
+        os << std::endl;
 
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// merged group functions" << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << mergedGroupFuncStream.str();
-    os << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// merged group functions" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << mergedGroupFuncStream.str();
+        os << std::endl;
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -195,7 +198,6 @@ void preNeuronSubstitutionsInSynapticCode(
     const std::string &offset,
     const std::string &axonalDelayOffset,
     const std::string &postIdx,
-    const std::string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
     const std::string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const std::string &preVarSuffix = "");   //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
@@ -205,7 +207,6 @@ void postNeuronSubstitutionsInSynapticCode(
     const std::string &offset,
     const std::string &backPropDelayOffset,
     const std::string &preIdx,
-    const std::string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
     const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const std::string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
@@ -219,7 +220,6 @@ void neuronSubstitutionsInSynapticCode(
     const SynapseGroupInternal &sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
     const std::string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const std::string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const std::string &devPrefix,            //!< device prefix, "dd_" for GPU, nothing for CPU
     double dt,                          //!< simulation timestep (ms)
     const std::string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const std::string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
