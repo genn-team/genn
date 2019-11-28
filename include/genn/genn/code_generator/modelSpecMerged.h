@@ -55,6 +55,9 @@ public:
     //! Get merged synapse groups with sparse connectivity which require initialisation
     const std::vector<SynapseGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
 
+    //! Get merged neuron groups which require their spike queues updating
+    const std::vector<NeuronGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
+
 private:
     //--------------------------------------------------------------------------
     // Members
@@ -85,5 +88,8 @@ private:
 
     //! Merged synapse groups with sparse connectivity which require initialisation
     std::vector<SynapseGroupMerged> m_MergedSynapseSparseInitGroups;
+
+    //! Merged neuron groups which require their spike queues updating
+    std::vector<NeuronGroupMerged> m_MergedNeuronSpikeQueueUpdateGroups;
 };
 }   // namespace CodeGenerator

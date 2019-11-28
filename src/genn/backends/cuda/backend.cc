@@ -129,7 +129,7 @@ template<typename ...Args>
 void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::string &blockIndicesPrefix, size_t blockSize,
                                    Args... args)
 {
-    // Declare array of indices (into mergedNeuronGroupXXX arrays)
+    // Declare array of indices (into mergedXXXXGroup arrays)
     os << "__device__ __constant__ uint16_t dd_merged" << blockIndicesPrefix << "GroupBlockIndices[] = {";
     genGroupBlockIndices(os, blockSize, args...);
     os << "};" << std::endl;
@@ -137,6 +137,24 @@ void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::str
     // Generate group start id arrays
     size_t idStart = 0;
     genGroupStartIDs(os, std::ref(idStart), blockSize, args...);
+}
+//-----------------------------------------------------------------------
+template<typename T>
+void genMergedResetKernelDataStructures(CodeGenerator::CodeStream &os, const std::string prefix, const std::vector<T> &mergedGroups)
+{
+    // Declare array of indices (into mergedXXXXGroup arrays)
+    os << "__device__ __constant__ uint16_t dd_merged" << prefix << "GroupThreadIndices[] = {";
+    
+    // Generate indices for these groups
+    for(const auto &m : mergedGroups) {
+        // Loop through neuron groups within merged neuron group
+        size_t n = 0;
+        for(const auto &ng : m.getGroups()) {
+            os << n++ << ", ";
+        }
+    };
+
+    os << "};" << std::endl;
 }
 //-----------------------------------------------------------------------
 void genMergedKernelPreamble(CodeGenerator::CodeStream &os, const std::string &kernelPrefix, const std::string &mergedGroupPrefix,
@@ -229,6 +247,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
         [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
     os << std::endl;
+    genMergedResetKernelDataStructures(os, "NeuronSpikeQueueUpdate", modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
 
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -239,34 +258,44 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelPreNeuronReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
         // Loop through local neuron groups
-        for(const auto &n : model.getNeuronGroups()) {
-            if(idPreNeuronReset > 0) {
-                os << "else ";
+        for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
+            os << "// merged" << n.getIndex() << std::endl;
+            if(idPreNeuronReset == 0) {
+                os << "if(id < " << n.getGroups().size() << ")";
             }
-            os << "if(id == " << (idPreNeuronReset++) << ")";
+            else {
+                os << "if(id >= " << idPreNeuronReset << " && id < " << idPreNeuronReset + n.getGroups().size() << ")";
+            }
             {
                 CodeStream::Scope b(os);
 
-                if (n.second.isDelayRequired()) { // with delay
-                    os << "dd_spkQuePtr" << n.first << " = (dd_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                // Get the index of the group within the merged group
+                os << "const unsigned int groupIndex = dd_mergedNeuronSpikeQueueUpdateGroupThreadIndices[id];" << std::endl;
 
-                    if (n.second.isSpikeEventRequired()) {
-                        os << "dd_glbSpkCntEvnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                // Use this to get reference to merged group structure
+                os << "const auto &group = dd_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[groupIndex]; " << std::endl;
+
+                if (n.getArchetype().isDelayRequired()) { // with delay
+                    os << "*group.spkQuePtr  = (*group.spkQuePtr + 1) % group.numDelaSlots;" << std::endl;
+
+                    if (n.getArchetype().isSpikeEventRequired()) {
+                        os << "group.spkCntEvnt[*group.spkQuePtr] = 0;" << std::endl;
                     }
-                    if (n.second.isTrueSpikeRequired()) {
-                        os << "dd_glbSpkCnt" << n.first << "[dd_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                    if (n.getArchetype().isTrueSpikeRequired()) {
+                        os << "group.spkCnt[*group.spkQuePtr] = 0;" << std::endl;
                     }
                     else {
-                        os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                        os << "group.spkCnt[0] = 0;" << std::endl;
                     }
                 }
                 else { // no delay
-                    if (n.second.isSpikeEventRequired()) {
-                        os << "dd_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                    if (n.getArchetype().isSpikeEventRequired()) {
+                        os << "group.spkCntEvnt[0] = 0;" << std::endl;
                     }
-                    os << "dd_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                    os << "group.spkCnt[0] = 0;" << std::endl;
                 }
             }
+            idPreNeuronReset += n.getGroups().size();
         }
     }
     os << std::endl;

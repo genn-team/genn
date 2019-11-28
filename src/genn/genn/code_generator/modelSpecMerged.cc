@@ -115,4 +115,13 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canInitBeMerged(b); });
 
+    LOGD << "Merging neuron groups which require their spike queues updating:";
+    createMergedGroups(model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
+                       [](const NeuronGroupInternal &ng){ return true; },
+                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b)
+                       {
+                           return ((a.getNumDelaySlots() == b.getNumDelaySlots())
+                                   && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
+                                   && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired()));
+                       });
 }

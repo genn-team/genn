@@ -69,6 +69,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
     // Generate functions to push merged neuron group structures
     const ModelSpecInternal &model = modelMerged.getModel();
     genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
+    genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged,
