@@ -42,11 +42,11 @@ std::string CodeGenerator::SynapseGroupMerged::getPresynapticAxonalDelaySlot() c
 
     const unsigned int numDelaySteps = getArchetype().getDelaySteps();
     if(numDelaySteps == 0) {
-        return "(*synapseGroup.srcSpkQuePtr)";
+        return "(*group.srcSpkQuePtr)";
     }
     else {
         const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-        return "((*synapseGroup.srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps) + ") % " + std::to_string(numSrcDelaySlots) + ")";
+        return "((*group.srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps) + ") % " + std::to_string(numSrcDelaySlots) + ")";
     }
 }
 //----------------------------------------------------------------------------
@@ -56,11 +56,11 @@ std::string CodeGenerator::SynapseGroupMerged::getPostsynapticBackPropDelaySlot(
 
     const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
     if(numBackPropDelaySteps == 0) {
-        return "(*synapseGroup.trgSpkQuePtr)";
+        return "(*group.trgSpkQuePtr)";
     }
     else {
         const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-        return "((*synapseGroup.trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps) + ") % " + std::to_string(numTrgDelaySlots) + ")";
+        return "((*group.trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps) + ") % " + std::to_string(numTrgDelaySlots) + ")";
     }
 }
 //----------------------------------------------------------------------------
@@ -69,9 +69,9 @@ std::string CodeGenerator::SynapseGroupMerged::getDendriticDelayOffset(const std
     assert(getArchetype().isDendriticDelayRequired());
 
     if(offset.empty()) {
-        return "(*synapseGroup.denDelayPtr * synapseGroup.numTrgNeurons) + ";
+        return "(*group.denDelayPtr * group.numTrgNeurons) + ";
     }
     else {
-        return "(((*synapseGroup.denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * synapseGroup.numTrgNeurons) + ";
+        return "(((*group.denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group.numTrgNeurons) + ";
     }
 }
