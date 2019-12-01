@@ -333,7 +333,8 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
                 popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
                 popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
                 popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
-
+                popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
+                
                 std::string code = connectInit.getSnippet()->getRowBuildCode();
                 popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : merged" + sg.getIndex());
                 code = ensureFtype(code, model.getPrecision());
