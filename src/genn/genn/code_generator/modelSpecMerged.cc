@@ -109,9 +109,10 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
     createMergedGroups(model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
                        [&backend](const SynapseGroupInternal &sg)
                        {
-                           return (sg.isWUVarInitRequired()
-                                   || (backend.isSynRemapRequired() && !sg.getWUModel()->getSynapseDynamicsCode().empty())
-                                   || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty()));
+                           return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
+                                   (sg.isWUVarInitRequired()
+                                    || (backend.isSynRemapRequired() && !sg.getWUModel()->getSynapseDynamicsCode().empty())
+                                    || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
                        },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canInitBeMerged(b); });
 
