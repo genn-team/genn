@@ -619,7 +619,6 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
 
         // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
         if(sg.getArchetype().isDendriticDelayRequired()) {
-            assert(false);
             presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&group.denDelay[" + sg.getDendriticDelayOffset("$(1)") + "$(id_post)], $(0))");
         }
         // Otherwise
