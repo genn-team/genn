@@ -403,6 +403,30 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
             return false;
         }
 
+        // If both groups have the same number of current sources
+        auto otherCurrentSources = other.getCurrentSources();
+        if(getCurrentSources().size() == otherCurrentSources.size()) {
+            // Loop through our current sources
+            for(const auto *cs : getCurrentSources()) {
+                // If a compatible current sourcecan be found amongst the other neuron group's current sources, remove it
+                const auto otherCS = std::find_if(otherCurrentSources.cbegin(), otherCurrentSources.cend(),
+                                                  [cs](const CurrentSourceInternal *m)
+                                                  {
+                                                      return cs->canInitBeMerged(*m);
+                                                  });
+                if(otherCS != otherCurrentSources.cend()) {
+                    otherCurrentSources.erase(otherCS);
+                }
+                // Otherwise, these can't be merged - return false
+                else {
+                    return false;
+                }
+            }
+        }
+        else {
+            return false;
+        }
+
         return true;
     }
     return false;

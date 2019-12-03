@@ -32,6 +32,30 @@ const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInitM
     assert(otherSyn != ng.getMergedInSyn().cend());
     return otherSyn->first;
 }
+//----------------------------------------------------------------------------
+const CurrentSourceInternal *CodeGenerator::NeuronGroupMerged::getCompatibleCurrentSource(size_t archetypeCurrentSource, const NeuronGroupInternal &ng) const
+{
+    const CurrentSourceInternal *archetypeCS = getArchetype().getCurrentSources()[archetypeCurrentSource];
+    const auto otherCS = std::find_if(ng.getCurrentSources().cbegin(), ng.getCurrentSources().cend(),
+                                      [archetypeCS](const CurrentSourceInternal *m)
+                                      {
+                                          return m->canBeMerged(*archetypeCS);
+                                      });
+    assert(otherCS != ng.getCurrentSources().cend());
+    return *otherCS;
+}
+//----------------------------------------------------------------------------
+const CurrentSourceInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInitCurrentSource(size_t archetypeCurrentSource, const NeuronGroupInternal &ng) const
+{
+    const CurrentSourceInternal *archetypeCS = getArchetype().getCurrentSources()[archetypeCurrentSource];
+    const auto otherCS = std::find_if(ng.getCurrentSources().cbegin(), ng.getCurrentSources().cend(),
+                                      [archetypeCS](const CurrentSourceInternal *m)
+                                      {
+                                          return m->canInitBeMerged(*archetypeCS);
+                                      });
+    assert(otherCS != ng.getCurrentSources().cend());
+    return *otherCS;
+}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMerged

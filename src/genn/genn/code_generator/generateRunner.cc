@@ -142,13 +142,13 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
         const SynapseGroupInternal *sg = m.getArchetype().getMergedInSyn()[i].first;
 
         // Add pointer to insyn
-        gen.addMergedInSynPointerField(precision + " *inSyn", i, init, prefix + "inSyn");
+        gen.addMergedInSynPointerField(precision + " *inSynInSyn", i, init, prefix + "inSyn");
 
         // Add pointer to dendritic delay buffer if required
         if (sg->isDendriticDelayRequired()) {
-            gen.addMergedInSynPointerField(precision + " *denDelay", i, init, prefix + "denDelay");
+            gen.addMergedInSynPointerField(precision + " *denDelayInSyn", i, init, prefix + "denDelay");
 
-            gen.addField("volatile unsigned int *denDelayPtr" + std::to_string(i),
+            gen.addField("volatile unsigned int *denDelayPtrInSyn" + std::to_string(i),
                             [i, m](const NeuronGroupInternal &ng)
                             {
                                 // **HACK**
@@ -159,7 +159,7 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
         // Add pointers to state variables
         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             for(const auto &v : sg->getPSModel()->getVars()) {
-                gen.addMergedInSynPointerField(v.type + "* " + v.name, i, init, prefix + v.name);
+                gen.addMergedInSynPointerField(v.type + "* " + v.name + "InSyn", i, init, prefix + v.name);
             }
         }
 
@@ -170,6 +170,16 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
             }*/
         }
     }
+
+    // Loop through current sources in archetypical neuron group
+    for(size_t i = 0; i < m.getArchetype().getCurrentSources().size(); i++) {
+        const auto *cs = m.getArchetype().getCurrentSources()[i];
+
+        for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
+            gen.addCurrentSourcePointerField(v.type + "* " + v.name + "CS", i, init, prefix + v.name);
+        }
+    }
+
 
     // Generate structure definitions and instantiation
     gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc,

@@ -5,6 +5,7 @@
 #include <vector>
 
 // GeNN includes
+#include "currentSourceInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
@@ -66,6 +67,14 @@ public:
     //! Find the synapse group compatible with specified merged insyn in archetype
     /*! **NOTE** this should only be called with neuron groups within merged group */
     const SynapseGroupInternal *getCompatibleInitMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const;
+
+    //! Find the current source compatible with specified current source in archetype
+    /*! **NOTE** this should only be called with neuron groups within merged group */
+    const CurrentSourceInternal *getCompatibleCurrentSource(size_t archetypeCurrentSource, const NeuronGroupInternal &ng) const;
+
+    //! Find the current source compatible with specified current source in archetype
+    /*! **NOTE** this should only be called with neuron groups within merged group */
+    const CurrentSourceInternal *getCompatibleInitCurrentSource(size_t archetypeCurrentSource, const NeuronGroupInternal &ng) const;
 };
 
 //----------------------------------------------------------------------------

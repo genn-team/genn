@@ -89,12 +89,13 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
 //------------------------------------------------------------------------
 template<typename I, typename Q>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                          const Models::Base::VarVec &vars, const std::string &groupStruct, const std::string &countMember, size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
+                          const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
+                          size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
                           I getVarInitialiser, Q isVarQueueRequired)
 {
     using namespace CodeGenerator;
 
-    const std::string count = groupStruct + "." + countMember;
+    const std::string count = "group." + countMember;
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
 
@@ -104,7 +105,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 
             // Generate target-specific code to initialise variable
             backend.genVariableInit(os, count, "id", popSubs,
-                [&backend, &vars, &varInit, &groupStruct, &ftype, groupIndex, k, count, isVarQueueRequired, numDelaySlots]
+                [&backend, &vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
@@ -126,11 +127,11 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
                         {
                             CodeStream::Scope b(os);
-                            os << groupStruct + "." + vars[k].name << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
+                            os << "group." + vars[k].name << fieldSuffix << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
                         }
                     }
                     else {
-                        varSubs.addVarSubstitution("value", groupStruct + "." + vars[k].name + "[" + varSubs["id"] + "]");
+                        varSubs.addVarSubstitution("value", "group." + vars[k].name + fieldSuffix + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
                         varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
@@ -144,10 +145,10 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 //------------------------------------------------------------------------
 template<typename I>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
-                          const Models::Base::VarVec &vars, const std::string &groupStruct, const std::string &countMember, const size_t groupIndex, const std::string &ftype,
-                          I getVarInitialiser)
+                          const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
+                          const size_t groupIndex, const std::string &ftype, I getVarInitialiser)
 {
-    genInitNeuronVarCode(os, backend, popSubs, vars, groupStruct, countMember, 0, groupIndex, ftype,
+    genInitNeuronVarCode(os, backend, popSubs, vars, fieldSuffix, countMember, 0, groupIndex, ftype,
                          getVarInitialiser,
                          [](size_t){ return false; });
 }
@@ -238,7 +239,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
             }
 
             // Initialise neuron variables
-            genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), "group", "numNeurons",
+            genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), "", "numNeurons",
                                  ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(),
                                  [&ng](size_t i){ return ng.getArchetype().getVarInitialisers().at(i); },
                                  [&ng](size_t i){ return ng.getArchetype().isVarQueueRequired(i); });
@@ -254,7 +255,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
                 backend.genVariableInit(os, "group.numNeurons", "id", popSubs,
                     [&backend, &model, sg, i] (CodeStream &os, Substitutions &varSubs)
                     {
-                        os << "group.inSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << "group.inSynInSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                     });
 
                 // If dendritic delays are required
@@ -266,14 +267,15 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
                             {
                                 CodeStream::Scope b(os);
                                 const std::string denDelayIndex = "(d * " + std::to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + " + varSubs["id"];
-                                os << "group.denDelay" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                os << "group.denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         });
                 }
 
                 // If postsynaptic model variables should be individual
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), "group", "numNeurons",
+                    genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), 
+                                         "InSyn" + std::to_string(i), "numNeurons",
                                          i, model.getPrecision(),
                                          [sg](size_t i){ return sg->getPSVarInitialisers().at(i); });
                 }
@@ -296,11 +298,14 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
 
             // Loop through current sources
             os << "// current source variables" << std::endl;
-            /*for (auto const *cs : ng.getArchetype().getCurrentSources()) {
-                genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), "group", "numNeurons",
-                                     model.getPrecision(),
+            for(size_t i = 0; i < ng.getArchetype().getCurrentSources().size(); i++) {
+                const auto *cs = ng.getArchetype().getCurrentSources()[i];
+
+                genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), 
+                                     "CS" + std::to_string(i), "numNeurons",
+                                     i, model.getPrecision(),
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); });
-            }*/
+            }
         },
         // Dense syanptic matrix variable initialisation
         [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)

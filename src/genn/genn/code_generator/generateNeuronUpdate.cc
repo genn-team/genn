@@ -134,19 +134,19 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn = group.inSyn" << i << "[" << popSubs["id"] << "];" << std::endl;
+                os << model.getPrecision() << " linSyn = group.inSynInSyn" << i << "[" << popSubs["id"] << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
-                    os << model.getPrecision() << " &denDelayFront" << i << " = ";
-                    os << "group.denDelay" << i << "[(*group.denDelayPtr" << i << " * group.numNeurons) + " << popSubs["id"] << "];" << std::endl;
+                    os << model.getPrecision() << " &denDelayFront = ";
+                    os << "group.denDelay" << i << "[(*group.denDelayPtrInSyn" << i << " * group.numNeurons) + " << popSubs["id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
-                    os << "linSyn += denDelayFront" << i << ";" << std::endl;
+                    os << "linSyn += denDelayFront;" << std::endl;
 
                     // Zero delay buffer slot
-                    os << "denDelayFront" << i << " = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    os << "denDelayFront = " << model.scalarExpr(0.0) << ";" << std::endl;
                 }
 
                 // If synapse group has individual postsynaptic variables, also pull these in a coalesced access
@@ -157,7 +157,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                             os << "const ";
                         }
                         os << v.type << " lps" << v.name;
-                        os << " = group." << v.name << i << "[" << neuronSubs["id"] << "];" << std::endl;
+                        os << " = group." << v.name << "InSyn" << i << "[" << neuronSubs["id"] << "];" << std::endl;
                     }
                 }
 
@@ -187,27 +187,29 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 }
 
                 // Write back linSyn
-                os << "group.inSyn"  << i << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
+                os << "group.inSynInSyn"  << i << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << "group." << v.name << i << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
+                        os << "group." << v.name << "InSyn" << i << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
                     }
                 }
             }
 
             // Loop through all of neuron group's current sources
-            /*for(const auto *cs : ng.getCurrentSources())
+            for(size_t i = 0; i < ng.getArchetype().getCurrentSources().size(); i++)
             {
-                os << "// current source " << cs->getName() << std::endl;
+                const auto *cs = ng.getArchetype().getCurrentSources()[i];
+
+                os << "// current source " << i << std::endl;
                 CodeStream::Scope b(os);
 
                 const auto *csm = cs->getCurrentSourceModel();
 
                 // Read current source variables into registers
                 for(const auto &v : csm->getVars()) {
-                    os << v.type << " lcs" << v.name << " = " << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "];" << std::endl;
+                    os << v.type << " lcs" << v.name << " = " << "group." << v.name << "CS" << i <<"[" << popSubs["id"] << "];" << std::endl;
                 }
 
                 Substitutions currSourceSubs(&popSubs);
@@ -215,20 +217,20 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 currSourceSubs.addVarNameSubstitution(csm->getVars(), "", "lcs");
                 currSourceSubs.addParamValueSubstitution(csm->getParamNames(), cs->getParams());
                 currSourceSubs.addVarValueSubstitution(csm->getDerivedParams(), cs->getDerivedParams());
-                currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "", cs->getName());
+                currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "group.cs", std::to_string(i));
 
                 std::string iCode = csm->getInjectionCode();
-                currSourceSubs.applyCheckUnreplaced(iCode, "injectionCode : " + cs->getName());
+                currSourceSubs.applyCheckUnreplaced(iCode, "injectionCode : merged" + std::to_string(i));
                 iCode = ensureFtype(iCode, model.getPrecision());
                 os << iCode << std::endl;
 
                 // Write read/write variables back to global memory
                 for(const auto &v : csm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << backend.getVarPrefix() << v.name << cs->getName() << "[" << currSourceSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
+                        os << "group." << v.name << "CS" << i << "[" << currSourceSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
                     }
                 }
-            }*/
+            }
 
             if (!nm->getSupportCode().empty()) {
                 assert(false);

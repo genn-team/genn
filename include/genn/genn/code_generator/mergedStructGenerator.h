@@ -72,22 +72,25 @@ public:
         definitionsInternal << ";" << std::endl;
 
         // Write local array of these structs containing individual neuron group pointers etc
-        runnerVarAlloc << "Merged" << name << "Group" << index << " merged" << name <<  "Group" << index << "[] = ";
+        // **NOTE** scope will hopefully reduce stack usage
         {
-            CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
-            for(const auto &sg : getMergedGroup().getGroups()) {
-                runnerVarAlloc << "{";
-                for(const auto &f : m_Fields) {
-                    runnerVarAlloc << f.second(sg) << ", ";
+            CodeStream::Scope b(runnerVarAlloc);
+            runnerVarAlloc << "Merged" << name << "Group" << index << " merged" << name << "Group" << index << "[] = ";
+            {
+                CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
+                for(const auto &sg : getMergedGroup().getGroups()) {
+                    runnerVarAlloc << "{";
+                    for(const auto &f : m_Fields) {
+                        runnerVarAlloc << f.second(sg) << ", ";
+                    }
+                    runnerVarAlloc << "}," << std::endl;
                 }
-                runnerVarAlloc << "}," << std::endl;
             }
+            runnerVarAlloc << ";" << std::endl;
+
+            // Then generate call to function to copy local array to device
+            runnerVarAlloc << "pushMerged" << name << "Group" << index << "ToDevice(merged" << name << "Group" << index << ");" << std::endl;
         }
-        runnerVarAlloc << ";" << std::endl;
-
-        // Then generate call to function to copy local array to device
-        runnerVarAlloc << "pushMerged" << name << "Group" << index << "ToDevice(merged" << name << "Group" << index << ");" << std::endl;
-
         // Finally add declaration to function to definitions internal
         definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << index << "ToDevice(const Merged" << name << "Group" << index << " *group);" << std::endl;
     }
@@ -135,6 +138,24 @@ public:
                     {
                         return prefix + getMergedGroup().getCompatibleMergedInSyn(index, ng)->getPSModelTargetName();
                     });
+        }
+    }
+
+    void addCurrentSourcePointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
+    {
+        if(init) {
+            addField(name + std::to_string(index),
+                     [this, index, prefix](const NeuronGroupInternal &ng)
+                     {
+                         return prefix + getMergedGroup().getCompatibleInitCurrentSource(index, ng)->getName();
+                     });
+        }
+        else {
+            addField(name + std::to_string(index),
+                     [this, index, prefix](const NeuronGroupInternal &ng)
+                     {
+                         return prefix + getMergedGroup().getCompatibleCurrentSource(index, ng)->getName();
+                     });
         }
     }
 };
