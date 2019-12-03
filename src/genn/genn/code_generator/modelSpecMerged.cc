@@ -125,4 +125,16 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                                    && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
                                    && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired()));
                        });
+
+    // Output summary to log
+    LOGI << "Merging model with " << model.getNeuronGroups().size() << " neuron groups and " << model.getSynapseGroups().size() << " synapse groups results in:";
+    LOGI << "\t" << m_MergedNeuronUpdateGroups.size() << " merged neuron update groups";
+    LOGI << "\t" << m_MergedPresynapticUpdateGroups.size() << " merged presynaptic update groups";
+    LOGI << "\t" << m_MergedPostsynapticUpdateGroups.size() << " merged postsynaptic update groups";
+    LOGI << "\t" << m_MergedSynapseDynamicsGroups.size() << " merged synapse dynamics groups";
+    LOGI << "\t" << m_MergedNeuronInitGroups.size() << " merged neuron init groups";
+    LOGI << "\t" << m_MergedSynapseDenseInitGroups.size() << " merged synapse dense init groups";
+    LOGI << "\t" << m_MergedSynapseConnectivityInitGroups.size() << " merged synapse connectivity init groups";
+    LOGI << "\t" << m_MergedSynapseSparseInitGroups.size() << " merged synapse sparse init groups";
+    LOGI << "\t" << m_MergedNeuronSpikeQueueUpdateGroups.size() << " merged neuron spike queue update groups";
 }
