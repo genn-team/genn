@@ -79,6 +79,18 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
         if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
             LOGW << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
         }
+
+        // Output summary to log
+        LOGI << "Merging model with " << model.getNeuronGroups().size() << " neuron groups and " << model.getSynapseGroups().size() << " synapse groups results in:";
+        LOGI << "\t" << modelMerged.getMergedNeuronUpdateGroups().size() << " merged neuron update groups";
+        LOGI << "\t" << modelMerged.getMergedPresynapticUpdateGroups().size() << " merged presynaptic update groups";
+        LOGI << "\t" << modelMerged.getMergedPostsynapticUpdateGroups().size() << " merged postsynaptic update groups";
+        LOGI << "\t" << modelMerged.getMergedSynapseDynamicsGroups().size() << " merged synapse dynamics groups";
+        LOGI << "\t" << modelMerged.getMergedNeuronInitGroups().size() << " merged neuron init groups";
+        LOGI << "\t" << modelMerged.getMergedSynapseDenseInitGroups().size() << " merged synapse dense init groups";
+        LOGI << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
+        LOGI << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
+        LOGI << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
     }
 
     // Return list of modules
