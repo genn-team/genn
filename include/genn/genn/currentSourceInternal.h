@@ -12,7 +12,7 @@ public:
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                           const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   CurrentSource(name, currentSourceModel, params, varInitialisers, defaultExtraGlobalParamLocation, defaultVarLocation)
+    :   CurrentSource(name, currentSourceModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
     }
 
