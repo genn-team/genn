@@ -76,31 +76,6 @@ private:
 
 
 //-----------------------------------------------------------------------
-void genGroupBlockIndices(CodeGenerator::CodeStream &, size_t)
-{
-}
-//-----------------------------------------------------------------------
-template<typename T, typename G, typename ...Args>
-void genGroupBlockIndices(CodeGenerator::CodeStream &os, size_t blockSize,
-                          const std::vector<T> &mergedGroups, const std::string &, G getNumThreads,
-                          Args... args)
-{
-    // Generate indices for these groups
-    for(const auto &m : mergedGroups) {
-        // Loop through neuron groups within merged neuron group
-        size_t n = 0;
-        for(const auto &ng : m.getGroups()) {
-            // Write index to this neuron group for each block used to simulate it
-            const size_t numBlocks = CodeGenerator::ceilDivide(getNumThreads(ng.get()), blockSize);
-            std::fill_n(std::ostream_iterator<std::string>(os), numBlocks,
-                        std::to_string(n++) + ", ");
-        }
-    };
-
-    // Generate any remaining groups
-    genGroupBlockIndices(os, blockSize, args...);
-}
-//-----------------------------------------------------------------------
 void genGroupStartIDs(CodeGenerator::CodeStream &, size_t &, size_t)
 {
 }
@@ -126,14 +101,9 @@ void genGroupStartIDs(CodeGenerator::CodeStream &os, size_t &idStart, size_t blo
 }
 //-----------------------------------------------------------------------
 template<typename ...Args>
-void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, const std::string &blockIndicesPrefix, size_t blockSize,
+void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, size_t blockSize,
                                    Args... args)
 {
-    // Declare array of indices (into mergedXXXXGroup arrays)
-    os << "__device__ __constant__ uint16_t dd_merged" << blockIndicesPrefix << "GroupBlockIndices[] = {";
-    genGroupBlockIndices(os, blockSize, args...);
-    os << "};" << std::endl;
-
     // Generate group start id arrays
     size_t idStart = 0;
     genGroupStartIDs(os, std::ref(idStart), blockSize, args...);
@@ -155,26 +125,6 @@ void genMergedResetKernelDataStructures(CodeGenerator::CodeStream &os, const std
     };
 
     os << "};" << std::endl;
-}
-//-----------------------------------------------------------------------
-void genMergedKernelPreamble(CodeGenerator::CodeStream &os, const std::string &kernelPrefix, const std::string &mergedGroupPrefix,
-                             size_t mergedGroupIndex, CodeGenerator::Substitutions &subs)
-{
-    // Get the index of the group within the merged group
-    os << "const unsigned int groupIndex = dd_merged" << kernelPrefix << "GroupBlockIndices[blk];" << std::endl;
-
-    // Use this to get reference to merged group structure
-    os << "const auto &group = dd_merged" << mergedGroupPrefix << "Group" << mergedGroupIndex << "[groupIndex]; " << std::endl;
-
-    // Use this and starting thread of merged group to calculate local id within neuron group
-    os << "const unsigned int lid = id - (dd_merged" << mergedGroupPrefix << "GroupStartID" << mergedGroupIndex << "[groupIndex]);" << std::endl;
-    subs.addVarSubstitution("id", "lid");
-}
-//-----------------------------------------------------------------------
-void genMergedKernelPreamble(CodeGenerator::CodeStream &os, const std::string &mergedGroupPrefix, size_t mergedGroupIndex,
-                             CodeGenerator::Substitutions &subs)
-{
-    genMergedKernelPreamble(os, mergedGroupPrefix, mergedGroupPrefix, mergedGroupIndex, subs);
 }
 //-----------------------------------------------------------------------
 template<typename T, typename G>
@@ -243,7 +193,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate data structure for accessing merged groups
     const ModelSpecInternal &model = modelMerged.getModel();
     genMergedKernelDataStructures(
-        os, "NeuronUpdate", m_KernelBlockSizes[KernelNeuronUpdate],
+        os, m_KernelBlockSizes[KernelNeuronUpdate],
         modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
         [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
     os << std::endl;
@@ -305,7 +255,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelNeuronUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
-        os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
         Substitutions kernelSubs(cudaFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
@@ -344,13 +293,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         os << "__syncthreads();" << std::endl;
 
         // Parallelise over neuron groups
-        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
+        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate", idStart,
             [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelNeuronUpdate)); },
             [&model, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
             {
-                // Generate kernel preamble for accessing group
-                genMergedKernelPreamble(os, "NeuronUpdate", ng.getIndex(), popSubs);
-
                 // **TODO** calculate 
                 // If axonal delays are required
                 if (ng.getArchetype().isDelayRequired()) {
@@ -486,7 +432,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // Generate data structure for accessing merged groups
     if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
         genMergedKernelDataStructures(
-            os, "PresynapticUpdate", m_KernelBlockSizes[KernelPresynapticUpdate],
+            os, m_KernelBlockSizes[KernelPresynapticUpdate],
             modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate",
             [this](const SynapseGroupInternal &sg)
             {
@@ -496,7 +442,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
         genMergedKernelDataStructures(
-            os, "PostsynapticUpdate", m_KernelBlockSizes[KernelPostsynapticUpdate],
+            os, m_KernelBlockSizes[KernelPostsynapticUpdate],
             modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate",
             [this](const SynapseGroupInternal &sg)
             {
@@ -506,7 +452,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
         genMergedKernelDataStructures(
-            os, "SynapseDynamics", m_KernelBlockSizes[KernelPostsynapticUpdate],
+            os, m_KernelBlockSizes[KernelPostsynapticUpdate],
             modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics",
             [this](const SynapseGroupInternal &sg)
             {
@@ -561,7 +507,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPresynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
-            os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
             // We need shLg if any synapse groups accumulate into shared memory
             // Determine the maximum shared memory outputs 
@@ -605,14 +550,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             }
 
             // Parallelise over presynaptic update groups
-            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), idPresynapticStart,
+            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate", idPresynapticStart,
                 [this](const SynapseGroupInternal &sg){ return padSize(getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences), m_KernelBlockSizes[KernelPresynapticUpdate]); },
                 [&idPresynapticStart, wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this]
                 (CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
-                    // Generate kernel preamble for accessing group
-                    genMergedKernelPreamble(os, "PresynapticUpdate", sg.getIndex(), popSubs);
-                    
                     // Get presynaptic update strategy to use for this synapse group
                     const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
                     LOGD << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
@@ -667,7 +609,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPostsynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
-            os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
             os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPostsynapticUpdate] << "];" << std::endl;
             if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
@@ -680,13 +621,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             }
 
             // Parallelise over postsynaptic update groups
-            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), idPostsynapticStart,
+            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate", idPostsynapticStart,
                 [this](const SynapseGroupInternal &sg) { return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelBlockSizes[KernelPostsynapticUpdate]); },
                 [postLearnHandler, &model, this](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
-                    // Generate kernel preamble for accessing group
-                    genMergedKernelPreamble(os, "PostsynapticUpdate", sg.getIndex(), popSubs);
-
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                         assert(false);
@@ -772,19 +710,15 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(os);
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelSynapseDynamicsUpdate] << " * blockIdx.x + threadIdx.x;" << std::endl;
-            os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
             Substitutions kernelSubs(cudaFunctions, model.getPrecision());
             kernelSubs.addVarSubstitution("t", "t");
 
             // Parallelise over synapse groups whose weight update models have code for synapse dynamics
-            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseDynamicsGroups(), idSynapseDynamicsStart,
+            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics", idSynapseDynamicsStart,
                 [this](const SynapseGroupInternal &sg) { return padSize(getNumSynapseDynamicsThreads(sg), m_KernelBlockSizes[KernelSynapseDynamicsUpdate]); },
                 [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
-                    // Generate kernel preamble for accessing group
-                    genMergedKernelPreamble(os, "SynapseDynamics", sg.getIndex(), popSubs);
-
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                         assert(false);
@@ -893,7 +827,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedKernelDataStructures(os, "Init", m_KernelBlockSizes[KernelInitialize],
+    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitialize],
         modelMerged.getMergedNeuronInitGroups(), "NeuronInit",
         [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
         modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit",
@@ -903,7 +837,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // If sparse initialisation is required, generate data structure for accessing merged groups from within sparse initialisation kernel
     if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
-        genMergedKernelDataStructures(os, "SynapseSparseInit", m_KernelBlockSizes[KernelInitializeSparse],
+        genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitializeSparse],
             modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit",
             [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
     }
@@ -935,17 +869,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelInitialize] << " * blockIdx.x + threadIdx.x;" << std::endl;
-        os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
-        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idInitStart,
+        genParallelGroup<NeuronGroupMerged>(os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), "NeuronInit", idInitStart,
             [this](const NeuronGroupInternal &ng){ return padSize(ng.getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [this, &model, localNGHandler](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
             {
-                // Generate kernel preamble for accessing group
-                genMergedKernelPreamble(os, "Init", "NeuronInit", ng.getIndex(), popSubs);
-
                 os << "// only do this for existing neurons" << std::endl;
                 os << "if(" << popSubs["id"] << " < group.numNeurons)";
                 {
@@ -973,13 +903,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with dense connectivity" << std::endl;
-        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseDenseInitGroups(), idInitStart,
+        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit", idInitStart,
             [this](const SynapseGroupInternal &sg){ return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [sgDenseInitHandler](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
             {
-                // Generate kernel preamble for accessing group
-                genMergedKernelPreamble(os, "Init", "SynapseDenseInit", sg.getIndex(), popSubs);
-
                 os << "// only do this for existing postsynaptic neurons" << std::endl;
                 os << "if(" << popSubs["id"] << " < group.numTrgNeurons)";
                 {
@@ -1003,13 +930,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idInitStart,
+        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit", idInitStart,
             [this](const SynapseGroupInternal &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
             [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
             {
-                // Generate kernel preamble for accessing group
-                genMergedKernelPreamble(os, "Init", "SynapseConnectivityInit", sg.getIndex(), popSubs);
-
                 os << "// only do this for existing presynaptic neurons" << std::endl;
                 os << "if(" << popSubs["id"] << " < group.numSrcNeurons)";
                 {
@@ -1085,7 +1009,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             Substitutions kernelSubs(cudaFunctions, model.getPrecision());
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelInitializeSparse] << " * blockIdx.x + threadIdx.x;" << std::endl;
-            os << "const unsigned int blk = blockIdx.x;" << std::endl;
 
             // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
             // **TODO** check actually required
@@ -1097,13 +1020,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             }
 
             // Initialise weight update variables for synapse groups with sparse connectivity
-            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseSparseInitGroups(), idSparseInitStart,
+            genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit", idSparseInitStart,
                 [this](const SynapseGroupInternal &sg){ return padSize(sg.getMaxConnections(), m_KernelBlockSizes[KernelInitializeSparse]); },
                 [this, &model, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
                 {
-                    // Generate kernel preamble for accessing group
-                    genMergedKernelPreamble(os, "SynapseSparseInit", sg.getIndex(), popSubs);
-
                     // If this post synapse requires an RNG for initialisation,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
