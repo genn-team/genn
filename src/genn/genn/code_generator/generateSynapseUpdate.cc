@@ -163,7 +163,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
 
                 synSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
                 synSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
-                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "(*group.", ")");
+                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
                 synSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
 
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();

@@ -254,6 +254,9 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         gen.addPointerField("uint32_t *gp", prefix + "gp");
     }
+    else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+        gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
+    }
 
     // Add pointers to var pointers to struct
     const WeightUpdateModels::Base *wum = m.getArchetype().getWUModel();
