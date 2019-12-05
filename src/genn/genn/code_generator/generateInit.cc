@@ -168,7 +168,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
             CodeStream::Scope b(os);
 
             // Generate target-specific code to initialise variable
-            backend.genSynapseVariableRowInit(os, popSubs,
+            backend.genSynapseVariableRowInit(os, sg, popSubs,
                 [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {

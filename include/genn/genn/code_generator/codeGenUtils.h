@@ -22,6 +22,7 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
+class NeuronGroupMerged;
 class Substitutions;
 class SynapseGroupMerged;
 }
@@ -136,6 +137,8 @@ inline size_t padSize(size_t size, size_t blockSize)
 {
     return ceilDivide(size, blockSize) * blockSize;
 }
+
+void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n);
 
 template<typename T>
 void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const std::string &suffix)

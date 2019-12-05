@@ -73,7 +73,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initVarSnippet.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\neuronGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\models.h" />
     <ClInclude Include="..\..\..\include\genn\genn\modelSpec.h" />
     <ClInclude Include="..\..\..\include\genn\genn\modelSpecInternal.h" />

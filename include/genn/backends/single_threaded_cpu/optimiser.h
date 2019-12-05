@@ -6,6 +6,8 @@
 // Single-threaded CPU backend includes
 #include "backend.h"
 
+class ModelSpecInternal;
+
 //--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Optimiser
 //--------------------------------------------------------------------------
@@ -16,7 +18,7 @@ namespace SingleThreadedCPU
 namespace Optimiser
 {
 BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath,
-                                     int localHostID, const Preferences &preferences);
+                                     const Preferences &preferences);
 }
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

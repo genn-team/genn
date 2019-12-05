@@ -225,25 +225,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 // Use this to get reference to merged group structure
                 os << "const auto &group = dd_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[groupIndex]; " << std::endl;
 
-                if (n.getArchetype().isDelayRequired()) { // with delay
+                if(n.getArchetype().isDelayRequired()) { // with delay
                     os << "*group.spkQuePtr  = (*group.spkQuePtr + 1) % group.numDelaSlots;" << std::endl;
-
-                    if (n.getArchetype().isSpikeEventRequired()) {
-                        os << "group.spkCntEvnt[*group.spkQuePtr] = 0;" << std::endl;
-                    }
-                    if (n.getArchetype().isTrueSpikeRequired()) {
-                        os << "group.spkCnt[*group.spkQuePtr] = 0;" << std::endl;
-                    }
-                    else {
-                        os << "group.spkCnt[0] = 0;" << std::endl;
-                    }
                 }
-                else { // no delay
-                    if (n.getArchetype().isSpikeEventRequired()) {
-                        os << "group.spkCntEvnt[0] = 0;" << std::endl;
-                    }
-                    os << "group.spkCnt[0] = 0;" << std::endl;
-                }
+                genMergedGroupSpikeCountReset(os, n);
             }
             idPreNeuronReset += n.getGroups().size();
         }
@@ -1672,7 +1657,8 @@ void Backend::genVariableInit(CodeStream &os, const std::string &, const std::st
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
+void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged &, 
+                                        const Substitutions &kernelSubs, Handler handler) const
 {
     // Pre and postsynaptic ID should already be provided via parallelism
     assert(kernelSubs.hasVarSubstitution("id_pre"));

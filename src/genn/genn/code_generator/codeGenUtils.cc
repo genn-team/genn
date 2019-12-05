@@ -25,6 +25,7 @@
 #include "modelSpec.h"
 
 // GeNN code generator includes
+#include "code_generator/groupMerged.h"
 #include "code_generator/substitutions.h"
 
 //--------------------------------------------------------------------------
@@ -370,6 +371,27 @@ void functionSubstitute(std::string &code, const std::string &funcName,
             // Find start of next function to replace
             found = code.find(funcStart);
         }
+    }
+}
+
+void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n)
+{
+    if(n.getArchetype().isDelayRequired()) { // with delay
+        if(n.getArchetype().isSpikeEventRequired()) {
+            os << "group.spkCntEvnt[*group.spkQuePtr] = 0;" << std::endl;
+        }
+        if(n.getArchetype().isTrueSpikeRequired()) {
+            os << "group.spkCnt[*group.spkQuePtr] = 0;" << std::endl;
+        }
+        else {
+            os << "group.spkCnt[0] = 0;" << std::endl;
+        }
+    }
+    else { // no delay
+        if(n.getArchetype().isSpikeEventRequired()) {
+            os << "group.spkCntEvnt[0] = 0;" << std::endl;
+        }
+        os << "group.spkCnt[0] = 0;" << std::endl;
     }
 }
 
