@@ -125,7 +125,7 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
         gen.addPointerField(timePrecision + " *sT", prefix + "sT");
     }
 
-    if(!init && populationRNG && m.getArchetype().isSimRNGRequired()) {
+    if(populationRNG && m.getArchetype().isSimRNGRequired()) {
         gen.addPointerField("curandState *rng", prefix + "rng");
     }
 
