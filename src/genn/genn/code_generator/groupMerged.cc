@@ -56,6 +56,21 @@ const CurrentSourceInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInit
     assert(otherCS != ng.getCurrentSources().cend());
     return *otherCS;
 }
+//----------------------------------------------------------------------------
+std::string CodeGenerator::NeuronGroupMerged::getCurrentQueueOffset() const
+{
+    assert(getArchetype().isDelayRequired());
+
+    return "(*group.spkQuePtr * group.numNeurons)";
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::NeuronGroupMerged::getPrevQueueOffset() const
+{
+    assert(getArchetype().isDelayRequired());
+
+    const std::string numDelaySlots = std::to_string(getArchetype().getNumDelaySlots());
+    return "(((*group.spkQuePtr + " + numDelaySlots + ") % " + numDelaySlots + ") * group.numNeurons)";
+}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMerged

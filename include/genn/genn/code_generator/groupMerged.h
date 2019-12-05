@@ -75,6 +75,13 @@ public:
     //! Find the current source compatible with specified current source in archetype
     /*! **NOTE** this should only be called with neuron groups within merged group */
     const CurrentSourceInternal *getCompatibleInitCurrentSource(size_t archetypeCurrentSource, const NeuronGroupInternal &ng) const;
+    
+    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
+    std::string getCurrentQueueOffset() const;
+
+    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
+    std::string getPrevQueueOffset() const;
+
 };
 
 //----------------------------------------------------------------------------

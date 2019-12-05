@@ -118,7 +118,10 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
 
     if(m.getArchetype().isDelayRequired()) {
         gen.addField("volatile unsigned int *spkQuePtr",
-                     [&prefix](const NeuronGroupInternal &ng){ return "&" + prefix + "spkQuePtr" + ng.getName(); });
+                     [&prefix](const NeuronGroupInternal &ng)
+                     { 
+                         return "getSymbolAddress(" + prefix + "spkQuePtr" + ng.getName() + ")";
+                     });
     }
 
     if(m.getArchetype().isSpikeTimeRequired()) {
@@ -150,10 +153,10 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
             gen.addMergedInSynPointerField(precision + " *denDelayInSyn", i, init, prefix + "denDelay");
 
             gen.addField("volatile unsigned int *denDelayPtrInSyn" + std::to_string(i),
-                            [&prefix, i, m](const NeuronGroupInternal &ng)
-                            {
-                                return "getSymbolAddress(" + prefix + "denDelayPtr" + m.getCompatibleMergedInSyn(i, ng)->getPSModelTargetName() + ")";
-                            });
+                         [&prefix, i, m](const NeuronGroupInternal &ng)
+                         {
+                             return "getSymbolAddress(" + prefix + "denDelayPtr" + m.getCompatibleMergedInSyn(i, ng)->getPSModelTargetName() + ")";
+                         });
         }
 
         // Add pointers to state variables
@@ -205,7 +208,10 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         if(m.getArchetype().isDendriticDelayRequired()) {
             gen.addPSPointerField(precision + " *denDelay", prefix + "denDelay");
             gen.addField("volatile unsigned int *denDelayPtr",
-                            [&backend](const SynapseGroupInternal &sg){ return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")"; });
+                         [&backend](const SynapseGroupInternal &sg)
+                         { 
+                             return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")"; 
+                         });
         }
         else {
             gen.addPSPointerField(precision + " *inSyn", prefix + "inSyn");
@@ -226,6 +232,26 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     else if(role == MergedSynapseStruct::PostsynapticUpdate) {
         gen.addTrgPointerField("unsigned int* trgSpkCnt", prefix + "glbSpkCnt");
         gen.addTrgPointerField("unsigned int* trgSpk", prefix + "glbSpk");
+    }
+
+    if(role == MergedSynapseStruct::PresynapticUpdate || role == MergedSynapseStruct::PostsynapticUpdate
+       || role == MergedSynapseStruct::SynapseDynamics)
+    {
+        if(m.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+            gen.addField("volatile unsigned int *srcSpkQuePtr",
+                         [&backend](const SynapseGroupInternal &sg)
+                         {
+                             return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + sg.getSrcNeuronGroup()->getName() + ")";
+                         });
+        }
+
+        if(m.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+            gen.addField("volatile unsigned int *trgSpkQuePtr",
+                         [&backend](const SynapseGroupInternal &sg)
+                         {
+                             return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + sg.getTrgNeuronGroup()->getName() + ")";
+                         });
+        }
     }
 
     // Add pointers to connectivity data

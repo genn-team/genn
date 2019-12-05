@@ -267,20 +267,6 @@ bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamef
     return false;
 }
 //----------------------------------------------------------------------------
-std::string NeuronGroup::getCurrentQueueOffset(const std::string &devPrefix) const
-{
-    assert(isDelayRequired());
-
-    return "(" + devPrefix + "spkQuePtr" + getName() + " * " + std::to_string(getNumNeurons()) + ")";
-}
-//----------------------------------------------------------------------------
-std::string NeuronGroup::getPrevQueueOffset(const std::string &devPrefix) const
-{
-    assert(isDelayRequired());
-
-    return "(((" + devPrefix + "spkQuePtr" + getName() + " + " + std::to_string(getNumDelaySlots() - 1) + ") % " + std::to_string(getNumDelaySlots()) + ") * " + std::to_string(getNumNeurons()) + ")";
-}
-//----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
     // Return flag corresponding to variable

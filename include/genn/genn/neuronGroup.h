@@ -155,13 +155,7 @@ protected:
 
     //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
-
-    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
-    std::string getCurrentQueueOffset(const std::string &devPrefix) const;
-
-    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
-    std::string getPrevQueueOffset(const std::string &devPrefix) const;
-
+    
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 

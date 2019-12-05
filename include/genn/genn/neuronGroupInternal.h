@@ -33,8 +33,6 @@ public:
     using NeuronGroup::getDerivedParams;
     using NeuronGroup::getSpikeEventCondition;
     using NeuronGroup::isParamRequiredBySpikeEventCondition;
-    using NeuronGroup::getCurrentQueueOffset;
-    using NeuronGroup::getPrevQueueOffset;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::canBeMerged;
     using NeuronGroup::canInitBeMerged;
