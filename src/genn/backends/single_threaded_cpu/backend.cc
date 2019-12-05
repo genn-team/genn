@@ -306,10 +306,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
                     // Get number of postsynaptic spikes
                     if (s.getArchetype().getTrgNeuronGroup()->isDelayRequired() && s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                        os << "const unsigned int numSpikes = group.spkCnt[postReadDelaySlot];" << std::endl;
+                        os << "const unsigned int numSpikes = group.trgSpkCnt[postReadDelaySlot];" << std::endl;
                     }
                     else {
-                        os << "const unsigned int numSpikes = group.spkCnt[0];" << std::endl;
+                        os << "const unsigned int numSpikes = group.trgSpkCnt[0];" << std::endl;
                     }
 
                     // Loop through postsynaptic spikes
@@ -318,7 +318,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                         CodeStream::Scope b(os);
 
                         const std::string offsetTrueSpkPost = (s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired() && s.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
-                        os << "const unsigned int spike = group.spk[" << offsetTrueSpkPost << "j];" << std::endl;
+                        os << "const unsigned int spike = group.trgSpk[" << offsetTrueSpkPost << "j];" << std::endl;
 
                         // Loop through column of presynaptic neurons
                         if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -462,7 +462,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                         
                         // Add function to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    "group.ind[(i * group.rwoStride) + (group.rowLength[i]++)] = $(0)");
+                                                    "group.ind[(i * group.rowStride) + (group.rowLength[i]++)] = $(0)");
 
                         sgSparseConnectHandler(os, s, popSubs);
                     }
@@ -649,7 +649,13 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
         os << std::endl;
     }
-
+    os << "template<class T>" << std::endl;
+    os << "T *getSymbolAddress(T &devSymbol)";
+    {
+        CodeStream::Scope b(os);
+        os << "return &devSymbol;" << std::endl;
+    }
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpecMerged &) const
@@ -707,6 +713,16 @@ void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const s
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, VarLocation) const
 {
+}
+//--------------------------------------------------------------------------
+void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
+{
+    os << "Merged" << suffix << "Group" << idx << " merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
+{
+    os << "std::copy_n(group, " << numGroups << ", merged" << suffix << "Group" << idx << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
@@ -919,10 +935,10 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupMerged &sg,
     // Detect spike events or spikes and do the update
     os << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
     if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "for (unsigned int i = 0; i < group.spkCnt" << eventSuffix << "[preReadDelaySlot]; i++)";
+        os << "for (unsigned int i = 0; i < group.srcSpkCnt" << eventSuffix << "[preReadDelaySlot]; i++)";
     }
     else {
-        os << "for (unsigned int i = 0; i < group.spkCn" << eventSuffix << "[0]; i++)";
+        os << "for (unsigned int i = 0; i < group.srcSpkCnt" << eventSuffix << "[0]; i++)";
     }
     {
         CodeStream::Scope b(os);
@@ -932,7 +948,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupMerged &sg,
         }
 
         const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-        os << "const unsigned int ipre = group.spk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
+        os << "const unsigned int ipre = group.srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
 
         // If this is a spike-like event, insert threshold check for this presynaptic neuron
         if (!trueSpike) {
@@ -1021,7 +1037,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupMerged &sg,
                 CodeStream::Scope b(os);
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "const uint64_t gid = (ipre * (uin64_t)group.numTrgNeurons + ipost);" << std::endl;
+                    os << "const uint64_t gid = (ipre * (uint64_t)group.numTrgNeurons + ipost);" << std::endl;
                     os << "if (B(group.gp[gid / 32], gid & 31))" << CodeStream::OB(20);
                 }
 

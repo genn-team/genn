@@ -13,6 +13,7 @@
 #include "variableMode.h"
 
 // GeNN code generator includes
+#include "backendBase.h"
 #include "codeStream.h"
 #include "teeStream.h"
 
@@ -141,7 +142,7 @@ inline size_t padSize(size_t size, size_t blockSize)
 void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n);
 
 template<typename T>
-void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const std::string &suffix)
+void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const std::string &suffix, const BackendBase &backend)
 {
     // Loop through merged neuron groups
     std::stringstream mergedGroupArrayStream;
@@ -154,16 +155,14 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const std:
         const size_t idx = g.getIndex();
         const size_t numGroups = g.getGroups().size();
 
-        // **TODO** backend-specific
-        mergedGroupArray << "__device__ __constant__ Merged" << suffix << "Group" << idx << " dd_merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
+        // Implement merged group array
+        backend.genMergedGroupImplementation(mergedGroupArray, suffix, idx, numGroups);
 
         // Write function to update
         mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(const Merged" << suffix << "Group" << idx << " *group)";
         {
             CodeStream::Scope b(mergedGroupFunc);
-            // **TODO** backend-specific
-            mergedGroupFunc << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(dd_merged" << suffix << "Group" << idx << ", group, ";
-            mergedGroupFunc << numGroups << " * sizeof(Merged" << suffix << "Group" << idx << ")));" << std::endl;
+            backend.genMergedGroupPush(mergedGroupFunc, suffix, idx, numGroups);
         }
     }
 

@@ -155,6 +155,12 @@ public:
     virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
 
+    //! Generate code for declaring merged group data to the 'device'
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+
+    //! Generate code for pushing merged group data to the 'device'
+    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
@@ -183,7 +189,7 @@ public:
     {
         genCurrentSpikePull(os, ng, true);
     }
-
+    
     virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                                       CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
@@ -201,9 +207,10 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
 
-    virtual std::string getVarPrefix() const override{ return "dd_"; }
+    virtual std::string getVarPrefix() const override{ return "d_"; }
 
     virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
+    virtual bool isPopulationRNGRequired() const { return true; }
     virtual bool isSynRemapRequired() const override{ return true; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
@@ -289,7 +296,7 @@ private:
                     CodeStream::Scope b(os);
                     os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                    os << "if(id < dd_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                    os << "if(id < d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
                     {
                         CodeStream::Scope b(os);
                         os << "hi = mid;" << std::endl;
@@ -302,10 +309,10 @@ private:
                 }
 
                 // Use this to get reference to merged group structure
-                os << "const auto &group = dd_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+                os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
                 // Use this and starting thread of merged group to calculate local id within neuron group
-                os << "const unsigned int lid = id - (dd_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+                os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
                 popSubs.addVarSubstitution("id", "lid");
                 handler(os, gMerge, popSubs);
 

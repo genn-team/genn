@@ -201,10 +201,10 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
-    genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit");
-    genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit");
+    genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit", backend);
 
     backend.genInit(os, modelMerged,
         // Local neuron group initialisation
@@ -266,7 +266,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
                             os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                const std::string denDelayIndex = "(d * " + std::to_string(sg->getTrgNeuronGroup()->getNumNeurons()) + ") + " + varSubs["id"];
+                                const std::string denDelayIndex = "(d * group.numNeurons) + " + varSubs["id"];
                                 os << "group.denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         });

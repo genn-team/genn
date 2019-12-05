@@ -88,7 +88,7 @@ void genGroupStartIDs(CodeGenerator::CodeStream &os, size_t &idStart, size_t blo
     // Loop through merged groups
     for(const auto &m : mergedGroups) {
         // Declare array of starting thread indices for each neuron group
-        os << "__device__ __constant__ unsigned int dd_merged" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
+        os << "__device__ __constant__ unsigned int d_merged" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
         for(const auto &ng : m.getGroups()) {
             os << idStart << ", ";
             idStart += CodeGenerator::padSize(getNumThreads(ng.get()), blockSize);
@@ -113,7 +113,7 @@ template<typename T>
 void genMergedResetKernelDataStructures(CodeGenerator::CodeStream &os, const std::string prefix, const std::vector<T> &mergedGroups)
 {
     // Declare array of indices (into mergedXXXXGroup arrays)
-    os << "__device__ __constant__ uint16_t dd_merged" << prefix << "GroupThreadIndices[] = {";
+    os << "__device__ __constant__ uint16_t d_merged" << prefix << "GroupThreadIndices[] = {";
     
     // Generate indices for these groups
     for(const auto &m : mergedGroups) {
@@ -220,10 +220,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 CodeStream::Scope b(os);
 
                 // Get the index of the group within the merged group
-                os << "const unsigned int groupIndex = dd_mergedNeuronSpikeQueueUpdateGroupThreadIndices[id];" << std::endl;
+                os << "const unsigned int groupIndex = d_mergedNeuronSpikeQueueUpdateGroupThreadIndices[id];" << std::endl;
 
                 // Use this to get reference to merged group structure
-                os << "const auto &group = dd_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[groupIndex]; " << std::endl;
+                os << "const auto &group = d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[groupIndex]; " << std::endl;
 
                 if(n.getArchetype().isDelayRequired()) { // with delay
                     os << "*group.spkQuePtr  = (*group.spkQuePtr + 1) % group.numDelaSlots;" << std::endl;
@@ -287,10 +287,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 if (ng.getArchetype().isDelayRequired()) {
                     assert(false);
                     // We should READ from delay slot before spkQuePtr
-                    os << "const unsigned int readDelayOffset = " << ng.getArchetype().getPrevQueueOffset("dd_") << ";" << std::endl;
+                    os << "const unsigned int readDelayOffset = " << ng.getArchetype().getPrevQueueOffset("d_") << ";" << std::endl;
 
                     // And we should WRITE to delay slot pointed to be spkQuePtr
-                    os << "const unsigned int writeDelayOffset = " << ng.getArchetype().getCurrentQueueOffset("dd_") << ";" << std::endl;
+                    os << "const unsigned int writeDelayOffset = " << ng.getArchetype().getCurrentQueueOffset("d_") << ";" << std::endl;
                 }
                 os << std::endl;
 
@@ -473,7 +473,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                         {
                             CodeStream::Scope b(os);
 
-                            os << "dd_denDelayPtr" << sg->getPSModelTargetName() << " = (dd_denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                            os << "d_denDelayPtr" << sg->getPSModelTargetName() << " = (d_denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
                         }
                     }
                 }
@@ -547,14 +547,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                         assert(false);
-                        //os << "const unsigned int preReadDelaySlot = " << sg.getArchetype().getPresynapticAxonalDelaySlot("dd_") << ";" << std::endl;
+                        //os << "const unsigned int preReadDelaySlot = " << sg.getArchetype().getPresynapticAxonalDelaySlot("d_") << ";" << std::endl;
                         os << "const unsigned int preReadDelayOffset = preReadDelaySlot * group.numSrcNeurons;" << std::endl;
                     }
 
                     // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                     if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
                         assert(false);
-                        //os << "const unsigned int postReadDelayOffset = " << sg.getArchetype().getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getArchetype().getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        //os << "const unsigned int postReadDelayOffset = " << sg.getArchetype().getPostsynapticBackPropDelaySlot("d_") << " * " << sg.getArchetype().getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
                     // Generate preamble
@@ -613,13 +613,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                         assert(false);
-                        //os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("dd_") << " * " << sg.getArchetype().getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        //os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("d_") << " * " << sg.getArchetype().getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
                     // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                     if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
                         assert(false);
-                        //os << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot("dd_") << ";" << std::endl;
+                        //os << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot("d_") << ";" << std::endl;
                         //os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
@@ -707,13 +707,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                         assert(false);
-                        //os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("dd_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        //os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("d_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
                     // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                     if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
                         assert(false);
-                        //os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        //os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("d_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
                     }
 
                     Substitutions synSubs(&popSubs);
@@ -836,7 +836,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             os << "if(threadIdx.x == 0)";
             {
                 CodeStream::Scope b(os);
-                os << "curand_init(deviceRNGSeed, 0, 0, &dd_rng[0]);" << std::endl;
+                os << "curand_init(deviceRNGSeed, 0, 0, &d_rng);" << std::endl;
             }
         }
         os << std::endl;
@@ -874,7 +874,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
                     if(ng.getArchetype().isInitRNGRequired()) {
-                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "curandStatePhilox4_32_10_t initRNG = d_rng;" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
                         // Add substitution for RNG
@@ -900,7 +900,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
                     if(sg.getArchetype().isWUInitRNGRequired()) {
-                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "curandStatePhilox4_32_10_t initRNG = d_rng;" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
 
                         // Add substitution for RNG
@@ -969,7 +969,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
                     if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-                        os << "curandStatePhilox4_32_10_t connectivityRNG = dd_rng[0];" << std::endl;
+                        os << "curandStatePhilox4_32_10_t connectivityRNG = d_rng;" << std::endl;
                         os << "skipahead_sequence((unsigned long long)id, &connectivityRNG);" << std::endl;
 
                         // Add substitution for RNG
@@ -1013,7 +1013,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                     // make copy of global phillox RNG and skip ahead by thread id
                     // **NOTE** not LOCAL id
                     if(sg.getArchetype().isWUInitRNGRequired()) {
-                        os << "curandStatePhilox4_32_10_t initRNG = dd_rng[0];" << std::endl;
+                        os << "curandStatePhilox4_32_10_t initRNG = d_rng;" << std::endl;
                         os << "skipahead_sequence((unsigned long long)" << numStaticInitThreads << " + id, &initRNG);" << std::endl;
 
                         // Add substitution for RNG
@@ -1437,7 +1437,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "#pragma warning(disable: 4297)" << std::endl;
 #endif
     os << "template<class T>" << std::endl;
-    os << "T *getSymbolAddress(const T &devSymbol)";
+    os << "T *getSymbolAddress(T &devSymbol)";
     {
         CodeStream::Scope b(os);
         os << "void *devPtr;" << std::endl;
@@ -1506,7 +1506,7 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
         }
         // Otherwise we just need a device variable, made volatile for safety
         else {
-            definitionsInternal << "EXPORT_VAR __device__ volatile " << type << " dd_" << name << ";" << std::endl;
+            definitionsInternal << "EXPORT_VAR __device__ volatile " << type << " d_" << name << ";" << std::endl;
         }
     }
 }
@@ -1523,7 +1523,7 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
         }
         // Otherwise we just need a device variable, made volatile for safety
         else {
-            os << "__device__ volatile " << type << " dd_" << name << ";" << std::endl;
+            os << "__device__ volatile " << type << " d_" << name << ";" << std::endl;
         }
     }
 }
@@ -1635,6 +1635,17 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
+{
+    os << "__device__ __constant__ Merged" << suffix << "Group" << idx << " d_merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
+{
+    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(d_merged" << suffix << "Group" << idx << ", group, ";
+    os << numGroups << " * sizeof(Merged" << suffix << "Group" << idx << ")));" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
@@ -1730,27 +1741,16 @@ MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsI
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
-    definitionsInternal << "EXPORT_VAR curandStatePhilox4_32_10_t *d_rng;" << std::endl;
-    definitionsInternal << "EXPORT_VAR __device__ curandStatePhilox4_32_10_t *dd_rng;" << std::endl;
+    definitionsInternal << "EXPORT_VAR __device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
     // Implement global Phillox RNG
-    runner << "curandStatePhilox4_32_10_t *d_rng;" << std::endl;
-    runner << "__device__ curandStatePhilox4_32_10_t *dd_rng;" << std::endl;
-
-    // Allocate device memory for global Phillox RNG and copy to device symbol
-    allocations << "void *rngDevPtr;" << std::endl;
-    allocations << "CHECK_CUDA_ERRORS(cudaMalloc(&d_rng, sizeof(curandStatePhilox4_32_10_t)));" << std::endl;
-    allocations << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&rngDevPtr, dd_rng));" << std::endl;
-    allocations << "CHECK_CUDA_ERRORS(cudaMemcpy(rngDevPtr, &d_rng, sizeof(void*), cudaMemcpyHostToDevice));" << std::endl;
-
-    // Add free call
-    genVariableFree(free, "rng", VarLocation::DEVICE);
+    runner << "__device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
     return MemAlloc::device(getSize("curandStatePhilox4_32_10_t"));
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                               const std::string &name, size_t count) const
+                                   const std::string &name, size_t count) const
 {
     // Create an array or XORWOW RNGs
     return genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);

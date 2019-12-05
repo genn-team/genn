@@ -201,6 +201,12 @@ public:
     virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
 
+    //! Generate code for declaring merged group data to the 'device'
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
+    
+    //! Generate code for pushing merged group data to the 'device'
+    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
+
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
@@ -272,6 +278,9 @@ public:
 
     //! Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?
     virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
+
+    //! Different backends use different RNGs for different things. Does this one require population RNGs?
+    virtual bool isPopulationRNGRequired() const = 0;
 
     //! Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure?
     virtual bool isSynRemapRequired() const = 0;

@@ -72,6 +72,13 @@ public:
     virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
 
+    //! Generate code for declaring merged group data to the 'device'
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+    
+    //! Generate code for pushing merged group data to the 'device'
+    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+
+
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
@@ -87,7 +94,6 @@ public:
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const override;
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const override;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const override;
-
 
     virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -108,6 +114,7 @@ public:
     virtual std::string getVarPrefix() const override{ return ""; }
 
     virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
+    virtual bool isPopulationRNGRequired() const { return false; }
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 

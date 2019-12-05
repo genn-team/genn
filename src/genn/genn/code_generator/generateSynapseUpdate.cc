@@ -106,9 +106,9 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate");
-    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate");
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics");
+    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics", backend);
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, modelMerged,
