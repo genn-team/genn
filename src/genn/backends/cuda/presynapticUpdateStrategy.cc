@@ -577,7 +577,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
             const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(modelMerged);
 
             // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
-            os << "curandStatePhilox4_32_10_t connectRNG = dd_rng[0];" << std::endl;
+            os << "curandStatePhilox4_32_10_t connectRNG = d_rng;" << std::endl;
             os << "skipahead_sequence((unsigned long long)(";
             if(numThreadsPerSpike > 1) {
                 os << "(preInd * " << numThreadsPerSpike << ") + thread + " << rngStreamOffset;
