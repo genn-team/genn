@@ -151,7 +151,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         CodeStream::Scope b(os);
 
         if (!wu->getSimSupportCode().empty()) {
-            os << "using namespace " << sg.getArchetype().getName() << "_weightupdate_simCode;" << std::endl;
+            os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
         }
 
         os << "const unsigned int preInd = group.srcSpk"  << eventSuffix;
@@ -348,7 +348,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                 }
 
                 if (!wu->getSimSupportCode().empty()) {
-                    os << "using namespace " << sg.getArchetype().getName() << "_weightupdate_simCode;" << std::endl;
+                    os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
                 }
                 if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << "if(";
@@ -547,7 +547,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         synSubs.addVarSubstitution("id_pre", "preInd");
 
         if (!wu->getSimSupportCode().empty()) {
-            os << "using namespace " << sg.getArchetype().getName() << "_weightupdate_simCode;" << std::endl;
+            os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
         }
 
 
@@ -749,7 +749,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &, const S
                 CodeStream::Scope b(os);
 
                 if (!wu->getSimSupportCode().empty()) {
-                    os << "using namespace " << sg.getArchetype().getName() << "_weightupdate_simCode;" << std::endl;
+                    os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
                 }
                 if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << "if(";

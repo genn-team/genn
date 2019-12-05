@@ -74,21 +74,6 @@ void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecMerged &m
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-
-        if (!wu->getLearnPostSupportCode().empty()) {
-            os << "namespace " << s.first << "_weightupdate_simLearnPost";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(wu->getLearnPostSupportCode(), model.getPrecision()) << std::endl;
-            }
-        }
-        if (!wu->getSynapseDynamicsSuppportCode().empty()) {
-            os << "namespace " << s.first << "_weightupdate_synapseDynamics";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(wu->getSynapseDynamicsSuppportCode(), model.getPrecision()) << std::endl;
-            }
-        }
         if (!psm->getSupportCode().empty()) {
             os << "namespace " << s.first << "_postsyn";
             {

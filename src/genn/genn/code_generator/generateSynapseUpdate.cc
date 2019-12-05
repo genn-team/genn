@@ -178,7 +178,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
         [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
         {
             if (!sg.getArchetype().getWUModel()->getLearnPostSupportCode().empty()) {
-                os << " using namespace " << sg.getArchetype().getName() << "_weightupdate_simLearnPost;" << std::endl;
+                os << " using namespace merged" << sg.getIndex() << "_weightupdate_simLearnPost;" << std::endl;
             }
 
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getLearnPostCode(), "learnPostCode",
@@ -188,7 +188,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
         [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
         {
             if (!sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode().empty()) {
-                os << " using namespace " << sg.getArchetype().getName() << "_weightupdate_synapseDynamics;" << std::endl;
+                os << " using namespace merged" << sg.getIndex() << "_weightupdate_synapseDynamics;" << std::endl;
             }
 
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getSynapseDynamicsCode(), "synapseDynamics",

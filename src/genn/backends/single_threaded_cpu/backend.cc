@@ -943,8 +943,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupMerged &sg,
     {
         CodeStream::Scope b(os);
         if (!wu->getSimSupportCode().empty()) {
-            assert(false);
-            os << " using namespace " << sg.getArchetype().getName() << "_weightupdate_simCode;" << std::endl;
+            os << " using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
         }
 
         const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";

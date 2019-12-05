@@ -176,7 +176,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 pdCode = ensureFtype(pdCode, model.getPrecision());
 
                 if (!psm->getSupportCode().empty()) {
-                    os << CodeStream::OB(29) << " using namespace " << sg->getPSModelTargetName() << "_postsyn;" << std::endl;
+                    assert(false);
+                    //os << CodeStream::OB(29) << " using namespace " << sg->getPSModelTargetName() << "_postsyn;" << std::endl;
                 }
 
                 os << psCode << std::endl;
@@ -233,8 +234,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
             }
 
             if (!nm->getSupportCode().empty()) {
-                assert(false);
-                //os << " using namespace " << ng.getName() << "_neuron;" << std::endl;
+                os << " using namespace merged" << ng.getIndex() << "_neuron;" << std::endl;
             }
 
             // If a threshold condition is provided
@@ -392,37 +392,6 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                     os << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
                 }
             }
-
-            /*for (const auto &m : ng.getMergedInSyn()) {
-                const auto *sg = m.first;
-                const auto *psm = sg->getPSModel();
-
-                Substitutions inSynSubs(&neuronSubs);
-                inSynSubs.addVarSubstitution("inSyn", "linSyn" + sg->getPSModelTargetName());
-                addPostsynapticModelSubstitutions(inSynSubs, sg);
-
-                std::string pdCode = psm->getDecayCode();
-                inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : " + sg->getPSModelTargetName());
-                pdCode = ensureFtype(pdCode, model.getPrecision());
-
-                os << "// the post-synaptic dynamics" << std::endl;
-                if (!psm->getSupportCode().empty()) {
-                    os << CodeStream::OB(29) << " using namespace " << sg->getName() << "_postsyn;" << std::endl;
-                }
-                os << pdCode << std::endl;
-                if (!psm->getSupportCode().empty()) {
-                    os << CodeStream::CB(29) << " // namespace bracket closed" << std::endl;
-                }
-
-                os << backend.getVarPrefix() << "inSyn"  << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "] = linSyn" << sg->getPSModelTargetName() << ";" << std::endl;
-
-                // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
-                for (const auto &v : psm->getVars()) {
-                    if(v.access == VarAccess::READ_WRITE) {
-                        os << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << sg->getPSModelTargetName() << ";" << std::endl;
-                    }
-                }
-            }*/
         },
         // WU var update handler
         [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
