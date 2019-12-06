@@ -118,9 +118,8 @@ void genMergedResetKernelDataStructures(CodeGenerator::CodeStream &os, const std
     // Generate indices for these groups
     for(const auto &m : mergedGroups) {
         // Loop through neuron groups within merged neuron group
-        size_t n = 0;
-        for(const auto &ng : m.getGroups()) {
-            os << n++ << ", ";
+        for(size_t i = 0; i < m.getGroups().size(); i++) {
+            os << i << ", ";
         }
     };
 
@@ -1420,7 +1419,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
 {
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
@@ -1728,7 +1727,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
+MemAlloc Backend::genGlobalRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
