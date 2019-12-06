@@ -514,8 +514,10 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         os << "const unsigned int numPostPerThread =  (group.numTrgNeurons + " << numThreadsPerSpike << " - 1) / " << numThreadsPerSpike << ";" << std::endl;
 
         // Calculate the starting position and length of the sub-row to process on this thread
+        // **TODO** fast-divide style optimisations here
         os << "const unsigned int idPostStart = thread * numPostPerThread;" << std::endl;
-        os << "const unsigned int numPost = (thread == " << (numThreadsPerSpike - 1) << ") ? (group.numTrgNeurons % numPostPerThread) : numPostPerThread;" << std::endl;
+        os << "const unsigned int postRemainder = group.numTrgNeurons % numPostPerThread;" << std::endl;
+        os << "const unsigned int numPost = (postRemainder == 0 || thread < " << (numThreadsPerSpike - 1) << ") ? numPostPerThread : postRemainder;" << std::endl;
     }
     else {
         os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
