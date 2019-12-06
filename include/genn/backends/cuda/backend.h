@@ -288,31 +288,38 @@ private:
                 CodeStream::Scope b(os);
                 Substitutions popSubs(&kernelSubs);
 
-                // Perform bisect operation to get index of merged struct
-                os << "unsigned int lo = 0;" << std::endl;
-                os << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
-                os << "while(lo < hi)" << std::endl;
-                {
-                    CodeStream::Scope b(os);
-                    os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
-
-                    os << "if(id < d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "hi = mid;" << std::endl;
-                    }
-                    os << "else";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "lo = mid + 1;" << std::endl;
-                    }
+                if(gMerge.getGroups().size() == 1) {
+                    os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[0];" << std::endl;
+                    os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
                 }
+                else {
+                    // Perform bisect operation to get index of merged struct
+                    os << "unsigned int lo = 0;" << std::endl;
+                    os << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
+                    os << "while(lo < hi)" << std::endl;
+                    {
+                        CodeStream::Scope b(os);
+                        os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                // Use this to get reference to merged group structure
-                os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+                        os << "if(id < d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "hi = mid;" << std::endl;
+                        }
+                        os << "else";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "lo = mid + 1;" << std::endl;
+                        }
+                    }
 
-                // Use this and starting thread of merged group to calculate local id within neuron group
-                os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+                    // Use this to get reference to merged group structure
+                    os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+
+                    // Use this and starting thread of merged group to calculate local id within neuron group
+                    os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+
+                }
                 popSubs.addVarSubstitution("id", "lid");
                 handler(os, gMerge, popSubs);
 
