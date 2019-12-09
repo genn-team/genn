@@ -280,6 +280,10 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
                 gen.addTrgPointerField(v.type + "* " + v.name + "Post", prefix + v.name);
             }
         }
+
+        // Add pre and postsynaptic variables to struct
+        gen.addVars(wum->getPreVars(), prefix);
+        gen.addVars(wum->getPostVars(), prefix);
     }
 
     // Add pointers to connectivity data
