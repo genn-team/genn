@@ -60,16 +60,13 @@ const CurrentSourceInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInit
 std::string CodeGenerator::NeuronGroupMerged::getCurrentQueueOffset() const
 {
     assert(getArchetype().isDelayRequired());
-
     return "(*group.spkQuePtr * group.numNeurons)";
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronGroupMerged::getPrevQueueOffset() const
 {
     assert(getArchetype().isDelayRequired());
-
-    const std::string numDelaySlots = std::to_string(getArchetype().getNumDelaySlots());
-    return "(((*group.spkQuePtr + " + numDelaySlots + ") % " + numDelaySlots + ") * group.numNeurons)";
+    return "(((*group.spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * group.numNeurons)";
 }
 
 //----------------------------------------------------------------------------
