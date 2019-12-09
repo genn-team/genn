@@ -434,7 +434,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
         genMergedKernelDataStructures(
-            os, m_KernelBlockSizes[KernelPostsynapticUpdate],
+            os, m_KernelBlockSizes[KernelSynapseDynamicsUpdate],
             modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics",
             [this](const SynapseGroupInternal &sg)
             {
