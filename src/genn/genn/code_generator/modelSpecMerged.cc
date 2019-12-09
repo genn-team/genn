@@ -118,7 +118,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
 
     LOGD << "Merging neuron groups which require their spike queues updating:";
     createMergedGroups(model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
-                       [](const NeuronGroupInternal &ng){ return true; },
+                       [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b)
                        {
                            return ((a.getNumDelaySlots() == b.getNumDelaySlots())
