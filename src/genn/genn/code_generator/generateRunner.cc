@@ -268,7 +268,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         for(const auto &v : preVars) {
             // If variable is referenced in code string, add source pointer
             if(code.find("$(" + v.name + "_pre)") != std::string::npos) {
-                gen.addSrcPointerField(v.type + "* " + v.name + "Source", prefix + v.name);
+                gen.addSrcPointerField(v.type + "* " + v.name + "Pre", prefix + v.name);
             }
         }
 
