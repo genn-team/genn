@@ -174,6 +174,12 @@ private:
     //! Update which variables require queues based on piece of code
     void updateVarQueues(const std::string &code, const std::string &suffix);
 
+    //! Helper to get vector of incoming synapse groups which have postsynaptic update code
+    std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
+
+    //! Helper to get vector of incoming synapse groups which have presynaptic update code
+    std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

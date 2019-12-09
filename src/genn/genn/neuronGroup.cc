@@ -14,6 +14,41 @@
 #include "gennUtils.h"
 
 // ------------------------------------------------------------------------
+// Anonymous namespace
+// ------------------------------------------------------------------------
+namespace
+{
+template<typename T, typename M>
+bool checkCompatibleUnordered(const std::vector<T> &ours, std::vector<T> &others, M canMerge)
+{
+     // If both groups have the same number
+    if(ours.size() == others.size()) {
+        // Loop through our groups
+        for(const auto a : ours) {
+            // If a compatible group can be found amongst the other vector, remove it
+            const auto b = std::find_if(others.cbegin(), others.cend(),
+                                        [a, canMerge](T b)
+                                        {
+                                            return canMerge(a, b);
+                                        });
+            if(b != others.cend()) {
+                others.erase(b);
+            }
+            // Otherwise, these can't be merged - return false
+            else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+}   // Anonymous namespace
+
+// ------------------------------------------------------------------------
 // NeuronGroup
 // ------------------------------------------------------------------------
 void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
@@ -273,18 +308,6 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
     return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
-{
-    // Loop through variables
-    const auto vars = getNeuronModel()->getVars();
-    for(size_t i = 0; i < vars.size(); i++) {
-        // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(vars[i].name + suffix) != std::string::npos) {
-            m_VarQueueRequired[i] = true;
-        }
-    }
-}
-//----------------------------------------------------------------------------
 bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
 {
     if(getNeuronModel()->canBeMerged(other.getNeuronModel())
@@ -294,53 +317,49 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
        && (getSpikeEventCondition() == other.getSpikeEventCondition())
        && (m_VarQueueRequired == other.m_VarQueueRequired))
     {
-        // If both groups have the same NUMBER of current sources
-        if(getCurrentSources().size() == other.getCurrentSources().size()) {
-            // Make temporary copies of other neuron group's current sources
-            auto otherCurrentSources = other.getCurrentSources();
 
-            // Loop through our current sources
-            for(const auto *cs : getCurrentSources()) {
-                // If a compatible current source can be found amongst the other neuron group's current sources, remove it
-                const auto otherCS = std::find_if(otherCurrentSources.cbegin(), otherCurrentSources.cend(),
-                                                  [cs](CurrentSourceInternal *otherCS) 
-                                                  { 
-                                                      return cs->canBeMerged(*otherCS); 
-                                                  });
-                if(otherCS != otherCurrentSources.cend()) {
-                    otherCurrentSources.erase(otherCS);
-                }
-                // Otherwise, these can't be merged - return false
-                else {
-                    return false;
-                }
-            }
-        }
-        else {
+        // Check if, by reshuffling, all current sources are compatible
+        auto otherCurrentSources = other.getCurrentSources();
+        if(!checkCompatibleUnordered(getCurrentSources(), otherCurrentSources,
+                                     [](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
+                                     {
+                                         return a->canBeMerged(*b);
+                                     }))
+        {
             return false;
         }
 
-        // If both groups have the same number of incoming synapse groups after merging
-        auto otherMergedInSyn = other.getMergedInSyn();
-        if(getMergedInSyn().size() == otherMergedInSyn.size()) {
-            // Loop through our incoming synapse groups
-            for(const auto &syn : getMergedInSyn()) {
-                // If a compatible postsynaptic model can be found amongst the other neuron group's current sources, remove it
-                const auto otherSyn = std::find_if(otherMergedInSyn.cbegin(), otherMergedInSyn.cend(),
-                                                   [syn](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &m)
-                                                   { 
-                                                       return syn.first->canPSBeMerged(*m.first);
-                                                   });
-                if(otherSyn != otherMergedInSyn.cend()) {
-                    otherMergedInSyn.erase(otherSyn);
-                }
-                // Otherwise, these can't be merged - return false
-                else {
-                    return false;
-                }
-            }
+        // Check if, by reshuffling, all incoming synapse groups with post code are mergable
+        auto otherInSynWithPostCode = other.getInSynWithPostCode();
+        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSynWithPostCode,
+                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
+                                     {
+                                         return a->canWUPostBeMerged(*b);
+                                     }))
+        {
+            return false;
         }
-        else {
+
+        // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
+        auto otherOutSynWithPreCode = other.getOutSynWithPreCode();
+        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSynWithPreCode,
+                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
+                                     {
+                                         return a->canWUPreBeMerged(*b);
+                                     }))
+        {
+            return false;
+        }
+
+        // Check if, by reshuffling, all merged incoming synapses are compatible
+        auto otherMergedInSyn = other.getMergedInSyn();
+        if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
+                                     [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &a,
+                                        const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &b)
+                                     {
+                                         return a.first->canPSBeMerged(*b.first);
+                                     }))
+        {
             return false;
         }
 
@@ -365,55 +384,82 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
             }
         }
 
-        // If both groups have the same number of incoming synapse groups after merging
-        auto otherMergedInSyn = other.getMergedInSyn();
-        if(getMergedInSyn().size() == otherMergedInSyn.size()) {
-            // Loop through our incoming synapse groups
-            for(const auto &syn : getMergedInSyn()) {
-                // If a compatible postsynaptic model can be found amongst the other neuron group's current sources, remove it
-                const auto otherSyn = std::find_if(otherMergedInSyn.cbegin(), otherMergedInSyn.cend(),
-                                                   [syn](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &m)
-                                                   {
-                                                       return syn.first->canPSInitBeMerged(*m.first);
-                                                   });
-                if(otherSyn != otherMergedInSyn.cend()) {
-                    otherMergedInSyn.erase(otherSyn);
-                }
-                // Otherwise, these can't be merged - return false
-                else {
-                    return false;
-                }
-            }
-        }
-        else {
-            return false;
-        }
 
         // If both groups have the same number of current sources
         auto otherCurrentSources = other.getCurrentSources();
-        if(getCurrentSources().size() == otherCurrentSources.size()) {
-            // Loop through our current sources
-            for(const auto *cs : getCurrentSources()) {
-                // If a compatible current sourcecan be found amongst the other neuron group's current sources, remove it
-                const auto otherCS = std::find_if(otherCurrentSources.cbegin(), otherCurrentSources.cend(),
-                                                  [cs](const CurrentSourceInternal *m)
-                                                  {
-                                                      return cs->canInitBeMerged(*m);
-                                                  });
-                if(otherCS != otherCurrentSources.cend()) {
-                    otherCurrentSources.erase(otherCS);
-                }
-                // Otherwise, these can't be merged - return false
-                else {
-                    return false;
-                }
-            }
-        }
-        else {
+        if(!checkCompatibleUnordered(getCurrentSources(), otherCurrentSources,
+                                     [](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
+                                     {
+                                         return a->canInitBeMerged(*b);
+                                     }))
+        {
             return false;
         }
+
+        // Check if, by reshuffling, all incoming synapse groups with post code are mergable
+        auto otherInSynWithPostCode = other.getInSynWithPostCode();
+        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSynWithPostCode,
+                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
+                                     {
+                                         return a->canWUPostInitBeMerged(*b);
+                                     }))
+        {
+            return false;
+        }
+
+        // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
+        auto otherOutSynWithPreCode = other.getOutSynWithPreCode();
+        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSynWithPreCode,
+                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
+                                     {
+                                         return a->canWUPreInitBeMerged(*b);
+                                     }))
+        {
+            return false;
+        }
+
+        // If both groups have the same number of incoming synapse groups after merging
+        auto otherMergedInSyn = other.getMergedInSyn();
+        if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
+                                     [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &a,
+                                        const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &b)
+                                     {
+                                         return a.first->canPSInitBeMerged(*b.first);
+                                     }))
+        {
+            return false;
+        }
+
 
         return true;
     }
     return false;
+}
+//----------------------------------------------------------------------------
+void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
+{
+    // Loop through variables
+    const auto vars = getNeuronModel()->getVars();
+    for(size_t i = 0; i < vars.size(); i++) {
+        // If the code contains a reference to this variable, set corresponding flag
+        if (code.find(vars[i].name + suffix) != std::string::npos) {
+            m_VarQueueRequired[i] = true;
+        }
+    }
+}
+//----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostCode() const
+{
+    std::vector<SynapseGroupInternal*> vec;
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPostSpikeCode().empty(); });
+    return vec;
+}
+//----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
+{
+    std::vector<SynapseGroupInternal*> vec;
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPreSpikeCode().empty(); });
+    return vec;
 }

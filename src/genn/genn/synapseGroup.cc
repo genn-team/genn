@@ -477,6 +477,22 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
     return false;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
+{
+    return (getWUModel()->canBeMerged(other.getWUModel())
+            && (getWUParams() == other.getWUParams())
+            && (getWUDerivedParams() == other.getWUDerivedParams())
+            && (getSrcNeuronGroup()->getNumDelaySlots() == other.getSrcNeuronGroup()->getNumDelaySlots()));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUPostBeMerged(const SynapseGroup &other) const
+{
+    return (getWUModel()->canBeMerged(other.getWUModel())
+            && (getWUParams() == other.getWUParams())
+            && (getWUDerivedParams() == other.getWUDerivedParams())
+            && (getTrgNeuronGroup()->getNumDelaySlots() == other.getTrgNeuronGroup()->getNumDelaySlots()));
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
 {
     const bool individualPSM = (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);

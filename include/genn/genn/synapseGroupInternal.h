@@ -25,7 +25,7 @@ public:
         trgNeuronGroup->addInSyn(this);
         srcNeuronGroup->addOutSyn(this);
     }
-    
+
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
     using SynapseGroup::getWUDerivedParams;
@@ -38,6 +38,8 @@ public:
     using SynapseGroup::isPSModelMerged;
     using SynapseGroup::getSparseIndType;
     using SynapseGroup::canWUBeMerged;
+    using SynapseGroup::canWUPreBeMerged;
+    using SynapseGroup::canWUPostBeMerged;
     using SynapseGroup::canPSBeMerged;
     using SynapseGroup::canPSBeLinearlyCombined;
     using SynapseGroup::canWUInitBeMerged;
