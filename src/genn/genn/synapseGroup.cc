@@ -510,7 +510,7 @@ bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
             && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canInitBeMerged(const SynapseGroup &other) const
+bool SynapseGroup::canWUInitBeMerged(const SynapseGroup &other) const
 {
     if((getMatrixType() == other.getMatrixType())
        && (getWUModel()->getVars() == other.getWUModel()->getVars()))
@@ -518,6 +518,36 @@ bool SynapseGroup::canInitBeMerged(const SynapseGroup &other) const
         // if any of the variable's initialisers can't be merged, return false
         for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
             if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUPreInitBeMerged(const SynapseGroup &other) const
+{
+    if(getWUModel()->getPreVars() == other.getWUModel()->getPreVars()) {
+        // if any of the presynaptic variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getWUPreVarInitialisers().size(); i++) {
+            if(!getWUPreVarInitialisers()[i].canBeMerged(other.getWUPreVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUPostInitBeMerged(const SynapseGroup &other) const
+{
+    if(getWUModel()->getPostVars() == other.getWUModel()->getPostVars()) {
+        // if any of the postsynaptic variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getWUPostVarInitialisers().size(); i++) {
+            if(!getWUPostVarInitialisers()[i].canBeMerged(other.getWUPostVarInitialisers()[i])) {
                 return false;
             }
         }

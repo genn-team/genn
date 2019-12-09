@@ -36,11 +36,13 @@ public:
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::isPSModelMerged;
-    using SynapseGroup::getSparseIndType;    
+    using SynapseGroup::getSparseIndType;
     using SynapseGroup::canWUBeMerged;
     using SynapseGroup::canPSBeMerged;
     using SynapseGroup::canPSBeLinearlyCombined;
-    using SynapseGroup::canInitBeMerged;
+    using SynapseGroup::canWUInitBeMerged;
+    using SynapseGroup::canWUPreInitBeMerged;
+    using SynapseGroup::canWUPostInitBeMerged;
     using SynapseGroup::canPSInitBeMerged;
     using SynapseGroup::canConnectivityInitBeMerged;
 };

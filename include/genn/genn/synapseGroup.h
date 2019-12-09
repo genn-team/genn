@@ -276,7 +276,15 @@ protected:
 
     //! Can initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
     /*! NOTE: this can only be called after model is finalized */
-    bool canInitBeMerged(const SynapseGroup &other) const;
+    bool canWUInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUPreInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUPostInitBeMerged(const SynapseGroup &other) const;
 
     //! Can postsynaptic initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
     /*! NOTE: this can only be called after model is finalized */

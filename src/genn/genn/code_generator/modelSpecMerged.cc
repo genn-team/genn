@@ -98,7 +98,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
                        },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canInitBeMerged(b); });
+                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
 
     LOGD << "Merging synapse connectivity initialisation groups:";
     createMergedGroups(model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
@@ -114,7 +114,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                                     || (backend.isSynRemapRequired() && !sg.getWUModel()->getSynapseDynamicsCode().empty())
                                     || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
                        },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canInitBeMerged(b); });
+                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
 
     LOGD << "Merging neuron groups which require their spike queues updating:";
     createMergedGroups(model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
