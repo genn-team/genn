@@ -1144,8 +1144,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         if(m.getArchetype().isDelayRequired()) {
             gen.addField("unsigned int numDelaySlots",
                          [](const NeuronGroupInternal &ng) { return std::to_string(ng.getNumDelaySlots()); });
+
             gen.addField("volatile unsigned int *spkQuePtr",
-                         [&backend](const NeuronGroupInternal &ng) { return "&" + backend.getVarPrefix() + "spkQuePtr" + ng.getName(); });
+                         [&backend](const NeuronGroupInternal &ng)
+                         {
+                             return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + ng.getName() + ")";
+                         });
         }
 
         gen.addPointerField("unsigned int *spkCnt", backend.getVarPrefix() + "glbSpkCnt");
