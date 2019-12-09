@@ -33,23 +33,7 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "group.");
     substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
 }
-//--------------------------------------------------------------------------
-void addPostsynapticModelSubstitutions(CodeGenerator::Substitutions &substitution, const SynapseGroupInternal *sg)
-{
-    const auto *psm = sg->getPSModel();
-    if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-        substitution.addVarNameSubstitution(psm->getVars(), "", "lps", sg->getName());
-    }
-    else {
-        substitution.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals());
-    }
-    substitution.addParamValueSubstitution(psm->getParamNames(), sg->getPSParams());
-
-    // Create iterators to iterate over the names of the postsynaptic model's derived parameters
-    substitution.addVarValueSubstitution(psm->getDerivedParams(), sg->getPSDerivedParams());
-    substitution.addVarNameSubstitution(psm->getExtraGlobalParams(), "", "", sg->getName());
 }
-}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // CodeGenerator
@@ -163,7 +147,18 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
 
                 Substitutions inSynSubs(&neuronSubs);
                 inSynSubs.addVarSubstitution("inSyn", "linSyn");
-                addPostsynapticModelSubstitutions(inSynSubs, sg);
+
+                if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                    inSynSubs.addVarNameSubstitution(psm->getVars(), "", "lps");
+                }
+                else {
+                    inSynSubs.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals());
+                }
+                inSynSubs.addParamValueSubstitution(psm->getParamNames(), sg->getPSParams());
+
+                // Create iterators to iterate over the names of the postsynaptic model's derived parameters
+                inSynSubs.addVarValueSubstitution(psm->getDerivedParams(), sg->getPSDerivedParams());
+                inSynSubs.addVarNameSubstitution(psm->getExtraGlobalParams(), "", "group.", "InSyn" + std::to_string(i));
 
                 // Apply substitutions to current converter code
                 std::string psCode = psm->getApplyInputCode();
@@ -199,8 +194,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
             }
 
             // Loop through all of neuron group's current sources
-            for(size_t i = 0; i < ng.getArchetype().getCurrentSources().size(); i++)
-            {
+            for(size_t i = 0; i < ng.getArchetype().getCurrentSources().size(); i++) {
                 const auto *cs = ng.getArchetype().getCurrentSources()[i];
 
                 os << "// current source " << i << std::endl;
@@ -218,7 +212,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 currSourceSubs.addVarNameSubstitution(csm->getVars(), "", "lcs");
                 currSourceSubs.addParamValueSubstitution(csm->getParamNames(), cs->getParams());
                 currSourceSubs.addVarValueSubstitution(csm->getDerivedParams(), cs->getDerivedParams());
-                currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "group.cs", std::to_string(i));
+                currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "group.", "CS" + std::to_string(i));
 
                 std::string iCode = csm->getInjectionCode();
                 currSourceSubs.applyCheckUnreplaced(iCode, "injectionCode : merged" + std::to_string(i));
@@ -396,105 +390,101 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
         // WU var update handler
         [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
         {
-            // Loop through outgoing synaptic populations
-            /*for(const auto *sg : ng.getOutSyn()) {
-                // If weight update model has any presynaptic update code
-                if(!sg->getWUModel()->getPreSpikeCode().empty()) {
-                    Substitutions preSubs(&popSubs);
+            // Loop through outgoing synaptic populations with presynaptic update code
+            const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
+            for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
+                const SynapseGroupInternal *sg = outSynWithPreCode[i];
+                Substitutions preSubs(&popSubs);
 
-                    CodeStream::Scope b(os);
-                    os << "// perform presynaptic update required for " << sg->getName() << std::endl;
+                CodeStream::Scope b(os);
+                os << "// perform presynaptic update required for merged " << i << std::endl;
 
-                    // Fetch presynaptic variables from global memory
-                    for(const auto &v : sg->getWUModel()->getPreVars()) {
-                        os << v.type << " l" << v.name << " = ";
-                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
-                        if (sg->getDelaySteps() != NO_DELAY) {
-                            os << "readDelayOffset + ";
-                        }
-                        os << preSubs["id"] << "];" << std::endl;
+                // Fetch presynaptic variables from global memory
+                for(const auto &v : sg->getWUModel()->getPreVars()) {
+                    os << v.type << " l" << v.name << " = group." << v.name << "WUPre" << i << "[";
+                    if (sg->getDelaySteps() != NO_DELAY) {
+                        os << "readDelayOffset + ";
                     }
+                    os << preSubs["id"] << "];" << std::endl;
+                }
 
-                    preSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams());
-                    preSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams());
-                    preSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "", sg->getName());
-                    preSubs.addVarNameSubstitution(sg->getWUModel()->getPreVars(), "", "l");
+                preSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams());
+                preSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams());
+                preSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group.", "WUPre" + std::to_string(i));
+                preSubs.addVarNameSubstitution(sg->getWUModel()->getPreVars(), "", "l");
 
-                    const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                    preNeuronSubstitutionsInSynapticCode(preSubs, *sg, offset, "", preSubs["id"], backend.getVarPrefix());
+                const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
+                preNeuronSubstitutionsInSynapticCode(preSubs, *sg, offset, "", preSubs["id"]);
 
-                    // Perform standard substitutions
-                    std::string code = sg->getWUModel()->getPreSpikeCode();
-                    preSubs.applyCheckUnreplaced(code, "preSpikeCode : " + sg->getName());
-                    code = ensureFtype(code, model.getPrecision());
-                    os << code;
+                // Perform standard substitutions
+                std::string code = sg->getWUModel()->getPreSpikeCode();
+                preSubs.applyCheckUnreplaced(code, "preSpikeCode :merged" + std::to_string(i));
+                code = ensureFtype(code, model.getPrecision());
+                os << code;
 
-                    // Loop through presynaptic variables into global memory
-                    for(const auto &v : sg->getWUModel()->getPreVars()) {
-                        // If state variables is read/write - meaning that it may have been updated - or it is axonally delayed -
-                        // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
-                        // back to global state variables dd_V etc  
-                        const bool delayed = (sg->getDelaySteps() != NO_DELAY);
-                        if((v.access == VarAccess::READ_WRITE) || delayed) {
-                            os << backend.getVarPrefix() << v.name << sg->getName() << "[";
-                            if (delayed) {
-                                os << "writeDelayOffset + ";
-                            }
-                            os << preSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
+                // Loop through presynaptic variables into global memory
+                for(const auto &v : sg->getWUModel()->getPreVars()) {
+                    // If state variables is read/write - meaning that it may have been updated - or it is axonally delayed -
+                    // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
+                    // back to global state variables dd_V etc
+                    const bool delayed = (sg->getDelaySteps() != NO_DELAY);
+                    if((v.access == VarAccess::READ_WRITE) || delayed) {
+                        os << "group." << v.name << "WUPre" << i << "[";
+                        if (delayed) {
+                            os << "writeDelayOffset + ";
                         }
+                        os << preSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                     }
                 }
             }
 
-            // Loop through incoming synaptic populations
-            for(const auto *sg : ng.getInSyn()) {
-                // If weight update model has any postsynaptic update code
-                if(!sg->getWUModel()->getPostSpikeCode().empty()) {
-                    Substitutions postSubs(&popSubs);
-                    CodeStream::Scope b(os);
+            // Loop through incoming synaptic populations with postsynaptic code
+            const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
+            for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
+                const SynapseGroupInternal *sg = inSynWithPostCode[i];
+                Substitutions postSubs(&popSubs);
+                CodeStream::Scope b(os);
 
-                    os << "// perform postsynaptic update required for " << sg->getName() << std::endl;
+                os << "// perform postsynaptic update required for merged" << i << std::endl;
 
-                    // Fetch postsynaptic variables from global memory
-                    for(const auto &v : sg->getWUModel()->getPostVars()) {
-                        os << v.type << " l" << v.name << " = ";
-                        os << backend.getVarPrefix() << v.name << sg->getName() << "[";
-                        if (sg->getBackPropDelaySteps() != NO_DELAY) {
-                            os << "readDelayOffset + ";
-                        }
-                        os << postSubs["id"] << "];" << std::endl;
+                // Fetch postsynaptic variables from global memory
+                for(const auto &v : sg->getWUModel()->getPostVars()) {
+                    os << v.type << " l" << v.name << " = group." << v.name << "WUPost" << i << "[";
+                    if (sg->getBackPropDelaySteps() != NO_DELAY) {
+                        os << "readDelayOffset + ";
                     }
+                    os << postSubs["id"] << "];" << std::endl;
+                }
 
-                    postSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams());
-                    postSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams());
-                    postSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "", sg->getName());
-                    postSubs.addVarNameSubstitution(sg->getWUModel()->getPostVars(), "", "l");
+                postSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams());
+                postSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams());
+                postSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group.", "WUPost" + std::to_string(i));
+                postSubs.addVarNameSubstitution(sg->getWUModel()->getPostVars(), "", "l");
 
-                    const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                    postNeuronSubstitutionsInSynapticCode(postSubs, *sg, offset, "", postSubs["id"], backend.getVarPrefix());
+                const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
+                postNeuronSubstitutionsInSynapticCode(postSubs, *sg, offset, "", postSubs["id"]);
 
-                    // Perform standard substitutions
-                    std::string code = sg->getWUModel()->getPostSpikeCode();
-                    postSubs.applyCheckUnreplaced(code, "postSpikeCode : " + sg->getName());
-                    code = ensureFtype(code, model.getPrecision());
-                    os << code;
+                // Perform standard substitutions
+                std::string code = sg->getWUModel()->getPostSpikeCode();
+                postSubs.applyCheckUnreplaced(code, "postSpikeCode : merged" + std::to_string(i));
+                code = ensureFtype(code, model.getPrecision());
+                os << code;
 
-                    // Write back presynaptic variables into global memory
-                    for(const auto &v : sg->getWUModel()->getPostVars()) {
-                        // If state variables is read/write - meaning that it may have been updated - or it is dendritically delayed -
-                        // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
-                        // back to global state variables dd_V etc  
-                        const bool delayed = (sg->getBackPropDelaySteps() != NO_DELAY);
-                        if((v.access == VarAccess::READ_WRITE) || delayed) {
-                            os << backend.getVarPrefix() << v.name << sg->getName() << "[";
-                            if (delayed) {
-                                os << "writeDelayOffset + ";
-                            }
-                            os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
+                // Write back presynaptic variables into global memory
+                for(const auto &v : sg->getWUModel()->getPostVars()) {
+                    // If state variables is read/write - meaning that it may have been updated - or it is dendritically delayed -
+                    // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
+                    // back to global state variables dd_V etc
+                    const bool delayed = (sg->getBackPropDelaySteps() != NO_DELAY);
+                    if((v.access == VarAccess::READ_WRITE) || delayed) {
+                        os << "group." << v.name << "WUPost" << i << "[";
+                        if (delayed) {
+                            os << "writeDelayOffset + ";
                         }
+                        os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
                     }
                 }
-            }*/
+            }
         }
     );
 }
