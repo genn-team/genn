@@ -194,6 +194,11 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
                             const CodeGenerator::SynapseGroupMerged &m, const std::string &precision, const std::string &timePrecision,
                             const std::string &prefix, const std::string &name, MergedSynapseStruct role)
 {
+    const bool updateRole = ((role == MergedSynapseStruct::PresynapticUpdate)
+                             || (role == MergedSynapseStruct::PostsynapticUpdate)
+                             || (role == MergedSynapseStruct::SynapseDynamics));
+    const WeightUpdateModels::Base *wum = m.getArchetype().getWUModel();
+
     CodeGenerator::MergedSynapseStructGenerator gen(m);
 
     gen.addField("unsigned int rowStride",
@@ -234,9 +239,9 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         gen.addTrgPointerField("unsigned int* trgSpk", prefix + "glbSpk");
     }
 
-    if(role == MergedSynapseStruct::PresynapticUpdate || role == MergedSynapseStruct::PostsynapticUpdate
-       || role == MergedSynapseStruct::SynapseDynamics)
-    {
+    // If this structure is used for updating rather than initializing
+    if(updateRole) {
+        // If presynaptic population has delay buffers
         if(m.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             gen.addField("volatile unsigned int *srcSpkQuePtr",
                          [&backend](const SynapseGroupInternal &sg)
@@ -245,12 +250,35 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
                          });
         }
 
+        // If postsynaptic population has delay buffers
         if(m.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
             gen.addField("volatile unsigned int *trgSpkQuePtr",
                          [&backend](const SynapseGroupInternal &sg)
                          {
                              return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + sg.getTrgNeuronGroup()->getName() + ")";
                          });
+        }
+
+        // Get correct code string
+        const std::string code = ((role == MergedSynapseStruct::PresynapticUpdate) ? wum->getSimCode()
+                                  : (role == MergedSynapseStruct::PostsynapticUpdate) ? wum->getLearnPostCode() : wum->getSynapseDynamicsCode());
+
+        // Loop through variables in presynaptic neuron model
+        const auto preVars = m.getArchetype().getSrcNeuronGroup()->getNeuronModel()->getVars();
+        for(const auto &v : preVars) {
+            // If variable is referenced in code string, add source pointer
+            if(code.find("$(" + v.name + "_pre)") != std::string::npos) {
+                gen.addSrcPointerField(v.type + "* " + v.name + "Source", prefix + v.name);
+            }
+        }
+
+        // Loop through variables in postsynaptic neuron model
+        const auto postVars = m.getArchetype().getTrgNeuronGroup()->getNeuronModel()->getVars();
+        for(const auto &v : postVars) {
+            // If variable is referenced in code string, add target pointer
+            if(code.find("$(" + v.name + "_post)") != std::string::npos) {
+                gen.addTrgPointerField(v.type + "* " + v.name + "Post", prefix + v.name);
+            }
         }
     }
 
@@ -260,7 +288,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         gen.addPointerField(m.getArchetype().getSparseIndType() + " *ind", prefix + "ind");
 
         // Add additional structure for postsynaptic access
-        if(backend.isPostsynapticRemapRequired() && !m.getArchetype().getWUModel()->getLearnPostCode().empty()
+        if(backend.isPostsynapticRemapRequired() && !wum->getLearnPostCode().empty()
            && (role == MergedSynapseStruct::PostsynapticUpdate || role == MergedSynapseStruct::SparseInit))
         {
             gen.addField("unsigned int colStride",
@@ -269,9 +297,9 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
             gen.addPointerField("unsigned int *colLength", prefix + "colLength");
             gen.addPointerField("unsigned int *remap", prefix + "remap");
         }
-        
+
         // Add additional structure for synapse dynamics access
-        if(backend.isSynRemapRequired() && !m.getArchetype().getWUModel()->getSynapseDynamicsCode().empty()
+        if(backend.isSynRemapRequired() && !wum->getSynapseDynamicsCode().empty()
            && (role == MergedSynapseStruct::SynapseDynamics || role == MergedSynapseStruct::SparseInit))
         {
             gen.addPointerField("unsigned int *synRemap", prefix + "synRemap");
@@ -285,22 +313,19 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     }
 
     // Add pointers to var pointers to struct
-    const WeightUpdateModels::Base *wum = m.getArchetype().getWUModel();
     if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         gen.addVars(wum->getVars(), prefix);
     }
 
-    
-    if(role == MergedSynapseStruct::PresynapticUpdate || role == MergedSynapseStruct::PostsynapticUpdate 
-       || role == MergedSynapseStruct::SynapseDynamics) 
-    {
+    // Add pointers to pre and postsynaptic spike times
+    if(updateRole) {
         if(wum->isPreSpikeTimeRequired()) {
             gen.addSrcPointerField(timePrecision + " *sTPre", prefix + "sT");
-           
         }
         if(wum->isPostSpikeTimeRequired()) {
             gen.addTrgPointerField(timePrecision + " *sTPost", prefix + "sT");
         }
+
         // Add EGPs to struct
         gen.addEGPs(wum->getExtraGlobalParams());
     }
