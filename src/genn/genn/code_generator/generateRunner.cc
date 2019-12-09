@@ -183,6 +183,15 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
         }
     }
 
+    // Loop through incoming synapse groups with postsynaptic update code
+    const auto inSynWithPostCode = m.getArchetype().getInSynWithPostCode();
+    for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
+        const auto *sg = inSynWithPostCode[i];
+
+        for(const auto &v : sg->getWUModel()->getPostVars()) {
+            gen.addInSynWithPostCodePointerField(v.type + "* " + v.name + "WUPost", i, init, prefix + v.name);
+        }
+    }
 
     // Generate structure definitions and instantiation
     gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc,

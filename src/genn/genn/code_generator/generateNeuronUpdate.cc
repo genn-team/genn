@@ -323,22 +323,19 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 // Spike triggered variables don't need to be copied
                 // if delay isn't required as there's only one copy of them
                 if(ng.getArchetype().isDelayRequired()) {
+                    const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
+                    const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
+
                     // Are there any outgoing synapse groups with axonal delay and presynaptic WUM variables?
-                    /*const bool preVars = std::any_of(ng.getOutSyn().cbegin(), ng.getOutSyn().cend(),
-                                                    [](const SynapseGroupInternal *sg)
-                                                    {
-                                                        return (sg->getDelaySteps() != NO_DELAY) && !sg->getWUModel()->getPreVars().empty();
-                                                    });
+                    const bool preVars = std::any_of(outSynWithPreCode.cbegin(), outSynWithPreCode.cend(),
+                                                     [](const SynapseGroupInternal *sg){ return (sg->getDelaySteps() != NO_DELAY); });
 
                     // Are there any incoming synapse groups with back-propagation delay and postsynaptic WUM variables?
-                    const bool postVars = std::any_of(ng.getInSyn().cbegin(), ng.getInSyn().cend(),
-                                                    [](const SynapseGroupInternal *sg)
-                                                    {
-                                                        return (sg->getBackPropDelaySteps() != NO_DELAY) && !sg->getWUModel()->getPostVars().empty();
-                                                    });*/
+                    const bool postVars = std::any_of(inSynWithPostCode.cbegin(), inSynWithPostCode.cend(),
+                                                      [](const SynapseGroupInternal *sg){ return (sg->getBackPropDelaySteps() != NO_DELAY); });
 
                     // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
-                    if(ng.getArchetype().isSpikeTimeRequired()/* || preVars || postVars*/) {
+                    if(ng.getArchetype().isSpikeTimeRequired() || preVars || postVars) {
                         os << "else";
                         CodeStream::Scope b(os);
 
@@ -348,25 +345,27 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                         }
 
                         // Copy presynaptic WUM variables between delay slots
-                        /*for(const auto *sg : ng.getOutSyn()) {
+                        for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
+                            const auto *sg = outSynWithPreCode[i];
                             if(sg->getDelaySteps() != NO_DELAY) {
                                 for(const auto &v : sg->getWUModel()->getPreVars()) {
-                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
-                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
+                                    os << "group." << v.name << "WUPre" << i << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
+                                    os << "group." << v.name << "WUPre" << i << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
                                 }
                             }
                         }
 
 
                         // Copy postsynaptic WUM variables between delay slots
-                        for(const auto *sg : ng.getInSyn()) {
+                        for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
+                            const auto *sg = inSynWithPostCode[i];
                             if(sg->getBackPropDelaySteps() != NO_DELAY) {
                                 for(const auto &v : sg->getWUModel()->getPostVars()) {
-                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
-                                    os << backend.getVarPrefix() << v.name << sg->getName() << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
+                                    os << "group." << v.name << "WUPost" << i << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
+                                    os << "group." << v.name << "WUPost" << i << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
                                 }
                             }
-                        }*/
+                        }
                     }
                 }
             }

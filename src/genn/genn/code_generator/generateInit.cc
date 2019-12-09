@@ -281,20 +281,28 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
                 }
             }
 
-            // Loop through incoming synaptic populations
-            /*for(const auto *s : ng.getInSyn()) {
-                genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPostVars(), "group", "numNeurons", s->getTrgNeuronGroup()->getNumDelaySlots(), model.getPrecision(),
-                                     [&s](size_t i){ return s->getWUPostVarInitialisers().at(i); },
-                                     [&s](size_t){ return (s->getBackPropDelaySteps() != NO_DELAY); });
+            // Loop through incoming synaptic populations with postsynaptic update code
+            const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
+            for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
+                const auto *sg = inSynWithPostCode[i];
+                genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPostVars(),
+                                     "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
+                                     i, model.getPrecision(),
+                                     [&sg](size_t i){ return sg->getWUPostVarInitialisers().at(i); },
+                                     [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); });
             }
 
             // Loop through outgoing synaptic populations
-            for(const auto *s : ng.getOutSyn()) {
+            const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
+            for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
+                const auto *sg = outSynWithPreCode[i];
                 // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
-                genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPreVars(), "group", "numNeurons", s->getSrcNeuronGroup()->getNumDelaySlots(), model.getPrecision(),
-                                     [&s](size_t i){ return s->getWUPreVarInitialisers().at(i); },
-                                     [&s](size_t){ return (s->getDelaySteps() != NO_DELAY); });
-            }*/
+                genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPreVars(),
+                                     "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
+                                     i, model.getPrecision(),
+                                     [&sg](size_t i){ return sg->getWUPreVarInitialisers().at(i); },
+                                     [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); });
+            }
 
             // Loop through current sources
             os << "// current source variables" << std::endl;
@@ -339,7 +347,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
                 popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
                 popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
                 popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
-                
+
                 std::string code = connectInit.getSnippet()->getRowBuildCode();
                 popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : merged" + sg.getIndex());
                 code = ensureFtype(code, model.getPrecision());

@@ -33,6 +33,32 @@ const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInitM
     return otherSyn->first;
 }
 //----------------------------------------------------------------------------
+const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInSynWithPostCode(size_t archetypeInSynWithPostCode, const NeuronGroupInternal &ng) const
+{
+    const SynapseGroupInternal *archetypeSG = getArchetype().getInSynWithPostCode()[archetypeInSynWithPostCode];
+    const auto inSynWithPostCode = ng.getInSynWithPostCode();
+    const auto otherSG = std::find_if(inSynWithPostCode.cbegin(), inSynWithPostCode.cend(),
+                                      [archetypeSG](const SynapseGroupInternal *m)
+                                      {
+                                          return m->canWUPostBeMerged(*archetypeSG);
+                                      });
+    assert(otherSG != inSynWithPostCode.cend());
+    return *otherSG;
+}
+//----------------------------------------------------------------------------
+const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInitInSynWithPostCode(size_t archetypeInSynWithPostCode, const NeuronGroupInternal &ng) const
+{
+    const SynapseGroupInternal *archetypeSG = getArchetype().getInSynWithPostCode()[archetypeInSynWithPostCode];
+    const auto inSynWithPostCode = ng.getInSynWithPostCode();
+    const auto otherSG = std::find_if(inSynWithPostCode.cbegin(), inSynWithPostCode.cend(),
+                                      [archetypeSG](const SynapseGroupInternal *m)
+                                      {
+                                          return m->canWUPostInitBeMerged(*archetypeSG);
+                                      });
+    assert(otherSG != inSynWithPostCode.cend());
+    return *otherSG;
+}
+//----------------------------------------------------------------------------
 const CurrentSourceInternal *CodeGenerator::NeuronGroupMerged::getCompatibleCurrentSource(size_t archetypeCurrentSource, const NeuronGroupInternal &ng) const
 {
     const CurrentSourceInternal *archetypeCS = getArchetype().getCurrentSources()[archetypeCurrentSource];

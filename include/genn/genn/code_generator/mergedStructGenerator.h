@@ -158,6 +158,24 @@ public:
                      });
         }
     }
+
+    void addInSynWithPostCodePointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
+    {
+        if(init) {
+            addField(name + std::to_string(index),
+                     [this, index, prefix](const NeuronGroupInternal &ng)
+                     {
+                         return prefix + getMergedGroup().getCompatibleInitInSynWithPostCode(index, ng)->getName();
+                     });
+        }
+        else {
+            addField(name + std::to_string(index),
+                     [this, index, prefix](const NeuronGroupInternal &ng)
+                     {
+                         return prefix + getMergedGroup().getCompatibleInSynWithPostCode(index, ng)->getName();
+                     });
+        }
+    }
 };
 //--------------------------------------------------------------------------
 // CodeGenerator::MergedSynapseStructGenerator
