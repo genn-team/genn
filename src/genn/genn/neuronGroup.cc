@@ -283,6 +283,22 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
     }
 }
 //----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostCode() const
+{
+    std::vector<SynapseGroupInternal*> vec;
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPostSpikeCode().empty(); });
+    return vec;
+}
+//----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
+{
+    std::vector<SynapseGroupInternal*> vec;
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPreSpikeCode().empty(); });
+    return vec;
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
 {
     m_SpikeEventCondition.insert(std::pair<std::string, std::string>(code, supportCodeNamespace));
@@ -447,19 +463,4 @@ void NeuronGroup::updateVarQueues(const std::string &code, const std::string &su
         }
     }
 }
-//----------------------------------------------------------------------------
-std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostCode() const
-{
-    std::vector<SynapseGroupInternal*> vec;
-    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPostSpikeCode().empty(); });
-    return vec;
-}
-//----------------------------------------------------------------------------
-std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
-{
-    std::vector<SynapseGroupInternal*> vec;
-    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPreSpikeCode().empty(); });
-    return vec;
-}
+

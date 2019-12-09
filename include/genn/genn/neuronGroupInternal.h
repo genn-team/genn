@@ -32,6 +32,8 @@ public:
     using NeuronGroup::getCurrentSources;
     using NeuronGroup::getDerivedParams;
     using NeuronGroup::getSpikeEventCondition;
+    using NeuronGroup::getInSynWithPostCode;
+    using NeuronGroup::getOutSynWithPreCode;
     using NeuronGroup::isParamRequiredBySpikeEventCondition;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::canBeMerged;
