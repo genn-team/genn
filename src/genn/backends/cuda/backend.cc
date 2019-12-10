@@ -1060,7 +1060,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
                                 // If this is the first thread block of the first block in the group AND the last block of rows,
                                 // write the total cumulative sum to the first entry of the remap structure
-                                os << "if(" << popSubs["id"] << " == 0 && (r == numBlocks))";
+                                os << "if(" << popSubs["id"] << " == 0 && (r == (numBlocks - 1)))";
                                 {
                                     CodeStream::Scope b(os);
                                     os << "group.synRemap[0] = shRowStart[numRowsInBlock];" << std::endl;
