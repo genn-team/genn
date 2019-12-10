@@ -222,6 +222,11 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
 
     gen.addField("unsigned int rowStride",
                  [m, &backend](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+    if(role == MergedSynapseStruct::PostsynapticUpdate || role == MergedSynapseStruct::SparseInit){
+        gen.addField("unsigned int colStride",
+                     [m](const SynapseGroupInternal &sg) { return std::to_string(sg.getMaxSourceConnections()); });
+    }
+
     gen.addField("unsigned int numSrcNeurons",
                  [](const SynapseGroupInternal &sg){ return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
     gen.addField("unsigned int numTrgNeurons",
@@ -314,9 +319,6 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         if(backend.isPostsynapticRemapRequired() && !wum->getLearnPostCode().empty()
            && (role == MergedSynapseStruct::PostsynapticUpdate || role == MergedSynapseStruct::SparseInit))
         {
-            gen.addField("unsigned int colStride",
-                         [m](const SynapseGroupInternal &sg) { return std::to_string(sg.getMaxSourceConnections()); });
-
             gen.addPointerField("unsigned int *colLength", prefix + "colLength");
             gen.addPointerField("unsigned int *remap", prefix + "remap");
         }
