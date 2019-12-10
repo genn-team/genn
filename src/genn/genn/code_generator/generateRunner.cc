@@ -284,7 +284,8 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         }
 
         // Get correct code string
-        const std::string code = ((role == MergedSynapseStruct::PresynapticUpdate) ? wum->getSimCode()
+        // **NOTE** we concatenate sim code and event code so both get tested
+        const std::string code = ((role == MergedSynapseStruct::PresynapticUpdate) ? (wum->getSimCode() + wum->getEventCode())
                                   : (role == MergedSynapseStruct::PostsynapticUpdate) ? wum->getLearnPostCode() : wum->getSynapseDynamicsCode());
 
         // Loop through variables in presynaptic neuron model
