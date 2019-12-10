@@ -584,6 +584,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     const ModelSpecInternal &model = modelMerged.getModel();
 
     os << "// Standard C++ includes" << std::endl;
+    os << "#include <algorithm>" << std::endl;
     os << "#include <chrono>" << std::endl;
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
