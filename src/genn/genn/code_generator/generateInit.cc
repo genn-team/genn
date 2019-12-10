@@ -292,7 +292,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMer
                                      [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); });
             }
 
-            // Loop through outgoing synaptic populations
+            // Loop through outgoing synaptic populations with presynaptic update code
             const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
             for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
                 const auto *sg = outSynWithPreCode[i];

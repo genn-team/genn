@@ -193,6 +193,16 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
         }
     }
 
+    // Loop through outgoing synapse groups with presynaptic update code
+    const auto outSynWithPreCode = m.getArchetype().getOutSynWithPreCode();
+    for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
+        const auto *sg = outSynWithPreCode[i];
+
+        for(const auto &v : sg->getWUModel()->getPreVars()) {
+            gen.addOutSynWithPreCodePointerField(v.type + "* " + v.name + "WUPre", i, init, prefix + v.name);
+        }
+    }
+
     // Generate structure definitions and instantiation
     gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
                  init ? "NeuronInit" : "NeuronUpdate");

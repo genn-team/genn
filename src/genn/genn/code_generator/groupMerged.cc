@@ -59,6 +59,32 @@ const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInitI
     return *otherSG;
 }
 //----------------------------------------------------------------------------
+const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleOutSynWithPreCode(size_t archetypeOutSynWithPreCode, const NeuronGroupInternal &ng) const
+{
+    const SynapseGroupInternal *archetypeSG = getArchetype().getOutSynWithPreCode()[archetypeOutSynWithPreCode];
+    const auto outSynWithPreCode = ng.getOutSynWithPreCode();
+    const auto otherSG = std::find_if(outSynWithPreCode.cbegin(), outSynWithPreCode.cend(),
+                                      [archetypeSG](const SynapseGroupInternal *m)
+                                      {
+                                          return m->canWUPreBeMerged(*archetypeSG);
+                                      });
+    assert(otherSG != outSynWithPreCode.cend());
+    return *otherSG;
+}
+//----------------------------------------------------------------------------
+const SynapseGroupInternal *CodeGenerator::NeuronGroupMerged::getCompatibleInitOutSynWithPreCode(size_t archetypeOutSynWithPreCode, const NeuronGroupInternal &ng) const
+{
+    const SynapseGroupInternal *archetypeSG = getArchetype().getOutSynWithPreCode()[archetypeOutSynWithPreCode];
+    const auto outSynWithPreCode = ng.getOutSynWithPreCode();
+    const auto otherSG = std::find_if(outSynWithPreCode.cbegin(), outSynWithPreCode.cend(),
+                                      [archetypeSG](const SynapseGroupInternal *m)
+                                      {
+                                          return m->canWUPreInitBeMerged(*archetypeSG);
+                                      });
+    assert(otherSG != outSynWithPreCode.cend());
+    return *otherSG;
+}
+//----------------------------------------------------------------------------
 const CurrentSourceInternal *CodeGenerator::NeuronGroupMerged::getCompatibleCurrentSource(size_t archetypeCurrentSource, const NeuronGroupInternal &ng) const
 {
     const CurrentSourceInternal *archetypeCS = getArchetype().getCurrentSources()[archetypeCurrentSource];

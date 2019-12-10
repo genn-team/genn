@@ -68,13 +68,21 @@ public:
     /*! **NOTE** this should only be called with neuron groups within merged group */
     const SynapseGroupInternal *getCompatibleInitMergedInSyn(size_t archetypeMergedInSyn, const NeuronGroupInternal &ng) const;
 
-    //! Find the synapse group compatible with specified merged insyn with post code in archetype
+    //! Find the synapse group compatible with specified insyn with post code in archetype
     /*! **NOTE** this should only be called with neuron groups within merged group */
     const SynapseGroupInternal *getCompatibleInSynWithPostCode(size_t archetypeInSynWithPostCode, const NeuronGroupInternal &ng) const;
 
     //! Find the synapse group compatible with specified insyn with post code in archetype
     /*! **NOTE** this should only be called with neuron groups within merged group */
     const SynapseGroupInternal *getCompatibleInitInSynWithPostCode(size_t archetypeInSynWithPostCode, const NeuronGroupInternal &ng) const;
+
+    //! Find the synapse group compatible with specified outsyn with pre code in archetype
+    /*! **NOTE** this should only be called with neuron groups within merged group */
+    const SynapseGroupInternal *getCompatibleOutSynWithPreCode(size_t archetypeOutSynWithPreCode, const NeuronGroupInternal &ng) const;
+
+    //! Find the synapse group compatible with specified outsyn with pre code in archetype
+    /*! **NOTE** this should only be called with neuron groups within merged group */
+    const SynapseGroupInternal *getCompatibleInitOutSynWithPreCode(size_t archetypeOutSynWithPreCode, const NeuronGroupInternal &ng) const;
 
     //! Find the current source compatible with specified current source in archetype
     /*! **NOTE** this should only be called with neuron groups within merged group */

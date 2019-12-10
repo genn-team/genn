@@ -176,6 +176,24 @@ public:
                      });
         }
     }
+
+    void addOutSynWithPreCodePointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
+    {
+        if(init) {
+            addField(name + std::to_string(index),
+                     [this, index, prefix](const NeuronGroupInternal &ng)
+                     {
+                         return prefix + getMergedGroup().getCompatibleInitOutSynWithPreCode(index, ng)->getName();
+                     });
+        }
+        else {
+            addField(name + std::to_string(index),
+                     [this, index, prefix](const NeuronGroupInternal &ng)
+                     {
+                         return prefix + getMergedGroup().getCompatibleOutSynWithPreCode(index, ng)->getName();
+                     });
+        }
+    }
 };
 //--------------------------------------------------------------------------
 // CodeGenerator::MergedSynapseStructGenerator
