@@ -98,6 +98,53 @@ void genSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng
     os << std::endl << std::endl;
 }
 //-------------------------------------------------------------------------
+template<typename T, typename G, typename C>
+void orderNeuronGroupChildren(const CodeGenerator::NeuronGroupMerged &m, const std::vector<T> &archetypeChildren,
+                              std::vector<std::vector<T>> &sortedGroupChildren,
+                              G getVectorFunc, C isCompatibleFunc)
+{
+    // Reserve vector of vectors to hold children for all neuron groups, in archetype order
+    sortedGroupChildren.reserve(archetypeChildren.size());
+
+    // Loop through groups
+    for(const auto &g : m.getGroups()) {
+        // Make temporary copy of this group's children
+        std::vector<T> tempChildren((g.get().*getVectorFunc)());
+
+        assert(tempChildren.size() == archetypeChildren.size());
+
+        // Reserve vector for this group's children
+        sortedGroupChildren.emplace_back();
+        sortedGroupChildren.back().reserve(tempChildren.size());
+
+        // Loop through archetype group's children
+        for(const auto &archetypeG : archetypeChildren) {
+            // Find compatible child in temporary list
+            const auto otherChild = std::find_if(tempChildren.cbegin(),tempChildren.cend(),
+                                                 [archetypeG, isCompatibleFunc](const T &g)
+                                                 {
+                                                     return isCompatibleFunc(archetypeG, g);
+                                                 });
+            assert(otherChild != tempChildren.cend());
+
+            // Add pointer to vector of compatible merged in syns
+            sortedGroupChildren.back().push_back(*otherChild);
+
+            // Remove from original vector
+            tempChildren.erase(otherChild);
+        }
+    }
+}
+//-------------------------------------------------------------------------
+template<typename T, typename G, typename C>
+void orderNeuronGroupChildren(const CodeGenerator::NeuronGroupMerged &m, std::vector<std::vector<T>> &sortedGroupChildren,
+                              G getVectorFunc, C isCompatibleFunc)
+{
+    const std::vector<T> &archetypeChildren = (m.getArchetype().*getVectorFunc)();
+    orderNeuronGroupChildren(m, archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
+}
+
+//-------------------------------------------------------------------------
 void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
                            CodeGenerator::CodeStream &runnerVarAlloc, const CodeGenerator::NeuronGroupMerged &m,
                            const std::string &precision, const std::string &timePrecision, const std::string &prefix, 
@@ -106,7 +153,7 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
     CodeGenerator::MergedNeuronStructGenerator gen(m);
 
     gen.addField("unsigned int numNeurons",
-                 [](const NeuronGroupInternal &ng){ return std::to_string(ng.getNumNeurons()); });
+                 [](const NeuronGroupInternal &ng, size_t){ return std::to_string(ng.getNumNeurons()); });
 
     gen.addPointerField("unsigned int *spkCnt", prefix + "glbSpkCnt");
     gen.addPointerField("unsigned int *spk", prefix + "glbSpk");
@@ -118,7 +165,7 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
 
     if(m.getArchetype().isDelayRequired()) {
         gen.addField("volatile unsigned int *spkQuePtr",
-                     [&prefix](const NeuronGroupInternal &ng)
+                     [&prefix](const NeuronGroupInternal &ng, size_t)
                      { 
                          return "getSymbolAddress(" + prefix + "spkQuePtr" + ng.getName() + ")";
                      });
@@ -141,28 +188,38 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
         gen.addEGPs(nm->getExtraGlobalParams());
     }
 
+    // Build vector of vectors containin each child group's merged in syns, ordered to match those of the archetype group
+    std::vector<std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>>> sortedMergedInSyns;
+    orderNeuronGroupChildren(m, sortedMergedInSyns, &NeuronGroupInternal::getMergedInSyn,
+                             [init](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &a,
+                                    const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &b)
+                             {
+                                 return init ? a.first->canPSInitBeMerged(*b.first) : a.first->canPSBeMerged(*b.first);
+                             });
+
+    // Build vector of vectors of neuron group's merged in syns
     // Loop through merged synaptic inputs in archetypical neuron group
     for(size_t i = 0; i < m.getArchetype().getMergedInSyn().size(); i++) {
         const SynapseGroupInternal *sg = m.getArchetype().getMergedInSyn()[i].first;
 
         // Add pointer to insyn
-        gen.addMergedInSynPointerField(precision + " *inSynInSyn", i, init, prefix + "inSyn");
+        gen.addMergedInSynPointerField(precision + " *inSynInSyn", i, prefix + "inSyn", sortedMergedInSyns);
 
         // Add pointer to dendritic delay buffer if required
         if (sg->isDendriticDelayRequired()) {
-            gen.addMergedInSynPointerField(precision + " *denDelayInSyn", i, init, prefix + "denDelay");
+            gen.addMergedInSynPointerField(precision + " *denDelayInSyn", i, prefix + "denDelay", sortedMergedInSyns);
 
             gen.addField("volatile unsigned int *denDelayPtrInSyn" + std::to_string(i),
-                         [&prefix, i, m](const NeuronGroupInternal &ng)
+                         [&prefix, &sortedMergedInSyns, i](const NeuronGroupInternal&, size_t groupIndex)
                          {
-                             return "getSymbolAddress(" + prefix + "denDelayPtr" + m.getCompatibleMergedInSyn(i, ng)->getPSModelTargetName() + ")";
+                             return "getSymbolAddress(" + prefix + "denDelayPtr" + sortedMergedInSyns[groupIndex][i].first->getPSModelTargetName() + ")";
                          });
         }
 
         // Add pointers to state variables
         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             for(const auto &v : sg->getPSModel()->getVars()) {
-                gen.addMergedInSynPointerField(v.type + "* " + v.name + "InSyn", i, init, prefix + v.name);
+                gen.addMergedInSynPointerField(v.type + "* " + v.name + "InSyn", i, prefix + v.name, sortedMergedInSyns);
             }
         }
 
@@ -174,32 +231,58 @@ void genMergedNeuronStruct(CodeGenerator::CodeStream &definitionsInternal, CodeG
         }
     }
 
+    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
+    std::vector<std::vector<CurrentSourceInternal*>> sortedCurrentSources;
+    orderNeuronGroupChildren(m, sortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
+                             [init](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
+                             {
+                                 return init ? a->canInitBeMerged(*b) : a->canBeMerged(*b);
+                             });
+
     // Loop through current sources in archetypical neuron group
     for(size_t i = 0; i < m.getArchetype().getCurrentSources().size(); i++) {
         const auto *cs = m.getArchetype().getCurrentSources()[i];
 
         for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
-            gen.addCurrentSourcePointerField(v.type + "* " + v.name + "CS", i, init, prefix + v.name);
+            gen.addCurrentSourcePointerField(v.type + "* " + v.name + "CS", i, prefix + v.name, sortedCurrentSources);
         }
     }
 
-    // Loop through incoming synapse groups with postsynaptic update code
+    // Build vector of vectors containing each child group's incoming synapse groups
+    // with postsynaptic updates, ordered to match those of the archetype group
     const auto inSynWithPostCode = m.getArchetype().getInSynWithPostCode();
+    std::vector<std::vector<SynapseGroupInternal*>> sortedInSynWithPostCode;
+    orderNeuronGroupChildren(m, inSynWithPostCode, sortedInSynWithPostCode, &NeuronGroupInternal::getInSynWithPostCode,
+                             [init](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
+                             {
+                                 return init ? a->canWUPostInitBeMerged(*b) : a->canWUPostBeMerged(*b);
+                             });
+
+    // Loop through incoming synapse groups with postsynaptic update code
     for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
         const auto *sg = inSynWithPostCode[i];
 
         for(const auto &v : sg->getWUModel()->getPostVars()) {
-            gen.addInSynWithPostCodePointerField(v.type + "* " + v.name + "WUPost", i, init, prefix + v.name);
+            gen.addSynPointerField(v.type + "* " + v.name + "WUPost", i, prefix + v.name, sortedInSynWithPostCode);
         }
     }
 
-    // Loop through outgoing synapse groups with presynaptic update code
+    // Build vector of vectors containing each child group's incoming synapse groups
+    // with postsynaptic updates, ordered to match those of the archetype group
     const auto outSynWithPreCode = m.getArchetype().getOutSynWithPreCode();
+    std::vector<std::vector<SynapseGroupInternal*>> sortedOutSynWithPreCode;
+    orderNeuronGroupChildren(m, outSynWithPreCode, sortedOutSynWithPreCode, &NeuronGroupInternal::getOutSynWithPreCode,
+                             [init](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
+                             {
+                                 return init ? a->canWUPreInitBeMerged(*b) : a->canWUPreBeMerged(*b);
+                             });
+
+    // Loop through outgoing synapse groups with presynaptic update code
     for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
         const auto *sg = outSynWithPreCode[i];
 
         for(const auto &v : sg->getWUModel()->getPreVars()) {
-            gen.addOutSynWithPreCodePointerField(v.type + "* " + v.name + "WUPre", i, init, prefix + v.name);
+            gen.addSynPointerField(v.type + "* " + v.name + "WUPre", i, prefix + v.name, sortedOutSynWithPreCode);
         }
     }
 
@@ -221,23 +304,23 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     CodeGenerator::MergedSynapseStructGenerator gen(m);
 
     gen.addField("unsigned int rowStride",
-                 [m, &backend](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+                 [m, &backend](const SynapseGroupInternal &sg, size_t){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
     if(role == MergedSynapseStruct::PostsynapticUpdate || role == MergedSynapseStruct::SparseInit){
         gen.addField("unsigned int colStride",
-                     [m](const SynapseGroupInternal &sg) { return std::to_string(sg.getMaxSourceConnections()); });
+                     [m](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
     }
 
     gen.addField("unsigned int numSrcNeurons",
-                 [](const SynapseGroupInternal &sg){ return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+                 [](const SynapseGroupInternal &sg, size_t){ return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
     gen.addField("unsigned int numTrgNeurons",
-                 [](const SynapseGroupInternal &sg){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+                 [](const SynapseGroupInternal &sg, size_t){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
 
     // If this role is one where postsynaptic input can be provided
     if(role == MergedSynapseStruct::PresynapticUpdate || role == MergedSynapseStruct::SynapseDynamics) {
         if(m.getArchetype().isDendriticDelayRequired()) {
             gen.addPSPointerField(precision + " *denDelay", prefix + "denDelay");
             gen.addField("volatile unsigned int *denDelayPtr",
-                         [&backend](const SynapseGroupInternal &sg)
+                         [&backend](const SynapseGroupInternal &sg, size_t)
                          { 
                              return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")"; 
                          });
@@ -268,7 +351,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         // If presynaptic population has delay buffers
         if(m.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             gen.addField("volatile unsigned int *srcSpkQuePtr",
-                         [&backend](const SynapseGroupInternal &sg)
+                         [&backend](const SynapseGroupInternal &sg, size_t)
                          {
                              return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + sg.getSrcNeuronGroup()->getName() + ")";
                          });
@@ -277,7 +360,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         // If postsynaptic population has delay buffers
         if(m.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
             gen.addField("volatile unsigned int *trgSpkQuePtr",
-                         [&backend](const SynapseGroupInternal &sg)
+                         [&backend](const SynapseGroupInternal &sg, size_t)
                          {
                              return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + sg.getTrgNeuronGroup()->getName() + ")";
                          });
@@ -1107,11 +1190,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         MergedSynapseStructGenerator gen(m);
 
         gen.addField("unsigned int numSrcNeurons",
-                     [](const SynapseGroupInternal &sg){ return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+                     [](const SynapseGroupInternal &sg, size_t){ return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
         gen.addField("unsigned int numTrgNeurons",
-                     [](const SynapseGroupInternal &sg){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+                     [](const SynapseGroupInternal &sg, size_t){ return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
         gen.addField("unsigned int rowStride",
-                     [&backend, m](const SynapseGroupInternal &sg){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+                     [&backend, m](const SynapseGroupInternal &sg, size_t){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
 
         if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             gen.addPointerField("unsigned int *rowLength", backend.getVarPrefix() + "rowLength");
@@ -1169,10 +1252,10 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         if(m.getArchetype().isDelayRequired()) {
             gen.addField("unsigned int numDelaySlots",
-                         [](const NeuronGroupInternal &ng) { return std::to_string(ng.getNumDelaySlots()); });
+                         [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumDelaySlots()); });
 
             gen.addField("volatile unsigned int *spkQuePtr",
-                         [&backend](const NeuronGroupInternal &ng)
+                         [&backend](const NeuronGroupInternal &ng, size_t)
                          {
                              return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + ng.getName() + ")";
                          });

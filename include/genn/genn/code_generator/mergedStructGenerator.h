@@ -20,7 +20,7 @@ public:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef std::function<std::string(const typename T::GroupInternal &)> GetFieldValueFunc;
+    typedef std::function<std::string(const typename T::GroupInternal &, size_t)> GetFieldValueFunc;
 
     MergedStructGenerator(const T &mergedGroup) : m_MergedGroup(mergedGroup)
     {
@@ -36,7 +36,7 @@ public:
 
     void addPointerField(const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const typename T::GroupInternal &g){ return prefix + g.getName(); });
+        addField(name, [prefix](const typename T::GroupInternal &g, size_t){ return prefix + g.getName(); });
     }
 
     void addVars(const std::vector<Models::Base::Var> &vars, const std::string &prefix)
@@ -50,7 +50,7 @@ public:
     {
         for(const auto &e : egps) {
             addField(e.type + " " + e.name,
-                     [e](const typename T::GroupInternal &g){ return e.name + g.getName(); });
+                     [e](const typename T::GroupInternal &g, size_t){ return e.name + g.getName(); });
         }
     }
 
@@ -78,10 +78,12 @@ public:
             runnerVarAlloc << "Merged" << name << "Group" << index << " merged" << name << "Group" << index << "[] = ";
             {
                 CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
-                for(const auto &sg : getMergedGroup().getGroups()) {
+                for(size_t i = 0; i < getMergedGroup().getGroups().size(); i++) {
+                    const auto &sg = getMergedGroup().getGroups()[i];
+
                     runnerVarAlloc << "{";
                     for(const auto &f : m_Fields) {
-                        runnerVarAlloc << f.second(sg) << ", ";
+                        runnerVarAlloc << f.second(sg, i) << ", ";
                     }
                     runnerVarAlloc << "}," << std::endl;
                 }
@@ -123,76 +125,35 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void addMergedInSynPointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
+    void addMergedInSynPointerField(const std::string &name, size_t archetypeIndex, const std::string &prefix,
+                                    const std::vector<std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>>> &sortedMergedInSyns)
     {
-        if(init) {
-            addField(name + std::to_string(index),
-                    [this, index, prefix](const NeuronGroupInternal &ng)
-                    {
-                        return prefix + getMergedGroup().getCompatibleInitMergedInSyn(index, ng)->getPSModelTargetName();
-                    });
-        }
-        else {
-            addField(name + std::to_string(index),
-                    [this, index, prefix](const NeuronGroupInternal &ng)
-                    {
-                        return prefix + getMergedGroup().getCompatibleMergedInSyn(index, ng)->getPSModelTargetName();
-                    });
-        }
+        addField(name + std::to_string(archetypeIndex),
+                 [prefix, &sortedMergedInSyns, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
+                 {
+                     return prefix + sortedMergedInSyns.at(groupIndex).at(archetypeIndex).first->getPSModelTargetName();
+                 });
     }
 
-    void addCurrentSourcePointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
+    void addCurrentSourcePointerField(const std::string &name, size_t archetypeIndex, const std::string &prefix,
+                                      const std::vector<std::vector<CurrentSourceInternal*>> &sortedCurrentSources)
     {
-        if(init) {
-            addField(name + std::to_string(index),
-                     [this, index, prefix](const NeuronGroupInternal &ng)
-                     {
-                         return prefix + getMergedGroup().getCompatibleInitCurrentSource(index, ng)->getName();
-                     });
-        }
-        else {
-            addField(name + std::to_string(index),
-                     [this, index, prefix](const NeuronGroupInternal &ng)
-                     {
-                         return prefix + getMergedGroup().getCompatibleCurrentSource(index, ng)->getName();
-                     });
-        }
+        addField(name + std::to_string(archetypeIndex),
+                 [prefix, &sortedCurrentSources, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
+                 {
+                     return prefix + sortedCurrentSources.at(groupIndex).at(archetypeIndex)->getName();
+                 });
     }
 
-    void addInSynWithPostCodePointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
+    void addSynPointerField(const std::string &name, size_t archetypeIndex, const std::string &prefix,
+                            const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn)
     {
-        if(init) {
-            addField(name + std::to_string(index),
-                     [this, index, prefix](const NeuronGroupInternal &ng)
-                     {
-                         return prefix + getMergedGroup().getCompatibleInitInSynWithPostCode(index, ng)->getName();
-                     });
-        }
-        else {
-            addField(name + std::to_string(index),
-                     [this, index, prefix](const NeuronGroupInternal &ng)
-                     {
-                         return prefix + getMergedGroup().getCompatibleInSynWithPostCode(index, ng)->getName();
-                     });
-        }
-    }
+        addField(name + std::to_string(archetypeIndex),
+                 [prefix, &sortedSyn, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
+                 {
+                     return prefix + sortedSyn.at(groupIndex).at(archetypeIndex)->getName();
+                 });
 
-    void addOutSynWithPreCodePointerField(const std::string &name, size_t index, bool init, const std::string &prefix)
-    {
-        if(init) {
-            addField(name + std::to_string(index),
-                     [this, index, prefix](const NeuronGroupInternal &ng)
-                     {
-                         return prefix + getMergedGroup().getCompatibleInitOutSynWithPreCode(index, ng)->getName();
-                     });
-        }
-        else {
-            addField(name + std::to_string(index),
-                     [this, index, prefix](const NeuronGroupInternal &ng)
-                     {
-                         return prefix + getMergedGroup().getCompatibleOutSynWithPreCode(index, ng)->getName();
-                     });
-        }
     }
 };
 //--------------------------------------------------------------------------
@@ -211,17 +172,17 @@ public:
     //------------------------------------------------------------------------
     void addPSPointerField(const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const SynapseGroupInternal &sg){ return prefix + sg.getPSModelTargetName(); });
+        addField(name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getPSModelTargetName(); });
     }
 
     void addSrcPointerField(const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const SynapseGroupInternal &sg){ return prefix + sg.getSrcNeuronGroup()->getName(); });
+        addField(name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getSrcNeuronGroup()->getName(); });
     }
 
     void addTrgPointerField(const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const SynapseGroupInternal &sg){ return prefix + sg.getTrgNeuronGroup()->getName(); });
+        addField(name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getTrgNeuronGroup()->getName(); });
     }
 };
 
