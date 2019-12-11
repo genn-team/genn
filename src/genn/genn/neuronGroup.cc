@@ -331,6 +331,8 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
        && (getDerivedParams() == other.getDerivedParams())
        && (isSpikeTimeRequired() == other.isSpikeTimeRequired())
        && (getSpikeEventCondition() == other.getSpikeEventCondition())
+       && (isSpikeEventRequired() == other.isSpikeEventRequired())
+       && (getNumDelaySlots() == other.getNumDelaySlots())
        && (m_VarQueueRequired == other.m_VarQueueRequired))
     {
 
