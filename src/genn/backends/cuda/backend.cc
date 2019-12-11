@@ -721,14 +721,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                             // Determine synapse and presynaptic indices for this thread
                             os << "const unsigned int s = group.synRemap[1 + " << popSubs["id"] << "];" << std::endl;
 
-                            synSubs.addVarSubstitution("id_pre", "s / group.rowStride");
+                            synSubs.addVarSubstitution("id_pre", "(s / group.rowStride)");
                             synSubs.addVarSubstitution("id_post", "group.ind[s]");
                             synSubs.addVarSubstitution("id_syn", "s");
                         }
                         else {
                             // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
-                            synSubs.addVarSubstitution("id_pre", popSubs["id"] + " / group.rowStride");
-                            synSubs.addVarSubstitution("id_post", popSubs["id"] + " % group.rowStride");
+                            synSubs.addVarSubstitution("id_pre", "(" + popSubs["id"] + " / group.rowStride)");
+                            synSubs.addVarSubstitution("id_post", "(" + popSubs["id"] + " % group.rowStride)");
                             synSubs.addVarSubstitution("id_syn", popSubs["id"]);
                         }
 
