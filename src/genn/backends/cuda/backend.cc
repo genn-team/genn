@@ -494,10 +494,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             // Determine the maximum shared memory outputs 
             size_t maxSharedMemPerThread = 0;
             for (const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
-                if (s.getArchetype().isTrueSpikeRequired() || !s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
-                    maxSharedMemPerThread = std::max(maxSharedMemPerThread,
-                                                     getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
-                }
+                maxSharedMemPerThread = std::max(maxSharedMemPerThread,
+                                                 getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
             }
 
             // If any shared memory is required, declare array
