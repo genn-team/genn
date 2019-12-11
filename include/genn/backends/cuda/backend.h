@@ -95,6 +95,9 @@ struct Preferences : public PreferencesBase
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
 
+    //! Should we use the constant cache for storing merged structures - improves performance but may overflow for large models
+    bool useConstantCacheForMergedStructs = true;
+
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 

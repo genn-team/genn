@@ -1625,7 +1625,8 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
 //--------------------------------------------------------------------------
 void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
 {
-    os << "__device__ __constant__ Merged" << suffix << "Group" << idx << " d_merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
+    const std::string prefix = m_Preferences.useConstantCacheForMergedStructs ? "__device__ __constant__" : "__device__";
+    os << prefix << " Merged" << suffix << "Group" << idx << " d_merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
