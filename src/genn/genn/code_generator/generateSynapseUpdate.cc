@@ -124,7 +124,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
 
             // Get read offset if required
             const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            preNeuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype(), offset, "", baseSubs["id_pre"]);
+            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, "", baseSubs["id_pre"], "_pre", "Pre");
 
             // Get event threshold condition code
             std::string code = sg.getArchetype().getWUModel()->getEventThresholdConditionCode();

@@ -413,7 +413,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 preSubs.addVarNameSubstitution(sg->getWUModel()->getPreVars(), "", "l");
 
                 const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                preNeuronSubstitutionsInSynapticCode(preSubs, *sg, offset, "", preSubs["id"]);
+                neuronSubstitutionsInSynapticCode(preSubs, sg->getSrcNeuronGroup(), offset, "", preSubs["id"], "_pre", "");
 
                 // Perform standard substitutions
                 std::string code = sg->getWUModel()->getPreSpikeCode();
@@ -461,7 +461,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
                 postSubs.addVarNameSubstitution(sg->getWUModel()->getPostVars(), "", "l");
 
                 const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                postNeuronSubstitutionsInSynapticCode(postSubs, *sg, offset, "", postSubs["id"]);
+                neuronSubstitutionsInSynapticCode(postSubs, sg->getTrgNeuronGroup(), offset, "", postSubs["id"], "_post", "");
 
                 // Perform standard substitutions
                 std::string code = sg->getWUModel()->getPostSpikeCode();

@@ -150,34 +150,6 @@ void doFinal(std::string &code, unsigned int i, const std::string &type, unsigne
     }
 }
 
-void neuronSubstitutionsInSynapticCode(
-    CodeGenerator::Substitutions &substitutions,
-    const NeuronGroupInternal *ng,
-    const std::string &offset,
-    const std::string &delayOffset,
-    const std::string &idx,
-    const std::string &sourceSuffix,
-    const std::string &destSuffix,
-    const std::string &varPrefix,
-    const std::string &varSuffix)
-{
-    using namespace CodeGenerator;
-
-    // presynaptic neuron variables, parameters, and global parameters
-    const auto *neuronModel = ng->getNeuronModel();
-    substitutions.addVarSubstitution("sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group.sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
-    for(const auto &v : neuronModel->getVars()) {
-        const std::string varIdx = ng->isVarQueueRequired(v.name) ? offset + idx : idx;
-
-        substitutions.addVarSubstitution(v.name + sourceSuffix,
-                                         varPrefix + "group." + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
-    }
-    substitutions.addParamValueSubstitution(neuronModel->getParamNames(), ng->getParams(), sourceSuffix);
-    substitutions.addVarValueSubstitution(neuronModel->getDerivedParams(), ng->getDerivedParams(), sourceSuffix);
-    substitutions.addVarNameSubstitution(neuronModel->getExtraGlobalParams(), sourceSuffix, "group.", destSuffix);
-}
-
 bool regexSubstitute(std::string &s, const std::regex &regex, const std::string &format)
 {
     // **NOTE** the following code performs the same function as std::regex_replace
@@ -523,35 +495,38 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
-void preNeuronSubstitutionsInSynapticCode(
-    Substitutions &substitutions, //!< the code string to work on
-    const SynapseGroupInternal &sg,
-    const std::string &offset,
-    const std::string &axonalDelayOffset,
-    const std::string &preIdx,
-    const std::string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &preVarSuffix)     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
-{
-    // presynaptic neuron variables, parameters, and global parameters
-    ::neuronSubstitutionsInSynapticCode(substitutions, sg.getSrcNeuronGroup(), offset, axonalDelayOffset, preIdx, "_pre", "Pre", preVarPrefix, preVarSuffix);
-}
 
-void postNeuronSubstitutionsInSynapticCode(
-    Substitutions &substitutions, //!< the code string to work on
-    const SynapseGroupInternal &sg,
+void neuronSubstitutionsInSynapticCode(
+    CodeGenerator::Substitutions &substitutions,
+    const NeuronGroupInternal *ng,
     const std::string &offset,
-    const std::string &backPropDelayOffset,
-    const std::string &postIdx,
-    const std::string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const std::string &delayOffset,
+    const std::string &idx,
+    const std::string &sourceSuffix,
+    const std::string &destSuffix,
+    const std::string &varPrefix,
+    const std::string &varSuffix)
 {
-    // postsynaptic neuron variables, parameters, and global parameters
-    ::neuronSubstitutionsInSynapticCode(substitutions, sg.getTrgNeuronGroup(), offset, backPropDelayOffset, postIdx, "_post", "Post", postVarPrefix, postVarSuffix);
+    using namespace CodeGenerator;
+
+    // presynaptic neuron variables, parameters, and global parameters
+    const auto *neuronModel = ng->getNeuronModel();
+    substitutions.addVarSubstitution("sT" + sourceSuffix,
+                                     "(" + delayOffset + varPrefix + "group.sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
+    for(const auto &v : neuronModel->getVars()) {
+        const std::string varIdx = ng->isVarQueueRequired(v.name) ? offset + idx : idx;
+
+        substitutions.addVarSubstitution(v.name + sourceSuffix,
+                                         varPrefix + "group." + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
+    }
+    substitutions.addParamValueSubstitution(neuronModel->getParamNames(), ng->getParams(), sourceSuffix);
+    substitutions.addVarValueSubstitution(neuronModel->getDerivedParams(), ng->getDerivedParams(), sourceSuffix);
+    substitutions.addVarNameSubstitution(neuronModel->getExtraGlobalParams(), sourceSuffix, "group.", destSuffix);
 }
 
 void neuronSubstitutionsInSynapticCode(
-    Substitutions &substitutions,                  //!< the code string to work on
-    const SynapseGroupInternal &sg,         //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    Substitutions &substitutions,        //!< the code string to work on
+    const SynapseGroupInternal &sg,      //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
     const std::string &preIdx,           //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
     const std::string &postIdx,          //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
     double dt,                           //!< simulation timestep (ms)
@@ -562,10 +537,10 @@ void neuronSubstitutionsInSynapticCode(
 {
     const std::string axonalDelayOffset = writePreciseString(dt * (double)(sg.getDelaySteps() + 1u)) + " + ";
     const std::string preOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-    preNeuronSubstitutionsInSynapticCode(substitutions, sg, preOffset, axonalDelayOffset, preIdx, preVarPrefix, preVarSuffix);
+    neuronSubstitutionsInSynapticCode(substitutions, sg.getSrcNeuronGroup(), preOffset, axonalDelayOffset, preIdx, "_pre", "Pre", preVarPrefix, preVarSuffix);
     
     const std::string backPropDelayMs = writePreciseString(dt * (double)(sg.getBackPropDelaySteps() + 1u)) + " + ";
     const std::string postOffset = sg.getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
-    postNeuronSubstitutionsInSynapticCode(substitutions, sg, postOffset, backPropDelayMs, postIdx, postVarPrefix, postVarSuffix);
+    neuronSubstitutionsInSynapticCode(substitutions, sg.getTrgNeuronGroup(), postOffset, backPropDelayMs, postIdx, "_post", "Post", postVarPrefix, postVarSuffix);
 }
 }   // namespace CodeGenerator
