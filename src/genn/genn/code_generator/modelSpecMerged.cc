@@ -14,18 +14,10 @@
 //----------------------------------------------------------------------------
 namespace
 {
-template<typename Group, typename MergedGroup, typename F, typename M>
-void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
-                        F filter, M canMerge)
+template<typename Group, typename MergedGroup, typename M>
+void createMergedGroups(std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
+                        std::vector<MergedGroup> &mergedGroups, M canMerge)
 {
-    // Build temporary vector of references to groups that pass filter
-    std::vector<std::reference_wrapper<const Group>> unmergedGroups;
-    for(const auto &g : groups) {
-        if(filter(g.second)) {
-            unmergedGroups.emplace_back(std::cref(g.second));
-        }
-    }
-
     // Loop through un-merged  groups
     while(!unmergedGroups.empty()) {
         // Remove last group from vector
@@ -58,6 +50,22 @@ void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<
         mergedGroups.emplace_back(mergedGroups.size(), mergeTargets);
 
     }
+}
+//----------------------------------------------------------------------------
+template<typename Group, typename MergedGroup, typename F, typename M>
+void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
+                        F filter, M canMerge)
+{
+    // Build temporary vector of references to groups that pass filter
+    std::vector<std::reference_wrapper<const Group>> unmergedGroups;
+    for(const auto &g : groups) {
+        if(filter(g.second)) {
+            unmergedGroups.emplace_back(std::cref(g.second));
+        }
+    }
+
+    // Merge filtered vector
+    createMergedGroups(unmergedGroups, mergedGroups, canMerge);
 }
 }   // Anonymous namespace
 
@@ -125,4 +133,21 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                                    && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
                                    && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired()));
                        });
+
+    // Build vector of merged synapse groups which require dendritic delay
+    std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
+    for(const auto &n : model.getNeuronGroups()) {
+        for(const auto &m : n.second.getMergedInSyn()) {
+            if(m.first->isDendriticDelayRequired()) {
+                synapseGroupsWithDendriticDelay.push_back(std::cref(*m.first));
+            }
+        }
+    }
+    LOGD << "Merging synapse groups which require their dendritic delay updating:";
+    createMergedGroups(synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
+                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b)
+                       {
+                           return (a.getMaxDendriticDelayTimesteps() == b.getMaxDendriticDelayTimesteps());
+                       });
+
 }

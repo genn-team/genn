@@ -1272,6 +1272,20 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "NeuronSpikeQueueUpdate");
     }
 
+    // Loop through synapse groups whose dendritic delay pointers need updating
+    for(const auto &m : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
+        MergedSynapseStructGenerator gen(m);
+
+        gen.addField("volatile unsigned int *denDelayPtr",
+                     [&backend](const SynapseGroupInternal &sg, size_t)
+                     {
+                         return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
+                     });
+
+        // Generate structure definitions and instantiation
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "SynapseDendriticDelayUpdate");
+    }
+
     // End extern C block around variable declarations
     runnerVarDecl << "}  // extern \"C\"" << std::endl;
  

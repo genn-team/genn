@@ -58,6 +58,9 @@ public:
     //! Get merged neuron groups which require their spike queues updating
     const std::vector<NeuronGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
 
+    //! Get merged synapse groups which require their dendritic delay updating
+    const std::vector<SynapseGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
+
 private:
     //--------------------------------------------------------------------------
     // Members
@@ -91,5 +94,8 @@ private:
 
     //! Merged neuron groups which require their spike queues updating
     std::vector<NeuronGroupMerged> m_MergedNeuronSpikeQueueUpdateGroups;
+
+    //! Merged synapse groups which require their dendritic delay updating
+    std::vector<SynapseGroupMerged> m_MergedSynapseDendriticDelayUpdateGroups;
 };
 }   // namespace CodeGenerator

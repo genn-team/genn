@@ -91,6 +91,7 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
         LOGI << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
         LOGI << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
         LOGI << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
+        LOGI << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
     }
 
     // Return list of modules

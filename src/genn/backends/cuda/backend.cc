@@ -424,37 +424,34 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
     size_t idPreSynapseReset = 0;
-    if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                   [](const SynapseGroupMerged &s){ return s.getArchetype().isDendriticDelayRequired(); }))
-    {
-        // pre synapse reset kernel header
+    if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
         os << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
         {
             CodeStream::Scope b(os);
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPreSynapseReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-            // Loop through neuron groups
-            for(const auto &n : model.getNeuronGroups()) {
-                // Loop through incoming synaptic populations
-                for(const auto &m : n.second.getMergedInSyn()) {
-                    const auto *sg = m.first;
-
-                     // If this kernel requires dendritic delay
-                    if(sg->isDendriticDelayRequired()) {
-                        if(idPreSynapseReset > 0) {
-                            os << "else ";
-                        }
-                        os << "if(id == " << (idPreSynapseReset++) << ")";
-                        {
-                            CodeStream::Scope b(os);
-
-                            os << "d_denDelayPtr" << sg->getPSModelTargetName() << " = (d_denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
-                        }
-                    }
+            // Loop through merged synapse groups
+            for(const auto &n : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
+                os << "// merged" << n.getIndex() << std::endl;
+                if(idPreSynapseReset == 0) {
+                    os << "if(id < " << n.getGroups().size() << ")";
                 }
+                else {
+                    os << "if(id >= " << idPreSynapseReset << " && id < " << idPreSynapseReset + n.getGroups().size() << ")";
+                }
+                {
+                    CodeStream::Scope b(os);
+
+                    // Use this to get reference to merged group structure
+                    os << "const auto &group = d_mergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << "[id - " << idPreSynapseReset << "]; " << std::endl;
+
+                    os << "*group.denDelayPtr = (*group.denDelayPtr + 1) % " << n.getArchetype().getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                }
+                idPreSynapseReset += n.getGroups().size();
             }
         }
+        os << std::endl;
     }
 
     // If there are any presynaptic update groups
