@@ -109,23 +109,6 @@ void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, size_t blockSi
     genGroupStartIDs(os, std::ref(idStart), blockSize, args...);
 }
 //-----------------------------------------------------------------------
-template<typename T>
-void genMergedResetKernelDataStructures(CodeGenerator::CodeStream &os, const std::string prefix, const std::vector<T> &mergedGroups)
-{
-    // Declare array of indices (into mergedXXXXGroup arrays)
-    os << "__device__ __constant__ uint16_t d_merged" << prefix << "GroupThreadIndices[] = {";
-    
-    // Generate indices for these groups
-    for(const auto &m : mergedGroups) {
-        // Loop through neuron groups within merged neuron group
-        for(size_t i = 0; i < m.getGroups().size(); i++) {
-            os << i << ", ";
-        }
-    };
-
-    os << "};" << std::endl;
-}
-//-----------------------------------------------------------------------
 template<typename T, typename G>
 size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
 {
@@ -196,7 +179,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
         [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
     os << std::endl;
-    genMergedResetKernelDataStructures(os, "NeuronSpikeQueueUpdate", modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
 
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -218,11 +200,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             {
                 CodeStream::Scope b(os);
 
-                // Get the index of the group within the merged group
-                os << "const unsigned int groupIndex = d_mergedNeuronSpikeQueueUpdateGroupThreadIndices[id];" << std::endl;
-
                 // Use this to get reference to merged group structure
-                os << "const auto &group = d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[groupIndex]; " << std::endl;
+                os << "const auto &group = d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idPreNeuronReset << "]; " << std::endl;
 
                 if(n.getArchetype().isDelayRequired()) { // with delay
                     os << "*group.spkQuePtr  = (*group.spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
