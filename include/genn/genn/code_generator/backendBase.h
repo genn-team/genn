@@ -207,6 +207,10 @@ public:
     //! Generate code for pushing merged group data to the 'device'
     virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
 
+    //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
+    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
+                                               const std::string &fieldName, const std::string &egpName) const = 0;
+
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;

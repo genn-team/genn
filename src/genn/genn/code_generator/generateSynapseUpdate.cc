@@ -92,7 +92,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend,
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged, const BackendBase &backend,
                                           bool standaloneModules)
 {
     if(standaloneModules) {
@@ -106,10 +106,10 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged 
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), "SynapseDendriticDelayUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedEGPs, "SynapseDendriticDelayUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), mergedEGPs, "PresynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), mergedEGPs, "PostsynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), mergedEGPs, "SynapseDynamics", backend);
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, modelMerged,

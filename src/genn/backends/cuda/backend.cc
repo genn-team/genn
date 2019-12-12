@@ -1611,6 +1611,15 @@ void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size
     os << numGroups << " * sizeof(Merged" << suffix << "Group" << idx << ")));" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
+                                            const std::string &fieldName, const std::string &egpName) const
+{
+    const std::string structName = "Merged" + suffix + "Group" + std::to_string(mergedGroupIdx);
+    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(d_merged" << suffix << "Group" << mergedGroupIdx;
+    os << ", &" << egpName << ", sizeof(" << egpName << ")";
+    os << ", (sizeof(" << structName << ") * " << groupIdx << ") + offsetof(" << structName << ", " << fieldName << ")));" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);

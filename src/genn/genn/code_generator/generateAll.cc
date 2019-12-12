@@ -54,10 +54,12 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     ModelSpecMerged modelMerged(model, backend);
 
     // Generate modules
-    generateNeuronUpdate(neuronUpdate, modelMerged, backend, standaloneModules);
-    generateSynapseUpdate(synapseUpdate, modelMerged, backend, standaloneModules);
-    generateInit(init, modelMerged, backend, standaloneModules);
-    auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
+    MergedEGPMap mergedEGPs;
+    auto mem = generateRunner(definitions, definitionsInternal, runner, mergedEGPs, modelMerged, backend);
+    generateNeuronUpdate(neuronUpdate, mergedEGPs, modelMerged, backend, standaloneModules);
+    generateSynapseUpdate(synapseUpdate, mergedEGPs, modelMerged, backend, standaloneModules);
+    generateInit(init, mergedEGPs, modelMerged, backend, standaloneModules);
+
     generateSupportCode(supportCode, modelMerged);
 
     // Create basic list of modules

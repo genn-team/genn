@@ -720,6 +720,12 @@ void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size
     os << "std::copy_n(group, " << numGroups << ", merged" << suffix << "Group" << idx << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
+                                            const std::string &fieldName, const std::string &egpName) const
+{
+    os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);

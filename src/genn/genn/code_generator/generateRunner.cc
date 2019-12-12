@@ -147,8 +147,8 @@ void orderNeuronGroupChildren(const CodeGenerator::NeuronGroupMerged &m, std::ve
 //-------------------------------------------------------------------------
 void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal,
                            CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarAlloc,
-                           const CodeGenerator::NeuronGroupMerged &m, const std::string &precision,
-                           const std::string &timePrecision, bool init)
+                           CodeGenerator::MergedEGPMap &mergedEGPs, const CodeGenerator::NeuronGroupMerged &m,
+                           const std::string &precision, const std::string &timePrecision, bool init)
 {
     CodeGenerator::MergedNeuronStructGenerator gen(m);
 
@@ -287,14 +287,14 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
     }
 
     // Generate structure definitions and instantiation
-    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
+    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs,
                  init ? "NeuronInit" : "NeuronUpdate");
 }
 //-------------------------------------------------------------------------
 void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal, 
                             CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarAlloc, 
-                            const CodeGenerator::SynapseGroupMerged &m, const std::string &precision,
-                            const std::string &timePrecision, const std::string &name, MergedSynapseStruct role)
+                            CodeGenerator::MergedEGPMap &mergedEGPs, const CodeGenerator::SynapseGroupMerged &m,
+                            const std::string &precision, const std::string &timePrecision, const std::string &name, MergedSynapseStruct role)
 {
     const bool updateRole = ((role == MergedSynapseStruct::PresynapticUpdate)
                              || (role == MergedSynapseStruct::PostsynapticUpdate)
@@ -440,7 +440,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     }
 
     // Generate structure definitions and instantiation
-    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, name);
+    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs, name);
 }
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
@@ -642,7 +642,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
 // CodeGenerator
 //--------------------------------------------------------------------------
 CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                                      const ModelSpecMerged &modelMerged, const BackendBase &backend)
+                                                      MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     // Track memory allocations, initially starting from zero
     auto mem = MemAlloc::zero();
@@ -1171,16 +1171,17 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
     definitionsInternalFunc << "// copying merged group structures to device" << std::endl;
     definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
+
     // Generate merged neuron initialisation groups
     for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
         genMergedNeuronStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
-                              m, model.getPrecision(), model.getTimePrecision(), true);
+                              mergedEGPs, m, model.getPrecision(), model.getTimePrecision(), true);
     }
 
     // Loop through merged dense synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
          genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
-                                m, model.getPrecision(), model.getTimePrecision(),
+                                mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                 "SynapseDenseInit", MergedSynapseStruct::DenseInit);
     }
 
@@ -1207,40 +1208,40 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "SynapseConnectivityInit");
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs, "SynapseConnectivityInit");
     }
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
          genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
-                                m, model.getPrecision(), model.getTimePrecision(),
+                                mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                 "SynapseSparseInit", MergedSynapseStruct::SparseInit);
     }
 
     // Loop through merged neuron update groups
     for(const auto &m : modelMerged.getMergedNeuronUpdateGroups()) {
         genMergedNeuronStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
-                              m, model.getPrecision(), model.getTimePrecision(), false);
+                              mergedEGPs, m, model.getPrecision(), model.getTimePrecision(), false);
     }
 
     // Loop through merged presynaptic update groups
     for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
-                               m, model.getPrecision(), model.getTimePrecision(),
+                               mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                "PresynapticUpdate", MergedSynapseStruct::PresynapticUpdate);
     }
 
     // Loop through merged postsynaptic update groups
     for(const auto &m : modelMerged.getMergedPostsynapticUpdateGroups()) {
         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
-                               m, model.getPrecision(), model.getTimePrecision(),
+                               mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                "PostsynapticUpdate", MergedSynapseStruct::PostsynapticUpdate);
     }
 
     // Loop through synapse dynamics groups
     for(const auto &m : modelMerged.getMergedSynapseDynamicsGroups()) {
         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarAlloc,
-                               m, model.getPrecision(), model.getTimePrecision(),
+                               mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                "SynapseDynamics", MergedSynapseStruct::SynapseDynamics);
     }
 
@@ -1267,7 +1268,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "NeuronSpikeQueueUpdate");
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs, "NeuronSpikeQueueUpdate");
     }
 
     // Loop through synapse groups whose dendritic delay pointers need updating
@@ -1281,7 +1282,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                      });
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, "SynapseDendriticDelayUpdate");
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs, "SynapseDendriticDelayUpdate");
     }
 
     // End extern C block around variable declarations
@@ -1296,6 +1297,22 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "// extra global params" << std::endl;
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerExtraGlobalParamFuncStream.str();
+    for(const auto &e : mergedEGPs) {
+        // Define push function
+        definitionsFunc << "EXPORT_FUNC void push" << e.first << "ToDevice();" << std::endl;
+
+        // Implement
+        runner << "void push" << e.first << "ToDevice()";
+        {
+            CodeStream::Scope b(runner);
+
+            for(const auto &v : e.second) {
+                const std::string pushFuncName = "pushMerged" + v.first + std::to_string(v.second.mergedGroupIndex) + v.second.fieldName + std::to_string(v.second.groupIndex) + "ToDevice();";
+                definitionsInternalFunc << "EXPORT_FUNC void " << pushFuncName << std::endl;
+                runner << pushFuncName << std::endl;
+            }
+        }
+    }
     runner << std::endl;
 
     // Write push function declarations to runner
@@ -1323,7 +1340,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "void copyStateToDevice(bool uninitialisedOnly)";
     {
         CodeStream::Scope b(runner);
-         for(const auto &n : model.getNeuronGroups()) {
+        for(const auto &n : model.getNeuronGroups()) {
             runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
         }
 

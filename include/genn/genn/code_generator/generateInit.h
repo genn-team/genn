@@ -1,10 +1,11 @@
 #pragma once
 
+// GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
+
 // Forward declarations
 namespace CodeGenerator
 {
-class BackendBase;
-class CodeStream;
 class ModelSpecMerged;
 }
 
@@ -13,5 +14,6 @@ class ModelSpecMerged;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateInit(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend, bool standaloneModules);
+void generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+                  const BackendBase &backend, bool standaloneModules);
 }

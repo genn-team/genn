@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <functional>
 #include <vector>
+#include <unordered_map>
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -51,11 +52,12 @@ public:
         for(const auto &e : egps) {
             addField(e.type + " " + e.name,
                      [e](const typename T::GroupInternal &g, size_t){ return e.name + g.getName(); });
+            m_EGPs.push_back(e.name);
         }
     }
 
     void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
-                  CodeGenerator::CodeStream &runnerVarAlloc, const std::string &name)
+                  CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &name)
     {
         const size_t index = getMergedGroup().getIndex();
 
@@ -81,11 +83,19 @@ public:
                 for(size_t i = 0; i < getMergedGroup().getGroups().size(); i++) {
                     const auto &sg = getMergedGroup().getGroups()[i];
 
+                    // Add all fields to merged group array
                     runnerVarAlloc << "{";
                     for(const auto &f : m_Fields) {
                         runnerVarAlloc << f.second(sg, i) << ", ";
                     }
                     runnerVarAlloc << "}," << std::endl;
+
+                    // Add all EGPs to EGP map
+                    for(const auto &e : m_EGPs) {
+                        mergedEGPs[e + sg.get().getName()].emplace(std::piecewise_construct,
+                                                                   std::forward_as_tuple(name),
+                                                                   std::forward_as_tuple(index, i, e));
+                    }
                 }
             }
             runnerVarAlloc << ";" << std::endl;
@@ -109,6 +119,7 @@ private:
     //------------------------------------------------------------------------
     const T &m_MergedGroup;
     std::vector<std::pair<std::string, GetFieldValueFunc>> m_Fields;
+    std::vector<std::string> m_EGPs;
 };
 
 //--------------------------------------------------------------------------

@@ -33,13 +33,13 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "group.");
     substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
 }
-}
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend,
-                                         bool standaloneModules)
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+                                         const BackendBase &backend, bool standaloneModules)
 {
     if(standaloneModules) {
         os << "#include \"runner.cc\"" << std::endl;
@@ -52,8 +52,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &
 
     // Generate functions to push merged neuron group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedEGPs, "NeuronSpikeQueueUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedEGPs, "NeuronUpdate", backend);
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged,
