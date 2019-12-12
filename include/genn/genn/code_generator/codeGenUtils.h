@@ -64,10 +64,12 @@ struct FunctionTemplate
 //! Immutable structure for tracking where an extra global variable ends up after merging
 struct MergedEGP
 {
-    MergedEGP(size_t m, size_t g, const std::string &f) : mergedGroupIndex(m), groupIndex(g), fieldName(f){}
+    MergedEGP(size_t m, size_t g, bool p, const std::string &f)
+    :   mergedGroupIndex(m), groupIndex(g), pointer(p), fieldName(f){}
 
     const size_t mergedGroupIndex;
     const size_t groupIndex;
+    const bool pointer;
     const std::string fieldName;
 };
 
@@ -193,26 +195,24 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << mergedGroupFuncStream.str();
         os << std::endl;
-    }
-
-    if(!mergedEGPs.empty()) {
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// merged extra global params" << std::endl;
-        os << "// ------------------------------------------------------------------------" << std::endl;
         for(const auto &e : mergedEGPs) {
             const auto groupEGPs = e.second.equal_range(suffix);
             for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-                os << "void pushMerged" << suffix << g->second.mergedGroupIndex << g->second.fieldName << g->second.groupIndex << "ToDevice()";
-                {
-                    CodeStream::Scope b(os);
-                    backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
+                if(g->second.pointer) {
+                    os << "void pushMerged" << suffix << g->second.mergedGroupIndex << g->second.fieldName << g->second.groupIndex << "ToDevice()";
+                    {
+                        CodeStream::Scope b(os);
+                        backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
+                    }
+                    os << std::endl;
                 }
-                os << std::endl;
-
             }
         }
     }
 }
+
+
+void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std::string &suffix, const BackendBase &backend);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).

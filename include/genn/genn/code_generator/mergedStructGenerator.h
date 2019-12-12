@@ -5,6 +5,9 @@
 #include <vector>
 #include <unordered_map>
 
+// GeNN includes
+#include "gennUtils.h"
+
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
@@ -52,7 +55,7 @@ public:
         for(const auto &e : egps) {
             addField(e.type + " " + e.name,
                      [e](const typename T::GroupInternal &g, size_t){ return e.name + g.getName(); });
-            m_EGPs.push_back(e.name);
+            m_EGPs.emplace_back(e.name, Utils::isTypePointer(e.type));
         }
     }
 
@@ -92,9 +95,9 @@ public:
 
                     // Add all EGPs to EGP map
                     for(const auto &e : m_EGPs) {
-                        mergedEGPs[e + sg.get().getName()].emplace(std::piecewise_construct,
-                                                                   std::forward_as_tuple(name),
-                                                                   std::forward_as_tuple(index, i, e));
+                        mergedEGPs[e.first + sg.get().getName()].emplace(std::piecewise_construct,
+                                                                         std::forward_as_tuple(name),
+                                                                         std::forward_as_tuple(index, i, e.second, e.first));
                     }
                 }
             }
@@ -119,7 +122,7 @@ private:
     //------------------------------------------------------------------------
     const T &m_MergedGroup;
     std::vector<std::pair<std::string, GetFieldValueFunc>> m_Fields;
-    std::vector<std::string> m_EGPs;
+    std::vector<std::pair<std::string, bool>> m_EGPs;
 };
 
 //--------------------------------------------------------------------------

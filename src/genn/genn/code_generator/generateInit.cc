@@ -360,5 +360,17 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
         [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
         {
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
+        },
+        // Initialise push EGP handler
+        [&backend, &mergedEGPs](CodeStream &os)
+        {
+            genScalarEGPPush(os, mergedEGPs, "NeuronInit", backend);
+            genScalarEGPPush(os, mergedEGPs, "SynapseDenseInit", backend);
+            genScalarEGPPush(os, mergedEGPs, "SynapseConnectivityInit", backend);
+        },
+        // Initialise sparse push EGP handler
+        [&backend, &mergedEGPs](CodeStream &os)
+        {
+            genScalarEGPPush(os, mergedEGPs, "SynapseSparseInit", backend);
         });
 }

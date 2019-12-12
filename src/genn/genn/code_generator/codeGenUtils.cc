@@ -367,6 +367,22 @@ void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n)
     }
 }
 
+void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std::string &suffix, const BackendBase &backend)
+{
+    // Loop through all merged EGPs
+    for(const auto &e : mergedEGPs) {
+        // Loop through range with correct suffix
+        const auto groupEGPs = e.second.equal_range(suffix);
+        for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
+            // If EGP is scalar, generate code to copy
+            if(!g->second.pointer) {
+                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
+            }
+
+        }
+    }
+}
+
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it). 
  */

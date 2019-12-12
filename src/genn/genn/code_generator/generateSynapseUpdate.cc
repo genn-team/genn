@@ -194,6 +194,12 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &me
 
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getSynapseDynamicsCode(), "synapseDynamics",
                                       sg.getArchetype(), baseSubs, model, backend);
-        }
-    );
+        },
+        // Push EGP handler
+        [&backend, &mergedEGPs](CodeStream &os)
+        {
+            genScalarEGPPush(os, mergedEGPs, "PresynapticUpdate", backend);
+            genScalarEGPPush(os, mergedEGPs, "PostsynapticUpdate", backend);
+            genScalarEGPPush(os, mergedEGPs, "SynapseDynamics", backend);
+        });
 }

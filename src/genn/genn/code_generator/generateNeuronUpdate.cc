@@ -484,6 +484,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                     }
                 }
             }
-        }
-    );
+        },
+        // Push EGP handler
+        [&backend, &mergedEGPs](CodeStream &os)
+        {
+            genScalarEGPPush(os, mergedEGPs, "NeuronUpdate", backend);
+        });
 }

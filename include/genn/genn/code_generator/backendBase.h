@@ -112,6 +112,8 @@ public:
     //--------------------------------------------------------------------------
     // Typedefines
     //--------------------------------------------------------------------------
+    typedef std::function<void(CodeStream &)> HostHandler;
+
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
     
     template<typename T>
@@ -140,7 +142,8 @@ public:
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const = 0;
+                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                                 HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
@@ -163,11 +166,13 @@ public:
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                                   SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                   SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
-                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const = 0;
+                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                                  HostHandler pushEGPHandler) const = 0;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                          NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const = 0;
+                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;

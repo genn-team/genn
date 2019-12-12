@@ -170,7 +170,8 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                              NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const
+                              NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                              HostHandler pushEGPHandler) const
 {
     // Generate data structure for accessing merged groups
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -368,6 +369,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << "void updateNeurons(" << model.getTimePrecision() << ")";
     {
         CodeStream::Scope b(os);
+
+        // Push any required EGPS
+        pushEGPHandler(os);
+
         if(idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
@@ -376,6 +381,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         }
         if(idStart > 0) {
             CodeStream::Scope b(os);
+
             Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
@@ -388,7 +394,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                                SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
-                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const
+                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                               HostHandler pushEGPHandler) const
 {
     // Generate data structure for accessing merged groups
     if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
@@ -725,6 +732,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     {
         CodeStream::Scope b(os);
 
+        // Push any required EGPs
+        pushEGPHandler(os);
+
         // Launch pre-synapse reset kernel if required
         if(idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
@@ -767,7 +777,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                       NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const
+                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -1140,6 +1151,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             }
         }
 
+        // Push any required EGPs
+        initPushEGPHandler(os);
+
         // If there are any initialisation threads
         if(idInitStart > 0) {
             CodeStream::Scope b(os);
@@ -1156,6 +1170,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
+
+        // Push any required EGPs
+        initSparsePushEGPHandler(os);
 
         // Copy all uninitialised state variables to device
         os << "copyStateToDevice(true);" << std::endl;
@@ -1615,7 +1632,7 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
                                             const std::string &fieldName, const std::string &egpName) const
 {
     const std::string structName = "Merged" + suffix + "Group" + std::to_string(mergedGroupIdx);
-    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbol(d_merged" << suffix << "Group" << mergedGroupIdx;
+    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << suffix << "Group" << mergedGroupIdx;
     os << ", &" << egpName << ", sizeof(" << egpName << ")";
     os << ", (sizeof(" << structName << ") * " << groupIdx << ") + offsetof(" << structName << ", " << fieldName << ")));" << std::endl;
 }
