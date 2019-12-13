@@ -168,7 +168,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &me
                 synSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
 
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();
-                synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + sg.getIndex());
+                synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(sg.getIndex()));
                 pCode = ensureFtype(pCode, model.getPrecision());
 
                 // Write out code

@@ -221,7 +221,7 @@ public:
     virtual std::string getVarPrefix() const override{ return "d_"; }
 
     virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
-    virtual bool isPopulationRNGRequired() const { return true; }
+    virtual bool isPopulationRNGRequired() const override{ return true; }
     virtual bool isSynRemapRequired() const override{ return true; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 

@@ -162,12 +162,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
 
                 // Apply substitutions to current converter code
                 std::string psCode = psm->getApplyInputCode();
-                inSynSubs.applyCheckUnreplaced(psCode, "postSyntoCurrent : merged " + i);
+                inSynSubs.applyCheckUnreplaced(psCode, "postSyntoCurrent : merged " + std::to_string(i));
                 psCode = ensureFtype(psCode, model.getPrecision());
 
                 // Apply substitutions to decay code
                 std::string pdCode = psm->getDecayCode();
-                inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : merged " + i);
+                inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : merged " + std::to_string(i));
                 pdCode = ensureFtype(pdCode, model.getPrecision());
 
                 if (!psm->getSupportCode().empty()) {
