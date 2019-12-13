@@ -22,6 +22,16 @@ class MergedStructGenerator
 {
 public:
     //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    enum class FieldType
+    {
+        Standard,
+        ScalarEGP,
+        PointerEGP,
+    };
+
+    //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
     typedef std::function<std::string(const typename T::GroupInternal &, size_t)> GetFieldValueFunc;
@@ -33,29 +43,30 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void addField(const std::string &name, GetFieldValueFunc getFieldValue)
+    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
-        m_Fields.emplace_back(name, getFieldValue);
+        m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
-    void addPointerField(const std::string &name, const std::string &prefix)
+    void addPointerField(const std::string &type, const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const typename T::GroupInternal &g, size_t){ return prefix + g.getName(); });
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name, [prefix](const typename T::GroupInternal &g, size_t){ return prefix + g.getName(); });
     }
 
     void addVars(const std::vector<Models::Base::Var> &vars, const std::string &prefix)
     {
         for(const auto &v : vars) {
-            addPointerField(v.type + " *" + v.name, prefix + v.name);
+            addPointerField(v.type, v.name, prefix + v.name);
         }
     }
 
     void addEGPs(const std::vector<Snippet::Base::EGP> &egps)
     {
         for(const auto &e : egps) {
-            addField(e.type + " " + e.name,
-                     [e](const typename T::GroupInternal &g, size_t){ return e.name + g.getName(); });
-            m_EGPs.emplace_back(e.name, Utils::isTypePointer(e.type));
+            addField(e.type, e.name,
+                     [e](const typename T::GroupInternal &g, size_t){ return e.name + g.getName(); },
+                     Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }
 
@@ -69,7 +80,7 @@ public:
         {
             CodeGenerator::CodeStream::Scope b(definitionsInternal);
             for(const auto &f : m_Fields) {
-                definitionsInternal << f.first << ";" << std::endl;
+                definitionsInternal << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
             }
             definitionsInternal << std::endl;
         }
@@ -84,21 +95,22 @@ public:
             {
                 CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
                 for(size_t i = 0; i < getMergedGroup().getGroups().size(); i++) {
-                    const auto &sg = getMergedGroup().getGroups()[i];
+                    const auto &g = getMergedGroup().getGroups()[i];
 
                     // Add all fields to merged group array
                     runnerVarAlloc << "{";
                     for(const auto &f : m_Fields) {
-                        runnerVarAlloc << f.second(sg, i) << ", ";
+                        const std::string fieldInitVal = std::get<2>(f)(g, i);
+                        runnerVarAlloc << fieldInitVal << ", ";
+
+                        // If field is an EGP, add record to merged EGPS
+                        if(std::get<3>(f) != FieldType::Standard) {
+                            mergedEGPs[fieldInitVal].emplace(
+                                std::piecewise_construct, std::forward_as_tuple(name),
+                                std::forward_as_tuple(index, i, (std::get<3>(f) == FieldType::PointerEGP), std::get<1>(f)));
+                        }
                     }
                     runnerVarAlloc << "}," << std::endl;
-
-                    // Add all EGPs to EGP map
-                    for(const auto &e : m_EGPs) {
-                        mergedEGPs[e.first + sg.get().getName()].emplace(std::piecewise_construct,
-                                                                         std::forward_as_tuple(name),
-                                                                         std::forward_as_tuple(index, i, e.second, e.first));
-                    }
                 }
             }
             runnerVarAlloc << ";" << std::endl;
@@ -121,8 +133,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     const T &m_MergedGroup;
-    std::vector<std::pair<std::string, GetFieldValueFunc>> m_Fields;
-    std::vector<std::pair<std::string, bool>> m_EGPs;
+    std::vector<std::tuple<std::string, std::string, GetFieldValueFunc, FieldType>> m_Fields;
 };
 
 //--------------------------------------------------------------------------
@@ -139,30 +150,33 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void addMergedInSynPointerField(const std::string &name, size_t archetypeIndex, const std::string &prefix,
+    void addMergedInSynPointerField(const std::string &type, const std::string &name, size_t archetypeIndex, const std::string &prefix,
                                     const std::vector<std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>>> &sortedMergedInSyns)
     {
-        addField(name + std::to_string(archetypeIndex),
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name + std::to_string(archetypeIndex),
                  [prefix, &sortedMergedInSyns, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
                  {
                      return prefix + sortedMergedInSyns.at(groupIndex).at(archetypeIndex).first->getPSModelTargetName();
                  });
     }
 
-    void addCurrentSourcePointerField(const std::string &name, size_t archetypeIndex, const std::string &prefix,
+    void addCurrentSourcePointerField(const std::string &type, const std::string &name, size_t archetypeIndex, const std::string &prefix,
                                       const std::vector<std::vector<CurrentSourceInternal*>> &sortedCurrentSources)
     {
-        addField(name + std::to_string(archetypeIndex),
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name + std::to_string(archetypeIndex),
                  [prefix, &sortedCurrentSources, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
                  {
                      return prefix + sortedCurrentSources.at(groupIndex).at(archetypeIndex)->getName();
                  });
     }
 
-    void addSynPointerField(const std::string &name, size_t archetypeIndex, const std::string &prefix,
+    void addSynPointerField(const std::string &type, const std::string &name, size_t archetypeIndex, const std::string &prefix,
                             const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn)
     {
-        addField(name + std::to_string(archetypeIndex),
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name + std::to_string(archetypeIndex),
                  [prefix, &sortedSyn, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
                  {
                      return prefix + sortedSyn.at(groupIndex).at(archetypeIndex)->getName();
@@ -184,20 +198,38 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void addPSPointerField(const std::string &name, const std::string &prefix)
+    void addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getPSModelTargetName(); });
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getPSModelTargetName(); });
     }
 
-    void addSrcPointerField(const std::string &name, const std::string &prefix)
+    void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getSrcNeuronGroup()->getName(); });
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getSrcNeuronGroup()->getName(); });
     }
 
-    void addTrgPointerField(const std::string &name, const std::string &prefix)
+    void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix)
     {
-        addField(name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getTrgNeuronGroup()->getName(); });
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t){ return prefix + sg.getTrgNeuronGroup()->getName(); });
     }
+
+    void addSrcEGPField(const Snippet::Base::EGP &egp)
+    {
+        addField(egp.type, egp.name + "Pre",
+                 [egp](const SynapseGroupInternal &sg, size_t){ return egp.name + sg.getSrcNeuronGroup()->getName(); },
+                 Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+    }
+
+    void addTrgEGPField(const Snippet::Base::EGP &egp)
+    {
+        addField(egp.type, egp.name + "Post",
+                 [egp](const SynapseGroupInternal &sg, size_t){ return egp.name + sg.getTrgNeuronGroup()->getName(); },
+                 Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+    }
+
 };
 
 }   // namespace CodeGenerator
