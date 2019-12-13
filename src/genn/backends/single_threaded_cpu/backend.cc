@@ -229,7 +229,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
                             // Add correct functions for apply synaptic input
                             if(s.getArchetype().isDendriticDelayRequired()) {
-                                synSubs.addFuncSubstitution("addToInSynDelay", 2, "group.denDelay[" + s.getDendriticDelayOffset("$(1)") + "j]");
+                                synSubs.addFuncSubstitution("addToInSynDelay", 2, "group.denDelay[" + s.getDendriticDelayOffset("$(1)") + "j] += $(0)");
                             }
                             else {
                                 synSubs.addFuncSubstitution("addToInSyn", 1, "group.inSyn[j] += $(0)");
