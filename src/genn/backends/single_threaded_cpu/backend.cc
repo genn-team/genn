@@ -66,7 +66,8 @@ namespace CodeGenerator
 namespace SingleThreadedCPU
 {
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler) const
+                              NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                              HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     os << "void updateNeurons(" << model.getTimePrecision() << " t)";
@@ -75,6 +76,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         Substitutions funcSubs(cpuFunctions, model.getPrecision());
         funcSubs.addVarSubstitution("t", "t");
+
+        // Push any required EGPs
+        pushEGPHandler(os);
 
         Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
@@ -152,15 +156,18 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
                                SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
                                SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler,
-                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler) const
+                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
+        CodeStream::Scope b(os);
         Substitutions funcSubs(cpuFunctions, model.getPrecision());
         funcSubs.addVarSubstitution("t", "t");
 
-        CodeStream::Scope b(os);
+        // Push any required EGPs
+        pushEGPHandler(os);
 
         // Synapse dynamics
         {
@@ -352,13 +359,17 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                       NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
-                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler) const
+                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     os << "void initialize()";
     {
         CodeStream::Scope b(os);
         Substitutions funcSubs(cpuFunctions, model.getPrecision());
+
+        // Push any required EGPs
+        initPushEGPHandler(os);
 
         Timer t(os, "init", model.isTimingEnabled());
 
@@ -499,6 +510,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     {
         CodeStream::Scope b(os);
         Substitutions funcSubs(cpuFunctions, model.getPrecision());
+
+        // Push any required EGPs
+        initSparsePushEGPHandler(os);
 
         Timer t(os, "initSparse", model.isTimingEnabled());
 
