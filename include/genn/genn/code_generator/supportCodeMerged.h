@@ -1,7 +1,7 @@
 #pragma once
 
 // Standard C++ includes
-#include <unordered_set>
+#include <unordered_map>
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -29,20 +29,17 @@ public:
             // Try and add code to set, assuming that a new namespace will be required
             // **NOTE** namespace name is NOT hashed or compared
             const size_t numStrings = m_SupportCode.size();
-            m_SupportCode.emplace(m_NamespacePrefix + std::to_string(numStrings), code);
+            m_SupportCode.emplace(code, m_NamespacePrefix + std::to_string(numStrings));
         }
     }
 
     const std::string &getSupportCodeNamespace(const std::string &code) const
     {
-        // Create dummy structure only containing code
-        // **NOTE** namespace name does not get hashed or compared
-        const SupportCode dummySupportCode{"", code};
-        const auto s = m_SupportCode.find(dummySupportCode);
+        const auto s = m_SupportCode.find(code);
         assert(s != m_SupportCode.cend());
 
         // Return the name of the namespace which should be included to use it
-        return s->namespaceName;
+        return s->second;
     }
 
     //! Generate support code
@@ -51,10 +48,10 @@ public:
         // Loop through support code
         for(const auto &s : m_SupportCode) {
             // Write namespace containing support code with fixed up floating point type
-            os << "namespace " << s.namespaceName;
+            os << "namespace " << s.second;
             {
                 CodeStream::Scope b(os);
-                os << ensureFtype(s.supportCode, ftype) << std::endl;
+                os << ensureFtype(s.first, ftype) << std::endl;
             }
             os << std::endl;
         }
@@ -64,40 +61,10 @@ public:
 
 private:
     //------------------------------------------------------------------------
-    // SupportCode
-    //------------------------------------------------------------------------
-    //! Struct containing unique support code string and namespace it is generated in
-    struct SupportCode
-    {
-        SupportCode(const std::string &n, const std::string &s) : namespaceName(n), supportCode(s){}
-
-        const std::string namespaceName;
-        const std::string supportCode;
-
-        bool operator == (const SupportCode &other) const
-        {
-            return (other.supportCode == supportCode);
-        }
-    };
-
-    //------------------------------------------------------------------------
-    // SupportCodeHash
-    //------------------------------------------------------------------------
-    //! Functor used for hashing support code strings
-    struct SupportCodeHash
-    {
-        size_t operator() (const SupportCode &supportCode) const
-        {
-            std::hash<std::string> stringHash;
-            return stringHash(supportCode.supportCode);
-        }
-    };
-
-    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    // Set of unique support code strings
-    std::unordered_set<SupportCode, SupportCodeHash> m_SupportCode;
+    // Map of support code strings to namespace names
+    std::unordered_map<std::string, std::string> m_SupportCode;
 
     // Prefix
     const std::string m_NamespacePrefix;
