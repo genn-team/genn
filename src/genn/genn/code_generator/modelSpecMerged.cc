@@ -73,7 +73,9 @@ void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<
 // CodeGenerator::ModelSpecMerged
 //----------------------------------------------------------------------------
 CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
-:   m_Model(model)
+:   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),
+    m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
+    m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
 {
     LOGD << "Merging neuron update groups:";
     createMergedGroups(model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
@@ -150,4 +152,29 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                            return (a.getMaxDendriticDelayTimesteps() == b.getMaxDendriticDelayTimesteps());
                        });
 
+    // Loop through merged neuron groups
+    for(const auto &ng : m_MergedNeuronUpdateGroups) {
+        // Add neuron support code
+        m_NeuronUpdateSupportCode.addSupportCode(ng.getArchetype().getNeuronModel()->getSupportCode());
+
+        // Loop through merged postsynaptic models and add their support code
+        for(const auto &sg : ng.getArchetype().getMergedInSyn()) {
+            m_PostsynapticDynamicsSupportCode.addSupportCode(sg.first->getPSModel()->getSupportCode());
+        }
+    }
+
+    // Loop through merged presynaptic update groups and add support code
+    for(const auto &sg : m_MergedPresynapticUpdateGroups) {
+        m_PresynapticUpdateSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSimSupportCode());
+    }
+
+    // Loop through merged postsynaptic update groups and add support code
+    for(const auto &sg : m_MergedPostsynapticUpdateGroups) {
+        m_PostsynapticUpdateSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getLearnPostSupportCode());
+    }
+
+    // Loop through merged synapse dynamics groups and add support code
+    for(const auto &sg : m_MergedSynapseDynamicsGroups) {
+        m_SynapseDynamicsSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode());
+    }
 }

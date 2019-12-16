@@ -51,17 +51,18 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
     os << std::endl;
 
     // Generate functions to push merged neuron group structures
-    const ModelSpecInternal &model = modelMerged.getModel();
+
     genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedEGPs, "NeuronSpikeQueueUpdate", backend);
     genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedEGPs, "NeuronUpdate", backend);
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged,
         // Sim handler
-        [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs,
-                           BackendBase::NeuronGroupMergedHandler genEmitTrueSpike, 
-                           BackendBase::NeuronGroupMergedHandler genEmitSpikeLikeEvent)
+        [&backend, &modelMerged](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs,
+                                 BackendBase::NeuronGroupMergedHandler genEmitTrueSpike,
+                                 BackendBase::NeuronGroupMergedHandler genEmitSpikeLikeEvent)
         {
+            const ModelSpecInternal &model = modelMerged.getModel();
             const NeuronModels::Base *nm = ng.getArchetype().getNeuronModel();
 
             // Generate code to copy neuron state into local variable
@@ -171,8 +172,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                 pdCode = ensureFtype(pdCode, model.getPrecision());
 
                 if (!psm->getSupportCode().empty()) {
-                    assert(false);
-                    //os << CodeStream::OB(29) << " using namespace " << sg->getPSModelTargetName() << "_postsyn;" << std::endl;
+                    os << "using namespace " << modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()) <<  ";" << std::endl;
                 }
 
                 os << psCode << std::endl;
@@ -228,7 +228,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
             }
 
             if (!nm->getSupportCode().empty()) {
-                os << " using namespace merged" << ng.getIndex() << "_neuron;" << std::endl;
+                os << "using namespace " << modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()) <<  ";" << std::endl;
             }
 
             // If a threshold condition is provided
@@ -276,9 +276,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                     // Open scope for spike-like event test
                     os << CodeStream::OB(31);
 
-                    // Use synapse population support code namespace if required
+                    // Use presynaptic update namespace if required
                     if (!spkEventCond.second.empty()) {
-                        os << " using namespace " << spkEventCond.second << ";" << std::endl;
+                        os << " using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.second) << ";" << std::endl;
                     }
 
                     // Combine this event threshold test with
@@ -387,7 +387,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
             }
         },
         // WU var update handler
-        [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
+        [&backend, &modelMerged](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
         {
             // Loop through outgoing synaptic populations with presynaptic update code
             const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
@@ -418,7 +418,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                 // Perform standard substitutions
                 std::string code = sg->getWUModel()->getPreSpikeCode();
                 preSubs.applyCheckUnreplaced(code, "preSpikeCode :merged" + std::to_string(i));
-                code = ensureFtype(code, model.getPrecision());
+                code = ensureFtype(code, modelMerged.getModel().getPrecision());
                 os << code;
 
                 // Loop through presynaptic variables into global memory
@@ -466,7 +466,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                 // Perform standard substitutions
                 std::string code = sg->getWUModel()->getPostSpikeCode();
                 postSubs.applyCheckUnreplaced(code, "postSpikeCode : merged" + std::to_string(i));
-                code = ensureFtype(code, model.getPrecision());
+                code = ensureFtype(code, modelMerged.getModel().getPrecision());
                 os << code;
 
                 // Write back presynaptic variables into global memory

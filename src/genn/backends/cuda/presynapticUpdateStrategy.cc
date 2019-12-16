@@ -151,7 +151,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         CodeStream::Scope b(os);
 
         if (!wu->getSimSupportCode().empty()) {
-            os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
+            os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) <<  ";" << std::endl;
         }
 
         os << "const unsigned int preInd = group.srcSpk"  << eventSuffix;
@@ -348,7 +348,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                 }
 
                 if (!wu->getSimSupportCode().empty()) {
-                    os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
+                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) <<  ";" << std::endl;
                 }
                 if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << "if(";
@@ -549,9 +549,8 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         synSubs.addVarSubstitution("id_pre", "preInd");
 
         if (!wu->getSimSupportCode().empty()) {
-            os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
+            os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) <<  ";" << std::endl;
         }
-
 
         if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << "if(";
@@ -703,7 +702,7 @@ size_t PostSpanBitmask::getSharedMemoryPerThread(const SynapseGroupMerged &, con
     return 32;
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &, const SynapseGroupMerged &sg,
+void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg,
                                 const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t,
                                 BackendBase::SynapseGroupMergedHandler wumThreshHandler, BackendBase::SynapseGroupMergedHandler wumSimHandler,
                                 BackendBase::SynapseGroupMergedHandler) const
@@ -751,7 +750,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &, const S
                 CodeStream::Scope b(os);
 
                 if (!wu->getSimSupportCode().empty()) {
-                    os << "using namespace merged" << sg.getIndex() << "_weightupdate_simCode;" << std::endl;
+                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) <<  ";" << std::endl;
                 }
                 if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << "if(";

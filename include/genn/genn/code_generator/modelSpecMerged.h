@@ -8,6 +8,7 @@
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
+#include "code_generator/supportCodeMerged.h"
 
 // Forward declarations
 namespace CodeGenerator
@@ -61,6 +62,26 @@ public:
     //! Get merged synapse groups which require their dendritic delay updating
     const std::vector<SynapseGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
 
+    void genNeuronUpdateGroupSupportCode(CodeStream &os) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision()); }
+
+    void genPostsynapticDynamicsSupportCode(CodeStream &os) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision()); }
+
+    void genPresynapticUpdateSupportCode(CodeStream &os) const{ m_PresynapticUpdateSupportCode.gen(os, getModel().getPrecision()); }
+
+    void genPostsynapticUpdateSupportCode(CodeStream &os) const{ m_PostsynapticUpdateSupportCode.gen(os, getModel().getPrecision()); }
+
+    void genSynapseDynamicsSupportCode(CodeStream &os) const{ m_SynapseDynamicsSupportCode.gen(os, getModel().getPrecision()); }
+
+    const std::string &getNeuronUpdateSupportCodeNamespace(const std::string &code) const{ return m_NeuronUpdateSupportCode.getSupportCodeNamespace(code); }
+
+    const std::string &getPostsynapticDynamicsSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticDynamicsSupportCode.getSupportCodeNamespace(code); }
+
+    const std::string &getPresynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PresynapticUpdateSupportCode.getSupportCodeNamespace(code); }
+
+    const std::string &getPostsynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticUpdateSupportCode.getSupportCodeNamespace(code); }
+
+    const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
+
 private:
     //--------------------------------------------------------------------------
     // Members
@@ -97,5 +118,21 @@ private:
 
     //! Merged synapse groups which require their dendritic delay updating
     std::vector<SynapseGroupMerged> m_MergedSynapseDendriticDelayUpdateGroups;
+
+    //! Unique support code strings for neuron update
+    SupportCodeMerged m_NeuronUpdateSupportCode;
+
+    //! Unique support code strings for postsynaptic model
+    SupportCodeMerged m_PostsynapticDynamicsSupportCode;
+
+    //! Unique support code strings for presynaptic update
+    SupportCodeMerged m_PresynapticUpdateSupportCode;
+
+    //! Unique support code strings for postsynaptic update
+    SupportCodeMerged m_PostsynapticUpdateSupportCode;
+
+    //! Unique support code strings for synapse dynamics
+    SupportCodeMerged m_SynapseDynamicsSupportCode;
+
 };
 }   // namespace CodeGenerator

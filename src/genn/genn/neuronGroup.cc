@@ -299,9 +299,9 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
     return vec;
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace)
+void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCode)
 {
-    m_SpikeEventCondition.insert(std::pair<std::string, std::string>(code, supportCodeNamespace));
+    m_SpikeEventCondition.emplace(code, supportCode);
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const

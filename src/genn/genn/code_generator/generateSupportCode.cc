@@ -17,70 +17,22 @@ void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecMerged &m
     os << std::endl;
 
     os << "// support code for neuron update groups" << std::endl;
-    const ModelSpecInternal &model = modelMerged.getModel();
-    for(const auto &n : modelMerged.getMergedNeuronUpdateGroups()) {
-        const std::string supportCode = n.getArchetype().getNeuronModel()->getSupportCode();
-        if (!supportCode.empty()) {
-            os << "namespace merged" << n.getIndex() << "_neuron";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
-            }
-        }
-    }
+    modelMerged.genNeuronUpdateGroupSupportCode(os);
     os << std::endl;
 
-    os << "// support code for presynaptic update groups" << std::endl;
-    for(const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
-        const std::string supportCode = s.getArchetype().getWUModel()->getSimSupportCode();
-        if (!supportCode.empty()) {
-            os << "namespace merged" << s.getIndex() << "_weightupdate_simCode";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
-            }
-        }
-    }
+    os << "// support code for postsynaptic dynamics" << std::endl;
+    modelMerged.genPostsynapticDynamicsSupportCode(os);
+    os << std::endl;
+
+    os << "// support code for presynaptic update" << std::endl;
+    modelMerged.genPresynapticUpdateSupportCode(os);
     os << std::endl;
 
     os << "// support code for postsynaptic update groups" << std::endl;
-    for(const auto &s : modelMerged.getMergedPostsynapticUpdateGroups()) {
-        const std::string supportCode = s.getArchetype().getWUModel()->getLearnPostSupportCode();
-        if (!supportCode.empty()) {
-            os << "namespace merged" << s.getIndex() << "_weightupdate_simLearnPost";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
-            }
-        }
-    }
+    modelMerged.genPostsynapticUpdateSupportCode(os);
     os << std::endl;
 
     os << "// support code for synapse dynamics update groups" << std::endl;
-    for(const auto &s : modelMerged.getMergedSynapseDynamicsGroups()) {
-        const std::string supportCode = s.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode();
-        if (!supportCode.empty()) {
-            os << "namespace merged" << s.getIndex() << "_weightupdate_synapseDynamics";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(supportCode, model.getPrecision()) << std::endl;
-            }
-        }
-    }
+    modelMerged.genSynapseDynamicsSupportCode(os);
     os << std::endl;
-
-    /*os << "// support code for synapse groups" << std::endl;
-    for(const auto &s : model.getSynapseGroups()) {
-        const auto *wu = s.second.getWUModel();
-        const auto *psm = s.second.getPSModel();
-
-        if (!psm->getSupportCode().empty()) {
-            os << "namespace " << s.first << "_postsyn";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(psm->getSupportCode(), model.getPrecision()) << std::endl;
-            }
-        }
-    }
-    os << std::endl;*/
 }

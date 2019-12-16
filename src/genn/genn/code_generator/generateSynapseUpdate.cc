@@ -176,24 +176,26 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &me
             }
         },
         // Postsynaptic learning code
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
+        [&backend, &modelMerged](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
         {
-            if (!sg.getArchetype().getWUModel()->getLearnPostSupportCode().empty()) {
-                os << " using namespace merged" << sg.getIndex() << "_weightupdate_simLearnPost;" << std::endl;
+            const auto *wum = sg.getArchetype().getWUModel();
+            if (!wum->getLearnPostSupportCode().empty()) {
+                os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
             }
 
-            applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getLearnPostCode(), "learnPostCode",
-                                      sg.getArchetype(), baseSubs, model, backend);
+            applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
+                                      sg.getArchetype(), baseSubs, modelMerged.getModel(), backend);
         },
         // Synapse dynamics
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
+        [&backend, &modelMerged](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
         {
-            if (!sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode().empty()) {
-                os << " using namespace merged" << sg.getIndex() << "_weightupdate_synapseDynamics;" << std::endl;
+            const auto *wum = sg.getArchetype().getWUModel();
+            if (!wum->getSynapseDynamicsSuppportCode().empty()) {
+                os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
             }
 
-            applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getSynapseDynamicsCode(), "synapseDynamics",
-                                      sg.getArchetype(), baseSubs, model, backend);
+            applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
+                                      sg.getArchetype(), baseSubs, modelMerged.getModel(), backend);
         },
         // Push EGP handler
         [&backend, &mergedEGPs](CodeStream &os)

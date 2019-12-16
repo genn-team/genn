@@ -188,12 +188,8 @@ void ModelSpec::finalize()
                 std::string eCode = wu->getEventThresholdConditionCode();
                 thresholdSubs.apply(eCode);
 
-                // Add code and name of
-                std::string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?
-                    "" : sg->getName() + "_weightupdate_simCode";
-
-                // Add code and name of support code namespace to set
-                n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
+                // Add threshold and support code to set
+                n.second.addSpkEventCondition(eCode, wu->getSimSupportCode());
 
                 // analyze which neuron variables need queues
                 n.second.updatePreVarQueues(wu->getEventCode());
