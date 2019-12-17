@@ -839,7 +839,7 @@ void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, C
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     std::string linkFlags = "-shared ";
-    std::string cxxFlags = "-c -fPIC -std=c++11 -MMD -MP";
+    std::string cxxFlags = "-c -fPIC -std=c++11 -MMD -MP -Wno-return-type-c-linkage";
     cxxFlags += " " + m_Preferences.userCxxFlagsGNU;
     if (m_Preferences.optimizeCode) {
         cxxFlags += " -O3 -ffast-math";
