@@ -132,8 +132,8 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genPresynapticUpdate(CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &popSubs, bool trueSpike,
-                              SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const;
+    void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
+                              bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const;
 
     void genEmitSpike(CodeStream &os, const NeuronGroupMerged &ng, const Substitutions &subs, bool trueSpike) const;
 

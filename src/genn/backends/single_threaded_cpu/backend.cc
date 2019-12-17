@@ -269,12 +269,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
                     // generate the code for processing spike-like events
                     if (s.getArchetype().isSpikeEventRequired()) {
-                        genPresynapticUpdate(os, s, funcSubs, false, wumThreshHandler, wumEventHandler);
+                        genPresynapticUpdate(os, modelMerged, s, funcSubs, false, wumThreshHandler, wumEventHandler);
                     }
 
                     // generate the code for processing true spike events
                     if (s.getArchetype().isTrueSpikeRequired()) {
-                        genPresynapticUpdate(os, s, funcSubs, true, wumThreshHandler, wumSimHandler);
+                        genPresynapticUpdate(os, modelMerged, s, funcSubs, true, wumThreshHandler, wumSimHandler);
                     }
                     os << std::endl;
                 }
@@ -940,8 +940,8 @@ bool Backend::isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const
     return false;
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &popSubs, bool trueSpike,
-                                   SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const
+void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
+                                   bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
