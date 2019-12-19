@@ -13,10 +13,6 @@
 #include "synapseGroupInternal.h"
 #include "gennUtils.h"
 
-// GeNN code generator includes
-#include "code_generator/codeGenUtils.h"
-#include "code_generator/substitutions.h"
-
 // ------------------------------------------------------------------------
 // Anonymous namespace
 // ------------------------------------------------------------------------
@@ -303,37 +299,19 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
     return vec;
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::addOutSyn(SynapseGroupInternal *synapseGroup)
+void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace, SynapseGroupInternal *synapseGroup)
 {
-    m_OutSyn.push_back(synapseGroup);
-
-    // If synapse group has event code
     const auto *wu = synapseGroup->getWUModel();
-    if (!wu->getEventCode().empty()) {
-        using namespace CodeGenerator;
-        assert(!wu->getEventThresholdConditionCode().empty());
 
-        // do an early replacement of parameters, derived parameters and extra global parameters
-        // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
-        // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
-        Substitutions thresholdSubs;
-        thresholdSubs.addParamValueSubstitution(wu->getParamNames(), synapseGroup->getWUParams());
-        thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), synapseGroup->getWUDerivedParams());
-
-        std::string eCode = wu->getEventThresholdConditionCode();
-        thresholdSubs.apply(eCode);
-
-        // Determine if any EGPs are required by threshold code
-        const auto wuEGPs = wu->getExtraGlobalParams();
-        const bool egpInThresholdCode = std::any_of(wuEGPs.cbegin(), wuEGPs.cend(),
-                                                    [&eCode](const Snippet::Base::EGP &egp)
-                                                    {
-                                                        return (eCode.find("$(" + egp.name + ")") != std::string::npos);
-                                                    });
-
-        // Add threshold, support code, synapse group and whether egps are required to set
-        m_SpikeEventCondition.emplace(eCode, wu->getSimSupportCode(), egpInThresholdCode, synapseGroup);
-    }
+    // Determine if any EGPs are required by threshold code
+    const auto wuEGPs = wu->getExtraGlobalParams();
+    const bool egpInThresholdCode = std::any_of(wuEGPs.cbegin(), wuEGPs.cend(),
+                                                [&code](const Snippet::Base::EGP &egp)
+                                                {
+                                                    return (code.find("$(" + egp.name + ")") != std::string::npos);
+                                                });
+    // Add threshold, support code, synapse group and whether egps are required to set
+    m_SpikeEventCondition.emplace(code, wu->getSimSupportCode(), egpInThresholdCode, synapseGroup);
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const

@@ -25,6 +25,10 @@
 // GeNN includes
 #include "modelSpec.h"
 
+// GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
+#include "code_generator/substitutions.h"
+
 // ------------------------------------------------------------------------
 // ModelSpec
 // ------------------------------------------------------------------------
@@ -174,6 +178,27 @@ void ModelSpec::finalize()
 
     // Loop through neuron populations and their outgoing synapse populations
     for(auto &n : m_LocalNeuronGroups) {
+        for(auto *sg : n.second.getOutSyn()) {
+            const auto *wu = sg->getWUModel();
+
+            if(!wu->getEventCode().empty()) {
+                using namespace CodeGenerator;
+                assert(!wu->getEventThresholdConditionCode().empty());
+
+                // do an early replacement of parameters and derived parameters
+                // **NOTE * *this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
+                // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
+                Substitutions thresholdSubs;
+                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
+                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
+                
+                std::string eCode = wu->getEventThresholdConditionCode();
+                thresholdSubs.apply(eCode);
+
+                // Add code and name of support code namespace to set	
+                n.second.addSpkEventCondition(eCode, wu->getSimSupportCode(), sg);
+            }
+        }
         if (n.second.getSpikeEventCondition().size() > 1) {
             for(auto *sg : n.second.getOutSyn()) {
                 if (!sg->getWUModel()->getEventCode().empty()) {
