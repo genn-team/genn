@@ -54,7 +54,7 @@ public:
     {
     }
 
-    bool canBeMerged(const Init &other) const
+    bool canBeMerged(const VarInit &other) const
     {
         return Snippet::Init<InitVarSnippet::Base>::canBeMerged(other, getSnippet()->getCode());
     }
