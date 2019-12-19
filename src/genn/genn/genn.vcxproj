@@ -63,8 +63,10 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSynapseUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\mergedStructGenerator.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\supportCodeMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
