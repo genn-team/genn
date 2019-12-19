@@ -564,7 +564,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                                 os << "// Calculate index of this synapse in the row-major matrix" << std::endl;
                                 os << "const unsigned int rowMajorIndex = (i * group.rowStride) + j;" << std::endl;
                                 os << "// Using this, lookup postsynaptic target" << std::endl;
-                                os << "const unsigned int postIndex = group,ind[rowMajorIndex];" << std::endl;
+                                os << "const unsigned int postIndex = group.ind[rowMajorIndex];" << std::endl;
                                 os << "// From this calculate index of this synapse in the column-major matrix" << std::endl;
                                 os << "const unsigned int colMajorIndex = (postIndex * group.colStride) + group.colLength[postIndex];" << std::endl;
                                 os << "// Increment column length corresponding to this postsynaptic neuron" << std::endl;
