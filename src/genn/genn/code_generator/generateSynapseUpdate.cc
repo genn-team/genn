@@ -27,7 +27,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     // Substitute parameter and derived parameter names
     synapseSubs.addParamValueSubstitution(sg.getWUModel()->getParamNames(), sg.getWUParams());
     synapseSubs.addVarValueSubstitution(wu->getDerivedParams(), sg.getWUDerivedParams());
-    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "(*group.", ")");
+    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "group.");
 
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? synapseSubs["id_pre"] : "preReadDelayOffset + " + baseSubs["id_pre"];
