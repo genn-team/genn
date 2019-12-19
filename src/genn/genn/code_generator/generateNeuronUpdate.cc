@@ -28,10 +28,9 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
 {
     const NeuronModels::Base *nm = ng.getNeuronModel();
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
-    substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams());
-    substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams());
-    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "group.");
-    substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
+    substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams(), sourceSuffix);
+    substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams(), sourceSuffix);
+    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group.");
 }
 }   // Anonymous namespace
 
@@ -104,6 +103,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
             Substitutions neuronSubs(&popSubs);
             neuronSubs.addVarSubstitution("Isyn", "Isyn");
             neuronSubs.addVarSubstitution("sT", "lsT");
+            neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
             addNeuronModelSubstitutions(neuronSubs, ng.getArchetype());
 
             // Initialise any additional input variables supported by neuron model
