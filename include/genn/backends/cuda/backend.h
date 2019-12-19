@@ -206,6 +206,9 @@ public:
     virtual bool isSynRemapRequired() const override{ return true; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
+    //! Is automatic copy mode enabled in the preferences?
+    virtual bool isAutomaticCopyEnabled() const override { return m_Preferences.automaticCopy; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
 

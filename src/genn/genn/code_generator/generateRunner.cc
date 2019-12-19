@@ -96,10 +96,10 @@ bool canPushPullVar(VarLocation loc)
 }
 //-------------------------------------------------------------------------
 bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
-                         VarLocation loc, const std::string &description, std::function<void()> handler)
+                         VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::function<void()> handler)
 {
-    // If this variable has a location that allows pushing and pulling
-    if(canPushPullVar(loc)) {
+    // If this variable has a location that allows pushing and pulling and automatic copying isn't enabled
+    if(canPushPullVar(loc) && !automaticCopyEnabled) {
         definitionsFunc << "EXPORT_FUNC void push" << description << "ToDevice(bool uninitialisedOnly = false);" << std::endl;
         definitionsFunc << "EXPORT_FUNC void pull" << description << "FromDevice();" << std::endl;
 
@@ -122,11 +122,11 @@ bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
 }
 //-------------------------------------------------------------------------
 void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
-                         VarLocation loc, const std::string &description, std::vector<std::string> &statePushPullFunction,
+                         VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::vector<std::string> &statePushPullFunction,
                          std::function<void()> handler)
 {
     // Add function to vector if push pull function was actually required
-    if(genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, loc, description, handler)) {
+    if(genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, loc, automaticCopyEnabled, description, handler)) {
         statePushPullFunction.push_back(description);
     }
 }
@@ -220,7 +220,7 @@ CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, C
                                     std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
-    genVarPushPullScope(definitionsFunc, push, pull, loc, name, statePushPullFunction,
+    genVarPushPullScope(definitionsFunc, push, pull, loc, backend.isAutomaticCopyEnabled(), name, statePushPullFunction,
         [&]()
         {
             backend.genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
@@ -259,7 +259,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
         }
 
         // If variable can be pushed and pulled
-        if(canPushPullVar(loc)) {
+        if(!backend.isAutomaticCopyEnabled() && canPushPullVar(loc)) {
             // Write definitions for push and pull functions
             definitionsFunc << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int count);" << std::endl;
             definitionsFunc << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int count);" << std::endl;
@@ -477,7 +477,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
             // True spike variable push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
-                                n.first + "CurrentSpikes", currentSpikePullFunctions,
+                                backend.isAutomaticCopyEnabled(), n.first + "CurrentSpikes", currentSpikePullFunctions,
                 [&]()
                 {
                     backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
@@ -506,7 +506,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                 "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), numSpikes);
 
         // True spike push and pull functions
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(), n.first + "Spikes",
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
+                            backend.isAutomaticCopyEnabled(), n.first + "Spikes",
             [&]()
             {
                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
@@ -514,10 +515,10 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
                                             "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), true, numSpikes);
             });
-        
+
         // Current true spike push and pull functions
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
-                            n.first + "CurrentSpikes", currentSpikePullFunctions,
+                            backend.isAutomaticCopyEnabled(), n.first + "CurrentSpikes", currentSpikePullFunctions,
             [&]()
             {
                 backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
@@ -541,7 +542,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                     n.second.getNumNeurons() * n.second.getNumDelaySlots());
 
             // Spike-like event push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(), n.first + "SpikeEvents",
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
+                                backend.isAutomaticCopyEnabled(), n.first + "SpikeEvents",
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
@@ -552,7 +554,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
             // Current spike-like event push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
-                                n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
+                                backend.isAutomaticCopyEnabled(), n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
                 [&]()
                 {
                     backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second);
@@ -575,7 +577,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                     n.second.getNumNeurons() * n.second.getNumDelaySlots());
 
             // Generate push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(), n.first + "SpikeTimes",
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
+                                backend.isAutomaticCopyEnabled(), n.first + "SpikeTimes",
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
@@ -601,11 +604,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
             // Current variable push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
-                                "Current" + vars[i].name + n.first,
+                                backend.isAutomaticCopyEnabled(), "Current" + vars[i].name + n.first,
                 [&]()
                 {
                     backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
-                                                       vars[i].name, n.second.getVarLocation(i));
+                                                    vars[i].name, n.second.getVarLocation(i));
                 });
 
             // Write getter to get access to correct pointer
@@ -624,7 +627,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Add helper function to push and pull entire neuron state
-        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first, neuronStatePushPullFunctions);
+        if(!backend.isAutomaticCopyEnabled()) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first, neuronStatePushPullFunctions);
+        }
 
         const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
         for(size_t i = 0; i < extraGlobalParams.size(); i++) {
@@ -648,7 +653,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
 
             // Add helper function to push and pull entire current source state
-            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName(), currentSourceStatePushPullFunctions);
+            if(!backend.isAutomaticCopyEnabled()) {
+                genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName(), currentSourceStatePushPullFunctions);
+            }
 
             const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
             for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
@@ -742,10 +749,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
 
             // Generate push and pull functions for sparse connectivity 
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(), s.first + "Connectivity", connectivityPushPullFunctions,
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
+                                backend.isAutomaticCopyEnabled(), s.first + "Connectivity", connectivityPushPullFunctions,
                 [&]()
                 {
-                     // Row lengths
+                    // Row lengths
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
                                                 "unsigned int", "rowLength" + s.first, s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
@@ -806,7 +814,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isPSModelMerged()) {
             // Add code to push and pull inSyn
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(), "inSyn" + s.first, synapseGroupStatePushPullFunctions,
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
+                                backend.isAutomaticCopyEnabled(), "inSyn" + s.first, synapseGroupStatePushPullFunctions,
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.first, s.second.getInSynLocation(),
@@ -818,7 +827,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 const auto psmVars = psm->getVars();
                 for(size_t i = 0; i < psmVars.size(); i++) {
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
-                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i), psmVars[i].name + s.first, synapseGroupStatePushPullFunctions,
+                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i),
+                                        backend.isAutomaticCopyEnabled(), psmVars[i].name + s.first, synapseGroupStatePushPullFunctions,
                         [&]()
                         {
                             backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.first, s.second.getPSVarLocation(i),
@@ -829,7 +839,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Add helper function to push and pull entire synapse group state
-        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first, synapseGroupStatePushPullFunctions);
+        if(!backend.isAutomaticCopyEnabled()) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first, synapseGroupStatePushPullFunctions);
+        }
 
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
@@ -886,76 +898,78 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << runnerGetterFuncStream.str();
     runner << std::endl;
 
-    // ---------------------------------------------------------------------
-    // Function for copying all state to device
-    runner << "void copyStateToDevice(bool uninitialisedOnly)";
-    {
-        CodeStream::Scope b(runner);
-         for(const auto &n : model.getLocalNeuronGroups()) {
-            runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
-        }
+    if(!backend.isAutomaticCopyEnabled()) {
+        // ---------------------------------------------------------------------
+        // Function for copying all state to device
+        runner << "void copyStateToDevice(bool uninitialisedOnly)";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &n : model.getLocalNeuronGroups()) {
+                runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            }
 
-        for(const auto &cs : model.getLocalCurrentSources()) {
-            runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
-        }
+            for(const auto &cs : model.getLocalCurrentSources()) {
+                runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            }
 
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            for(const auto &s : model.getLocalSynapseGroups()) {
+                runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            }
         }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all connectivity to device
+        runner << "void copyConnectivityToDevice(bool uninitialisedOnly)";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &func : connectivityPushPullFunctions) {
+                runner << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
+            }
+        }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all state from device
+        runner << "void copyStateFromDevice()";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &n : model.getLocalNeuronGroups()) {
+                runner << "pull" << n.first << "StateFromDevice();" << std::endl;
+            }
+
+            for(const auto &cs : model.getLocalCurrentSources()) {
+                runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
+            }
+
+            for(const auto &s : model.getLocalSynapseGroups()) {
+                runner << "pull" << s.first << "StateFromDevice();" << std::endl;
+            }
+        }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all current spikes from device
+        runner << "void copyCurrentSpikesFromDevice()";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &func : currentSpikePullFunctions) {
+                runner << "pull" << func << "FromDevice();" << std::endl;
+            }
+        }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all current spikes events from device
+        runner << "void copyCurrentSpikeEventsFromDevice()";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &func : currentSpikeEventPullFunctions) {
+                runner << "pull" << func << "FromDevice();" << std::endl;
+            }
+        }
+        runner << std::endl;
     }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all connectivity to device
-    runner << "void copyConnectivityToDevice(bool uninitialisedOnly)";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &func : connectivityPushPullFunctions) {
-            runner << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
-        }
-    }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all state from device
-    runner << "void copyStateFromDevice()";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &n : model.getLocalNeuronGroups()) {
-            runner << "pull" << n.first << "StateFromDevice();" << std::endl;
-        }
-
-        for(const auto &cs : model.getLocalCurrentSources()) {
-            runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
-        }
-
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            runner << "pull" << s.first << "StateFromDevice();" << std::endl;
-        }
-    }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all current spikes from device
-    runner << "void copyCurrentSpikesFromDevice()";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &func : currentSpikePullFunctions) {
-            runner << "pull" << func << "FromDevice();" << std::endl;
-        }
-    }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all current spikes events from device
-    runner << "void copyCurrentSpikeEventsFromDevice()";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &func : currentSpikeEventPullFunctions) {
-            runner << "pull" << func << "FromDevice();" << std::endl;
-        }
-    }
-    runner << std::endl;
 
     // ---------------------------------------------------------------------
     // Function for setting the CUDA device and the host's global variables.
@@ -1034,11 +1048,13 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     // ---------------------------------------------------------------------
     // Function definitions
     definitions << "// Runner functions" << std::endl;
-    definitions << "EXPORT_FUNC void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
-    definitions << "EXPORT_FUNC void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
-    definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
-    definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
-    definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
+    if(!backend.isAutomaticCopyEnabled()) {
+        definitions << "EXPORT_FUNC void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
+        definitions << "EXPORT_FUNC void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
+        definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
+        definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
+        definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
+    }
     definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;
