@@ -1003,6 +1003,9 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 wumSimHandler(os, sg, synSubs);
             }
         }
+        else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+            throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
+        }
         else if(m_Preferences.enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
             // Determine the number of words in each row
             os << "const unsigned int rowWords = ((group.numTrgNeurons + 32 - 1) / 32);" << std::endl;
