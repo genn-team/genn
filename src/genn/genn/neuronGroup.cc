@@ -299,7 +299,7 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
     return vec;
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace, SynapseGroupInternal *synapseGroup)
+void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup)
 {
     const auto *wu = synapseGroup->getWUModel();
 

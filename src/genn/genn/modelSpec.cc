@@ -196,7 +196,7 @@ void ModelSpec::finalize()
                 thresholdSubs.apply(eCode);
 
                 // Add code and name of support code namespace to set	
-                n.second.addSpkEventCondition(eCode, wu->getSimSupportCode(), sg);
+                n.second.addSpkEventCondition(eCode, sg);
             }
         }
         if (n.second.getSpikeEventCondition().size() > 1) {

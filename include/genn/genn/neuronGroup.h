@@ -180,7 +180,7 @@ protected:
     //! Update which postsynaptic variables  require queues based on piece of code
     void updatePostVarQueues(const std::string &code);
 
-    void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace, SynapseGroupInternal *synapseGroup);
+    void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
