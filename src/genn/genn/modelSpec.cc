@@ -25,11 +25,6 @@
 // GeNN includes
 #include "modelSpec.h"
 
-// GeNN code generator includes
-#include "code_generator/backendBase.h"
-#include "code_generator/codeGenUtils.h"
-#include "code_generator/substitutions.h"
-
 // ------------------------------------------------------------------------
 // ModelSpec
 // ------------------------------------------------------------------------
@@ -139,17 +134,25 @@ void ModelSpec::finalize()
         // Initialize derived parameters
         s.second.initDerivedParams(m_DT);
 
+        // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
         if (!wu->getSimCode().empty()) {
-            // analyze which neuron variables need queues
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
         }
 
+        // Mark any pre or postsyaptic neuron variables referenced in event code as requiring queues
+        if (!wu->getEventCode().empty()) {
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getEventCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getEventCode());
+        }
+
+        // Mark any pre or postsyaptic neuron variables referenced in postsynaptic update code as requiring queues
         if (!wu->getLearnPostCode().empty()) {
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
         }
 
+        // Mark any pre or postsyaptic neuron variables referenced in synapse dynamics code as requiring queues
         if (!wu->getSynapseDynamicsCode().empty()) {
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
@@ -171,30 +174,6 @@ void ModelSpec::finalize()
 
     // Loop through neuron populations and their outgoing synapse populations
     for(auto &n : m_LocalNeuronGroups) {
-        for(auto *sg : n.second.getOutSyn()) {
-            const auto *wu = sg->getWUModel();
-
-            if (!wu->getEventCode().empty()) {
-                using namespace CodeGenerator;
-                assert(!wu->getEventThresholdConditionCode().empty());
-
-                // do an early replacement of parameters, derived parameters and extra global parameters
-                // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
-                Substitutions thresholdSubs;
-                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
-                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
-                thresholdSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg->getName());
-
-                std::string eCode = wu->getEventThresholdConditionCode();
-                thresholdSubs.apply(eCode);
-
-                // Add threshold and support code to set
-                n.second.addSpkEventCondition(eCode, wu->getSimSupportCode());
-
-                // analyze which neuron variables need queues
-                n.second.updatePreVarQueues(wu->getEventCode());
-            }
-        }
         if (n.second.getSpikeEventCondition().size() > 1) {
             for(auto *sg : n.second.getOutSyn()) {
                 if (!sg->getWUModel()->getEventCode().empty()) {

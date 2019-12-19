@@ -123,10 +123,8 @@ protected:
     //! Update which postsynaptic variables  require queues based on piece of code
     void updatePostVarQueues(const std::string &code);
 
-    void addSpkEventCondition(const std::string &code, const std::string &supportCode);
-
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
-    void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
+    void addOutSyn(SynapseGroupInternal *synapseGroup);
 
     void initDerivedParams(double dt);
 
@@ -156,12 +154,12 @@ protected:
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
     std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
 
-    //! Helper to get vector of incoming synapse groups which have presynaptic update code
+    //! Helper to get vector of outgoing synapse groups which have presynaptic update code
     std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
 
     //! Do any of the spike event conditions tested by this neuron require specified parameter?
     bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
-    
+
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 

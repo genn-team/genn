@@ -13,6 +13,10 @@
 #include "synapseGroupInternal.h"
 #include "gennUtils.h"
 
+// GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
+#include "code_generator/substitutions.h"
+
 // ------------------------------------------------------------------------
 // Anonymous namespace
 // ------------------------------------------------------------------------
@@ -299,9 +303,29 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
     return vec;
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::addSpkEventCondition(const std::string &code, const std::string &supportCode)
+void NeuronGroup::addOutSyn(SynapseGroupInternal *synapseGroup)
 {
-    m_SpikeEventCondition.emplace(code, supportCode);
+    m_OutSyn.push_back(synapseGroup);
+
+    // If synapse group has event code
+    const auto *wu = synapseGroup->getWUModel();
+    if (!wu->getEventCode().empty()) {
+        using namespace CodeGenerator;
+        assert(!wu->getEventThresholdConditionCode().empty());
+
+        // do an early replacement of parameters, derived parameters and extra global parameters
+        // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
+        // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
+        Substitutions thresholdSubs;
+        thresholdSubs.addParamValueSubstitution(wu->getParamNames(), synapseGroup->getWUParams());
+        thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), synapseGroup->getWUDerivedParams());
+
+        std::string eCode = wu->getEventThresholdConditionCode();
+        thresholdSubs.apply(eCode);
+
+        // Add threshold, support code and synapse group to set
+        m_SpikeEventCondition.emplace(eCode, wu->getSimSupportCode());
+    }
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const
