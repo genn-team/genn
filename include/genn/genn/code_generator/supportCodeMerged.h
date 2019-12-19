@@ -21,7 +21,7 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Add support code string, returning namespace that should be used to access it
+    //! Add support code string
     void addSupportCode(const std::string &code)
     {
         // If there is any support code
@@ -33,6 +33,7 @@ public:
         }
     }
 
+    //! Gets the name of the support code namespace which should be 'used' to provide this support code
     const std::string &getSupportCodeNamespace(const std::string &code) const
     {
         const auto s = m_SupportCode.find(code);
@@ -57,6 +58,7 @@ public:
         }
     }
 
+    //! Gets the number of support code strings hence namespaces which will be generated
     size_t getNumSupportCodeString() const{ return m_SupportCode.size(); }
 
 private:

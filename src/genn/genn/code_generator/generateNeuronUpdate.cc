@@ -263,13 +263,19 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                 os << "bool spikeLikeEvent = false;" << std::endl;
 
                 // Loop through outgoing synapse populations that will contribute to event condition code
+                size_t i = 0;
                 for(const auto &spkEventCond : ng.getArchetype().getSpikeEventCondition()) {
                     // Replace of parameters, derived parameters and extraglobalsynapse parameters
                     Substitutions spkEventCondSubs(&popSubs);
 
+                    // If this spike event condition requires EGPS, substitute them
+                    if(spkEventCond.egpInThresholdCode) {
+                        spkEventCondSubs.addVarNameSubstitution(spkEventCond.synapseGroup->getWUModel()->getExtraGlobalParams(), "", "group.", "EventThresh" + std::to_string(i));
+                        i++;
+                    }
                     addNeuronModelSubstitutions(spkEventCondSubs, ng.getArchetype(), "_pre");
 
-                    std::string eCode = spkEventCond.first;
+                    std::string eCode = spkEventCond.eventThresholdCode;
                     spkEventCondSubs.applyCheckUnreplaced(eCode, "neuronSpkEvntCondition : merged" + std::to_string(ng.getIndex()));
                     eCode = ensureFtype(eCode, model.getPrecision());
 
@@ -277,8 +283,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                     os << CodeStream::OB(31);
 
                     // Use presynaptic update namespace if required
-                    if (!spkEventCond.second.empty()) {
-                        os << " using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.second) << ";" << std::endl;
+                    if (!spkEventCond.supportCode.empty()) {
+                        os << " using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode) << ";" << std::endl;
                     }
 
                     // Combine this event threshold test with

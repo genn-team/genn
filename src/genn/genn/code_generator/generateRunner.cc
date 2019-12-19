@@ -286,6 +286,39 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         }
     }
 
+    std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
+    // Reserve vector of vectors to hold children for all neuron groups, in archetype order
+    //sortedEventThresh.reserve(archetypeChildren.size());
+
+    // Loop through neuron groups
+    for(const auto &g : m.getGroups()) {
+        // Reserve vector for this group's children
+        eventThresholdSGs.emplace_back();
+
+        // Add synapse groups 
+        for(const auto &s : g.get().getSpikeEventCondition()) {
+            if(s.egpInThresholdCode) {
+                eventThresholdSGs.back().push_back(s.synapseGroup);
+            }
+        }
+    }
+    
+    size_t i = 0;
+    for(const auto &s : m.getArchetype().getSpikeEventCondition()) {
+        if(s.egpInThresholdCode) {
+            const auto sgEGPs = s.synapseGroup->getWUModel()->getExtraGlobalParams();
+            for(const auto &egp : sgEGPs) {
+                gen.addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
+                             [egp, &eventThresholdSGs, i](const NeuronGroupInternal &, size_t groupIndex)
+                             {
+                                 return egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
+                             },
+                             Utils::isTypePointer(egp.type) ? CodeGenerator::MergedNeuronStructGenerator::FieldType::PointerEGP : CodeGenerator::MergedNeuronStructGenerator::FieldType::ScalarEGP);
+            }
+            i++;
+        }
+    }
+    
     // Generate structure definitions and instantiation
     gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs,
                  init ? "NeuronInit" : "NeuronUpdate");

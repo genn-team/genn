@@ -21,6 +21,63 @@ class SynapseGroupInternal;
 class GENN_EXPORT NeuronGroup
 {
 public:
+    //------------------------------------------------------------------------
+    // SpikeEventThreshold
+    //------------------------------------------------------------------------
+    //! Structure used for storing spike event data
+    struct SpikeEventThreshold
+    {
+        SpikeEventThreshold(const std::string &e, const std::string &s, bool egp, SynapseGroupInternal *sg)
+            : eventThresholdCode(e), supportCode(s), egpInThresholdCode(egp), synapseGroup(sg)
+        {
+        }
+
+        const std::string eventThresholdCode;
+        const std::string supportCode;
+        const bool egpInThresholdCode;
+        SynapseGroupInternal *synapseGroup;
+
+        //! Less than operator (used for std::set::insert), lexicographically compares all three 
+        //! struct members - meaning that event thresholds featuring extra global parameters from
+        //! different synapse groups will not get combined together in neuron update
+        bool operator < (const SpikeEventThreshold &other) const
+        {
+            if(other.eventThresholdCode < eventThresholdCode) {
+                return false;
+            }
+            else if(eventThresholdCode < other.eventThresholdCode) {
+                return true;
+            }
+
+            if(other.supportCode < supportCode) {
+                return false;
+            }
+            else if(supportCode < other.supportCode) {
+                return true;
+            }
+
+            if(egpInThresholdCode) {
+                if(other.synapseGroup < synapseGroup) {
+                    return false;
+                }
+                else if(synapseGroup < other.synapseGroup) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        //! Equality operator (used for set::set equality used when testing neuron groups mergability),
+        //! Compares only the two code strings as neuron groups with threshold conditions 
+        //! featuring extra global parameters from different synapse groups can still be merged
+        bool operator == (const SpikeEventThreshold &other) const
+        {
+            return ((eventThresholdCode == other.eventThresholdCode)
+                    && (supportCode == other.supportCode));
+        }
+    };
+
     NeuronGroup(const NeuronGroup&) = delete;
     NeuronGroup() = delete;
 
@@ -149,16 +206,13 @@ protected:
 
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
 
-    const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
+    const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
     std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic update code
     std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
-
-    //! Do any of the spike event conditions tested by this neuron require specified parameter?
-    bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
@@ -192,7 +246,7 @@ private:
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>> m_MergedInSyn;
-    std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
+    std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSources;
 

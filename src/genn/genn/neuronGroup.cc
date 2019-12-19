@@ -323,23 +323,17 @@ void NeuronGroup::addOutSyn(SynapseGroupInternal *synapseGroup)
         std::string eCode = wu->getEventThresholdConditionCode();
         thresholdSubs.apply(eCode);
 
-        // Add threshold, support code and synapse group to set
-        m_SpikeEventCondition.emplace(eCode, wu->getSimSupportCode());
-    }
-}
-//----------------------------------------------------------------------------
-bool NeuronGroup::isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const
-{
-    // Loop through event conditions
-    for(const auto &spkEventCond : m_SpikeEventCondition) {
-        // If the event threshold code contains this parameter
-        // (in it's non-uniquified form), set flag and stop searching
-        if(spkEventCond.first.find(pnamefull) != std::string::npos) {
-            return true;
-        }
-    }
+        // Determine if any EGPs are required by threshold code
+        const auto wuEGPs = wu->getExtraGlobalParams();
+        const bool egpInThresholdCode = std::any_of(wuEGPs.cbegin(), wuEGPs.cend(),
+                                                    [&eCode](const Snippet::Base::EGP &egp)
+                                                    {
+                                                        return (eCode.find("$(" + egp.name + ")") != std::string::npos);
+                                                    });
 
-    return false;
+        // Add threshold, support code, synapse group and whether egps are required to set
+        m_SpikeEventCondition.emplace(eCode, wu->getSimSupportCode(), egpInThresholdCode, synapseGroup);
+    }
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
