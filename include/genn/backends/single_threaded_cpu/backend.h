@@ -45,7 +45,8 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
+                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                                  SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
@@ -53,9 +54,11 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
-    virtual void genDefinitionsPreamble(CodeStream &os) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os) const override;
-    virtual void genRunnerPreamble(CodeStream &os) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const override;
 
@@ -87,7 +90,7 @@ public:
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const override;
 
 
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const override;
+    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                       const std::string &name, size_t count) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,

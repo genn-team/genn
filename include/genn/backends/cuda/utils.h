@@ -29,25 +29,3 @@
         exit(EXIT_FAILURE);                                                                                             \
     }                                                                                                                   \
 }
-
-//--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Utils
-//--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace CUDA
-{
-namespace Utils
-{
-inline size_t ceilDivide(size_t numerator, size_t denominator)
-{
-    return ((numerator + denominator - 1) / denominator);
-}
-
-inline size_t padSize(size_t size, size_t blockSize)
-{
-    return ceilDivide(size, blockSize) * blockSize;
-}
-}   // namespace Utils
-}   // namespace CUDA
-}   // namespace CodeGenerator

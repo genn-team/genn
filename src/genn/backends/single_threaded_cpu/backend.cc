@@ -1,5 +1,8 @@
 #include "backend.h"
 
+// Standard C++ include
+#include <random>
+
 // GeNN includes
 #include "gennUtils.h"
 #include "modelSpecInternal.h"
@@ -143,7 +146,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
+                               SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                               SynapseGroupHandler wumEventHandler, SynapseGroupHandler,
                                SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
@@ -409,6 +413,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 os << "// synapse group " << s.first << std::endl;
                 const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+                const size_t synapticMatrixRowStride = getSynapticMatrixRowStride(s.second);
 
                 // If matrix connectivity is ragged
                 if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -425,10 +430,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
                         Substitutions popSubs(&funcSubs);
                         popSubs.addVarSubstitution("id_pre", "i");
-
+                        popSubs.addVarSubstitution("id_post_begin", "0");
+                        popSubs.addVarSubstitution("id_thread", "0");
+                        popSubs.addVarSubstitution("num_threads", "1");
+                        popSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
+                        
                         // Add function to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    ind + "[(i * " + std::to_string(s.second.getMaxConnections()) + ") + (" + rowLength + "[i]++)] = $(0)");
+                                                    ind + "[(i * " + std::to_string(synapticMatrixRowStride) + ") + (" + rowLength + "[i]++)] = $(0)");
 
                         sgSparseConnectHandler(os, s.second, popSubs);
                     }
@@ -437,18 +446,21 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                 // Otherwise, if matrix connectivity is a bitmask
                 else if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     // Zero memory before setting sparse bits
-                    os << "memset(gp" << s.first << ", 0, " << (numSrcNeurons * numTrgNeurons) / 32 + 1 << " * sizeof(uint32_t));" << std::endl;
+                    const size_t gpSize = ceilDivide((size_t)numSrcNeurons * synapticMatrixRowStride, 32);
+                    os << "memset(gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t));" << std::endl;
 
                     // Loop through source neurons
                     os << "for(unsigned int i = 0; i < " << numSrcNeurons << "; i++)";
                     {
                         // Calculate index of bit at start of this row
                         CodeStream::Scope b(os);
-                        os << "const int64_t rowStartGID = i * " << numTrgNeurons << "ll;" << std::endl;
+                        os << "const int64_t rowStartGID = i * " << synapticMatrixRowStride << "ll;" << std::endl;
 
                         // Build function template to set correct bit in bitmask
                         Substitutions popSubs(&funcSubs);
                         popSubs.addVarSubstitution("id_pre", "i");
+                        popSubs.addVarSubstitution("id_post_begin", "0");
+                        popSubs.addVarSubstitution("num_post", std::to_string(numTrgNeurons));
 
                         // Add function to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
@@ -532,7 +544,20 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsPreamble(CodeStream &os) const
+size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return sg.getMaxConnections();
+    }
+    else if(m_Preferences.enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+        return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+    }
+    else {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const
 {
     os << "// Standard C++ includes" << std::endl;
     os << "#include <chrono>" << std::endl;
@@ -543,16 +568,56 @@ void Backend::genDefinitionsPreamble(CodeStream &os) const
     os << "#include <cmath>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
+
+     // If a global RNG is required, define standard host distributions as recreating them each call is slow
+    if(isGlobalRNGRequired(model)) {
+        os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
+        os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
+void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &) const
 {
     os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
+
+    // On windows, define an inline function, matching the signature of __builtin_clz which counts leading zeros
+#ifdef _WIN32
+    os << "#include <intrin.h>" << std::endl;
+    os << std::endl;
+    os << "int inline gennCLZ(unsigned int value)";
+    {
+        CodeStream::Scope b(os);
+        os << "unsigned long leadingZero = 0;" << std::endl;
+        os << "if( _BitScanReverse(&leadingZero, value))";
+        {
+            CodeStream::Scope b(os);
+            os << "return 31 - leadingZero;" << std::endl;
+        }
+        os << "else";
+        {
+            CodeStream::Scope b(os);
+            os << "return 32;" << std::endl;
+        }
+    }
+    // Otherwise, on *nix, use __builtin_clz intrinsic
+#else
+    os << "#define gennCLZ __builtin_clz" << std::endl;
+#endif
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const
 {
+    // If a global RNG is required, implement standard host distributions as recreating them each call is slow
+    if(isGlobalRNGRequired(model)) {
+        os << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
+        os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
+        os << std::endl;
+    }
+
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpecInternal &) const
@@ -700,24 +765,16 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
     assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &, const ModelSpecInternal &model) const
+MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &) const
 {
     definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
     runner << "std::mt19937 rng;" << std::endl;
 
-    // Define and implement standard host distributions as recreating them each call is slow
-    definitions << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
-    definitions << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
-    runner << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
-    runner << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
-    runner << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
-
-    return MemAlloc::zero();
+    return MemAlloc::host(sizeof(std::mt19937));
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
-                               const std::string&, size_t) const
+                                   const std::string&, size_t) const
 {
     // No need for population RNGs for single-threaded CPU
     return MemAlloc::zero();
@@ -869,49 +926,95 @@ void Backend::genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &s
             os << CodeStream::OB(10);
         }
 
+        Substitutions synSubs(&popSubs);
+        synSubs.addVarSubstitution("id_pre", "ipre");
+        synSubs.addVarSubstitution("id_post", "ipost");
+        synSubs.addVarSubstitution("id_syn", "synAddress");
+
+        if(sg.isDendriticDelayRequired()) {
+            synSubs.addFuncSubstitution("addToInSynDelay", 2, "denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
+        }
+        else {
+            synSubs.addFuncSubstitution("addToInSyn", 1, "inSyn" + sg.getPSModelTargetName() + "[ipost] += $(0)");
+        }
+
         if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "const unsigned int npost = rowLength" << sg.getName() << "[ipre];" << std::endl;
             os << "for (unsigned int j = 0; j < npost; j++)";
+            {
+                CodeStream::Scope b(os);
+
+                // **TODO** seperate stride from max connection
+                os << "const unsigned int synAddress = (ipre * " << sg.getMaxConnections() <<  ") + j;" << std::endl;
+                os << "const unsigned int ipost = ind" << sg.getName() << "[synAddress];" << std::endl;
+
+                wumSimHandler(os, sg, synSubs);
+            }
+        }
+        else if(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+            throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
+        }
+        else if(m_Preferences.enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+            // Determine the number of words in each row
+            const size_t rowWords = ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+            os << "for(unsigned int w = 0; w < " << rowWords << "; w++)";
+            {
+                CodeStream::Scope b(os);
+
+                // Read row word
+                os << "uint32_t connectivityWord = gp" << sg.getName() << "[(ipre * " << rowWords << ") + w];" << std::endl;
+
+                // Set ipost to first synapse in connectivity word
+                os << "unsigned int ipost = w * 32;" << std::endl;
+
+                // While there any bits left
+                os << "while(connectivityWord != 0)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
+                    os << "const int numLZ = gennCLZ(connectivityWord);" << std::endl;
+
+                    // Shift off zeros and the one just discovered
+                    // **NOTE** << 32 appears to result in undefined behaviour
+                    os << "connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));" << std::endl;
+
+                    // Add to ipost
+                    os << "ipost += numLZ;" << std::endl;
+
+                    // If we aren't in padding region
+                    // **TODO** don't bother checking if there is no padding
+                    os << "if(ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    {
+                        CodeStream::Scope b(os);
+                        wumSimHandler(os, sg, synSubs);
+                    }
+
+                    // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
+                    os << "ipost++;" << std::endl;
+                }
+            }
         }
         // Otherwise (DENSE or BITMASK)
         else {
             os << "for (unsigned int ipost = 0; ipost < " << sg.getTrgNeuronGroup()->getNumNeurons() << "; ipost++)";
-        }
-        {
-            CodeStream::Scope b(os);
-            if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                // **TODO** seperate stride from max connection
-                os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getMaxConnections()) + ") + j;" << std::endl;
-                os << "const unsigned int ipost = ind" << sg.getName() << "[synAddress];" << std::endl;
-            }
-            else {
+            {
+                CodeStream::Scope b(os);
+
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     os << "const uint64_t gid = (ipre * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + ipost);" << std::endl;
                     os << "if (B(gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(20);
                 }
 
                 os << "const unsigned int synAddress = (ipre * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + ipost;" << std::endl;
-            }
 
-            Substitutions synSubs(&popSubs);
-            synSubs.addVarSubstitution("id_pre", "ipre");
-            synSubs.addVarSubstitution("id_post", "ipost");
-            synSubs.addVarSubstitution("id_syn", "synAddress");
+                wumSimHandler(os, sg, synSubs);
 
-            if(sg.isDendriticDelayRequired()) {
-                synSubs.addFuncSubstitution("addToInSynDelay", 2, "denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost] += $(0)");
-            }
-            else {
-                synSubs.addFuncSubstitution("addToInSyn", 1, "inSyn" + sg.getPSModelTargetName() + "[ipost] += $(0)");
-
-            }
-            wumSimHandler(os, sg, synSubs);
-
-            if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                os << CodeStream::CB(20);
+                if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    os << CodeStream::CB(20);
+                }
             }
         }
-
         // If this is a spike-like event, close braces around threshold check
         if (!trueSpike) {
             os << CodeStream::CB(10);

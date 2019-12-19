@@ -37,10 +37,43 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", backend.getVarPrefix(),
                                        sg.getName() + "[" + delayedPostIdx + "]");
 
+    // If weights are individual, substitute variables for values stored in global memory
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synapseSubs.addVarNameSubstitution(wu->getVars(), "", backend.getVarPrefix(),
                                            sg.getName() + "[" + synapseSubs["id_syn"] + "]");
     }
+    // Otherwise, if weights are procedual
+    else if (sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+        const auto vars = wu->getVars();
+
+        // Loop through variables and their initialisers
+        auto var = vars.cbegin();
+        auto varInit = sg.getWUVarInitialisers().cbegin();
+        for (; var != vars.cend(); var++, varInit++) {
+            // Configure variable substitutions
+            CodeGenerator::Substitutions varSubs(&synapseSubs);
+            varSubs.addVarSubstitution("value", "l" + var->name);
+            varSubs.addParamValueSubstitution(varInit->getSnippet()->getParamNames(), varInit->getParams());
+            varSubs.addVarValueSubstitution(varInit->getSnippet()->getDerivedParams(), varInit->getDerivedParams());
+
+            // Generate variable initialization code
+            std::string code = varInit->getSnippet()->getCode();
+            varSubs.applyCheckUnreplaced(code, "initVar : " + var->name + sg.getName());
+
+            // Declare local variable
+            os << var->type << " " << "l" << var->name << ";" << std::endl;
+
+            // Insert code to initialize variable into scope
+            {
+                CodeGenerator::CodeStream::Scope b(os);
+                os << code << std::endl;;
+            }
+        }
+
+        // Substitute variables for newly-declared local variables
+        synapseSubs.addVarNameSubstitution(vars, "", "l");
+    }
+    // Otherwise, substitute variables for constant values
     else {
         synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getWUConstInitVals());
     }
@@ -48,8 +81,10 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     neuronSubstitutionsInSynapticCode(synapseSubs, sg, synapseSubs["id_pre"],
                                       synapseSubs["id_post"], backend.getVarPrefix(),
                                       model.getDT());
-    synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
-    code= CodeGenerator::ensureFtype(code, model.getPrecision());
+
+    synapseSubs.apply(code);
+    //synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
+    code = CodeGenerator::ensureFtype(code, model.getPrecision());
     os << code;
 }
 }   // Anonymous namespace
@@ -72,7 +107,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
     // Synaptic update kernels
     backend.genSynapseUpdate(os, model,
         // Presynaptic weight update threshold
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
         {
             Substitutions synapseSubs(&baseSubs);
 
@@ -92,16 +127,45 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
             os << code;
         },
         // Presynaptic spike
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getWUModel()->getSimCode(), "simCode",
                                       sg, baseSubs, model, backend);
         },
         // Presynaptic spike-like event
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getWUModel()->getEventCode(), "eventCode",
                                       sg, baseSubs, model, backend);
+        },
+        // Procedural connectivity
+        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
+        {
+            baseSubs.addFuncSubstitution("endRow", 0, "break");
+
+            // Initialise row building state variables for procedural connectivity
+            const auto &connectInit = sg.getConnectivityInitialiser();
+            for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
+            }
+
+            // Loop through synapses in row
+            os << "while(true)";
+            {
+                CodeStream::Scope b(os);
+                Substitutions synSubs(&baseSubs);
+
+                synSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+                synSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "", sg.getName());
+
+                std::string pCode = connectInit.getSnippet()->getRowBuildCode();
+                synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : " + sg.getName());
+                pCode = ensureFtype(pCode, model.getPrecision());
+
+                // Write out code
+                os << pCode << std::endl;
+            }
         },
         // Postsynaptic learning code
         [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)

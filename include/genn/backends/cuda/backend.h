@@ -125,7 +125,8 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
+                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                                  SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
@@ -133,9 +134,12 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
-    virtual void genDefinitionsPreamble(CodeStream &os) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os) const override;
-    virtual void genRunnerPreamble(CodeStream &os) const override;
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const override;
 
@@ -179,7 +183,7 @@ public:
         genCurrentSpikePull(os, ng, true);
     }
 
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const override;
+    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                                       CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
@@ -218,12 +222,17 @@ public:
 
     std::string getFloatAtomicAdd(const std::string &ftype) const;
 
+    //! Get total number of RNG streams potentially used to initialise model
+    /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
+    size_t getNumInitialisationRNGStreams(const ModelSpecInternal &model) const;
+
     size_t getKernelBlockSize(Kernel kernel) const{ return m_KernelBlockSizes.at(kernel); }
 
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
-    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg);
+    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps,
+                                                 const Preferences &preferences);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
 
@@ -255,9 +264,9 @@ private:
                           FilterGroupFunc<T> filter, 
                           GroupHandler<T> handler) const
     {
-        // Populate neuron update groups
+        // Loop through groups
         for (const auto &g : groups) {
-            // If this synapse group should be processed
+            // If this group should be processed
             Substitutions popSubs(&kernelSubs);
             if(filter(g.second)) {
                 const size_t paddedSize = getPaddedSizeFunc(g.second);
@@ -299,17 +308,28 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
 
+    //! Get the stride used for accessing synapses, taking into account vectorization etc
+    size_t getMatrixRowStride(const SynapseGroupInternal &sg) const;
+
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;
 
+    // Get appropriate presynaptic update strategy to use for this synapse group
+    const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
+    {
+        return getPresynapticUpdateStrategy(sg, m_ChosenDevice, m_Preferences);
+    }
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------
     // Get appropriate presynaptic update strategy to use for this synapse group
-    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg);
+    static const PresynapticUpdateStrategy::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
+                                                                               const cudaDeviceProp &deviceProps,
+                                                                               const Preferences &preferences);
 
     //--------------------------------------------------------------------------
     // Members

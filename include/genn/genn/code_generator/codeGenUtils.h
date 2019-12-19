@@ -120,6 +120,18 @@ std::string writePreciseString(T value)
     return s.str();
 }
 
+//! Divide two integers, rounding up i.e. effectively taking ceil
+inline size_t ceilDivide(size_t numerator, size_t denominator)
+{
+    return ((numerator + denominator - 1) / denominator);
+}
+
+//! Pad an integer to a multiple of another
+inline size_t padSize(size_t size, size_t blockSize)
+{
+    return ceilDivide(size, blockSize) * blockSize;
+}
+
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */

@@ -39,6 +39,10 @@ struct PreferencesBase
     //! Generate code with debug symbols
     bool debugCode = false;
 
+    //! New optimizations made to kernels for simulating synapse groups with BITMASK connectivity
+    //! Improve performance but break backward compatibility due to word-padding each row
+    bool enableBitmaskOptimisations = false;
+
     //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
     bool automaticCopy = false;
 
@@ -139,22 +143,26 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
-    /*! \param os CodeStream to write function to
-        \param model model to generate code for
-        \param wumThreshHandler         callback to write platform-independent code to update an individual NeuronGroup
-        \param wumSimHandler            callback to write platform-independent code to process presynaptic spikes.
-                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                        to callback via Substitutions.
-        \param wumEventHandler          callback to write platform-independent code to process presynaptic spike-like events.
-                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                        to callback via Substitutions.
-        \param postLearnHandler         callback to write platform-independent code to process postsynaptic spikes.
-                                        "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
-        \param synapseDynamicsHandler   callback to write platform-independent code to update time-driven synapse dynamics.
-                                        "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                        to callback via Substitutions.*/
+    /*! \param os                           CodeStream to write function to
+        \param model                        model to generate code for
+        \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
+        \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
+                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                            to callback via Substitutions.
+        \param wumEventHandler              callback to write platform-independent code to process presynaptic spike-like events.
+                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                            to callback via Substitutions.
+        \param wumProceduralConnectHandler  callback to write platform-indepent code to procedurally generate connectivity
+                                            "id_pre" variable and "addSynapse" function will be provided to callback via Substitutions.
+                                            callback needs to implement loop over synapses in row, providing "synAddress" variable if INDIVIDUALG
+        \param postLearnHandler             callback to write platform-independent code to process postsynaptic spikes.
+                                            "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
+        \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
+                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
+                                            to callback via Substitutions.*/
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
+                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
+                                  SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
                                   SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const = 0;
 
     virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
@@ -162,16 +170,19 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
+    
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/
-    virtual void genDefinitionsPreamble(CodeStream &os) const = 0;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
     //! Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
-    virtual void genDefinitionsInternalPreamble(CodeStream &os) const = 0;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
 
-    virtual void genRunnerPreamble(CodeStream &os) const = 0;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
     //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
@@ -221,9 +232,14 @@ public:
     //! Generate code for pulling spike-like events emitted by a neuron group in the current timestep from the 'device'
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const = 0;
 
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, const ModelSpecInternal &model) const = 0;
+    //! Generate a single RNG instance
+    /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
+    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
+
+    //! Generate an RNG with a state per population member
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                              const std::string &name, size_t count) const = 0;
+                                      const std::string &name, size_t count) const = 0;
+
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 

@@ -148,11 +148,11 @@ public:
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
     struct Var
     {
-        Var()
-        {}
         Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(t), access(a)
         {}
         Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
+        {}
+        Var() : Var("", "", VarAccess::READ_WRITE)
         {}
 
         std::string name;
