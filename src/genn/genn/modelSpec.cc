@@ -61,7 +61,7 @@ std::string ModelSpec::getTimePrecision() const
     }
 }
 
-unsigned int ModelSpec::getNumLocalNeurons() const
+unsigned int ModelSpec::getNumNeurons() const
 {
     // Return sum of local neuron group sizes
     return std::accumulate(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(), 0,

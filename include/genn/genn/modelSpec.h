@@ -184,14 +184,8 @@ public:
 
     // PUBLIC NEURON FUNCTIONS
     //========================
-    //! How many neurons are simulated locally in this model
-    unsigned int getNumLocalNeurons() const;
-
-    //! How many neurons are simulated remotely in this model
-    unsigned int getNumRemoteNeurons() const;
-
     //! How many neurons make up the entire model
-    unsigned int getNumNeurons() const{ return getNumLocalNeurons() + getNumRemoteNeurons(); }
+    unsigned int getNumNeurons() const;
 
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name){ return static_cast<NeuronGroup*>(findNeuronGroupInternal(name)); }
@@ -453,9 +447,6 @@ private:
 
     //! Named local current sources
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
-
-    //! Named remote current sources
-    std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;
