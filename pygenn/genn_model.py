@@ -393,7 +393,7 @@ class GeNNModel(object):
 
         # Build code
         if system() == "Windows":
-            check_call(["msbuild", "/p:Configuration=Release",
+            check_call(["msbuild", "/p:Configuration=Release", "/m", "/verbosity:minimal",
                         path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-C", output_path])
@@ -993,7 +993,7 @@ def create_cmlf_class(cml_func):
         cmlf.__init__(self)
 
     def call(self, num_pre, num_post, pars):
-        return cml_func(numPre, num_post, pars, dt)
+        return cml_func(num_pre, num_post, pars)
 
     return type("", (cmlf,), {"__init__": ctor, "__call__": call})
 
