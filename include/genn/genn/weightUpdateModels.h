@@ -166,7 +166,7 @@ public:
 class StaticPulseDendriticDelay : public Base
 {
 public:
-    DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelay, 0, 2, 0, 0);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY},{"d", "uint8_t", VarAccess::READ_ONLY}});
 
