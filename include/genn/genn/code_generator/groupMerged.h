@@ -5,6 +5,7 @@
 #include <vector>
 
 // GeNN includes
+#include "gennExport.h"
 #include "currentSourceInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
@@ -50,7 +51,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronGroupMerged
 //----------------------------------------------------------------------------
-class NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
     NeuronGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
@@ -71,7 +72,7 @@ public:
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMerged
 //----------------------------------------------------------------------------
-class SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
     SynapseGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
