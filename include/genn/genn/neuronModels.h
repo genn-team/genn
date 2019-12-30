@@ -29,7 +29,7 @@
 namespace NeuronModels
 {
 //! Base class for all neuron models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------

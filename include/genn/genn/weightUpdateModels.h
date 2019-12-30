@@ -36,7 +36,7 @@
 namespace WeightUpdateModels
 {
 //! Base class for all weight update models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------

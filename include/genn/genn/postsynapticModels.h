@@ -20,7 +20,7 @@
 namespace PostsynapticModels
 {
 //! Base class for all postsynaptic models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------

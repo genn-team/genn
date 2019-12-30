@@ -32,7 +32,7 @@
 //! Base class for all sparse connectivity initialisation snippets
 namespace InitSparseConnectivitySnippet
 {
-class Base : public Snippet::Base
+class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------

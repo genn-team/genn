@@ -14,7 +14,7 @@
 //! Base class for all value initialisation snippets
 namespace InitVarSnippet
 {
-class Base : public Snippet::Base
+class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------

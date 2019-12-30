@@ -142,7 +142,7 @@ public:
 // Models::Base
 //----------------------------------------------------------------------------
 //! Base class for all models - in addition to the parameters snippets have, models can have state variables
-class Base : public Snippet::Base
+class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------

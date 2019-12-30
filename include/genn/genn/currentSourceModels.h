@@ -23,7 +23,7 @@
 namespace CurrentSourceModels
 {
 //! Base class for all current source models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------
