@@ -1494,11 +1494,12 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) 
     os << "#pragma warning(disable: 4297)" << std::endl;
 #endif
 
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
+    os << std::endl;
+    os << "template<class T>" << std::endl;
+    
     if(m_Preferences.automaticCopy) {
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
-        os << std::endl;
-        os << "template<class T>" << std::endl;
         os << "void deviceManagedMemAllocate(T* hostPtr, const T &devSymbol, size_t size)";
         {
             CodeStream::Scope b(os);
@@ -1510,10 +1511,6 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) 
         os << std::endl;
     }
     else {
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Helper function for allocating memory blocks on the GPU device" << std::endl;
-        os << std::endl;
-        os << "template<class T>" << std::endl;
         os << "void deviceMemAllocate(T* hostPtr, const T &devSymbol, size_t size)";
         {
             CodeStream::Scope b(os);
