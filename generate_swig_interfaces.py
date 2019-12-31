@@ -546,6 +546,7 @@ def generateConfigs(gennPath, backends):
             
             if is_snippet:
                 mg.addSwigImport( '"Snippet.i"' )
+                mg.addSwigTemplate('Snippet::Init<' + mg.name + '::Base>', 'InitBase')
             else:
                 mg.addSwigImport( '"Models.i"' )
             mg.addSwigFeatureDirector( mg.name + '::Base' )

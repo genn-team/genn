@@ -16,7 +16,8 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                           SynapseMatrixConnectivity_BITMASK,
                           SynapseMatrixConnectivity_DENSE,
                           SynapseMatrixWeight_INDIVIDUAL,
-                          SynapseMatrixWeight_INDIVIDUAL_PSM)
+                          SynapseMatrixWeight_INDIVIDUAL_PSM,
+                          VarLocation_HOST)
 
 
 class Group(object):
@@ -42,7 +43,7 @@ class Group(object):
         """
         self.vars[var_name].set_values(values)
 
-    def _add_extra_global_param(self, param_name, param_values, model):
+    def _add_extra_global_param(self, param_name, param_values, model, egp_dict=None):
         """Add extra global parameter
 
         Args:
@@ -50,6 +51,10 @@ class Group(object):
         param_values    --  iterable
         model           --  instance of the model
         """
+        # If no EGP dictionary is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+        
         param_type = None
         for p in model.get_extra_global_params():
             if p.name == param_name:
@@ -57,8 +62,8 @@ class Group(object):
                 break
 
         assert param_type is not None
-        self.extra_global_params[param_name] = ExtraGlobalVariable(
-            param_name, param_type, param_values)
+        egp_dict[param_name] = ExtraGlobalVariable(param_name, param_type,
+                                                   param_values)
 
     def _assign_external_pointer(self, slm, scalar, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
@@ -132,7 +137,7 @@ class Group(object):
         else:
             raise TypeError("unsupported var_type '{}'".format(var_type))
 
-    def _load_vars(self, slm, scalar, size=None, var_dict=None):
+    def _load_vars(self, slm, scalar, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
         if size is None:
             size = self.size
@@ -141,16 +146,26 @@ class Group(object):
         if var_dict is None:
             var_dict = self.vars
 
+        # If no location getter function is specified, use standard one
+        if get_location_fn is None:
+            get_location_fn = self.pop.get_var_location
+
         # Loop through variables
         for var_name, var_data in iteritems(var_dict):
-            # Get view
-            var_data.view = self._assign_external_pointer(slm, scalar,
-                                                          var_name, size,
-                                                          var_data.type)
+            # If variable is located on host
+            var_loc = get_location_fn(var_name) 
+            if (var_loc & VarLocation_HOST) != 0:
+                # Get view
+                var_data.view = self._assign_external_pointer(slm, scalar,
+                                                              var_name, size,
+                                                              var_data.type)
 
-            # If manual initialisation is required, copy over variables
-            if var_data.init_required:
-                var_data.view[:] = var_data.values
+                # If manual initialisation is required, copy over variables
+                if var_data.init_required:
+                    var_data.view[:] = var_data.values
+            else:
+                assert not var_data.init_required
+                var_data.view = None
 
     def _reinitialise_vars(self, slm, scalar, size=None, var_dict=None):
         # If no size is specified, use standard size
@@ -312,6 +327,8 @@ class SynapseGroup(Group):
         self.psm_vars = {}
         self.pre_vars = {}
         self.post_vars = {}
+        self.psm_extra_global_params = {}
+        self.connectivity_extra_global_params = {}
         self.connectivity_initialiser = None
 
     @property
@@ -582,7 +599,7 @@ class SynapseGroup(Group):
                            ps_var_ini, connect_init)
 
     def add_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter
+        """Add extra global parameter to weight update model
 
         Args:
         param_name   -- string with the name of the extra global parameter
@@ -590,6 +607,28 @@ class SynapseGroup(Group):
         """
         self._add_extra_global_param(param_name, param_values, self.w_update)
 
+    def add_psm_extra_global_param(self, param_name, param_values):
+        """Add extra global parameter to postsynaptic model
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self._add_extra_global_param(param_name, param_values, 
+                                     self.postsyn,
+                                     self.psm_extra_global_params)
+                                     
+    def add_connectivity_extra_global_param(self, param_name, param_values):
+        """Add extra global parameter to connectivity initialisation snippet
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self._add_extra_global_param(param_name, param_values, 
+                                     self.connectivity_initialiser.get_snippet(),
+                                     self.connectivity_extra_global_params)
+    
     def load(self, slm, scalar):
         # If synapse population has non-dense connectivity which
         # requires initialising manually
@@ -627,25 +666,41 @@ class SynapseGroup(Group):
         if self.has_individual_synapse_vars:
             # Loop through weight update model state variables
             for var_name, var_data in iteritems(self.vars):
-                # Get view
-                var_data.view = self._assign_external_pointer(
-                    slm, scalar, var_name,
-                    self.weight_update_var_size,
-                    var_data.type)
+                # If variable is located on host
+                var_loc = self.pop.get_wuvar_location(var_name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Get view
+                    var_data.view = self._assign_external_pointer(
+                        slm, scalar, var_name,
+                        self.weight_update_var_size,
+                        var_data.type)
 
-                # Initialise variable if necessary
-                self._init_wum_var(var_data)
+                    # Initialise variable if necessary
+                    self._init_wum_var(var_data)
+                else:
+                    assert not var_data.init_required
+                    var_data.view = None
 
         # Load weight update model presynaptic variables
-        self._load_vars(slm, scalar, self.src.size, self.pre_vars)
+        self._load_vars(slm, scalar, self.src.size, self.pre_vars,
+                        self.pop.get_wupre_var_location)
 
         # Load weight update model postsynaptic variables
-        self._load_vars(slm, scalar, self.trg.size, self.post_vars)
+        self._load_vars(slm, scalar, self.trg.size, self.post_vars,
+                        self.pop.get_wupost_var_location)
 
         # Load postsynaptic update model variables
         if self.has_individual_postsynaptic_vars:
-            self._load_vars(slm, scalar, self.trg.size, self.psm_vars)
-
+            self._load_vars(slm, scalar, self.trg.size, self.psm_vars,
+                            self.pop.get_psvar_location)
+        
+        # Load extra global parameters
+        self._load_egp(slm, scalar)
+        self._load_egp(slm, scalar, self.psm_extra_global_params)
+    
+    def load_connectivity_init_egps(self,  slm, scalar):
+        self._load_egp(slm, scalar, self.connectivity_extra_global_params)
+    
     def reinitialise(self, slm, scalar):
         """Reinitialise synapse group
 

@@ -69,7 +69,7 @@ public:
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-class Init : public Snippet::Init<Base>
+class Init : public Snippet::Init<InitSparseConnectivitySnippet::Base>
 {
 public:
     Init(const Base *snippet, const std::vector<double> &params)
