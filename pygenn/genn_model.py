@@ -422,7 +422,7 @@ class GeNNModel(object):
         genn_wrapper.generate_code(self._model, backend, output_path, 0)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
-        self._backend_module.delete_backend(backend)
+        backend = None
 
         # Build code
         if system() == "Windows":
