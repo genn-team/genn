@@ -25,8 +25,8 @@ public:
     //------------------------------------------------------------------------
     typedef G GroupInternal;
 
-    GroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> &groups)
-    :   m_Index(index), m_Groups(groups)
+    GroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_Groups(std::move(groups))
     {}
 
     //------------------------------------------------------------------------

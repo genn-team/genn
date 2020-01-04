@@ -19,36 +19,42 @@ void createMergedGroups(std::vector<std::reference_wrapper<const Group>> &unmerg
                         std::vector<MergedGroup> &mergedGroups, M canMerge)
 {
     // Loop through un-merged  groups
+    std::vector<std::vector<std::reference_wrapper<const Group>>> protoMergedGroups;
     while(!unmergedGroups.empty()) {
         // Remove last group from vector
         const Group &group = unmergedGroups.back().get();
         unmergedGroups.pop_back();
 
-        // Start vector of groups that can be merged
-        std::vector<std::reference_wrapper<const Group>> mergeTargets{group};
+        // Loop through existing proto-merged groups
+        bool existingMergedGroupFound = false;
+        for(auto &p : protoMergedGroups) {
+            assert(!p.empty());
 
-        // Loop through other remaining unmerged groups
-        for(auto otherGroup = unmergedGroups.begin(); otherGroup != unmergedGroups.end();) {
-            // If this 'other' group can be merged with original
-            if(canMerge(group, otherGroup->get())) {
-                LOGD << "\tMerging group '" << otherGroup->get().getName() << "' with '" << group.getName() << "'";
+            // If our group can be merged with this proto-merged group
+            if(canMerge(p.front().get(), group)) {
+                // Add group to vector
+                p.emplace_back(group);
 
-                // Add to list of merge targets
-                mergeTargets.push_back(otherGroup->get());
-
-                // Remove from unmerged list
-                otherGroup = unmergedGroups.erase(otherGroup);
-            }
-            // Otherwise, advance to next group
-            else {
-                LOGD << "\tUnable to merge group '" << otherGroup->get().getName() << "' with '" << group.getName() << "'";
-                ++otherGroup;
+                // Set flag and stop searching
+                existingMergedGroupFound = true;
+                break;
             }
         }
 
-        // A new merged neuron group to model
-        mergedGroups.emplace_back(mergedGroups.size(), mergeTargets);
+        // If no existing merged groups were found, 
+        // create a new proto-merged group containing just this group
+        if(!existingMergedGroupFound) {
+            protoMergedGroups.emplace_back();
+            protoMergedGroups.back().emplace_back(group);
+        }
+    }
 
+    // Reserve final merged groups vector
+    mergedGroups.reserve(protoMergedGroups.size());
+
+    // Build, moving vectors of groups into data structure to avoid copying
+    for(size_t i = 0; i < protoMergedGroups.size(); i++) {
+        mergedGroups.emplace_back(i, std::move(protoMergedGroups[i]));
     }
 }
 //----------------------------------------------------------------------------
