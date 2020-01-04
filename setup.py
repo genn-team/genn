@@ -56,7 +56,7 @@ package_data = ["genn_wrapper/genn_Release_DLL.*"] if windows else ["genn_wrappe
 genn_extension_kwargs = deepcopy(extension_kwargs)
 genn_extension_kwargs["libraries"] =  ["genn_Release_DLL"] if windows else ["genn_dynamic"]
 genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
-genn_extension_kwargs["swig_opts"].append("-I" + genn_include)
+genn_extension_kwargs["swig_opts"].extend(["-I" + genn_include, "-I" + genn_third_party_include])
 genn_extension_kwargs["define_macros"] = [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]
 
 # On Linux, we want to add extension directory i.e. $ORIGIN to runtime
