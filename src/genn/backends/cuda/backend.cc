@@ -4,11 +4,9 @@
 #include <algorithm>
 #include <numeric>
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -561,7 +559,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
                 {
                     // Get presynaptic update strategy to use for this synapse group
                     const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg);
-                    LOGD << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for synapse group '" << sg.getName() << "'";
+                    LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for synapse group '" << sg.getName() << "'";
 
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getSrcNeuronGroup()->isDelayRequired()) {

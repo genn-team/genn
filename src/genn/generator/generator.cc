@@ -6,13 +6,13 @@
 #endif
 
 // PLOG includes
-#include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
 // Filesystem includes
 #include "path.h"
 
 // GeNN includes
+#include "logging.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -57,15 +57,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
         
         // Initialise logging, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-
-        // If there isn't already a plog instance, initialise one
-        if(plog::get() == nullptr) {
-            plog::init(GENN_PREFERENCES.logLevel, &consoleAppender);
-        }
-        // Otherwise, set it's max severity from GeNN preferences
-        else {
-            plog::get()->setMaxSeverity(GENN_PREFERENCES.logLevel);
-        }
+        Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, &consoleAppender, &consoleAppender);
 
         // Finalize model
         model.finalize();
@@ -80,7 +72,9 @@ int main(int argc,     //!< number of arguments; expected to be 2
         filesystem::create_directory(outputPath);
 
         // Create backend
-        auto backend = Optimiser::createBackend(model, outputPath, localHostID, GENN_PREFERENCES);
+        auto backend = Optimiser::createBackend(model, outputPath,
+                                                GENN_PREFERENCES.logLevel, &consoleAppender,
+                                                localHostID, GENN_PREFERENCES);
         
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
@@ -93,7 +87,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
             // Create a new GUID for project
             GUID guid;
             if(::CoCreateGuid(&guid) != S_OK) {
-                LOGE << "Unable to generate project GUID";
+                LOGE_CODE_GENERATOR << "Unable to generate project GUID";
                 return EXIT_FAILURE;
             }
             
@@ -108,7 +102,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
             
             // Use result as project GUID string
             projectGUIDString = projectGUIDStream.str();
-            LOGI << "Generated new project GUID:" << projectGUIDString;
+            LOGI_CODE_GENERATOR << "Generated new project GUID:" << projectGUIDString;
             
             // Write GUID to project GUID file
             std::ofstream projectGUIDFile(projectGUIDFilename.str());
@@ -119,7 +113,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
             // Read GUID from project GUID file
             std::ifstream projectGUIDFile(projectGUIDFilename.str());
             std::getline(projectGUIDFile, projectGUIDString);
-            LOGI << "Using previously generated project GUID:" << projectGUIDString;
+            LOGI_CODE_GENERATOR << "Using previously generated project GUID:" << projectGUIDString;
         }
         // Create MSBuild project to compile and link all generated modules
         std::ofstream makefile((outputPath / "runner.vcxproj").str());

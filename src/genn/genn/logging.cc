@@ -1,8 +1,5 @@
 #include "logging.h"
 
-// PLOG includes
-#include <plog/Log.h>
-
 //----------------------------------------------------------------------------
 // Logging
 //----------------------------------------------------------------------------
@@ -19,11 +16,11 @@ void Logging::init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel,
     }
 
     // If there isn't already a plog instance, initialise one
-    if(plog::get<CHANNEL_CODE_GENERATOR>() == nullptr) {
-        plog::init<CHANNEL_CODE_GENERATOR>(codeGeneratorLevel, codeGeneratorAppender);
+    if(plog::get<CHANNEL_CODE_GEN>() == nullptr) {
+        plog::init<CHANNEL_CODE_GEN>(codeGeneratorLevel, codeGeneratorAppender);
     }
     // Otherwise, set it's max severity from GeNN preferences
     else {
-        plog::get<CHANNEL_CODE_GENERATOR>()->setMaxSeverity(codeGeneratorLevel);
+        plog::get<CHANNEL_CODE_GEN>()->setMaxSeverity(codeGeneratorLevel);
     }
 }
