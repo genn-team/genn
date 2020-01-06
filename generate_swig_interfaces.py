@@ -394,13 +394,17 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigInclude('<exception.i>')
         
         with SwigAsIsScope(mg):
+            mg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
             mg.addCppInclude('"optimiser.h"')
             mg.addCppInclude('"path.h"')
             mg.write("using namespace CodeGenerator::" + namespace + ";\n")
 
         # Include genn and backend export headers so BACKEND_EXPORT and GENN_EXPORT macros can be correctly parsed
-        mg.addSwigInclude( '"backendExport.h"' )
-        mg.addSwigInclude( '"gennExport.h"' )
+        mg.addSwigInclude('"backendExport.h"')
+        mg.addSwigInclude('"gennExport.h"')
+
+        # Add plog severity header so logging severities can be passed to backend
+        mg.addSwigInclude('<plog/Severity.h>')
         
         # Parse backend base, ignore BackendBase itself to get PreferencesBase definition
         mg.addSwigIgnore("BackendBase")
@@ -431,9 +435,10 @@ def generateBackend(swigPath, folder, namespace):
         
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
-            mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &outputPath, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
+            mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &outputPath, plog::Severity backendLevel, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
                      '{\n'
-                     '  return Optimiser::createBackend(model, filesystem::path(outputPath), preferences);\n'
+                     '  auto *consoleAppender = new plog::ConsoleAppender<plog::TxtFormatter>;\n'
+                     '  return Optimiser::createBackend(model, filesystem::path(outputPath), backendLevel, consoleAppender, preferences);\n'
                      '}\n\n'
                      'void delete_backend(CodeGenerator::' + namespace + '::Backend *backend)\n'
                      '{\n'
@@ -482,6 +487,8 @@ def generateConfigs(gennPath, backends):
         pygennSmg.addSwigModuleHeadline()
         with SwigAsIsScope( pygennSmg ):
             pygennSmg.addCppInclude( '<fstream>' )
+            pygennSmg.addCppInclude( '<plog/Appenders/ConsoleAppender.h>' )
+            pygennSmg.addCppInclude( '"logging.h"' )
             pygennSmg.addCppInclude( '"variableMode.h"' )
             pygennSmg.addCppInclude( '"modelSpec.h"' )
             pygennSmg.addCppInclude( '"modelSpecInternal.h"' )
@@ -501,11 +508,21 @@ def generateConfigs(gennPath, backends):
         
         # Include genn export header so GENN_EXPORT macros can be correctly parsed
         pygennSmg.addSwigInclude( '"gennExport.h"' )
+
+        # Add plog severity header so logging severities can be passed to backend
+        pygennSmg.addSwigInclude('<plog/Severity.h>')
         
-        # define and wrap two functions which replace main in generateALL.cc
+        # define and wrap three functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
-            void generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &path, int localHostID) {
+            void init_logging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel)
+            {
+                auto *consoleAppender = new plog::ConsoleAppender<plog::TxtFormatter>;
+                Logging::init(gennLevel, codeGeneratorLevel, consoleAppender, consoleAppender);
+            }
+
+            void generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &path, int localHostID)
+            {
                 const filesystem::path outputPath(path);
 
                 // Generate code, returning list of module names that must be build
