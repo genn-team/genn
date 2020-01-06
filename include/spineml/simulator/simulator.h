@@ -6,6 +6,10 @@
 #include <string>
 #include <tuple>
 
+// PLOG includes
+#include <plog/Severity.h>
+#include <plog/Appenders/ConsoleAppender.h>
+
 // SpineML simulator includes
 #include "input.h"
 #include "inputValue.h"
@@ -20,8 +24,8 @@ namespace SpineMLSimulator
 class Simulator
 {
 public:
-    Simulator();
-    Simulator(const std::string &experimentXML, const std::string &overrideOutputPath = "");
+    Simulator(plog::Severity logLevel = plog::warning);
+    Simulator(const std::string &experimentXML, const std::string &overrideOutputPath = "", plog::Severity logLevel = plog::warning);
     ~Simulator();
 
     //------------------------------------------------------------------------
@@ -171,5 +175,8 @@ private:
 
     //! Map of named external inputs
     std::map<std::string, InputValue::External*> m_ExternalInputs;
+
+    //! Console appender for logging
+    plog::ConsoleAppender<plog::TxtFormatter> m_ConsoleAppender;
 };
 }   // namespace SpineMLSimulator
