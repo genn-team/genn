@@ -3,8 +3,8 @@
 // Standard C++ includes
 #include <iostream>
 
-// PLOG includes
-#include <plog/Log.h>
+// GeNN includes
+#include "logging.h"
 
 #if CUDA_VERSION >= 6050
 #define CHECK_CU_ERRORS(call)                                                                       \
@@ -13,7 +13,7 @@
     if (error != CUDA_SUCCESS) {                                                                    \
         const char *errStr;                                                                         \
         cuGetErrorName(error, &errStr);                                                             \
-        LOGE << __FILE__ << ": " <<  __LINE__ << ": cuda driver error " << error << ": " << errStr; \
+        LOGE_BACKEND << __FILE__ << ": " <<  __LINE__ << ": cuda driver error " << error << ": " << errStr; \
         exit(EXIT_FAILURE);                                                                         \
     }                                                                                               \
 }
@@ -25,7 +25,7 @@
 {                                                                                                                       \
     cudaError_t error = call;                                                                                           \
     if (error != cudaSuccess) {                                                                                         \
-        LOGE << __FILE__ << ": " <<  __LINE__ << ": cuda runtime error " << error << ": " << cudaGetErrorString(error); \
+        LOGE_BACKEND << __FILE__ << ": " <<  __LINE__ << ": cuda runtime error " << error << ": " << cudaGetErrorString(error); \
         exit(EXIT_FAILURE);                                                                                             \
     }                                                                                                                   \
 }

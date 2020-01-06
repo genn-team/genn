@@ -6,6 +6,14 @@
 // CUDA backend includes
 #include "backend.h"
 
+// Forward declarations
+class ModelSpecInternal;
+namespace plog
+{
+class IAppender;
+}
+
+
 //--------------------------------------------------------------------------
 // CodeGenerator::CUDA::Optimiser
 //--------------------------------------------------------------------------
@@ -15,8 +23,9 @@ namespace CUDA
 {
 namespace Optimiser
 {
-BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, int localHostID,
-                                     const Preferences &preferences);
+BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath,
+                                     plog::Severity backendLevel, plog::IAppender *backendAppender,
+                                     int localHostID, const Preferences &preferences);
 }   // namespace Optimiser
 }   // namespace CUDA
 }   // namespace CodeGenerator
