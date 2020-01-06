@@ -4,11 +4,9 @@
 #include <algorithm>
 #include <cmath>
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN includes
 #include "currentSourceInternal.h"
+#include "logging.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 #include "gennUtils.h"
@@ -258,7 +256,7 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         for(auto b = inSyn.begin(); b != inSyn.end();) {
             // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
             if(a->canPSBeLinearlyCombined(**b)) {
-                LOGD << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
+                LOGD_GENN << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
 
                 // Add to list of merged synapses
                 m_MergedInSyn.back().second.push_back(*b);
@@ -271,7 +269,7 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
             }
             // Otherwise, advance to next synapse group
             else {
-                LOGD << "Unable to merge '" << (*b)->getName() << "' with '" << a->getName() << "'";
+                LOGD_GENN << "Unable to merge '" << (*b)->getName() << "' with '" << a->getName() << "'";
                 ++b;
             }
         }

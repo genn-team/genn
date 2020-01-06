@@ -20,6 +20,7 @@
 #include "path.h"
 
 // GeNN includes
+#include "logging.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -75,9 +76,9 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
         maxBlocksPerSM = 32;
 
         if(deviceProps.major > 7) {
-            LOGW << "Unsupported CUDA device major version: " << deviceProps.major;
-            LOGW << "This is a bug! Please report it at https://github.com/genn-team/genn.";
-            LOGW << "Falling back to next latest SM version parameters.";
+            LOGW_BACKEND << "Unsupported CUDA device major version: " << deviceProps.major;
+            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
+            LOGW_BACKEND << "Falling back to next latest SM version parameters.";
         }
     }
 }
@@ -220,7 +221,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                 CUfunction kern;
                 CUresult res = cuModuleGetFunction(&kern, module, Backend::KernelNames[k]);
                 if (res == CUDA_SUCCESS) {
-                    LOGD << "\tKernel '" << Backend::KernelNames[k] << "' found";
+                    LOGD_BACKEND << "\tKernel '" << Backend::KernelNames[k] << "' found";
 
                     // Read function's shared memory size and register counand add blank entry to map of kernels to optimise
                     CHECK_CU_ERRORS(cuFuncGetAttribute(&krnlSharedSizeBytes[r][k], CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
@@ -231,8 +232,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                                               std::forward_as_tuple(k),
                                               std::forward_as_tuple(false, 0));
 
-                    LOGD << "\t\tShared memory bytes:" << krnlSharedSizeBytes[r][k];
-                    LOGD << "\t\tNum registers:" << krnlNumRegs[r][k];
+                    LOGD_BACKEND << "\t\tShared memory bytes:" << krnlSharedSizeBytes[r][k];
+                    LOGD_BACKEND << "\t\tNum registers:" << krnlNumRegs[r][k];
                 }
             }
 
@@ -241,7 +242,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
             // Remove tempory cubin file
             if(std::remove((modulePath + ".cubin").c_str())) {
-                LOGW << "Cannot remove dry-run cubin file";
+                LOGW_BACKEND << "Cannot remove dry-run cubin file";
             }
         }
     }
@@ -261,7 +262,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
     // Loop through kernels to optimise
     for(auto &k : kernelsToOptimise) {
-        LOGD << "Kernel '" << Backend::KernelNames[k.first] << "':";
+        LOGD_BACKEND << "Kernel '" << Backend::KernelNames[k.first] << "':";
 
         // Get required number of registers per thread and shared memory bytes for this kernel
         // **NOTE** register requirements are assumed to remain constant as they're vector-width
@@ -276,11 +277,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         const size_t maxBlockWarps = deviceProps.maxThreadsPerBlock / warpSize;
         for(size_t blockWarps = 1; blockWarps < maxBlockWarps; blockWarps++) {
             const size_t blockThreads = blockWarps * warpSize;
-            LOGD << "\tCandidate block size:" << blockThreads;
+            LOGD_BACKEND << "\tCandidate block size:" << blockThreads;
 
             // Estimate shared memory for block size and padd
             const size_t reqSharedMemBytes = padSize((reqSharedMemBytesA * blockThreads) + reqSharedMemBytesB, smemAllocGran);
-            LOGD << "\t\tEstimated shared memory required:" << reqSharedMemBytes << " bytes (padded)";
+            LOGD_BACKEND << "\t\tEstimated shared memory required:" << reqSharedMemBytes << " bytes (padded)";
 
             // Calculate number of blocks the groups used by this kernel will require
             const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), size_t{0},
@@ -288,14 +289,14 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                                                         {
                                                             return acc + ceilDivide(size, blockThreads);
                                                         });
-            LOGD << "\t\tBlocks required (according to padded sum):" << reqBlocks;
+            LOGD_BACKEND << "\t\tBlocks required (according to padded sum):" << reqBlocks;
 
             // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
             size_t smBlockLimit = deviceProps.maxThreadsPerMultiProcessor / blockThreads;
-            LOGD << "\t\tSM block limit due to maxThreadsPerMultiProcessor:" << smBlockLimit;
+            LOGD_BACKEND << "\t\tSM block limit due to maxThreadsPerMultiProcessor:" << smBlockLimit;
 
             smBlockLimit = std::min(smBlockLimit, maxBlocksPerSM);
-            LOGD << "\t\tSM block limit corrected for maxBlocksPerSM:" << smBlockLimit;
+            LOGD_BACKEND << "\t\tSM block limit corrected for maxBlocksPerSM:" << smBlockLimit;
 
             // If register allocation is per-block
             if (deviceProps.major == 1) {
@@ -319,13 +320,13 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                 // Update limit based on the number of warps required
                 smBlockLimit = std::min(smBlockLimit, paddedNumWarpsPerSM / blockWarps);
             }
-            LOGD << "\t\tSM block limit corrected for registers:" << smBlockLimit;
+            LOGD_BACKEND << "\t\tSM block limit corrected for registers:" << smBlockLimit;
 
             // If this kernel requires any shared memory, update limit to reflect shared memory available in each multiprocessor
             // **NOTE** this used to be sharedMemPerBlock but that seems incorrect
             if(reqSharedMemBytes != 0) {
                 smBlockLimit = std::min(smBlockLimit, deviceProps.sharedMemPerMultiprocessor / reqSharedMemBytes);
-                LOGD << "\t\tSM block limit corrected for shared memory:" << smBlockLimit;
+                LOGD_BACKEND << "\t\tSM block limit corrected for shared memory:" << smBlockLimit;
             }
 
             // Calculate occupancy
@@ -337,7 +338,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                 k.second.second = newOccupancy;
                 k.second.first = true;
 
-                LOGD << "\t\tSmall model situation detected - block size:" << blockSize[k.first];
+                LOGD_BACKEND << "\t\tSmall model situation detected - block size:" << blockSize[k.first];
 
                 // For small model the first (smallest) block size allowing it is chosen
                 break;
@@ -347,12 +348,12 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                 blockSize[k.first] = blockThreads;
                 k.second.second = newOccupancy;
 
-                LOGD << "\t\tNew highest occupancy: " << newOccupancy << ", block size:" << blockSize[k.first];
+                LOGD_BACKEND << "\t\tNew highest occupancy: " << newOccupancy << ", block size:" << blockSize[k.first];
             }
 
         }
 
-        LOGI << "Kernel: " << Backend::KernelNames[k.first] << ", block size:" << blockSize[k.first];
+        LOGI_BACKEND << "Kernel: " << Backend::KernelNames[k.first] << ", block size:" << blockSize[k.first];
     }
 
     // Return optimisation data
@@ -400,7 +401,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Ker
                                                                 return acc + (kernel.second.first ? 1 : 0);
                                                             });
 
-        LOGD << "Device " << d << " - total occupancy:" << totalOccupancy << ", number of small models:" << numSmallModelKernels << ", SM version:" << smVersion;
+        LOGD_BACKEND << "Device " << d << " - total occupancy:" << totalOccupancy << ", number of small models:" << numSmallModelKernels << ", SM version:" << smVersion;
         devices.emplace_back(smVersion, totalOccupancy, numSmallModelKernels, optimalBlockSize);
     }
 
@@ -439,7 +440,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Ker
 
     // Find ID of best device
     const int bestDeviceID = (int)std::distance(devices.cbegin(), bestDevice);
-    LOGI << "Optimal  device " << bestDeviceID << " - total occupancy:" << std::get<1>(*bestDevice) << ", number of small models:" << std::get<2>(*bestDevice) << ", SM version:" << std::get<0>(*bestDevice);
+    LOGI_BACKEND << "Optimal  device " << bestDeviceID << " - total occupancy:" << std::get<1>(*bestDevice) << ", number of small models:" << std::get<2>(*bestDevice) << ", SM version:" << std::get<0>(*bestDevice);
 
     // Get optimal block size from best device
     blockSize = std::get<3>(*bestDevice);
@@ -473,7 +474,7 @@ int chooseDeviceWithMostGlobalMemory()
         }
     }
 
-    LOGI << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
+    LOGI_BACKEND << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
     return bestDevice;
 }
 }
@@ -484,8 +485,20 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, const Preferences &preferences)
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath,
+                      plog::Severity backendLevel, plog::IAppender *backendAppender,
+                      const Preferences &preferences)
 {
+    // If there isn't already a plog instance, initialise one
+    if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {
+        plog::init<Logging::CHANNEL_BACKEND>(backendLevel, backendAppender);
+    }
+    // Otherwise, set it's max severity from GeNN preferences
+    else {
+        plog::get<Logging::CHANNEL_BACKEND>()->setMaxSeverity(backendLevel);
+    }
+
+
     // If optimal device should be chosen
     if(preferences.deviceSelectMethod == DeviceSelect::OPTIMAL) {
         // Assert that block size selection method is set to occupancy as these two processes are linked

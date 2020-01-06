@@ -4,11 +4,9 @@
 #include <algorithm>
 #include <iterator>
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
@@ -520,7 +518,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 {
                     // Get presynaptic update strategy to use for this synapse group
                     const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
-                    LOGD << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
+                    LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
 
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
