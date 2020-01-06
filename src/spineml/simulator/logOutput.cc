@@ -15,11 +15,8 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
-// PLOG includes
-#include <plog/Log.h>
-#include <plog/Appenders/ConsoleAppender.h>
-
 // SpineML common includes
+#include "spineMLLogging.h"
 #include "spineMLUtils.h"
 
 //----------------------------------------------------------------------------
@@ -56,7 +53,7 @@ const char *SpineMLTypeName<float>::name = "float";
 //----------------------------------------------------------------------------
 SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt)
 {
-    LOGI << "Log '" << node.attribute("name").value() << "'";
+    LOGI_SPINEML << "Log '" << node.attribute("name").value() << "'";
 
     // Read start time
     auto startAttr = node.attribute("start_time");
@@ -76,7 +73,7 @@ SpineMLSimulator::LogOutput::Base::Base(const pugi::xml_node &node, double dt)
         m_EndTimeStep = m_StartTimeStep + (unsigned long long)std::ceil(durationAttr.as_double() / dt);
     }
 
-    LOGD << "\tStart timestep:" << m_StartTimeStep << ", end timestep:" << m_EndTimeStep;
+    LOGD_SPINEML << "\tStart timestep:" << m_StartTimeStep << ", end timestep:" << m_EndTimeStep;
 }
 
 //----------------------------------------------------------------------------
@@ -93,7 +90,7 @@ SpineMLSimulator::LogOutput::AnalogueBase::AnalogueBase(const pugi::xml_node &no
         SpineMLCommon::SpineMLUtils::readCSVIndices(indices.value(),
                                                     std::back_inserter(m_Indices));
 
-        LOGD << "\tRecording " << m_Indices.size() << " values";
+        LOGD_SPINEML << "\tRecording " << m_Indices.size() << " values";
     }
 }
 
@@ -151,7 +148,7 @@ SpineMLSimulator::LogOutput::AnalogueFile::AnalogueFile(const pugi::xml_node &no
     // Save report
     reportDoc.save_file((absoluteFileTitle + "_logrep.xml").c_str());
 
-    LOGD << "\tAnalogue file log:" << absoluteFileTitle << "_log.bin";
+    LOGD_SPINEML << "\tAnalogue file log:" << absoluteFileTitle << "_log.bin";
 
     // Open file for binary writing
     m_File.open(absoluteFileTitle + "_log.bin", std::ios::binary);
@@ -206,7 +203,7 @@ SpineMLSimulator::LogOutput::AnalogueExternal::AnalogueExternal(const pugi::xml_
         // Calculate how many GeNN timesteps to count down before logging
         // **NOTE** subtract one because we are checking BEFORE we subtract
         m_IntervalTimesteps = ((unsigned int)std::round(externalTimestepMs / dt)) - 1;
-        LOGD << "\tExternal timestep:" << externalTimestepMs << "ms - interval:" << m_IntervalTimesteps;
+        LOGD_SPINEML << "\tExternal timestep:" << externalTimestepMs << "ms - interval:" << m_IntervalTimesteps;
     }
 }
 //----------------------------------------------------------------------------
@@ -254,7 +251,7 @@ SpineMLSimulator::LogOutput::AnalogueNetwork::AnalogueNetwork(const pugi::xml_no
     const std::string hostname = node.attribute("host").value();
     const unsigned int tcpPort = node.attribute("tcp_port").as_uint();
 
-    LOGD << "\tAnalogue network log '" << connectionName << "' (" << hostname << ":" << tcpPort << ")";
+    LOGD_SPINEML << "\tAnalogue network log '" << connectionName << "' (" << hostname << ":" << tcpPort << ")";
 
     // Attempt to connect network client
     if(!m_Client.connect(hostname, tcpPort, size, NetworkClient::DataType::Analogue,
@@ -309,7 +306,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
         SpineMLCommon::SpineMLUtils::readCSVIndices(indices.value(),
                                                     std::inserter(m_Indices, m_Indices.end()));
 
-        LOGD << "\tRecording " << m_Indices.size() << " values";
+        LOGD_SPINEML << "\tRecording " << m_Indices.size() << " values";
     }
 
     // Combine node target and logger names to get file title
@@ -360,7 +357,7 @@ SpineMLSimulator::LogOutput::Event::Event(const pugi::xml_node &node, double dt,
     // Save report
     reportDoc.save_file((absoluteFileTitle + "_logrep.xml").c_str());
 
-    LOGD << "\tEvent log:" << absoluteFileTitle << ".csv";
+    LOGD_SPINEML << "\tEvent log:" << absoluteFileTitle << ".csv";
 
     // Open CSV file
     m_File.open(absoluteFileTitle + "_log.csv");

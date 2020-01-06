@@ -5,9 +5,8 @@
 #include <iostream>
 #include <string>
 
-// PLOG includes
-#include <plog/Log.h>
-#include <plog/Appenders/ConsoleAppender.h>
+// SpineML common includes
+#include "spineMLLogging.h"
 
 //------------------------------------------------------------------------
 // SpineMLSimulator::Timer
@@ -23,7 +22,7 @@ public:
 
     ~Timer()
     {
-        LOGI << m_Title << get() << std::endl;
+        LOGI_SPINEML << m_Title << get() << std::endl;
     }
 
     //------------------------------------------------------------------------
