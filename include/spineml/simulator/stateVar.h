@@ -3,8 +3,8 @@
 // Standard C++ includes
 #include <functional>
 
-// PLOG includes
-#include <plog/Log.h>
+// SpineML common includes
+#include "spineMLLogging.h"
 
 //----------------------------------------------------------------------------
 // SpineMLSimulator::StateVar
@@ -26,7 +26,7 @@ public:
         }
         // Otherwise
         else {
-            LOGD << "\t" << stateVarName;
+            LOGD_SPINEML << "\t" << stateVarName;
 
             // If there is a function to get the current state of variable
             GetCurrentFunc getCurrentFunc = reinterpret_cast<GetCurrentFunc>(getLibrarySymbolFunc(("getCurrent" + stateVarName).c_str(), true));
@@ -39,7 +39,7 @@ public:
                 m_Indirect.pushFunc = reinterpret_cast<PushCurrentFunc>(getLibrarySymbolFunc(("pushCurrent" + stateVarName + "ToDevice").c_str(), false));
                 m_PullFunc = reinterpret_cast<PullFunc>(getLibrarySymbolFunc(("pullCurrent" + stateVarName + "FromDevice").c_str(), false));
 
-                LOGD << "\t\tIndirect with get function:" << m_Indirect.getFunc << ", push function:" << m_Indirect.pushFunc << ", pull function:" << m_PullFunc;
+                LOGD_SPINEML << "\t\tIndirect with get function:" << m_Indirect.getFunc << ", push function:" << m_Indirect.pushFunc << ", pull function:" << m_PullFunc;
             }
             // Otherwise
             else {
@@ -51,7 +51,7 @@ public:
                 m_Direct.pushFunc = reinterpret_cast<PushFunc>(getLibrarySymbolFunc(("push" + stateVarName + "ToDevice").c_str(), false));
                 m_PullFunc = reinterpret_cast<PullFunc>(getLibrarySymbolFunc(("pull" + stateVarName + "FromDevice").c_str(), false));
 
-                LOGD << "\t\tDirect with host pointer:" << m_Direct.hostStateVar << ", push function:" << m_Direct.pushFunc << ", pull function:" << m_PullFunc;
+                LOGD_SPINEML << "\t\tDirect with host pointer:" << m_Direct.hostStateVar << ", push function:" << m_Direct.pushFunc << ", pull function:" << m_PullFunc;
             }
         }
     }
