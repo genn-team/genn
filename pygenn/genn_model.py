@@ -88,7 +88,10 @@ class GeNNModel(object):
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 enable_debug=False, backend=None, selected_gpu=None):
+                 enable_debug=False, backend=None, selected_gpu=None,
+                 genn_log_level=genn_wrapper.warning,
+                 code_gen_log_level=genn_wrapper.warning,
+                 backend_log_level=genn_wrapper.warning):
         """Init GeNNModel
         Keyword args:
         precision       --  string precision as string ("float", "double"
@@ -115,10 +118,14 @@ class GeNNModel(object):
                 "Supported precisions are float and double, "
                 "but '{1}' was given".format(precision))
 
+        # Initialise GeNN logging
+        genn_wrapper.init_logging(genn_log_level, code_gen_log_level)
+
         self._built = False
         self._loaded = False
         self.use_backend = backend
         self._selected_gpu = selected_gpu
+        self.backend_log_level=backend_log_level
         self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
 
@@ -416,7 +423,7 @@ class GeNNModel(object):
             preferences.manualDeviceID = self.selected_gpu
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, output_path, 0, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path, self.backend_log_level, 0, preferences);
 
         # Generate code
         genn_wrapper.generate_code(self._model, backend, output_path, 0)
