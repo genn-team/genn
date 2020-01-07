@@ -60,7 +60,11 @@ public:
     bool open(const std::string &pathToModel, const std::string &modelName)
     {
 #ifdef _WIN32
+#ifdef _DEBUG
+        const std::string libraryName = pathToModel + "\\runner_Debug.dll";
+#else
         const std::string libraryName = pathToModel + "\\runner_Release.dll";
+#endif
         m_Library = LoadLibrary(libraryName.c_str());
 #else
         const std::string libraryName = pathToModel + modelName + "_CODE/librunner.so";

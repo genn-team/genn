@@ -383,7 +383,7 @@ class GeNNModel(object):
             preferences.manualDeviceID = self.selected_gpu
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, output_path, 0, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path, preferences);
 
         # Generate code
         genn_wrapper.generate_code(self._model, backend, output_path, 0)

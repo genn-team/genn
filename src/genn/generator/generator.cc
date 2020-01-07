@@ -42,14 +42,6 @@ int main(int argc,     //!< number of arguments; expected to be 2
         
         const filesystem::path targetPath(argv[1]);
 
-        // Create code generation path
-        int localHostID = 0;
-#ifdef MPI_ENABLE
-        MPI_Init(NULL, NULL);
-        MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
-        std::cout << "MPI initialized - host ID:" << localHostID;
-#endif
-
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
         ModelSpecInternal model;
@@ -71,16 +63,13 @@ int main(int argc,     //!< number of arguments; expected to be 2
         model.finalize();
 
         // Create code generation path
-#ifdef MPI_ENABLE
-        const filesystem::path outputPath = targetPath / (model.getName() + "_" + std::to_string(localHostID) + "_CODE");
-#else
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
-#endif
+
         // Create output path
         filesystem::create_directory(outputPath);
 
         // Create backend
-        auto backend = Optimiser::createBackend(model, outputPath, localHostID, GENN_PREFERENCES);
+        auto backend = Optimiser::createBackend(model, outputPath, GENN_PREFERENCES);
         
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
@@ -130,10 +119,6 @@ int main(int argc,     //!< number of arguments; expected to be 2
         CodeGenerator::generateMakefile(makefile, backend, moduleNames);
 #endif
 
-#ifdef MPI_ENABLE
-        MPI_Finalize();
-        std::cout << "MPI finalized";
-#endif
     }
     catch(const std::exception &exception)
     {

@@ -3,21 +3,22 @@
 // Standard C++ includes
 #include <string>
 
-// GeNN includes
-#include "modelSpecInternal.h"
-
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/backendBase.h"
+#include "code_generator/groupMerged.h"
+#include "code_generator/modelSpecMerged.h"
+#include "code_generator/teeStream.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext, const SynapseGroupInternal &sg,
-                               const CodeGenerator::Substitutions &baseSubs, const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
+void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext,
+                               const SynapseGroupInternal &sg, const CodeGenerator::Substitutions &baseSubs,
+                               const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
 {
     const auto *wu = sg.getWUModel();
 
@@ -26,21 +27,21 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     // Substitute parameter and derived parameter names
     synapseSubs.addParamValueSubstitution(sg.getWUModel()->getParamNames(), sg.getWUParams());
     synapseSubs.addVarValueSubstitution(wu->getDerivedParams(), sg.getWUDerivedParams());
-    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg.getName());
+    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "group.");
 
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? synapseSubs["id_pre"] : "preReadDelayOffset + " + baseSubs["id_pre"];
-    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", backend.getVarPrefix(),
-                                       sg.getName() + "[" + delayedPreIdx + "]");
+    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group.",
+                                       "[" + delayedPreIdx + "]");
 
     const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? synapseSubs["id_post"] : "postReadDelayOffset + " + baseSubs["id_post"];
-    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", backend.getVarPrefix(),
-                                       sg.getName() + "[" + delayedPostIdx + "]");
+    synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "group.",
+                                       "[" + delayedPostIdx + "]");
 
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        synapseSubs.addVarNameSubstitution(wu->getVars(), "", backend.getVarPrefix(),
-                                           sg.getName() + "[" + synapseSubs["id_syn"] + "]");
+        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group.",
+                                           "[" + synapseSubs["id_syn"] + "]");
     }
     // Otherwise, if weights are procedual
     else if (sg.getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
@@ -79,8 +80,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     }
 
     neuronSubstitutionsInSynapticCode(synapseSubs, sg, synapseSubs["id_pre"],
-                                      synapseSubs["id_post"], backend.getVarPrefix(),
-                                      model.getDT());
+                                      synapseSubs["id_post"], model.getDT());
 
     synapseSubs.apply(code);
     //synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
@@ -92,7 +92,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged, const BackendBase &backend,
                                           bool standaloneModules)
 {
     if(standaloneModules) {
@@ -104,47 +104,54 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 
+    // Generate functions to push merged synapse group structures
+    const ModelSpecInternal &model = modelMerged.getModel();
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedEGPs, "SynapseDendriticDelayUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), mergedEGPs, "PresynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), mergedEGPs, "PostsynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), mergedEGPs, "SynapseDynamics", backend);
+
     // Synaptic update kernels
-    backend.genSynapseUpdate(os, model,
+    backend.genSynapseUpdate(os, modelMerged,
         // Presynaptic weight update threshold
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
         {
             Substitutions synapseSubs(&baseSubs);
 
             // Make weight update model substitutions
-            synapseSubs.addParamValueSubstitution(sg.getWUModel()->getParamNames(), sg.getWUParams());
-            synapseSubs.addVarValueSubstitution(sg.getWUModel()->getDerivedParams(), sg.getWUDerivedParams());
-            synapseSubs.addVarNameSubstitution(sg.getWUModel()->getExtraGlobalParams(), "", "", sg.getName());
+            synapseSubs.addParamValueSubstitution(sg.getArchetype().getWUModel()->getParamNames(), sg.getArchetype().getWUParams());
+            synapseSubs.addVarValueSubstitution(sg.getArchetype().getWUModel()->getDerivedParams(), sg.getArchetype().getWUDerivedParams());
+            synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "group.");
 
             // Get read offset if required
-            const std::string offset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            preNeuronSubstitutionsInSynapticCode(synapseSubs, sg, offset, "", baseSubs["id_pre"], backend.getVarPrefix());
+            const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, "", baseSubs["id_pre"], "_pre", "Pre");
 
             // Get event threshold condition code
-            std::string code = sg.getWUModel()->getEventThresholdConditionCode();
+            std::string code = sg.getArchetype().getWUModel()->getEventThresholdConditionCode();
             synapseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
             code = ensureFtype(code, model.getPrecision());
             os << code;
         },
         // Presynaptic spike
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
         {
-            applySynapseSubstitutions(os, sg.getWUModel()->getSimCode(), "simCode",
-                                      sg, baseSubs, model, backend);
+            applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getSimCode(), "simCode",
+                                      sg.getArchetype(), baseSubs, model, backend);
         },
         // Presynaptic spike-like event
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
         {
-            applySynapseSubstitutions(os, sg.getWUModel()->getEventCode(), "eventCode",
-                                      sg, baseSubs, model, backend);
+            applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getEventCode(), "eventCode",
+                                      sg.getArchetype(), baseSubs, model, backend);
         },
         // Procedural connectivity
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
         {
             baseSubs.addFuncSubstitution("endRow", 0, "break");
 
             // Initialise row building state variables for procedural connectivity
-            const auto &connectInit = sg.getConnectivityInitialiser();
+            const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
             for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
                 os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
             }
@@ -157,10 +164,11 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
 
                 synSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
                 synSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
-                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "", sg.getName());
+                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
+                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
 
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();
-                synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : " + sg.getName());
+                synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(sg.getIndex()));
                 pCode = ensureFtype(pCode, model.getPrecision());
 
                 // Write out code
@@ -168,24 +176,32 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
             }
         },
         // Postsynaptic learning code
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &modelMerged](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
         {
-            if (!sg.getWUModel()->getLearnPostSupportCode().empty()) {
-                os << " using namespace " << sg.getName() << "_weightupdate_simLearnPost;" << std::endl;
+            const auto *wum = sg.getArchetype().getWUModel();
+            if (!wum->getLearnPostSupportCode().empty()) {
+                os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
             }
 
-            applySynapseSubstitutions(os, sg.getWUModel()->getLearnPostCode(), "learnPostCode",
-                                      sg, baseSubs, model, backend);
+            applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
+                                      sg.getArchetype(), baseSubs, modelMerged.getModel(), backend);
         },
         // Synapse dynamics
-        [&backend, &model](CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &baseSubs)
+        [&backend, &modelMerged](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
         {
-            if (!sg.getWUModel()->getSynapseDynamicsSuppportCode().empty()) {
-                os << " using namespace " << sg.getName() << "_weightupdate_synapseDynamics;" << std::endl;
+            const auto *wum = sg.getArchetype().getWUModel();
+            if (!wum->getSynapseDynamicsSuppportCode().empty()) {
+                os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
             }
 
-            applySynapseSubstitutions(os, sg.getWUModel()->getSynapseDynamicsCode(), "synapseDynamics",
-                                      sg, baseSubs, model, backend);
-        }
-    );
+            applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
+                                      sg.getArchetype(), baseSubs, modelMerged.getModel(), backend);
+        },
+        // Push EGP handler
+        [&backend, &mergedEGPs](CodeStream &os)
+        {
+            genScalarEGPPush(os, mergedEGPs, "PresynapticUpdate", backend);
+            genScalarEGPPush(os, mergedEGPs, "PostsynapticUpdate", backend);
+            genScalarEGPPush(os, mergedEGPs, "SynapseDynamics", backend);
+        });
 }

@@ -34,33 +34,36 @@ struct Preferences : public PreferencesBase
 class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
-    Backend(int localHostID, const std::string &scalarType, const Preferences &preferences)
-    :   BackendBase(localHostID, scalarType), m_Preferences(preferences)
+    Backend(const std::string &scalarType, const Preferences &preferences)
+    :   BackendBase(scalarType), m_Preferences(preferences)
     {
     }
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                                 HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
-                                  SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler,
-                                  SynapseGroupHandler wumEventHandler, SynapseGroupHandler wumProceduralConnectHandler,
-                                  SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const override;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+                                  SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
+                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecInternal &model,
-                         NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-                         SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
-                         SynapseGroupHandler sgSparseInitHandler) const override;
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
+                         NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
+                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
-    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const override;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -73,10 +76,20 @@ public:
     virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
 
-    virtual void genPopVariableInit(CodeStream &os, VarLocation loc, const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genVariableInit(CodeStream &os, VarLocation loc, size_t count, const std::string &indexVarName,
+    //! Generate code for declaring merged group data to the 'device'
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+    
+    //! Generate code for pushing merged group data to the 'device'
+    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+
+    //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
+    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
+                                               const std::string &fieldName, const std::string &egpName) const override;
+
+    virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
+    virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genSynapseVariableRowInit(CodeStream &os, VarLocation loc, const SynapseGroupInternal &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged &sg,
                                            const Substitutions &kernelSubs, Handler handler) const override;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
@@ -88,7 +101,6 @@ public:
     virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const override;
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const override;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const override;
-
 
     virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -106,9 +118,11 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
 
-    virtual std::string getVarPrefix() const override{ return ""; }
+    virtual std::string getArrayPrefix() const override{ return ""; }
+    virtual std::string getScalarPrefix() const override{ return ""; }
 
-    virtual bool isGlobalRNGRequired(const ModelSpecInternal &model) const override;
+    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
+    virtual bool isPopulationRNGRequired() const override { return false; }
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
@@ -122,10 +136,10 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genPresynapticUpdate(CodeStream &os, const SynapseGroupInternal &sg, const Substitutions &popSubs, bool trueSpike,
-                              SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler) const;
+    void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
+                              bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const;
 
-    void genEmitSpike(CodeStream &os, const NeuronGroupInternal &ng, const Substitutions &subs, bool trueSpike) const;
+    void genEmitSpike(CodeStream &os, const NeuronGroupMerged &ng, const Substitutions &subs, bool trueSpike) const;
 
   
     //--------------------------------------------------------------------------

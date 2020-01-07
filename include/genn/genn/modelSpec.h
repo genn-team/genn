@@ -28,16 +28,12 @@ Part of the code generation and generated code sections.
 #include <set>
 #include <string>
 #include <vector>
-#ifdef MPI_ENABLE
-#include <mpi.h>
-#endif
 
 // GeNN includes
+#include "currentSourceInternal.h"
 #include "gennExport.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
-#include "currentSourceInternal.h"
-
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -168,7 +164,6 @@ public:
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
 
-
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return m_Name; }
 
@@ -189,14 +184,8 @@ public:
 
     // PUBLIC NEURON FUNCTIONS
     //========================
-    //! How many neurons are simulated locally in this model
-    unsigned int getNumLocalNeurons() const;
-
-    //! How many neurons are simulated remotely in this model
-    unsigned int getNumRemoteNeurons() const;
-
     //! How many neurons make up the entire model
-    unsigned int getNumNeurons() const{ return getNumLocalNeurons() + getNumRemoteNeurons(); }
+    unsigned int getNumNeurons() const;
 
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name){ return static_cast<NeuronGroup*>(findNeuronGroupInternal(name)); }
@@ -208,33 +197,18 @@ public:
         \param model neuron model to use for neuron group.
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
-        \param hostID if using MPI, the ID of the node to simulate this population on.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModel *model,
                                      const typename NeuronModel::ParamValues &paramValues,
-                                     const typename NeuronModel::VarValues &varInitialisers,
-                                     int hostID = 0)
+                                     const typename NeuronModel::VarValues &varInitialisers)
     {
-#ifdef MPI_ENABLE
-        // Determine the host ID
-        int mpiHostID = 0;
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
-
-        // Pick map to add group to appropriately
-        auto &groupMap = (hostID == mpiHostID) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
-#else
-        // If MPI is disabled always add to local neuron groups and zero host id
-        auto &groupMap = m_LocalNeuronGroups;
-        hostID = 0;
-#endif
-
         // Add neuron group to map
-        auto result = groupMap.emplace(std::piecewise_construct,
+        auto result = m_LocalNeuronGroups.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, size, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers(), 
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, hostID));
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second) {
             throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
@@ -250,14 +224,12 @@ public:
         \param size integer specifying how many neurons are in the population.
         \param paramValues parameters for model wrapped in NeuronModel::ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
-        \param hostID if using MPI, the ID of the node to simulate this population on.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size,
-                                     const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers,
-                                     int hostID = 0)
+                                     const typename NeuronModel::ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers)
     {
-        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers, hostID);
+        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers);
     }
 
     // PUBLIC SYNAPSE FUNCTIONS
@@ -296,23 +268,8 @@ public:
         auto srcNeuronGrp = findNeuronGroupInternal(src);
         auto trgNeuronGrp = findNeuronGroupInternal(trg);
 
-#ifdef MPI_ENABLE
-        // Get host ID of target neuron group
-        const int hostID = trgNeuronGrp->getClusterHostID();
-
-        // Determine the host ID
-        int mpiHostID = 0;
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
-
-        // Pick map to add group to appropriately
-        auto &groupMap = (hostID == mpiHostID) ? m_LocalSynapseGroups : m_RemoteSynapseGroups;
-#else
-        // If MPI is disabled always add to local synapse groups
-        auto &groupMap = m_LocalSynapseGroups;
-#endif
-
         // Add synapse group to map
-        auto result = groupMap.emplace(
+        auto result = m_LocalSynapseGroups.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, mtype, delaySteps,
@@ -414,23 +371,8 @@ public:
     {
         auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
 
-#ifdef MPI_ENABLE
-        // Get host ID of target neuron group
-        const int hostID = targetGroup->getClusterHostID();
-
-        // Determine the host ID
-        int mpiHostID = 0;
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
-
-        // Pick map to add group to appropriately
-        auto &groupMap = (hostID == mpiHostID) ? m_LocalCurrentSources : m_RemoteCurrentSources;
-#else
-        // If MPI is disabled always add to local current sources
-        auto &groupMap = m_LocalCurrentSources;
-#endif
-
         // Add current source to map
-        auto result = groupMap.emplace(std::piecewise_construct,
+        auto result = m_LocalCurrentSources.emplace(std::piecewise_construct,
             std::forward_as_tuple(currentSourceName),
             std::forward_as_tuple(currentSourceName, model,
                                   paramValues.getValues(), varInitialisers.getInitialisers(),
@@ -478,22 +420,14 @@ protected:
     bool zeroCopyInUse() const;
 
     //! Get std::map containing local named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroupInternal> &getLocalNeuronGroups() const{ return m_LocalNeuronGroups; }
-
-    //! Get std::map containing remote named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroupInternal> &getRemoteNeuronGroups() const{ return m_RemoteNeuronGroups; }
+    const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
 
     //! Get std::map containing local named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroupInternal> &getLocalSynapseGroups() const{ return m_LocalSynapseGroups; }
-
-    //! Get std::map containing remote named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroupInternal> &getRemoteSynapseGroups() const{ return m_RemoteSynapseGroups; }
+    const std::map<std::string, SynapseGroupInternal> &getSynapseGroups() const{ return m_LocalSynapseGroups; }
 
     //! Get std::map containing local named CurrentSource objects in model
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
-    //! Get std::map containing remote named CurrentSource objects in model
-    const std::map<std::string, CurrentSourceInternal> &getRemoteCurrentSources() const{ return m_RemoteCurrentSources; }
 
 private:
     //--------------------------------------------------------------------------
@@ -508,20 +442,11 @@ private:
     //! Named local neuron groups
     std::map<std::string, NeuronGroupInternal> m_LocalNeuronGroups;
 
-    //! Named remote neuron groups
-    std::map<std::string, NeuronGroupInternal> m_RemoteNeuronGroups;
-
     //! Named local synapse groups
     std::map<std::string, SynapseGroupInternal> m_LocalSynapseGroups;
 
-    //! Named remote synapse groups
-    std::map<std::string, SynapseGroupInternal> m_RemoteSynapseGroups;
-
     //! Named local current sources
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
-
-    //! Named remote current sources
-    std::map<std::string, CurrentSourceInternal> m_RemoteCurrentSources;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;

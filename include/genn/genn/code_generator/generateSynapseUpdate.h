@@ -1,12 +1,12 @@
 #pragma once
 
-// Forward declarations
-class ModelSpecInternal;
+// GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 
+// Forward declarations
 namespace CodeGenerator
 {
-class BackendBase;
-class CodeStream;
+class ModelSpecMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -14,5 +14,6 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend, bool standaloneModules);
+void generateSynapseUpdate(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+                           const BackendBase &backend, bool standaloneModules);
 }

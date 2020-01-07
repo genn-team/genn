@@ -13,9 +13,9 @@ namespace SingleThreadedCPU
 namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &,
-                      int localHostID, const Preferences &preferences)
+                      const Preferences &preferences)
 {
-    return Backend(localHostID, model.getPrecision(), preferences);
+    return Backend(model.getPrecision(), preferences);
 }
 }   // namespace Optimiser
 }   // namespace CUDA

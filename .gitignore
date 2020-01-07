@@ -19,6 +19,7 @@
 **/.vs
 **/*.ipdb
 **/*.iobj
+**/*.testdurations
 
 /lib
 /documentation/

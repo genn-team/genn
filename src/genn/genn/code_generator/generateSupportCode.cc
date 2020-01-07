@@ -3,65 +3,36 @@
 // Standard C++ includes
 #include <string>
 
-// GeNN includes
-#include "modelSpecInternal.h"
-
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecInternal &model)
+void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecMerged &modelMerged)
 {
     os << "#pragma once" << std::endl;
     os << std::endl;
 
-    os << "// support code for neuron groups" << std::endl;
-    for(const auto &n : model.getLocalNeuronGroups()) {
-        if (!n.second.getNeuronModel()->getSupportCode().empty()) {
-            os << "namespace " << n.first << "_neuron";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.getPrecision()) << std::endl;
-            }
-        }
-    }
+    os << "// support code for neuron update groups" << std::endl;
+    modelMerged.genNeuronUpdateGroupSupportCode(os);
     os << std::endl;
-    os << "// support code for synapse groups" << std::endl;
-    for(const auto &s : model.getLocalSynapseGroups()) {
-        const auto *wu = s.second.getWUModel();
-        const auto *psm = s.second.getPSModel();
 
-        if (!wu->getSimSupportCode().empty()) {
-            os << "namespace " << s.first << "_weightupdate_simCode";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(wu->getSimSupportCode(), model.getPrecision()) << std::endl;
-            }
-        }
-        if (!wu->getLearnPostSupportCode().empty()) {
-            os << "namespace " << s.first << "_weightupdate_simLearnPost";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(wu->getLearnPostSupportCode(), model.getPrecision()) << std::endl;
-            }
-        }
-        if (!wu->getSynapseDynamicsSuppportCode().empty()) {
-            os << "namespace " << s.first << "_weightupdate_synapseDynamics";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(wu->getSynapseDynamicsSuppportCode(), model.getPrecision()) << std::endl;
-            }
-        }
-        if (!psm->getSupportCode().empty()) {
-            os << "namespace " << s.first << "_postsyn";
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(psm->getSupportCode(), model.getPrecision()) << std::endl;
-            }
-        }
-    }
+    os << "// support code for postsynaptic dynamics" << std::endl;
+    modelMerged.genPostsynapticDynamicsSupportCode(os);
+    os << std::endl;
+
+    os << "// support code for presynaptic update" << std::endl;
+    modelMerged.genPresynapticUpdateSupportCode(os);
+    os << std::endl;
+
+    os << "// support code for postsynaptic update groups" << std::endl;
+    modelMerged.genPostsynapticUpdateSupportCode(os);
+    os << std::endl;
+
+    os << "// support code for synapse dynamics update groups" << std::endl;
+    modelMerged.genSynapseDynamicsSupportCode(os);
     os << std::endl;
 }
