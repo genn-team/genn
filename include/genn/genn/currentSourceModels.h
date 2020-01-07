@@ -71,4 +71,31 @@ class GaussianNoise : public Base
 
     SET_PARAM_NAMES({"mean", "sd"} );
 };
+
+//----------------------------------------------------------------------------
+// CurrentSourceModels::PoissonExp
+//----------------------------------------------------------------------------
+class PoissonExp : public Base
+{
+    DECLARE_MODEL(PoissonExp, 3, 1);
+
+    SET_INJECTION_CODE(
+        "scalar p = 1.0f;\n"
+        "unsigned int numSpikes = 0;\n"
+        "do\n"
+        "{\n"
+        "    numSpikes++;\n"
+        "    p *= $(gennrand_uniform);\n"
+        "} while (p > $(ExpMinusLambda));\n"
+        "$(current) += $(Init) * (scalar)(numSpikes - 1);\n"
+        "$(injectCurrent, $(current));\n"
+        "$(current) *= $(ExpDecay);\n");
+
+    SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
+    SET_VARS({{"current", "scalar"}});
+    SET_DERIVED_PARAMS({
+        {"ExpDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
+        {"Init", [](const std::vector<double> &pars, double dt){ return pars[0] * (1.0 - std::exp(-dt / pars[1])) * (pars[1] / dt); }},
+        {"ExpMinusLambda", [](const std::vector<double> &pars, double dt){ return std::exp(-(pars[2] / 1000.0) * dt); }}});
+};
 } // CurrentSourceModels
