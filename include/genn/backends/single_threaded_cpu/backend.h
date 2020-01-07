@@ -118,12 +118,16 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
 
-    virtual std::string getVarPrefix() const override{ return ""; }
+    virtual std::string getArrayPrefix() const override{ return ""; }
+    virtual std::string getScalarPrefix() const override{ return ""; }
 
     virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override { return false; }
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
+
+    //! Is automatic copy mode enabled in the preferences?
+    virtual bool isAutomaticCopyEnabled() const override { return m_Preferences.automaticCopy; }
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return 0; }

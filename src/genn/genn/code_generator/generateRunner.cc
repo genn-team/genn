@@ -155,33 +155,33 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
     gen.addField("unsigned int", "numNeurons",
                  [](const NeuronGroupInternal &ng, size_t){ return std::to_string(ng.getNumNeurons()); });
 
-    gen.addPointerField("unsigned int", "spkCnt", backend.getVarPrefix() + "glbSpkCnt");
-    gen.addPointerField("unsigned int", "spk", backend.getVarPrefix() + "glbSpk");
+    gen.addPointerField("unsigned int", "spkCnt", backend.getArrayPrefix() + "glbSpkCnt");
+    gen.addPointerField("unsigned int", "spk", backend.getArrayPrefix() + "glbSpk");
 
     if(m.getArchetype().isSpikeEventRequired()) {
-        gen.addPointerField("unsigned int", "spkCntEvnt", backend.getVarPrefix() + "glbSpkCntEvnt");
-        gen.addPointerField("unsigned int", "spkEvnt", backend.getVarPrefix() + "glbSpkEvnt");
+        gen.addPointerField("unsigned int", "spkCntEvnt", backend.getArrayPrefix() + "glbSpkCntEvnt");
+        gen.addPointerField("unsigned int", "spkEvnt", backend.getArrayPrefix() + "glbSpkEvnt");
     }
 
     if(m.getArchetype().isDelayRequired()) {
         gen.addField("volatile unsigned int*", "spkQuePtr",
                      [&backend](const NeuronGroupInternal &ng, size_t)
                      { 
-                         return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + ng.getName() + ")";
+                         return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + ng.getName() + ")";
                      });
     }
 
     if(m.getArchetype().isSpikeTimeRequired()) {
-        gen.addPointerField(timePrecision, "sT", backend.getVarPrefix() + "sT");
+        gen.addPointerField(timePrecision, "sT", backend.getArrayPrefix() + "sT");
     }
 
     if(backend.isPopulationRNGRequired() && m.getArchetype().isSimRNGRequired()) {
-        gen.addPointerField("curandState", "rng", backend.getVarPrefix() + "rng");
+        gen.addPointerField("curandState", "rng", backend.getArrayPrefix() + "rng");
     }
 
     // Add pointers to variables
     const NeuronModels::Base *nm = m.getArchetype().getNeuronModel();
-    gen.addVars(nm->getVars(), backend.getVarPrefix());
+    gen.addVars(nm->getVars(), backend.getArrayPrefix());
 
     // Extra global parameters are not required for init
     if(!init) {
@@ -203,23 +203,23 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const SynapseGroupInternal *sg = m.getArchetype().getMergedInSyn()[i].first;
 
         // Add pointer to insyn
-        gen.addMergedInSynPointerField(precision, "inSynInSyn", i, backend.getVarPrefix() + "inSyn", sortedMergedInSyns);
+        gen.addMergedInSynPointerField(precision, "inSynInSyn", i, backend.getArrayPrefix() + "inSyn", sortedMergedInSyns);
 
         // Add pointer to dendritic delay buffer if required
         if (sg->isDendriticDelayRequired()) {
-            gen.addMergedInSynPointerField(precision, "denDelayInSyn", i, backend.getVarPrefix() + "denDelay", sortedMergedInSyns);
+            gen.addMergedInSynPointerField(precision, "denDelayInSyn", i, backend.getArrayPrefix() + "denDelay", sortedMergedInSyns);
 
             gen.addField("volatile unsigned int*", "denDelayPtrInSyn" + std::to_string(i),
                          [&backend, &sortedMergedInSyns, i](const NeuronGroupInternal&, size_t groupIndex)
                          {
-                             return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sortedMergedInSyns[groupIndex][i].first->getPSModelTargetName() + ")";
+                             return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sortedMergedInSyns[groupIndex][i].first->getPSModelTargetName() + ")";
                          });
         }
 
         // Add pointers to state variables
         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             for(const auto &v : sg->getPSModel()->getVars()) {
-                gen.addMergedInSynPointerField(v.type, v.name + "InSyn", i, backend.getVarPrefix() + v.name, sortedMergedInSyns);
+                gen.addMergedInSynPointerField(v.type, v.name + "InSyn", i, backend.getArrayPrefix() + v.name, sortedMergedInSyns);
             }
         }
 
@@ -244,7 +244,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const auto *cs = m.getArchetype().getCurrentSources()[i];
 
         for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
-            gen.addCurrentSourcePointerField(v.type, v.name + "CS", i, backend.getVarPrefix() + v.name, sortedCurrentSources);
+            gen.addCurrentSourcePointerField(v.type, v.name + "CS", i, backend.getArrayPrefix() + v.name, sortedCurrentSources);
         }
     }
 
@@ -263,7 +263,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const auto *sg = inSynWithPostCode[i];
 
         for(const auto &v : sg->getWUModel()->getPostVars()) {
-            gen.addSynPointerField(v.type, v.name + "WUPost", i, backend.getVarPrefix() + v.name, sortedInSynWithPostCode);
+            gen.addSynPointerField(v.type, v.name + "WUPost", i, backend.getArrayPrefix() + v.name, sortedInSynWithPostCode);
         }
     }
 
@@ -282,7 +282,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const auto *sg = outSynWithPreCode[i];
 
         for(const auto &v : sg->getWUModel()->getPreVars()) {
-            gen.addSynPointerField(v.type, v.name + "WUPre", i, backend.getVarPrefix() + v.name, sortedOutSynWithPreCode);
+            gen.addSynPointerField(v.type, v.name + "WUPre", i, backend.getArrayPrefix() + v.name, sortedOutSynWithPreCode);
         }
     }
 
@@ -351,32 +351,32 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     // If this role is one where postsynaptic input can be provided
     if(role == MergedSynapseStruct::PresynapticUpdate || role == MergedSynapseStruct::SynapseDynamics) {
         if(m.getArchetype().isDendriticDelayRequired()) {
-            gen.addPSPointerField(precision, "denDelay", backend.getVarPrefix() + "denDelay");
+            gen.addPSPointerField(precision, "denDelay", backend.getArrayPrefix() + "denDelay");
             gen.addField("volatile unsigned int*", "denDelayPtr",
                          [&backend](const SynapseGroupInternal &sg, size_t)
                          { 
-                             return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")"; 
+                             return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
                          });
         }
         else {
-            gen.addPSPointerField(precision, "inSyn", backend.getVarPrefix() + "inSyn");
+            gen.addPSPointerField(precision, "inSyn", backend.getArrayPrefix() + "inSyn");
         }
     }
 
     if(role == MergedSynapseStruct::PresynapticUpdate) {
         if(m.getArchetype().isTrueSpikeRequired()) {
-            gen.addSrcPointerField("unsigned int", "srcSpkCnt", backend.getVarPrefix() + "glbSpkCnt");
-            gen.addSrcPointerField("unsigned int", "srcSpk", backend.getVarPrefix() + "glbSpk");
+            gen.addSrcPointerField("unsigned int", "srcSpkCnt", backend.getArrayPrefix() + "glbSpkCnt");
+            gen.addSrcPointerField("unsigned int", "srcSpk", backend.getArrayPrefix() + "glbSpk");
         }
 
         if(m.getArchetype().isSpikeEventRequired()) {
-            gen.addSrcPointerField("unsigned int", "srcSpkCntEvnt", backend.getVarPrefix() + "glbSpkCntEvnt");
-            gen.addSrcPointerField("unsigned int", "srcSpkEvnt", backend.getVarPrefix() + "glbSpkEvnt");
+            gen.addSrcPointerField("unsigned int", "srcSpkCntEvnt", backend.getArrayPrefix() + "glbSpkCntEvnt");
+            gen.addSrcPointerField("unsigned int", "srcSpkEvnt", backend.getArrayPrefix() + "glbSpkEvnt");
         }
     }
     else if(role == MergedSynapseStruct::PostsynapticUpdate) {
-        gen.addTrgPointerField("unsigned int", "trgSpkCnt", backend.getVarPrefix() + "glbSpkCnt");
-        gen.addTrgPointerField("unsigned int", "trgSpk", backend.getVarPrefix() + "glbSpk");
+        gen.addTrgPointerField("unsigned int", "trgSpkCnt", backend.getArrayPrefix() + "glbSpkCnt");
+        gen.addTrgPointerField("unsigned int", "trgSpk", backend.getArrayPrefix() + "glbSpk");
     }
 
     // If this structure is used for updating rather than initializing
@@ -386,7 +386,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
             gen.addField("volatile unsigned int*", "srcSpkQuePtr",
                          [&backend](const SynapseGroupInternal &sg, size_t)
                          {
-                             return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + sg.getSrcNeuronGroup()->getName() + ")";
+                             return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + sg.getSrcNeuronGroup()->getName() + ")";
                          });
         }
 
@@ -395,7 +395,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
             gen.addField("volatile unsigned int*", "trgSpkQuePtr",
                          [&backend](const SynapseGroupInternal &sg, size_t)
                          {
-                             return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + sg.getTrgNeuronGroup()->getName() + ")";
+                             return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + sg.getTrgNeuronGroup()->getName() + ")";
                          });
         }
 
@@ -409,7 +409,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         for(const auto &v : preVars) {
             // If variable is referenced in code string, add source pointer
             if(code.find("$(" + v.name + "_pre)") != std::string::npos) {
-                gen.addSrcPointerField(v.type, v.name + "Pre", backend.getVarPrefix() + v.name);
+                gen.addSrcPointerField(v.type, v.name + "Pre", backend.getArrayPrefix() + v.name);
             }
         }
 
@@ -418,7 +418,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         for(const auto &v : postVars) {
             // If variable is referenced in code string, add target pointer
             if(code.find("$(" + v.name + "_post)") != std::string::npos) {
-                gen.addTrgPointerField(v.type, v.name + "Post", backend.getVarPrefix() + v.name);
+                gen.addTrgPointerField(v.type, v.name + "Post", backend.getArrayPrefix() + v.name);
             }
         }
 
@@ -440,15 +440,15 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
 
         // Add spike times if required
         if(wum->isPreSpikeTimeRequired()) {
-            gen.addSrcPointerField(timePrecision, "sTPre", backend.getVarPrefix() + "sT");
+            gen.addSrcPointerField(timePrecision, "sTPre", backend.getArrayPrefix() + "sT");
         }
         if(wum->isPostSpikeTimeRequired()) {
-            gen.addTrgPointerField(timePrecision, "sTPost", backend.getVarPrefix() + "sT");
+            gen.addTrgPointerField(timePrecision, "sTPost", backend.getArrayPrefix() + "sT");
         }
 
         // Add pre and postsynaptic variables to struct
-        gen.addVars(wum->getPreVars(), backend.getVarPrefix());
-        gen.addVars(wum->getPostVars(), backend.getVarPrefix());
+        gen.addVars(wum->getPreVars(), backend.getArrayPrefix());
+        gen.addVars(wum->getPostVars(), backend.getArrayPrefix());
 
         // Add EGPs to struct
         gen.addEGPs(wum->getExtraGlobalParams());
@@ -456,26 +456,26 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
 
     // Add pointers to connectivity data
     if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        gen.addPointerField("unsigned int", "rowLength", backend.getVarPrefix() + "rowLength");
-        gen.addPointerField(m.getArchetype().getSparseIndType(),"ind", backend.getVarPrefix() + "ind");
+        gen.addPointerField("unsigned int", "rowLength", backend.getArrayPrefix() + "rowLength");
+        gen.addPointerField(m.getArchetype().getSparseIndType(),"ind", backend.getArrayPrefix() + "ind");
 
         // Add additional structure for postsynaptic access
         if(backend.isPostsynapticRemapRequired() && !wum->getLearnPostCode().empty()
            && (role == MergedSynapseStruct::PostsynapticUpdate || role == MergedSynapseStruct::SparseInit))
         {
-            gen.addPointerField("unsigned int", "colLength", backend.getVarPrefix() + "colLength");
-            gen.addPointerField("unsigned int", "remap", backend.getVarPrefix() + "remap");
+            gen.addPointerField("unsigned int", "colLength", backend.getArrayPrefix() + "colLength");
+            gen.addPointerField("unsigned int", "remap", backend.getArrayPrefix() + "remap");
         }
 
         // Add additional structure for synapse dynamics access
         if(backend.isSynRemapRequired() && !wum->getSynapseDynamicsCode().empty()
            && (role == MergedSynapseStruct::SynapseDynamics || role == MergedSynapseStruct::SparseInit))
         {
-            gen.addPointerField("unsigned int", "synRemap", backend.getVarPrefix() + "synRemap");
+            gen.addPointerField("unsigned int", "synRemap", backend.getArrayPrefix() + "synRemap");
         }
     }
     else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        gen.addPointerField("uint32_t", "gp", backend.getVarPrefix() + "gp");
+        gen.addPointerField("uint32_t", "gp", backend.getArrayPrefix() + "gp");
     }
     else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
         gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
@@ -483,7 +483,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
 
     // Add pointers to var pointers to struct
     if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        gen.addVars(wum->getVars(), backend.getVarPrefix());
+        gen.addVars(wum->getVars(), backend.getArrayPrefix());
     }
 
     // Generate structure definitions and instantiation
@@ -498,10 +498,10 @@ bool canPushPullVar(VarLocation loc)
 }
 //-------------------------------------------------------------------------
 bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
-                         VarLocation loc, const std::string &description, std::function<void()> handler)
+                         VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::function<void()> handler)
 {
-    // If this variable has a location that allows pushing and pulling
-    if(canPushPullVar(loc)) {
+    // If this variable has a location that allows pushing and pulling and automatic copying isn't enabled
+    if(canPushPullVar(loc) && !automaticCopyEnabled) {
         definitionsFunc << "EXPORT_FUNC void push" << description << "ToDevice(bool uninitialisedOnly = false);" << std::endl;
         definitionsFunc << "EXPORT_FUNC void pull" << description << "FromDevice();" << std::endl;
 
@@ -524,11 +524,11 @@ bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
 }
 //-------------------------------------------------------------------------
 void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
-                         VarLocation loc, const std::string &description, std::vector<std::string> &statePushPullFunction,
+                         VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::vector<std::string> &statePushPullFunction,
                          std::function<void()> handler)
 {
     // Add function to vector if push pull function was actually required
-    if(genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, loc, description, handler)) {
+    if(genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, loc, automaticCopyEnabled, description, handler)) {
         statePushPullFunction.push_back(description);
     }
 }
@@ -622,7 +622,7 @@ CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, C
                                     std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
-    genVarPushPullScope(definitionsFunc, push, pull, loc, name, statePushPullFunction,
+    genVarPushPullScope(definitionsFunc, push, pull, loc, backend.isAutomaticCopyEnabled(), name, statePushPullFunction,
         [&]()
         {
             backend.genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
@@ -673,7 +673,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
         }
 
         // If variable can be pushed and pulled
-        if(canPushPullVar(loc)) {
+        if(!backend.isAutomaticCopyEnabled() && canPushPullVar(loc)) {
             // Write definitions for push and pull functions
             definitionsFunc << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int count);" << std::endl;
             definitionsFunc << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int count);" << std::endl;
@@ -893,11 +893,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                      [&backend, m](const SynapseGroupInternal &sg, size_t){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
 
         if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            gen.addPointerField("unsigned int", "rowLength", backend.getVarPrefix() + "rowLength");
-            gen.addPointerField(m.getArchetype().getSparseIndType(), "ind", backend.getVarPrefix() + "ind");
+            gen.addPointerField("unsigned int", "rowLength", backend.getArrayPrefix() + "rowLength");
+            gen.addPointerField(m.getArchetype().getSparseIndType(), "ind", backend.getArrayPrefix() + "ind");
         }
         else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            gen.addPointerField("uint32_t", "gp", backend.getVarPrefix() + "gp");
+            gen.addPointerField("uint32_t", "gp", backend.getArrayPrefix() + "gp");
         }
 
         // Add EGPs to struct
@@ -952,14 +952,14 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             gen.addField("volatile unsigned int*", "spkQuePtr",
                          [&backend](const NeuronGroupInternal &ng, size_t)
                          {
-                             return "getSymbolAddress(" + backend.getVarPrefix() + "spkQuePtr" + ng.getName() + ")";
+                             return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + ng.getName() + ")";
                          });
         }
 
-        gen.addPointerField("unsigned int", "spkCnt", backend.getVarPrefix() + "glbSpkCnt");
+        gen.addPointerField("unsigned int", "spkCnt", backend.getArrayPrefix() + "glbSpkCnt");
 
         if(m.getArchetype().isSpikeEventRequired()) {
-            gen.addPointerField("unsigned int", "spkCntEvnt", backend.getVarPrefix() + "glbSpkCntEvnt");
+            gen.addPointerField("unsigned int", "spkCntEvnt", backend.getArrayPrefix() + "glbSpkCntEvnt");
         }
 
 
@@ -974,7 +974,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         gen.addField("volatile unsigned int*", "denDelayPtr",
                      [&backend](const SynapseGroupInternal &sg, size_t)
                      {
-                         return "getSymbolAddress(" + backend.getVarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
+                         return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
                      });
 
         // Generate structure definitions and instantiation
@@ -1000,7 +1000,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                 "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), numSpikes);
 
         // True spike push and pull functions
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(), n.first + "Spikes",
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
+                            backend.isAutomaticCopyEnabled(), n.first + "Spikes",
             [&]()
             {
                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
@@ -1008,10 +1009,10 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
                                             "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), true, numSpikes);
             });
-        
+
         // Current true spike push and pull functions
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
-                            n.first + "CurrentSpikes", currentSpikePullFunctions,
+                            backend.isAutomaticCopyEnabled(), n.first + "CurrentSpikes", currentSpikePullFunctions,
             [&]()
             {
                 backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
@@ -1035,7 +1036,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                     n.second.getNumNeurons() * n.second.getNumDelaySlots());
 
             // Spike-like event push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(), n.first + "SpikeEvents",
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
+                                backend.isAutomaticCopyEnabled(), n.first + "SpikeEvents",
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
@@ -1046,7 +1048,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
             // Current spike-like event push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
-                                n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
+                                backend.isAutomaticCopyEnabled(), n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
                 [&]()
                 {
                     backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second);
@@ -1069,7 +1071,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                     n.second.getNumNeurons() * n.second.getNumDelaySlots());
 
             // Generate push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(), n.first + "SpikeTimes",
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
+                                backend.isAutomaticCopyEnabled(), n.first + "SpikeTimes",
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
@@ -1095,11 +1098,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
             // Current variable push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
-                                "Current" + vars[i].name + n.first,
+                                backend.isAutomaticCopyEnabled(), "Current" + vars[i].name + n.first,
                 [&]()
                 {
                     backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
-                                                       vars[i].name, n.second.getVarLocation(i));
+                                                    vars[i].name, n.second.getVarLocation(i));
                 });
 
             // Write getter to get access to correct pointer
@@ -1118,7 +1121,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Add helper function to push and pull entire neuron state
-        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first, neuronStatePushPullFunctions);
+        if(!backend.isAutomaticCopyEnabled()) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first, neuronStatePushPullFunctions);
+        }
 
         const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
         for(size_t i = 0; i < extraGlobalParams.size(); i++) {
@@ -1142,7 +1147,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
 
             // Add helper function to push and pull entire current source state
-            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName(), currentSourceStatePushPullFunctions);
+            if(!backend.isAutomaticCopyEnabled()) {
+                genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName(), currentSourceStatePushPullFunctions);
+            }
 
             const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
             for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
@@ -1236,8 +1243,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
 
             // Generate push and pull functions for sparse connectivity
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc,
-                                s.second.getSparseConnectivityLocation(), s.second.getName() + "Connectivity", connectivityPushPullFunctions,
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
+                                backend.isAutomaticCopyEnabled(), s.second.getName() + "Connectivity", connectivityPushPullFunctions,
                 [&]()
                 {
                     // Row lengths
@@ -1301,7 +1308,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isPSModelMerged()) {
             // Add code to push and pull inSyn
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(), "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
+                                backend.isAutomaticCopyEnabled(), "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.second.getName(), s.second.getInSynLocation(),
@@ -1313,7 +1321,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 const auto psmVars = psm->getVars();
                 for(size_t i = 0; i < psmVars.size(); i++) {
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
-                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i), psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i),
+                                        backend.isAutomaticCopyEnabled(), psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
                         [&]()
                         {
                             backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.second.getName(), s.second.getPSVarLocation(i),
@@ -1324,7 +1333,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Add helper function to push and pull entire synapse group state
-        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getName(), synapseGroupStatePushPullFunctions);
+        if(!backend.isAutomaticCopyEnabled()) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getName(), synapseGroupStatePushPullFunctions);
+        }
 
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
@@ -1381,76 +1392,78 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << runnerGetterFuncStream.str();
     runner << std::endl;
 
-    // ---------------------------------------------------------------------
-    // Function for copying all state to device
-    runner << "void copyStateToDevice(bool uninitialisedOnly)";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &n : model.getNeuronGroups()) {
-            runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
-        }
+    if(!backend.isAutomaticCopyEnabled()) {
+        // ---------------------------------------------------------------------
+        // Function for copying all state to device
+        runner << "void copyStateToDevice(bool uninitialisedOnly)";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &n : model.getNeuronGroups()) {
+                runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            }
 
-        for(const auto &cs : model.getLocalCurrentSources()) {
-            runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
-        }
+            for(const auto &cs : model.getLocalCurrentSources()) {
+                runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            }
 
-        for(const auto &s : model.getSynapseGroups()) {
-            runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            for(const auto &s : model.getSynapseGroups()) {
+                runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
+            }
         }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all connectivity to device
+        runner << "void copyConnectivityToDevice(bool uninitialisedOnly)";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &func : connectivityPushPullFunctions) {
+                runner << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
+            }
+        }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all state from device
+        runner << "void copyStateFromDevice()";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &n : model.getNeuronGroups()) {
+                runner << "pull" << n.first << "StateFromDevice();" << std::endl;
+            }
+
+            for(const auto &cs : model.getLocalCurrentSources()) {
+                runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
+            }
+
+            for(const auto &s : model.getSynapseGroups()) {
+                runner << "pull" << s.first << "StateFromDevice();" << std::endl;
+            }
+        }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all current spikes from device
+        runner << "void copyCurrentSpikesFromDevice()";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &func : currentSpikePullFunctions) {
+                runner << "pull" << func << "FromDevice();" << std::endl;
+            }
+        }
+        runner << std::endl;
+
+        // ---------------------------------------------------------------------
+        // Function for copying all current spikes events from device
+        runner << "void copyCurrentSpikeEventsFromDevice()";
+        {
+            CodeStream::Scope b(runner);
+            for(const auto &func : currentSpikeEventPullFunctions) {
+                runner << "pull" << func << "FromDevice();" << std::endl;
+            }
+        }
+        runner << std::endl;
     }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all connectivity to device
-    runner << "void copyConnectivityToDevice(bool uninitialisedOnly)";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &func : connectivityPushPullFunctions) {
-            runner << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
-        }
-    }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all state from device
-    runner << "void copyStateFromDevice()";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &n : model.getNeuronGroups()) {
-            runner << "pull" << n.first << "StateFromDevice();" << std::endl;
-        }
-
-        for(const auto &cs : model.getLocalCurrentSources()) {
-            runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
-        }
-
-        for(const auto &s : model.getSynapseGroups()) {
-            runner << "pull" << s.first << "StateFromDevice();" << std::endl;
-        }
-    }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all current spikes from device
-    runner << "void copyCurrentSpikesFromDevice()";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &func : currentSpikePullFunctions) {
-            runner << "pull" << func << "FromDevice();" << std::endl;
-        }
-    }
-    runner << std::endl;
-
-    // ---------------------------------------------------------------------
-    // Function for copying all current spikes events from device
-    runner << "void copyCurrentSpikeEventsFromDevice()";
-    {
-        CodeStream::Scope b(runner);
-        for(const auto &func : currentSpikeEventPullFunctions) {
-            runner << "pull" << func << "FromDevice();" << std::endl;
-        }
-    }
-    runner << std::endl;
 
     // ---------------------------------------------------------------------
     // Function for setting the CUDA device and the host's global variables.
@@ -1530,11 +1543,13 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     // ---------------------------------------------------------------------
     // Function definitions
     definitions << "// Runner functions" << std::endl;
-    definitions << "EXPORT_FUNC void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
-    definitions << "EXPORT_FUNC void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
-    definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
-    definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
-    definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
+    if(!backend.isAutomaticCopyEnabled()) {
+        definitions << "EXPORT_FUNC void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
+        definitions << "EXPORT_FUNC void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
+        definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
+        definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
+        definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
+    }
     definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;

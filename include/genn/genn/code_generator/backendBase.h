@@ -45,6 +45,9 @@ struct PreferencesBase
     //! Improve performance but break backward compatibility due to word-padding each row
     bool enableBitmaskOptimisations = false;
 
+    //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
+    bool automaticCopy = false;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
@@ -283,7 +286,9 @@ public:
 
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
     //! This function returns this prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getVarPrefix() const{ return ""; }
+    virtual std::string getArrayPrefix() const{ return ""; }
+
+    virtual std::string getScalarPrefix() const{ return ""; }
 
     //! Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?
     virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
@@ -296,6 +301,9 @@ public:
 
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
+
+    //! Is automatic copy mode enabled in the preferences?
+    virtual bool isAutomaticCopyEnabled() const = 0;
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
