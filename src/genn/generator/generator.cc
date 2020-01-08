@@ -39,22 +39,14 @@ int main(int argc,     //!< number of arguments; expected to be 2
             std::cerr << "usage: generator <target dir>";
             return EXIT_FAILURE;
         }
-        
-        const filesystem::path targetPath(argv[1]);
 
-        // Create code generation path
-        int localHostID = 0;
-#ifdef MPI_ENABLE
-        MPI_Init(NULL, NULL);
-        MPI_Comm_rank(MPI_COMM_WORLD, &localHostID);
-        std::cout << "MPI initialized - host ID:" << localHostID;
-#endif
+        const filesystem::path targetPath(argv[1]);
 
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
         ModelSpecInternal model;
         modelDefinition(static_cast<ModelSpec&>(std::ref(model)));
-        
+
         // Initialise logging, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
         Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, &consoleAppender, &consoleAppender);
@@ -63,19 +55,16 @@ int main(int argc,     //!< number of arguments; expected to be 2
         model.finalize();
 
         // Create code generation path
-#ifdef MPI_ENABLE
-        const filesystem::path outputPath = targetPath / (model.getName() + "_" + std::to_string(localHostID) + "_CODE");
-#else
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
-#endif
+
         // Create output path
         filesystem::create_directory(outputPath);
 
         // Create backend
         auto backend = Optimiser::createBackend(model, outputPath,
                                                 GENN_PREFERENCES.logLevel, &consoleAppender,
-                                                localHostID, GENN_PREFERENCES);
-        
+                                                GENN_PREFERENCES);
+
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
 
@@ -90,7 +79,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
                 LOGE_CODE_GENERATOR << "Unable to generate project GUID";
                 return EXIT_FAILURE;
             }
-            
+
             // Write GUID to string stream
             std::stringstream projectGUIDStream;
             projectGUIDStream << std::uppercase << std::hex << std::setfill('0');
@@ -99,11 +88,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
             projectGUIDStream << std::setw(4) << guid.Data3 << '-';
             projectGUIDStream << std::setw(2) << static_cast<short>(guid.Data4[0]) << std::setw(2) << static_cast<short>(guid.Data4[1]) << '-';
             projectGUIDStream << static_cast<short>(guid.Data4[2]) << static_cast<short>(guid.Data4[3]) << static_cast<short>(guid.Data4[4]) << static_cast<short>(guid.Data4[5]) << static_cast<short>(guid.Data4[6]) << static_cast<short>(guid.Data4[7]);
-            
+
             // Use result as project GUID string
             projectGUIDString = projectGUIDStream.str();
             LOGI_CODE_GENERATOR << "Generated new project GUID:" << projectGUIDString;
-            
+
             // Write GUID to project GUID file
             std::ofstream projectGUIDFile(projectGUIDFilename.str());
             projectGUIDFile << projectGUIDString << std::endl;
@@ -124,10 +113,6 @@ int main(int argc,     //!< number of arguments; expected to be 2
         CodeGenerator::generateMakefile(makefile, backend, moduleNames);
 #endif
 
-#ifdef MPI_ENABLE
-        MPI_Finalize();
-        std::cout << "MPI finalized";
-#endif
     }
     catch(const std::exception &exception)
     {

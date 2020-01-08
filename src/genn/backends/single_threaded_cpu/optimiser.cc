@@ -14,7 +14,7 @@ namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &,
                       plog::Severity backendLevel, plog::IAppender *backendAppender,
-                      int localHostID, const Preferences &preferences)
+                      const Preferences &preferences)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {
@@ -25,7 +25,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &,
         plog::get<Logging::CHANNEL_BACKEND>()->setMaxSeverity(backendLevel);
     }
 
-    return Backend(localHostID, model.getPrecision(), preferences);
+    return Backend(model.getPrecision(), preferences);
 }
 }   // namespace Optimiser
 }   // namespace CUDA

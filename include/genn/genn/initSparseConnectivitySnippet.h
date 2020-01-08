@@ -32,7 +32,7 @@
 //! Base class for all sparse connectivity initialisation snippets
 namespace InitSparseConnectivitySnippet
 {
-class Base : public Snippet::Base
+class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -64,6 +64,9 @@ public:
     {
         return getNamedVecIndex(paramName, getExtraGlobalParams());
     }
+
+    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
 };
 
 //----------------------------------------------------------------------------
@@ -75,6 +78,11 @@ public:
     Init(const Base *snippet, const std::vector<double> &params)
         : Snippet::Init<Base>(snippet, params)
     {
+    }
+
+    bool canBeMerged(const Init &other) const
+    {
+        return Snippet::Init<Base>::canBeMerged(other, getSnippet()->getRowBuildCode());
     }
 };
 

@@ -128,8 +128,6 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    int getClusterHostID() const;
-
     //! Does synapse group need to handle 'true' spikes
     bool isTrueSpikeRequired() const;
 
@@ -260,18 +258,49 @@ protected:
     const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
     bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
 
-    //! Get the expression to calculate the delay slot for accessing
-    //! Presynaptic neuron state variables, taking into account axonal delay
-    std::string getPresynapticAxonalDelaySlot(const std::string &devPrefix) const;
-
-    //! Get the expression to calculate the delay slot for accessing
-    //! Postsynaptic neuron state variables, taking into account back propagation delay
-    std::string getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const;
-
-    std::string getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset = "") const;
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
+
+    //! Can weight update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUBeMerged(const SynapseGroup &other) const;
+
+    //! Can presynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUPreBeMerged(const SynapseGroup &other) const;
+
+    //! Can postsynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUPostBeMerged(const SynapseGroup &other) const;
+
+    //! Can postsynaptic update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canPSBeMerged(const SynapseGroup &other) const;
+
+    //! Can postsynaptic update component of this synapse group not only be merged with other, but combined so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    bool canPSBeLinearlyCombined(const SynapseGroup &other) const;
+
+    //! Can initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUPreInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canWUPostInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can postsynaptic initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canPSInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can connectivity initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canConnectivityInitBeMerged(const SynapseGroup &other) const;
 
 private:
     //------------------------------------------------------------------------

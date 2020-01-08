@@ -574,13 +574,12 @@ int main(int argc, char *argv[])
         const auto codePath = runPath / (model.getName() + "_CODE");
         filesystem::create_directory(codePath);
 
-        // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
-        const int localHostID = 0;
+        // Create default preferences
         CodeGenerator::BACKEND_NAMESPACE::Preferences preferences;
 
         // Create backend
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(
-            model, codePath, (plog::Severity)gennLogLevel, &consoleAppender, localHostID, preferences);
+            model, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
 
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath);

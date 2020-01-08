@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,11 @@ public:
     VarInit(double constant)
         : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
     {
+    }
+
+    bool canBeMerged(const VarInit &other) const
+    {
+        return Snippet::Init<InitVarSnippet::Base>::canBeMerged(other, getSnippet()->getCode());
     }
 };
 
@@ -136,7 +142,7 @@ public:
 // Models::Base
 //----------------------------------------------------------------------------
 //! Base class for all models - in addition to the parameters snippets have, models can have state variables
-class Base : public Snippet::Base
+class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -154,6 +160,11 @@ public:
         {}
         Var() : Var("", "", VarAccess::READ_WRITE)
         {}
+
+        bool operator == (const Var &other) const
+        {
+            return ((name == other.name) && (type == other.type) && (access == other.access));
+        }
 
         std::string name;
         std::string type;
@@ -188,6 +199,18 @@ public:
     size_t getExtraGlobalParamIndex(const std::string &paramName) const
     {
         return getNamedVecIndex(paramName, getExtraGlobalParams());
+    }
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    bool canBeMerged(const Base *other) const
+    {
+        // Return true if vars and egps match
+        return (Snippet::Base::canBeMerged(other)
+                && (getVars() == other->getVars())
+                && (getExtraGlobalParams() == other->getExtraGlobalParams()));
     }
 };
 } // Models

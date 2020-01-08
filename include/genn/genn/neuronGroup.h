@@ -21,6 +21,63 @@ class SynapseGroupInternal;
 class GENN_EXPORT NeuronGroup
 {
 public:
+    //------------------------------------------------------------------------
+    // SpikeEventThreshold
+    //------------------------------------------------------------------------
+    //! Structure used for storing spike event data
+    struct SpikeEventThreshold
+    {
+        SpikeEventThreshold(const std::string &e, const std::string &s, bool egp, SynapseGroupInternal *sg)
+            : eventThresholdCode(e), supportCode(s), egpInThresholdCode(egp), synapseGroup(sg)
+        {
+        }
+
+        const std::string eventThresholdCode;
+        const std::string supportCode;
+        const bool egpInThresholdCode;
+        SynapseGroupInternal *synapseGroup;
+
+        //! Less than operator (used for std::set::insert), lexicographically compares all three 
+        //! struct members - meaning that event thresholds featuring extra global parameters from
+        //! different synapse groups will not get combined together in neuron update
+        bool operator < (const SpikeEventThreshold &other) const
+        {
+            if(other.eventThresholdCode < eventThresholdCode) {
+                return false;
+            }
+            else if(eventThresholdCode < other.eventThresholdCode) {
+                return true;
+            }
+
+            if(other.supportCode < supportCode) {
+                return false;
+            }
+            else if(supportCode < other.supportCode) {
+                return true;
+            }
+
+            if(egpInThresholdCode) {
+                if(other.synapseGroup < synapseGroup) {
+                    return false;
+                }
+                else if(synapseGroup < other.synapseGroup) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        //! Equality operator (used for set::set equality used when testing neuron groups mergability),
+        //! Compares only the two code strings as neuron groups with threshold conditions 
+        //! featuring extra global parameters from different synapse groups can still be merged
+        bool operator == (const SpikeEventThreshold &other) const
+        {
+            return ((eventThresholdCode == other.eventThresholdCode)
+                    && (supportCode == other.supportCode));
+        }
+    };
+
     NeuronGroup(const NeuronGroup&) = delete;
     NeuronGroup() = delete;
 
@@ -62,8 +119,6 @@ public:
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
-    int getClusterHostID() const{ return m_HostID; }
-
     bool isSpikeTimeRequired() const;
     bool isTrueSpikeRequired() const;
     bool isSpikeEventRequired() const;
@@ -101,18 +156,15 @@ public:
     //! Does this neuron group require an RNG for it's init code?
     bool isInitRNGRequired() const;
 
-    //! Does this neuron group have outgoing connections specified host id?
-    bool hasOutputToHost(int targetHostID) const;
-
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, int hostID) :
+                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation) :
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
         m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_HostID(hostID)
+        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
     {
     }
 
@@ -128,7 +180,7 @@ protected:
     //! Update which postsynaptic variables  require queues based on piece of code
     void updatePostVarQueues(const std::string &code);
 
-    void addSpkEventCondition(const std::string &code, const std::string &supportCodeNamespace);
+    void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
@@ -156,19 +208,24 @@ protected:
 
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
 
-    const std::set<std::pair<std::string, std::string>> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
+    const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
-    //! Do any of the spike event conditions tested by this neuron require specified parameter?
-    bool isParamRequiredBySpikeEventCondition(const std::string &pnamefull) const;
+    //! Helper to get vector of incoming synapse groups which have postsynaptic update code
+    std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
 
-    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
-    std::string getCurrentQueueOffset(const std::string &devPrefix) const;
-
-    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
-    std::string getPrevQueueOffset(const std::string &devPrefix) const;
+    //! Helper to get vector of outgoing synapse groups which have presynaptic update code
+    std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
+
+    //! Can this neuron group be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canBeMerged(const NeuronGroup &other) const;
+
+    //! Can the initialisation of these neuron groups be merged together? i.e. can they be initialised using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canInitBeMerged(const NeuronGroup &other) const;
 
 private:
     //------------------------------------------------------------------------
@@ -191,7 +248,7 @@ private:
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>> m_MergedInSyn;
-    std::set<std::pair<std::string, std::string>> m_SpikeEventCondition;
+    std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSources;
 
@@ -212,7 +269,4 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
-
-    //! The ID of the cluster node which the neuron groups are computed on
-    const int m_HostID;
 };

@@ -10,8 +10,8 @@
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-CodeGenerator::BackendBase::BackendBase(int localHostID, const std::string &scalarType)
-:   m_LocalHostID(localHostID), m_TypeBytes{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
+CodeGenerator::BackendBase::BackendBase(const std::string &scalarType)
+:   m_TypeBytes{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
     TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
     TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
     TYPE(signed long long int), TYPE(unsigned char), TYPE(unsigned short), TYPE(unsigned short int), TYPE(unsigned),

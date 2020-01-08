@@ -13,12 +13,9 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    using ModelSpec::getLocalNeuronGroups;
-    using ModelSpec::getRemoteNeuronGroups;
-    using ModelSpec::getLocalSynapseGroups;
-    using ModelSpec::getRemoteSynapseGroups;
+    using ModelSpec::getNeuronGroups;
+    using ModelSpec::getSynapseGroups;
     using ModelSpec::getLocalCurrentSources;
-    using ModelSpec::getRemoteCurrentSources;
 
     using ModelSpec::finalize;
 

@@ -33,7 +33,6 @@
 // ModelSpec
 // ------------------------------------------------------------------------
 // class ModelSpec for specifying a neuronal network model
-
 ModelSpec::ModelSpec()
 :   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
@@ -62,7 +61,7 @@ std::string ModelSpec::getTimePrecision() const
     }
 }
 
-unsigned int ModelSpec::getNumLocalNeurons() const
+unsigned int ModelSpec::getNumNeurons() const
 {
     // Return sum of local neuron group sizes
     return std::accumulate(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(), 0,
@@ -72,15 +71,6 @@ unsigned int ModelSpec::getNumLocalNeurons() const
                            });
 }
 
-unsigned int ModelSpec::getNumRemoteNeurons() const
-{
-    // Return sum of local remote neuron group sizes
-    return std::accumulate(m_RemoteNeuronGroups.cbegin(), m_RemoteNeuronGroups.cend(), 0,
-                           [](unsigned int total, const NeuronGroupValueType &n)
-                           {
-                               return total + n.second.getNumNeurons();
-                           });
-}
 
 SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
 {
@@ -88,13 +78,6 @@ SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
     auto localSynapseGroup = m_LocalSynapseGroups.find(name);
     if(localSynapseGroup != m_LocalSynapseGroups.cend()) {
         return &localSynapseGroup->second;
-    }
-
-    // Otherwise, if a matching remote synapse group is found, return it
-    auto remoteSynapseGroup = m_RemoteSynapseGroups.find(name);
-    if(remoteSynapseGroup != m_RemoteSynapseGroups.cend()) {
-        return &remoteSynapseGroup->second;
-
     }
     // Otherwise, error
     else {
@@ -111,13 +94,6 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
     auto localCurrentSource = m_LocalCurrentSources.find(name);
     if(localCurrentSource != m_LocalCurrentSources.cend()) {
         return &localCurrentSource->second;
-    }
-
-    // Otherwise, if a matching remote current source is found, return it
-    auto remoteCurrentSource = m_RemoteCurrentSources.find(name);
-    if(remoteCurrentSource != m_RemoteCurrentSources.cend()) {
-        return &remoteCurrentSource->second;
-
     }
     // Otherwise, error
     else {
@@ -162,17 +138,25 @@ void ModelSpec::finalize()
         // Initialize derived parameters
         s.second.initDerivedParams(m_DT);
 
+        // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
         if (!wu->getSimCode().empty()) {
-            // analyze which neuron variables need queues
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
         }
 
+        // Mark any pre or postsyaptic neuron variables referenced in event code as requiring queues
+        if (!wu->getEventCode().empty()) {
+            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getEventCode());
+            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getEventCode());
+        }
+
+        // Mark any pre or postsyaptic neuron variables referenced in postsynaptic update code as requiring queues
         if (!wu->getLearnPostCode().empty()) {
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
         }
 
+        // Mark any pre or postsyaptic neuron variables referenced in synapse dynamics code as requiring queues
         if (!wu->getSynapseDynamicsCode().empty()) {
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
@@ -197,29 +181,22 @@ void ModelSpec::finalize()
         for(auto *sg : n.second.getOutSyn()) {
             const auto *wu = sg->getWUModel();
 
-            if (!wu->getEventCode().empty()) {
+            if(!wu->getEventCode().empty()) {
                 using namespace CodeGenerator;
                 assert(!wu->getEventThresholdConditionCode().empty());
 
-                // do an early replacement of parameters, derived parameters and extra global parameters
-                // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
+                // do an early replacement of parameters and derived parameters
+                // **NOTE * *this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
+                // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
                 Substitutions thresholdSubs;
                 thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
                 thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
-                thresholdSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg->getName());
-
+                
                 std::string eCode = wu->getEventThresholdConditionCode();
                 thresholdSubs.apply(eCode);
 
-                // Add code and name of
-                std::string supportCodeNamespaceName = wu->getSimSupportCode().empty() ?
-                    "" : sg->getName() + "_weightupdate_simCode";
-
-                // Add code and name of support code namespace to set
-                n.second.addSpkEventCondition(eCode, supportCodeNamespaceName);
-
-                // analyze which neuron variables need queues
-                n.second.updatePreVarQueues(wu->getEventCode());
+                // Add code and name of support code namespace to set	
+                n.second.addSpkEventCondition(eCode, sg);
             }
         }
         if (n.second.getSpikeEventCondition().size() > 1) {
@@ -271,12 +248,6 @@ NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
     auto localNeuronGroup = m_LocalNeuronGroups.find(name);
     if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
         return &localNeuronGroup->second;
-    }
-
-    // Otherwise, if a matching remote neuron group is found, return it
-    auto remoteNeuronGroup = m_RemoteNeuronGroups.find(name);
-    if(remoteNeuronGroup != m_RemoteNeuronGroups.cend()) {
-        return &remoteNeuronGroup->second;
     }
     // Otherwise, error
     else {

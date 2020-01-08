@@ -14,13 +14,19 @@
 //! Base class for all value initialisation snippets
 namespace InitVarSnippet
 {
-class Base : public Snippet::Base
+class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getCode() const{ return ""; }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
 };
 
 //----------------------------------------------------------------------------

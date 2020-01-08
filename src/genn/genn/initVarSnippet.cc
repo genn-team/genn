@@ -7,3 +7,12 @@ IMPLEMENT_SNIPPET(InitVarSnippet::Uniform);
 IMPLEMENT_SNIPPET(InitVarSnippet::Normal);
 IMPLEMENT_SNIPPET(InitVarSnippet::Exponential);
 IMPLEMENT_SNIPPET(InitVarSnippet::Gamma);
+
+//----------------------------------------------------------------------------
+// InitVarSnippet::Base
+//----------------------------------------------------------------------------
+bool InitVarSnippet::Base::canBeMerged(const Base *other) const
+{
+    return (Snippet::Base::canBeMerged(other)
+            && (getCode() == other->getCode()));
+}

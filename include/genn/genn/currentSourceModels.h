@@ -23,7 +23,7 @@
 namespace CurrentSourceModels
 {
 //! Base class for all current source models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -31,6 +31,12 @@ public:
     //----------------------------------------------------------------------------
     //! Gets the code that defines current injected each timestep 
     virtual std::string getInjectionCode() const{ return ""; }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
 };
 
 //----------------------------------------------------------------------------
@@ -38,7 +44,6 @@ public:
 //----------------------------------------------------------------------------
 //! DC source
 /*! It has a single parameter:
-
     - \c amp    - amplitude of the current [nA]
 */
 class DC : public Base

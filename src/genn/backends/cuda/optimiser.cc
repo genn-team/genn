@@ -90,7 +90,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
     using namespace CUDA;
 
     // Loop through neuron groups
-    for(const auto &n : model.getLocalNeuronGroups()) {
+    for(const auto &n : model.getNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
         groupSizes[KernelNeuronUpdate].push_back(n.second.getNumNeurons());
 
@@ -100,9 +100,10 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
 
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
-    for(const auto &s : model.getLocalSynapseGroups()) {
+    for(const auto &s : model.getSynapseGroups()) {
         if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
-            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps, preferences));
+            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps,
+                                                                                                  preferences));
         }
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
@@ -124,7 +125,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
                 groupSizes[KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
             }
         }
-        
+
         // If this synapse group requires dendritic delay, it requires a pre-synapse reset
         if(s.second.isDendriticDelayRequired()) {
             numPreSynapseResetGroups++;
@@ -132,13 +133,13 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
     }
 
     // Add group sizes for reset kernels
-    groupSizes[KernelPreNeuronReset].push_back(model.getLocalNeuronGroups().size());
+    groupSizes[KernelPreNeuronReset].push_back(model.getNeuronGroups().size());
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
                                            CodeGenerator::CUDA::KernelBlockSize &blockSize, const CodeGenerator::CUDA::Preferences &preferences,
-                                           int localHostID, const filesystem::path &outputPath)
+                                           const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -186,7 +187,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backend
-        Backend backend(blockSize, preferences, localHostID, model.getPrecision(), deviceID);
+        Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
 
         // Generate code
         const auto moduleNames = generateAll(model, backend, outputPath, true);
@@ -360,7 +361,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 }
 //--------------------------------------------------------------------------
 int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
-                        const CodeGenerator::CUDA::Preferences &preferences, int localHostID, const filesystem::path &outputPath)
+                        const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -384,7 +385,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Ker
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, localHostID, outputPath);
+        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -486,7 +487,7 @@ namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath,
                       plog::Severity backendLevel, plog::IAppender *backendAppender,
-                      int localHostID, const Preferences &preferences)
+                      const Preferences &preferences)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {
@@ -505,10 +506,10 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
         // Choose optimal device
         KernelBlockSize cudaBlockSize;
-        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, localHostID, outputPath);
+        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
-        return Backend(cudaBlockSize, preferences, localHostID, model.getPrecision(), deviceID);
+        return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
     }
     // Otherwise
     else {
@@ -524,14 +525,14 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, localHostID, outputPath);
+            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
-            return Backend(cudaBlockSize, preferences, localHostID, model.getPrecision(), deviceID);
+            return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
         }
         // Otherwise, create backend using manual block sizes specified in preferences
         else {
-            return Backend(preferences.manualBlockSizes, preferences, localHostID, model.getPrecision(), deviceID);
+            return Backend(preferences.manualBlockSizes, preferences, model.getPrecision(), deviceID);
         }
 
     }
