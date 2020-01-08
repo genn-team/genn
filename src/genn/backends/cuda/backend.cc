@@ -161,6 +161,11 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
+    // Give a warning if automatic copy is used on pre-Pascal devices
+    if(m_Preferences.automaticCopy && m_ChosenDevice.major < 6) {
+        LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
+    }
+
     // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
     addDeviceType("curandState", 44);
     addDeviceType("curandStatePhilox4_32_10_t", 64);
@@ -1172,8 +1177,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         initSparsePushEGPHandler(os);
 
         // Copy all uninitialised state variables to device
-        os << "copyStateToDevice(true);" << std::endl;
-        os << "copyConnectivityToDevice(true);" << std::endl << std::endl;
+        if(!m_Preferences.automaticCopy) {
+            os << "copyStateToDevice(true);" << std::endl;
+            os << "copyConnectivityToDevice(true);" << std::endl << std::endl;
+        }
 
         // If there are any sparse initialisation threads
         if(idSparseInitStart > 0) {
@@ -1453,8 +1460,9 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
-    // Synchronise if zero-copy is in use
-    if(modelMerged.getModel().zeroCopyInUse()) {
+    // Synchronise if automatic copying or zero-copy are in use
+    // **THINK** Is this only required with automatic copy on older SM, CUDA and on non-Linux?
+    if(m_Preferences.automaticCopy || modelMerged.getModel().zeroCopyInUse()) {
         os << "CHECK_CUDA_ERRORS(cudaDeviceSynchronize());" << std::endl;
     }
 
@@ -1468,40 +1476,55 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
 {
     const bool deviceType = isDeviceType(type);
 
-    if(loc & VarLocation::HOST) {
-        if(deviceType) {
-            throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
-        }
+    if(m_Preferences.automaticCopy && ::Utils::isTypePointer(type)) {
+        // Export pointer, either in definitionsInternal if variable has a device type
+        // or to definitions if it should be accessable on host
+        CodeStream &d = deviceType ? definitionsInternal : definitions;
+        d << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+    }
+    else {
+        if(loc & VarLocation::HOST) {
+            if(deviceType) {
+                throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
+            }
 
-        definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-    }
-    if(loc & VarLocation::DEVICE) {
-        // If the type is a pointer type we need a device pointer
-        if(::Utils::isTypePointer(type)) {
-            // Write host definition to internal definitions stream if type is device only
-            CodeStream &d = deviceType ? definitionsInternal : definitions;
-            d << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+            definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
         }
-        // Otherwise we just need a device variable, made volatile for safety
-        else {
-            definitionsInternal << "EXPORT_VAR __device__ volatile " << type << " d_" << name << ";" << std::endl;
+        if(loc & VarLocation::DEVICE) {
+            // If the type is a pointer type we need a device pointer
+            if(::Utils::isTypePointer(type)) {
+                // Write host definition to internal definitions stream if type is device only
+                CodeStream &d = deviceType ? definitionsInternal : definitions;
+                d << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+            }
+            // Otherwise we just need a device variable, made volatile for safety
+            else {
+                definitionsInternal << "EXPORT_VAR __device__ volatile " << type << " d_" << name << ";" << std::endl;
+            }
         }
     }
+
+
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    if(loc & VarLocation::HOST) {
+    if(m_Preferences.automaticCopy && ::Utils::isTypePointer(type)) {
         os << type << " " << name << ";" << std::endl;
     }
-    if(loc & VarLocation::DEVICE) {
-        // If the type is a pointer type we need a host and a device pointer
-        if(::Utils::isTypePointer(type)) {
-            os << type << " d_" << name << ";" << std::endl;
+    else {
+        if(loc & VarLocation::HOST) {
+            os << type << " " << name << ";" << std::endl;
         }
-        // Otherwise we just need a device variable, made volatile for safety
-        else {
-            os << "__device__ volatile " << type << " d_" << name << ";" << std::endl;
+        if(loc & VarLocation::DEVICE) {
+            // If the type is a pointer type we need a host and a device pointer
+            if(::Utils::isTypePointer(type)) {
+                os << type << " d_" << name << ";" << std::endl;
+            }
+            // Otherwise we just need a device variable, made volatile for safety
+            else {
+                os << "__device__ volatile " << type << " d_" << name << ";" << std::endl;
+            }
         }
     }
 }
@@ -1510,22 +1533,28 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
 {
     auto allocation = MemAlloc::zero();
 
-    if(loc & VarLocation::HOST) {
-        const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << "));" << std::endl;
-        allocation += MemAlloc::host(count * getSize(type));
+    if(m_Preferences.automaticCopy) {
+        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
+        allocation += MemAlloc::device(count * getSize(type));
     }
-
-    // If variable is present on device at all
-    if(loc & VarLocation::DEVICE) {
-        // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
-        if(loc & VarLocation::ZERO_COPY) {
-            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0);" << std::endl;
-            allocation += MemAlloc::zeroCopy(count * getSize(type));
+    else {
+        if(loc & VarLocation::HOST) {
+            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << "));" << std::endl;
+            allocation += MemAlloc::host(count * getSize(type));
         }
-        else {
-            os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
-            allocation += MemAlloc::device(count * getSize(type));
+
+        // If variable is present on device at all
+        if(loc & VarLocation::DEVICE) {
+            // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+            if(loc & VarLocation::ZERO_COPY) {
+                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0);" << std::endl;
+                allocation += MemAlloc::zeroCopy(count * getSize(type));
+            }
+            else {
+                os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
+                allocation += MemAlloc::device(count * getSize(type));
+            }
         }
     }
 
@@ -1534,34 +1563,49 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
 {
-    // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
-    if(loc & VarLocation::HOST) {
-        os << "CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << std::endl;
+    if(m_Preferences.automaticCopy) {
+        os << "CHECK_CUDA_ERRORS(cudaFree(" << name << "));" << std::endl;
     }
+    else {
+        // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
+        if(loc & VarLocation::HOST) {
+            os << "CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << std::endl;
+        }
 
-    // If this variable wasn't allocated in zero-copy mode, free it
-    if(loc & VarLocation::DEVICE) {
-        os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
+        // If this variable wasn't allocated in zero-copy mode, free it
+        if(loc & VarLocation::DEVICE) {
+            os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    if(loc & VarLocation::HOST) {
+    if(m_Preferences.automaticCopy) {
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
-    if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-        definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+    else {
+        if(loc & VarLocation::HOST) {
+            definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+        }
+        if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+            definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    if(loc & VarLocation::HOST) {
+    if(m_Preferences.automaticCopy) {
         os << type << " " << name << ";" << std::endl;
     }
-    if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-        os << type << " d_" << name << ";" << std::endl;
+    else {
+        if(loc & VarLocation::HOST) {
+            os << type << " " << name << ";" << std::endl;
+        }
+        if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+            os << type << " d_" << name << ";" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -1571,24 +1615,31 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
 
-    if(loc & VarLocation::HOST) {
-        const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", count * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
+    if(m_Preferences.automaticCopy) {
+        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", count * sizeof(" << underlyingType << ")));" << std::endl;
     }
-
-    // If variable is present on device at all
-    if(loc & VarLocation::DEVICE) {
-        if(loc & VarLocation::ZERO_COPY) {
-            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)&d_" << name << ", (void*)" << name << ", 0));" << std::endl;
+    else {
+        if(loc & VarLocation::HOST) {
+            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", count * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
         }
-        else {
-            os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", count * sizeof(" << underlyingType << ")));" << std::endl;
+
+        // If variable is present on device at all
+        if(loc & VarLocation::DEVICE) {
+            if(loc & VarLocation::ZERO_COPY) {
+                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)&d_" << name << ", (void*)" << name << ", 0));" << std::endl;
+            }
+            else {
+                os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", count * sizeof(" << underlyingType << ")));" << std::endl;
+            }
         }
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
+    assert(!m_Preferences.automaticCopy);
+
     if(!(loc & VarLocation::ZERO_COPY)) {
         // Get underlying type
         // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
@@ -1602,6 +1653,8 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
+    assert(!m_Preferences.automaticCopy);
+
     if(!(loc & VarLocation::ZERO_COPY)) {
         // Get underlying type
         // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
@@ -1670,6 +1723,8 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
 {
+    assert(!m_Preferences.automaticCopy);
+
     if(!(loc & VarLocation::ZERO_COPY)) {
         // Only copy if uninitialisedOnly isn't set
         if(autoInitialized) {
@@ -1688,6 +1743,8 @@ void Backend::genVariablePush(CodeStream &os, const std::string &type, const std
 //--------------------------------------------------------------------------
 void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
+    assert(!m_Preferences.automaticCopy);
+
     if(!(loc & VarLocation::ZERO_COPY)) {
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
         os << ", d_"  << name;
@@ -1697,6 +1754,8 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
 {
+    assert(!m_Preferences.automaticCopy);
+
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
@@ -1704,7 +1763,7 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
         os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
         os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
     }
-    // Otherwise, generate standard push
+    // Otherwise, generate standard s
     else {
         genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
     }
@@ -1712,6 +1771,8 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
 {
+    assert(!m_Preferences.automaticCopy);
+
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
@@ -2009,6 +2070,8 @@ void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std:
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
+    assert(!m_Preferences.automaticCopy);
+
     if(!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
         const bool delayRequired = spikeEvent ?

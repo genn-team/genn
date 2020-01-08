@@ -252,9 +252,9 @@ public:
             // Calculate suitable quantile for 0.9999 change when drawing numPost times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
 
-            // In each row, the number of connections that end up in a column are distributed
-            // as Binom(numConnections, 1.0 / numPost). As there are numPre rows, the total number
-            // of connections that end up in each column are distributed as Binom(numConnections * numPre, 1.0 / numPost)
+            // In each row the number of connections that end up in a column are distributed
+            // binomially distributed with n=numConnections and p=1.0 / numPost. As there are numPre rows the total number
+            // of connections that end up in each column are distributed binomially with n=numConnections * numPre and p=1.0 / numPost
             return binomialInverseCDF(quantile, (unsigned int)pars[0] * numPre, 1.0 / (double)numPost);
         });
 };
@@ -299,7 +299,7 @@ public:
 
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
-            // probability of being selected, and the number of synapses in the sub-row is binomially distributed
+            // probability of being selected and the number of synapses in the sub-row is binomially distributed
             return binomialInverseCDF(quantile, pars[0], (double)numPost / ((double)numPre * (double)numPost));
         });
 
@@ -311,7 +311,7 @@ public:
 
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
-            // probability of being selected, and the number of synapses in the sub-row is binomially distributed
+            // probability of being selected and the number of synapses in the sub-row is binomially distributed
             return binomialInverseCDF(quantile, pars[0], (double)numPre / ((double)numPre * (double)numPost));
         });
 };
