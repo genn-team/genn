@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <thread>
 
 // Standard C includes
 #include <cstdlib>
@@ -154,7 +155,8 @@ private:
             cmd += " -c";
         }
 
-        cmd += " && make clean all";
+        const unsigned int numThreads = std::thread::hardware_concurrency();
+        cmd += " && make -j " + std::to_string(numThreads) + " clean all";
         const int retval = system(cmd.c_str());
         if (retval != 0){
             std::cerr << "ERROR: Following call failed with status " << retval << ":" << std::endl << cmd << std::endl;
