@@ -254,7 +254,7 @@ public:
 
             // In each row the number of connections that end up in a column are distributed
             // binomially distributed with n=numConnections and p=1.0 / numPost. As there are numPre rows the total number
-            // of connections that end up in each column are distributed binomially with n=numConnections * numPre and p= 1.0 / numPost)
+            // of connections that end up in each column are distributed binomially with n=numConnections * numPre and p=1.0 / numPost
             return binomialInverseCDF(quantile, (unsigned int)pars[0] * numPre, 1.0 / (double)numPost);
         });
 };
