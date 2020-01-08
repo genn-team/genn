@@ -7,10 +7,8 @@
 #include <string>
 #include <vector>
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN includes
+#include "logging.h"
 #include "gennExport.h"
 
 //----------------------------------------------------------------------------
@@ -112,7 +110,7 @@ public:
                 }
                 catch(const std::runtime_error &exception)
                 {
-                    LOGE << exception.what();
+                    LOGE_CODE_GEN << exception.what();
                 }
             }
         }

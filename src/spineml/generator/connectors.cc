@@ -17,11 +17,11 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN includes
 #include "synapseMatrixType.h"
+
+// SpineML common includes
+#include "spineMLLogging.h"
 
 //----------------------------------------------------------------------------
 // SpineMLGenerator::Connectors::FixedProbability
@@ -36,7 +36,7 @@ SynapseMatrixConnectivity FixedProbability::getMatrixConnectivity(const pugi::xm
 
     // If we're implementing a fully-connected matrix use DENSE format
     if(connectionProbability == 1.0) {
-        LOGD << "\tFully-connected FixedProbability connector implemented as DENSE";
+        LOGD_SPINEML << "\tFully-connected FixedProbability connector implemented as DENSE";
         return SynapseMatrixConnectivity::DENSE;
     }
     else {
@@ -47,7 +47,7 @@ SynapseMatrixConnectivity FixedProbability::getMatrixConnectivity(const pugi::xm
 InitSparseConnectivitySnippet::Init FixedProbability::getConnectivityInit(const pugi::xml_node &node)
 {
     const double connectionProbability = node.attribute("probability").as_double();
-    LOGD << "\tFixed probability:" << connectionProbability;
+    LOGD_SPINEML << "\tFixed probability:" << connectionProbability;
 
     return InitSparseConnectivitySnippet::Init(InitSparseConnectivitySnippet::FixedProbability::getInstance(), { connectionProbability });
 }
@@ -195,11 +195,11 @@ std::tuple<unsigned int, List::DelayType, float> List::readMaxRowLengthAndDelay(
     // If there are explicit delays
     if(explicitDelay) {
         if(heterogenousDelay) {
-            LOGD << "Using heterogenous delay up to a maximum of " << maxDelayMs << "ms";
+            LOGD_SPINEML << "Using heterogenous delay up to a maximum of " << maxDelayMs << "ms";
             return std::make_tuple(maxRowLength, DelayType::Heterogeneous, maxDelayMs);
         }
         else {
-            LOGD << "Using homogeneous delay of " << maxDelayMs << "ms";
+            LOGD_SPINEML << "Using homogeneous delay of " << maxDelayMs << "ms";
             return std::make_tuple(maxRowLength, DelayType::Homogeneous, maxDelayMs);
         }
     }

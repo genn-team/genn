@@ -19,9 +19,8 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
-// PLOG includes
-#include <plog/Log.h>
-#include <plog/Appenders/ConsoleAppender.h>
+// SpineML common includes
+#include "spineMLLogging.h"
 
 //------------------------------------------------------------------------
 // Anonymous namespace
@@ -42,7 +41,7 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
 
     // Zero row lengths
     std::fill_n(rowLength, numPre, 0);
-    
+
     // Create array with matching dimensions to ind, initially filled with invalid value
     std::vector<unsigned int> originalOrder(numPre * maxRowLength,
                                             std::numeric_limits<unsigned int>::max());
@@ -63,7 +62,7 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
         if(explicitDelay && delay == nullptr) {
             throw std::runtime_error("Cannot build list connector with explicit delay - delay variable not found");
         }
-        
+
         // Read binary connection filename from node
         std::string filename = (basePath / binaryFile.attribute("file_name").value()).str();
 
@@ -99,7 +98,7 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
                 if(explicitDelay) {
                     // Cast delay word to float
                     const float *synDelay = reinterpret_cast<float*>(&connectionBuffer[w + 2]);
-                    
+
                     // Store in delay array
                     (*delay)[index] = (uint8_t)std::round(*synDelay / dt);
                 }
@@ -126,7 +125,7 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
             const size_t index = (pre * maxRowLength) + rowLength[pre];
             ind[index] = post;
             originalOrder[index] = i++;
-            
+
             // If this synapse has a delay
             auto delayAttr = c.attribute("delay");
             if(delayAttr) {
@@ -134,18 +133,18 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
                 if(delay == nullptr) {
                     throw std::runtime_error("Cannot build list connector with explicit delay - delay variable not found");
                 }
-                
+
                 // Store in delay array
                 (*delay)[index] = (uint8_t)std::round(delayAttr.as_float() / dt);
             }
-            
+
             // Increment row length
             rowLength[pre]++;
             assert(rowLength[pre] <= maxRowLength);
         }
     }
 
-    LOGD << "\tList connector with " << numConnections << " sparse synapses";
+    LOGD_SPINEML << "\tList connector with " << numConnections << " sparse synapses";
 
     // Reserve remap indices array to match number of connections
     remapIndices.resize(numConnections);
@@ -190,12 +189,12 @@ void createListSparse(const pugi::xml_node &node, double dt, unsigned int numPre
             // Copy row indices into vector
             // **NOTE** reordering in place is non-trivial
             std::copy_n(rowDelayBegin, rowLength[i], rowDelayCopy.begin());
-            
+
             // Use row order to re-order row delays back into original data structure
             std::transform(rowOrder.cbegin(), rowOrder.cend(), rowDelayBegin,
                            [&rowDelayCopy](unsigned int ord){ return rowDelayCopy[ord]; });
         }
-        
+
         // Loop through synapses in newly reorderd row and set the remap index in the 
         // synapse's ORIGINAL location to its new index in the ragged array
         for(unsigned int j = 0; j < rowLength[i]; j++) {
@@ -218,7 +217,7 @@ unsigned int SpineMLSimulator::Connectors::create(const pugi::xml_node &node, do
         if(delay != nullptr) {
             throw std::runtime_error("OneToOneConnection does not support heterogeneous delays");
         }
-        
+
         if(rowLength != nullptr && ind != nullptr && maxRowLength != nullptr) {
             return numPre;
         }

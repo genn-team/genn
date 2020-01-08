@@ -15,8 +15,8 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
-// PLOG includes
-#include <plog/Log.h>
+// SpineML common includes
+#include "spineMLLogging.h"
 
 //------------------------------------------------------------------------
 // SpineMLSimulator::ModelProperty::Fixed
@@ -30,7 +30,7 @@ SpineMLSimulator::ModelProperty::Fixed::Fixed(double value, const StateVar<scala
     : Base(stateVar, size)
 {
     setValue(value);
-    LOGD << "\t\t\tFixed value:" << m_Value;
+    LOGD_SPINEML << "\t\t\tFixed value:" << m_Value;
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::ModelProperty::Fixed::setValue(scalar value)
@@ -86,11 +86,11 @@ SpineMLSimulator::ModelProperty::ValueList::ValueList(const pugi::xml_node &node
             values[index] = value;
         }
 
-        LOGD << "\t\t\tValue list (from file)";
+        LOGD_SPINEML << "\t\t\tValue list (from file)";
     }
     // Otherwise
     else {
-        LOGD << "\t\t\tValue list (inline)";
+        LOGD_SPINEML << "\t\t\tValue list (inline)";
 
         // Loop through inline values
         for(const auto v : node.children("Value")) {
@@ -135,13 +135,13 @@ SpineMLSimulator::ModelProperty::UniformDistribution::UniformDistribution(const 
     : Base(stateVar, size)
 {
     setValue(node.attribute("minimum").as_double(), node.attribute("maximum").as_double());
-    LOGD << "\t\t\tMin value:" << m_Distribution.min() << ", Max value:" << m_Distribution.max();
+    LOGD_SPINEML << "\t\t\tMin value:" << m_Distribution.min() << ", Max value:" << m_Distribution.max();
 
     // Seed RNG if required
     auto seed = node.attribute("seed");
     if(seed) {
         m_RandomGenerator.seed(seed.as_uint());
-        LOGD << "\t\t\tSeed:" << seed.as_uint();
+        LOGD_SPINEML << "\t\t\tSeed:" << seed.as_uint();
     }
 }
 //------------------------------------------------------------------------
@@ -166,13 +166,13 @@ SpineMLSimulator::ModelProperty::NormalDistribution::NormalDistribution(const pu
     : Base(stateVar, size)
 {
     setValue(node.attribute("mean").as_double(), node.attribute("variance").as_double());
-    LOGD << "\t\t\tMean:" << m_Distribution.mean() << ", Variance:" << m_Distribution.stddev() * m_Distribution.stddev();
+    LOGD_SPINEML << "\t\t\tMean:" << m_Distribution.mean() << ", Variance:" << m_Distribution.stddev() * m_Distribution.stddev();
 
     // Seed RNG if required
     auto seed = node.attribute("seed");
     if(seed) {
         m_RandomGenerator.seed(seed.as_uint());
-        LOGD << "\t\t\tSeed:" << seed.as_uint();
+        LOGD_SPINEML << "\t\t\tSeed:" << seed.as_uint();
     }
 }
 //------------------------------------------------------------------------
@@ -197,13 +197,13 @@ SpineMLSimulator::ModelProperty::ExponentialDistribution::ExponentialDistributio
     : Base(stateVar, size)
 {
     setValue(node.attribute("mean").as_double());
-    LOGD << "\t\t\tLambda:" << m_Distribution.lambda();
+    LOGD_SPINEML << "\t\t\tLambda:" << m_Distribution.lambda();
 
     // Seed RNG if required
     auto seed = node.attribute("seed");
     if(seed) {
         m_RandomGenerator.seed(seed.as_uint());
-        LOGD << "\t\t\tSeed:" << seed.as_uint();
+        LOGD_SPINEML << "\t\t\tSeed:" << seed.as_uint();
     }
 }
 //------------------------------------------------------------------------

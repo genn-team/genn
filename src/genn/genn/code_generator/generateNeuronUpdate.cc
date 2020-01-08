@@ -247,7 +247,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
             /*else if(std::any_of(ng.getOutSyn().cbegin(), ng.getOutSyn().cend(),
                                 [](const SynapseGroupInternal *sg){ return !sg->getWUModel()->getSimCode().empty(); }))
             {
-                LOGW << "No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!";
+                LOGW_CODE_GEN << "No thresholdConditionCode for neuron type " << typeid(*nm).name() << " used for population \"" << ng.getName() << "\" was provided. There will be no spikes detected in this population!";
             }*/
 
             os << "// calculate membrane potential" << std::endl;

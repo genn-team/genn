@@ -73,13 +73,13 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
 
         // **YUCK** this is kinda (ab)using standaloneModules for things it's not intended for but...
         // Show memory usage
-        LOGI << "Host memory required for model: " << mem.getHostMBytes() << " MB";
-        LOGI << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
-        LOGI << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
+        LOGI_CODE_GEN << "Host memory required for model: " << mem.getHostMBytes() << " MB";
+        LOGI_CODE_GEN << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
+        LOGI_CODE_GEN << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
 
         // Give warning of model requires more memory than device has
         if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
-            LOGW << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
+            LOGW_CODE_GEN << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
         }
 
         // Output summary to log

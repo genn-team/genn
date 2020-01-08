@@ -1,7 +1,3 @@
-// PLOG includes
-#include <plog/Log.h>
-#include <plog/Appenders/ConsoleAppender.h>
-
 // CLI11 includes
 #include "CLI11.hpp"
 
@@ -26,10 +22,6 @@ int main(int argc, char *argv[])
 
         CLI11_PARSE(app, argc, argv);
 
-        // Initialise log channels, appending all to console
-        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init((plog::Severity)logLevel, &consoleAppender);
-
 #ifdef _WIN32
         // Startup WinSock 2
         WSADATA wsaData;
@@ -40,17 +32,17 @@ int main(int argc, char *argv[])
 #endif  // _WIN32
 
         // Create simulator
-        Simulator simulator(experimentFilename,outputDirectory);
+        Simulator simulator(experimentFilename, outputDirectory, (plog::Severity)logLevel);
 
         const unsigned long long numTimeSteps = simulator.calcNumTimesteps();
-        LOGI << "Simulating for " << numTimeSteps << " " << simulator.getDT() << "ms timesteps";
+        LOGI_SPINEML << "Simulating for " << numTimeSteps << " " << simulator.getDT() << "ms timesteps";
 
         // Loop through time
         for(unsigned long long i = 0; i < numTimeSteps; i++) {
             simulator.stepTime();
         }
 
-        LOGI << "Applying input: " << simulator.getInputMs() << "ms, simulating:" << simulator.getSimulateMs() << "ms, logging:" << simulator.getLogMs() << "ms" << std::endl;
+        LOGI_SPINEML << "Applying input: " << simulator.getInputMs() << "ms, simulating:" << simulator.getSimulateMs() << "ms, logging:" << simulator.getLogMs() << "ms" << std::endl;
 
 #ifdef _WIN32
         // Close down WinSock 2
@@ -59,12 +51,12 @@ int main(int argc, char *argv[])
     }
     catch(const std::exception &exception)
     {
-        LOGE << exception.what();
+        LOGE_SPINEML << exception.what();
         return EXIT_FAILURE;
     }
     catch(...)
     {
-        LOGE << "Unknown exception";
+        LOGE_SPINEML << "Unknown exception";
         return EXIT_FAILURE;
     }
 
