@@ -20,6 +20,9 @@ extern "C"
 }
 #endif
 
+// GeNN userproject includes
+#include "spikeRecorder.h"
+
 //----------------------------------------------------------------------------
 // SharedLibraryModel
 //----------------------------------------------------------------------------
@@ -261,6 +264,17 @@ public:
 
         // Call push
         std::get<2>(funcs)(count);
+    }
+
+    template<typename Writer, typename... WriterArgs>
+    SpikeRecorder<Writer> getSpikeRecorder(const std::string &popName, WriterArgs &&... writerArgs)
+    {
+        // Get functions to access spikes
+        auto getSpikesFn = (typename SpikeRecorder<Writer>::GetCurrentSpikesFunc)getSymbol("get" + popName + "CurrentSpikes");
+        auto getSpikeCountFn = (typename SpikeRecorder<Writer>::GetCurrentSpikeCountFunc)getSymbol("get" + popName + "CurrentSpikeCount");
+
+        // Add cached recorder
+        return SpikeRecorder<Writer>(getSpikesFn, getSpikeCountFn, std::forward<WriterArgs>(writerArgs)...);
     }
 
     // Gets a pointer to an array in the shared library
