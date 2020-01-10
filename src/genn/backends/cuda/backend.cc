@@ -1550,7 +1550,7 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
         if(loc & VarLocation::DEVICE) {
             // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
             if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0));" << std::endl;
                 allocation += MemAlloc::zeroCopy(count * getSize(type));
             }
             else {
