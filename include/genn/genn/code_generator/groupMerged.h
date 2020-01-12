@@ -208,5 +208,10 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
+    //! Is the weight update model variable initialization parameter homogeneous across all synapse groups?
+    bool isWUVarInitParamHomogeneous(size_t varIndex, size_t paramIndex) const;
+    
+    //! Is the weight update model variable initialization derived parameter homogeneous across all synapse groups?
+    bool isWUVarInitDerivedParamHomogeneous(size_t varIndex, size_t paramIndex) const;
 };
 }   // namespace CodeGenerator

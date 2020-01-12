@@ -112,3 +112,23 @@ std::string CodeGenerator::SynapseGroupMerged::getDendriticDelayOffset(const std
         return "(((*group.denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group.numTrgNeurons) + ";
     }
 }
+//----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous(size_t varIndex, size_t paramIndex) const
+{
+    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamHomogeneous(
+        paramIndex, 
+        [varIndex](const SynapseGroupInternal &sg) 
+        { 
+            return sg.getWUVarInitialisers().at(varIndex).getParams(); 
+        });
+}
+//----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHomogeneous(size_t varIndex, size_t paramIndex) const
+{
+    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamHomogeneous(
+        paramIndex,
+        [varIndex](const SynapseGroupInternal &sg)
+        {
+            return sg.getWUVarInitialisers().at(varIndex).getDerivedParams();
+        });
+}
