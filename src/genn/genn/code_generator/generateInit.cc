@@ -173,7 +173,6 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addVarSubstitution("value", "group." + vars[k].name + "[" + varSubs["id_syn"] +  "]");
-                    
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitParamHomogeneous(k, p); },
                                                       "", "group.", vars[k].name);
