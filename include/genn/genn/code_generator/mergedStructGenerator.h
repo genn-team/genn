@@ -116,10 +116,11 @@ public:
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
                 if(!(getMergedGroup().*isHomogeneous)(v, p)) {
+
                     addField("scalar", varInit.getSnippet()->getParamNames()[p] + vars[v].name,
-                             [p, &varInit](const typename T::GroupInternal &ng, size_t)
+                             [p, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
                              {
-                                 const auto &values = varInit.getParams();
+                                 const auto &values = (ng.*getVarInitialisers)()[v].getParams();
                                  return CodeGenerator::writePreciseString(values.at(p));
                              });
                 }
@@ -138,9 +139,9 @@ public:
             for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
                 if(!(getMergedGroup().*isHomogeneous)(v, d)) {
                     addField("scalar", varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
-                             [d, &varInit](const typename T::GroupInternal &ng, size_t)
+                             [d, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
                              {
-                                 const auto &values = varInit.getDerivedParams();
+                                 const auto &values = (ng.*getVarInitialisers)()[v].getDerivedParams();
                                  return CodeGenerator::writePreciseString(values.at(d));
                              });
                 }
