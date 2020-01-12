@@ -141,20 +141,13 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         gen.addEGPs(nm->getExtraGlobalParams());
 
         // Add heterogeneous neuron model parameters
-        const auto paramNames = m.getArchetype().getNeuronModel()->getParamNames();
-        for(size_t i = 0; i < paramNames.size(); i++) {
-            if(!m.isParamHomogeneous(i)) {
-                gen.addHeterogeneousParam(i, paramNames, &NeuronGroupInternal::getParams);
-            }
-        }
+        gen.addHeterogeneousParams(m.getArchetype().getNeuronModel()->getParamNames(), &NeuronGroupInternal::getParams,
+                                   &CodeGenerator::NeuronGroupMerged::isParamHomogeneous);
+        
 
         // Add heterogeneous neuron model derived parameters
-        const auto derivedParams = m.getArchetype().getNeuronModel()->getDerivedParams();
-        for(size_t i = 0; i < derivedParams.size(); i++) {
-            if(!m.isDerivedParamHomogeneous(i)) {
-                gen.addHeterogeneousDerivedParam(i, derivedParams, &NeuronGroupInternal::getDerivedParams);
-            }
-        }
+        gen.addHeterogeneousDerivedParams(m.getArchetype().getNeuronModel()->getDerivedParams(), &NeuronGroupInternal::getDerivedParams,
+                                          &CodeGenerator::NeuronGroupMerged::isDerivedParamHomogeneous);
     }
 
     // Build vector of vectors of neuron group's merged in syns
@@ -440,9 +433,17 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
     }
 
-    // Add pointers to var pointers to struct
+    // If synaptic matrix weights are individual, add pointers to var pointers to struct
     if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         gen.addVars(wum->getVars(), backend.getArrayPrefix());
+    }
+    // Otherwise, if they are procedural or we are initializing
+    else if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL || !updateRole) {
+        gen.addHeterogeneousVarInitParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+                                          &CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous);
+     
+        gen.addHeterogeneousVarInitDerivedParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+                                                 &CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHomogeneous);
     }
 
     // Generate structure definitions and instantiation

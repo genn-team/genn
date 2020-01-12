@@ -70,26 +70,82 @@ public:
         }
     }
 
-    template<typename G>
-    void addHeterogeneousParam(size_t paramIndex, const std::vector<std::string> &paramNames, G getParamValues)
+    template<typename G, typename H>
+    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, G getParamValues, H isHomogeneous)
     {
-        addField("scalar", paramNames[paramIndex],
-                 [paramIndex, getParamValues](const typename T::GroupInternal &ng, size_t)
-                 {
-                     const auto &values = (ng.*getParamValues)();
-                     return CodeGenerator::writePreciseString(values.at(paramIndex));
-                 });
+        // Loop through params
+        for(size_t p = 0; p < paramNames.size(); p++) {
+            // If parameters isn't homogeneous
+            if(!(getMergedGroup().*isHomogeneous)(p)) {
+                // Add field
+                addField("scalar", paramNames[p],
+                         [p, getParamValues](const typename T::GroupInternal &g, size_t)
+                         {
+                             const auto &values = (g.*getParamValues)();
+                             return CodeGenerator::writePreciseString(values.at(p));
+                         });
+            }
+        }
     }
 
-    template<typename G>
-    void addHeterogeneousDerivedParam(size_t derivedParamIndex, const Snippet::Base::DerivedParamVec &derivedParams, G getDerivedParamValues)
+    template<typename G, typename H>
+    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, G getDerivedParamValues, H isHomogeneous)
+    { 
+        // Loop through derived params
+        for(size_t p = 0; p < derivedParams.size(); p++) {
+            // If parameters isn't homogeneous
+            if(!(getMergedGroup().*isHomogeneous)(p)) {
+                // Add field
+                addField("scalar", derivedParams[p].name,
+                         [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
+                         {
+                             const auto &values = (g.*getDerivedParamValues)();
+                             return CodeGenerator::writePreciseString(values.at(p));
+                         });
+            }
+        }
+    }
+
+    template<typename V, typename H>
+    void addHeterogeneousVarInitParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHomogeneous)
     {
-        addField("scalar", derivedParams[derivedParamIndex].name,
-                 [derivedParamIndex, getDerivedParamValues](const typename T::GroupInternal &ng, size_t)
-                 {
-                     const auto &values = (ng.*getDerivedParamValues)();
-                     return CodeGenerator::writePreciseString(values.at(derivedParamIndex));
-                 });
+        // Loop through weight update model variables
+        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getMergedGroup().getArchetype().*getVarInitialisers)();
+        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+            // Loop through parameters
+            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            for(size_t p = 0; p < varInit.getParams().size(); p++) {
+                if(!(getMergedGroup().*isHomogeneous)(v, p)) {
+                    addField("scalar", vars[v].name + varInit.getSnippet()->getParamNames()[p],
+                             [p, &varInit](const typename T::GroupInternal &ng, size_t)
+                             {
+                                 const auto &values = varInit.getParams();
+                                 return CodeGenerator::writePreciseString(values.at(p));
+                             });
+                }
+            }
+        }
+    }
+
+    template<typename V, typename H>
+    void addHeterogeneousVarInitDerivedParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHomogeneous)
+    {
+        // Loop through weight update model variables
+        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getMergedGroup().getArchetype().*getVarInitialisers)();
+        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+            // Loop through parameters
+            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            for(size_t p = 0; d < varInit.getDerivedParams().size(); d++) {
+                if(!(getMergedGroup().*isHomogeneous)(v, d)) {
+                    addField("scalar", vars[v].name + varInit.getSnippet()->getDerivedParams()[d].name,
+                             [d, &varInit](const typename T::GroupInternal &ng, size_t)
+                             {
+                                 const auto &values = varInit.getDerivedParams();
+                                 return CodeGenerator::writePreciseString(values.at(d));
+                             });
+                }
+            }
+        }
     }
 
     void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
