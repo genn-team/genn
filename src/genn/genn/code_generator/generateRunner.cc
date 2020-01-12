@@ -144,11 +144,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const auto paramNames = m.getArchetype().getNeuronModel()->getParamNames();
         for(size_t i = 0; i < paramNames.size(); i++) {
             if(!m.isParamHomogeneous(i)) {
-                gen.addField(precision, paramNames[i],
-                             [i](const NeuronGroupInternal &ng, size_t) 
-                             { 
-                                 return CodeGenerator::writePreciseString(ng.getParams().at(i)); 
-                             });
+                gen.addHeterogeneousParam(i, paramNames, &NeuronGroupInternal::getParams);
             }
         }
 
@@ -156,11 +152,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const auto derivedParams = m.getArchetype().getNeuronModel()->getDerivedParams();
         for(size_t i = 0; i < derivedParams.size(); i++) {
             if(!m.isDerivedParamHomogeneous(i)) {
-                gen.addField(precision, derivedParams[i].name,
-                             [i](const NeuronGroupInternal &ng, size_t)
-                             {
-                                 return CodeGenerator::writePreciseString(ng.getDerivedParams().at(i));
-                             });
+                gen.addHeterogeneousDerivedParam(i, derivedParams, &NeuronGroupInternal::getDerivedParams);
             }
         }
     }
@@ -207,7 +199,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const auto paramNames = cs->getCurrentSourceModel()->getParamNames();
         for(size_t p = 0; p < paramNames.size(); p++) {
             if(!m.isCurrentSourceParamHomogeneous(i, p)) {
-                gen.addField(precision, paramNames[p] + "CS" + std::to_string(i),
+                gen.addField("scalar", paramNames[p] + "CS" + std::to_string(i),
                              [i, p, &m](const NeuronGroupInternal &, size_t groupIndex)
                              {
                                  const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getParams().at(p);
@@ -219,7 +211,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const auto derivedParams = cs->getCurrentSourceModel()->getDerivedParams();
         for(size_t p = 0; p < derivedParams.size(); p++) {
             if(!m.isCurrentSourceDerivedParamHomogeneous(i, p)) {
-                gen.addField(precision, derivedParams[p].name + "CS" + std::to_string(i),
+                gen.addField("scalar", derivedParams[p].name + "CS" + std::to_string(i),
                              [i, p, &m](const NeuronGroupInternal&, size_t groupIndex)
                              {
                                  const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getDerivedParams().at(p);

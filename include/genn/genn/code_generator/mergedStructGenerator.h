@@ -35,7 +35,7 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef std::function<std::string(const typename T::GroupInternal &, size_t)> GetFieldValueFunc;
-
+ 
     MergedStructGenerator(const T &mergedGroup) : m_MergedGroup(mergedGroup)
     {
     }
@@ -68,6 +68,28 @@ public:
                      [e](const typename T::GroupInternal &g, size_t){ return e.name + g.getName(); },
                      Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
+    }
+
+    template<typename G>
+    void addHeterogeneousParam(size_t paramIndex, const std::vector<std::string> &paramNames, G getParamValues)
+    {
+        addField("scalar", paramNames[paramIndex],
+                 [paramIndex, getParamValues](const typename T::GroupInternal &ng, size_t)
+                 {
+                     const auto &values = (ng.*getParamValues)();
+                     return CodeGenerator::writePreciseString(values.at(paramIndex));
+                 });
+    }
+
+    template<typename G>
+    void addHeterogeneousDerivedParam(size_t derivedParamIndex, const Snippet::Base::DerivedParamVec &derivedParams, G getDerivedParamValues)
+    {
+        addField("scalar", derivedParams[derivedParamIndex].name,
+                 [derivedParamIndex, getDerivedParamValues](const typename T::GroupInternal &ng, size_t)
+                 {
+                     const auto &values = (ng.*getDerivedParamValues)();
+                     return CodeGenerator::writePreciseString(values.at(derivedParamIndex));
+                 });
     }
 
     void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
