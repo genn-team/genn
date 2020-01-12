@@ -173,8 +173,13 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addVarSubstitution("value", "group." + vars[k].name + "[" + varSubs["id_syn"] +  "]");
-                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
+                    
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                                                      [k, &sg](size_t p) { return sg.isWUVarInitParamHomogeneous(k, p); },
+                                                      "", "group.", vars[k].name);
+                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
+                                                      [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHomogeneous(k, p); },
+                                                      "", "group.", vars[k].name);
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));

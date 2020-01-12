@@ -437,8 +437,9 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         gen.addVars(wum->getVars(), backend.getArrayPrefix());
     }
-    // Otherwise, if they are procedural or we are initializing
-    else if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL || !updateRole) {
+    
+    // If synaptic matrix weights are procedural or we are initializing
+    if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL || !updateRole) {
         gen.addHeterogeneousVarInitParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
                                           &CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous);
      

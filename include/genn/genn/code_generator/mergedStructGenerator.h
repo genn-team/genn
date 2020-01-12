@@ -116,7 +116,7 @@ public:
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
                 if(!(getMergedGroup().*isHomogeneous)(v, p)) {
-                    addField("scalar", vars[v].name + varInit.getSnippet()->getParamNames()[p],
+                    addField("scalar", varInit.getSnippet()->getParamNames()[p] + vars[v].name,
                              [p, &varInit](const typename T::GroupInternal &ng, size_t)
                              {
                                  const auto &values = varInit.getParams();
@@ -135,9 +135,9 @@ public:
         for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
             // Loop through parameters
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
-            for(size_t p = 0; d < varInit.getDerivedParams().size(); d++) {
+            for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
                 if(!(getMergedGroup().*isHomogeneous)(v, d)) {
-                    addField("scalar", vars[v].name + varInit.getSnippet()->getDerivedParams()[d].name,
+                    addField("scalar", varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
                              [d, &varInit](const typename T::GroupInternal &ng, size_t)
                              {
                                  const auto &values = varInit.getDerivedParams();
