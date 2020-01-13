@@ -23,13 +23,17 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, const NeuronGroupInternal &ng,
+void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, const CodeGenerator::NeuronGroupMerged &ng,
                                  const std::string &sourceSuffix = "", const std::string &destSuffix = "")
 {
-    const NeuronModels::Base *nm = ng.getNeuronModel();
+    const NeuronModels::Base *nm = ng.getArchetype().getNeuronModel();
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
-    substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams(), sourceSuffix);
-    substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams(), sourceSuffix);
+    substitution.addParamValueSubstitution(nm->getParamNames(), ng.getArchetype().getParams(), 
+                                           [&ng](size_t i) { return ng.isParamHomogeneous(i);  },
+                                           sourceSuffix, "group.");
+    substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getArchetype().getDerivedParams(), 
+                                         [&ng](size_t i) { return ng.isDerivedParamHomogeneous(i);  },
+                                         sourceSuffix, "group.");
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group.");
 }
 }   // Anonymous namespace
@@ -50,7 +54,6 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
     os << std::endl;
 
     // Generate functions to push merged neuron group structures
-
     genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedEGPs, "NeuronSpikeQueueUpdate", backend);
     genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedEGPs, "NeuronUpdate", backend);
 
@@ -104,7 +107,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
             neuronSubs.addVarSubstitution("Isyn", "Isyn");
             neuronSubs.addVarSubstitution("sT", "lsT");
             neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
-            addNeuronModelSubstitutions(neuronSubs, ng.getArchetype());
+            addNeuronModelSubstitutions(neuronSubs, ng);
 
             // Initialise any additional input variables supported by neuron model
             for (const auto &a : nm->getAdditionalInputVars()) {
@@ -204,14 +207,21 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
 
                 // Read current source variables into registers
                 for(const auto &v : csm->getVars()) {
+                    if(v.access == VarAccess::READ_ONLY) {
+                        os << "const ";
+                    }
                     os << v.type << " lcs" << v.name << " = " << "group." << v.name << "CS" << i <<"[" << popSubs["id"] << "];" << std::endl;
                 }
 
                 Substitutions currSourceSubs(&popSubs);
                 currSourceSubs.addFuncSubstitution("injectCurrent", 1, "Isyn += $(0)");
                 currSourceSubs.addVarNameSubstitution(csm->getVars(), "", "lcs");
-                currSourceSubs.addParamValueSubstitution(csm->getParamNames(), cs->getParams());
-                currSourceSubs.addVarValueSubstitution(csm->getDerivedParams(), cs->getDerivedParams());
+                currSourceSubs.addParamValueSubstitution(csm->getParamNames(), cs->getParams(),
+                                                         [&ng, i](size_t p) { return ng.isCurrentSourceParamHomogeneous(i, p);  },
+                                                         "", "group.", "CS" + std::to_string(i));
+                currSourceSubs.addVarValueSubstitution(csm->getDerivedParams(), cs->getDerivedParams(),
+                                                       [&ng, i](size_t p) { return ng.isCurrentSourceDerivedParamHomogeneous(i, p);  },
+                                                       "", "group.", "CS" + std::to_string(i));
                 currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "group.", "CS" + std::to_string(i));
 
                 std::string iCode = csm->getInjectionCode();
@@ -273,7 +283,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                         spkEventCondSubs.addVarNameSubstitution(spkEventCond.synapseGroup->getWUModel()->getExtraGlobalParams(), "", "group.", "EventThresh" + std::to_string(i));
                         i++;
                     }
-                    addNeuronModelSubstitutions(spkEventCondSubs, ng.getArchetype(), "_pre");
+                    addNeuronModelSubstitutions(spkEventCondSubs, ng, "_pre");
 
                     std::string eCode = spkEventCond.eventThresholdCode;
                     spkEventCondSubs.applyCheckUnreplaced(eCode, "neuronSpkEvntCondition : merged" + std::to_string(ng.getIndex()));
@@ -406,6 +416,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
 
                 // Fetch presynaptic variables from global memory
                 for(const auto &v : sg->getWUModel()->getPreVars()) {
+                    if(v.access == VarAccess::READ_ONLY) {
+                        os << "const ";
+                    }
                     os << v.type << " l" << v.name << " = group." << v.name << "WUPre" << i << "[";
                     if (sg->getDelaySteps() != NO_DELAY) {
                         os << "readDelayOffset + ";
@@ -454,6 +467,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
 
                 // Fetch postsynaptic variables from global memory
                 for(const auto &v : sg->getWUModel()->getPostVars()) {
+                    if(v.access == VarAccess::READ_ONLY) {
+                        os << "const ";
+                    }
                     os << v.type << " l" << v.name << " = group." << v.name << "WUPost" << i << "[";
                     if (sg->getBackPropDelaySteps() != NO_DELAY) {
                         os << "readDelayOffset + ";

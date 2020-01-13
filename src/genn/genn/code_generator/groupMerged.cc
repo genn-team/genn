@@ -9,6 +9,43 @@
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronGroupMerged
 //----------------------------------------------------------------------------
+CodeGenerator::NeuronGroupMerged::NeuronGroupMerged(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+:   CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups)
+{
+    // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getMergedInSyn,
+                             [init](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &a,
+                                    const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &b)
+                             {
+                                 return init ? a.first->canPSInitBeMerged(*b.first) : a.first->canPSBeMerged(*b.first);
+                             });
+
+    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
+                             [init](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
+                             {
+                                 return init ? a->canInitBeMerged(*b) : a->canBeMerged(*b);
+                             });
+
+    // Build vector of vectors containing each child group's incoming synapse groups
+    // with postsynaptic updates, ordered to match those of the archetype group
+    const auto inSynWithPostCode = getArchetype().getInSynWithPostCode();
+    orderNeuronGroupChildren(inSynWithPostCode, m_SortedInSynWithPostCode, &NeuronGroupInternal::getInSynWithPostCode,
+                             [init](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
+                             {
+                                 return init ? a->canWUPostInitBeMerged(*b) : a->canWUPostBeMerged(*b);
+                             });
+
+    // Build vector of vectors containing each child group's incoming synapse groups
+    // with postsynaptic updates, ordered to match those of the archetype group
+    const auto outSynWithPreCode = getArchetype().getOutSynWithPreCode();
+    orderNeuronGroupChildren(outSynWithPreCode, m_SortedOutSynWithPreCode, &NeuronGroupInternal::getOutSynWithPreCode,
+                             [init](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
+                             {
+                                 return init ? a->canWUPreInitBeMerged(*b) : a->canWUPreBeMerged(*b);
+                             });
+}
+//----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronGroupMerged::getCurrentQueueOffset() const
 {
     assert(getArchetype().isDelayRequired());
@@ -19,6 +56,18 @@ std::string CodeGenerator::NeuronGroupMerged::getPrevQueueOffset() const
 {
     assert(getArchetype().isDelayRequired());
     return "(((*group.spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * group.numNeurons)";
+}
+//----------------------------------------------------------------------------
+bool CodeGenerator::NeuronGroupMerged::isParamHomogeneous(size_t index) const
+{
+    return CodeGenerator::GroupMerged<NeuronGroupInternal>::isParamHomogeneous(
+        index, [](const NeuronGroupInternal &ng) { return ng.getParams(); });
+}
+//----------------------------------------------------------------------------
+bool CodeGenerator::NeuronGroupMerged::isDerivedParamHomogeneous(size_t index) const
+{
+    return CodeGenerator::GroupMerged<NeuronGroupInternal>::isParamHomogeneous(
+        index, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
 }
 
 //----------------------------------------------------------------------------
@@ -62,4 +111,24 @@ std::string CodeGenerator::SynapseGroupMerged::getDendriticDelayOffset(const std
     else {
         return "(((*group.denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group.numTrgNeurons) + ";
     }
+}
+//----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous(size_t varIndex, size_t paramIndex) const
+{
+    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamHomogeneous(
+        paramIndex, 
+        [varIndex](const SynapseGroupInternal &sg) 
+        { 
+            return sg.getWUVarInitialisers().at(varIndex).getParams(); 
+        });
+}
+//----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHomogeneous(size_t varIndex, size_t paramIndex) const
+{
+    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamHomogeneous(
+        paramIndex,
+        [varIndex](const SynapseGroupInternal &sg)
+        {
+            return sg.getWUVarInitialisers().at(varIndex).getDerivedParams();
+        });
 }

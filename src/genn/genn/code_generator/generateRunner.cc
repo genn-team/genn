@@ -98,53 +98,6 @@ void genSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng
     os << std::endl << std::endl;
 }
 //-------------------------------------------------------------------------
-template<typename T, typename G, typename C>
-void orderNeuronGroupChildren(const CodeGenerator::NeuronGroupMerged &m, const std::vector<T> &archetypeChildren,
-                              std::vector<std::vector<T>> &sortedGroupChildren,
-                              G getVectorFunc, C isCompatibleFunc)
-{
-    // Reserve vector of vectors to hold children for all neuron groups, in archetype order
-    sortedGroupChildren.reserve(archetypeChildren.size());
-
-    // Loop through groups
-    for(const auto &g : m.getGroups()) {
-        // Make temporary copy of this group's children
-        std::vector<T> tempChildren((g.get().*getVectorFunc)());
-
-        assert(tempChildren.size() == archetypeChildren.size());
-
-        // Reserve vector for this group's children
-        sortedGroupChildren.emplace_back();
-        sortedGroupChildren.back().reserve(tempChildren.size());
-
-        // Loop through archetype group's children
-        for(const auto &archetypeG : archetypeChildren) {
-            // Find compatible child in temporary list
-            const auto otherChild = std::find_if(tempChildren.cbegin(),tempChildren.cend(),
-                                                 [archetypeG, isCompatibleFunc](const T &g)
-                                                 {
-                                                     return isCompatibleFunc(archetypeG, g);
-                                                 });
-            assert(otherChild != tempChildren.cend());
-
-            // Add pointer to vector of compatible merged in syns
-            sortedGroupChildren.back().push_back(*otherChild);
-
-            // Remove from original vector
-            tempChildren.erase(otherChild);
-        }
-    }
-}
-//-------------------------------------------------------------------------
-template<typename T, typename G, typename C>
-void orderNeuronGroupChildren(const CodeGenerator::NeuronGroupMerged &m, std::vector<std::vector<T>> &sortedGroupChildren,
-                              G getVectorFunc, C isCompatibleFunc)
-{
-    const std::vector<T> &archetypeChildren = (m.getArchetype().*getVectorFunc)();
-    orderNeuronGroupChildren(m, archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
-}
-
-//-------------------------------------------------------------------------
 void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal,
                            CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarAlloc,
                            CodeGenerator::MergedEGPMap &mergedEGPs, const CodeGenerator::NeuronGroupMerged &m,
@@ -186,16 +139,16 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
     // Extra global parameters are not required for init
     if(!init) {
         gen.addEGPs(nm->getExtraGlobalParams());
-    }
 
-    // Build vector of vectors containin each child group's merged in syns, ordered to match those of the archetype group
-    std::vector<std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>>> sortedMergedInSyns;
-    orderNeuronGroupChildren(m, sortedMergedInSyns, &NeuronGroupInternal::getMergedInSyn,
-                             [init](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &a,
-                                    const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &b)
-                             {
-                                 return init ? a.first->canPSInitBeMerged(*b.first) : a.first->canPSBeMerged(*b.first);
-                             });
+        // Add heterogeneous neuron model parameters
+        gen.addHeterogeneousParams(m.getArchetype().getNeuronModel()->getParamNames(), &NeuronGroupInternal::getParams,
+                                   &CodeGenerator::NeuronGroupMerged::isParamHomogeneous);
+        
+
+        // Add heterogeneous neuron model derived parameters
+        gen.addHeterogeneousDerivedParams(m.getArchetype().getNeuronModel()->getDerivedParams(), &NeuronGroupInternal::getDerivedParams,
+                                          &CodeGenerator::NeuronGroupMerged::isDerivedParamHomogeneous);
+    }
 
     // Build vector of vectors of neuron group's merged in syns
     // Loop through merged synaptic inputs in archetypical neuron group
@@ -203,23 +156,24 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         const SynapseGroupInternal *sg = m.getArchetype().getMergedInSyn()[i].first;
 
         // Add pointer to insyn
-        gen.addMergedInSynPointerField(precision, "inSynInSyn", i, backend.getArrayPrefix() + "inSyn", sortedMergedInSyns);
+        gen.addMergedInSynPointerField(precision, "inSynInSyn", i, backend.getArrayPrefix() + "inSyn", m.getSortedMergedInSyns());
 
         // Add pointer to dendritic delay buffer if required
         if (sg->isDendriticDelayRequired()) {
-            gen.addMergedInSynPointerField(precision, "denDelayInSyn", i, backend.getArrayPrefix() + "denDelay", sortedMergedInSyns);
+            gen.addMergedInSynPointerField(precision, "denDelayInSyn", i, backend.getArrayPrefix() + "denDelay", m.getSortedMergedInSyns());
 
             gen.addField("volatile unsigned int*", "denDelayPtrInSyn" + std::to_string(i),
-                         [&backend, &sortedMergedInSyns, i](const NeuronGroupInternal&, size_t groupIndex)
+                         [&backend, &m, i](const NeuronGroupInternal&, size_t groupIndex)
                          {
-                             return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sortedMergedInSyns[groupIndex][i].first->getPSModelTargetName() + ")";
+                             const std::string &targetName = m.getSortedMergedInSyns()[groupIndex][i].first->getPSModelTargetName();
+                             return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + targetName + ")";
                          });
         }
 
         // Add pointers to state variables
         if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             for(const auto &v : sg->getPSModel()->getVars()) {
-                gen.addMergedInSynPointerField(v.type, v.name + "InSyn", i, backend.getArrayPrefix() + v.name, sortedMergedInSyns);
+                gen.addMergedInSynPointerField(v.type, v.name + "InSyn", i, backend.getArrayPrefix() + v.name, m.getSortedMergedInSyns());
             }
         }
 
@@ -231,58 +185,56 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         }
     }
 
-    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
-    std::vector<std::vector<CurrentSourceInternal*>> sortedCurrentSources;
-    orderNeuronGroupChildren(m, sortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
-                             [init](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
-                             {
-                                 return init ? a->canInitBeMerged(*b) : a->canBeMerged(*b);
-                             });
-
     // Loop through current sources in archetypical neuron group
     for(size_t i = 0; i < m.getArchetype().getCurrentSources().size(); i++) {
         const auto *cs = m.getArchetype().getCurrentSources()[i];
 
+        const auto paramNames = cs->getCurrentSourceModel()->getParamNames();
+        for(size_t p = 0; p < paramNames.size(); p++) {
+            if(!m.isCurrentSourceParamHomogeneous(i, p)) {
+                gen.addField("scalar", paramNames[p] + "CS" + std::to_string(i),
+                             [i, p, &m](const NeuronGroupInternal &, size_t groupIndex)
+                             {
+                                 const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getParams().at(p);
+                                 return CodeGenerator::writePreciseString(val);
+                             });
+            }
+        }
+
+        const auto derivedParams = cs->getCurrentSourceModel()->getDerivedParams();
+        for(size_t p = 0; p < derivedParams.size(); p++) {
+            if(!m.isCurrentSourceDerivedParamHomogeneous(i, p)) {
+                gen.addField("scalar", derivedParams[p].name + "CS" + std::to_string(i),
+                             [i, p, &m](const NeuronGroupInternal&, size_t groupIndex)
+                             {
+                                 const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getDerivedParams().at(p);
+                                 return CodeGenerator::writePreciseString(val);
+                             });
+            }
+        }
+
         for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
-            gen.addCurrentSourcePointerField(v.type, v.name + "CS", i, backend.getArrayPrefix() + v.name, sortedCurrentSources);
+            gen.addCurrentSourcePointerField(v.type, v.name + "CS", i, backend.getArrayPrefix() + v.name, m.getSortedCurrentSources());
         }
     }
 
-    // Build vector of vectors containing each child group's incoming synapse groups
-    // with postsynaptic updates, ordered to match those of the archetype group
-    const auto inSynWithPostCode = m.getArchetype().getInSynWithPostCode();
-    std::vector<std::vector<SynapseGroupInternal*>> sortedInSynWithPostCode;
-    orderNeuronGroupChildren(m, inSynWithPostCode, sortedInSynWithPostCode, &NeuronGroupInternal::getInSynWithPostCode,
-                             [init](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
-                             {
-                                 return init ? a->canWUPostInitBeMerged(*b) : a->canWUPostBeMerged(*b);
-                             });
-
     // Loop through incoming synapse groups with postsynaptic update code
+    const auto inSynWithPostCode = m.getArchetype().getInSynWithPostCode();
     for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
         const auto *sg = inSynWithPostCode[i];
 
         for(const auto &v : sg->getWUModel()->getPostVars()) {
-            gen.addSynPointerField(v.type, v.name + "WUPost", i, backend.getArrayPrefix() + v.name, sortedInSynWithPostCode);
+            gen.addSynPointerField(v.type, v.name + "WUPost", i, backend.getArrayPrefix() + v.name, m.getSortedInSynWithPostCode());
         }
     }
 
-    // Build vector of vectors containing each child group's incoming synapse groups
-    // with postsynaptic updates, ordered to match those of the archetype group
-    const auto outSynWithPreCode = m.getArchetype().getOutSynWithPreCode();
-    std::vector<std::vector<SynapseGroupInternal*>> sortedOutSynWithPreCode;
-    orderNeuronGroupChildren(m, outSynWithPreCode, sortedOutSynWithPreCode, &NeuronGroupInternal::getOutSynWithPreCode,
-                             [init](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
-                             {
-                                 return init ? a->canWUPreInitBeMerged(*b) : a->canWUPreBeMerged(*b);
-                             });
-
     // Loop through outgoing synapse groups with presynaptic update code
+    const auto outSynWithPreCode = m.getArchetype().getOutSynWithPreCode();
     for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
         const auto *sg = outSynWithPreCode[i];
 
         for(const auto &v : sg->getWUModel()->getPreVars()) {
-            gen.addSynPointerField(v.type, v.name + "WUPre", i, backend.getArrayPrefix() + v.name, sortedOutSynWithPreCode);
+            gen.addSynPointerField(v.type, v.name + "WUPre", i, backend.getArrayPrefix() + v.name, m.getSortedOutSynWithPreCode());
         }
     }
 
@@ -481,9 +433,18 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
     }
 
-    // Add pointers to var pointers to struct
+    // If synaptic matrix weights are individual, add pointers to var pointers to struct
     if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         gen.addVars(wum->getVars(), backend.getArrayPrefix());
+    }
+    
+    // If synaptic matrix weights are procedural or we are initializing
+    if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL || !updateRole) {
+        gen.addHeterogeneousVarInitParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+                                          &CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous);
+     
+        gen.addHeterogeneousVarInitDerivedParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+                                                 &CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHomogeneous);
     }
 
     // Generate structure definitions and instantiation

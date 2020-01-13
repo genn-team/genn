@@ -40,6 +40,25 @@ public:
     //! Gets access to underlying vector of neuron groups which have been merged
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
+protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    //! Helper to test whether parameter values are constant across all groups
+    template<typename P>
+    bool isParamHomogeneous(size_t index, P getParamValuesFn) const
+    {
+        // Get value of archetype derived parameter
+        const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
+
+        // Return true if all derived parameter values are the
+        return std::all_of(getGroups().cbegin(), getGroups().cend(),
+                           [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
+                           {
+                               return (getParamValuesFn(g).at(index) == archetypeValue);
+                           });
+    }
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -54,9 +73,7 @@ private:
 class GENN_EXPORT NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    :   GroupMerged<NeuronGroupInternal>(index, groups)
-    {}
+    NeuronGroupMerged(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -67,6 +84,105 @@ public:
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
     std::string getPrevQueueOffset() const;
 
+    //! Is the parameter homogeneous across all neuron groups?
+    bool isParamHomogeneous(size_t index) const;
+
+    //! Is the derived parameter homogeneous across all neuron groups?
+    bool isDerivedParamHomogeneous(size_t index) const;
+
+    //! Is the parameter homogeneous across all current sources at specified index
+    bool isCurrentSourceParamHomogeneous(size_t childIndex, size_t paramIndex) const
+    {
+        return isChildParamHomogeneous(childIndex, paramIndex, m_SortedCurrentSources,
+                                       [](const CurrentSourceInternal *cs) { return cs->getParams();  });
+    }
+
+    //! Is the derived parameter homogeneous across all current sources at specified index
+    bool isCurrentSourceDerivedParamHomogeneous(size_t childIndex, size_t paramIndex) const
+    {
+        return isChildParamHomogeneous(childIndex, paramIndex, m_SortedCurrentSources,
+                                       [](const CurrentSourceInternal *cs) { return cs->getDerivedParams();  });
+    }
+
+    const std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> &getSortedMergedInSyns() const{ return m_SortedMergedInSyns; }
+    const std::vector<std::vector<CurrentSourceInternal *>> &getSortedCurrentSources() const { return m_SortedCurrentSources; }
+    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedInSynWithPostCode() const { return m_SortedInSynWithPostCode; }
+    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedOutSynWithPreCode() const{ return m_SortedOutSynWithPreCode; }
+
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    template<typename T, typename G, typename C>
+    void orderNeuronGroupChildren(const std::vector<T> &archetypeChildren,
+                                  std::vector<std::vector<T>> &sortedGroupChildren,
+                                  G getVectorFunc, C isCompatibleFunc) const
+    {
+        // Reserve vector of vectors to hold children for all neuron groups, in archetype order
+        sortedGroupChildren.reserve(archetypeChildren.size());
+
+        // Loop through groups
+        for(const auto &g : getGroups()) {
+            // Make temporary copy of this group's children
+            std::vector<T> tempChildren((g.get().*getVectorFunc)());
+
+            assert(tempChildren.size() == archetypeChildren.size());
+
+            // Reserve vector for this group's children
+            sortedGroupChildren.emplace_back();
+            sortedGroupChildren.back().reserve(tempChildren.size());
+
+            // Loop through archetype group's children
+            for(const auto &archetypeG : archetypeChildren) {
+                // Find compatible child in temporary list
+                const auto otherChild = std::find_if(tempChildren.cbegin(), tempChildren.cend(),
+                                                     [archetypeG, isCompatibleFunc](const T &g)
+                                                     {
+                                                         return isCompatibleFunc(archetypeG, g);
+                                                     });
+                assert(otherChild != tempChildren.cend());
+
+                // Add pointer to vector of compatible merged in syns
+                sortedGroupChildren.back().push_back(*otherChild);
+
+                // Remove from original vector
+                tempChildren.erase(otherChild);
+            }
+        }
+    }
+    
+    template<typename T, typename G, typename C>
+    void orderNeuronGroupChildren(std::vector<std::vector<T>> &sortedGroupChildren,
+                                  G getVectorFunc, C isCompatibleFunc) const
+    {
+        const std::vector<T> &archetypeChildren = (getArchetype().*getVectorFunc)();
+        orderNeuronGroupChildren(archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
+    }
+    
+    template<typename T, typename G>
+    bool isChildParamHomogeneous(size_t childIndex, size_t paramIndex, const std::vector<std::vector<T>> &sortedGroupChildren,
+                                 G getParamValuesFn) const
+    {
+        // Get value of archetype derived parameter
+        const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
+
+        // Loop through groups within merged group
+        for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
+            const auto group = sortedGroupChildren[i][childIndex];
+            if(getParamValuesFn(group).at(paramIndex) != firstValue) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> m_SortedMergedInSyns;
+    std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreCode;
 };
 
 //----------------------------------------------------------------------------
@@ -75,7 +191,7 @@ public:
 class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    SynapseGroupMerged(size_t index, bool, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   GroupMerged<SynapseGroupInternal>(index, groups)
     {}
 
@@ -92,5 +208,10 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
+    //! Is the weight update model variable initialization parameter homogeneous across all synapse groups?
+    bool isWUVarInitParamHomogeneous(size_t varIndex, size_t paramIndex) const;
+    
+    //! Is the weight update model variable initialization derived parameter homogeneous across all synapse groups?
+    bool isWUVarInitDerivedParamHomogeneous(size_t varIndex, size_t paramIndex) const;
 };
 }   // namespace CodeGenerator

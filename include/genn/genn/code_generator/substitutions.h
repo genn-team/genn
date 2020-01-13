@@ -49,15 +49,6 @@ public:
         }
     }
 
-    void addParamNameSubstitution(const std::vector<std::string> &paramNames, const std::string &sourceSuffix = "",
-                                  const std::string &destPrefix = "", const std::string &destSuffix = "")
-    {
-        for(const auto &p : paramNames) {
-            addVarSubstitution(p + sourceSuffix,
-                               destPrefix + p + destSuffix);
-        }
-    }
-
     template<typename T>
     void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
                                  const std::string &sourceSuffix = "")
@@ -69,10 +60,8 @@ public:
         auto var = variables.cbegin();
         auto val = values.cbegin();
         for (;var != variables.cend() && val != values.cend(); var++, val++) {
-            std::stringstream stream;
-            writePreciseString(stream, *val);
             addVarSubstitution(var->name + sourceSuffix,
-                               "(" + stream.str() + ")");
+                               "(" + writePreciseString(*val) + ")");
         }
     }
 
@@ -86,12 +75,50 @@ public:
         auto param = paramNames.cbegin();
         auto val = values.cbegin();
         for (;param != paramNames.cend() && val != values.cend(); param++, val++) {
-            std::stringstream stream;
-            writePreciseString(stream, *val);
             addVarSubstitution(*param + sourceSuffix,
-                               "(" + stream.str() + ")");
+                               "(" + writePreciseString(*val) + ")");
         }
 
+    }
+
+    template<typename G>
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values, G isHomogeneousFn,
+                                   const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
+    {
+        if(paramNames.size() != values.size()) {
+            throw std::runtime_error("Number of parameters does not match number of values");
+        }
+
+        for(size_t i = 0; i < paramNames.size(); i++) {
+            if(isHomogeneousFn(i)) {
+                addVarSubstitution(paramNames[i] + sourceSuffix,
+                                   "(" + writePreciseString(values[i]) + ")");
+            }
+            else {
+                addVarSubstitution(paramNames[i] + sourceSuffix,
+                                   destPrefix + paramNames[i] + destSuffix);
+            }
+        }
+    }
+
+    template<typename T, typename G>
+    void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values, G isHomogeneousFn,
+                                 const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
+    {
+        if(variables.size() != values.size()) {
+            throw std::runtime_error("Number of variables does not match number of values");
+        }
+
+        for(size_t i = 0; i < variables.size(); i++) {
+            if(isHomogeneousFn(i)) {
+                addVarSubstitution(variables[i].name + sourceSuffix,
+                                   "(" + writePreciseString(values[i]) + ")");
+            }
+            else {
+                addVarSubstitution(variables[i].name + sourceSuffix,
+                                   destPrefix + variables[i].name + destSuffix);
+            }
+        }
     }
 
     void addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride = false)

@@ -461,11 +461,12 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
             }
             // Otherwise, if connectivity is procedural, all variable initialisers must be mergable
             else if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-                return std::equal(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), other.getWUVarInitialisers().cbegin(),
+                /*return std::equal(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), other.getWUVarInitialisers().cbegin(),
                                   [](const Models::VarInit &a, const Models::VarInit & b)
                                   {
                                       return a.canBeMerged(b);
-                                  });
+                                  });*/
+                return true;
             }
             // Otherwise, if matrix weights are individual, merging is unproblematic
             else if(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -537,11 +538,11 @@ bool SynapseGroup::canWUInitBeMerged(const SynapseGroup &other) const
        && (getWUModel()->getVars() == other.getWUModel()->getVars()))
     {
         // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
+        /*for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
             if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
                 return false;
             }
-        }
+        }*/
 
         return true;
     }
