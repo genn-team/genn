@@ -42,14 +42,9 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
-                                         const BackendBase &backend, bool standaloneModules)
+                                         const BackendBase &backend)
 {
-    if(standaloneModules) {
-        os << "#include \"runner.cc\"" << std::endl;
-    }
-    else {
-        os << "#include \"definitionsInternal.h\"" << std::endl;
-    }
+    os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 

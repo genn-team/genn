@@ -662,7 +662,8 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
 // CodeGenerator
 //--------------------------------------------------------------------------
 CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                                      MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+                                                      MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+                                                      const BackendBase &backend)
 {
     // Track memory allocations, initially starting from zero
     auto mem = MemAlloc::zero();
