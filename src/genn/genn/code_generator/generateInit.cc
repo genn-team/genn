@@ -190,14 +190,9 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
-                                 const BackendBase &backend, bool standaloneModules)
+                                 const BackendBase &backend)
 {
-    if(standaloneModules) {
-        os << "#include \"runner.cc\"" << std::endl;
-    }
-    else {
-        os << "#include \"definitionsInternal.h\"" << std::endl;
-    }
+    os << "#include \"definitionsInternal.h\"" << std::endl;
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();

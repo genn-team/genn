@@ -15,5 +15,5 @@ class ModelSpecMerged;
 namespace CodeGenerator
 {
 void generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
-                  const BackendBase &backend, bool standaloneModules);
+                  const BackendBase &backend);
 }
