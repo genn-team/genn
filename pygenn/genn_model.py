@@ -98,7 +98,6 @@ class GeNNModel(object):
         precision       --  string precision as string ("float", "double"
                             or "long double"). defaults to float.
         model_name      --  string name of the model. Defaults to "GeNNModel".
-        enable_debug    --  boolean enable debug mode. Disabled by default.
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
         selected_gpu    --  integer specifying the id of the gpu in which the
