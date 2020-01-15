@@ -150,7 +150,8 @@ public:
     }
 
     void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
-                  CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &name)
+                  CodeGenerator::CodeStream &runnerVarDecl, CodeGenerator::CodeStream &runnerVarAlloc,
+                  CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &name)
     {
         const size_t index = getMergedGroup().getIndex();
 
@@ -166,37 +167,29 @@ public:
 
         definitionsInternal << ";" << std::endl;
 
-        // Write local array of these structs containing individual neuron group pointers etc
-        // **NOTE** scope will hopefully reduce stack usage
-        {
-            CodeStream::Scope b(runnerVarAlloc);
-            runnerVarAlloc << "Merged" << name << "Group" << index << " merged" << name << "Group" << index << "[] = ";
-            {
-                CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
-                for(size_t i = 0; i < getMergedGroup().getGroups().size(); i++) {
-                    const auto &g = getMergedGroup().getGroups()[i];
+        // Declare array of these structs containing individual neuron group pointers etc
+        runnerVarDecl << "Merged" << name << "Group" << index << " merged" << name << "Group" << index << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
 
-                    // Add all fields to merged group array
-                    runnerVarAlloc << "{";
-                    for(const auto &f : m_Fields) {
-                        const std::string fieldInitVal = std::get<2>(f)(g, i);
-                        runnerVarAlloc << fieldInitVal << ", ";
+        for(size_t i = 0; i < getMergedGroup().getGroups().size(); i++) {
+            const auto &g = getMergedGroup().getGroups()[i];
 
-                        // If field is an EGP, add record to merged EGPS
-                        if(std::get<3>(f) != FieldType::Standard) {
-                            mergedEGPs[fieldInitVal].emplace(
-                                std::piecewise_construct, std::forward_as_tuple(name),
-                                std::forward_as_tuple(index, i, (std::get<3>(f) == FieldType::PointerEGP), std::get<1>(f)));
-                        }
-                    }
-                    runnerVarAlloc << "}," << std::endl;
+            // Set all fields in array of structs
+            for(const auto &f : m_Fields) {
+                const std::string fieldInitVal = std::get<2>(f)(g, i);
+                runnerVarAlloc << "merged" << name << "Group" << index << "[" << i << "]." << std::get<1>(f) << " = " << fieldInitVal << ";" << std::endl;
+                // If field is an EGP, add record to merged EGPS
+                if(std::get<3>(f) != FieldType::Standard) {
+                    mergedEGPs[fieldInitVal].emplace(
+                        std::piecewise_construct, std::forward_as_tuple(name),
+                        std::forward_as_tuple(index, i, (std::get<3>(f) == FieldType::PointerEGP), std::get<1>(f)));
                 }
             }
-            runnerVarAlloc << ";" << std::endl;
 
-            // Then generate call to function to copy local array to device
-            runnerVarAlloc << "pushMerged" << name << "Group" << index << "ToDevice(merged" << name << "Group" << index << ");" << std::endl;
         }
+
+        // Then generate call to function to copy local array to device
+        runnerVarAlloc << "pushMerged" << name << "Group" << index << "ToDevice(merged" << name << "Group" << index << ");" << std::endl;
+
         // Finally add declaration to function to definitions internal
         definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << index << "ToDevice(const Merged" << name << "Group" << index << " *group);" << std::endl;
     }

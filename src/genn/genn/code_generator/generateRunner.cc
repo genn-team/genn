@@ -99,9 +99,9 @@ void genSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng
 }
 //-------------------------------------------------------------------------
 void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal,
-                           CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarAlloc,
-                           CodeGenerator::MergedEGPMap &mergedEGPs, const CodeGenerator::NeuronGroupMerged &m,
-                           const std::string &precision, const std::string &timePrecision, bool init)
+                           CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarDecl,
+                           CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs,
+                           const CodeGenerator::NeuronGroupMerged &m, const std::string &precision, const std::string &timePrecision, bool init)
 {
     CodeGenerator::MergedNeuronStructGenerator gen(m);
 
@@ -272,14 +272,14 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
     }
     
     // Generate structure definitions and instantiation
-    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs,
-                 init ? "NeuronInit" : "NeuronUpdate");
+    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerVarAlloc,
+                 mergedEGPs, init ? "NeuronInit" : "NeuronUpdate");
 }
 //-------------------------------------------------------------------------
 void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal, 
-                            CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarAlloc, 
-                            CodeGenerator::MergedEGPMap &mergedEGPs, const CodeGenerator::SynapseGroupMerged &m,
-                            const std::string &precision, const std::string &timePrecision, const std::string &name, MergedSynapseStruct role)
+                            CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarDecl,
+                            CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs,
+                            const CodeGenerator::SynapseGroupMerged &m, const std::string &precision, const std::string &timePrecision, const std::string &name, MergedSynapseStruct role)
 {
     const bool updateRole = ((role == MergedSynapseStruct::PresynapticUpdate)
                              || (role == MergedSynapseStruct::PostsynapticUpdate)
@@ -448,7 +448,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     }
 
     // Generate structure definitions and instantiation
-    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarAlloc, mergedEGPs, name);
+    gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerVarAlloc, mergedEGPs, name);
 }
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
@@ -794,13 +794,13 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         // Add presynaptic update timer
         if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
             backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 runnerStepTimeFinalise, "presynapticUpdate", true);
+                             runnerStepTimeFinalise, "presynapticUpdate", true);
         }
 
         // Add postsynaptic update timer if required
         if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
             backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 runnerStepTimeFinalise, "postsynapticUpdate", true);
+                             runnerStepTimeFinalise, "postsynapticUpdate", true);
         }
 
         // Add synapse dynamics update timer if required
@@ -822,6 +822,10 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         allVarStreams << std::endl;
     }
 
+    runnerVarDecl << "// ------------------------------------------------------------------------" << std::endl;
+    runnerVarDecl << "// merged group arrays" << std::endl;
+    runnerVarDecl << "// ------------------------------------------------------------------------" << std::endl;
+
     definitionsInternal << "// ------------------------------------------------------------------------" << std::endl;
     definitionsInternal << "// merged group structures" << std::endl;
     definitionsInternal << "// ------------------------------------------------------------------------" << std::endl;
@@ -832,13 +836,13 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
     // Generate merged neuron initialisation groups
     for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
-        genMergedNeuronStruct(backend, definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc,
+        genMergedNeuronStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                               mergedEGPs, m, model.getPrecision(), model.getTimePrecision(), true);
     }
 
     // Loop through merged dense synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
-         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc,
+         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                                 mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                 "SynapseDenseInit", MergedSynapseStruct::DenseInit);
     }
@@ -866,39 +870,40 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc, mergedEGPs, "SynapseConnectivityInit");
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
+                     mergedEGPs, "SynapseConnectivityInit");
     }
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
-         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc,
+         genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                                 mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                 "SynapseSparseInit", MergedSynapseStruct::SparseInit);
     }
 
     // Loop through merged neuron update groups
     for(const auto &m : modelMerged.getMergedNeuronUpdateGroups()) {
-        genMergedNeuronStruct(backend, definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc,
+        genMergedNeuronStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                               mergedEGPs, m, model.getPrecision(), model.getTimePrecision(), false);
     }
 
     // Loop through merged presynaptic update groups
     for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
-        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc,
+        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                                mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                "PresynapticUpdate", MergedSynapseStruct::PresynapticUpdate);
     }
 
     // Loop through merged postsynaptic update groups
     for(const auto &m : modelMerged.getMergedPostsynapticUpdateGroups()) {
-        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc,
+        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                                mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                "PostsynapticUpdate", MergedSynapseStruct::PostsynapticUpdate);
     }
 
     // Loop through synapse dynamics groups
     for(const auto &m : modelMerged.getMergedSynapseDynamicsGroups()) {
-        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc,
+        genMergedSynapseStruct(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                                mergedEGPs, m, model.getPrecision(), model.getTimePrecision(),
                                "SynapseDynamics", MergedSynapseStruct::SynapseDynamics);
     }
@@ -926,7 +931,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc, mergedEGPs, "NeuronSpikeQueueUpdate");
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
+                     mergedEGPs, "NeuronSpikeQueueUpdate");
     }
 
     // Loop through synapse groups whose dendritic delay pointers need updating
@@ -940,7 +946,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                      });
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, runnerMergedStructAlloc, mergedEGPs, "SynapseDendriticDelayUpdate");
+        gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
+                     mergedEGPs, "SynapseDendriticDelayUpdate");
     }
 
 
