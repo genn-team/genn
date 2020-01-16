@@ -1,13 +1,14 @@
 #pragma once
 
 // Standard C++ includes
+#include <limits>
 #include <random>
 
 // Standard C includes
 #include <cassert>
 
 inline void preCalcRowLengths(unsigned int numPre, unsigned int numPost, size_t numConnections,
-                              unsigned int *subRowLengths, std::mt19937 &rng, unsigned int numThreadsPerSpike = 1)
+                              uint16_t *subRowLengths, std::mt19937 &rng, unsigned int numThreadsPerSpike = 1)
 {
     assert(numThreadsPerSpike > 0);
 
@@ -45,11 +46,12 @@ inline void preCalcRowLengths(unsigned int numPre, unsigned int numPost, size_t 
                 matrixSize -= numSubRowNeurons;
 
                 // Add row length to array
-                *subRowLengths++ = (unsigned int)subRowLength;
+                assert(subRowLength < std::numeric_limits<uint16_t>::max());
+                *subRowLengths++ = (uint16_t)subRowLength;
             }
         }
     }
 
     // Insert remaining connections into last sub-row
-    *subRowLengths = (unsigned int)remainingConnections;
+    *subRowLengths = (uint16_t)remainingConnections;
 }

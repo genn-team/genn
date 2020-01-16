@@ -289,7 +289,7 @@ public:
     SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", 0}});
 
     SET_PARAM_NAMES({"total"});
-    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
+    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)

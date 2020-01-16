@@ -12,16 +12,16 @@ import_array();
 
 // Expose C++ functions with unsigned int **subRowLengths, int *numSubRowLengths parameters in their signatures 
 // i.e. preCalcRowLengths below into python functions which return a numpy array (of size specified by the function itself)
-%apply (unsigned int** ARGOUTVIEW_ARRAY1, int *DIM1) {(unsigned int **subRowLengths, int *numSubRowLengths)}
+%apply (uint16_t** ARGOUTVIEW_ARRAY1, int *DIM1) {(uint16_t **subRowLengths, int *numSubRowLengths)}
 
 
 %inline %{
 
 void preCalcRowLengths(unsigned int numPre, unsigned int numPost, size_t numConnections,
-                       unsigned int **subRowLengths, int *numSubRowLengths, 
+                       uint16_t **subRowLengths, int *numSubRowLengths, 
                        std::mt19937 &rng, unsigned int numThreadsPerSpike = 1)
 {
-    *subRowLengths = new unsigned int[numPre * numThreadsPerSpike];
+    *subRowLengths = new uint16_t[numPre * numThreadsPerSpike];
     preCalcRowLengths(numPre, numPost, numConnections, *subRowLengths, rng, numThreadsPerSpike);
     *numSubRowLengths = numPre * numThreadsPerSpike;
 }
