@@ -260,6 +260,9 @@ public:
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 
+    //! Generate code to return amount of free 'device' memory in bytes
+    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const = 0;
+
     //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
 
