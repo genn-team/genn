@@ -226,6 +226,10 @@ class GeNNModel(object):
         self._slm.set_timestep(timestep)
 
     @property
+    def free_device_mem_bytes(self):
+        return self._slm.get_free_device_mem_bytes();
+
+    @property
     def dT(self):
         """Step size"""
         return self._model.get_dt()
