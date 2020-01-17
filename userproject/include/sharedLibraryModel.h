@@ -78,6 +78,7 @@ public:
         if(m_Library != nullptr) {
             m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
             m_FreeMem = (VoidFunction)getSymbol("freeMem");
+            m_GetFreeDeviceMemBytes = (GetFreeMemFunction)getSymbol("getFreeDeviceMemBytes");
 
             m_Initialize = (VoidFunction)getSymbol("initialize");
             m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
@@ -302,6 +303,11 @@ public:
         m_FreeMem();
     }
 
+    size_t getFreeDeviceMemBytes()
+    {
+        return m_GetFreeDeviceMemBytes();
+    }
+
     void initialize()
     {
         m_Initialize();
@@ -377,6 +383,7 @@ private:
     typedef void (*PushFunction)(bool);
     typedef void (*PullFunction)(void);
     typedef void (*EGPFunction)(unsigned int);
+    typedef size_t (*GetFreeMemFunction)(void);
 
     typedef std::pair<PushFunction, PullFunction> PushPullFunc;
     typedef std::tuple<EGPFunction, VoidFunction, EGPFunction, EGPFunction> EGPFunc;
@@ -442,6 +449,7 @@ private:
 
     VoidFunction m_AllocateMem;
     VoidFunction m_FreeMem;
+    GetFreeMemFunction m_GetFreeDeviceMemBytes;
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
