@@ -1450,11 +1450,17 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << std::endl;
     }
     
-    // Write code to get device by PCI bus ID
+    // If we should select GPU by device ID, do so
+    if(m_Preferences.selectGPUByDeviceID) {
+        os << "CHECK_CUDA_ERRORS(cudaSetDevice(" << m_ChosenDeviceID << "));" << std::endl;
+    }
+    // Otherwise, write code to get device by PCI bus ID
     // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
-    os << "int deviceID;" << std::endl;
-    os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
-    os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
+    else {
+        os << "int deviceID;" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
+    }
     os << std::endl;
 }
 //--------------------------------------------------------------------------

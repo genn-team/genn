@@ -98,6 +98,10 @@ struct Preferences : public PreferencesBase
     //! Should we use the constant cache for storing merged structures - improves performance but may overflow for large models
     bool useConstantCacheForMergedStructs = true;
 
+    //! GeNN normally identifies devices by PCI bus ID to ensure that the model is run on the same device
+    //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
+    bool selectGPUByDeviceID = false;
+
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 
