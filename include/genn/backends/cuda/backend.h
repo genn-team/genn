@@ -212,6 +212,9 @@ public:
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
                           const std::string &name, bool updateInStepTime) const override;
 
+    //! Generate code to return amount of free 'device' memory in bytes
+    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
+
     virtual void genMakefilePreamble(std::ostream &os) const override;
     virtual void genMakefileLinkRule(std::ostream &os) const override;
     virtual void genMakefileCompileRule(std::ostream &os) const override;

@@ -1838,6 +1838,14 @@ void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
+{
+    os << "size_t free;" << std::endl;
+    os << "size_t total;" << std::endl;
+    os << "CHECK_CUDA_ERRORS(cudaMemGetInfo(&free, &total));" << std::endl;
+    os << "return free;" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
