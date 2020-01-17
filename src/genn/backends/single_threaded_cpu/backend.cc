@@ -785,6 +785,12 @@ void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, C
     // Timing single-threaded CPU backends don't require any additional state
 }
 //--------------------------------------------------------------------------
+void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
+{
+    // There is no 'device' when using single-threaded CPU backend
+    os << "return 0;" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     std::string linkFlags = "-shared ";
