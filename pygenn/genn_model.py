@@ -88,8 +88,7 @@ class GeNNModel(object):
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 backend=None, selected_gpu=None,
-                 genn_log_level=genn_wrapper.warning,
+                 backend=None, genn_log_level=genn_wrapper.warning,
                  code_gen_log_level=genn_wrapper.warning,
                  backend_log_level=genn_wrapper.warning,
                  **preference_kwargs):
@@ -136,8 +135,11 @@ class GeNNModel(object):
         self.current_sources = {}
         self.dT = 0.1
 
-        # For backward compatibility, if selected GPU is set, add preferences
+        # For backward compatibility, if selected GPU is set, remove it from
+        # preferences dictionary and add in underlying GeNN preferences
+        selected_gpu = self._preferences.pop("selected_gpu", None)
         if selected_gpu is not None:
+            print("MERRR")
             self._preferences["deviceSelectMethod"] = self._backend_module.DeviceSelect_MANUAL
             self._preferences["preferences.manualDeviceID"] = selected_gpu
 
