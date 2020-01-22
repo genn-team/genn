@@ -61,13 +61,15 @@ restarted to initialise the variables set using the `SETX` command.
     Nvidia CUDA toolkit installation and that the CUDA binary directory is in your path.
     For example, if your CUDA toolkit was installed to `/usr/local/cuda`, you can use: 
     ```
-    echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile 
+    echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile
     echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
     ```
 
 (3) Add GeNN's `bin` directory to your $PATH variable. For example, if you extracted GeNN to
     `/home/me/genn`, you can use: 
     `echo "export PATH=$PATH:/home/me/genn/bin" >> ~/.bash_profile`
+    
+(4) Use `source ~/.bash_profile` for the changes to take effect.
 
 This completes the installation.
 
