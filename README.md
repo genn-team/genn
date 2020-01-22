@@ -26,10 +26,10 @@ This completes the installation. Note that the command window must be restarted 
 
 2. Ensure that the environment variable `CUDA_PATH` is set to the location of your Nvidia CUDA toolkit installation and that the CUDA binary directory is in your path. 
 For example, if your CUDA toolkit was installed to `/usr/local/cuda`, you can use: 
-```sh
-echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile
-echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
-```
+	```sh
+	echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile
+	echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
+	```
 
 4. Add GeNN's `bin` directory to your $PATH variable. For example, if you extracted GeNN to `/home/me/genn`, you can use: `echo "export PATH=$PATH:/home/me/genn/bin" >> ~/.bash_profile`
     
@@ -56,25 +56,21 @@ yay -S genn_cpu_only
 
 At the moment, the following example projects are provided with GeNN:
 
--   Self-organisation with STDP in the locust olfactory system \([Nowotny et al. 2005][@Nowotnyetal2005]\):
-    -   with all-to-all connectivity, using built-in neuron and synapse
-        models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
-    -   with sparse connectivity for some synapses, using user-defined
-        neuron-and synapse models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
-    -   using INDIVIDUALID scheme
-    -   using delayed synapses
--   Pulse-coupled network of Izhikevich neurons \([Izhikevich 2003][@Izhikevich2003]\)
-    (for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016])
+- Self-organisation with STDP in the locust olfactory system \([Nowotny et al. 2005][@Nowotnyetal2005]\):
+    - with all-to-all connectivity, using built-in neuron and synapse models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
+    - with sparse connectivity for some synapses, using user-defined neuron-and synapse models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
+    - using INDIVIDUALID scheme
+    - using delayed synapses
+- Pulse-coupled network of Izhikevich neurons \([Izhikevich 2003][@Izhikevich2003]\) (for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016])
 
--   Genetic algorithm for tracking parameters in a Hodgkin-Huxley model cell
+- Genetic algorithm for tracking parameters in a Hodgkin-Huxley model cell
 
--   Classifier based on an abstraction of the insect olfactory system
-    \([Schmuker et al. 2014][@Schmukeretal2014]\)
+- Classifier based on an abstraction of the insect olfactory system \([Schmuker et al. 2014][@Schmukeretal2014]\)
 
--   Toy examples:
-    -   Single neuron population of Izhikevich neuron(s) receiving Poisson spike trains as input
-    -   Single neuron population of Izhikevich neuron(s) with no synapses
-    -   Network of Izhikevich neurons with delayed synapses
+- Toy examples:
+    - Single neuron population of Izhikevich neuron(s) receiving Poisson spike trains as input
+    - Single neuron population of Izhikevich neuron(s) with no synapses
+    - Network of Izhikevich neurons with delayed synapses
 
 In order to get a quick start and run one of the the provided example models, navigate to one of the example project directories in the userproject sub-directory, and then follow the instructions in the README file contained within.
 
@@ -82,17 +78,17 @@ In order to get a quick start and run one of the the provided example models, na
 
 The sample projects listed above are already quite highly integrated examples. If one was to use the library for GPU code generation of their own model, the following would be done:
 
-1.  The model in question is defined in a file, say `Model1.cc`.
+1. The model in question is defined in a file, say `Model1.cc`.
 
-2.  This file needs to
-- include `modelSpec.h`
-- contains the model's definition in the form of a function `void modelDefinition(NNmodel &model)`  (`MBody1.cc`) shows a typical example)
+2. This file needs to
+	- include `modelSpec.h`
+	- contains the model's definition in the form of a function `void modelDefinition(NNmodel &model)`  (`MBody1.cc`) shows a typical example)
 
-3.  The programmer defines their own modeling code along similar lines as `MBody1Sim.cc`, etcetera. In this code,
--   they define input patterns (e.g. for Poisson neurons like in the example)
--   they use `stepTime();` to run one time step on whatever backend the model was built using.
--   they use functions like `copyStateFromDevice();` etcetera to obtain results from GPU calculations.
--   the simulation code is then produced in the following two steps: `genn-buildmodel.[sh|bat] ./modelFile.cc` and `make clean && make`
+3. The programmer defines their own modeling code along similar lines as `MBody1Sim.cc`, etcetera. In this code,
+	- they define input patterns (e.g. for Poisson neurons like in the example)
+	- they use `stepTime();` to run one time step on whatever backend the model was built using.
+	- they use functions like `copyStateFromDevice();` etcetera to obtain results from GPU calculations.
+	- the simulation code is then produced in the following two steps: `genn-buildmodel.[sh|bat] ./modelFile.cc` and `make clean && make`
 
 For more details on how to use GeNN, please see [documentation](http://genn-team.github.io/genn/).
 
