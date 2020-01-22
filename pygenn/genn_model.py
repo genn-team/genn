@@ -117,7 +117,7 @@ class GeNNModel(object):
         self._built = False
         self._loaded = False
         self.use_backend = backend
-        self.selected_gpu = selected_gpu
+        self._selected_gpu = selected_gpu
         self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
 
