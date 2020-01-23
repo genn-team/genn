@@ -32,10 +32,8 @@ For example, if your CUDA toolkit was installed to `/usr/local/cuda`, you can us
 	```
 
 4. Add GeNN's `bin` directory to your $PATH variable. For example, if you extracted GeNN to `/home/me/genn`, you can use: `echo "export PATH=$PATH:/home/me/genn/bin" >> ~/.bash_profile`
-    
-5. Use `source ~/.bash_profile` for the changes to take effect.
 
-This completes the installation.
+This completes the installation. Note that you must either logout and in again or run `source ~/.bash_profile` for the changes to `.bash_profile` to take effect.
 
 ### ARCH LINUX INSTALL
 For Arch Linux there are GeNN packages available [from the AUR](https://aur.archlinux.org/packages/?O=0&K=genn).
