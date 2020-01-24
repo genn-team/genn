@@ -8,6 +8,9 @@
 // Standard C includes
 #include <cassert>
 
+// GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
+
 // GeNN includes
 #include "gennUtils.h"
 #include "logging.h"
