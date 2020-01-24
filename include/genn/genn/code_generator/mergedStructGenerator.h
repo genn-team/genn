@@ -83,7 +83,7 @@ public:
                          [p, getParamValues](const typename T::GroupInternal &g, size_t)
                          {
                              const auto &values = (g.*getParamValues)();
-                             return CodeGenerator::writePreciseString(values.at(p));
+                             return Utils::writePreciseString(values.at(p));
                          });
             }
         }
@@ -102,7 +102,7 @@ public:
                          [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
                          {
                              const auto &values = (g.*getDerivedParamValues)();
-                             return CodeGenerator::writePreciseString(values.at(p));
+                             return Utils::writePreciseString(values.at(p));
                          });
             }
         }
@@ -122,7 +122,7 @@ public:
                              [p, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
                              {
                                  const auto &values = (ng.*getVarInitialisers)()[v].getParams();
-                                 return CodeGenerator::writePreciseString(values.at(p));
+                                 return Utils::writePreciseString(values.at(p));
                              });
                 }
             }
@@ -143,7 +143,7 @@ public:
                              [d, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
                              {
                                  const auto &values = (ng.*getVarInitialisers)()[v].getDerivedParams();
-                                 return CodeGenerator::writePreciseString(values.at(d));
+                                 return Utils::writePreciseString(values.at(d));
                              });
                 }
             }

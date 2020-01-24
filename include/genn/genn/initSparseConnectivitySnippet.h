@@ -226,17 +226,16 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPostWithReplacement, 1);
 
     SET_ROW_BUILD_CODE(
-        "const unsigned int rowLength = $(rowLength);\n"
-        "if(c >= rowLength) {\n"
+        "if(c == 0) {\n"
         "   $(endRow);\n"
         "}\n"
         "const scalar u = $(gennrand_uniform);\n"
-        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)(rowLength - c)));\n"
+        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
         "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
         "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
         "$(addSynapse, postIdx + $(id_post_begin));\n"
-        "c++;\n");
-    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", 0}});
+        "c--;\n");
+    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(rowLength)"}});
 
     SET_PARAM_NAMES({"rowLength"});
 
@@ -276,17 +275,16 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement, 1);
 
     SET_ROW_BUILD_CODE(
-        "const unsigned int rowLength = $(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)];\n"
-        "if(c >= rowLength) {\n"
+        "if(c == 0) {\n"
         "   $(endRow);\n"
         "}\n"
         "const scalar u = $(gennrand_uniform);\n"
-        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)(rowLength - c)));\n"
+        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
         "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
         "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
         "$(addSynapse, postIdx + $(id_post_begin));\n"
-        "c++;\n");
-    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", 0}});
+        "c--;\n");
+    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
 
     SET_PARAM_NAMES({"total"});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})

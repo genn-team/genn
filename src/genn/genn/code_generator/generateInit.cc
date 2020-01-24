@@ -329,25 +329,30 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
         // Sparse synaptic matrix connectivity initialisation
         [&model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
         {
+            const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+
+            // Add substitutions
             popSubs.addFuncSubstitution("endRow", 0, "break");
+            popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+            popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+            popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
 
             // Initialise row building state variables and loop on generated code to initialise sparse connectivity
-            const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
             os << "// Build sparse connectivity" << std::endl;
             for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-                os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
+                // Apply substitutions to value
+                std::string value = a.value;
+                popSubs.applyCheckUnreplaced(value, "initSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
+
+                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
             }
             os << "while(true)";
             {
                 CodeStream::Scope b(os);
 
-                // Add substitutions
-                popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-                popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
-                popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
-                popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
-
+                // Apply substitutions to row build code
                 std::string code = connectInit.getSnippet()->getRowBuildCode();
+                popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
                 popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : merged" + std::to_string(sg.getIndex()));
                 code = ensureFtype(code, model.getPrecision());
 

@@ -148,27 +148,32 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &me
         // Procedural connectivity
         [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
         {
-            baseSubs.addFuncSubstitution("endRow", 0, "break");
-
-            // Initialise row building state variables for procedural connectivity
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+
+            // Add substitutions
+            baseSubs.addFuncSubstitution("endRow", 0, "break");
+            baseSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
+            baseSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+            baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
+            
+            // Initialise row building state variables for procedural connectivity
             for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-                os << a.type << " " << a.name << " = " << a.value << ";" << std::endl;
+                // Apply substitutions to value
+                std::string value = a.value;
+                baseSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
+
+                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
             }
 
             // Loop through synapses in row
             os << "while(true)";
             {
                 CodeStream::Scope b(os);
-                Substitutions synSubs(&baseSubs);
-
-                synSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-                synSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
-                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
-                synSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
-
+                
+                // Apply substitutions to row building code
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();
-                synSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(sg.getIndex()));
+                baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
+                baseSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(sg.getIndex()));
                 pCode = ensureFtype(pCode, model.getPrecision());
 
                 // Write out code

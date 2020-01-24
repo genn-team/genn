@@ -106,7 +106,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
 
             // Initialise any additional input variables supported by neuron model
             for (const auto &a : nm->getAdditionalInputVars()) {
-                os << a.type << " " << a.name<< " = " << a.value << ";" << std::endl;
+                // Apply substitutions to value
+                std::string value = a.value;
+                neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(ng.getIndex()));
+
+                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
             }
 
             // Loop through incoming synapse groups

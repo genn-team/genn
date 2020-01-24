@@ -9,10 +9,8 @@
 #include <cassert>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "logging.h"
-
-// GeNN code generator includes
-#include "codeGenUtils.h"
 
 //--------------------------------------------------------------------------
 // Substitutions
@@ -61,7 +59,7 @@ public:
         auto val = values.cbegin();
         for (;var != variables.cend() && val != values.cend(); var++, val++) {
             addVarSubstitution(var->name + sourceSuffix,
-                               "(" + writePreciseString(*val) + ")");
+                               "(" + Utils::writePreciseString(*val) + ")");
         }
     }
 
@@ -76,7 +74,7 @@ public:
         auto val = values.cbegin();
         for (;param != paramNames.cend() && val != values.cend(); param++, val++) {
             addVarSubstitution(*param + sourceSuffix,
-                               "(" + writePreciseString(*val) + ")");
+                               "(" + Utils::writePreciseString(*val) + ")");
         }
 
     }
@@ -96,7 +94,7 @@ public:
             }
             else {
                 addVarSubstitution(paramNames[i] + sourceSuffix,
-                                   "(" + writePreciseString(values[i]) + ")");
+                                   "(" + Utils::writePreciseString(values[i]) + ")");
             }
         }
     }
@@ -116,7 +114,7 @@ public:
             }
             else {
                 addVarSubstitution(variables[i].name + sourceSuffix,
-                                   "(" + writePreciseString(values[i]) + ")");
+                                   "(" + Utils::writePreciseString(values[i]) + ")");
             }
         }
     }

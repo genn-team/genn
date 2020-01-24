@@ -11,6 +11,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "gennUtils.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -134,6 +135,13 @@ public:
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
+        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
+        {}
+        ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
+        {}
+        ParamVal() : ParamVal("", "", "0.0")
+        {}
+
         bool operator == (const ParamVal &other) const
         {
             return ((name == other.name) && (type == other.type) && (value == other.value));
@@ -141,7 +149,7 @@ public:
 
         std::string name;
         std::string type;
-        double value;
+        std::string value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value
