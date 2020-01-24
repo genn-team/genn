@@ -174,9 +174,10 @@ public:
             const auto &g = getMergedGroup().getGroups()[i];
 
             // Set all fields in array of structs
+            runnerVarAlloc << "merged" << name << "Group" << index << "[" << i << "] = {";
             for(const auto &f : m_Fields) {
                 const std::string fieldInitVal = std::get<2>(f)(g, i);
-                runnerVarAlloc << "merged" << name << "Group" << index << "[" << i << "]." << std::get<1>(f) << " = " << fieldInitVal << ";" << std::endl;
+                runnerVarAlloc << fieldInitVal << ", ";
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) != FieldType::Standard) {
                     mergedEGPs[fieldInitVal].emplace(
@@ -184,6 +185,7 @@ public:
                         std::forward_as_tuple(index, i, (std::get<3>(f) == FieldType::PointerEGP), std::get<1>(f)));
                 }
             }
+            runnerVarAlloc << "};" << std::endl;
 
         }
 
