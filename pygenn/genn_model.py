@@ -139,7 +139,6 @@ class GeNNModel(object):
         # preferences dictionary and add in underlying GeNN preferences
         selected_gpu = self._preferences.pop("selected_gpu", None)
         if selected_gpu is not None:
-            print("MERRR")
             self._preferences["deviceSelectMethod"] = self._backend_module.DeviceSelect_MANUAL
             self._preferences["preferences.manualDeviceID"] = selected_gpu
 
