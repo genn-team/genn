@@ -71,12 +71,13 @@ public:
     }
 
     template<typename G, typename H>
-    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, G getParamValues, H isHomogeneous)
+    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, 
+                                G getParamValues, H isHeterogeneous)
     {
         // Loop through params
         for(size_t p = 0; p < paramNames.size(); p++) {
-            // If parameters isn't homogeneous
-            if(!(getMergedGroup().*isHomogeneous)(p)) {
+            // If parameters is heterogeneous
+            if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
                 addField("scalar", paramNames[p],
                          [p, getParamValues](const typename T::GroupInternal &g, size_t)
@@ -89,12 +90,13 @@ public:
     }
 
     template<typename G, typename H>
-    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, G getDerivedParamValues, H isHomogeneous)
+    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, 
+                                       G getDerivedParamValues, H isHeterogeneous)
     { 
         // Loop through derived params
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameters isn't homogeneous
-            if(!(getMergedGroup().*isHomogeneous)(p)) {
+            if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
                 addField("scalar", derivedParams[p].name,
                          [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
@@ -107,7 +109,7 @@ public:
     }
 
     template<typename V, typename H>
-    void addHeterogeneousVarInitParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHomogeneous)
+    void addHeterogeneousVarInitParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
         const std::vector<Models::VarInit> &archetypeVarInitialisers = (getMergedGroup().getArchetype().*getVarInitialisers)();
@@ -115,8 +117,7 @@ public:
             // Loop through parameters
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
-                if(!(getMergedGroup().*isHomogeneous)(v, p)) {
-
+                if((getMergedGroup().*isHeterogeneous)(v, p)) {
                     addField("scalar", varInit.getSnippet()->getParamNames()[p] + vars[v].name,
                              [p, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
                              {
@@ -129,7 +130,7 @@ public:
     }
 
     template<typename V, typename H>
-    void addHeterogeneousVarInitDerivedParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHomogeneous)
+    void addHeterogeneousVarInitDerivedParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
         const std::vector<Models::VarInit> &archetypeVarInitialisers = (getMergedGroup().getArchetype().*getVarInitialisers)();
@@ -137,7 +138,7 @@ public:
             // Loop through parameters
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
-                if(!(getMergedGroup().*isHomogeneous)(v, d)) {
+                if((getMergedGroup().*isHeterogeneous)(v, d)) {
                     addField("scalar", varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
                              [d, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
                              {

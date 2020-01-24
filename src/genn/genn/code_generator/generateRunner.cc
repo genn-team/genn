@@ -142,12 +142,12 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
 
         // Add heterogeneous neuron model parameters
         gen.addHeterogeneousParams(m.getArchetype().getNeuronModel()->getParamNames(), &NeuronGroupInternal::getParams,
-                                   &CodeGenerator::NeuronGroupMerged::isParamHomogeneous);
+                                   &CodeGenerator::NeuronGroupMerged::isParamHeterogeneous);
         
 
         // Add heterogeneous neuron model derived parameters
         gen.addHeterogeneousDerivedParams(m.getArchetype().getNeuronModel()->getDerivedParams(), &NeuronGroupInternal::getDerivedParams,
-                                          &CodeGenerator::NeuronGroupMerged::isDerivedParamHomogeneous);
+                                          &CodeGenerator::NeuronGroupMerged::isDerivedParamHeterogeneous);
     }
 
     // Build vector of vectors of neuron group's merged in syns
@@ -191,7 +191,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
 
         const auto paramNames = cs->getCurrentSourceModel()->getParamNames();
         for(size_t p = 0; p < paramNames.size(); p++) {
-            if(!m.isCurrentSourceParamHomogeneous(i, p)) {
+            if(m.isCurrentSourceParamHeterogeneous(i, p)) {
                 gen.addField("scalar", paramNames[p] + "CS" + std::to_string(i),
                              [i, p, &m](const NeuronGroupInternal &, size_t groupIndex)
                              {
@@ -203,7 +203,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
 
         const auto derivedParams = cs->getCurrentSourceModel()->getDerivedParams();
         for(size_t p = 0; p < derivedParams.size(); p++) {
-            if(!m.isCurrentSourceDerivedParamHomogeneous(i, p)) {
+            if(m.isCurrentSourceDerivedParamHeterogeneous(i, p)) {
                 gen.addField("scalar", derivedParams[p].name + "CS" + std::to_string(i),
                              [i, p, &m](const NeuronGroupInternal&, size_t groupIndex)
                              {
@@ -441,10 +441,10 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
     // If synaptic matrix weights are procedural or we are initializing
     if(m.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL || !updateRole) {
         gen.addHeterogeneousVarInitParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                                          &CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous);
+                                          &CodeGenerator::SynapseGroupMerged::isWUVarInitParamHeterogeneous);
      
         gen.addHeterogeneousVarInitDerivedParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                                                 &CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHomogeneous);
+                                                 &CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHeterogeneous);
     }
 
     // Generate structure definitions and instantiation

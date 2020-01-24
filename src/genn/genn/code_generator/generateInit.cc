@@ -174,10 +174,10 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 {
                     varSubs.addVarSubstitution("value", "group." + vars[k].name + "[" + varSubs["id_syn"] +  "]");
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                      [k, &sg](size_t p) { return sg.isWUVarInitParamHomogeneous(k, p); },
+                                                      [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
                                                       "", "group.", vars[k].name);
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                      [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHomogeneous(k, p); },
+                                                      [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
                                                       "", "group.", vars[k].name);
 
                     std::string code = varInit.getSnippet()->getCode();

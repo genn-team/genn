@@ -58,15 +58,15 @@ std::string CodeGenerator::NeuronGroupMerged::getPrevQueueOffset() const
     return "(((*group.spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * group.numNeurons)";
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::NeuronGroupMerged::isParamHomogeneous(size_t index) const
+bool CodeGenerator::NeuronGroupMerged::isParamHeterogeneous(size_t index) const
 {
-    return CodeGenerator::GroupMerged<NeuronGroupInternal>::isParamHomogeneous(
+    return CodeGenerator::GroupMerged<NeuronGroupInternal>::isParamValueHeterogeneous(
         index, [](const NeuronGroupInternal &ng) { return ng.getParams(); });
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::NeuronGroupMerged::isDerivedParamHomogeneous(size_t index) const
+bool CodeGenerator::NeuronGroupMerged::isDerivedParamHeterogeneous(size_t index) const
 {
-    return CodeGenerator::GroupMerged<NeuronGroupInternal>::isParamHomogeneous(
+    return CodeGenerator::GroupMerged<NeuronGroupInternal>::isParamValueHeterogeneous(
         index, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
 }
 
@@ -113,9 +113,9 @@ std::string CodeGenerator::SynapseGroupMerged::getDendriticDelayOffset(const std
     }
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous(size_t varIndex, size_t paramIndex) const
+bool CodeGenerator::SynapseGroupMerged::isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
 {
-    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamHomogeneous(
+    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamValueHeterogeneous(
         paramIndex, 
         [varIndex](const SynapseGroupInternal &sg) 
         { 
@@ -123,9 +123,9 @@ bool CodeGenerator::SynapseGroupMerged::isWUVarInitParamHomogeneous(size_t varIn
         });
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHomogeneous(size_t varIndex, size_t paramIndex) const
+bool CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
 {
-    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamHomogeneous(
+    return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamValueHeterogeneous(
         paramIndex,
         [varIndex](const SynapseGroupInternal &sg)
         {

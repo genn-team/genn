@@ -56,10 +56,10 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
                 CodeGenerator::Substitutions varSubs(&synapseSubs);
                 varSubs.addVarSubstitution("value", "l" + vars[k].name);
                 varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                  [k, &sg](size_t p) { return sg.isWUVarInitParamHomogeneous(k, p); },
+                                                  [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
                                                   "", "group.", vars[k].name);
                 varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHomogeneous(k, p); },
+                                                [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
                                                 "", "group.", vars[k].name);
 
                 // Generate variable initialization code

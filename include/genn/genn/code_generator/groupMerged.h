@@ -44,18 +44,18 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    //! Helper to test whether parameter values are constant across all groups
+    //! Helper to test whether parameter values are heterogeneous within merged group
     template<typename P>
-    bool isParamHomogeneous(size_t index, P getParamValuesFn) const
+    bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
     {
-        // Get value of archetype derived parameter
+        // Get value of parameter in archetype group
         const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
 
-        // Return true if all derived parameter values are the
-        return std::all_of(getGroups().cbegin(), getGroups().cend(),
+        // Return true if any parameter values differ from the archetype value
+        return std::any_of(getGroups().cbegin(), getGroups().cend(),
                            [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
                            {
-                               return (getParamValuesFn(g).at(index) == archetypeValue);
+                               return (getParamValuesFn(g).at(index) != archetypeValue);
                            });
     }
 
@@ -84,23 +84,23 @@ public:
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
     std::string getPrevQueueOffset() const;
 
-    //! Is the parameter homogeneous across all neuron groups?
-    bool isParamHomogeneous(size_t index) const;
+    //! Is the parameter implemented as a heterogeneous parameter?
+    bool isParamHeterogeneous(size_t index) const;
 
-    //! Is the derived parameter homogeneous across all neuron groups?
-    bool isDerivedParamHomogeneous(size_t index) const;
+    //! Is the derived parameter implemented as a heterogeneous parameter?
+    bool isDerivedParamHeterogeneous(size_t index) const;
 
-    //! Is the parameter homogeneous across all current sources at specified index
-    bool isCurrentSourceParamHomogeneous(size_t childIndex, size_t paramIndex) const
+    //! Is the current source parameter implemented as a heterogeneous parameter?
+    bool isCurrentSourceParamHeterogeneous(size_t childIndex, size_t paramIndex) const
     {
-        return isChildParamHomogeneous(childIndex, paramIndex, m_SortedCurrentSources,
+        return isChildParamHeterogeneous(childIndex, paramIndex, m_SortedCurrentSources,
                                        [](const CurrentSourceInternal *cs) { return cs->getParams();  });
     }
 
-    //! Is the derived parameter homogeneous across all current sources at specified index
-    bool isCurrentSourceDerivedParamHomogeneous(size_t childIndex, size_t paramIndex) const
+    //! Is the current source derived parameter implemented as a heterogeneous parameter?
+    bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const
     {
-        return isChildParamHomogeneous(childIndex, paramIndex, m_SortedCurrentSources,
+        return isChildParamHeterogeneous(childIndex, paramIndex, m_SortedCurrentSources,
                                        [](const CurrentSourceInternal *cs) { return cs->getDerivedParams();  });
     }
 
@@ -160,8 +160,8 @@ private:
     }
     
     template<typename T, typename G>
-    bool isChildParamHomogeneous(size_t childIndex, size_t paramIndex, const std::vector<std::vector<T>> &sortedGroupChildren,
-                                 G getParamValuesFn) const
+    bool isChildParamHeterogeneous(size_t childIndex, size_t paramIndex, const std::vector<std::vector<T>> &sortedGroupChildren,
+                                   G getParamValuesFn) const
     {
         // Get value of archetype derived parameter
         const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
@@ -170,10 +170,10 @@ private:
         for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
             const auto group = sortedGroupChildren[i][childIndex];
             if(getParamValuesFn(group).at(paramIndex) != firstValue) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     //------------------------------------------------------------------------
@@ -208,10 +208,10 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
-    //! Is the weight update model variable initialization parameter homogeneous across all synapse groups?
-    bool isWUVarInitParamHomogeneous(size_t varIndex, size_t paramIndex) const;
+    //! Is the weight update model variable initialization parameter implemented as a heterogeneous parameter?
+    bool isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
     
-    //! Is the weight update model variable initialization derived parameter homogeneous across all synapse groups?
-    bool isWUVarInitDerivedParamHomogeneous(size_t varIndex, size_t paramIndex) const;
+    //! Is the weight update model variable initialization derived parameter implemented as a heterogeneous parameter?
+    bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
 };
 }   // namespace CodeGenerator

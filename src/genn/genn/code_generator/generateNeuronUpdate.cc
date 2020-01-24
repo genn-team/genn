@@ -29,10 +29,10 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
     const NeuronModels::Base *nm = ng.getArchetype().getNeuronModel();
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
     substitution.addParamValueSubstitution(nm->getParamNames(), ng.getArchetype().getParams(), 
-                                           [&ng](size_t i) { return ng.isParamHomogeneous(i);  },
+                                           [&ng](size_t i) { return ng.isParamHeterogeneous(i);  },
                                            sourceSuffix, "group.");
     substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getArchetype().getDerivedParams(), 
-                                         [&ng](size_t i) { return ng.isDerivedParamHomogeneous(i);  },
+                                         [&ng](size_t i) { return ng.isDerivedParamHeterogeneous(i);  },
                                          sourceSuffix, "group.");
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group.");
 }
@@ -212,10 +212,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
                 currSourceSubs.addFuncSubstitution("injectCurrent", 1, "Isyn += $(0)");
                 currSourceSubs.addVarNameSubstitution(csm->getVars(), "", "lcs");
                 currSourceSubs.addParamValueSubstitution(csm->getParamNames(), cs->getParams(),
-                                                         [&ng, i](size_t p) { return ng.isCurrentSourceParamHomogeneous(i, p);  },
+                                                         [&ng, i](size_t p) { return ng.isCurrentSourceParamHeterogeneous(i, p);  },
                                                          "", "group.", "CS" + std::to_string(i));
                 currSourceSubs.addVarValueSubstitution(csm->getDerivedParams(), cs->getDerivedParams(),
-                                                       [&ng, i](size_t p) { return ng.isCurrentSourceDerivedParamHomogeneous(i, p);  },
+                                                       [&ng, i](size_t p) { return ng.isCurrentSourceDerivedParamHeterogeneous(i, p);  },
                                                        "", "group.", "CS" + std::to_string(i));
                 currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "group.", "CS" + std::to_string(i));
 
