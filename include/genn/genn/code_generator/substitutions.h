@@ -11,6 +11,9 @@
 // Standard C includes
 #include <cassert>
 
+// GeNN code generator includes
+#include "codeGenUtils.h"
+
 // GeNN includes
 #include "gennUtils.h"
 
