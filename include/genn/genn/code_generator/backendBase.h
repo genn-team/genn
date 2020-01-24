@@ -48,6 +48,9 @@ struct PreferencesBase
     //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
     bool automaticCopy = false;
 
+    //! Should GeNN generate empty state push and pull functions
+    bool generateEmptyStatePushPull = true;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
@@ -307,6 +310,9 @@ public:
 
     //! Is automatic copy mode enabled in the preferences?
     virtual bool isAutomaticCopyEnabled() const = 0;
+
+    //! Should GeNN generate empty state push and pull functions?
+    virtual bool shouldGenerateEmptyStatePushPull() const = 0;
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
