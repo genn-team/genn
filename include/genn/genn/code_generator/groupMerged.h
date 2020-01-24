@@ -91,18 +91,10 @@ public:
     bool isDerivedParamHeterogeneous(size_t index) const;
 
     //! Is the current source parameter implemented as a heterogeneous parameter?
-    bool isCurrentSourceParamHeterogeneous(size_t childIndex, size_t paramIndex) const
-    {
-        return isChildParamHeterogeneous(childIndex, paramIndex, m_SortedCurrentSources,
-                                       [](const CurrentSourceInternal *cs) { return cs->getParams();  });
-    }
+    bool isCurrentSourceParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
     //! Is the current source derived parameter implemented as a heterogeneous parameter?
-    bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const
-    {
-        return isChildParamHeterogeneous(childIndex, paramIndex, m_SortedCurrentSources,
-                                       [](const CurrentSourceInternal *cs) { return cs->getDerivedParams();  });
-    }
+    bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
     const std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> &getSortedMergedInSyns() const{ return m_SortedMergedInSyns; }
     const std::vector<std::vector<CurrentSourceInternal *>> &getSortedCurrentSources() const { return m_SortedCurrentSources; }
@@ -160,8 +152,8 @@ private:
     }
     
     template<typename T, typename G>
-    bool isChildParamHeterogeneous(size_t childIndex, size_t paramIndex, const std::vector<std::vector<T>> &sortedGroupChildren,
-                                   G getParamValuesFn) const
+    bool isChildParamValueHeterogeneous(size_t childIndex, size_t paramIndex, const std::vector<std::vector<T>> &sortedGroupChildren,
+                                        G getParamValuesFn) const
     {
         // Get value of archetype derived parameter
         const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
