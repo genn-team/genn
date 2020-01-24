@@ -1,17 +1,12 @@
 #pragma once
 
 // Standard includes
-#include <iomanip>
-#include <limits>
 #include <string>
-#include <sstream>
 #include <unordered_map>
 #include <vector>
 
 // GeNN includes
 #include "gennExport.h"
-#include "models.h"
-#include "snippet.h"
 #include "variableMode.h"
 
 // GeNN code generator includes
@@ -105,44 +100,6 @@ bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::stri
 //--------------------------------------------------------------------------
 void functionSubstitute(std::string &code, const std::string &funcName,
                         unsigned int numParams, const std::string &replaceFuncTemplate);
-
-//--------------------------------------------------------------------------
-//! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
-//--------------------------------------------------------------------------
-template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-void writePreciseString(std::ostream &os, T value)
-{
-    // Cache previous precision
-    const std::streamsize previousPrecision = os.precision();
-
-    // Set scientific formatting
-    os << std::scientific;
-
-    // Set precision to what is required to fully represent T
-    os << std::setprecision(std::numeric_limits<T>::max_digits10);
-
-    // Write value to stream
-    os << value;
-
-    // Reset to default formatting
-    // **YUCK** GCC 4.8.X doesn't seem to include std::defaultfloat
-    os.unsetf(std::ios_base::floatfield);
-    //os << std::defaultfloat;
-
-    // Restore previous precision
-    os << std::setprecision(previousPrecision);
-}
-
-//--------------------------------------------------------------------------
-//! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
-//--------------------------------------------------------------------------
-template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-std::string writePreciseString(T value)
-{
-    std::stringstream s;
-    writePreciseString(s, value);
-    return s.str();
-}
 
 //! Divide two integers, rounding up i.e. effectively taking ceil
 inline size_t ceilDivide(size_t numerator, size_t denominator)

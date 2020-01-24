@@ -35,21 +35,21 @@ void genTypeRange(CodeGenerator::CodeStream &os, const std::string &precision, c
 
     os << "#define " << prefix << "_MIN ";
     if (precision == "float") {
-        writePreciseString(os, std::numeric_limits<float>::min());
+        Utils::writePreciseString(os, std::numeric_limits<float>::min());
         os << "f" << std::endl;
     }
     else {
-        writePreciseString(os, std::numeric_limits<double>::min());
+        Utils::writePreciseString(os, std::numeric_limits<double>::min());
         os << std::endl;
     }
 
     os << "#define " << prefix << "_MAX ";
     if (precision == "float") {
-        writePreciseString(os, std::numeric_limits<float>::max());
+        Utils::writePreciseString(os, std::numeric_limits<float>::max());
         os << "f" << std::endl;
     }
     else {
-        writePreciseString(os, std::numeric_limits<double>::max());
+        Utils::writePreciseString(os, std::numeric_limits<double>::max());
         os << std::endl;
     }
     os << std::endl;
