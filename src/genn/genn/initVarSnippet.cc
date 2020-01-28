@@ -5,6 +5,8 @@ IMPLEMENT_SNIPPET(InitVarSnippet::Uninitialised);
 IMPLEMENT_SNIPPET(InitVarSnippet::Constant);
 IMPLEMENT_SNIPPET(InitVarSnippet::Uniform);
 IMPLEMENT_SNIPPET(InitVarSnippet::Normal);
+IMPLEMENT_SNIPPET(InitVarSnippet::NormalClipped);
+IMPLEMENT_SNIPPET(InitVarSnippet::NormalClippedDelay);
 IMPLEMENT_SNIPPET(InitVarSnippet::Exponential);
 IMPLEMENT_SNIPPET(InitVarSnippet::Gamma);
 

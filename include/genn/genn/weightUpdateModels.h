@@ -171,7 +171,7 @@ class StaticPulseDendriticDelay : public Base
 public:
     DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2);
 
-    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY},{"d", "uint8_t", VarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
 };

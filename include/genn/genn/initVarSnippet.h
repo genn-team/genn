@@ -86,7 +86,7 @@ public:
 /*! This snippet takes 2 parameters:
  *
     - \c mean - The mean
-    - \c sd - The standard distribution*/
+    - \c sd - The standard deviation*/
 class Normal : public Base
 {
 public:
@@ -95,6 +95,67 @@ public:
     SET_CODE("$(value) = $(mean) + ($(gennrand_normal) * $(sd));");
 
     SET_PARAM_NAMES({"mean", "sd"});
+};
+
+//----------------------------------------------------------------------------
+// InitVarSnippet::NormalClipped
+//----------------------------------------------------------------------------
+//! Initialises variable by sampling from the normal distribution,
+//! Resamples value if out of range specified my min and max
+/*! This snippet takes 2 parameters:
+ *
+    - \c mean - The mean
+    - \c sd - The standard deviation
+    - \c min - The minimum value
+    - \c max - The maximum value*/
+class NormalClipped : public Base
+{
+public:
+    DECLARE_SNIPPET(InitVarSnippet::NormalClipped, 4);
+
+    SET_CODE(
+        "scalar normal;\n"
+        "do\n"
+        "{\n"
+        "   normal = $(mean) + ($(gennrand_normal) * $(sd));\n"
+        "} while (normal > $(max) || normal < $(min));\n"
+        "$(value) = normal;\n");
+
+    SET_PARAM_NAMES({"mean", "sd", "min", "max"});
+};
+
+//----------------------------------------------------------------------------
+// InitVarSnippet::NormalClippedDelay
+//----------------------------------------------------------------------------
+//! Initialises variable by sampling from the normal distribution,
+//! Resamples value of out of range specified my min and max.
+//! This snippet is intended for initializing (dendritic) delay parameters
+//! where parameters are specified in ms but converted to timesteps.
+/*! This snippet takes 2 parameters:
+ *
+    - \c mean - The mean [ms]
+    - \c sd - The standard deviation [ms]
+    - \c min - The minimum value [ms]
+    - \c max - The maximum value [ms]*/
+class NormalClippedDelay : public Base
+{
+public:
+    DECLARE_SNIPPET(InitVarSnippet::NormalClippedDelay, 4);
+
+    SET_CODE(
+        "scalar normal;\n"
+        "do\n"
+        "{\n"
+        "   normal = $(meanTimestep) + ($(gennrand_normal) * $(sdTimestep));\n"
+        "} while (normal > $(maxTimestep) || normal < $(minTimestep));\n"
+        "$(value) = rint(normal);\n");
+
+    SET_PARAM_NAMES({"mean", "sd", "min", "max"});
+    SET_DERIVED_PARAMS({
+        {"meanTimestep", [](const std::vector<double> &pars, double dt){ return pars[0] / dt; }},
+        {"sdTimestep", [](const std::vector<double> &pars, double dt){ return pars[1] / dt; }},
+        {"minTimestep", [](const std::vector<double> &pars, double dt){ return pars[2] / dt; }},
+        {"maxTimestep", [](const std::vector<double> &pars, double dt){ return pars[3] / dt; }}});
 };
 
 //----------------------------------------------------------------------------

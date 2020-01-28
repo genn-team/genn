@@ -71,4 +71,38 @@ class GaussianNoise : public Base
 
     SET_PARAM_NAMES({"mean", "sd"} );
 };
+
+//----------------------------------------------------------------------------
+// CurrentSourceModels::PoissonExp
+//----------------------------------------------------------------------------
+//! Current source for injecting a current equivalent to a population of
+//! Poisson spike sources, one-to-one connected with exponential synapses
+/*! It has 3 parameters:
+    - \c weight - synaptic weight of the Poisson spikes [nA]
+    - \c tauSyn - decay time constant [ms]
+    - \c rate   - mean firing rate [Hz]
+*/
+class PoissonExp : public Base
+{
+    DECLARE_MODEL(PoissonExp, 3, 1);
+
+    SET_INJECTION_CODE(
+        "scalar p = 1.0f;\n"
+        "unsigned int numSpikes = 0;\n"
+        "do\n"
+        "{\n"
+        "    numSpikes++;\n"
+        "    p *= $(gennrand_uniform);\n"
+        "} while (p > $(ExpMinusLambda));\n"
+        "$(current) += $(Init) * (scalar)(numSpikes - 1);\n"
+        "$(injectCurrent, $(current));\n"
+        "$(current) *= $(ExpDecay);\n");
+
+    SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
+    SET_VARS({{"current", "scalar"}});
+    SET_DERIVED_PARAMS({
+        {"ExpDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
+        {"Init", [](const std::vector<double> &pars, double dt){ return pars[0] * (1.0 - std::exp(-dt / pars[1])) * (pars[1] / dt); }},
+        {"ExpMinusLambda", [](const std::vector<double> &pars, double dt){ return std::exp(-(pars[2] / 1000.0) * dt); }}});
+};
 } // CurrentSourceModels

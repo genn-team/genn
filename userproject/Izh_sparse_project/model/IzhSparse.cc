@@ -29,53 +29,6 @@ public:
 };
 IMPLEMENT_SNIPPET(RandomizeSq);
 
-//----------------------------------------------------------------------------
-// FixedNumberPostWithReplacement
-//----------------------------------------------------------------------------
-//! Initialises variable by sampling from the uniform distribution
-class FixedNumberPostWithReplacement : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(FixedNumberPostWithReplacement, 1);
-
-    SET_ROW_BUILD_CODE(
-        "const scalar u = $(gennrand_uniform);\n"
-        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)($(rowLength) - c)));\n"
-        "const unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
-        "if(postIdx < $(num_post)) {\n"
-        "   $(addSynapse, postIdx);\n"
-        "}\n"
-        "else {\n"
-        "   $(addSynapse, $(num_post) - 1);\n"
-        "}\n"
-        "c++;\n"
-        "if(c >= $(rowLength)) {\n"
-        "   $(endRow);\n"
-        "}\n");
-    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", 0}});
-
-    SET_PARAM_NAMES({"rowLength"});
-
-    SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const std::vector<double> &pars)
-        {
-            return (unsigned int)pars[0];
-        });
-
-    /*SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
-        {
-            // Calculate suitable quantile for 0.9999 change when drawing numPre times
-            const double quantile = pow(0.9999, 1.0 / (double)numPost);
-
-            // There are numConnections connections amongst the numPre*numPost possible connections.
-            // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
-            // probability of being selected, and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars[0], (double)numPre / ((double)numPre * (double)numPost));
-        });*/
-};
-IMPLEMENT_SNIPPET(FixedNumberPostWithReplacement);
-
 void modelDefinition(ModelSpec &model) 
 {
 #ifdef DEBUG
@@ -146,10 +99,10 @@ void modelDefinition(ModelSpec &model)
     const unsigned int nIConn = _NConn - nEConn;
 
     // Fixed number post with replacement parameters - connections targetting excitatory population
-    FixedNumberPostWithReplacement::ParamValues Exc_conn_par(nEConn);
+    InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues Exc_conn_par(nEConn);
 
     // Fixed number post with replacement parameters - connections targetting inhibitory population
-    FixedNumberPostWithReplacement::ParamValues Inh_conn_par(nIConn);
+    InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues Inh_conn_par(nIConn);
 
     // Uniform weights for excitatory weights
     InitVarSnippet::Uniform::ParamValues Exc_weight_par(
@@ -183,25 +136,25 @@ void modelDefinition(ModelSpec &model)
         "PExc", "PExc",
         {}, SynExc_ini,
         {}, {},
-        initConnectivity<FixedNumberPostWithReplacement>(Exc_conn_par));
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(Exc_conn_par));
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Exc_Inh", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "PExc", "PInh",
         {}, SynExc_ini,
         {}, {},
-        initConnectivity<FixedNumberPostWithReplacement>(Inh_conn_par));
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(Inh_conn_par));
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Inh_Exc", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "PInh", "PExc",
         {}, SynInh_ini,
         {}, {},
-        initConnectivity<FixedNumberPostWithReplacement>(Exc_conn_par));
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(Exc_conn_par));
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "Inh_Inh",  SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "PInh", "PInh",
         {}, SynInh_ini,
         {}, {},
-        initConnectivity<FixedNumberPostWithReplacement>(Inh_conn_par));
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(Inh_conn_par));
 
     model.setPrecision(_FTYPE);
     model.setTiming(_TIMING);

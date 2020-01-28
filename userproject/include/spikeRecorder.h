@@ -26,6 +26,12 @@ public:
         }
     }
 
+    SpikeWriterText(SpikeWriterText&& other)
+    :   m_Stream(std::move(other.m_Stream)),
+        m_Delimiter(std::move(other.m_Delimiter))
+    {
+    }
+
 protected:
     //----------------------------------------------------------------------------
     // Protected API
@@ -61,6 +67,13 @@ public:
         if(header) {
             m_Stream << "Time [ms], Neuron ID" << std::endl;
         }
+    }
+
+    SpikeWriterTextCached(SpikeWriterTextCached&& other)
+    :   m_Stream(std::move(other.m_Stream)),
+        m_Delimiter(std::move(other.m_Delimiter)),
+        m_Cache(std::move(other.m_Cache))
+    {
     }
 
     ~SpikeWriterTextCached()
@@ -133,6 +146,8 @@ public:
         m_GetCurrentSpikeCount(getCurrentSpikeCount), m_Sum(0)
     {
     }
+
+    SpikeRecorder(SpikeRecorder<Writer>&& other) = default;
 
     //----------------------------------------------------------------------------
     // Public API
