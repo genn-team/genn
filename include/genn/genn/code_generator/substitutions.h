@@ -14,6 +14,9 @@
 // GeNN code generator includes
 #include "codeGenUtils.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 //--------------------------------------------------------------------------
 // Substitutions
 //--------------------------------------------------------------------------
@@ -69,10 +72,8 @@ public:
         auto var = variables.cbegin();
         auto val = values.cbegin();
         for (;var != variables.cend() && val != values.cend(); var++, val++) {
-            std::stringstream stream;
-            writePreciseString(stream, *val);
             addVarSubstitution(var->name + sourceSuffix,
-                               "(" + stream.str() + ")");
+                               "(" + Utils::writePreciseString(*val) + ")");
         }
     }
 
@@ -86,10 +87,8 @@ public:
         auto param = paramNames.cbegin();
         auto val = values.cbegin();
         for (;param != paramNames.cend() && val != values.cend(); param++, val++) {
-            std::stringstream stream;
-            writePreciseString(stream, *val);
             addVarSubstitution(*param + sourceSuffix,
-                               "(" + stream.str() + ")");
+                               "(" + Utils::writePreciseString(*val) + ")");
         }
 
     }

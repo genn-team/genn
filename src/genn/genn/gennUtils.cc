@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <algorithm>
 
+// GeNN includes
+#include "models.h"
+
 namespace
 {
 //--------------------------------------------------------------------------
