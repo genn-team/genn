@@ -603,7 +603,7 @@ CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, C
 //-------------------------------------------------------------------------
 void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &definitionsFunc,
                          CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &runner, CodeGenerator::CodeStream &extraGlobalParam,
-                         CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &type, const std::string &name, VarLocation loc)
+                         const CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &type, const std::string &name, VarLocation loc)
 {
     // Generate variables
     backend.genExtraGlobalParamDefinition(definitionsVar, type, name, loc);
@@ -621,15 +621,12 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
             CodeGenerator::CodeStream::Scope a(extraGlobalParam);
             backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
 
-            // Get destinations in merged structures, this EGP needs to be copied to
+            // Get destinations in merged structures, this EGP 
+            // needs to be copied to and call push function
             const auto &mergedDestinations = mergedEGPs.at(name);
             for(const auto &v : mergedDestinations) {
-                // Define push function
-                const std::string pushFuncName = "pushMerged" + v.first + std::to_string(v.second.mergedGroupIndex) + v.second.fieldName + std::to_string(v.second.groupIndex) + "ToDevice();";
-                definitionsInternal << "EXPORT_FUNC void " << pushFuncName << std::endl;
-
-                // Call push function
-                extraGlobalParam << pushFuncName << std::endl;
+                extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                extraGlobalParam << v.second.groupIndex << ", " << backend.getArrayPrefix() << name << ");" << std::endl;
             }
         }
 

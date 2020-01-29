@@ -375,8 +375,10 @@ void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std:
         const auto groupEGPs = e.second.equal_range(suffix);
         for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
             // If EGP is scalar, generate code to copy
-            if(!g->second.pointer) {
-                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
+            if(!Utils::isTypePointer(g->second.type)) {
+                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, 
+                                                      std::to_string(g->second.groupIndex), 
+                                                      g->second.fieldName, e.first);
             }
 
         }

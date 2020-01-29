@@ -154,14 +154,19 @@ public:
                   CodeGenerator::CodeStream &runnerVarDecl, CodeGenerator::CodeStream &runnerVarAlloc,
                   CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &name)
     {
-        const size_t index = getMergedGroup().getIndex();
+        const size_t mergedGroupIndex = getMergedGroup().getIndex();
 
         // Write struct declation to top of definitions internal
-        definitionsInternal << "struct Merged" << name << "Group" << index << std::endl;
+        definitionsInternal << "struct Merged" << name << "Group" << mergedGroupIndex << std::endl;
         {
             CodeGenerator::CodeStream::Scope b(definitionsInternal);
             for(const auto &f : m_Fields) {
                 definitionsInternal << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+
+                // If this field is for a pointer EGP, also declare function to push it
+                if(std::get<3>(f) == FieldType::PointerEGP) {
+                    definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << mergedGroupIndex << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
+                }
             }
             definitionsInternal << std::endl;
         }
@@ -169,21 +174,25 @@ public:
         definitionsInternal << ";" << std::endl;
 
         // Declare array of these structs containing individual neuron group pointers etc
-        runnerVarDecl << "Merged" << name << "Group" << index << " merged" << name << "Group" << index << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
+        runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
 
-        for(size_t i = 0; i < getMergedGroup().getGroups().size(); i++) {
-            const auto &g = getMergedGroup().getGroups()[i];
+        for(size_t groupIndex = 0; groupIndex < getMergedGroup().getGroups().size(); groupIndex++) {
+            const auto &g = getMergedGroup().getGroups()[groupIndex];
 
             // Set all fields in array of structs
-            runnerVarAlloc << "merged" << name << "Group" << index << "[" << i << "] = {";
+            runnerVarAlloc << "merged" << name << "Group" << mergedGroupIndex << "[" << groupIndex << "] = {";
             for(const auto &f : m_Fields) {
-                const std::string fieldInitVal = std::get<2>(f)(g, i);
+                const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
                 runnerVarAlloc << fieldInitVal << ", ";
+
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) != FieldType::Standard) {
+                    const bool isPointer = (std::get<3>(f) == FieldType::PointerEGP);
+
                     mergedEGPs[fieldInitVal].emplace(
-                        std::piecewise_construct, std::forward_as_tuple(name),
-                        std::forward_as_tuple(index, i, (std::get<3>(f) == FieldType::PointerEGP), std::get<1>(f)));
+                        std::piecewise_construct, 
+                        std::forward_as_tuple(name),
+                        std::forward_as_tuple(mergedGroupIndex, groupIndex, std::get<0>(f), std::get<1>(f)));
                 }
             }
             runnerVarAlloc << "};" << std::endl;
@@ -191,10 +200,10 @@ public:
         }
 
         // Then generate call to function to copy local array to device
-        runnerVarAlloc << "pushMerged" << name << "Group" << index << "ToDevice(merged" << name << "Group" << index << ");" << std::endl;
+        runnerVarAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(merged" << name << "Group" << mergedGroupIndex << ");" << std::endl;
 
         // Finally add declaration to function to definitions internal
-        definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << index << "ToDevice(const Merged" << name << "Group" << index << " *group);" << std::endl;
+        definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(const Merged" << name << "Group" << mergedGroupIndex << " *group);" << std::endl;
     }
 
 protected:

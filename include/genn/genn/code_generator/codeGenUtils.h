@@ -1,6 +1,8 @@
 #pragma once
 
 // Standard includes
+#include <algorithm>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -60,12 +62,12 @@ struct FunctionTemplate
 //! Immutable structure for tracking where an extra global variable ends up after merging
 struct MergedEGP
 {
-    MergedEGP(size_t m, size_t g, bool p, const std::string &f)
-    :   mergedGroupIndex(m), groupIndex(g), pointer(p), fieldName(f){}
+    MergedEGP(size_t m, size_t g, const std::string &t, const std::string &f)
+    :   mergedGroupIndex(m), groupIndex(g), type(t), fieldName(f){}
 
     const size_t mergedGroupIndex;
     const size_t groupIndex;
-    const bool pointer;
+    const std::string type;
     const std::string fieldName;
 };
 
@@ -153,17 +155,35 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << mergedGroupFuncStream.str();
         os << std::endl;
+
+        // Loop through all extra global parameters to build a set of unique filename, group index pairs
+        // **YUCK** it would be much nicer if this were part of the original data structure
+        // **NOTE** tuple would be nicer but doesn't define std::hash overload
+        std::set<std::pair<size_t, std::pair<std::string, std::string>>> mergedGroupFields;
         for(const auto &e : mergedEGPs) {
             const auto groupEGPs = e.second.equal_range(suffix);
-            for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-                if(g->second.pointer) {
-                    os << "void pushMerged" << suffix << g->second.mergedGroupIndex << g->second.fieldName << g->second.groupIndex << "ToDevice()";
-                    {
-                        CodeStream::Scope b(os);
-                        backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
-                    }
-                    os << std::endl;
+            std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
+                           [](const MergedEGPMap::value_type::second_type::value_type &g)
+                           {
+                               return std::make_pair(g.second.mergedGroupIndex, 
+                                                     std::make_pair(g.second.type, g.second.fieldName));
+                           });
+        }
+
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// merged extra global parameter functions" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        // Loop through resultant fields and generate push function for pointer extra global parameters
+        for(auto f : mergedGroupFields) {
+            // If EGP is a pointer
+            // **NOTE** this is common to all references!
+            if(Utils::isTypePointer(f.second.first)) {
+                os << "void pushMerged" << suffix << f.first << f.second.second << "ToDevice(unsigned int idx, " << f.second.first << " value)";
+                {
+                    CodeStream::Scope b(os);
+                    backend.genMergedExtraGlobalParamPush(os, suffix, f.first, "idx", f.second.second, "value");
                 }
+                os << std::endl;
             }
         }
     }

@@ -172,8 +172,9 @@ public:
     virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
-    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
-                                               const std::string &fieldName, const std::string &egpName) const override;
+    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                               const std::string &groupIdx, const std::string &fieldName,
+                                               const std::string &egpName) const override;
 
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const override;
