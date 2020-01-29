@@ -9,6 +9,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "variableMode.h"
 
 // GeNN code generator includes
