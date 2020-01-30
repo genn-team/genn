@@ -641,7 +641,6 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
         if(!backend.isAutomaticCopyEnabled() && canPushPullVar(loc)) {
             // Write definitions for push and pull functions
             definitionsFunc << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int count);" << std::endl;
-            definitionsFunc << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int count);" << std::endl;
 
             // Write push function
             extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
@@ -650,11 +649,16 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
                 backend.genExtraGlobalParamPush(extraGlobalParam, type, name, loc);
             }
 
-            // Write pull function
-            extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
-            {
-                CodeGenerator::CodeStream::Scope a(extraGlobalParam);
-                backend.genExtraGlobalParamPull(extraGlobalParam, type, name, loc);
+            if(backend.shouldGenerateExtraGlobalParamPull()) {
+                // Write definitions for pull functions
+                definitionsFunc << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int count);" << std::endl;
+
+                // Write pull function
+                extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
+                {
+                    CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+                    backend.genExtraGlobalParamPull(extraGlobalParam, type, name, loc);
+                }
             }
         }
 

@@ -240,6 +240,9 @@ public:
     //! Should GeNN generate empty state push and pull functions?
     virtual bool shouldGenerateEmptyStatePushPull() const override { return m_Preferences.generateEmptyStatePushPull; }
 
+    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
+    virtual bool shouldGenerateExtraGlobalParamPull() const override { return m_Preferences.generateExtraGlobalParamPull; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
 

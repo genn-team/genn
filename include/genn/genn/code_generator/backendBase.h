@@ -51,6 +51,9 @@ struct PreferencesBase
     //! Should GeNN generate empty state push and pull functions
     bool generateEmptyStatePushPull = true;
 
+    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
+    bool generateExtraGlobalParamPull = true;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
@@ -314,6 +317,9 @@ public:
 
     //! Should GeNN generate empty state push and pull functions?
     virtual bool shouldGenerateEmptyStatePushPull() const = 0;
+
+    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
+    virtual bool shouldGenerateExtraGlobalParamPull() const = 0;
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
