@@ -187,8 +187,6 @@ public:
 
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) != FieldType::Standard) {
-                    const bool isPointer = (std::get<3>(f) == FieldType::PointerEGP);
-
                     mergedEGPs[fieldInitVal].emplace(
                         std::piecewise_construct, 
                         std::forward_as_tuple(name),
