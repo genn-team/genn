@@ -601,9 +601,10 @@ CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, C
                             type, name, loc, count);
 }
 //-------------------------------------------------------------------------
-void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &definitionsFunc,
-                         CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &runner, CodeGenerator::CodeStream &extraGlobalParam,
-                         const CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &type, const std::string &name, VarLocation loc)
+void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar,
+                         CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runner,
+                         CodeGenerator::CodeStream &extraGlobalParam, const CodeGenerator::MergedEGPMap &mergedEGPs,
+                         const std::string &type, const std::string &name, VarLocation loc)
 {
     // Generate variables
     backend.genExtraGlobalParamDefinition(definitionsVar, type, name, loc);
@@ -1109,7 +1110,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
         for(size_t i = 0; i < extraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
                                 mergedEGPs, extraGlobalParams[i].type, extraGlobalParams[i].name + n.first, n.second.getExtraGlobalParamLocation(i));
         }
 
@@ -1137,7 +1138,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
             const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
             for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
                                     mergedEGPs, csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + cs->getName(), cs->getExtraGlobalParamLocation(i));
             }
         }
@@ -1325,19 +1326,19 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
                                 mergedEGPs, psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.second.getName(), s.second.getPSExtraGlobalParamLocation(i));
         }
 
         const auto wuExtraGlobalParams = wu->getExtraGlobalParams();
         for(size_t i = 0; i < wuExtraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
                                 mergedEGPs, wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.second.getName(), s.second.getWUExtraGlobalParamLocation(i));
         }
 
         const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
         for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
                                 mergedEGPs, sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.second.getName(),
                                 s.second.getSparseConnectivityExtraGlobalParamLocation(i));
         }
