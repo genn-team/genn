@@ -287,7 +287,42 @@ public:
     SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
 
     SET_PARAM_NAMES({"total"});
-    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
+    SET_EXTRA_GLOBAL_PARAMS({{
+        "preCalcRowLength", "uint16_t*",
+        "$(allocate, $(num_pre));\n"
+        "// Calculate row lengths\n"
+        "const size_t numPostPerThread = ($(num_post) + $(num_threads) - 1) / $(num_threads);\n"
+        "const size_t leftOverNeurons = $(num_post) % numPostPerThread;\n"
+        "size_t remainingConnections = $(total);\n"
+        "size_t matrixSize = (size_t)$(num_pre) * (size_t)numPost;\n"
+        "uint16_t *subRowLengths = $(value);\n"
+        "// Loop through rows\n"
+        "for(size_t i = 0; i < $(num_pre); i++) {\n"
+        "    const bool lastPre = (i == ($(num_pre) - 1));\n"
+        "    // Loop through subrows\n"
+        "    for(size_t j = 0; j < $(num_threads); j++) {\n"
+        "        const bool lastSubRow = (j == ($(num_threads) - 1));\n"
+        "        // If this isn't the last sub-row of the matrix\n"
+        "        if(!lastPre || ! lastSubRow) {\n"
+        "            // Get length of this subrow\n"
+        "            const unsigned int numSubRowNeurons = (leftOverNeurons != 0 && lastSubRow) ? leftOverNeurons : numPostPerThread;\n"
+        "            // Calculate probability\n"
+        "            const double probability = (double)numSubRowNeurons / (double)matrixSize;\n"
+        "            // Create distribution to sample row length\n"
+        "            std::binomial_distribution<size_t> rowLengthDist(remainingConnections, probability);\n"
+        "            // Sample row length;\n"
+        "            const size_t subRowLength = rowLengthDist($(rng));\n"
+        "            // Update counters\n"
+        "            remainingConnections -= subRowLength;\n"
+        "            matrixSize -= numSubRowNeurons;\n"
+        "            // Add row length to array\n"
+        "            assert(subRowLength < std::numeric_limits<uint16_t>::max());\n"
+        "            *subRowLengths++ = (uint16_t)subRowLength;\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+        "// Insert remaining connections into last sub-row\n"
+        "*subRowLengths = (uint16_t)remainingConnections;\n"}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
