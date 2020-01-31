@@ -123,13 +123,21 @@ public:
     //! An extra global parameter has a name and a type
     struct EGP
     {
+        EGP(const std::string &n, const std::string &t, const std::string &i) : name(n), type(t), initCode(i)
+        {}
+        EGP(const std::string &n, const std::string &t) : EGP(n, t, "")
+        {}
+        EGP() : EGP("", "", "")
+        {}
+
         bool operator == (const EGP &other) const
         {
-            return ((name == other.name) && (type == other.type));
+            return ((name == other.name) && (type == other.type) && (initCode == other.initCode));
         }
 
         std::string name;
         std::string type;
+        std::string initCode;
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value

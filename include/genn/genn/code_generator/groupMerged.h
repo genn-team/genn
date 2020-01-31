@@ -84,16 +84,16 @@ public:
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
     std::string getPrevQueueOffset() const;
 
-    //! Is the parameter implemented as a heterogeneous parameter?
+    //! Should the parameter be implemented heterogeneously?
     bool isParamHeterogeneous(size_t index) const;
 
-    //! Is the derived parameter implemented as a heterogeneous parameter?
+    //! Should the derived parameter be implemented heterogeneously?
     bool isDerivedParamHeterogeneous(size_t index) const;
 
-    //! Is the current source parameter implemented as a heterogeneous parameter?
+    //! Should the current source parameter be implemented heterogeneously?
     bool isCurrentSourceParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
-    //! Is the current source derived parameter implemented as a heterogeneous parameter?
+    //! Should the current source derived parameter be implemented heterogeneously?
     bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
     const std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> &getSortedMergedInSyns() const{ return m_SortedMergedInSyns; }
@@ -200,10 +200,16 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
-    //! Is the weight update model variable initialization parameter implemented as a heterogeneous parameter?
+    //! Should the weight update model variable initialization parameter be implemented heterogeneously?
     bool isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
     
-    //! Is the weight update model variable initialization derived parameter implemented as a heterogeneous parameter?
+    //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+
+    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityInitEGPInitParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityInitEGPInitDerivedParamHeterogeneous(size_t paramIndex) const;
 };
 }   // namespace CodeGenerator

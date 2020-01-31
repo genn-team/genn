@@ -180,3 +180,57 @@ bool CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHeterogeneous(siz
             });
     }
 }
+//----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMerged::isConnectivityInitEGPInitParamHeterogeneous(size_t paramIndex) const
+{
+    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();;
+
+    // If none of the connection init EGP initiation code references this parameter, return false
+    const auto connectInitEGPs = connectInitSnippet->getExtraGlobalParams();
+    const std::string paramName = connectInitSnippet->getParamNames().at(paramIndex);
+    if(std::none_of(connectInitEGPs.cbegin(), connectInitEGPs.cend(),
+                    [paramName](const Snippet::Base::EGP &egp)
+                    {
+                        return (egp.initCode.find("$(" + paramName + ")") != std::string::npos);
+                    }))
+    {
+        return false;
+    }
+    // Otherwise, return whether values across all groups are heterogeneous
+    else {
+        return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamValueHeterogeneous(
+            paramIndex,
+            [](const SynapseGroupInternal &sg)
+            {
+                return sg.getConnectivityInitialiser().getParams();
+            });
+    }
+}
+//----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMerged::isConnectivityInitEGPInitDerivedParamHeterogeneous(size_t paramIndex) const
+{
+    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();;
+
+    // If none of the connection init EGP initiation code references this parameter, return false
+    const auto connectInitEGPs = connectInitSnippet->getExtraGlobalParams();
+    const std::string derivedParamName = connectInitSnippet->getDerivedParams().at(paramIndex).name;
+    if(std::none_of(connectInitEGPs.cbegin(), connectInitEGPs.cend(),
+                    [derivedParamName](const Snippet::Base::EGP &egp)
+                    {
+                        return (egp.initCode.find("$(" + derivedParamName + ")") != std::string::npos);
+                    }))
+    {
+        return false;
+    }
+    // Otherwise, return whether values across all groups are heterogeneous
+    else {
+        return CodeGenerator::GroupMerged<SynapseGroupInternal>::isParamValueHeterogeneous(
+            paramIndex,
+            [](const SynapseGroupInternal &sg)
+            {
+                return sg.getConnectivityInitialiser().getDerivedParams();
+            });
+    }
+}
