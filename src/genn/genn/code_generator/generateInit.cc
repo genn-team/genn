@@ -205,19 +205,6 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
     genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), mergedEGPs, "SynapseConnectivityInit", backend);
     genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), mergedEGPs, "SynapseSparseInit", backend);
 
-    // Loop through merged synapse connectivity host init groups
-    for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        CodeStream::Scope b(os);
-        os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;
-        os << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
-        {
-            CodeStream::Scope b(os);
-
-            // Get reference to group
-            //os << "const auto &group = mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
-        }
-    }
-
     backend.genInit(os, modelMerged,
         // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
@@ -386,8 +373,65 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
             genScalarEGPPush(os, mergedEGPs, "SynapseConnectivityInit", backend);
         },
         // Initialise sparse push EGP handler
-        [&backend, &mergedEGPs](CodeStream &os)
+        [&backend, &mergedEGPs, &modelMerged](CodeStream &os)
         {
             genScalarEGPPush(os, mergedEGPs, "SynapseSparseInit", backend);
+
+            // Loop through merged synapse connectivity host init groups
+            for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
+                CodeStream::Scope b(os);
+                os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;
+                os << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Get reference to group
+                    os << "const auto &group = mergedSynapseConnectivityHostInitGroup" << sg.getIndex() << "[g]; " << std::endl;
+
+                    const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+
+                    // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
+                    // Otherwise it will only ever be used for initialization which uses one thread per row
+                    const size_t numThreads = (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) ? sg.getArchetype().getNumThreadsPerSpike() : 1;
+
+                    // Create substitutions
+                    Substitutions subs;
+                    subs.addVarSubstitution("num_pre", "group.numSrcNeurons");
+                    subs.addVarSubstitution("num_post", "group.numTrgNeurons");
+                    subs.addVarSubstitution("num_threads", std::to_string(numThreads));
+                    subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
+                    subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                                   [&sg](size_t p) { return sg.isConnectivityHostInitParamHeterogeneous(p); },
+                                                   "", "group.");
+                    subs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                                 [&sg](size_t p) { return sg.isConnectivityHostInitDerivedParamHeterogeneous(p); },
+                                                 "", "group.");
+
+                    // Loop through EGPs
+                    const auto egps = connectInit.getSnippet()->getExtraGlobalParams();
+                    for(size_t i = 0; i < egps.size(); i++) {
+                        const auto loc = sg.getArchetype().getSparseConnectivityExtraGlobalParamLocation(i);
+                        // If EGP is a pointer and located on the host
+                        if(Utils::isTypePointer(egps[i].type) && (loc & VarLocation::HOST)) {
+                            // Generate code to allocate this EGP with count specified by $(1)
+                            std::stringstream allocStream;
+                            CodeStream alloc(allocStream);
+                            backend.genExtraGlobalParamAllocation(alloc, egps[i].type, egps[i].name,
+                                                                  loc, "$(1)");
+
+                            // Add substitution
+                            subs.addFuncSubstitution("allocate" + egps[i].name, 1, allocStream.str());
+                        }
+                    }
+                    std::string code = connectInit.getSnippet()->getHostInitCode();
+                    //subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(sg.getIndex()));
+                    subs.apply(code);
+                    code = ensureFtype(code, modelMerged.getModel().getPrecision());
+
+                    // Write out code
+                    os << code << std::endl;
+
+                }
+            }
         });
 }

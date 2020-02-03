@@ -494,7 +494,7 @@ void genMergedSynapseConnectivityInit(const CodeGenerator::BackendBase &backend,
 
     // Generate structure definitions and instantiation
     gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerVarAlloc,
-                 mergedEGPs, host ? "SynapseConnectivityHostInit" : "SynapseConnectivityInit");
+                 mergedEGPs, host ? "SynapseConnectivityHostInit" : "SynapseConnectivityInit", host);
 }
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)

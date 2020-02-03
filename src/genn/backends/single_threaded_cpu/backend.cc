@@ -707,21 +707,22 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
     genVariableImplementation(os, type, name, loc);
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                            VarLocation, const std::string &countVarName) const
 {
     // Get underlying type
     // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
     const std::string underlyingType = Utils::getUnderlyingType(type);
 
-    os << name << " = new " << underlyingType << "[count];" << std::endl;
+    os << name << " = new " << underlyingType << "[" << countVarName << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, VarLocation) const
+void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, VarLocation, const std::string &) const
 {
     assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, VarLocation) const
+void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, VarLocation, const std::string &) const
 {
     assert(!m_Preferences.automaticCopy);
 }

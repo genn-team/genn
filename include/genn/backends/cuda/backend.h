@@ -161,9 +161,12 @@ public:
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                               VarLocation loc, const std::string &countVarName = "count") const override;
+    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count") const override;
+    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count") const override;
 
     //! Generate code for declaring merged group data to the 'device'
     virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;

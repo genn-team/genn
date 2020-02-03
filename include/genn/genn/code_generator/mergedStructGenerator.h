@@ -152,7 +152,7 @@ public:
 
     void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
                   CodeGenerator::CodeStream &runnerVarDecl, CodeGenerator::CodeStream &runnerVarAlloc,
-                  CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &name)
+                  CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &name, bool host = false)
     {
         const size_t mergedGroupIndex = getMergedGroup().getIndex();
 
@@ -197,11 +197,18 @@ public:
 
         }
 
-        // Then generate call to function to copy local array to device
-        runnerVarAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(merged" << name << "Group" << mergedGroupIndex << ");" << std::endl;
+        // If this is a host merged struct, export the variable
+        if(host) {
+            definitionsInternal << "EXPORT_VAR Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "]; " << std::endl;
+        }
+        // Otherwise
+        else {
+            // Then generate call to function to copy local array to device
+            runnerVarAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(merged" << name << "Group" << mergedGroupIndex << ");" << std::endl;
 
-        // Finally add declaration to function to definitions internal
-        definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(const Merged" << name << "Group" << mergedGroupIndex << " *group);" << std::endl;
+            // Finally add declaration to function to definitions internal
+            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(const Merged" << name << "Group" << mergedGroupIndex << " *group);" << std::endl;
+        }
     }
 
 protected:

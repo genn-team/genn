@@ -211,9 +211,12 @@ public:
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                               VarLocation loc, const std::string &countVarName = "count") const = 0;
+    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count") const = 0;
+    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count") const = 0;
 
     //! Generate code for declaring merged group data to the 'device'
     virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
