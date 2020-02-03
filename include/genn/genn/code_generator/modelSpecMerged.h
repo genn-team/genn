@@ -62,6 +62,9 @@ public:
     //! Get merged synapse groups which require their dendritic delay updating
     const std::vector<SynapseGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
 
+    //! Merged synapse groups which require host code to initialise their EGPs
+    std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityEGPInitGroups() const{ return m_MergedSynapseConnectivityEGPInitGroups; }
+
     void genNeuronUpdateGroupSupportCode(CodeStream &os) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision()); }
 
     void genPostsynapticDynamicsSupportCode(CodeStream &os) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision()); }
@@ -118,6 +121,9 @@ private:
 
     //! Merged synapse groups which require their dendritic delay updating
     std::vector<SynapseGroupMerged> m_MergedSynapseDendriticDelayUpdateGroups;
+
+    //! Merged synapse groups which require host code to initialise their EGPs
+    std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityEGPInitGroups;
 
     //! Unique support code strings for neuron update
     SupportCodeMerged m_NeuronUpdateSupportCode;
