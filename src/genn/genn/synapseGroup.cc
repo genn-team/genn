@@ -287,7 +287,7 @@ bool SynapseGroup::isWUInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isHostInitRNGRequired() const
 {
-    return Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getHostInitCode());
+    return (m_ConnectivityInitialiser.getSnippet()->getHostInitCode().find("$(rng)") != std::string::npos);
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
