@@ -61,11 +61,11 @@ public:
         }
     }
 
-    void addEGPs(const std::vector<Snippet::Base::EGP> &egps)
+    void addEGPs(const std::vector<Snippet::Base::EGP> &egps, const std::string &prefix)
     {
         for(const auto &e : egps) {
             addField(e.type, e.name,
-                     [e](const typename T::GroupInternal &g, size_t){ return e.name + g.getName(); },
+                     [e, prefix](const typename T::GroupInternal &g, size_t){ return prefix + e.name + g.getName(); },
                      Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }

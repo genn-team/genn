@@ -138,7 +138,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
 
     // Extra global parameters are not required for init
     if(!init) {
-        gen.addEGPs(nm->getExtraGlobalParams());
+        gen.addEGPs(nm->getExtraGlobalParams(), backend.getArrayPrefix());
 
         // Add heterogeneous neuron model parameters
         gen.addHeterogeneousParams(m.getArchetype().getNeuronModel()->getParamNames(), 
@@ -405,7 +405,7 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         gen.addVars(wum->getPostVars(), backend.getArrayPrefix());
 
         // Add EGPs to struct
-        gen.addEGPs(wum->getExtraGlobalParams());
+        gen.addEGPs(wum->getExtraGlobalParams(), backend.getArrayPrefix());
     }
 
     // Add pointers to connectivity data
@@ -432,7 +432,8 @@ void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGener
         gen.addPointerField("uint32_t", "gp", backend.getArrayPrefix() + "gp");
     }
     else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-        gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
+        gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
+                    backend.getArrayPrefix());
     }
 
     // If synaptic matrix weights are individual, add pointers to var pointers to struct
@@ -490,7 +491,8 @@ void genMergedSynapseConnectivityInit(const CodeGenerator::BackendBase &backend,
     }
 
     // Add EGPs to struct
-    gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
+    gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
+                backend.getArrayPrefix());
 
     // Generate structure definitions and instantiation
     gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerVarAlloc,
@@ -670,10 +672,10 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
 
             // Get destinations in merged structures, this EGP 
             // needs to be copied to and call push function
-            const auto &mergedDestinations = mergedEGPs.at(name);
+            const auto &mergedDestinations = mergedEGPs.at(backend.getArrayPrefix() + name);
             for(const auto &v : mergedDestinations) {
                 extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                extraGlobalParam << v.second.groupIndex << ", " << backend.getArrayPrefix() << name << ");" << std::endl;
+                extraGlobalParam << v.second.groupIndex << ", " << name << ");" << std::endl;
             }
         }
 
