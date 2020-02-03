@@ -285,6 +285,11 @@ bool SynapseGroup::isWUInitRNGRequired() const
             && Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isHostInitRNGRequired() const
+{
+    return Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getHostInitCode());
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables,

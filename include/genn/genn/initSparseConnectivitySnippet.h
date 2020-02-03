@@ -300,7 +300,7 @@ public:
         "const size_t numPostPerThread = ($(num_post) + $(num_threads) - 1) / $(num_threads);\n"
         "const size_t leftOverNeurons = $(num_post) % numPostPerThread;\n"
         "size_t remainingConnections = $(total);\n"
-        "size_t matrixSize = (size_t)$(num_pre) * (size_t)numPost;\n"
+        "size_t matrixSize = (size_t)$(num_pre) * (size_t)$(num_post);\n"
         "uint16_t *subRowLengths = $(preCalcRowLength);\n"
         "// Loop through rows\n"
         "for(size_t i = 0; i < $(num_pre); i++) {\n"
@@ -328,7 +328,9 @@ public:
         "    }\n"
         "}\n"
         "// Insert remaining connections into last sub-row\n"
-        "*subRowLengths = (uint16_t)remainingConnections;\n");
+        "*subRowLengths = (uint16_t)remainingConnections;\n"
+        "// Push populated row length array\n"
+        "$(pushpreCalcRowLength, $(num_pre) * $(num_threads));\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)

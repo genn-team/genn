@@ -479,6 +479,11 @@ void genMergedSynapseConnectivityInit(const CodeGenerator::BackendBase &backend,
         gen.addHeterogeneousDerivedParams(m.getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(),
                                           [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
                                           &CodeGenerator::SynapseGroupMerged::isConnectivityHostInitDerivedParamHeterogeneous);
+
+        // Add EGP pointers to struct for both host and device EGPs
+        gen.addEGPPointers(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
+        gen.addEGPPointers(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
+                           backend.getArrayPrefix());
     }
     else {
         if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -488,11 +493,11 @@ void genMergedSynapseConnectivityInit(const CodeGenerator::BackendBase &backend,
         else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             gen.addPointerField("uint32_t", "gp", backend.getArrayPrefix() + "gp");
         }
-    }
 
-    // Add EGPs to struct
-    gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-                backend.getArrayPrefix());
+        // Add EGPs to struct
+        gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
+                    backend.getArrayPrefix());
+    }
 
     // Generate structure definitions and instantiation
     gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerVarAlloc,

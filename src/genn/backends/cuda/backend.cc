@@ -1616,35 +1616,35 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                            VarLocation loc, const std::string &countVarName) const
+                                            VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
     // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
 
     if(m_Preferences.automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << prefix << name << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", count * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << prefix << name << ", " << countVarName << " * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
         }
 
         // If variable is present on device at all
         if(loc & VarLocation::DEVICE) {
             if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)&d_" << name << ", (void*)" << name << ", 0));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)&" << prefix << "d_" << name << ", (void*)" << name << ", 0));" << std::endl;
             }
             else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMalloc(&" << prefix << "d_" << name << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
             }
         }
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
-                                      VarLocation loc, const std::string &countVarName) const
+                                      VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     assert(!m_Preferences.automaticCopy);
 
@@ -1653,14 +1653,14 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
         // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
         const std::string underlyingType = ::Utils::getUnderlyingType(type);
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
-        os << ", " << name;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << "d_" << name;
+        os << ", " << prefix << name;
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
-                                      VarLocation loc, const std::string &countVarName) const
+                                      VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     assert(!m_Preferences.automaticCopy);
 
@@ -1669,8 +1669,8 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
         // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
         const std::string underlyingType = ::Utils::getUnderlyingType(type);
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
-        os << ", d_"  << name;
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << name;
+        os << ", " << prefix << "d_"  << name;
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
     }
 }

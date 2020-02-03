@@ -366,16 +366,11 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         },
         // Initialise push EGP handler
-        [&backend, &mergedEGPs](CodeStream &os)
+        [&backend, &mergedEGPs, &modelMerged](CodeStream &os)
         {
             genScalarEGPPush(os, mergedEGPs, "NeuronInit", backend);
             genScalarEGPPush(os, mergedEGPs, "SynapseDenseInit", backend);
             genScalarEGPPush(os, mergedEGPs, "SynapseConnectivityInit", backend);
-        },
-        // Initialise sparse push EGP handler
-        [&backend, &mergedEGPs, &modelMerged](CodeStream &os)
-        {
-            genScalarEGPPush(os, mergedEGPs, "SynapseSparseInit", backend);
 
             // Loop through merged synapse connectivity host init groups
             for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
@@ -413,14 +408,23 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
                         const auto loc = sg.getArchetype().getSparseConnectivityExtraGlobalParamLocation(i);
                         // If EGP is a pointer and located on the host
                         if(Utils::isTypePointer(egps[i].type) && (loc & VarLocation::HOST)) {
-                            // Generate code to allocate this EGP with count specified by $(1)
+                            // Generate code to allocate this EGP with count specified by $(0)
                             std::stringstream allocStream;
                             CodeStream alloc(allocStream);
                             backend.genExtraGlobalParamAllocation(alloc, egps[i].type, egps[i].name,
-                                                                  loc, "$(1)");
+                                                                  loc, "$(0)", "group.");
 
                             // Add substitution
                             subs.addFuncSubstitution("allocate" + egps[i].name, 1, allocStream.str());
+
+                            // Generate code to push this EGP with count specified by $(0)
+                            std::stringstream pushStream;
+                            CodeStream push(pushStream);
+                            backend.genExtraGlobalParamPush(push, egps[i].type, egps[i].name,
+                                                            loc, "$(0)", "group.");
+
+                            // Add substitution
+                            subs.addFuncSubstitution("push" + egps[i].name, 1, pushStream.str());
                         }
                     }
                     std::string code = connectInit.getSnippet()->getHostInitCode();
@@ -433,5 +437,10 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
 
                 }
             }
+        },
+        // Initialise sparse push EGP handler
+        [&backend, &mergedEGPs](CodeStream &os)
+        {
+            genScalarEGPPush(os, mergedEGPs, "SynapseSparseInit", backend);
         });
 }
