@@ -232,7 +232,7 @@ public:
     virtual std::string getArrayPrefix() const override{ return m_Preferences.automaticCopy ? "" : "d_"; }
     virtual std::string getScalarPrefix() const override{ return "d_"; }
 
-    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override{ return true; }
     virtual bool isSynRemapRequired() const override{ return true; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }

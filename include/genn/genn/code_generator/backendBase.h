@@ -303,8 +303,8 @@ public:
 
     virtual std::string getScalarPrefix() const{ return ""; }
 
-    //! Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?
-    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
+    //! Different backends use different RNGs for different things. Does this one require a global deviceRNG for the specified model?
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require population RNGs?
     virtual bool isPopulationRNGRequired() const = 0;

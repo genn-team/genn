@@ -807,7 +807,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << std::endl;
 
     // If device RNG is required, generate kernel to initialise it
-    if(isGlobalRNGRequired(modelMerged)) {
+    if(isGlobalDeviceRNGRequired(modelMerged)) {
         os << "extern \"C\" __global__ void initializeRNGKernel(unsigned long long deviceRNGSeed)";
         {
             CodeStream::Scope b(os);
@@ -1117,7 +1117,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         os << "unsigned long long deviceRNGSeed = 0;" << std::endl;
 
         // If on-device global RNG is required
-        if(isGlobalRNGRequired(modelMerged)) {
+        if(isGlobalDeviceRNGRequired(modelMerged)) {
             // If no seed is specified
             if (model.getSeed() == 0) {
                 CodeStream::Scope b(os);
@@ -1947,7 +1947,7 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const
+bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
 {
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account

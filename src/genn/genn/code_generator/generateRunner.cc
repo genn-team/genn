@@ -825,7 +825,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runnerVarDecl << model.getTimePrecision() << " t;" << std::endl;
 
     // If backend requires a global RNG to simulate (or initialize) this model
-    if(backend.isGlobalRNGRequired(modelMerged)) {
+    if(backend.isGlobalDeviceRNGRequired(modelMerged)) {
         mem += backend.genGlobalRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
     }
     allVarStreams << std::endl;

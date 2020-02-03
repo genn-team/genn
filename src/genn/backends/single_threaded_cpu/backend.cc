@@ -374,7 +374,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         Timer t(os, "init", model.isTimingEnabled());
 
         // If model requires a host RNG
-        if(isGlobalRNGRequired(modelMerged)) {
+        if(isGlobalDeviceRNGRequired(modelMerged)) {
             // If no seed is specified, use system randomness to generate seed sequence
             CodeStream::Scope b(os);
             if (model.getSeed() == 0) {
@@ -517,7 +517,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         Timer t(os, "initSparse", model.isTimingEnabled());
 
         // If model requires RNG, add it to substitutions
-        if(isGlobalRNGRequired(modelMerged)) {
+        if(isGlobalDeviceRNGRequired(modelMerged)) {
             funcSubs.addVarSubstitution("rng", "rng");
         }
 
@@ -609,7 +609,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <cstring>" << std::endl;
 
      // If a global RNG is required, define standard host distributions as recreating them each call is slow
-    if(isGlobalRNGRequired(modelMerged)) {
+    if(isGlobalDeviceRNGRequired(modelMerged)) {
         os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
@@ -652,7 +652,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
-    if(isGlobalRNGRequired(modelMerged)) {
+    if(isGlobalDeviceRNGRequired(modelMerged)) {
         os << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
         os << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
         os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
@@ -934,7 +934,7 @@ void Backend::genMSBuildImportTarget(std::ostream&) const
 {
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const
+bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account

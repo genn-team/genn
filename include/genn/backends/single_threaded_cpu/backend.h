@@ -128,7 +128,7 @@ public:
     virtual std::string getArrayPrefix() const override{ return ""; }
     virtual std::string getScalarPrefix() const override{ return ""; }
 
-    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override { return false; }
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
