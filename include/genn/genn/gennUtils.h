@@ -36,6 +36,11 @@ GENN_EXPORT bool isRNGRequired(const std::vector<Models::VarInit> &varInitialise
 GENN_EXPORT bool isTypePointer(const std::string &type);
 
 //--------------------------------------------------------------------------
+//! \brief Function to determine whether a string containing a type is a pointer to a pointer
+//--------------------------------------------------------------------------
+GENN_EXPORT bool isTypePointerToPointer(const std::string &type);
+
+//--------------------------------------------------------------------------
 //! \brief Assuming type is a string containing a pointer type, function to return the underlying type
 //--------------------------------------------------------------------------
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);

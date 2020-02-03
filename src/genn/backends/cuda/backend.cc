@@ -1209,6 +1209,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << "#include <stdexcept>" << std::endl;
     os << std::endl;
     os << "// Standard C includes" << std::endl;
+    os << "#include <cassert>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -1620,25 +1621,28 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
                                             VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
-    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
+    const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
+    const std::string hostPointerToPointer = pointerToPointer ? (prefix + name) : ("&" + prefix + name);
+    const std::string devicePointerToPointer = pointerToPointer ? (prefix + "d_" + name) : ("&" + prefix + "d_" + name);
     if(m_Preferences.automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << prefix << name << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << prefix << name << ", " << countVarName << " * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
         }
 
         // If variable is present on device at all
         if(loc & VarLocation::DEVICE) {
             if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)&" << prefix << "d_" << name << ", (void*)" << name << ", 0));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
             }
             else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(&" << prefix << "d_" << name << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
             }
         }
     }
@@ -1651,11 +1655,14 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
 
     if(!(loc & VarLocation::ZERO_COPY)) {
         // Get underlying type
-        // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
         const std::string underlyingType = ::Utils::getUnderlyingType(type);
+        const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << "d_" << name;
-        os << ", " << prefix << name;
+        const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
+        const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << devicePointer;
+        os << ", " << hostPointer;
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
     }
 }
@@ -1667,11 +1674,14 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
 
     if(!(loc & VarLocation::ZERO_COPY)) {
         // Get underlying type
-        // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
         const std::string underlyingType = ::Utils::getUnderlyingType(type);
+        const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << name;
-        os << ", " << prefix << "d_"  << name;
+        const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
+        const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+
+        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << hostPointer;
+        os << ", " << devicePointer;
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
     }
 }

@@ -423,7 +423,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
                     subs.addVarSubstitution("num_pre", "group.numSrcNeurons");
                     subs.addVarSubstitution("num_post", "group.numTrgNeurons");
                     subs.addVarSubstitution("num_threads", std::to_string(numThreads));
-                    subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
+                    subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group.");
                     subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
                                                    [&sg](size_t p) { return sg.isConnectivityHostInitParamHeterogeneous(p); },
                                                    "", "group.");
@@ -440,7 +440,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
                             // Generate code to allocate this EGP with count specified by $(0)
                             std::stringstream allocStream;
                             CodeStream alloc(allocStream);
-                            backend.genExtraGlobalParamAllocation(alloc, egps[i].type, egps[i].name,
+                            backend.genExtraGlobalParamAllocation(alloc, egps[i].type + "*", egps[i].name,
                                                                   loc, "$(0)", "group.");
 
                             // Add substitution
@@ -449,7 +449,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
                             // Generate code to push this EGP with count specified by $(0)
                             std::stringstream pushStream;
                             CodeStream push(pushStream);
-                            backend.genExtraGlobalParamPush(push, egps[i].type, egps[i].name,
+                            backend.genExtraGlobalParamPush(push, egps[i].type + "*", egps[i].name,
                                                             loc, "$(0)", "group.");
 
                             // Add substitution

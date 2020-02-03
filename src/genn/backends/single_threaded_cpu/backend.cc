@@ -575,6 +575,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <random>" << std::endl;
     os << std::endl;
     os << "// Standard C includes" << std::endl;
+    os << "#include <cassert>" << std::endl;
     os << "#include <cmath>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
