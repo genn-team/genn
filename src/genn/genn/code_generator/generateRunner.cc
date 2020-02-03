@@ -12,6 +12,7 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
+#include "code_generator/substitutions.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
 #include "code_generator/mergedStructGenerator.h"
@@ -658,14 +659,14 @@ CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, C
 void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar,
                          CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runner,
                          CodeGenerator::CodeStream &extraGlobalParam, const CodeGenerator::MergedEGPMap &mergedEGPs,
-                         const std::string &type, const std::string &name, VarLocation loc)
+                         const std::string &type, const std::string &name, bool apiRequired, VarLocation loc)
 {
     // Generate variables
     backend.genExtraGlobalParamDefinition(definitionsVar, type, name, loc);
     backend.genExtraGlobalParamImplementation(runner, type, name, loc);
 
-    // If type is a pointer
-    if(Utils::isTypePointer(type)) {
+    // If type is a pointer and API is required
+    if(Utils::isTypePointer(type) && apiRequired) {
         // Write definitions for functions to allocate and free extra global param
         definitionsFunc << "EXPORT_FUNC void allocate" << name << "(unsigned int count);" << std::endl;
         definitionsFunc << "EXPORT_FUNC void free" << name << "();" << std::endl;
@@ -716,6 +717,108 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
                 }
             }
         }
+
+    }
+}
+//-------------------------------------------------------------------------
+CodeGenerator::MemAlloc genGlobalHostRNG(CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &runnerVarDecl,
+                                         CodeGenerator::CodeStream &runnerVarAlloc, unsigned int seed)
+{
+    definitionsVar << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
+    runnerVarDecl << "std::mt19937 rng;" << std::endl;
+
+    // If no seed is specified, use system randomness to generate seed sequence
+    CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
+    if(seed == 0) {
+        runnerVarAlloc << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
+        runnerVarAlloc << "std::random_device seedSource;" << std::endl;
+        {
+            CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
+            runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
+            {
+                CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
+                runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
+            }
+        }
+        runnerVarAlloc << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
+    }
+    // Otherwise, create a seed sequence from model seed
+    // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
+    else {
+        runnerVarAlloc << "std::seed_seq seeds{" << seed << "};" << std::endl;
+    }
+
+    // Seed RNG from seed sequence
+    runnerVarAlloc << "rng.seed(seeds);" << std::endl;
+
+    // Add size of Mersenne Twister to memory tracker
+    return CodeGenerator::MemAlloc::host(sizeof(std::mt19937));
+}
+//-------------------------------------------------------------------------
+void genSynapseConnectivityHostInit(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &os, 
+                                    const CodeGenerator::SynapseGroupMerged &sg, const std::string &precision)
+{
+    CodeGenerator::CodeStream::Scope b(os);
+    os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;
+    os << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
+    {
+        CodeGenerator::CodeStream::Scope b(os);
+
+        // Get reference to group
+        os << "const auto &group = mergedSynapseConnectivityHostInitGroup" << sg.getIndex() << "[g]; " << std::endl;
+
+        const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+
+        // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
+        // Otherwise it will only ever be used for initialization which uses one thread per row
+        const size_t numThreads = (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) ? sg.getArchetype().getNumThreadsPerSpike() : 1;
+
+        // Create substitutions
+        CodeGenerator::Substitutions subs;
+        subs.addVarSubstitution("rng", "rng");
+        subs.addVarSubstitution("num_pre", "group.numSrcNeurons");
+        subs.addVarSubstitution("num_post", "group.numTrgNeurons");
+        subs.addVarSubstitution("num_threads", std::to_string(numThreads));
+        subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group.");
+        subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                       [&sg](size_t p) { return sg.isConnectivityHostInitParamHeterogeneous(p); },
+                                       "", "group.");
+        subs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                     [&sg](size_t p) { return sg.isConnectivityHostInitDerivedParamHeterogeneous(p); },
+                                     "", "group.");
+
+        // Loop through EGPs
+        const auto egps = connectInit.getSnippet()->getExtraGlobalParams();
+        for(size_t i = 0; i < egps.size(); i++) {
+            const auto loc = sg.getArchetype().getSparseConnectivityExtraGlobalParamLocation(i);
+            // If EGP is a pointer and located on the host
+            if(Utils::isTypePointer(egps[i].type) && (loc & VarLocation::HOST)) {
+                // Generate code to allocate this EGP with count specified by $(0)
+                std::stringstream allocStream;
+                CodeGenerator::CodeStream alloc(allocStream);
+                backend.genExtraGlobalParamAllocation(alloc, egps[i].type + "*", egps[i].name,
+                                                      loc, "$(0)", "group.");
+
+                // Add substitution
+                subs.addFuncSubstitution("allocate" + egps[i].name, 1, allocStream.str());
+
+                // Generate code to push this EGP with count specified by $(0)
+                std::stringstream pushStream;
+                CodeGenerator::CodeStream push(pushStream);
+                backend.genExtraGlobalParamPush(push, egps[i].type + "*", egps[i].name,
+                                                loc, "$(0)", "group.");
+
+
+                // Add substitution
+                subs.addFuncSubstitution("push" + egps[i].name, 1, pushStream.str());
+            }
+        }
+        std::string code = connectInit.getSnippet()->getHostInitCode();
+        subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(sg.getIndex()));
+        code = CodeGenerator::ensureFtype(code, precision);
+
+        // Write out code
+        os << code << std::endl;
 
     }
 }
@@ -831,10 +934,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     }
     // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
     if(backend.isGlobalHostRNGRequired(modelMerged)) {
-        definitionsVar << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
-        runnerVarDecl << "std::mt19937 rng;" << std::endl;
-
-        mem += MemAlloc::host(sizeof(std::mt19937));
+        mem += genGlobalHostRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, model.getSeed());
     }
     allVarStreams << std::endl;
 
@@ -903,6 +1003,18 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
     definitionsInternalFunc << "// copying merged group structures to device" << std::endl;
     definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
+
+    // Loop through merged synapse connectivity host initialisation groups
+    for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
+        genMergedSynapseConnectivityInit(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
+                                         mergedEGPs, m, true);
+    }
+    
+    // Loop through merged synapse connectivity host init groups and generate host init code
+    // **NOTE** this is done here so valid pointers get copied straight into subsequent structures and merged EGP system isn't required
+    for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
+        genSynapseConnectivityHostInit(backend, runnerMergedStructAlloc, sg, model.getPrecision());
+    }
 
     // Generate merged neuron initialisation groups
     for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
@@ -997,12 +1109,6 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         // Generate structure definitions and instantiation
         gen.generate(definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
                      mergedEGPs, "SynapseDendriticDelayUpdate");
-    }
-
-    // Loop through merged synapse connectivity initialisation groups
-    for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        genMergedSynapseConnectivityInit(backend, definitionsInternal, definitionsInternalFunc, runnerVarDecl, runnerMergedStructAlloc,
-                                         mergedEGPs, m, true);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -1156,7 +1262,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
         for(size_t i = 0; i < extraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                mergedEGPs, extraGlobalParams[i].type, extraGlobalParams[i].name + n.first, n.second.getExtraGlobalParamLocation(i));
+                                mergedEGPs, extraGlobalParams[i].type, extraGlobalParams[i].name + n.first, 
+                                true, n.second.getExtraGlobalParamLocation(i));
         }
 
         if(!n.second.getCurrentSources().empty()) {
@@ -1184,7 +1291,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
             for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
                 genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    mergedEGPs, csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + cs->getName(), cs->getExtraGlobalParamLocation(i));
+                                    mergedEGPs, csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + cs->getName(), 
+                                    true, cs->getExtraGlobalParamLocation(i));
             }
         }
     }
@@ -1372,19 +1480,22 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                mergedEGPs, psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.second.getName(), s.second.getPSExtraGlobalParamLocation(i));
+                                mergedEGPs, psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.second.getName(), 
+                                true, s.second.getPSExtraGlobalParamLocation(i));
         }
 
         const auto wuExtraGlobalParams = wu->getExtraGlobalParams();
         for(size_t i = 0; i < wuExtraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                mergedEGPs, wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.second.getName(), s.second.getWUExtraGlobalParamLocation(i));
+                                mergedEGPs, wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.second.getName(), 
+                                true, s.second.getWUExtraGlobalParamLocation(i));
         }
 
         const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
         for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
             genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
                                 mergedEGPs, sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.second.getName(),
+                                s.second.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty(),
                                 s.second.getSparseConnectivityExtraGlobalParamLocation(i));
         }
     }
