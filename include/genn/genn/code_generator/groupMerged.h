@@ -207,9 +207,9 @@ public:
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
 
     //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitEGPInitParamHeterogeneous(size_t paramIndex) const;
+    bool isConnectivityHostInitParamHeterogeneous(size_t paramIndex) const;
 
     //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitEGPInitDerivedParamHeterogeneous(size_t paramIndex) const;
+    bool isConnectivityHostInitDerivedParamHeterogeneous(size_t paramIndex) const;
 };
 }   // namespace CodeGenerator

@@ -156,6 +156,14 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                            return (a.getMaxDendriticDelayTimesteps() == b.getMaxDendriticDelayTimesteps());
                        });
 
+    LOGD_CODE_GEN << "Merging synapse groups which require host code to initialise their synaptic connectivity:";
+    createMergedGroups(model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups, true,
+                       [](const SynapseGroupInternal &sg) { return !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty(); },
+                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b)
+                       { 
+                           return a.canConnectivityHostInitBeMerged(b); 
+                       });
+
     // Loop through merged neuron groups
     for(const auto &ng : m_MergedNeuronUpdateGroups) {
         // Add neuron support code

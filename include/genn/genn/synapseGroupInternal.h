@@ -47,4 +47,5 @@ public:
     using SynapseGroup::canWUPostInitBeMerged;
     using SynapseGroup::canPSInitBeMerged;
     using SynapseGroup::canConnectivityInitBeMerged;
+    using SynapseGroup::canConnectivityHostInitBeMerged;
 };

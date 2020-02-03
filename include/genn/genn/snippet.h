@@ -123,21 +123,13 @@ public:
     //! An extra global parameter has a name and a type
     struct EGP
     {
-        EGP(const std::string &n, const std::string &t, const std::string &i) : name(n), type(t), initCode(i)
-        {}
-        EGP(const std::string &n, const std::string &t) : EGP(n, t, "")
-        {}
-        EGP() : EGP("", "", "")
-        {}
-
         bool operator == (const EGP &other) const
         {
-            return ((name == other.name) && (type == other.type) && (initCode == other.initCode));
+            return ((name == other.name) && (type == other.type));
         }
 
         std::string name;
         std::string type;
-        std::string initCode;
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
@@ -255,6 +247,7 @@ public:
 protected:
     bool canBeMerged(const Init<SnippetBase> &other, const std::string &codeString) const
     {
+        // **TODO** this whole system can be replaced with the same homogeneous param business used elsewhere
         // If snippets can be merged
         if(getSnippet()->canBeMerged(other.getSnippet())) {
             // Loop through parameters

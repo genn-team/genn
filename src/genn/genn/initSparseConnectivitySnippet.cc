@@ -16,5 +16,6 @@ bool InitSparseConnectivitySnippet::Base::canBeMerged(const Base *other) const
     return (Snippet::Base::canBeMerged(other)
             && (getRowBuildCode() == other->getRowBuildCode())
             && (getRowBuildStateVars() == other->getRowBuildStateVars())
+            && (getHostInitCode() == other->getHostInitCode())
             && (getExtraGlobalParams() == other->getExtraGlobalParams()));
 }

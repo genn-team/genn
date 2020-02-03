@@ -40,6 +40,17 @@
 %include "gennExport.h"
 %include "snippet.h"
 
+// Extend each of the underlying structs with constructors
+%extend Snippet::Base::EGP {
+    EGP(const std::string &name, const std::string &type) 
+    {
+        Snippet::Base::EGP* v = new Snippet::Base::EGP();
+        v->name = name;
+        v->type = type;
+        return v;
+    }
+};
+
 %extend Snippet::Base::DerivedParam {
     DerivedParam(const std::string &name, std::function<double(const std::vector<double> &, double)> func) 
     {

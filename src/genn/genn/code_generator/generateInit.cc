@@ -205,6 +205,19 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
     genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), mergedEGPs, "SynapseConnectivityInit", backend);
     genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), mergedEGPs, "SynapseSparseInit", backend);
 
+    // Loop through merged synapse connectivity host init groups
+    for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
+        CodeStream::Scope b(os);
+        os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;
+        os << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
+        {
+            CodeStream::Scope b(os);
+
+            // Get reference to group
+            //os << "const auto &group = mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+        }
+    }
+
     backend.genInit(os, modelMerged,
         // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)

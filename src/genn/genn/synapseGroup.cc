@@ -604,3 +604,9 @@ bool SynapseGroup::canConnectivityInitBeMerged(const SynapseGroup &other) const
             && (getSynapseMatrixConnectivity(getMatrixType()) == getSynapseMatrixConnectivity(other.getMatrixType()))
             && (getSparseIndType() == other.getSparseIndType()));
 }
+//----------------------------------------------------------------------------
+bool SynapseGroup::canConnectivityHostInitBeMerged(const SynapseGroup &other) const
+{
+    // Connectivity host initialization can be merged if the initialisers 
+    return getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser());
+}

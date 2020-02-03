@@ -82,7 +82,7 @@ public:
                 addField("scalar", paramNames[p],
                          [p, getParamValues](const typename T::GroupInternal &g, size_t)
                          {
-                             const auto &values = (g.*getParamValues)();
+                             const auto &values = getParamValues(g);
                              return Utils::writePreciseString(values.at(p));
                          });
             }
@@ -101,7 +101,7 @@ public:
                 addField("scalar", derivedParams[p].name,
                          [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
                          {
-                             const auto &values = (g.*getDerivedParamValues)();
+                             const auto &values = getDerivedParamValues(g);
                              return Utils::writePreciseString(values.at(p));
                          });
             }
@@ -119,9 +119,9 @@ public:
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
                 if((getMergedGroup().*isHeterogeneous)(v, p)) {
                     addField("scalar", varInit.getSnippet()->getParamNames()[p] + vars[v].name,
-                             [p, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
+                             [p, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
                              {
-                                 const auto &values = (ng.*getVarInitialisers)()[v].getParams();
+                                 const auto &values = (g.*getVarInitialisers)()[v].getParams();
                                  return Utils::writePreciseString(values.at(p));
                              });
                 }
@@ -140,9 +140,9 @@ public:
             for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
                 if((getMergedGroup().*isHeterogeneous)(v, d)) {
                     addField("scalar", varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
-                             [d, v, getVarInitialisers](const typename T::GroupInternal &ng, size_t)
+                             [d, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
                              {
-                                 const auto &values = (ng.*getVarInitialisers)()[v].getDerivedParams();
+                                 const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
                                  return Utils::writePreciseString(values.at(d));
                              });
                 }

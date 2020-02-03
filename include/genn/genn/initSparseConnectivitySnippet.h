@@ -18,6 +18,8 @@
 #define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const override{ return CODE; }
 #define SET_ROW_BUILD_STATE_VARS(...) virtual ParamValVec getRowBuildStateVars() const override{ return __VA_ARGS__; }
 
+#define SET_HOST_INIT_CODE(CODE) virtual std::string getHostInitCode() const override{ return CODE; }
+
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 
@@ -45,6 +47,8 @@ public:
     //----------------------------------------------------------------------------
     virtual std::string getRowBuildCode() const{ return ""; }
     virtual ParamValVec getRowBuildStateVars() const{ return {}; }
+
+    virtual std::string getHostInitCode() const{ return ""; }
 
     //! Get function to calculate the maximum row length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return CalcMaxLengthFunc(); }
@@ -287,15 +291,17 @@ public:
     SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
 
     SET_PARAM_NAMES({"total"});
-    SET_EXTRA_GLOBAL_PARAMS({{
-        "preCalcRowLength", "uint16_t*",
-        "$(allocate, $(num_pre));\n"
+    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
+
+    SET_HOST_INIT_CODE(
+        "// Allocate pre-calculated row length array\n"
+    	"$(allocate, $(preCalcRowLength), $(num_pre));\n"
         "// Calculate row lengths\n"
         "const size_t numPostPerThread = ($(num_post) + $(num_threads) - 1) / $(num_threads);\n"
         "const size_t leftOverNeurons = $(num_post) % numPostPerThread;\n"
         "size_t remainingConnections = $(total);\n"
         "size_t matrixSize = (size_t)$(num_pre) * (size_t)numPost;\n"
-        "uint16_t *subRowLengths = $(value);\n"
+        "uint16_t *subRowLengths = $(preCalcRowLength);\n"
         "// Loop through rows\n"
         "for(size_t i = 0; i < $(num_pre); i++) {\n"
         "    const bool lastPre = (i == ($(num_pre) - 1));\n"
@@ -322,7 +328,7 @@ public:
         "    }\n"
         "}\n"
         "// Insert remaining connections into last sub-row\n"
-        "*subRowLengths = (uint16_t)remainingConnections;\n"}});
+        "*subRowLengths = (uint16_t)remainingConnections;\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
