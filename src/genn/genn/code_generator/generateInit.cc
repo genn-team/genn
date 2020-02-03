@@ -366,8 +366,36 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         },
         // Initialise push EGP handler
-        [&backend, &mergedEGPs, &modelMerged](CodeStream &os)
+        [&backend, &mergedEGPs, &modelMerged, &model](CodeStream &os)
         {
+            // If model requires a host RNG
+            if(backend.isGlobalHostRNGRequired(modelMerged)) {
+                // If no seed is specified, use system randomness to generate seed sequence
+                CodeStream::Scope b(os);
+                if(model.getSeed() == 0) {
+                    os << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
+                    os << "std::random_device seedSource;" << std::endl;
+                    {
+                        CodeStream::Scope b(os);
+                        os << "for(int i = 0; i < std::mt19937::state_size; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "seedData[i] = seedSource();" << std::endl;
+                        }
+                    }
+                    os << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
+                }
+                // Otherwise, create a seed sequence from model seed
+                // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
+                else {
+                    os << "std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
+                }
+
+                // Seed RNG from seed sequence
+                os << "rng.seed(seeds);" << std::endl;
+            }
+            os << std::endl;
+
             genScalarEGPPush(os, mergedEGPs, "NeuronInit", backend);
             genScalarEGPPush(os, mergedEGPs, "SynapseDenseInit", backend);
             genScalarEGPPush(os, mergedEGPs, "SynapseConnectivityInit", backend);

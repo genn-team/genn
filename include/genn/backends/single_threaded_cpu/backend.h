@@ -106,7 +106,7 @@ public:
     virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const override;
     virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const override;
 
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
+    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                       const std::string &name, size_t count) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -128,6 +128,7 @@ public:
     virtual std::string getArrayPrefix() const override{ return ""; }
     virtual std::string getScalarPrefix() const override{ return ""; }
 
+    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override { return false; }
     virtual bool isSynRemapRequired() const override{ return false; }

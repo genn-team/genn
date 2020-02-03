@@ -209,7 +209,7 @@ public:
         genCurrentSpikePull(os, ng, true);
     }
     
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
+    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                                       CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
@@ -232,6 +232,7 @@ public:
     virtual std::string getArrayPrefix() const override{ return m_Preferences.automaticCopy ? "" : "d_"; }
     virtual std::string getScalarPrefix() const override{ return "d_"; }
 
+    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override{ return true; }
     virtual bool isSynRemapRequired() const override{ return true; }

@@ -1796,7 +1796,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &) const
+MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
@@ -1945,6 +1945,17 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
     os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
     os << "\t\t<Import Project=\"$(VCTargetsPath)\\BuildCustomizations\\CUDA $(CudaVersion).targets\" />" << std::endl;
     os << "\t</ImportGroup>" << std::endl;
+}
+//--------------------------------------------------------------------------
+bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
+{
+    // Host RNG is required if any synapse groups require a host initialization RNG
+    const ModelSpecInternal &model = modelMerged.getModel();
+    return std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
+                       [](const ModelSpec::SynapseGroupValueType &s)
+                       {
+                           return (s.second.isHostInitRNGRequired());
+                       });
 }
 //--------------------------------------------------------------------------
 bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const

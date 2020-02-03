@@ -1,8 +1,5 @@
 #include "backend.h"
 
-// Standard C++ include
-#include <random>
-
 // GeNN includes
 #include "gennUtils.h"
 
@@ -373,36 +370,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         Timer t(os, "init", model.isTimingEnabled());
 
-        // If model requires a host RNG
-        if(isGlobalDeviceRNGRequired(modelMerged)) {
-            // If no seed is specified, use system randomness to generate seed sequence
-            CodeStream::Scope b(os);
-            if (model.getSeed() == 0) {
-                os << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
-                os << "std::random_device seedSource;" << std::endl;
-                {
-                    CodeStream::Scope b(os);
-                    os << "for(int i = 0; i < std::mt19937::state_size; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "seedData[i] = seedSource();" << std::endl;
-                    }
-                }
-                os << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
-            }
-            // Otherwise, create a seed sequence from model seed
-            // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
-            else {
-                os << "std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
-            }
-
-            // Seed RNG from seed sequence
-            os << "rng.seed(seeds);" << std::endl;
-
-            // Add RNG to substitutions
+        // If model requires a host RNG, add RNG to substitutions
+        if(isGlobalHostRNGRequired(modelMerged)) {
             funcSubs.addVarSubstitution("rng", "rng");
         }
-        os << std::endl;
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
@@ -517,7 +488,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         Timer t(os, "initSparse", model.isTimingEnabled());
 
         // If model requires RNG, add it to substitutions
-        if(isGlobalDeviceRNGRequired(modelMerged)) {
+        if(isGlobalHostRNGRequired(modelMerged)) {
             funcSubs.addVarSubstitution("rng", "rng");
         }
 
@@ -609,7 +580,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <cstring>" << std::endl;
 
      // If a global RNG is required, define standard host distributions as recreating them each call is slow
-    if(isGlobalDeviceRNGRequired(modelMerged)) {
+    if(isGlobalHostRNGRequired(modelMerged)) {
         os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
@@ -652,7 +623,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
-    if(isGlobalDeviceRNGRequired(modelMerged)) {
+    if(isGlobalHostRNGRequired(modelMerged)) {
         os << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
         os << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
         os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
@@ -831,12 +802,10 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
     assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &) const
+MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &) const
 {
-    definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
-    runner << "std::mt19937 rng;" << std::endl;
-
-    return MemAlloc::host(sizeof(std::mt19937));
+    assert(false);
+    return MemAlloc::host(0);
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
@@ -934,30 +903,35 @@ void Backend::genMSBuildImportTarget(std::ostream&) const
 {
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
+bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
     const ModelSpecInternal &model = modelMerged.getModel();
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-        [](const ModelSpec::NeuronGroupValueType &n)
-        {
-            return n.second.isSimRNGRequired() || n.second.isInitRNGRequired();
-        }))
+                   [](const ModelSpec::NeuronGroupValueType &n)
+                   {
+                       return n.second.isSimRNGRequired() || n.second.isInitRNGRequired();
+                   }))
     {
         return true;
     }
 
     // If any synapse groups require an RNG for weight update model initialisation, return true
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-        [](const ModelSpec::SynapseGroupValueType &s)
-        {
-            return s.second.isWUInitRNGRequired();
-        }))
+                   [](const ModelSpec::SynapseGroupValueType &s)
+                   {
+                       return (s.second.isWUInitRNGRequired() || s.second.isHostInitRNGRequired());
+                   }))
     {
         return true;
     }
 
+    return false;
+}
+//--------------------------------------------------------------------------
+bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
+{
     return false;
 }
 //--------------------------------------------------------------------------

@@ -261,7 +261,7 @@ public:
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
+    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
 
     //! Generate an RNG with a state per population member
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -303,7 +303,10 @@ public:
 
     virtual std::string getScalarPrefix() const{ return ""; }
 
-    //! Different backends use different RNGs for different things. Does this one require a global deviceRNG for the specified model?
+    //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
+    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
+
+    //! Different backends use different RNGs for different things. Does this one require a global device RNG for the specified model?
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require population RNGs?

@@ -1,6 +1,7 @@
 #include "code_generator/generateRunner.h"
 
 // Standard C++ includes
+#include <random>
 #include <sstream>
 #include <string>
 
@@ -824,9 +825,16 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runnerVarDecl << "unsigned long long iT;" << std::endl;
     runnerVarDecl << model.getTimePrecision() << " t;" << std::endl;
 
-    // If backend requires a global RNG to simulate (or initialize) this model
+    // If backend requires a global device RNG to simulate (or initialize) this model
     if(backend.isGlobalDeviceRNGRequired(modelMerged)) {
-        mem += backend.genGlobalRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
+        mem += backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
+    }
+    // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
+    if(backend.isGlobalHostRNGRequired(modelMerged)) {
+        definitionsVar << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
+        runnerVarDecl << "std::mt19937 rng;" << std::endl;
+
+        mem += MemAlloc::host(sizeof(std::mt19937));
     }
     allVarStreams << std::endl;
 
