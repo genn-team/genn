@@ -1204,6 +1204,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) const
 {
     os << "// Standard C++ includes" << std::endl;
+    os << "#include <random>" << std::endl;
     os << "#include <string>" << std::endl;
     os << "#include <stdexcept>" << std::endl;
     os << std::endl;
