@@ -4,7 +4,6 @@
 #include <vector>
 
 // GeNN user project includes
-#include "../include/fixedNumberTotalPreCalc.h"
 #include "../include/sharedLibraryModel.h"
 #include "../include/spikeRecorder.h"
 #include "../include/timer.h"
@@ -25,42 +24,6 @@ int main(int argc, char *argv[])
     SharedLibraryModel<float> model("./", "PotjansMicrocircuit");
 
     model.allocateMem();
-
-    {
-        Timer timer("Building row lengths:");
-
-        std::mt19937 rng;
-        for(unsigned int trgLayer = 0; trgLayer < Parameters::LayerMax; trgLayer++) {
-            for(unsigned int trgPop = 0; trgPop < Parameters::PopulationMax; trgPop++) {
-                const std::string trgName = Parameters::getPopulationName(trgLayer, trgPop);
-                const unsigned int numTrg = Parameters::getScaledNumNeurons(trgLayer, trgPop);
-
-                // Loop through source populations and layers
-                for(unsigned int srcLayer = 0; srcLayer < Parameters::LayerMax; srcLayer++) {
-                    for(unsigned int srcPop = 0; srcPop < Parameters::PopulationMax; srcPop++) {
-                        const std::string srcName = Parameters::getPopulationName(srcLayer, srcPop);
-                        const unsigned int numSrc = Parameters::getScaledNumNeurons(srcLayer, srcPop);
-
-                        // If synapse group exists
-                        const std::string synapsePopName = srcName + "_" + trgName;
-                        void *rowLengths = model.getSymbol("preCalcRowLength" + synapsePopName, true);
-                        if(rowLengths) {
-                            // Allocate row lengths
-                            model.allocateExtraGlobalParam(synapsePopName, "preCalcRowLength", numSrc);
-
-                            // Build row lengths on host
-                            preCalcRowLengths(numSrc, numTrg, Parameters::getScaledNumConnections(srcLayer, srcPop, trgLayer, trgPop),
-                                             *(static_cast<unsigned int**>(rowLengths)), rng);
-
-                            // Push to device
-                            model.pushExtraGlobalParam(synapsePopName, "preCalcRowLength", numSrc);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     model.initialize();
     model.initializeSparse();
 
