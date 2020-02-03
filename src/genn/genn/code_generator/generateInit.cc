@@ -419,6 +419,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
 
                     // Create substitutions
                     Substitutions subs;
+                    subs.addVarSubstitution("rng", "rng");
                     subs.addVarSubstitution("num_pre", "group.numSrcNeurons");
                     subs.addVarSubstitution("num_post", "group.numTrgNeurons");
                     subs.addVarSubstitution("num_threads", std::to_string(numThreads));
@@ -456,8 +457,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
                         }
                     }
                     std::string code = connectInit.getSnippet()->getHostInitCode();
-                    //subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(sg.getIndex()));
-                    subs.apply(code);
+                    subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(sg.getIndex()));
                     code = ensureFtype(code, modelMerged.getModel().getPrecision());
 
                     // Write out code
