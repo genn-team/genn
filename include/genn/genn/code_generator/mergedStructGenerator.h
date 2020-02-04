@@ -159,8 +159,9 @@ public:
     }
 
     void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
-                  CodeGenerator::CodeStream &runnerVarDecl, CodeGenerator::CodeStream &runnerVarAlloc,
-                  CodeGenerator::MergedEGPMap &mergedEGPs, const std::string &name, bool host = false)
+                  CodeGenerator::CodeStream &definitionsInternalVar, CodeGenerator::CodeStream &runnerVarDecl,
+                  CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs,
+                  const std::string &name, bool host = false)
     {
         const size_t mergedGroupIndex = getMergedGroup().getIndex();
 
@@ -207,7 +208,7 @@ public:
 
         // If this is a host merged struct, export the variable
         if(host) {
-            definitionsInternal << "EXPORT_VAR Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "]; " << std::endl;
+            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "]; " << std::endl;
         }
         // Otherwise
         else {
