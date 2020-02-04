@@ -19,13 +19,13 @@
 #include "pugixml/pugixml.hpp"
 
 // PLOG includes
-#include <plog/Log.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
 // CLI11 includes
 #include "CLI11.hpp"
 
 // GeNN includes
+#include "logging.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -38,6 +38,7 @@
 
 // SpineMLCommon includes
 #include "connectors.h"
+#include "spineMLLogging.h"
 #include "spineMLUtils.h"
 
 // SpineMLGenerator includes
@@ -95,7 +96,7 @@ const Model &getCreateModel(const Param &params, std::map<Param, Model> &models,
 
         // Create new model
         // **THINK** some sort of move-semantic magic could probably make this a move
-        LOGD << "\tCreating new model";
+        LOGD_SPINEML << "\tCreating new model";
         auto newModel = models.insert(
             std::make_pair(params, Model(params, componentClass, args...)));
 
@@ -117,7 +118,7 @@ const Model &getCreatePassthroughModel(const Param &params, std::map<Param, Mode
     {
         // Create new model
         // **THINK** some sort of move-semantic magic could probably make this a move
-        LOGI << "\tCreating new model";
+        LOGI_SPINEML << "\tCreating new model";
         auto newModel = models.insert(
             std::make_pair(params, Model(params, args...)));
 
@@ -196,7 +197,7 @@ SynapseMatrixProps getSynapticMatrixProps(const filesystem::path &basePath, cons
         else {
             maxDendriticDelay = (unsigned int)std::round(maxDelay / dt);
         }
-        
+
         // If explicit delay wasn't specified, read it from delay child. Otherwise convert explicit delay to timesteps
         return {Connectors::List::getMatrixConnectivity(connectionList, numPre, numPost),
                 axonalDelay, maxDendriticDelay, maxRowLength, uninitialisedConnectivity()};
@@ -232,17 +233,25 @@ int main(int argc, char *argv[])
         std::string outputDirectory;
         bool timing = false;
         unsigned int logLevel = plog::info;
+        unsigned int gennLogLevel = plog::warning;
 
         app.add_option("experiment,-e,--experiment", experimentFilename, "Experiment xml file")->required();
         app.add_option("output,-o,--output", outputDirectory, "Output directory for generated code");
         app.add_flag("-t,--timing", timing, "Generate GeNN timing code, allowing more fine-grained profiling");
-        app.add_flag("--log-error{2},--log-warning{3},--log-info{4},--log-debug{5}", logLevel, "Verbosity of logging to show");
+        app.add_flag("--log-error{2},--log-warning{3},--log-info{4},--log-debug{5}", logLevel, "Verbosity of SpineML logging to show");
+        app.add_flag("--genn-log-error{2},--genn-log-warning{3},--genn-log-info{4},--genn-log-debug{5}", gennLogLevel, "Verbosity of GeNN logging to show");
 
         CLI11_PARSE(app, argc, argv);
 
         // Initialise log channels, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init((plog::Severity)logLevel, &consoleAppender);
+
+        // Initialize standard GeNN logging
+        Logging::init((plog::Severity)gennLogLevel, (plog::Severity)gennLogLevel,
+                       &consoleAppender, &consoleAppender);
+
+        // Initialize SpineML logging
+        SpineMLLogging::init((plog::Severity)logLevel, &consoleAppender);
 
         // Use filesystem library to get parent path of the network XML file
         const auto experimentPath = filesystem::path(experimentFilename).make_absolute();
@@ -251,8 +260,8 @@ int main(int argc, char *argv[])
         // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
         const auto outputPath = outputDirectory.empty() ? basePath.parent_path() : filesystem::path(outputDirectory).make_absolute();
 
-        LOGI << "Output path:" << outputPath.str();
-        LOGI << "Parsing experiment '" << experimentPath.str() << "'";
+        LOGI_SPINEML << "Output path:" << outputPath.str();
+        LOGI_SPINEML << "Parsing experiment '" << experimentPath.str() << "'";
 
         // Load experiment document
         pugi::xml_document experimentDoc;
@@ -281,7 +290,7 @@ int main(int argc, char *argv[])
             const std::string port = input.node().attribute("port").value();
 
             // Add to map
-            LOGD << "\tInput targetting: " << target << ":" << port;
+            LOGD_SPINEML << "\tInput targetting: " << target << ":" << port;
             if(!externalInputs[target].emplace(port).second) {
                 throw std::runtime_error("Multiple inputs targetting " + target + ":" + port);
             }
@@ -295,7 +304,7 @@ int main(int argc, char *argv[])
 
         // Build path to network from URL in model
         auto networkPath = basePath / experimentModel.attribute("network_layer_url").value();
-        LOGI << "\tExperiment using model:" << networkPath;
+        LOGI_SPINEML << "\tExperiment using model:" << networkPath;
 
         // Loop through configurations (overriden property values)
         std::map<std::string, std::set<std::string>> overridenProperties;
@@ -308,7 +317,7 @@ int main(int argc, char *argv[])
                 const std::string propertyName = property.attribute("name").value();
 
                 // Add to map
-                LOGD << "\tOverriding property " << target << ":" << propertyName ;
+                LOGD_SPINEML << "\tOverriding property " << target << ":" << propertyName ;
                 if(!overridenProperties[target].emplace(propertyName).second) {
                     throw std::runtime_error("Multiple overrides for property " + target + ":" + propertyName);
                 }
@@ -327,7 +336,7 @@ int main(int argc, char *argv[])
 
         // Read integration timestep
         const double dt = eulerIntegration.attribute("dt").as_double(0.1);
-        LOGI << "\tDT = " << dt << "ms";
+        LOGI_SPINEML << "\tDT = " << dt << "ms";
 
         // Load XML document
         pugi::xml_document doc;
@@ -370,7 +379,7 @@ int main(int argc, char *argv[])
             // Read basic population properties
             auto popName = SpineMLUtils::getSafeName(neuron.attribute("name").value());
             const unsigned int popSize = neuron.attribute("size").as_uint();
-            LOGD << "Population " << popName << " consisting of " << popSize << " neurons";
+            LOGD_SPINEML << "Population " << popName << " consisting of " << popSize << " neurons";
 
             // If population is a spike source add GeNN spike source
             // **TODO** is this the only special case?
@@ -415,17 +424,17 @@ int main(int argc, char *argv[])
                 std::string srcPort = input.attribute("src_port").value();
                 std::string dstPort = input.attribute("dst_port").value();
 
-                LOGD << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")";
+                LOGD_SPINEML << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")";
 
                 // Determine the GeNN matrix type, number of delay steps, max row length (if required) and connectivity initialiser
                 const auto synapseMatrixProps = getSynapticMatrixProps(basePath, input,
                                                                        srcNeuronGroup->getNumNeurons(),
                                                                        neuronGroup->getNumNeurons(),
                                                                        dt);
-                
+
                 // Are heterogeneous delays required
                 const bool heterogeneousDelay = (synapseMatrixProps.maxDendriticDelay > 1);
-                
+
                 // Either get existing passthrough weight update model or create new one of no suitable models are available
                 const auto &passthroughWeightUpdateModel = getCreatePassthroughModel(srcPort, passthroughWeightUpdateModels,
                                                                                      srcNeuronModel, heterogeneousDelay);
@@ -434,7 +443,6 @@ int main(int argc, char *argv[])
                 const auto &passthroughPostsynapticModel = getCreatePassthroughModel(dstPort, passthroughPostsynapticModels,
                                                                                      neuronModel);
 
-                
                 // Create synapse population
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
                 auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, 
@@ -453,7 +461,7 @@ int main(int argc, char *argv[])
                     assert(synapseMatrixProps.maxRowLength != 0);
                     synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                 }
-                
+
                 // Set maximum dendritic delay for synapse population
                 assert(synapseMatrixProps.maxDendriticDelay >= 1);
                 synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
@@ -469,7 +477,7 @@ int main(int argc, char *argv[])
                 // Loop through synapse children
                 // **NOTE** multiple projections between the same two populations of neurons are implemented in this way
                 for(auto synapse : projection.children("LL:Synapse")) {
-                    LOGD << "Projection from population:" << popName << "->" << trgPopName;
+                    LOGD_SPINEML << "Projection from population:" << popName << "->" << trgPopName;
 
                     // Get weight update
                     auto weightUpdate = synapse.child("LL:WeightUpdate");
@@ -546,14 +554,13 @@ int main(int argc, char *argv[])
                         assert(synapseMatrixProps.maxRowLength != 0);
                         synapsePop->setMaxConnections(synapseMatrixProps.maxRowLength);
                     }
-                    
+
                     // Set maximum dendritic delay for synapse population
                     assert(synapseMatrixProps.maxDendriticDelay >= 1);
                     synapsePop->setMaxDendriticDelayTimesteps(synapseMatrixProps.maxDendriticDelay);
                 }
             }
         }
-    
 
         // Finalize model
         model.finalize();
@@ -567,13 +574,13 @@ int main(int argc, char *argv[])
         const auto codePath = runPath / (model.getName() + "_CODE");
         filesystem::create_directory(codePath);
 
-        // **NOTE** SpineML doesn't support MPI for now so set local host ID to zero
-        const int localHostID = 0;
+        // Create default preferences
         CodeGenerator::BACKEND_NAMESPACE::Preferences preferences;
-        
+
         // Create backend
-        auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(model, codePath, localHostID, preferences);
-    
+        auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(
+            model, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
+
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath);
 
@@ -597,7 +604,7 @@ int main(int argc, char *argv[])
 
         // Generate command to build using make, using as many threads as possible
         const unsigned int numThreads = std::thread::hardware_concurrency();
-        LOGD << "Using " << numThreads << " threads to build model";
+        LOGD_SPINEML << "Using " << numThreads << " threads to build model";
         const std::string buildCommand = "make -C \"" + codePath.str() + "\" -j " + std::to_string(numThreads);
 #endif
 

@@ -12,11 +12,8 @@
 // pugixml includes
 #include "pugixml/pugixml.hpp"
 
-// PLOG includes
-#include <plog/Log.h>
-#include <plog/Appenders/ConsoleAppender.h>
-
 // SpineML common includes
+#include "spineMLLogging.h"
 #include "spineMLUtils.h"
 
 //------------------------------------------------------------------------
@@ -29,7 +26,7 @@ SpineMLSimulator::InputValue::Base::Base(unsigned int numNeurons, const pugi::xm
     if(targetIndices) {
         SpineMLCommon::SpineMLUtils::readCSVIndices(targetIndices.value(),
                                                     std::back_inserter(m_TargetIndices));
-        LOGD << "\tTargetting " << m_TargetIndices.size() << " neurons";
+        LOGD_SPINEML << "\tTargetting " << m_TargetIndices.size() << " neurons";
     }
 }
 
@@ -59,7 +56,7 @@ SpineMLSimulator::InputValue::Constant::Constant(double, unsigned int numNeurons
 : ScalarBase(numNeurons, node)
 {
     m_Value = node.attribute("value").as_double();
-    LOGD << "\tConstant value:" << m_Value;
+    LOGD_SPINEML << "\tConstant value:" << m_Value;
 }
 //------------------------------------------------------------------------
 void SpineMLSimulator::InputValue::Constant::update(double, unsigned long long timestep,
@@ -96,7 +93,7 @@ SpineMLSimulator::InputValue::ConstantArray::ConstantArray(double, unsigned int 
             throw std::runtime_error("Number of values passed to ConstantArrayInput does not match target indices size");
         }
 
-        LOGD << "\tSpecified " << m_Values.size() << " constant values";
+        LOGD_SPINEML << "\tSpecified " << m_Values.size() << " constant values";
     }
 }
 //------------------------------------------------------------------------
@@ -136,7 +133,7 @@ SpineMLSimulator::InputValue::TimeVarying::TimeVarying(double dt, unsigned int n
         unsigned int timestep = (unsigned int)std::floor(time / dt);
         m_TimeValues.insert(std::make_pair(timestep, value));
 
-        LOGD << "\tTime:" << time << "(timestep:" << timestep << "), value:" << value;
+        LOGD_SPINEML << "\tTime:" << time << "(timestep:" << timestep << "), value:" << value;
     }
 
 }
@@ -147,7 +144,7 @@ void SpineMLSimulator::InputValue::TimeVarying::update(double, unsigned long lon
     // If there is a time value to apply at this timestep, do so
     auto timeValue = m_TimeValues.find(timestep);
     if(timeValue != m_TimeValues.end()) {
-        LOGD << "\tTimestep:" << timestep << ", applying:" << timeValue->second;
+        LOGD_SPINEML << "\tTimestep:" << timestep << ", applying:" << timeValue->second;
         applyScalar(timeValue->second, applyValueFunc);
     }
 }
@@ -230,7 +227,7 @@ SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double dt, unsi
     }
 
     for(const auto t : m_TimeArrays) {
-        LOGD << "\tTimestep:" << t.first << "," << t.second.size() << " values";
+        LOGD_SPINEML << "\tTimestep:" << t.first << "," << t.second.size() << " values";
     }
 }
 //------------------------------------------------------------------------
@@ -240,7 +237,7 @@ void SpineMLSimulator::InputValue::TimeVaryingArray::update(double, unsigned lon
     // If there is a time value to apply at this timestep, do so
     auto timeValue = m_TimeArrays.find(timestep);
     if(timeValue != m_TimeArrays.end()) {
-        LOGD << "\tTimestep:" << timestep << ", applying " << timeValue->second.size() << " values";
+        LOGD_SPINEML << "\tTimestep:" << timestep << ", applying " << timeValue->second.size() << " values";
         for(const auto &value : timeValue->second) {
             applyValueFunc(value.first, value.second);
         }
@@ -266,7 +263,7 @@ SpineMLSimulator::InputValue::External::External(double dt, unsigned int numNeur
         // Calculate how many GeNN timesteps to count down before logging
         // **NOTE** subtract one because we are checking BEFORE we subtract
         m_IntervalTimesteps = ((unsigned int)std::round(externalTimestepMs / dt)) - 1;
-        LOGD << "\tExternal timestep:" << externalTimestepMs << "ms - interval:" << m_IntervalTimesteps;
+        LOGD_SPINEML << "\tExternal timestep:" << externalTimestepMs << "ms - interval:" << m_IntervalTimesteps;
     }
 
     // Resize buffer
@@ -313,7 +310,7 @@ SpineMLSimulator::InputValue::ExternalNetwork::ExternalNetwork(double dt, unsign
     const std::string connectionName = node.attribute("name").value();
     const std::string hostname = node.attribute("host").value();
     const unsigned int port = node.attribute("tcp_port").as_uint();
-    LOGD << "\tNetwork input '" << connectionName << "' (" << hostname << ":" << port << ")";
+    LOGD_SPINEML << "\tNetwork input '" << connectionName << "' (" << hostname << ":" << port << ")";
 
     // Attempt to connect network client
     if(!m_Client.connect(hostname, port, getSize(), NetworkClient::DataType::Analogue,
@@ -357,7 +354,7 @@ std::unique_ptr<SpineMLSimulator::InputValue::Base> SpineMLSimulator::InputValue
             // Add to map of external inputs
             const std::string name = node.attribute("name").value();
             if(!externalInputs.emplace(name, inputValue.get()).second) {
-                LOGW << "External input with duplicate name '" << name << "' encountered";
+                LOGW_SPINEML << "External input with duplicate name '" << name << "' encountered";
             }
 
             return inputValue;

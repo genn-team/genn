@@ -29,7 +29,7 @@
 namespace NeuronModels
 {
 //! Base class for all neuron models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -59,6 +59,12 @@ public:
 
     //! Does this model require auto-refractory logic?
     virtual bool isAutoRefractoryRequired() const{ return true; }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
 };
 
 //----------------------------------------------------------------------------

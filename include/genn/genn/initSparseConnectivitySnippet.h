@@ -32,7 +32,7 @@
 //! Base class for all sparse connectivity initialisation snippets
 namespace InitSparseConnectivitySnippet
 {
-class Base : public Snippet::Base
+class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -64,6 +64,9 @@ public:
     {
         return getNamedVecIndex(paramName, getExtraGlobalParams());
     }
+
+    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
 };
 
 //----------------------------------------------------------------------------
@@ -75,6 +78,11 @@ public:
     Init(const Base *snippet, const std::vector<double> &params)
         : Snippet::Init<Base>(snippet, params)
     {
+    }
+
+    bool canBeMerged(const Init &other) const
+    {
+        return Snippet::Init<Base>::canBeMerged(other, getSnippet()->getRowBuildCode());
     }
 };
 
@@ -204,4 +212,105 @@ public:
         "}\n");
 };
 
+//----------------------------------------------------------------------------
+// InitSparseConnectivitySnippet::FixedNumberPostWithReplacement
+//----------------------------------------------------------------------------
+//! Initialises connectivity with a fixed number of random synapses per row.
+/*! The postsynaptic targets of the synapses can be initialised in parallel by sampling from the discrete
+    uniform distribution. However, to sample connections in ascending order, we sample from the 1st order statistic
+    of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value. In this special case
+    this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.*/
+class FixedNumberPostWithReplacement : public Base
+{
+public:
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPostWithReplacement, 1);
+
+    SET_ROW_BUILD_CODE(
+        "if(c == 0) {\n"
+        "   $(endRow);\n"
+        "}\n"
+        "const scalar u = $(gennrand_uniform);\n"
+        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
+        "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
+        "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
+        "$(addSynapse, postIdx + $(id_post_begin));\n"
+        "c--;\n");
+    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(rowLength)"}});
+
+    SET_PARAM_NAMES({"rowLength"});
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int, unsigned int, const std::vector<double> &pars)
+        {
+            return (unsigned int)pars[0];
+        });
+
+    SET_CALC_MAX_COL_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            // Calculate suitable quantile for 0.9999 change when drawing numPost times
+            const double quantile = pow(0.9999, 1.0 / (double)numPost);
+
+            // In each row the number of connections that end up in a column are distributed
+            // binomially with n=numConnections and p=1.0 / numPost. As there are numPre rows the total number
+            // of connections that end up in each column are distributed binomially with n=numConnections * numPre and p=1.0 / numPost
+            return binomialInverseCDF(quantile, (unsigned int)pars[0] * numPre, 1.0 / (double)numPost);
+        });
+};
+
+//----------------------------------------------------------------------------
+// InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement
+//----------------------------------------------------------------------------
+//! Initialises connectivity with a total number of random synapses.
+//! The first stage in using this connectivity is to determine how many of the total synapses end up in each row.
+//! This can be determined by sampling from the multinomial distribution. However, this operation cannot be
+//! efficiently parallelised so must be performed on the host and the result passed as an extra global parameter array.
+/*! Once the length of each row is determined, the postsynaptic targets of the synapses can be initialised in parallel
+    by sampling from the discrete uniform distribution. However, to sample connections in ascending order, we sample
+    from the 1st order statistic of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value.
+    In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.*/
+class FixedNumberTotalWithReplacement : public Base
+{
+public:
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement, 1);
+
+    SET_ROW_BUILD_CODE(
+        "if(c == 0) {\n"
+        "   $(endRow);\n"
+        "}\n"
+        "const scalar u = $(gennrand_uniform);\n"
+        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
+        "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
+        "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
+        "$(addSynapse, postIdx + $(id_post_begin));\n"
+        "c--;\n");
+    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
+
+    SET_PARAM_NAMES({"total"});
+    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            // Calculate suitable quantile for 0.9999 change when drawing numPre times
+            const double quantile = pow(0.9999, 1.0 / (double)numPre);
+
+            // There are numConnections connections amongst the numPre*numPost possible connections.
+            // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
+            // probability of being selected and the number of synapses in the sub-row is binomially distributed
+            return binomialInverseCDF(quantile, pars[0], (double)numPost / ((double)numPre * (double)numPost));
+        });
+
+    SET_CALC_MAX_COL_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            // Calculate suitable quantile for 0.9999 change when drawing numPost times
+            const double quantile = pow(0.9999, 1.0 / (double)numPost);
+
+            // There are numConnections connections amongst the numPre*numPost possible connections.
+            // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
+            // probability of being selected and the number of synapses in the sub-row is binomially distributed
+            return binomialInverseCDF(quantile, pars[0], (double)numPre / ((double)numPre * (double)numPost));
+        });
+};
 }   // namespace InitVarSnippet

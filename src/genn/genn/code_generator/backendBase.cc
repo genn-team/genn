@@ -1,10 +1,8 @@
 #include "code_generator/backendBase.h"
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 
 // Macro for simplifying defining type sizes
 #define TYPE(T) {#T, sizeof(T)}
@@ -12,8 +10,8 @@
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-CodeGenerator::BackendBase::BackendBase(int localHostID, const std::string &scalarType)
-:   m_LocalHostID(localHostID), m_TypeBytes{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
+CodeGenerator::BackendBase::BackendBase(const std::string &scalarType)
+:   m_TypeBytes{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
     TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
     TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
     TYPE(signed long long int), TYPE(unsigned char), TYPE(unsigned short), TYPE(unsigned short int), TYPE(unsigned),
@@ -40,7 +38,7 @@ size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
         // If type isn't found in dictionary, give a warning and return 0
         const auto typeSize = m_TypeBytes.find(type);
         if(typeSize == m_TypeBytes.cend()) {
-            LOGW << "Unable to estimate size of type '" << type << "'";
+            LOGW_CODE_GEN << "Unable to estimate size of type '" << type << "'";
             return 0;
         }
         // Otherwise, return its size

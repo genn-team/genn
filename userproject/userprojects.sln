@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2043
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generate_izh_sparse_runner", "Izh_sparse_project\generate_izh_sparse_runner.vcxproj", "{8E1C64A8-3B93-4806-8DEF-0C162F9DD795}"
 EndProject
@@ -17,6 +17,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gen_input_structured", "tools\gen_input_structured.vcxproj", "{31035B4C-EE5A-4157-84CF-EAAEEFB7E9C4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generate_hhvclamp_runner", "HHVclampGA_project\generate_hhvclamp_runner.vcxproj", "{BB63390B-8FE5-4A09-98C7-C97EF3DE5FA9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "generate_potjans_microcircuit_runner", "PotjansMicrocircuit_project\generate_potjans_microcircuit_runner.vcxproj", "{4A6620AC-5F1F-4BB7-81C7-BDC83A3E75FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,6 +50,10 @@ Global
 		{BB63390B-8FE5-4A09-98C7-C97EF3DE5FA9}.Debug|x64.Build.0 = Debug|x64
 		{BB63390B-8FE5-4A09-98C7-C97EF3DE5FA9}.Release|x64.ActiveCfg = Release|x64
 		{BB63390B-8FE5-4A09-98C7-C97EF3DE5FA9}.Release|x64.Build.0 = Release|x64
+		{4A6620AC-5F1F-4BB7-81C7-BDC83A3E75FB}.Debug|x64.ActiveCfg = Debug|x64
+		{4A6620AC-5F1F-4BB7-81C7-BDC83A3E75FB}.Debug|x64.Build.0 = Debug|x64
+		{4A6620AC-5F1F-4BB7-81C7-BDC83A3E75FB}.Release|x64.ActiveCfg = Release|x64
+		{4A6620AC-5F1F-4BB7-81C7-BDC83A3E75FB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -35,6 +35,7 @@ extern "C"
 #include <plog/Appenders/ConsoleAppender.h>
 
 // SpineMLCommon includes
+#include "spineMLLogging.h"
 #include "spineMLUtils.h"
 
 // SpineML simulator includes
@@ -53,13 +54,15 @@ using namespace SpineMLCommon;
 //----------------------------------------------------------------------------
 namespace SpineMLSimulator
 {
-Simulator::Simulator()
+Simulator::Simulator(plog::Severity logLevel)
 :   m_ModelLibrary(nullptr), m_StepTime(nullptr), m_SimulationTime(nullptr), m_SimulationTimestep(nullptr),
     m_DT(0.0), m_DurationMs(0.0), m_InputMs(0.0), m_SimulateMs(0.0), m_LogMs(0.0)
-{}
+{
+    SpineMLLogging::init(logLevel, &m_ConsoleAppender);
+}
 //----------------------------------------------------------------------------
-Simulator::Simulator(const std::string &experimentXML, const std::string &overrideOutputPath)
-: Simulator()
+Simulator::Simulator(const std::string &experimentXML, const std::string &overrideOutputPath, plog::Severity logLevel)
+: Simulator(logLevel)
 {
     load(experimentXML, overrideOutputPath);
 }
@@ -85,7 +88,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
     // If 2nd argument is specified use as output path otherwise use SpineCreator-compliant location
     const filesystem::path outputPath = overrideOutputPath.empty() ? basePath.parent_path() : filesystem::path(overrideOutputPath).make_absolute();
 
-    LOGI << "Output path:" << outputPath.str();
+    LOGI_SPINEML << "Output path:" << outputPath.str();
 
     // Load experiment document
     pugi::xml_document experimentDoc;
@@ -114,7 +117,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
 
     // Build path to network from URL in model
     auto networkPath = basePath / model.attribute("network_layer_url").value();
-    LOGI << "Experiment using model:" << networkPath;
+    LOGI_SPINEML << "Experiment using model:" << networkPath;
 
     // Get the filename of the network and remove extension
     // to get something usable as a network name
@@ -124,11 +127,11 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
     // Attempt to load model library
 #ifdef _WIN32
     auto libraryPath = outputPath / "run" / "runner_Release.dll";
-    LOGI << "Experiment using model library:" << libraryPath;
+    LOGI_SPINEML << "Experiment using model library:" << libraryPath;
     m_ModelLibrary = LoadLibrary(libraryPath.str().c_str());
 #else
     auto libraryPath = outputPath / "run" / (networkName + "_CODE") / "librunner.so";
-    LOGI << "Experiment using model library:" << libraryPath;
+    LOGI_SPINEML << "Experiment using model library:" << libraryPath;
     m_ModelLibrary = dlopen(libraryPath.str().c_str(), RTLD_NOW);
 #endif
 
@@ -189,7 +192,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
 
     // Read integration timestep
     m_DT = eulerIntegration.attribute("dt").as_double(0.1);
-    LOGI << "DT = " << m_DT << "ms";
+    LOGI_SPINEML << "DT = " << m_DT << "ms";
 
     // Read duration from simulation and convert to timesteps
     m_DurationMs = simulation.attribute("duration").as_double() * 1000.0;
@@ -209,7 +212,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
         // Read basic population properties
         const char *popName = neuron.attribute("name").value();
         const unsigned int popSize = neuron.attribute("size").as_uint();
-        LOGI << "Population '" << popName << "' consisting of " << popSize << " neurons";
+        LOGI_SPINEML << "Population '" << popName << "' consisting of " << popSize << " neurons";
 
         // Add neuron population properties to dictionary
         auto geNNPopName = SpineMLUtils::getSafeName(popName);
@@ -234,7 +237,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
             std::string srcPort = input.attribute("src_port").value();
             std::string dstPort = input.attribute("dst_port").value();
 
-            LOGI << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")";
+            LOGI_SPINEML << "Low-level input from population:" << srcPopName << "(" << srcPort << ")->" << popName << "(" << dstPort << ")";
 
             std::string geNNSynPopName = SpineMLUtils::getSafeName(srcPopName) + "_" + srcPort + "_" + SpineMLUtils::getSafeName(popName) + "_"  + dstPort;
 
@@ -260,7 +263,7 @@ void Simulator::load(const std::string &experimentXML, const std::string &overri
             // Loop through synapse children
             // **NOTE** multiple projections between the same two populations of neurons are implemented in this way
             for(auto synapse : projection.children("LL:Synapse")) {
-                LOGI << "Projection from population:" << popName << "->" << trgPopName;
+                LOGI_SPINEML << "Projection from population:" << popName << "->" << trgPopName;
 
                 // Get weight update
                 auto weightUpdate = synapse.child("LL:WeightUpdate");
@@ -497,7 +500,7 @@ void Simulator::addPropertiesAndSizes(const filesystem::path &basePath, const pu
                 if((overridenParam = overridenProperties.node().select_node("UL:Property[@name=$name]",
                                                                             &propertyNameVars).node()))
                 {
-                    LOGD << "\t\tOverriden in experiment";
+                    LOGD_SPINEML << "\t\tOverriden in experiment";
                 }
             }
 
@@ -570,7 +573,7 @@ std::unique_ptr<Input::Base> Simulator::createInput(const pugi::xml_node &node,
 
     // Get name of target
     std::string target = node.attribute("target").value();
-    LOGI << "Input targetting '" << target << "'";
+    LOGI_SPINEML << "Input targetting '" << target << "'";
 
     // Find size of target population
     auto targetSize = componentSizes.find(target);
@@ -702,7 +705,7 @@ std::unique_ptr<LogOutput::Base> Simulator::createLogOutput(const pugi::xml_node
                     // Add to map of external loggers
                     const std::string name = node.attribute("name").value();
                     if(!m_ExternalLoggers.emplace(name, log.get()).second) {
-                        LOGW << "External logger with duplicate name '" << name << "' encountered";
+                        LOGW_SPINEML << "External logger with duplicate name '" << name << "' encountered";
                     }
 
                     // Return pointer

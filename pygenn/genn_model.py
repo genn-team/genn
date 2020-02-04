@@ -87,13 +87,15 @@ class GeNNModel(object):
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 enable_debug=False, backend=None, selected_gpu=None):
+                 backend=None, genn_log_level=genn_wrapper.warning,
+                 code_gen_log_level=genn_wrapper.warning,
+                 backend_log_level=genn_wrapper.warning,
+                 **preference_kwargs):
         """Init GeNNModel
         Keyword args:
         precision       --  string precision as string ("float", "double"
                             or "long double"). defaults to float.
         model_name      --  string name of the model. Defaults to "GeNNModel".
-        enable_debug    --  boolean enable debug mode. Disabled by default.
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
         selected_gpu    --  integer specifying the id of the gpu in which the
@@ -114,10 +116,14 @@ class GeNNModel(object):
                 "Supported precisions are float and double, "
                 "but '{1}' was given".format(precision))
 
+        # Initialise GeNN logging
+        genn_wrapper.init_logging(genn_log_level, code_gen_log_level)
+
         self._built = False
         self._loaded = False
         self.use_backend = backend
-        self._selected_gpu = selected_gpu
+        self._preferences = preference_kwargs
+        self.backend_log_level=backend_log_level
         self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
 
@@ -128,17 +134,12 @@ class GeNNModel(object):
         self.current_sources = {}
         self.dT = 0.1
 
-    @property
-    def selected_gpu(self):
-        return self._selected_gpu
-
-    @selected_gpu.setter
-    def selected_gpu(self, v):
-        if self.use_backend == "CUDA":
-            self._selected_gpu = v
-        elif v is not None:
-            raise Exception("Selecting a GPU is only compatible with the CUDA backend "
-                            "but the {} backend was chosen.".format(self.use_backend))
+        # For backward compatibility, if selected GPU is set, remove it from
+        # preferences dictionary and add in underlying GeNN preferences
+        selected_gpu = self._preferences.pop("selected_gpu", None)
+        if selected_gpu is not None:
+            self._preferences["deviceSelectMethod"] = self._backend_module.DeviceSelect_MANUAL
+            self._preferences["preferences.manualDeviceID"] = selected_gpu
 
     @property
     def use_backend(self):
@@ -214,6 +215,10 @@ class GeNNModel(object):
     @timestep.setter
     def timestep(self, timestep):
         self._slm.set_timestep(timestep)
+
+    @property
+    def free_device_mem_bytes(self):
+        return self._slm.get_free_device_mem_bytes();
 
     @property
     def dT(self):
@@ -377,13 +382,13 @@ class GeNNModel(object):
         # Create suitable preferences object for backend
         preferences = self._backend_module.Preferences()
 
-        if self.selected_gpu is not None:
-            preferences.deviceSelectMethod = self._backend_module.DeviceSelect_MANUAL
-
-            preferences.manualDeviceID = self.selected_gpu
+        # Set attributes on preferences object
+        for k, v in iteritems(self._preferences):
+            if hasattr(preferences, k):
+                setattr(preferences, k, v)
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, output_path, 0, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path, self.backend_log_level, preferences);
 
         # Generate code
         genn_wrapper.generate_code(self._model, backend, output_path, 0)

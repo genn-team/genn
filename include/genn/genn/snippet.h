@@ -11,6 +11,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "gennUtils.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -122,6 +123,11 @@ public:
     //! An extra global parameter has a name and a type
     struct EGP
     {
+        bool operator == (const EGP &other) const
+        {
+            return ((name == other.name) && (type == other.type));
+        }
+
         std::string name;
         std::string type;
     };
@@ -129,14 +135,31 @@ public:
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
     struct ParamVal
     {
+        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
+        {}
+        ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
+        {}
+        ParamVal() : ParamVal("", "", "0.0")
+        {}
+
+        bool operator == (const ParamVal &other) const
+        {
+            return ((name == other.name) && (type == other.type) && (value == other.value));
+        }
+
         std::string name;
         std::string type;
-        double value;
+        std::string value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value
     struct DerivedParam
     {
+        bool operator == (const DerivedParam &other) const
+        {
+            return (name == other.name);
+        }
+
         std::string name;
         std::function<double(const std::vector<double> &, double)> func;
     };
@@ -162,6 +185,15 @@ public:
 
 
 protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    bool canBeMerged(const Base *other) const
+    {
+        // Return true if parameters names and derived parameter names match
+        return ((getParamNames() == other->getParamNames()) && (getDerivedParams() == other->getDerivedParams()));
+    }
+
     //------------------------------------------------------------------------
     // Protected static helpers
     //------------------------------------------------------------------------
@@ -210,6 +242,42 @@ public:
         for(const auto &d : derivedParams) {
             m_DerivedParams.push_back(d.func(m_Params, dt));
         }
+    }
+
+protected:
+    bool canBeMerged(const Init<SnippetBase> &other, const std::string &codeString) const
+    {
+        // If snippets can be merged
+        if(getSnippet()->canBeMerged(other.getSnippet())) {
+            // Loop through parameters
+            const auto paramNames = getSnippet()->getParamNames();
+            for(size_t i = 0; i < paramNames.size(); i++) {
+                // If parameter is referenced in code string
+                if(codeString.find("$(" + paramNames[i] + ")") != std::string::npos) {
+                    // If parameter values don't match, return true
+                    if(getParams()[i] != other.getParams()[i]) {
+                        return false;
+                    }
+                }
+            }
+
+            // Loop through derived parameters
+            const auto derivedParams = getSnippet()->getDerivedParams();
+            assert(derivedParams.size() == getDerivedParams().size());
+            assert(derivedParams.size() == other.getDerivedParams().size());
+            for(size_t i = 0; i < derivedParams.size(); i++) {
+                // If derived parameter is referenced in code string
+                if(codeString.find("$(" + derivedParams[i].name + ")") != std::string::npos) {
+                    // If derived parameter values don't match, return true
+                    if(getDerivedParams()[i] != other.getDerivedParams()[i]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
 private:

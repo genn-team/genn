@@ -1,12 +1,20 @@
 #pragma once
 
 // Standard C++ includes
+#include <iomanip>
+#include <limits>
+#include <sstream>
 #include <string>
 #include <vector>
 
 // GeNN includes
 #include "gennExport.h"
-#include "models.h"
+
+// Forward declarations
+namespace Models
+{
+class VarInit;
+}
 
 //--------------------------------------------------------------------------
 // Utils
@@ -32,5 +40,43 @@ GENN_EXPORT bool isTypePointer(const std::string &type);
 //! \brief Assuming type is a string containing a pointer type, function to return the underlying type
 //--------------------------------------------------------------------------
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);
+
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
+//--------------------------------------------------------------------------
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
+GENN_EXPORT void writePreciseString(std::ostream &os, T value)
+{
+    // Cache previous precision
+    const std::streamsize previousPrecision = os.precision();
+
+    // Set scientific formatting
+    os << std::scientific;
+
+    // Set precision to what is required to fully represent T
+    os << std::setprecision(std::numeric_limits<T>::max_digits10);
+
+    // Write value to stream
+    os << value;
+
+    // Reset to default formatting
+    // **YUCK** GCC 4.8.X doesn't seem to include std::defaultfloat
+    os.unsetf(std::ios_base::floatfield);
+    //os << std::defaultfloat;
+
+    // Restore previous precision
+    os << std::setprecision(previousPrecision);
+}
+
+//--------------------------------------------------------------------------
+//! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
+//--------------------------------------------------------------------------
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
+GENN_EXPORT std::string writePreciseString(T value)
+{
+    std::stringstream s;
+    writePreciseString(s, value);
+    return s.str();
+}
 
 }   // namespace Utils
