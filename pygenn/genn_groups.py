@@ -7,6 +7,7 @@ try:
 except NameError:  # Python 3
     xrange = range
 
+from deprecated import deprecated
 from six import iteritems
 import numpy as np
 from . import genn_wrapper
@@ -253,6 +254,16 @@ class NeuronGroup(Group):
         var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
         self.pop = add_fct(self.name, num_neurons, self.neuron,
                            self.params, var_ini)
+
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
+    def add_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self.set_extra_global_param(param_name, param_values)
 
     def set_extra_global_param(self, param_name, param_values):
         """Set extra global parameter
@@ -588,6 +599,16 @@ class SynapseGroup(Group):
                            wu_post_var_ini, self.postsyn, self.ps_params,
                            ps_var_ini, connect_init)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
+    def add_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self.set_extra_global_param(param_name, param_values)
+
     def set_extra_global_param(self, param_name, param_values):
         """Set extra global parameter to weight update model
 
@@ -795,6 +816,16 @@ class CurrentSource(Group):
             self.current_source_model, self.vars)
         self.pop = add_fct(self.name, self.current_source_model, pop.name,
                            self.params, var_ini)
+
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
+    def add_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self.set_extra_global_param(param_name, param_values)
 
     def set_extra_global_param(self, param_name, param_values):
         """Set extra global parameter
