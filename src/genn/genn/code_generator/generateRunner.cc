@@ -225,9 +225,9 @@ void genMergedNeuronStruct(const BackendBase &backend, CodeStream &definitionsIn
             const auto egps = cs->getCurrentSourceModel()->getExtraGlobalParams();
             for(const auto &e : egps) {
                 gen.addField(e.type, e.name + "CS" + std::to_string(i),
-                             [i, e, &m](const NeuronGroupInternal&, size_t groupIndex)
+                             [i, e, &m, &backend](const NeuronGroupInternal&, size_t groupIndex)
                              {
-                                 return e.name + m.getSortedCurrentSources().at(groupIndex).at(i)->getName();
+                                 return backend.getArrayPrefix() + e.name + m.getSortedCurrentSources().at(groupIndex).at(i)->getName();
                              },
                              Utils::isTypePointer(e.type) ? MergedNeuronStructGenerator::FieldType::PointerEGP : MergedNeuronStructGenerator::FieldType::ScalarEGP);
             }
@@ -277,9 +277,9 @@ void genMergedNeuronStruct(const BackendBase &backend, CodeStream &definitionsIn
             const auto sgEGPs = s.synapseGroup->getWUModel()->getExtraGlobalParams();
             for(const auto &egp : sgEGPs) {
                 gen.addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
-                             [egp, &eventThresholdSGs, i](const NeuronGroupInternal &, size_t groupIndex)
+                             [&eventThresholdSGs, &backend, egp, i](const NeuronGroupInternal &, size_t groupIndex)
                              {
-                                 return egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
+                                 return backend.getArrayPrefix() + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
                              },
                              Utils::isTypePointer(egp.type) ? MergedNeuronStructGenerator::FieldType::PointerEGP : MergedNeuronStructGenerator::FieldType::ScalarEGP);
             }
