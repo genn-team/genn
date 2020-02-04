@@ -563,6 +563,7 @@ def generateConfigs(gennPath, backends):
             
             if is_snippet:
                 mg.addSwigImport( '"Snippet.i"' )
+                mg.addSwigTemplate('Snippet::Init<' + mg.name + '::Base>', 'InitBase')
             else:
                 mg.addSwigImport( '"Models.i"' )
             mg.addSwigFeatureDirector( mg.name + '::Base' )
@@ -613,7 +614,7 @@ def generateConfigs(gennPath, backends):
 
             // helper function to convert CalcMaxLengthFunc to std::function
             %inline %{
-            std::function<unsigned int( unsigned int, unsigned int, const std::vector<double> &, double )> makeCMLF( CalcMaxLengthFunc* cmlf )
+            std::function<unsigned int( unsigned int, unsigned int, const std::vector<double> &)> makeCMLF( CalcMaxLengthFunc* cmlf )
             {
             return std::bind( &CalcMaxLengthFunc::operator(), cmlf, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 );
             }

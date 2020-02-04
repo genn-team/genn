@@ -394,11 +394,11 @@ class GeNNModel(object):
         genn_wrapper.generate_code(self._model, backend, output_path, 0)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
-        self._backend_module.delete_backend(backend)
+        backend = None
 
         # Build code
         if system() == "Windows":
-            check_call(["msbuild", "/p:Configuration=Release",
+            check_call(["msbuild", "/p:Configuration=Release", "/m", "/verbosity:minimal",
                         path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-C", output_path])
@@ -416,6 +416,13 @@ class GeNNModel(object):
         self._slm.open(self._path_to_model, self.model_name)
 
         self._slm.allocate_mem()
+
+        # Loop through synapse populations and load any 
+        # extra global parameters required for connectivity init
+        for pop_data in itervalues(self.synapse_populations):
+            pop_data.load_connectivity_init_egps(self._slm, self._scalar)
+
+        # Initialize model
         self._slm.initialize()
 
         # Loop through neuron populations
@@ -998,7 +1005,7 @@ def create_cmlf_class(cml_func):
         cmlf.__init__(self)
 
     def call(self, num_pre, num_post, pars):
-        return cml_func(numPre, num_post, pars, dt)
+        return cml_func(num_pre, num_post, pars)
 
     return type("", (cmlf,), {"__init__": ctor, "__call__": call})
 

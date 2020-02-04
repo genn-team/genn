@@ -7,16 +7,18 @@ try:
 except NameError:  # Python 3
     xrange = range
 
+from deprecated import deprecated
 from six import iteritems
 import numpy as np
 from . import genn_wrapper
 from . import model_preprocessor
-from .model_preprocessor import ExtraGlobalVariable, Variable
+from .model_preprocessor import ExtraGlobalVariable, Variable, genn_types
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                           SynapseMatrixConnectivity_BITMASK,
                           SynapseMatrixConnectivity_DENSE,
                           SynapseMatrixWeight_INDIVIDUAL,
-                          SynapseMatrixWeight_INDIVIDUAL_PSM)
+                          SynapseMatrixWeight_INDIVIDUAL_PSM,
+                          VarLocation_HOST)
 
 
 class Group(object):
@@ -42,14 +44,18 @@ class Group(object):
         """
         self.vars[var_name].set_values(values)
 
-    def _add_extra_global_param(self, param_name, param_values, model):
-        """Add extra global parameter
+    def _set_extra_global_param(self, param_name, param_values, model, egp_dict=None):
+        """Set extra global parameter
 
         Args:
         param_name      --  string with the name of the extra global parameter
         param_values    --  iterable
         model           --  instance of the model
         """
+        # If no EGP dictionary is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+        
         param_type = None
         for p in model.get_extra_global_params():
             if p.name == param_name:
@@ -57,10 +63,10 @@ class Group(object):
                 break
 
         assert param_type is not None
-        self.extra_global_params[param_name] = ExtraGlobalVariable(
-            param_name, param_type, param_values)
+        egp_dict[param_name] = ExtraGlobalVariable(param_name, param_type,
+                                                   param_values)
 
-    def _assign_external_pointer(self, slm, scalar, var_name, var_size, var_type):
+    def _assign_ext_ptr_array(self, slm, scalar, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
 
         Args:
@@ -80,59 +86,38 @@ class Group(object):
         """
 
         internal_var_name = var_name + self.name
+        
         if var_type == "scalar":
-            if scalar == "float":
-                return slm.assign_external_pointer_array_f(
-                    internal_var_name, var_size)
-            elif scalar == "double":
-                return slm.assign_external_pointer_array_d(
-                    internal_var_name, var_size)
-            elif scalar == "long double":
-                return slm.assign_external_pointer_array_ld(
-                    internal_var_name, var_size)
-        elif var_type == "char":
-            return slm.assign_external_pointer_array_c(
-                internal_var_name, var_size)
-        elif var_type == "unsigned char":
-            return slm.assign_external_pointer_array_uc(
-                internal_var_name, var_size)
-        elif var_type == "short":
-            return slm.assign_external_pointer_array_s(
-                internal_var_name, var_size)
-        elif var_type == "unsigned short":
-            return slm.assign_external_pointer_array_us(
-                internal_var_name, var_size)
-        elif var_type == "int":
-            return slm.assign_external_pointer_array_i(
-                internal_var_name, var_size)
-        elif var_type == "unsigned int":
-            return slm.assign_external_pointer_array_ui(
-                internal_var_name, var_size)
-        elif var_type == "long":
-            return slm.assign_external_pointer_array_l(
-                internal_var_name, var_size)
-        elif var_type == "unsigned long":
-            return slm.assign_external_pointer_array_ul(
-                internal_var_name, var_size)
-        elif var_type == "long long":
-            return slm.assign_external_pointer_array_ll(
-                internal_var_name, var_size)
-        elif var_type == "unsigned long long":
-            return slm.assign_external_pointer_array_ull(
-                internal_var_name, var_size)
-        elif var_type == "float":
-            return slm.assign_external_pointer_array_f(
-                internal_var_name, var_size)
-        elif var_type == "double":
-            return slm.assign_external_pointer_array_d(
-                internal_var_name, var_size)
-        elif var_type == "long double":
-            return slm.assign_external_pointer_array_ld(
-                internal_var_name, var_size)
-        else:
-            raise TypeError("unsupported var_type '{}'".format(var_type))
+            var_type = scalar
+        
+        return genn_types[var_type].assign_ext_ptr_array(slm, internal_var_name, var_size)
+    
+    def _assign_ext_ptr_single(self, slm, scalar, var_name, var_type):
+        """Assign a variable to an external scalar value containing one element
 
-    def _load_vars(self, slm, scalar, size=None, var_dict=None):
+        Args:
+        slm         --  SharedLibraryModel instance for acccessing variables
+        scalar      --  string containing type to use inplace of scalar
+        var_name    --  string a fully qualified name of the variable to assign
+        var_type    --  string type of the variable. The supported types are
+                        char, unsigned char, short, unsigned short, int,
+                        unsigned int, long, unsigned long, long long,
+                        unsigned long long, float, double, long double
+                        and scalar.
+
+        Returns numpy array of type var_type
+
+        Raises ValueError if variable type is not supported
+        """
+
+        internal_var_name = var_name + self.name
+        
+        if var_type == "scalar":
+            var_type = scalar
+        
+        return genn_types[var_type].assign_ext_ptr_single(slm, internal_var_name)
+        
+    def _load_vars(self, slm, scalar, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
         if size is None:
             size = self.size
@@ -141,16 +126,26 @@ class Group(object):
         if var_dict is None:
             var_dict = self.vars
 
+        # If no location getter function is specified, use standard one
+        if get_location_fn is None:
+            get_location_fn = self.pop.get_var_location
+
         # Loop through variables
         for var_name, var_data in iteritems(var_dict):
-            # Get view
-            var_data.view = self._assign_external_pointer(slm, scalar,
-                                                          var_name, size,
-                                                          var_data.type)
+            # If variable is located on host
+            var_loc = get_location_fn(var_name) 
+            if (var_loc & VarLocation_HOST) != 0:
+                # Get view
+                var_data.view = self._assign_ext_ptr_array(slm, scalar,
+                                                           var_name, size,
+                                                           var_data.type)
 
-            # If manual initialisation is required, copy over variables
-            if var_data.init_required:
-                var_data.view[:] = var_data.values
+                # If manual initialisation is required, copy over variables
+                if var_data.init_required:
+                    var_data.view[:] = var_data.values
+            else:
+                assert not var_data.init_required
+                var_data.view = None
 
     def _reinitialise_vars(self, slm, scalar, size=None, var_dict=None):
         # If no size is specified, use standard size
@@ -174,20 +169,28 @@ class Group(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            # Allocate memory
-            slm.allocate_extra_global_param(self.name, egp_name,
+            if egp_data.is_scalar:
+                # Assign view
+                egp_data.view = self._assign_ext_ptr_single(slm, scalar, egp_name,
+                                                            egp_data.type)
+                # Copy values
+                egp_data.view[:] = egp_data.values
+            else:
+                # Allocate memory
+                slm.allocate_extra_global_param(self.name, egp_name,
+                                                len(egp_data.values))
+
+                # Assign view
+                egp_data.view = self._assign_ext_ptr_array(slm, scalar, egp_name,
+                                                           len(egp_data.values), 
+                                                           egp_data.type)
+
+                # Copy values
+                egp_data.view[:] = egp_data.values
+
+                # Push egp_data
+                slm.push_extra_global_param(self.name, egp_name,
                                             len(egp_data.values))
-
-            # Assign view
-            egp_data.view = self._assign_external_pointer(
-                slm, scalar, egp_name, len(egp_data.values), egp_data.type)
-
-            # Copy values
-            egp_data.view[:] = egp_data.values
-
-            # Push egp_data
-            slm.push_extra_global_param(self.name, egp_name,
-                                        len(egp_data.values))
 
 class NeuronGroup(Group):
 
@@ -252,14 +255,24 @@ class NeuronGroup(Group):
         self.pop = add_fct(self.name, num_neurons, self.neuron,
                            self.params, var_ini)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
     def add_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter
+        """Set extra global parameter
 
         Args:
         param_name      --  string with the name of the extra global parameter
         param_values    --  iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values, self.neuron)
+        self.set_extra_global_param(param_name, param_values)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self._set_extra_global_param(param_name, param_values, self.neuron)
 
     def load(self, slm, scalar):
         """Loads neuron group
@@ -268,10 +281,13 @@ class NeuronGroup(Group):
         slm --      SharedLibraryModel instance for acccessing variables
         scalar --   String specifying "scalar" type
         """
-        self.spikes = self._assign_external_pointer(
-            slm, scalar, "glbSpk", self.size * self.delay_slots, "unsigned int")
-        self.spike_count = self._assign_external_pointer(
-            slm, scalar, "glbSpkCnt", self.delay_slots, "unsigned int")
+        self.spikes = self._assign_ext_ptr_array(slm, scalar, "glbSpk", 
+                                                 self.size * self.delay_slots,
+                                                 "unsigned int")
+        self.spike_count = self._assign_ext_ptr_array(slm, scalar, 
+                                                      "glbSpkCnt", 
+                                                      self.delay_slots, 
+                                                      "unsigned int")
         if self.delay_slots > 1:
             self.spike_que_ptr = slm.assign_external_pointer_single_ui(
                 "spkQuePtr" + self.name)
@@ -312,6 +328,8 @@ class SynapseGroup(Group):
         self.psm_vars = {}
         self.pre_vars = {}
         self.post_vars = {}
+        self.psm_extra_global_params = {}
+        self.connectivity_extra_global_params = {}
         self.connectivity_initialiser = None
 
     @property
@@ -581,14 +599,46 @@ class SynapseGroup(Group):
                            wu_post_var_ini, self.postsyn, self.ps_params,
                            ps_var_ini, connect_init)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
     def add_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self.set_extra_global_param(param_name, param_values)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter to weight update model
 
         Args:
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values, self.w_update)
+        self._set_extra_global_param(param_name, param_values, self.w_update)
+
+    def set_psm_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter to postsynaptic model
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self._set_extra_global_param(param_name, param_values,
+                                     self.postsyn,
+                                     self.psm_extra_global_params)
+
+    def set_connectivity_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter to connectivity initialisation snippet
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self._set_extra_global_param(param_name, param_values,
+                                     self.connectivity_initialiser.get_snippet(),
+                                     self.connectivity_extra_global_params)
 
     def load(self, slm, scalar):
         # If synapse population has non-dense connectivity which
@@ -598,11 +648,13 @@ class SynapseGroup(Group):
             if self.connections_set:
                 if self.is_ragged:
                     # Get pointers to ragged data structure members
-                    ind = self._assign_external_pointer(
-                        slm, scalar, "ind", self.weight_update_var_size,
-                        "unsigned int")
-                    row_length = self._assign_external_pointer(
-                        slm, scalar, "rowLength", self.src.size, "unsigned int")
+                    ind = self._assign_ext_ptr_array(slm, scalar, "ind",
+                                                     self.weight_update_var_size,
+                                                     "unsigned int")
+                    row_length = self._assign_ext_ptr_array(slm, scalar,
+                                                            "rowLength",
+                                                            self.src.size,
+                                                            "unsigned int")
 
                     # Copy in row length
                     row_length[:] = self.row_lengths
@@ -627,25 +679,41 @@ class SynapseGroup(Group):
         if self.has_individual_synapse_vars:
             # Loop through weight update model state variables
             for var_name, var_data in iteritems(self.vars):
-                # Get view
-                var_data.view = self._assign_external_pointer(
-                    slm, scalar, var_name,
-                    self.weight_update_var_size,
-                    var_data.type)
+                # If variable is located on host
+                var_loc = self.pop.get_wuvar_location(var_name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Get view
+                    var_data.view = self._assign_ext_ptr_array(
+                        slm, scalar, var_name,
+                        self.weight_update_var_size,
+                        var_data.type)
 
-                # Initialise variable if necessary
-                self._init_wum_var(var_data)
+                    # Initialise variable if necessary
+                    self._init_wum_var(var_data)
+                else:
+                    assert not var_data.init_required
+                    var_data.view = None
 
         # Load weight update model presynaptic variables
-        self._load_vars(slm, scalar, self.src.size, self.pre_vars)
+        self._load_vars(slm, scalar, self.src.size, self.pre_vars,
+                        self.pop.get_wupre_var_location)
 
         # Load weight update model postsynaptic variables
-        self._load_vars(slm, scalar, self.trg.size, self.post_vars)
+        self._load_vars(slm, scalar, self.trg.size, self.post_vars,
+                        self.pop.get_wupost_var_location)
 
         # Load postsynaptic update model variables
         if self.has_individual_postsynaptic_vars:
-            self._load_vars(slm, scalar, self.trg.size, self.psm_vars)
-
+            self._load_vars(slm, scalar, self.trg.size, self.psm_vars,
+                            self.pop.get_psvar_location)
+        
+        # Load extra global parameters
+        self._load_egp(slm, scalar)
+        self._load_egp(slm, scalar, self.psm_extra_global_params)
+    
+    def load_connectivity_init_egps(self,  slm, scalar):
+        self._load_egp(slm, scalar, self.connectivity_extra_global_params)
+    
     def reinitialise(self, slm, scalar):
         """Reinitialise synapse group
 
@@ -749,14 +817,24 @@ class CurrentSource(Group):
         self.pop = add_fct(self.name, self.current_source_model, pop.name,
                            self.params, var_ini)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
     def add_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter
+        """Set extra global parameter
 
         Args:
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values,
+        self.set_extra_global_param(param_name, param_values)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self._set_extra_global_param(param_name, param_values,
                                      self.current_source_model)
 
     def load(self, slm, scalar):
