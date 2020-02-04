@@ -18,6 +18,8 @@
 #include "code_generator/mergedStructGenerator.h"
 #include "code_generator/modelSpecMerged.h"
 
+using namespace CodeGenerator;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -31,10 +33,8 @@ enum class MergedSynapseStruct
     DenseInit,
     SparseInit,
 };
-void genTypeRange(CodeGenerator::CodeStream &os, const std::string &precision, const std::string &prefix)
+void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
 {
-    using namespace CodeGenerator;
-
     os << "#define " << prefix << "_MIN ";
     if (precision == "float") {
         Utils::writePreciseString(os, std::numeric_limits<float>::min());
@@ -57,7 +57,7 @@ void genTypeRange(CodeGenerator::CodeStream &os, const std::string &precision, c
     os << std::endl;
 }
 //-------------------------------------------------------------------------
-void genSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
+void genSpikeMacros(CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
 {
     const bool delayRequired = trueSpike
         ? (ng.isDelayRequired() && ng.isTrueSpikeRequired())
@@ -100,12 +100,12 @@ void genSpikeMacros(CodeGenerator::CodeStream &os, const NeuronGroupInternal &ng
     os << std::endl << std::endl;
 }
 //-------------------------------------------------------------------------
-void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal,
-                           CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarDecl,
-                           CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs,
-                           const CodeGenerator::NeuronGroupMerged &m, const std::string &precision, const std::string &timePrecision, bool init)
+void genMergedNeuronStruct(const BackendBase &backend, CodeStream &definitionsInternal,
+                           CodeStream &definitionsInternalFunc, CodeStream &runnerVarDecl,
+                           CodeStream &runnerVarAlloc, MergedEGPMap &mergedEGPs,
+                           const NeuronGroupMerged &m, const std::string &precision, const std::string &timePrecision, bool init)
 {
-    CodeGenerator::MergedNeuronStructGenerator gen(m);
+    MergedNeuronStructGenerator gen(m);
 
     gen.addField("unsigned int", "numNeurons",
                  [](const NeuronGroupInternal &ng, size_t){ return std::to_string(ng.getNumNeurons()); });
@@ -220,6 +220,18 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
         for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
             gen.addCurrentSourcePointerField(v.type, v.name + "CS", i, backend.getArrayPrefix() + v.name, m.getSortedCurrentSources());
         }
+
+        if(!init) {
+            const auto egps = cs->getCurrentSourceModel()->getExtraGlobalParams();
+            for(const auto &e : egps) {
+                gen.addField(e.type, e.name + "CS" + std::to_string(i),
+                             [i, e, &m](const NeuronGroupInternal&, size_t groupIndex)
+                             {
+                                 return e.name + m.getSortedCurrentSources().at(groupIndex).at(i)->getName();
+                             },
+                             Utils::isTypePointer(e.type) ? MergedNeuronStructGenerator::FieldType::PointerEGP : MergedNeuronStructGenerator::FieldType::ScalarEGP);
+            }
+        }
     }
 
     // Loop through incoming synapse groups with postsynaptic update code
@@ -269,7 +281,7 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
                              {
                                  return egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
                              },
-                             Utils::isTypePointer(egp.type) ? CodeGenerator::MergedNeuronStructGenerator::FieldType::PointerEGP : CodeGenerator::MergedNeuronStructGenerator::FieldType::ScalarEGP);
+                             Utils::isTypePointer(egp.type) ? MergedNeuronStructGenerator::FieldType::PointerEGP : MergedNeuronStructGenerator::FieldType::ScalarEGP);
             }
             i++;
         }
@@ -280,17 +292,17 @@ void genMergedNeuronStruct(const CodeGenerator::BackendBase &backend, CodeGenera
                  mergedEGPs, init ? "NeuronInit" : "NeuronUpdate");
 }
 //-------------------------------------------------------------------------
-void genMergedSynapseStruct(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal, 
-                            CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &runnerVarDecl,
-                            CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs,
-                            const CodeGenerator::SynapseGroupMerged &m, const std::string &precision, const std::string &timePrecision, const std::string &name, MergedSynapseStruct role)
+void genMergedSynapseStruct(const BackendBase &backend, CodeStream &definitionsInternal, 
+                            CodeStream &definitionsInternalFunc, CodeStream &runnerVarDecl,
+                            CodeStream &runnerVarAlloc, MergedEGPMap &mergedEGPs,
+                            const SynapseGroupMerged &m, const std::string &precision, const std::string &timePrecision, const std::string &name, MergedSynapseStruct role)
 {
     const bool updateRole = ((role == MergedSynapseStruct::PresynapticUpdate)
                              || (role == MergedSynapseStruct::PostsynapticUpdate)
                              || (role == MergedSynapseStruct::SynapseDynamics));
     const WeightUpdateModels::Base *wum = m.getArchetype().getWUModel();
 
-    CodeGenerator::MergedSynapseStructGenerator gen(m);
+    MergedSynapseStructGenerator gen(m);
 
     gen.addField("unsigned int", "rowStride",
                  [m, &backend](const SynapseGroupInternal &sg, size_t){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
@@ -513,7 +525,7 @@ bool canPushPullVar(VarLocation loc)
             (loc & VarLocation::DEVICE));
 }
 //-------------------------------------------------------------------------
-bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
+bool genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
                          VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::function<void()> handler)
 {
     // If this variable has a location that allows pushing and pulling and automatic copying isn't enabled
@@ -524,8 +536,8 @@ bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
         runnerPushFunc << "void push" << description << "ToDevice(bool uninitialisedOnly)";
         runnerPullFunc << "void pull" << description << "FromDevice()";
         {
-            CodeGenerator::CodeStream::Scope a(runnerPushFunc);
-            CodeGenerator::CodeStream::Scope b(runnerPullFunc);
+            CodeStream::Scope a(runnerPushFunc);
+            CodeStream::Scope b(runnerPullFunc);
 
             handler();
         }
@@ -539,7 +551,7 @@ bool genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
     }
 }
 //-------------------------------------------------------------------------
-void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
+void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
                          VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::vector<std::string> &statePushPullFunction,
                          std::function<void()> handler)
 {
@@ -549,7 +561,7 @@ void genVarPushPullScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerat
     }
 }
 //-------------------------------------------------------------------------
-void genVarGetterScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerGetterFunc,
+void genVarGetterScope(CodeStream &definitionsFunc, CodeStream &runnerGetterFunc,
                        VarLocation loc, const std::string &description, const std::string &type, std::function<void()> handler)
 {
     // If this variable has a location that allows pushing and pulling and hence getting a host pointer
@@ -560,14 +572,14 @@ void genVarGetterScope(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator
         // Define getter
         runnerGetterFunc << type << " get" << description << "()";
         {
-            CodeGenerator::CodeStream::Scope a(runnerGetterFunc);
+            CodeStream::Scope a(runnerGetterFunc);
             handler();
         }
         runnerGetterFunc << std::endl;
     }
 }
 //-------------------------------------------------------------------------
-void genSpikeGetters(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerGetterFunc,
+void genSpikeGetters(CodeStream &definitionsFunc, CodeStream &runnerGetterFunc,
                      const NeuronGroupInternal &ng, bool trueSpike)
 {
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -609,7 +621,7 @@ void genSpikeGetters(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::
 
 }
 //-------------------------------------------------------------------------
-void genStatePushPull(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
+void genStatePushPull(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
                       const std::string &name, bool generateEmptyStatePushPull, 
                       const std::vector<std::string> &groupPushPullFunction, std::vector<std::string> &modelPushPullFunctions)
 {
@@ -621,8 +633,8 @@ void genStatePushPull(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator:
         runnerPushFunc << "void push" << name << "StateToDevice(bool uninitialisedOnly)";
         runnerPullFunc << "void pull" << name << "StateFromDevice()";
         {
-            CodeGenerator::CodeStream::Scope a(runnerPushFunc);
-            CodeGenerator::CodeStream::Scope b(runnerPullFunc);
+            CodeStream::Scope a(runnerPushFunc);
+            CodeStream::Scope b(runnerPullFunc);
 
             for(const auto &func : groupPushPullFunction) {
                 runnerPushFunc << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
@@ -637,12 +649,10 @@ void genStatePushPull(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator:
     }
 }
 //-------------------------------------------------------------------------
-CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &definitionsFunc,
-                                    CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &runner,
-                                    CodeGenerator::CodeStream &allocations, CodeGenerator::CodeStream &free,
-                                    CodeGenerator::CodeStream &push, CodeGenerator::CodeStream &pull,
-                                    const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count,
-                                    std::vector<std::string> &statePushPullFunction)
+MemAlloc genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsFunc,
+                     CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                     CodeStream &push, CodeStream &pull, const std::string &type, const std::string &name,
+                     VarLocation loc, bool autoInitialized, size_t count, std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
     genVarPushPullScope(definitionsFunc, push, pull, loc, backend.isAutomaticCopyEnabled(), name, statePushPullFunction,
@@ -656,9 +666,9 @@ CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, C
                             type, name, loc, count);
 }
 //-------------------------------------------------------------------------
-void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar,
-                         CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runner,
-                         CodeGenerator::CodeStream &extraGlobalParam, const CodeGenerator::MergedEGPMap &mergedEGPs,
+void genExtraGlobalParam(const BackendBase &backend, CodeStream &definitionsVar,
+                         CodeStream &definitionsFunc, CodeStream &runner,
+                         CodeStream &extraGlobalParam, const MergedEGPMap &mergedEGPs,
                          const std::string &type, const std::string &name, bool apiRequired, VarLocation loc)
 {
     // Generate variables
@@ -674,7 +684,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
         // Write allocation function
         extraGlobalParam << "void allocate" << name << "(unsigned int count)";
         {
-            CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+            CodeStream::Scope a(extraGlobalParam);
             backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
 
             // Get destinations in merged structures, this EGP 
@@ -689,7 +699,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
         // Write free function
         extraGlobalParam << "void free" << name << "()";
         {
-            CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+            CodeStream::Scope a(extraGlobalParam);
             backend.genVariableFree(extraGlobalParam, name, loc);
         }
 
@@ -701,7 +711,7 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
             // Write push function
             extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
             {
-                CodeGenerator::CodeStream::Scope a(extraGlobalParam);
+                CodeStream::Scope a(extraGlobalParam);
                 backend.genExtraGlobalParamPush(extraGlobalParam, type, name, loc);
             }
 
@@ -721,22 +731,22 @@ void genExtraGlobalParam(const CodeGenerator::BackendBase &backend, CodeGenerato
     }
 }
 //-------------------------------------------------------------------------
-CodeGenerator::MemAlloc genGlobalHostRNG(CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &runnerVarDecl,
-                                         CodeGenerator::CodeStream &runnerVarAlloc, unsigned int seed)
+MemAlloc genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
+                          CodeStream &runnerVarAlloc, unsigned int seed)
 {
     definitionsVar << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
     runnerVarDecl << "std::mt19937 rng;" << std::endl;
 
     // If no seed is specified, use system randomness to generate seed sequence
-    CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
+    CodeStream::Scope b(runnerVarAlloc);
     if(seed == 0) {
         runnerVarAlloc << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
         runnerVarAlloc << "std::random_device seedSource;" << std::endl;
         {
-            CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
+            CodeStream::Scope b(runnerVarAlloc);
             runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
             {
-                CodeGenerator::CodeStream::Scope b(runnerVarAlloc);
+                CodeStream::Scope b(runnerVarAlloc);
                 runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
             }
         }
@@ -752,17 +762,17 @@ CodeGenerator::MemAlloc genGlobalHostRNG(CodeGenerator::CodeStream &definitionsV
     runnerVarAlloc << "rng.seed(seeds);" << std::endl;
 
     // Add size of Mersenne Twister to memory tracker
-    return CodeGenerator::MemAlloc::host(sizeof(std::mt19937));
+    return MemAlloc::host(sizeof(std::mt19937));
 }
 //-------------------------------------------------------------------------
-void genSynapseConnectivityHostInit(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &os, 
-                                    const CodeGenerator::SynapseGroupMerged &sg, const std::string &precision)
+void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os, 
+                                    const SynapseGroupMerged &sg, const std::string &precision)
 {
-    CodeGenerator::CodeStream::Scope b(os);
+    CodeStream::Scope b(os);
     os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;
     os << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
     {
-        CodeGenerator::CodeStream::Scope b(os);
+        CodeStream::Scope b(os);
 
         // Get reference to group
         os << "const auto &group = mergedSynapseConnectivityHostInitGroup" << sg.getIndex() << "[g]; " << std::endl;
@@ -774,7 +784,7 @@ void genSynapseConnectivityHostInit(const CodeGenerator::BackendBase &backend, C
         const size_t numThreads = (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) ? sg.getArchetype().getNumThreadsPerSpike() : 1;
 
         // Create substitutions
-        CodeGenerator::Substitutions subs;
+        Substitutions subs;
         subs.addVarSubstitution("rng", "rng");
         subs.addVarSubstitution("num_pre", "group.numSrcNeurons");
         subs.addVarSubstitution("num_post", "group.numTrgNeurons");
@@ -804,7 +814,7 @@ void genSynapseConnectivityHostInit(const CodeGenerator::BackendBase &backend, C
 
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
-                CodeGenerator::CodeStream push(pushStream);
+                CodeStream push(pushStream);
                 backend.genExtraGlobalParamPush(push, egps[i].type + "*", egps[i].name,
                                                 loc, "$(0)", "group.");
 
@@ -815,7 +825,7 @@ void genSynapseConnectivityHostInit(const CodeGenerator::BackendBase &backend, C
         }
         std::string code = connectInit.getSnippet()->getHostInitCode();
         subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(sg.getIndex()));
-        code = CodeGenerator::ensureFtype(code, precision);
+        code = ensureFtype(code, precision);
 
         // Write out code
         os << code << std::endl;
@@ -827,9 +837,9 @@ void genSynapseConnectivityHostInit(const CodeGenerator::BackendBase &backend, C
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                                      MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
-                                                      const BackendBase &backend)
+MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
+                                       MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+                                       const BackendBase &backend)
 {
     // Track memory allocations, initially starting from zero
     auto mem = MemAlloc::zero();
