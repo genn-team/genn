@@ -98,7 +98,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;
@@ -106,10 +106,10 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &me
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedEGPs, "SynapseDendriticDelayUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), mergedEGPs, "PresynapticUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), mergedEGPs, "PostsynapticUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), mergedEGPs, "SynapseDynamics", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedStructData, "SynapseDendriticDelayUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), mergedStructData, "PresynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), mergedStructData, "PostsynapticUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), mergedStructData, "SynapseDynamics", backend);
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, modelMerged,
@@ -203,10 +203,10 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedEGPMap &me
                                       sg, baseSubs, modelMerged.getModel(), backend);
         },
         // Push EGP handler
-        [&backend, &mergedEGPs](CodeStream &os)
+        [&backend, &mergedStructData](CodeStream &os)
         {
-            genScalarEGPPush(os, mergedEGPs, "PresynapticUpdate", backend);
-            genScalarEGPPush(os, mergedEGPs, "PostsynapticUpdate", backend);
-            genScalarEGPPush(os, mergedEGPs, "SynapseDynamics", backend);
+            genScalarEGPPush(os, mergedStructData, "PresynapticUpdate", backend);
+            genScalarEGPPush(os, mergedStructData, "PostsynapticUpdate", backend);
+            genScalarEGPPush(os, mergedStructData, "SynapseDynamics", backend);
         });
 }

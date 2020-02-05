@@ -193,17 +193,17 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged,
                                  const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), mergedEGPs, "NeuronInit", backend);
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), mergedEGPs, "SynapseDenseInit", backend);
-    genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), mergedEGPs, "SynapseConnectivityInit", backend);
-    genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), mergedEGPs, "SynapseSparseInit", backend);
+    genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), mergedStructData, "NeuronInit", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), mergedStructData, "SynapseDenseInit", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), mergedStructData, "SynapseConnectivityInit", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), mergedStructData, "SynapseSparseInit", backend);
 
     backend.genInit(os, modelMerged,
         // Local neuron group initialisation
@@ -366,15 +366,15 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         },
         // Initialise push EGP handler
-        [&backend, &mergedEGPs, &modelMerged, &model](CodeStream &os)
+        [&backend, &mergedStructData, &modelMerged, &model](CodeStream &os)
         {
-            genScalarEGPPush(os, mergedEGPs, "NeuronInit", backend);
-            genScalarEGPPush(os, mergedEGPs, "SynapseDenseInit", backend);
-            genScalarEGPPush(os, mergedEGPs, "SynapseConnectivityInit", backend);
+            genScalarEGPPush(os, mergedStructData, "NeuronInit", backend);
+            genScalarEGPPush(os, mergedStructData, "SynapseDenseInit", backend);
+            genScalarEGPPush(os, mergedStructData, "SynapseConnectivityInit", backend);
         },
         // Initialise sparse push EGP handler
-        [&backend, &mergedEGPs](CodeStream &os)
+        [&backend, &mergedStructData](CodeStream &os)
         {
-            genScalarEGPPush(os, mergedEGPs, "SynapseSparseInit", backend);
+            genScalarEGPPush(os, mergedStructData, "SynapseSparseInit", backend);
         });
 }

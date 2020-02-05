@@ -14,6 +14,6 @@ class ModelSpecMerged;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+void generateInit(CodeStream &os, const MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged,
                   const BackendBase &backend);
 }

@@ -41,7 +41,7 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mergedEGPs, const ModelSpecMerged &modelMerged,
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged,
                                          const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
@@ -49,8 +49,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
     os << std::endl;
 
     // Generate functions to push merged neuron group structures
-    genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedEGPs, "NeuronSpikeQueueUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedEGPs, "NeuronUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedStructData, "NeuronSpikeQueueUpdate", backend);
+    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedStructData, "NeuronUpdate", backend);
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged,
@@ -507,8 +507,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedEGPMap &mer
             }
         },
         // Push EGP handler
-        [&backend, &mergedEGPs](CodeStream &os)
+        [&backend, &mergedStructData](CodeStream &os)
         {
-            genScalarEGPPush(os, mergedEGPs, "NeuronUpdate", backend);
+            genScalarEGPPush(os, mergedStructData, "NeuronUpdate", backend);
         });
 }

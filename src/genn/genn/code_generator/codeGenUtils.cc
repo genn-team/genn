@@ -367,10 +367,10 @@ void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n)
     }
 }
 
-void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std::string &suffix, const BackendBase &backend)
+void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend)
 {
     // Loop through all merged EGPs
-    for(const auto &e : mergedEGPs) {
+    for(const auto &e : mergedStructData.getMergedEGPs()) {
         // Loop through range with correct suffix
         const auto groupEGPs = e.second.equal_range(suffix);
         for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {

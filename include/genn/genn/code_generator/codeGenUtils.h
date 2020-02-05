@@ -58,22 +58,56 @@ struct FunctionTemplate
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::FunctionTemplate
+// CodeGenerator::MergedStructData
 //--------------------------------------------------------------------------
-//! Immutable structure for tracking where an extra global variable ends up after merging
-struct MergedEGP
+//! Class for storing data generated when writing merged
+//! structures in runner and required in later code generation
+class MergedStructData
 {
-    MergedEGP(size_t m, size_t g, const std::string &t, const std::string &f)
-    :   mergedGroupIndex(m), groupIndex(g), type(t), fieldName(f){}
+public:
+    //! Immutable structure for tracking where an extra global variable ends up after merging
+    struct MergedEGP
+    {
+        MergedEGP(size_t m, size_t g, const std::string &t, const std::string &f)
+        :   mergedGroupIndex(m), groupIndex(g), type(t), fieldName(f){}
 
-    const size_t mergedGroupIndex;
-    const size_t groupIndex;
-    const std::string type;
-    const std::string fieldName;
+        const size_t mergedGroupIndex;
+        const size_t groupIndex;
+        const std::string type;
+        const std::string fieldName;
+    };
+
+    //! Map of original extra global param names to their locations within merged structures
+    typedef std::map<std::string, std::unordered_multimap<std::string, MergedEGP>> MergedEGPMap;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const MergedEGPMap &getMergedEGPs() const{ return m_MergedEGPs; }
+
+    void addMergedEGP(const std::string &variableName, const std::string &mergedGroupType,
+                      size_t mergedGroupIndex, size_t groupIndex, const std::string &type, const std::string &fieldName)
+    {
+        m_MergedEGPs[variableName].emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(mergedGroupType),
+            std::forward_as_tuple(mergedGroupIndex, groupIndex, type, fieldName));
+    }
+
+
+    void addMergedGroupSize(const std::string &mergedGroupType, size_t sizeBytes)
+    {
+        m_MergedGroupSizes[mergedGroupType].push_back(sizeBytes);
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    MergedEGPMap m_MergedEGPs;
+
+    std::map<std::string, std::vector<size_t>> m_MergedGroupSizes;
 };
-
-//! Map of original extra global param names to their locations within merged structures
-typedef std::map<std::string, std::unordered_multimap<std::string, MergedEGP>> MergedEGPMap;
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
@@ -119,7 +153,7 @@ inline size_t padSize(size_t size, size_t blockSize)
 GENN_EXPORT void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n);
 
 template<typename T>
-void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedEGPMap &mergedEGPs,
+void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
                         const std::string &suffix, const BackendBase &backend)
 {
     // Loop through merged neuron groups
@@ -161,10 +195,10 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         // **YUCK** it would be much nicer if this were part of the original data structure
         // **NOTE** tuple would be nicer but doesn't define std::hash overload
         std::set<std::pair<size_t, std::pair<std::string, std::string>>> mergedGroupFields;
-        for(const auto &e : mergedEGPs) {
+        for(const auto &e : mergedStructData.getMergedEGPs()) {
             const auto groupEGPs = e.second.equal_range(suffix);
             std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
-                           [](const MergedEGPMap::value_type::second_type::value_type &g)
+                           [](const MergedStructData::MergedEGPMap::value_type::second_type::value_type &g)
                            {
                                return std::make_pair(g.second.mergedGroupIndex, 
                                                      std::make_pair(g.second.type, g.second.fieldName));
@@ -191,7 +225,7 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
 }
 
 
-void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std::string &suffix, const BackendBase &backend);
+void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).

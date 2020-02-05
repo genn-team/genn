@@ -158,9 +158,9 @@ public:
         }
     }
 
-    void generate(CodeGenerator::CodeStream &definitionsInternal, CodeGenerator::CodeStream &definitionsInternalFunc,
-                  CodeGenerator::CodeStream &definitionsInternalVar, CodeGenerator::CodeStream &runnerVarDecl,
-                  CodeGenerator::CodeStream &runnerVarAlloc, CodeGenerator::MergedEGPMap &mergedEGPs,
+    void generate(CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc,
+                  CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl,
+                  CodeStream &runnerVarAlloc, MergedStructData &mergedStructData,
                   const std::string &name, bool host = false)
     {
         const size_t mergedGroupIndex = getMergedGroup().getIndex();
@@ -168,7 +168,7 @@ public:
         // Write struct declation to top of definitions internal
         definitionsInternal << "struct Merged" << name << "Group" << mergedGroupIndex << std::endl;
         {
-            CodeGenerator::CodeStream::Scope b(definitionsInternal);
+            CodeStream::Scope b(definitionsInternal);
             for(const auto &f : m_Fields) {
                 definitionsInternal << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
 
@@ -196,10 +196,8 @@ public:
 
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) != FieldType::Standard) {
-                    mergedEGPs[fieldInitVal].emplace(
-                        std::piecewise_construct, 
-                        std::forward_as_tuple(name),
-                        std::forward_as_tuple(mergedGroupIndex, groupIndex, std::get<0>(f), std::get<1>(f)));
+                    mergedStructData.addMergedEGP(fieldInitVal, name, mergedGroupIndex, groupIndex,
+                                                  std::get<0>(f), std::get<1>(f));
                 }
             }
             runnerVarAlloc << "};" << std::endl;
