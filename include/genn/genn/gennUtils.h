@@ -49,7 +49,7 @@ GENN_EXPORT std::string getUnderlyingType(const std::string &type);
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-GENN_EXPORT void writePreciseString(std::ostream &os, T value)
+void writePreciseString(std::ostream &os, T value)
 {
     // Cache previous precision
     const std::streamsize previousPrecision = os.precision();
