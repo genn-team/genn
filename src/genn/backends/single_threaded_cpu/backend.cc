@@ -701,8 +701,10 @@ void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const s
     assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
+void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                           size_t idx, size_t numGroups) const
 {
+    assert(memorySpace.empty());
     os << "Merged" << suffix << "Group" << idx << " merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
 }
 //--------------------------------------------------------------------------

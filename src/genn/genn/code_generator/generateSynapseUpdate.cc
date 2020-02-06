@@ -105,11 +105,16 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
     os << std::endl;
 
     // Generate functions to push merged synapse group structures
+    auto memorySpaces = backend.getMergedSynapseGroupMemorySpaces(modelMerged);
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedStructData, "SynapseDendriticDelayUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), mergedStructData, "PresynapticUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), mergedStructData, "PostsynapticUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), mergedStructData, "SynapseDynamics", backend);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedStructData, "SynapseDendriticDelayUpdate",
+                       backend, memorySpaces);
+    genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), mergedStructData, "PresynapticUpdate",
+                       backend, memorySpaces);
+    genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), mergedStructData, "PostsynapticUpdate",
+                       backend, memorySpaces);
+    genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), mergedStructData, "SynapseDynamics",
+                       backend, memorySpaces);
 
     // Synaptic update kernels
     backend.genSynapseUpdate(os, modelMerged,
@@ -155,7 +160,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
             baseSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
             baseSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
             baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
-            
+
             // Initialise row building state variables for procedural connectivity
             for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
                 // Apply substitutions to value
@@ -169,7 +174,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
             os << "while(true)";
             {
                 CodeStream::Scope b(os);
-                
+
                 // Apply substitutions to row building code
                 std::string pCode = connectInit.getSnippet()->getRowBuildCode();
                 baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());

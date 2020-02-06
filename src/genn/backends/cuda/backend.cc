@@ -17,12 +17,14 @@
 // CUDA backend includes
 #include "utils.h"
 
+using namespace CodeGenerator;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<CodeGenerator::FunctionTemplate> cudaFunctions = {
+const std::vector<FunctionTemplate> cudaFunctions = {
     {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
     {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
@@ -36,7 +38,7 @@ const std::vector<CodeGenerator::FunctionTemplate> cudaFunctions = {
 class Timer
 {
 public:
-    Timer(CodeGenerator::CodeStream &codeStream, const std::string &name, bool timingEnabled, bool synchroniseOnStop = false)
+    Timer(CodeStream &codeStream, const std::string &name, bool timingEnabled, bool synchroniseOnStop = false)
     :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled), m_SynchroniseOnStop(synchroniseOnStop)
     {
         // Record start event
@@ -66,7 +68,7 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    CodeGenerator::CodeStream &m_CodeStream;
+    CodeStream &m_CodeStream;
     const std::string m_Name;
     const bool m_TimingEnabled;
     const bool m_SynchroniseOnStop;
@@ -74,12 +76,12 @@ private:
 
 
 //-----------------------------------------------------------------------
-void genGroupStartIDs(CodeGenerator::CodeStream &, size_t &, size_t)
+void genGroupStartIDs(CodeStream &, size_t &, size_t)
 {
 }
 //-----------------------------------------------------------------------
 template<typename T, typename G, typename ...Args>
-void genGroupStartIDs(CodeGenerator::CodeStream &os, size_t &idStart, size_t blockSize,
+void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t blockSize,
                       const std::vector<T> &mergedGroups, const std::string &groupStartPrefix, G getNumThreads,
                       Args... args)
 {
@@ -89,7 +91,7 @@ void genGroupStartIDs(CodeGenerator::CodeStream &os, size_t &idStart, size_t blo
         os << "__device__ __constant__ unsigned int d_merged" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
         for(const auto &ng : m.getGroups()) {
             os << idStart << ", ";
-            idStart += CodeGenerator::padSize(getNumThreads(ng.get()), blockSize);
+            idStart += padSize(getNumThreads(ng.get()), blockSize);
         }
         os << "};" << std::endl;
     }
@@ -99,7 +101,7 @@ void genGroupStartIDs(CodeGenerator::CodeStream &os, size_t &idStart, size_t blo
 }
 //-----------------------------------------------------------------------
 template<typename ...Args>
-void genMergedKernelDataStructures(CodeGenerator::CodeStream &os, size_t blockSize,
+void genMergedKernelDataStructures(CodeStream &os, size_t blockSize,
                                    Args... args)
 {
     // Generate group start id arrays
@@ -121,6 +123,35 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
                                        return acc + getNumThreads(g.get());
                                    });
         });
+}
+//-----------------------------------------------------------------------
+size_t getGroupStartIDSize()
+{
+    return 0;
+}
+//-----------------------------------------------------------------------
+template<typename T, typename ...Args>
+size_t getGroupStartIDSize(const std::vector<T> &mergedGroups, Args... args)
+{
+    // Calculate size of groups
+    const size_t mergedGroupSize = std::accumulate(mergedGroups.cbegin(), mergedGroups.cend(),
+                                                   0, [](size_t acc, const T &ng)
+                                                   {
+                                                       return acc + (sizeof(unsigned int) * ng.getGroups().size());
+                                                   });
+
+    // Return sum of this and size of remainder of groups
+    return mergedGroupSize + getGroupStartIDSize(args...);
+}
+//-----------------------------------------------------------------------
+template<typename ...Args>
+BackendBase::MemorySpaces getMergedGroupMemorySpaces(size_t totalConstMem, size_t totalGlobalMem, Args... args)
+{
+    // Calculate the size of the group start IDs for all groups
+    const size_t groupStartIDSize = getGroupStartIDSize(args...);
+
+    return {{"__device__ __constant__", (groupStartIDSize > totalConstMem) ? 0 : (totalConstMem - groupStartIDSize)},
+            {"__device__", totalGlobalMem}};
 }
 }   // Anonymous namespace
 
@@ -1686,10 +1717,10 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
+void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                           size_t idx, size_t numGroups) const
 {
-    const std::string prefix = m_Preferences.useConstantCacheForMergedStructs ? "__device__ __constant__" : "__device__";
-    os << prefix << " Merged" << suffix << "Group" << idx << " d_merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
+    os << memorySpace << " Merged" << suffix << "Group" << idx << " d_merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
@@ -1994,6 +2025,29 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) cons
     }
 
     return false;
+}
+//--------------------------------------------------------------------------
+Backend::MemorySpaces Backend::getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
+{
+    return getMergedGroupMemorySpaces(m_ChosenDevice.totalConstMem, m_ChosenDevice.totalGlobalMem,
+                                      modelMerged.getMergedNeuronUpdateGroups());
+}
+//--------------------------------------------------------------------------
+Backend::MemorySpaces Backend::getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
+{
+    return getMergedGroupMemorySpaces(m_ChosenDevice.totalConstMem, m_ChosenDevice.totalGlobalMem,
+                                      modelMerged.getMergedPresynapticUpdateGroups(),
+                                      modelMerged.getMergedPostsynapticUpdateGroups(),
+                                      modelMerged.getMergedSynapseDynamicsGroups());
+}
+//--------------------------------------------------------------------------
+Backend::MemorySpaces Backend::getMergedInitGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
+{
+    return getMergedGroupMemorySpaces(m_ChosenDevice.totalConstMem, m_ChosenDevice.totalGlobalMem,
+                                      modelMerged.getMergedNeuronInitGroups(),
+                                      modelMerged.getMergedSynapseDenseInitGroups(),
+                                      modelMerged.getMergedSynapseConnectivityInitGroups(),
+                                      modelMerged.getMergedSynapseSparseInitGroups());
 }
 //--------------------------------------------------------------------------
 std::string Backend::getNVCCFlags() const

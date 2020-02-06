@@ -94,6 +94,10 @@ public:
             std::forward_as_tuple(mergedGroupIndex, groupIndex, type, fieldName));
     }
 
+    size_t getMergedGroupSize(const std::string &mergedGroupType, size_t mergedGroupIndex) const
+    {
+        return m_MergedGroupSizes.at(mergedGroupType).at(mergedGroupIndex);
+    }
 
     void addMergedGroupSize(const std::string &mergedGroupType, size_t mergedGroupIndex, size_t sizeBytes)
     {
@@ -154,7 +158,7 @@ GENN_EXPORT void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroup
 
 template<typename T>
 void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
-                        const std::string &suffix, const BackendBase &backend)
+                        const std::string &suffix, const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)
 {
     // Loop through merged neuron groups
     std::stringstream mergedGroupArrayStream;
@@ -167,8 +171,29 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         const size_t idx = g.getIndex();
         const size_t numGroups = g.getGroups().size();
 
-        // Implement merged group array
-        backend.genMergedGroupImplementation(mergedGroupArray, suffix, idx, numGroups);
+        // Get size of group in bytes
+        const size_t groupBytes = mergedStructData.getMergedGroupSize(suffix, idx);
+
+        // Loop through memory spaces
+        bool memorySpaceFound = false;
+        for(auto &m : memorySpaces) {
+            // If there is space in this memory space for group
+            if(m.second > groupBytes) {
+                // Implement merged group array in this memory space
+                backend.genMergedGroupImplementation(mergedGroupArray, m.first, suffix, idx, numGroups);
+
+                // Set flag
+                memorySpaceFound = true;
+
+                // Subtract
+                m.second -= groupBytes;
+
+                // Stop searching
+                break;
+            }
+        }
+
+        assert(memorySpaceFound);
 
         // Write function to update
         mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(const Merged" << suffix << "Group" << idx << " *group)";

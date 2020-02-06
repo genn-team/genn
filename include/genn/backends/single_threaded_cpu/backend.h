@@ -146,6 +146,21 @@ public:
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return 0; }
 
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override{ return {}; }
+
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override{ return {}; }
+
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedInitGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override{ return {}; }
+
 private:
     //--------------------------------------------------------------------------
     // Private methods

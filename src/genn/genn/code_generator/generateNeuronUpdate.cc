@@ -49,8 +49,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
     os << std::endl;
 
     // Generate functions to push merged neuron group structures
-    genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedStructData, "NeuronSpikeQueueUpdate", backend);
-    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedStructData, "NeuronUpdate", backend);
+    auto memorySpaces = backend.getMergedNeuronGroupMemorySpaces(modelMerged);
+    genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedStructData, "NeuronSpikeQueueUpdate",
+                       backend, memorySpaces);
+    genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedStructData, "NeuronUpdate",
+                       backend, memorySpaces);
 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged,

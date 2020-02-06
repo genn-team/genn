@@ -139,6 +139,9 @@ public:
     typedef std::function <void(CodeStream &, const NeuronGroupMerged &, Substitutions&,
                                 NeuronGroupMergedHandler, NeuronGroupMergedHandler)> NeuronGroupSimHandler;
     
+    //! Vector of prefixes required to allocate in memory space and size of memory space
+    typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
+
     BackendBase(const std::string &scalarType);
     virtual ~BackendBase(){}
 
@@ -219,7 +222,8 @@ public:
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
 
     //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                              size_t idx, size_t numGroups) const = 0;
     
     //! Generate code for pushing merged group data to the 'device'
     virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
@@ -329,6 +333,21 @@ public:
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
+
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
+
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
+
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedInitGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
 
     //--------------------------------------------------------------------------
     // Public API
