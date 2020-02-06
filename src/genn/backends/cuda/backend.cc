@@ -76,19 +76,32 @@ private:
 
 
 //-----------------------------------------------------------------------
-void genGroupStartIDs(CodeStream &, size_t &, size_t)
+void genGroupStartIDs(CodeStream &, size_t&, size_t&, size_t)
 {
 }
 //-----------------------------------------------------------------------
 template<typename T, typename G, typename ...Args>
-void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t blockSize,
+void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem, size_t blockSize,
                       const std::vector<T> &mergedGroups, const std::string &groupStartPrefix, G getNumThreads,
                       Args... args)
 {
     // Loop through merged groups
     for(const auto &m : mergedGroups) {
+        // Calculate size of array
+        const size_t sizeBytes = m.getGroups().size() * sizeof(unsigned int);
+
+        // If there is enough constant memory left for group, declare it in constant memory space
+        if(sizeBytes < totalConstMem) {
+            os << "__device__ __constant__ ";
+            totalConstMem -= sizeBytes;
+        }
+        // Otherwise, declare it in global memory space
+        else {
+            os << "__device__ ";
+        }
+
         // Declare array of starting thread indices for each neuron group
-        os << "__device__ __constant__ unsigned int d_merged" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
+        os << "unsigned int d_merged" << groupStartPrefix << "GroupStartID" << m.getIndex() << "[] = {";
         for(const auto &ng : m.getGroups()) {
             os << idStart << ", ";
             idStart += padSize(getNumThreads(ng.get()), blockSize);
@@ -97,16 +110,16 @@ void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t blockSize,
     }
 
     // Generate any remaining groups
-    genGroupStartIDs(os, idStart, blockSize, args...);
+    genGroupStartIDs(os, idStart, totalConstMem, blockSize, args...);
 }
 //-----------------------------------------------------------------------
 template<typename ...Args>
-void genMergedKernelDataStructures(CodeStream &os, size_t blockSize,
+void genMergedKernelDataStructures(CodeStream &os, size_t blockSize, size_t &totalConstMem,
                                    Args... args)
 {
     // Generate group start id arrays
     size_t idStart = 0;
-    genGroupStartIDs(os, std::ref(idStart), blockSize, args...);
+    genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), blockSize, args...);
 }
 //-----------------------------------------------------------------------
 template<typename T, typename G>
@@ -209,8 +222,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 {
     // Generate data structure for accessing merged groups
     const ModelSpecInternal &model = modelMerged.getModel();
+    size_t totalConstMem = m_ChosenDevice.totalConstMem;
     genMergedKernelDataStructures(
-        os, m_KernelBlockSizes[KernelNeuronUpdate],
+        os, m_KernelBlockSizes[KernelNeuronUpdate], totalConstMem,
         modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
         [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
     os << std::endl;
@@ -432,9 +446,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                HostHandler pushEGPHandler) const
 {
     // Generate data structure for accessing merged groups
+    size_t totalConstMem = m_ChosenDevice.totalConstMem;
     if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
         genMergedKernelDataStructures(
-            os, m_KernelBlockSizes[KernelPresynapticUpdate],
+            os, m_KernelBlockSizes[KernelPresynapticUpdate], totalConstMem,
             modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate",
             [this](const SynapseGroupInternal &sg)
             {
@@ -444,7 +459,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
         genMergedKernelDataStructures(
-            os, m_KernelBlockSizes[KernelPostsynapticUpdate],
+            os, m_KernelBlockSizes[KernelPostsynapticUpdate], totalConstMem,
             modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate",
             [this](const SynapseGroupInternal &sg)
             {
@@ -454,7 +469,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
         genMergedKernelDataStructures(
-            os, m_KernelBlockSizes[KernelSynapseDynamicsUpdate],
+            os, m_KernelBlockSizes[KernelSynapseDynamicsUpdate], totalConstMem,
             modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics",
             [this](const SynapseGroupInternal &sg)
             {
@@ -821,7 +836,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     const ModelSpecInternal &model = modelMerged.getModel();
-    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitialize],
+    size_t totalConstMem = m_ChosenDevice.totalConstMem;
+    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitialize], totalConstMem,
         modelMerged.getMergedNeuronInitGroups(), "NeuronInit",
         [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
         modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit",
@@ -831,7 +847,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // If sparse initialisation is required, generate data structure for accessing merged groups from within sparse initialisation kernel
     if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
-        genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitializeSparse],
+        genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitializeSparse], totalConstMem,
             modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit",
             [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
     }
