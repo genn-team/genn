@@ -287,7 +287,7 @@ void genMergedNeuronStruct(const BackendBase &backend, CodeStream &definitionsIn
     }
     
     // Generate structure definitions and instantiation
-    gen.generate(definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc,
+    gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc,
                  mergedStructData, init ? "NeuronInit" : "NeuronUpdate");
 }
 //-------------------------------------------------------------------------
@@ -463,7 +463,7 @@ void genMergedSynapseStruct(const BackendBase &backend, CodeStream &definitionsI
     }
 
     // Generate structure definitions and instantiation
-    gen.generate(definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc,
+    gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc,
                  mergedStructData, name);
 }
 //--------------------------------------------------------------------------
@@ -512,7 +512,7 @@ void genMergedSynapseConnectivityInit(const BackendBase &backend, CodeStream &de
     }
 
     // Generate structure definitions and instantiation
-    gen.generate(definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc,
+    gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc,
                  mergedStructData, host ? "SynapseConnectivityHostInit" : "SynapseConnectivityInit", host);
 }
 //--------------------------------------------------------------------------
@@ -1106,7 +1106,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+        gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                      mergedStructData, "NeuronSpikeQueueUpdate");
     }
 
@@ -1121,7 +1121,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                      });
 
         // Generate structure definitions and instantiation
-        gen.generate(definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+        gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                      mergedStructData, "SynapseDendriticDelayUpdate");
     }
 

@@ -366,6 +366,9 @@ public:
         genVariableImplementation(runner, type, name, loc);
     }
 
+    //! Get the size of the type
+    size_t getSize(const std::string &type) const;
+
 protected:
     //--------------------------------------------------------------------------
     // Protected API
@@ -374,8 +377,6 @@ protected:
     {
         m_TypeBytes.emplace(type, size);
     }
-
-    size_t getSize(const std::string &type) const;
 
 private:
     //--------------------------------------------------------------------------

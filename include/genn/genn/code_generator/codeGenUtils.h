@@ -95,9 +95,9 @@ public:
     }
 
 
-    void addMergedGroupSize(const std::string &mergedGroupType, size_t sizeBytes)
+    void addMergedGroupSize(const std::string &mergedGroupType, size_t mergedGroupIndex, size_t sizeBytes)
     {
-        m_MergedGroupSizes[mergedGroupType].push_back(sizeBytes);
+        m_MergedGroupSizes[mergedGroupType].emplace(mergedGroupIndex, sizeBytes);
     }
 
 private:
@@ -106,7 +106,7 @@ private:
     //------------------------------------------------------------------------
     MergedEGPMap m_MergedEGPs;
 
-    std::map<std::string, std::vector<size_t>> m_MergedGroupSizes;
+    std::unordered_map<std::string, std::map<size_t, size_t>> m_MergedGroupSizes;
 };
 
 //--------------------------------------------------------------------------

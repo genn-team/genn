@@ -158,29 +158,39 @@ public:
         }
     }
 
-    void generate(CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc,
-                  CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl,
-                  CodeStream &runnerVarAlloc, MergedStructData &mergedStructData,
-                  const std::string &name, bool host = false)
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal, 
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar, 
+                  CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, 
+                  MergedStructData &mergedStructData, const std::string &name, bool host = false)
     {
         const size_t mergedGroupIndex = getMergedGroup().getIndex();
 
         // Write struct declation to top of definitions internal
+        size_t structSize = 0;
         definitionsInternal << "struct Merged" << name << "Group" << mergedGroupIndex << std::endl;
         {
             CodeStream::Scope b(definitionsInternal);
             for(const auto &f : m_Fields) {
+                // Add field to structure
                 definitionsInternal << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+
+                // Add size of field to total
+                structSize += backend.getSize(std::get<0>(f));
 
                 // If this field is for a pointer EGP, also declare function to push it
                 if(std::get<3>(f) == FieldType::PointerEGP) {
                     definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << mergedGroupIndex << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
                 }
+
+                
             }
             definitionsInternal << std::endl;
         }
 
         definitionsInternal << ";" << std::endl;
+
+        // Add total size of array of merged structures to merged struct data
+        mergedStructData.addMergedGroupSize(name, mergedGroupIndex, structSize * getMergedGroup().getGroups().size());
 
         // Declare array of these structs containing individual neuron group pointers etc
         runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
