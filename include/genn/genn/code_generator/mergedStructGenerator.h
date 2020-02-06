@@ -167,6 +167,7 @@ public:
 
         // Write struct declation to top of definitions internal
         size_t structSize = 0;
+        size_t largestFieldSize = 0;
         definitionsInternal << "struct Merged" << name << "Group" << mergedGroupIndex << std::endl;
         {
             CodeStream::Scope b(definitionsInternal);
@@ -175,14 +176,16 @@ public:
                 definitionsInternal << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
 
                 // Add size of field to total
-                structSize += backend.getSize(std::get<0>(f));
+                const size_t fieldSize = backend.getSize(std::get<0>(f));
+                structSize += fieldSize;
+
+                // Update largest field size
+                largestFieldSize = std::max(fieldSize, largestFieldSize);
 
                 // If this field is for a pointer EGP, also declare function to push it
                 if(std::get<3>(f) == FieldType::PointerEGP) {
                     definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << mergedGroupIndex << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
                 }
-
-                
             }
             definitionsInternal << std::endl;
         }
@@ -190,7 +193,9 @@ public:
         definitionsInternal << ";" << std::endl;
 
         // Add total size of array of merged structures to merged struct data
-        mergedStructData.addMergedGroupSize(name, mergedGroupIndex, structSize * getMergedGroup().getGroups().size());
+        // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
+        const size_t arraySize = padSize(structSize, largestFieldSize) * getMergedGroup().getGroups().size();
+        mergedStructData.addMergedGroupSize(name, mergedGroupIndex, arraySize);
 
         // Declare array of these structs containing individual neuron group pointers etc
         runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
