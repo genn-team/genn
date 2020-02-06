@@ -938,6 +938,21 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) cons
     return false;
 }
 //--------------------------------------------------------------------------
+Backend::MemorySpaces Backend::getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &) const
+{
+    return {{"", std::numeric_limits<size_t>::max()}};
+}
+//--------------------------------------------------------------------------
+Backend::MemorySpaces Backend::getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &) const
+{
+    return {{"", std::numeric_limits<size_t>::max()}};
+}
+//--------------------------------------------------------------------------
+Backend::MemorySpaces Backend::getMergedInitGroupMemorySpaces(const ModelSpecMerged &) const
+{
+    return {{"", std::numeric_limits<size_t>::max()}};
+}
+//--------------------------------------------------------------------------
 void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
                                    bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const
 {

@@ -80,7 +80,8 @@ public:
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
 
     //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                              size_t idx, size_t numGroups) const override;
     
     //! Generate code for pushing merged group data to the 'device'
     virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
@@ -149,17 +150,17 @@ public:
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
-    virtual MemorySpaces getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override{ return {}; }
+    virtual MemorySpaces getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
-    virtual MemorySpaces getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override{ return {}; }
+    virtual MemorySpaces getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
-    virtual MemorySpaces getMergedInitGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override{ return {}; }
+    virtual MemorySpaces getMergedInitGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
 private:
     //--------------------------------------------------------------------------
