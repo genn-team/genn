@@ -161,9 +161,18 @@ public:
     void generate(const BackendBase &backend, CodeStream &definitionsInternal, 
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar, 
                   CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, 
-                  MergedStructData &mergedStructData, const std::string &name, bool host = false)
+                  MergedStructData &mergedStructData, const std::string &name, bool host = false) const
     {
         const size_t mergedGroupIndex = getMergedGroup().getIndex();
+
+        // Make a copy of fields and sort so largest come first. This should mean that due
+        // to structure packing rules, significant memory is saved and estimate is more precise
+        auto sortedFields = m_Fields;
+        std::sort(sortedFields.begin(), sortedFields.end(),
+                  [&backend](const Field &a, const Field &b)
+                  {
+                      return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
+                  });
 
         // Write struct declation to top of definitions internal
         size_t structSize = 0;
@@ -171,7 +180,7 @@ public:
         definitionsInternal << "struct Merged" << name << "Group" << mergedGroupIndex << std::endl;
         {
             CodeStream::Scope b(definitionsInternal);
-            for(const auto &f : m_Fields) {
+            for(const auto &f : sortedFields) {
                 // Add field to structure
                 definitionsInternal << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
 
@@ -205,7 +214,7 @@ public:
 
             // Set all fields in array of structs
             runnerVarAlloc << "merged" << name << "Group" << mergedGroupIndex << "[" << groupIndex << "] = {";
-            for(const auto &f : m_Fields) {
+            for(const auto &f : sortedFields) {
                 const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
                 runnerVarAlloc << fieldInitVal << ", ";
 
@@ -241,10 +250,15 @@ protected:
 
 private:
     //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
+
+    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     const T &m_MergedGroup;
-    std::vector<std::tuple<std::string, std::string, GetFieldValueFunc, FieldType>> m_Fields;
+    std::vector<Field> m_Fields;
 };
 
 //--------------------------------------------------------------------------
