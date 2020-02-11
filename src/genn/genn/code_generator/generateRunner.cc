@@ -105,7 +105,7 @@ void genMergedNeuronStruct(const BackendBase &backend, CodeStream &definitionsIn
                            MergedStructData &mergedStructData, const NeuronGroupMerged &m, const std::string &precision,
                            const std::string &timePrecision, bool init)
 {
-    MergedNeuronStructGenerator gen(m);
+    MergedNeuronStructGenerator gen(m, precision);
 
     gen.addField("unsigned int", "numNeurons",
                  [](const NeuronGroupInternal &ng, size_t){ return std::to_string(ng.getNumNeurons()); });
@@ -195,24 +195,24 @@ void genMergedNeuronStruct(const BackendBase &backend, CodeStream &definitionsIn
         const auto paramNames = cs->getCurrentSourceModel()->getParamNames();
         for(size_t p = 0; p < paramNames.size(); p++) {
             if(m.isCurrentSourceParamHeterogeneous(i, p)) {
-                gen.addField("scalar", paramNames[p] + "CS" + std::to_string(i),
-                             [i, p, &m](const NeuronGroupInternal &, size_t groupIndex)
-                             {
-                                 const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getParams().at(p);
-                                 return Utils::writePreciseString(val);
-                             });
+                gen.addScalarField(paramNames[p] + "CS" + std::to_string(i),
+                                   [i, p, &m](const NeuronGroupInternal &, size_t groupIndex)
+                                   {
+                                       const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getParams().at(p);
+                                       return Utils::writePreciseString(val);
+                                   });
             }
         }
 
         const auto derivedParams = cs->getCurrentSourceModel()->getDerivedParams();
         for(size_t p = 0; p < derivedParams.size(); p++) {
             if(m.isCurrentSourceDerivedParamHeterogeneous(i, p)) {
-                gen.addField("scalar", derivedParams[p].name + "CS" + std::to_string(i),
-                             [i, p, &m](const NeuronGroupInternal&, size_t groupIndex)
-                             {
-                                 const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getDerivedParams().at(p);
-                                 return Utils::writePreciseString(val);
-                             });
+                gen.addScalarField(derivedParams[p].name + "CS" + std::to_string(i),
+                                   [i, p, &m](const NeuronGroupInternal&, size_t groupIndex)
+                                   {
+                                       const double val = m.getSortedCurrentSources().at(groupIndex).at(i)->getDerivedParams().at(p);
+                                       return Utils::writePreciseString(val);
+                                    });
             }
         }
 
@@ -301,7 +301,7 @@ void genMergedSynapseStruct(const BackendBase &backend, CodeStream &definitionsI
                              || (role == MergedSynapseStruct::SynapseDynamics));
     const WeightUpdateModels::Base *wum = m.getArchetype().getWUModel();
 
-    MergedSynapseStructGenerator gen(m);
+    MergedSynapseStructGenerator gen(m, precision);
 
     gen.addField("unsigned int", "rowStride",
                  [m, &backend](const SynapseGroupInternal &sg, size_t){ return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
@@ -469,9 +469,9 @@ void genMergedSynapseStruct(const BackendBase &backend, CodeStream &definitionsI
 //--------------------------------------------------------------------------
 void genMergedSynapseConnectivityInit(const BackendBase &backend, CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc,
                                       CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc,
-                                      MergedStructData &mergedStructData, const SynapseGroupMerged &m, bool host)
+                                      MergedStructData &mergedStructData, const SynapseGroupMerged &m, const std::string &precision, bool host)
 {
-    MergedSynapseStructGenerator gen(m);
+    MergedSynapseStructGenerator gen(m, precision);
 
     gen.addField("unsigned int", "numSrcNeurons",
                  [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
@@ -1019,7 +1019,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // Loop through merged synapse connectivity host initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
         genMergedSynapseConnectivityInit(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                         runnerVarDecl, runnerMergedStructAlloc, mergedStructData, m, true);
+                                         runnerVarDecl, runnerMergedStructAlloc, mergedStructData, m, model.getPrecision(), true);
     }
 
     // Loop through merged synapse connectivity host init groups and generate host init code
@@ -1045,7 +1045,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // Loop through merged synapse connectivity initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityInitGroups()) {
         genMergedSynapseConnectivityInit(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                         runnerVarDecl, runnerMergedStructAlloc, mergedStructData, m, false);
+                                         runnerVarDecl, runnerMergedStructAlloc, mergedStructData, m, model.getPrecision(), false);
     }
 
     // Loop through merged sparse synapse init groups
@@ -1085,7 +1085,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through neuron groups whose spike queues need resetting
     for(const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
-        MergedNeuronStructGenerator gen(m);
+        MergedNeuronStructGenerator gen(m, model.getPrecision());
 
         if(m.getArchetype().isDelayRequired()) {
             gen.addField("unsigned int", "numDelaySlots",
@@ -1112,7 +1112,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through synapse groups whose dendritic delay pointers need updating
     for(const auto &m : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
-        MergedSynapseStructGenerator gen(m);
+        MergedSynapseStructGenerator gen(m, model.getPrecision());
 
         gen.addField("volatile unsigned int*", "denDelayPtr",
                      [&backend](const SynapseGroupInternal &sg, size_t)

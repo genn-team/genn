@@ -36,7 +36,7 @@ public:
     //------------------------------------------------------------------------
     typedef std::function<std::string(const typename T::GroupInternal &, size_t)> GetFieldValueFunc;
  
-    MergedStructGenerator(const T &mergedGroup) : m_MergedGroup(mergedGroup)
+    MergedStructGenerator(const T &mergedGroup, const std::string &precision) : m_MergedGroup(mergedGroup), m_Precision(precision)
     {
     }
 
@@ -46,6 +46,16 @@ public:
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
+    }
+
+    void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
+    {
+        addField("scalar", name,
+                 [getFieldValue, this](const typename T::GroupInternal &g, size_t i)
+                 {
+                    return ensureFtype(getFieldValue(g, i), m_Precision);
+                 },
+                 fieldType);
     }
 
     void addPointerField(const std::string &type, const std::string &name, const std::string &prefix)
@@ -87,12 +97,12 @@ public:
             // If parameters is heterogeneous
             if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
-                addField("scalar", paramNames[p],
-                         [p, getParamValues](const typename T::GroupInternal &g, size_t)
-                         {
-                             const auto &values = getParamValues(g);
-                             return Utils::writePreciseString(values.at(p));
-                         });
+                addScalarField(paramNames[p],
+                               [p, getParamValues](const typename T::GroupInternal &g, size_t)
+                               {
+                                   const auto &values = getParamValues(g);
+                                   return Utils::writePreciseString(values.at(p));
+                               });
             }
         }
     }
@@ -106,12 +116,12 @@ public:
             // If parameters isn't homogeneous
             if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
-                addField("scalar", derivedParams[p].name,
-                         [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
-                         {
-                             const auto &values = getDerivedParamValues(g);
-                             return Utils::writePreciseString(values.at(p));
-                         });
+                addScalarField(derivedParams[p].name,
+                               [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
+                               {
+                                   const auto &values = getDerivedParamValues(g);
+                                   return Utils::writePreciseString(values.at(p));
+                               });
             }
         }
     }
@@ -126,12 +136,12 @@ public:
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
                 if((getMergedGroup().*isHeterogeneous)(v, p)) {
-                    addField("scalar", varInit.getSnippet()->getParamNames()[p] + vars[v].name,
-                             [p, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
-                             {
-                                 const auto &values = (g.*getVarInitialisers)()[v].getParams();
-                                 return Utils::writePreciseString(values.at(p));
-                             });
+                    addScalarField(varInit.getSnippet()->getParamNames()[p] + vars[v].name,
+                                   [p, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
+                                   {
+                                       const auto &values = (g.*getVarInitialisers)()[v].getParams();
+                                       return Utils::writePreciseString(values.at(p));
+                                   });
                 }
             }
         }
@@ -147,12 +157,12 @@ public:
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
                 if((getMergedGroup().*isHeterogeneous)(v, d)) {
-                    addField("scalar", varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
-                             [d, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
-                             {
-                                 const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
-                                 return Utils::writePreciseString(values.at(d));
-                             });
+                    addScalarField(varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
+                                   [d, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
+                                   {
+                                       const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
+                                       return Utils::writePreciseString(values.at(d));
+                                   });
                 }
             }
         }
@@ -258,6 +268,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     const T &m_MergedGroup;
+    const std::string m_Precision;
     std::vector<Field> m_Fields;
 };
 
@@ -267,8 +278,8 @@ private:
 class MergedNeuronStructGenerator : public MergedStructGenerator<CodeGenerator::NeuronGroupMerged>
 {
 public:
-    MergedNeuronStructGenerator(const CodeGenerator::NeuronGroupMerged &mergedGroup)
-    :   MergedStructGenerator<CodeGenerator::NeuronGroupMerged>(mergedGroup)
+    MergedNeuronStructGenerator(const CodeGenerator::NeuronGroupMerged &mergedGroup, const std::string &precision)
+    :   MergedStructGenerator<CodeGenerator::NeuronGroupMerged>(mergedGroup, precision)
     {
     }
 
@@ -315,8 +326,8 @@ public:
 class MergedSynapseStructGenerator : public MergedStructGenerator<CodeGenerator::SynapseGroupMerged>
 {
 public:
-    MergedSynapseStructGenerator(const CodeGenerator::SynapseGroupMerged &mergedGroup)
-    :   MergedStructGenerator<CodeGenerator::SynapseGroupMerged>(mergedGroup)
+    MergedSynapseStructGenerator(const CodeGenerator::SynapseGroupMerged &mergedGroup, const std::string &precision)
+    :   MergedStructGenerator<CodeGenerator::SynapseGroupMerged>(mergedGroup, precision)
     {
     }
 
