@@ -15,13 +15,13 @@ After downloading continue to install GeNN as described in the \ref installing s
 
 \section GitSnapshot Obtaining a Git snapshot
 
-If it is not yet installed on your system, download and install <a href="http://git-scm.com/">Git<\a>.
+If it is not yet installed on your system, download and install (\a http://git-scm.com/).
 Then clone the GeNN repository from Github
 \code
 git clone https://github.com/genn-team/genn.git
 \endcode
 The github url of GeNN in the command above can be copied from the
-HTTPS clone URL displayed on the GeNN <a href="https://github.com/genn-team/genn">Github page<\a>.
+HTTPS clone URL displayed on the GeNN (\a https://github.com/genn-team/genn).
 
 This will clone the entire repository, including all open branches.
 By default git will check out the master branch which contains the
@@ -31,7 +31,7 @@ purposes and are opened and closed without warning.
 
 As an alternative to using git is to download the full content of
 GeNN sources by clicking on the "Download ZIP" button on the bottom right
-of the GeNN Github page <a href="https://github.com/genn-team/genn">Github page<\a>.
+of the GeNN Github page (\a https://github.com/genn-team/genn).
 
 \section installing Installing GeNN
 
@@ -49,7 +49,7 @@ repository.
       \code
       export PATH=$PATH:$HOME/GeNN/bin
       \endcode
-       to your login script (e.g. `.profile` or `.bashrc`. If you are using
+       to your login script (e.g. `.profile` or `.bashrc`). If you are using
      WINDOWS, the path should be a windows path as it will be
      interpreted by the Visual C++ compiler `cl`, and environment
      variables are best set using `SETX` in a Windows cmd window.
