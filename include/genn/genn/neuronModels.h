@@ -22,6 +22,9 @@
 #define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const override{ return SUPPORT_CODE; }
 #define SET_ADDITIONAL_INPUT_VARS(...) virtual ParamValVec getAdditionalInputVars() const override{ return __VA_ARGS__; }
 #define SET_NEEDS_AUTO_REFRACTORY(AUTO_REFRACTORY_REQUIRED) virtual bool isAutoRefractoryRequired() const override{ return AUTO_REFRACTORY_REQUIRED; }
+#define SET_SIM_CODE_PREAMBLE(SIM_CODE_PREAMBLE) virtual std::string getSimCodePreamble() const override{ return SIM_CODE_PREAMBLE; }
+#define SET_SIM_CODE_POSTAMBLE(SIM_CODE_POSTAMBLE) virtual std::string getSimCodePostamble() const override{ return SIM_CODE_POSTAMBLE; }
+#define SET_STATE_VARS(...) virtual StateVarVec getStateVars() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // NeuronModels::Base
@@ -65,6 +68,53 @@ public:
     //----------------------------------------------------------------------------
     //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
+};
+
+//----------------------------------------------------------------------------
+// NeuronModels::RK4Base
+//----------------------------------------------------------------------------
+//! Helper class to simplify development of neuron models solved using RK4 with standard coefficients
+class GENN_EXPORT RK4Base : public Base
+{
+public:
+    //----------------------------------------------------------------------------
+    // StateVar
+    //----------------------------------------------------------------------------
+    struct StateVar
+    {
+        StateVar(const std::string &n, const std::string &d, const std::string &u) : name(n), derivative(d), updateCondition(u)
+        {}
+        StateVar(const std::string &n, const std::string &d) : StateVar(n, d, "")
+        {}
+        StateVar() : StateVar("", "", "")
+        {}
+        
+        std::string name;
+        std::string derivative;
+        std::string updateCondition;
+    };
+    
+    //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef std::vector<StateVar> StateVarVec;
+    
+    //----------------------------------------------------------------------------
+    // NeuronModels::Base virtuals
+    //----------------------------------------------------------------------------
+    virtual std::string getSimCode() const final;
+    
+    //----------------------------------------------------------------------------
+    // Declared virtuals
+    //----------------------------------------------------------------------------
+    //! Gets state variables to be updated using RK4 solver
+    virtual StateVarVec getStateVars() const = 0;
+     
+    //! Gets any additional code to be inserted before RK4 solver 
+    virtual std::string getSimCodePreamble() const{ return ""; }
+    
+    //! Gets any additional code to be inserted after RK4 solver 
+    virtual std::string getSimCodePostamble() const{ return ""; }
 };
 
 //----------------------------------------------------------------------------
