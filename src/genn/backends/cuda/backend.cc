@@ -1163,8 +1163,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         os << "unsigned long long deviceRNGSeed = 0;" << std::endl;
 
-        // If on-device global RNG is required
-        if(isGlobalDeviceRNGRequired(modelMerged)) {
+        // If any sort of on-device global RNG is required
+        const bool simRNGRequired = std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
+                                                [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); });
+        const bool globalDeviceRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
+        if(simRNGRequired || globalDeviceRNGRequired) {
             // If no seed is specified
             if (model.getSeed() == 0) {
                 CodeStream::Scope b(os);
@@ -1183,9 +1186,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                 os << "deviceRNGSeed = " << model.getSeed() << ";" << std::endl;
             }
 
-            // Launch kernel to initalize RNG
-            os << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            // If global RNG is required, launch kernel to initalize it
+            if (globalDeviceRNGRequired) {
+                os << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
         }
 
         for(const auto &s : model.getSynapseGroups()) {
