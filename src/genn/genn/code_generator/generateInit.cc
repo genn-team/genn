@@ -7,11 +7,9 @@
 #include "models.h"
 
 // GeNN code generator includes
-#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
-#include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -193,13 +191,12 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged,
-                                 const BackendBase &backend)
+void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedStructData, BackendBase::MemorySpaces &memorySpaces,
+                                 const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
 
     // Generate functions to push merged synapse group structures
-    auto memorySpaces = backend.getMergedInitGroupMemorySpaces(modelMerged);
     const ModelSpecInternal &model = modelMerged.getModel();
     genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), mergedStructData, "NeuronInit",
                        backend, memorySpaces);

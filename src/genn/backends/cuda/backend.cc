@@ -138,33 +138,15 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
         });
 }
 //-----------------------------------------------------------------------
-size_t getGroupStartIDSize()
-{
-    return 0;
-}
-//-----------------------------------------------------------------------
-template<typename T, typename ...Args>
-size_t getGroupStartIDSize(const std::vector<T> &mergedGroups, Args... args)
+template<typename T>
+size_t getGroupStartIDSize(const std::vector<T> &mergedGroups)
 {
     // Calculate size of groups
-    const size_t mergedGroupSize = std::accumulate(mergedGroups.cbegin(), mergedGroups.cend(),
-                                                   0, [](size_t acc, const T &ng)
-                                                   {
-                                                       return acc + (sizeof(unsigned int) * ng.getGroups().size());
-                                                   });
-
-    // Return sum of this and size of remainder of groups
-    return mergedGroupSize + getGroupStartIDSize(args...);
-}
-//-----------------------------------------------------------------------
-template<typename ...Args>
-BackendBase::MemorySpaces getMergedGroupMemorySpaces(size_t totalConstMem, size_t totalGlobalMem, Args... args)
-{
-    // Calculate the size of the group start IDs for all groups
-    const size_t groupStartIDSize = getGroupStartIDSize(args...);
-
-    return {{"__device__ __constant__", (groupStartIDSize > totalConstMem) ? 0 : (totalConstMem - groupStartIDSize)},
-            {"__device__", totalGlobalMem}};
+    return std::accumulate(mergedGroups.cbegin(), mergedGroups.cend(),
+                           0, [](size_t acc, const T &ng)
+                           {
+                               return acc + (sizeof(unsigned int) * ng.getGroups().size());
+                           });
 }
 }   // Anonymous namespace
 
@@ -221,12 +203,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                               HostHandler pushEGPHandler) const
 {
     // Generate data structure for accessing merged groups
+    // **NOTE** constant cache is preferentially given to synapse groups as, typically, more synapse kernels are launches
+    // so subtract constant memory requirements of synapse group start ids from total constant memory
     const ModelSpecInternal &model = modelMerged.getModel();
-    size_t totalConstMem = m_ChosenDevice.totalConstMem;
-    genMergedKernelDataStructures(
-        os, m_KernelBlockSizes[KernelNeuronUpdate], totalConstMem,
-        modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
-        [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
+    const size_t synapseGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+                                            getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
+                                            getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
+    size_t totalConstMem = (m_ChosenDevice.totalConstMem > synapseGroupStartIDSize) ? (m_ChosenDevice.totalConstMem - synapseGroupStartIDSize) : 0;
+    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelNeuronUpdate], totalConstMem,
+                                  modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
+                                  [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
     os << std::endl;
 
     // Generate reset kernel to be run before the neuron kernel
@@ -447,35 +433,19 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 {
     // Generate data structure for accessing merged groups
     size_t totalConstMem = m_ChosenDevice.totalConstMem;
-    if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
-        genMergedKernelDataStructures(
-            os, m_KernelBlockSizes[KernelPresynapticUpdate], totalConstMem,
-            modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate",
-            [this](const SynapseGroupInternal &sg)
-            {
-                return getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences);
-            });
-    }
+    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelPresynapticUpdate], totalConstMem,
+                                  modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate",
+                                  [this](const SynapseGroupInternal &sg)
+                                  {
+                                      return getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences);
+                                  });
+    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelPostsynapticUpdate], totalConstMem,
+                                  modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate",
+                                  [this](const SynapseGroupInternal &sg){ return getNumPostsynapticUpdateThreads(sg); });
 
-    if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
-        genMergedKernelDataStructures(
-            os, m_KernelBlockSizes[KernelPostsynapticUpdate], totalConstMem,
-            modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate",
-            [this](const SynapseGroupInternal &sg)
-            {
-                return getNumPostsynapticUpdateThreads(sg);
-            });
-    }
-
-    if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
-        genMergedKernelDataStructures(
-            os, m_KernelBlockSizes[KernelSynapseDynamicsUpdate], totalConstMem,
-            modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics",
-            [this](const SynapseGroupInternal &sg)
-            {
-                return getNumSynapseDynamicsThreads(sg);
-            });
-    }
+    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelSynapseDynamicsUpdate], totalConstMem,
+                                  modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics",
+                                  [this](const SynapseGroupInternal &sg){ return getNumSynapseDynamicsThreads(sg); });
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -835,22 +805,21 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << std::endl;
 
     // Generate data structure for accessing merged groups from within initialisation kernel
+    // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
     const ModelSpecInternal &model = modelMerged.getModel();
-    size_t totalConstMem = m_ChosenDevice.totalConstMem;
+    size_t totalConstMem = 0;
     genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitialize], totalConstMem,
-        modelMerged.getMergedNeuronInitGroups(), "NeuronInit",
-        [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
-        modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit",
-        [](const SynapseGroupInternal &sg){ return sg.getTrgNeuronGroup()->getNumNeurons(); },
-        modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit",
-        [](const SynapseGroupInternal &sg){ return sg.getSrcNeuronGroup()->getNumNeurons(); });
+                                  modelMerged.getMergedNeuronInitGroups(), "NeuronInit",
+                                  [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
+                                  modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit",
+                                  [](const SynapseGroupInternal &sg){ return sg.getTrgNeuronGroup()->getNumNeurons(); },
+                                  modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit",
+                                  [](const SynapseGroupInternal &sg){ return sg.getSrcNeuronGroup()->getNumNeurons(); });
 
-    // If sparse initialisation is required, generate data structure for accessing merged groups from within sparse initialisation kernel
-    if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
-        genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitializeSparse], totalConstMem,
-            modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit",
-            [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
-    }
+    // Generate data structure for accessing merged groups from within sparse initialisation kernel
+    genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelInitializeSparse], totalConstMem,
+                                  modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit",
+                                  [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
     os << std::endl;
 
     // If device RNG is required, generate kernel to initialise it
@@ -2048,27 +2017,17 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) cons
     return false;
 }
 //--------------------------------------------------------------------------
-Backend::MemorySpaces Backend::getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
+Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
 {
-    return getMergedGroupMemorySpaces(m_ChosenDevice.totalConstMem, m_ChosenDevice.totalGlobalMem,
-                                      modelMerged.getMergedNeuronUpdateGroups());
-}
-//--------------------------------------------------------------------------
-Backend::MemorySpaces Backend::getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
-{
-    return getMergedGroupMemorySpaces(m_ChosenDevice.totalConstMem, m_ChosenDevice.totalGlobalMem,
-                                      modelMerged.getMergedPresynapticUpdateGroups(),
-                                      modelMerged.getMergedPostsynapticUpdateGroups(),
-                                      modelMerged.getMergedSynapseDynamicsGroups());
-}
-//--------------------------------------------------------------------------
-Backend::MemorySpaces Backend::getMergedInitGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
-{
-    return getMergedGroupMemorySpaces(m_ChosenDevice.totalConstMem, m_ChosenDevice.totalGlobalMem,
-                                      modelMerged.getMergedNeuronInitGroups(),
-                                      modelMerged.getMergedSynapseDenseInitGroups(),
-                                      modelMerged.getMergedSynapseConnectivityInitGroups(),
-                                      modelMerged.getMergedSynapseSparseInitGroups());
+    // Get size of update group start ids (constant cache is precious so don't use for init groups
+    const size_t groupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
+
+    // Return available constant memory and to
+    return {{"__device__ __constant__", (groupStartIDSize > m_ChosenDevice.totalConstMem) ? 0 : (m_ChosenDevice.totalConstMem - groupStartIDSize)},
+            {"__device__", m_ChosenDevice.totalGlobalMem}};
 }
 //--------------------------------------------------------------------------
 std::string Backend::getNVCCFlags() const

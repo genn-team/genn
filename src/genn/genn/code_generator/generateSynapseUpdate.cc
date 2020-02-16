@@ -5,10 +5,9 @@
 
 // GeNN code generator includes
 #include "code_generator/codeStream.h"
-#include "code_generator/substitutions.h"
-#include "code_generator/backendBase.h"
 #include "code_generator/groupMerged.h"
 #include "code_generator/modelSpecMerged.h"
+#include "code_generator/substitutions.h"
 #include "code_generator/teeStream.h"
 
 //--------------------------------------------------------------------------
@@ -98,14 +97,14 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData &mergedStructData, BackendBase::MemorySpaces &memorySpaces,
+                                          const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 
     // Generate functions to push merged synapse group structures
-    auto memorySpaces = backend.getMergedSynapseGroupMemorySpaces(modelMerged);
     const ModelSpecInternal &model = modelMerged.getModel();
     genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedStructData, "SynapseDendriticDelayUpdate",
                        backend, memorySpaces);

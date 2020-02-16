@@ -11,8 +11,6 @@
 #include "models.h"
 
 // GeNN code generator includes
-#include "code_generator/backendBase.h"
-#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
@@ -41,15 +39,14 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged,
-                                         const BackendBase &backend)
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData &mergedStructData, BackendBase::MemorySpaces &memorySpaces,
+                                         const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 
     // Generate functions to push merged neuron group structures
-    auto memorySpaces = backend.getMergedNeuronGroupMemorySpaces(modelMerged);
     genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), mergedStructData, "NeuronSpikeQueueUpdate",
                        backend, memorySpaces);
     genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), mergedStructData, "NeuronUpdate",

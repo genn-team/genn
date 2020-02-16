@@ -54,12 +54,13 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     ModelSpecMerged modelMerged(model, backend);
 
     // Generate modules
+    //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
     MergedStructData mergedStructData;
+    auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
     auto mem = generateRunner(definitions, definitionsInternal, runner, mergedStructData, modelMerged, backend);
-    generateNeuronUpdate(neuronUpdate, mergedStructData, modelMerged, backend);
-    generateSynapseUpdate(synapseUpdate, mergedStructData, modelMerged, backend);
-    generateInit(init, mergedStructData, modelMerged, backend);
-
+    generateSynapseUpdate(synapseUpdate, mergedStructData, memorySpaces, modelMerged, backend);
+    generateNeuronUpdate(neuronUpdate, mergedStructData, memorySpaces, modelMerged, backend);
+    generateInit(init, mergedStructData, memorySpaces, modelMerged, backend);
     generateSupportCode(supportCode, modelMerged);
 
     // Create basic list of modules
