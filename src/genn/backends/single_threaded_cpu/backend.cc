@@ -933,22 +933,12 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
     return false;
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
+bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &) const
 {
     return false;
 }
 //--------------------------------------------------------------------------
-Backend::MemorySpaces Backend::getMergedNeuronGroupMemorySpaces(const ModelSpecMerged &) const
-{
-    return {{"", std::numeric_limits<size_t>::max()}};
-}
-//--------------------------------------------------------------------------
-Backend::MemorySpaces Backend::getMergedSynapseGroupMemorySpaces(const ModelSpecMerged &) const
-{
-    return {{"", std::numeric_limits<size_t>::max()}};
-}
-//--------------------------------------------------------------------------
-Backend::MemorySpaces Backend::getMergedInitGroupMemorySpaces(const ModelSpecMerged &) const
+Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
 {
     return {{"", std::numeric_limits<size_t>::max()}};
 }
