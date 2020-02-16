@@ -14,10 +14,10 @@
 //----------------------------------------------------------------------------
 /*! \page Quickstart Quickstart 
 
-GeNN is based on the idea of code generation, not only generating GPU or
-CPU simulation code for neuronal network models but also leaving a lot of
-freedom on how to use the generated code in the final
-application. To facilitate the use of GeNN on the background of this
+GeNN is based on the idea of code generation for the code that simulates neuronal network models, 
+either on GPU or CPU. At the same time, it leaves a lot of freedom to users, 
+how to use the generated code in their final applications. 
+To facilitate the use of GeNN on the background of this
 philosophy, it comes with a number of complete examples containing both
 the model description code that is used by GeNN for code generation
 and the "user side code" to run the generated model as well as save the
