@@ -20,7 +20,7 @@
 namespace PostsynapticModels
 {
 //! Base class for all postsynaptic models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -29,12 +29,20 @@ public:
     virtual std::string getDecayCode() const{ return ""; }
     virtual std::string getApplyInputCode() const{ return ""; }
     virtual std::string getSupportCode() const{ return ""; }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
 };
 
 //----------------------------------------------------------------------------
 // PostsynapticModels::ExpCurr
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a current value.
+/*! This model has no variables and a single parameter:
+  - \c tau : Decay time constant*/
 class ExpCurr : public Base
 {
 public:

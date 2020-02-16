@@ -5,11 +5,11 @@
 #include <list>
 #include <regex>
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
+
+// SpineML common includes
+#include "spineMLLogging.h"
 
 // SpineML generator includes
 #include "objectHandler.h"
@@ -88,7 +88,7 @@ void SpineMLGenerator::CodeStream::flush()
 //----------------------------------------------------------------------------
 SpineMLGenerator::Aliases::Aliases(const pugi::xml_node &componentClass)
 {
-    LOGD << "\t\tAliases:";
+    LOGD_SPINEML << "\t\tAliases:";
 
     // Loop through aliases and add to map
     auto dynamics = componentClass.child("Dynamics");
@@ -96,13 +96,13 @@ SpineMLGenerator::Aliases::Aliases(const pugi::xml_node &componentClass)
         const std::string name = alias.attribute("name").value();
         const std::string code = alias.child_value("MathInline");
 
-        LOGD << "\t\t\t" << name;
+        LOGD_SPINEML << "\t\t\t" << name;
 
         m_Aliases.emplace(name, code);
     }
 
 
-    LOGD << "\t\t\tDependencies:";
+    LOGD_SPINEML << "\t\t\tDependencies:";
     // Loop through aliases
     for(auto alias = m_Aliases.begin(); alias != m_Aliases.end(); alias++) {
         // Loop through other aliases
@@ -115,7 +115,7 @@ SpineMLGenerator::Aliases::Aliases(const pugi::xml_node &componentClass)
 
                 // If 'alias' references 'otherAlias', add to set
                 if(std::regex_search(alias->second.code, regex)) {
-                    LOGD << "\t\t\t\t" << alias->first << " depends on " << otherAlias->first;
+                    LOGD_SPINEML << "\t\t\t\t" << alias->first << " depends on " << otherAlias->first;
                     alias->second.dependencies.push_back(otherAlias);
                 }
 
@@ -136,7 +136,7 @@ void SpineMLGenerator::Aliases::genAliases(std::ostream &os, std::initializer_li
     // Stack used to implment depth-first search
     std::vector<AliasIter> aliasStack;
 
-    LOGD << "\t\t\tCode alias requirements:";
+    LOGD_SPINEML << "\t\t\tCode alias requirements:";
     // Loop through aliases
     for(auto alias = m_Aliases.cbegin(); alias != m_Aliases.cend(); alias++) {
         // Build a regex to find alias name with at least one character that
@@ -153,7 +153,7 @@ void SpineMLGenerator::Aliases::genAliases(std::ostream &os, std::initializer_li
 
             // Add starting alias to vector
             aliasStack.push_back(alias);
-            LOGD << "\t\t\t\tStart:" << alias->first;
+            LOGD_SPINEML << "\t\t\t\tStart:" << alias->first;
 
             // While there are aliases on the stack
             std::list<AliasIter> requiredAliases;
@@ -219,7 +219,7 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
                                                                   ObjectHandler::Base *objectHandlerTimeDerivative,
                                                                   std::function<void(bool, unsigned int)> regimeEndFunc)
 {
-    LOGD << "\t\tModel name:" << componentClass.attribute("name").value();
+    LOGD_SPINEML << "\t\tModel name:" << componentClass.attribute("name").value();
 
     // Build mapping from regime names to IDs
     auto dynamics = componentClass.child("Dynamics");
@@ -233,11 +233,11 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
     const bool multipleRegimes = (regimeIDs.size() > 1);
 
     // Loop through regimes
-    LOGD << "\t\tRegimes:";
+    LOGD_SPINEML << "\t\tRegimes:";
     for(auto regime : dynamics.children("Regime")) {
         const auto *currentRegimeName = regime.attribute("name").value();
         const unsigned int currentRegimeID = regimeIDs[currentRegimeName];
-        LOGD << "\t\t\tRegime name:" << currentRegimeName << ", id:" << currentRegimeID;
+        LOGD_SPINEML << "\t\t\tRegime name:" << currentRegimeName << ", id:" << currentRegimeID;
 
         // Loop through internal conditions by which model might leave regime
         for(auto condition : regime.children("OnCondition")) {
@@ -305,7 +305,7 @@ std::pair<bool, unsigned int> SpineMLGenerator::generateModelCode(const pugi::xm
         throw std::runtime_error("No initial regime set");
     }
 
-    LOGD << "\t\t\tInitial regime ID:" << initialRegime->second;
+    LOGD_SPINEML << "\t\t\tInitial regime ID:" << initialRegime->second;
 
     // Return whether this model has multiple regimes and what the ID of the initial regime is
     return std::make_pair(multipleRegimes, initialRegime->second);
@@ -365,9 +365,9 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
                                                 const std::vector<std::string*> &codeStrings)
 {
     // Loop through model parameters
-    LOGD << "\t\tParameters:";
+    LOGD_SPINEML << "\t\tParameters:";
     for(const auto &p : paramNames) {
-        LOGD << "\t\t\t" << p;
+        LOGD_SPINEML << "\t\t\t" << p;
 
         // Wrap variable names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
@@ -375,9 +375,9 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
         }
     }
 
-    LOGD << "\t\tVariables:";
+    LOGD_SPINEML << "\t\tVariables:";
     for(const auto &v : vars) {
-        LOGD << "\t\t\t" << v.name << ":" << v.type;
+        LOGD_SPINEML << "\t\t\t" << v.name << ":" << v.type;
 
         // Wrap variable names so GeNN code generator can find them
         for(std::string *c : codeStrings) {
@@ -385,9 +385,9 @@ void SpineMLGenerator::substituteModelVariables(const Models::Base::StringVec &p
         }
     }
 
-    LOGD << "\t\tDerived params:";
+    LOGD_SPINEML << "\t\tDerived params:";
     for(const auto &d : derivedParams) {
-        LOGD << "\t\t\t" << d.name;
+        LOGD_SPINEML << "\t\t\t" << d.name;
 
         // Wrap derived param names so GeNN code generator can find them
         for(std::string *c : codeStrings) {

@@ -65,9 +65,34 @@ bool CurrentSource::isSimRNGRequired() const
 bool CurrentSource::isInitRNGRequired() const
 {
     // If initialising the neuron variables require an RNG, return true
-    if(Utils::isInitRNGRequired(getVarInitialisers())) {
+    if(Utils::isRNGRequired(getVarInitialisers())) {
         return true;
     }
 
     return false;
+}
+//----------------------------------------------------------------------------
+bool CurrentSource::canBeMerged(const CurrentSource &other) const
+{
+    return (getCurrentSourceModel()->canBeMerged(other.getCurrentSourceModel())
+            && (getParams() == other.getParams())
+            && (getDerivedParams() == other.getDerivedParams()));
+}
+//----------------------------------------------------------------------------
+bool CurrentSource::canInitBeMerged(const CurrentSource &other) const
+{
+     // If both groups have the same number of variables
+    if(getVarInitialisers().size() == other.getVarInitialisers().size()) {
+        // if any of the variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getVarInitialisers().size(); i++) {
+            if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    else {
+        return false;
+    }
 }

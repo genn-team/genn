@@ -123,11 +123,11 @@ void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayT
 //----------------------------------------------------------------------------
 void SynapseGroup::setSpanType(SpanType spanType)
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if ((getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)) {
         m_SpanType = spanType;
     }
     else {
-        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse connectivity.");
+        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse or bitmask connectivity.");
     }
 }
 //----------------------------------------------------------------------------
@@ -137,7 +137,7 @@ void SynapseGroup::setNumThreadsPerSpike(unsigned int numThreadsPerSpike)
         m_NumThreadsPerSpike = numThreadsPerSpike;
     }
     else {
-        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with a presynaptic span type.");
+        throw std::runtime_error("setNumThreadsPerSpike: This function can only be used on synapse groups with a presynaptic span type.");
     }
 }
 //----------------------------------------------------------------------------
@@ -156,11 +156,6 @@ void SynapseGroup::setNarrowSparseIndEnabled(bool enabled)
     else {
         throw std::runtime_error("setNarrowSparseIndEnabled: This function can only be used on synapse groups with sparse connectivity.");
     }
-}
-//----------------------------------------------------------------------------
-int SynapseGroup::getClusterHostID() const
-{
-    return m_TrgNeuronGroup->getClusterHostID();
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isTrueSpikeRequired() const
@@ -266,21 +261,28 @@ bool SynapseGroup::isDendriticDelayRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isProceduralConnectivityRNGRequired() const
+{
+    return ((m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) &&
+            Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isPSInitRNGRequired() const
 {
     // If initialising the postsynaptic variables require an RNG, return true
-    return Utils::isInitRNGRequired(m_PSVarInitialisers);
+    return Utils::isRNGRequired(m_PSVarInitialisers);
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUInitRNGRequired() const
 {
     // If initialising the weight update variables require an RNG, return true
-    if(Utils::isInitRNGRequired(m_WUVarInitialisers)) {
+    if(Utils::isRNGRequired(m_WUVarInitialisers)) {
         return true;
     }
 
-    // Return true if the var init mode we're querying is the one used for sparse connectivity and the connectivity initialiser requires an RNG
-    return Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode());
+    // Return true if matrix has sparse or bitmask connectivity and an RNG is required to initialise connectivity
+    return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
+            && Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
@@ -298,8 +300,9 @@ bool SynapseGroup::isWUVarInitRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isSparseConnectivityInitRequired() const
 {
-    // Return true if there is code to initialise sparse connectivity on device
-    return !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
+    // Return true if the matrix type is sparse or bitmask and there is code to initialise sparse connectivity
+    return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
+            && !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty());
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
@@ -321,6 +324,25 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
+    // If connectivity is procedural
+    if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
+        // If there's no row build code, give an error
+        if(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode().empty()) {
+            throw std::runtime_error("Cannot use procedural connectivity without specifying connectivity initialisation snippet");
+        }
+
+        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
+        if(!m_WUModel->getLearnPostCode().empty()) {
+            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
+        }
+
+        // If weight update model has code for continuous synapse dynamics, give error
+        // **THINK** this would actually be pretty trivial to implement
+        if (!m_WUModel->getSynapseDynamicsCode().empty()) {
+            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
+        }
+    }
+
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
     // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
@@ -392,42 +414,6 @@ void SynapseGroup::initDerivedParams(double dt)
     m_ConnectivityInitialiser.initDerivedParams(dt);
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroup::getPresynapticAxonalDelaySlot(const std::string &devPrefix) const
-{
-    assert(getSrcNeuronGroup()->isDelayRequired());
-
-    if(getDelaySteps() == 0) {
-        return devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName();
-    }
-    else {
-        return "((" + devPrefix + "spkQuePtr" + getSrcNeuronGroup()->getName() + " + " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots() - getDelaySteps()) + ") % " + std::to_string(getSrcNeuronGroup()->getNumDelaySlots()) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string SynapseGroup::getPostsynapticBackPropDelaySlot(const std::string &devPrefix) const
-{
-    assert(getTrgNeuronGroup()->isDelayRequired());
-
-    if(getBackPropDelaySteps() == 0) {
-        return devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName();
-    }
-    else {
-        return "((" + devPrefix + "spkQuePtr" + getTrgNeuronGroup()->getName() + " + " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots() - getBackPropDelaySteps()) + ") % " + std::to_string(getTrgNeuronGroup()->getNumDelaySlots()) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string SynapseGroup::getDendriticDelayOffset(const std::string &devPrefix, const std::string &offset) const
-{
-    assert(isDendriticDelayRequired());
-
-    if(offset.empty()) {
-        return "(" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " * " + std::to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
-    }
-    else {
-        return "(((" + devPrefix + "denDelayPtr" + getPSModelTargetName() + " + " + offset + ") % " + std::to_string(getMaxDendriticDelayTimesteps()) + ") * " + std::to_string(getTrgNeuronGroup()->getNumNeurons()) + ") + ";
-    }
-}
-//----------------------------------------------------------------------------
 std::string SynapseGroup::getSparseIndType() const
 {
     // If narrow sparse inds are enabled
@@ -446,4 +432,174 @@ std::string SynapseGroup::getSparseIndType() const
     // Otherwise, use 32-bit int
     return "uint32_t";
 
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
+{
+    if(getWUModel()->canBeMerged(other.getWUModel())
+       && (getWUParams() == other.getWUParams())
+       && (getWUDerivedParams() == other.getWUDerivedParams())
+       && (getDelaySteps() == other.getDelaySteps())
+       && (getBackPropDelaySteps() == other.getBackPropDelaySteps())
+       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
+       && (getSparseIndType() == other.getSparseIndType())
+       && (getNumThreadsPerSpike() == other.getNumThreadsPerSpike())
+       && (isEventThresholdReTestRequired() == other.isEventThresholdReTestRequired())
+       && (getSpanType() == other.getSpanType())
+       && (isPSModelMerged() == other.isPSModelMerged())
+       && (getSrcNeuronGroup()->getNumDelaySlots() == other.getSrcNeuronGroup()->getNumDelaySlots())
+       && (getTrgNeuronGroup()->getNumDelaySlots() == other.getTrgNeuronGroup()->getNumDelaySlots())
+       && (getMatrixType() == other.getMatrixType()))
+    {
+        // If connectivity is either non-procedural or connectivity initialisers can be merged
+        if(!(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
+           || getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser()))
+        {
+            // If matrix weights are global, constantified init values must match
+            if(getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+                return (getWUConstInitVals() == other.getWUConstInitVals());
+            }
+            // Otherwise, if connectivity is procedural, all variable initialisers must be mergable
+            else if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+                return std::equal(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), other.getWUVarInitialisers().cbegin(),
+                                  [](const Models::VarInit &a, const Models::VarInit & b)
+                                  {
+                                      return a.canBeMerged(b);
+                                  });
+            }
+            // Otherwise, if matrix weights are individual, merging is unproblematic
+            else if(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
+{
+    const bool delayed = (getDelaySteps() != 0);
+    const bool otherDelayed = (other.getDelaySteps() != 0);
+    return (getWUModel()->canBeMerged(other.getWUModel())
+            && (getWUParams() == other.getWUParams())
+            && (getWUDerivedParams() == other.getWUDerivedParams())
+            && (delayed == otherDelayed));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUPostBeMerged(const SynapseGroup &other) const
+{
+    const bool delayed = (getDelaySteps() != 0);
+    const bool otherDelayed = (other.getDelaySteps() != 0);
+    return (getWUModel()->canBeMerged(other.getWUModel())
+            && (getWUParams() == other.getWUParams())
+            && (getWUDerivedParams() == other.getWUDerivedParams())
+            && (delayed == otherDelayed));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
+{
+    const bool individualPSM = (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
+    const bool otherIndividualPSM = (other.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
+    if(getPSModel()->canBeMerged(other.getPSModel())
+       && (getPSParams() == other.getPSParams())
+       && (getPSDerivedParams() == other.getPSDerivedParams())
+       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
+       && (individualPSM == otherIndividualPSM))
+    {
+        // If synapse group has individual postsynaptic model variables, return true
+        if(individualPSM) {
+            return true;
+        }
+        // Otherwise, constantified init values must match
+        else {
+            return (getPSConstInitVals() == other.getPSConstInitVals());
+        }
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
+{
+    // Postsynaptic models can be linearly combined if they can be merged and either 
+    // they DON'T have individual postsynaptic model variables or they have no variable at all
+    // **NOTE * *many models with variables would work fine, but nothing stops
+    // initialisers being used to configure PS models to behave totally different
+    return (canPSBeMerged(other)
+            && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUInitBeMerged(const SynapseGroup &other) const
+{
+    if((getMatrixType() == other.getMatrixType())
+       && (getSparseIndType() == other.getSparseIndType())
+       && (getWUModel()->getVars() == other.getWUModel()->getVars()))
+    {
+        // if any of the variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
+            if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUPreInitBeMerged(const SynapseGroup &other) const
+{
+    if(getWUModel()->getPreVars() == other.getWUModel()->getPreVars()) {
+        // if any of the presynaptic variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getWUPreVarInitialisers().size(); i++) {
+            if(!getWUPreVarInitialisers()[i].canBeMerged(other.getWUPreVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUPostInitBeMerged(const SynapseGroup &other) const
+{
+    if(getWUModel()->getPostVars() == other.getWUModel()->getPostVars()) {
+        // if any of the postsynaptic variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getWUPostVarInitialisers().size(); i++) {
+            if(!getWUPostVarInitialisers()[i].canBeMerged(other.getWUPostVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canPSInitBeMerged(const SynapseGroup &other) const
+{
+    if((getPSModel()->getVars() == other.getPSModel()->getVars())
+       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps()))
+    {
+        // if any of the variable's initialisers can't be merged, return false
+        for(size_t i = 0; i < getPSVarInitialisers().size(); i++) {
+            if(!getPSVarInitialisers()[i].canBeMerged(other.getPSVarInitialisers()[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canConnectivityInitBeMerged(const SynapseGroup &other) const
+{
+    // Connectivity initialization can be merged if the type of connectivity is the same and the initialisers can be merged
+    return (getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser())
+            && (getSynapseMatrixConnectivity(getMatrixType()) == getSynapseMatrixConnectivity(other.getMatrixType()))
+            && (getSparseIndType() == other.getSparseIndType()));
 }

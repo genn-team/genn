@@ -254,12 +254,12 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating dynamic libraries";
                             msbuildCommand = """
                             CALL %VC_VARS_BAT%
-                            msbuild genn.sln /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${uniqueMsg}" 2>&1
+                            msbuild genn.sln /m /verbosity:minimal /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${uniqueMsg}" 2>&1
                             """;
                             
                             // If this isn't a CPU_ONLY node, also build CUDA backend
                             if(!nodeLabel.contains("cpu_only")) {
-                                msbuildCommand += "msbuild genn.sln /p:Configuration=Release_DLL /t:cuda_backend >> \"${uniqueMsg}\" 2>&1";
+                                msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> \"${uniqueMsg}\" 2>&1";
                             }
                             
                             def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true

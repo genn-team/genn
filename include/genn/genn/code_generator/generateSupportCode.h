@@ -1,11 +1,10 @@
 #pragma once
 
 // Forward declarations
-class ModelSpecInternal;
-
 namespace CodeGenerator
 {
 class CodeStream;
+class ModelSpecMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -13,5 +12,5 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSupportCode(CodeStream &os, const ModelSpecInternal &model);
+void generateSupportCode(CodeStream &os, const ModelSpecMerged &modelMerged);
 }

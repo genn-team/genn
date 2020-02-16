@@ -36,7 +36,7 @@
 namespace WeightUpdateModels
 {
 //! Base class for all weight update models
-class Base : public Models::Base
+class GENN_EXPORT Base : public Models::Base
 {
 public:
     //----------------------------------------------------------------------------
@@ -120,6 +120,9 @@ public:
         return getNamedVecIndex(varName, getPostVars());
     }
 
+    //! Can this weight update model be merged with other? i.e. can they be simulated using same generated code
+    bool canBeMerged(const Base *other) const;
+
 };
 
 //----------------------------------------------------------------------------
@@ -166,9 +169,9 @@ public:
 class StaticPulseDendriticDelay : public Base
 {
 public:
-    DECLARE_MODEL(StaticPulseDendriticDelay, 0, 2);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelay, 0, 2, 0, 0);
 
-    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY},{"d", "uint8_t", VarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
 };

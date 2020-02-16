@@ -2,13 +2,13 @@
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
+#include "code_generator/codeGenUtils.h"
 
 // Forward declarations
-class ModelSpecInternal;
-
 namespace CodeGenerator
 {
 class CodeStream;
+class ModelSpecMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -16,6 +16,6 @@ class CodeStream;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-MemAlloc generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                        const ModelSpecInternal &model, const BackendBase &backend, int localHostID);
+MemAlloc generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, MergedEGPMap &mergedEGPs,
+                        const ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

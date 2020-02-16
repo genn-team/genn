@@ -25,7 +25,7 @@ public:
         trgNeuronGroup->addInSyn(this);
         srcNeuronGroup->addOutSyn(this);
     }
-    
+
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
     using SynapseGroup::getWUDerivedParams;
@@ -36,8 +36,15 @@ public:
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::isPSModelMerged;
-    using SynapseGroup::getPresynapticAxonalDelaySlot;
-    using SynapseGroup::getPostsynapticBackPropDelaySlot;
-    using SynapseGroup::getDendriticDelayOffset;
     using SynapseGroup::getSparseIndType;
+    using SynapseGroup::canWUBeMerged;
+    using SynapseGroup::canWUPreBeMerged;
+    using SynapseGroup::canWUPostBeMerged;
+    using SynapseGroup::canPSBeMerged;
+    using SynapseGroup::canPSBeLinearlyCombined;
+    using SynapseGroup::canWUInitBeMerged;
+    using SynapseGroup::canWUPreInitBeMerged;
+    using SynapseGroup::canWUPostInitBeMerged;
+    using SynapseGroup::canPSInitBeMerged;
+    using SynapseGroup::canConnectivityInitBeMerged;
 };

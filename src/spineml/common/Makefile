@@ -5,8 +5,8 @@ include ../../genn/MakefileCommon
 CXXFLAGS		+=-I$(GENN_DIR)/include/spineml/common
 
 # Find source files
-PUGIXML_SOURCES		:=$(wildcard pugixml/*.cpp)
-SOURCES			:=pugixml/pugixml.cpp#$(PUGIXML_SOURCES)
+PUGIXML_SOURCES		:=$(wildcard pugixml/*.cc)
+SOURCES			:=$(wildcard *.cc) $(PUGIXML_SOURCES)
 
 # Add prefix to object directory and library name
 SPINEML_COMMON		:=$(GENN_DIR)/lib/libspineml_common$(GENN_PREFIX).a
@@ -15,7 +15,7 @@ SPINEML_COMMON		:=$(GENN_DIR)/lib/libspineml_common$(GENN_PREFIX).a
 OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/spineml/common
 
 # Add object directory prefix
-OBJECTS			:=$(SOURCES:%.cpp=$(OBJECT_DIRECTORY)/%.o)
+OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
 DEPS			:=$(OBJECTS:.o=.d)
 
 .PHONY: all clean
@@ -28,7 +28,7 @@ $(SPINEML_COMMON): $(OBJECTS)
 
 -include $(DEPS)
 
-$(OBJECT_DIRECTORY)/%.o: %.cpp $(OBJECT_DIRECTORY)/%.d
+$(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	mkdir -p $(@D)
 	$(CXX) -std=c++11 $(CXXFLAGS) -c -o $@ $<
 

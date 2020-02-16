@@ -21,11 +21,25 @@ FOR /D %%F IN (*) DO (
 	msbuild "%%F.sln" /m /t:%%F /p:BuildProjectReferences=true /verbosity:minimal /p:Configuration=Release
 	
 	REM Run tests
-    test.exe --gtest_output="xml:test_results.xml"
+	test.exe --gtest_output="xml:test_results.xml"
 
 	REM pop directory
 	POPD
 )
 
 REM pop features
+POPD
+
+REM double-check GeNN is built
+msbuild ../genn.sln /m /t:genn /verbosity:minimal /p:Configuration=Release
+
+REM build unit tests
+msbuild tests.sln /m /verbosity:minimal /p:Configuration=Release
+
+PUSHD unit
+
+REM run tests
+unit_Release.exe --gtest_output="xml:test_results_unit.xml"
+
+REM pop unit
 POPD

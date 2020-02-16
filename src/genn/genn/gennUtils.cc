@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <algorithm>
 
+// GeNN includes
+#include "models.h"
+
 namespace
 {
 //--------------------------------------------------------------------------
@@ -55,7 +58,7 @@ bool isRNGRequired(const std::string &code)
 
 }
 //--------------------------------------------------------------------------
-bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
+bool isRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),

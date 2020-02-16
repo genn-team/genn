@@ -1,16 +1,18 @@
 #pragma once
 
 // Standard includes
-#include <iomanip>
-#include <limits>
 #include <string>
-#include <sstream>
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
-#include "models.h"
-#include "snippet.h"
+#include "gennExport.h"
 #include "variableMode.h"
+
+// GeNN code generator includes
+#include "backendBase.h"
+#include "codeStream.h"
+#include "teeStream.h"
 
 // Forward declarations
 class ModelSpecInternal;
@@ -18,17 +20,16 @@ class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
+class NeuronGroupMerged;
 class Substitutions;
+class SynapseGroupMerged;
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// CodeGenerator::FunctionTemplate
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-//--------------------------------------------------------------------------
-// FunctionTemplate
-//--------------------------------------------------------------------------
 //! Immutable structure for specifying how to implement
 //! a generic function e.g. gennrand_uniform
 /*! **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes) */
@@ -52,6 +53,24 @@ struct FunctionTemplate
     //! The function template (for use with ::functionSubstitute) used when model uses single precision
     const std::string singlePrecisionTemplate;
 };
+
+//--------------------------------------------------------------------------
+// CodeGenerator::FunctionTemplate
+//--------------------------------------------------------------------------
+//! Immutable structure for tracking where an extra global variable ends up after merging
+struct MergedEGP
+{
+    MergedEGP(size_t m, size_t g, bool p, const std::string &f)
+    :   mergedGroupIndex(m), groupIndex(g), pointer(p), fieldName(f){}
+
+    const size_t mergedGroupIndex;
+    const size_t groupIndex;
+    const bool pointer;
+    const std::string fieldName;
+};
+
+//! Map of original extra global param names to their locations within merged structures
+typedef std::map<std::string, std::unordered_multimap<std::string, MergedEGP>> MergedEGPMap;
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
@@ -82,43 +101,76 @@ bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::stri
 void functionSubstitute(std::string &code, const std::string &funcName,
                         unsigned int numParams, const std::string &replaceFuncTemplate);
 
-//--------------------------------------------------------------------------
-//! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
-//--------------------------------------------------------------------------
-template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-void writePreciseString(std::ostream &os, T value)
+//! Divide two integers, rounding up i.e. effectively taking ceil
+inline size_t ceilDivide(size_t numerator, size_t denominator)
 {
-    // Cache previous precision
-    const std::streamsize previousPrecision = os.precision();
-
-    // Set scientific formatting
-    os << std::scientific;
-
-    // Set precision to what is required to fully represent T
-    os << std::setprecision(std::numeric_limits<T>::max_digits10);
-
-    // Write value to stream
-    os << value;
-
-    // Reset to default formatting
-    // **YUCK** GCC 4.8.X doesn't seem to include std::defaultfloat
-    os.unsetf(std::ios_base::floatfield);
-    //os << std::defaultfloat;
-
-    // Restore previous precision
-    os << std::setprecision(previousPrecision);
+    return ((numerator + denominator - 1) / denominator);
 }
 
-//--------------------------------------------------------------------------
-//! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
-//--------------------------------------------------------------------------
-template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-std::string writePreciseString(T value)
+//! Pad an integer to a multiple of another
+inline size_t padSize(size_t size, size_t blockSize)
 {
-    std::stringstream s;
-    writePreciseString(s, value);
-    return s.str();
+    return ceilDivide(size, blockSize) * blockSize;
 }
+
+GENN_EXPORT void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n);
+
+template<typename T>
+void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedEGPMap &mergedEGPs,
+                        const std::string &suffix, const BackendBase &backend)
+{
+    // Loop through merged neuron groups
+    std::stringstream mergedGroupArrayStream;
+    std::stringstream mergedGroupFuncStream;
+    CodeStream mergedGroupArray(mergedGroupArrayStream);
+    CodeStream mergedGroupFunc(mergedGroupFuncStream);
+    TeeStream mergedGroupStreams(mergedGroupArray, mergedGroupFunc);
+    for(const auto &g : groups) {
+        // Declare static array to hold merged neuron groups
+        const size_t idx = g.getIndex();
+        const size_t numGroups = g.getGroups().size();
+
+        // Implement merged group array
+        backend.genMergedGroupImplementation(mergedGroupArray, suffix, idx, numGroups);
+
+        // Write function to update
+        mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(const Merged" << suffix << "Group" << idx << " *group)";
+        {
+            CodeStream::Scope b(mergedGroupFunc);
+            backend.genMergedGroupPush(mergedGroupFunc, suffix, idx, numGroups);
+        }
+    }
+
+    if(!groups.empty()) {
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// merged group arrays" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << mergedGroupArrayStream.str();
+        os << std::endl;
+
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// merged group functions" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << mergedGroupFuncStream.str();
+        os << std::endl;
+        for(const auto &e : mergedEGPs) {
+            const auto groupEGPs = e.second.equal_range(suffix);
+            for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
+                if(g->second.pointer) {
+                    os << "void pushMerged" << suffix << g->second.mergedGroupIndex << g->second.fieldName << g->second.groupIndex << "ToDevice()";
+                    {
+                        CodeStream::Scope b(os);
+                        backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
+                    }
+                    os << std::endl;
+                }
+            }
+        }
+    }
+}
+
+
+void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std::string &suffix, const BackendBase &backend);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
@@ -133,25 +185,16 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type);
 //--------------------------------------------------------------------------
 void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
 
-void preNeuronSubstitutionsInSynapticCode(
-    Substitutions &substitutions,
-    const SynapseGroupInternal &sg,
+void neuronSubstitutionsInSynapticCode(
+    CodeGenerator::Substitutions &substitutions,
+    const NeuronGroupInternal *ng,
     const std::string &offset,
-    const std::string &axonalDelayOffset,
-    const std::string &postIdx,
-    const std::string &devPrefix,  //!< device prefix, "dd_" for GPU, nothing for CPU
-    const std::string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &preVarSuffix = "");   //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
-
-void postNeuronSubstitutionsInSynapticCode(
-    Substitutions &substitutions,
-    const SynapseGroupInternal &sg,
-    const std::string &offset,
-    const std::string &backPropDelayOffset,
-    const std::string &preIdx,
-    const std::string &devPrefix, //!< device prefix, "dd_" for GPU, nothing for CPU
-    const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+    const std::string &delayOffset,
+    const std::string &idx,             //!< index of the neuron to be accessed
+    const std::string &sourceSuffix,
+    const std::string &destSuffix,
+    const std::string &varPrefix = "",  //!< prefix to be used for variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
+    const std::string &varSuffix = ""); //!< suffix to be used for variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
 
 //-------------------------------------------------------------------------
 /*!
@@ -160,11 +203,10 @@ void postNeuronSubstitutionsInSynapticCode(
 //-------------------------------------------------------------------------
 void neuronSubstitutionsInSynapticCode(
     Substitutions &substitutions,
-    const SynapseGroupInternal &sg,             //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const std::string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const std::string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    const std::string &devPrefix,            //!< device prefix, "dd_" for GPU, nothing for CPU
-    double dt,                          //!< simulation timestep (ms)
+    const SynapseGroupInternal &sg,          //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
+    const std::string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables
+    const std::string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables
+    double dt,                               //!< simulation timestep (ms)
     const std::string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const std::string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
     const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)

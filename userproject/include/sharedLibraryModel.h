@@ -20,6 +20,9 @@ extern "C"
 }
 #endif
 
+// GeNN userproject includes
+#include "spikeRecorder.h"
+
 //----------------------------------------------------------------------------
 // SharedLibraryModel
 //----------------------------------------------------------------------------
@@ -60,7 +63,11 @@ public:
     bool open(const std::string &pathToModel, const std::string &modelName)
     {
 #ifdef _WIN32
+#ifdef _DEBUG
+        const std::string libraryName = pathToModel + "\\runner_Debug.dll";
+#else
         const std::string libraryName = pathToModel + "\\runner_Release.dll";
+#endif
         m_Library = LoadLibrary(libraryName.c_str());
 #else
         const std::string libraryName = pathToModel + modelName + "_CODE/librunner.so";
@@ -71,6 +78,7 @@ public:
         if(m_Library != nullptr) {
             m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
             m_FreeMem = (VoidFunction)getSymbol("freeMem");
+            m_GetFreeDeviceMemBytes = (GetFreeMemFunction)getSymbol("getFreeDeviceMemBytes");
 
             m_Initialize = (VoidFunction)getSymbol("initialize");
             m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
@@ -260,6 +268,17 @@ public:
         std::get<2>(funcs)(count);
     }
 
+    template<typename Writer, typename... WriterArgs>
+    SpikeRecorder<Writer> getSpikeRecorder(const std::string &popName, WriterArgs &&... writerArgs)
+    {
+        // Get functions to access spikes
+        auto getSpikesFn = (typename SpikeRecorder<Writer>::GetCurrentSpikesFunc)getSymbol("get" + popName + "CurrentSpikes");
+        auto getSpikeCountFn = (typename SpikeRecorder<Writer>::GetCurrentSpikeCountFunc)getSymbol("get" + popName + "CurrentSpikeCount");
+
+        // Add cached recorder
+        return SpikeRecorder<Writer>(getSpikesFn, getSpikeCountFn, std::forward<WriterArgs>(writerArgs)...);
+    }
+
     // Gets a pointer to an array in the shared library
     template<typename T>
     T *getArray(const std::string &varName)
@@ -282,6 +301,11 @@ public:
     void freeMem()
     {
         m_FreeMem();
+    }
+
+    size_t getFreeDeviceMemBytes()
+    {
+        return m_GetFreeDeviceMemBytes();
     }
 
     void initialize()
@@ -359,6 +383,7 @@ private:
     typedef void (*PushFunction)(bool);
     typedef void (*PullFunction)(void);
     typedef void (*EGPFunction)(unsigned int);
+    typedef size_t (*GetFreeMemFunction)(void);
 
     typedef std::pair<PushFunction, PullFunction> PushPullFunc;
     typedef std::tuple<EGPFunction, VoidFunction, EGPFunction, EGPFunction> EGPFunc;
@@ -424,6 +449,7 @@ private:
 
     VoidFunction m_AllocateMem;
     VoidFunction m_FreeMem;
+    GetFreeMemFunction m_GetFreeDeviceMemBytes;
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
