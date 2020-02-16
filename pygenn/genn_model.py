@@ -434,7 +434,7 @@ class GeNNModel(object):
             check_call(["msbuild", "/p:Configuration=Release", "/m", "/verbosity:minimal",
                         path.join(output_path, "runner.vcxproj")])
         else:
-            check_call(["make", "-j", cpu_count(logical=False), "-C", output_path])
+            check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
         self._built = True
 
