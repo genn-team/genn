@@ -2036,9 +2036,11 @@ std::string Backend::getNVCCFlags() const
     // How you hide device compiler warnings is totally non-documented but https://stackoverflow.com/a/17095910/1476754
     // holds the answer! For future reference --display_error_number option can be used to get warning ids to use in --diag-supress
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
-    std::string nvccFlags = "-x cu -Xcudafe '--diag_suppress=2937' -arch " + architecture;
-#ifndef _WIN32
-    nvccFlags += " -std=c++11 --compiler-options '-fPIC -Wno-return-type-c-linkage'";
+    std::string nvccFlags = "-x cu -arch " + architecture;
+#ifdef _WIN32
+    nvccFlags += " -Xcudafe \"--diag_suppress=2961\"";
+#else
+    nvccFlags += " -Xcudafe '--diag_suppress=2937' -std=c++11 --compiler-options '-fPIC -Wno-return-type-c-linkage'";
 #endif
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
