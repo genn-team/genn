@@ -61,7 +61,7 @@ class GaussianMin : public InitVarSnippet::Base
 public:
     DECLARE_SNIPPET(GaussianMin, 3);
 
-    SET_CODE("$(value) = max($(min), $(mean) + ($(gennrand_normal) * $(sd)));");
+    SET_CODE("$(value) = fmax($(min), $(mean) + ($(gennrand_normal) * $(sd)));");
 
     SET_PARAM_NAMES({"mean", "sd", "min"});
 };
