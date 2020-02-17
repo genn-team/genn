@@ -2040,7 +2040,7 @@ std::string Backend::getNVCCFlags() const
 #ifdef _WIN32
     nvccFlags += " -Xcudafe \"--diag_suppress=2961\"";
 #else
-    nvccFlags += " -Xcudafe '--diag_suppress=2937' -std=c++11 --compiler-options '-fPIC -Wno-return-type-c-linkage'";
+    nvccFlags += " -Xcudafe \"--diag_suppress=2937\" -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
 #endif
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
