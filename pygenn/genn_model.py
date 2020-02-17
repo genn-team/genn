@@ -43,6 +43,7 @@ from collections import OrderedDict
 from importlib import import_module
 from os import path
 from platform import system
+from psutil import cpu_count
 from subprocess import check_call  # to call make
 from textwrap import dedent
 
@@ -160,6 +161,14 @@ class GeNNModel(object):
             self._backend_module = backend_modules[backend]
 
     @property
+    def timing_enabled(self):
+        return self._model.is_timing_enabled()
+
+    @timing_enabled.setter
+    def timing_enabled(self, timing):
+        self._model.set_timing(timing)
+    
+    @property
     def default_var_location(self):
         """Default variable location - defines
         where state variables are initialised"""
@@ -230,6 +239,30 @@ class GeNNModel(object):
         if self._built:
             raise Exception("GeNN model already built")
         self._model.set_dt(dt)
+
+    @property
+    def neuron_update_time(self):
+        return self._slm.get_neuron_update_time()
+    
+    @property
+    def init_time(self):
+        return self._slm.get_init_time()
+        
+    @property
+    def presynaptic_update_time(self):
+        return self._slm.get_presynaptic_update_time()
+    
+    @property
+    def postsynaptic_update_time(self):
+        return self._slm.get_postsynaptic_update_time()
+
+    @property
+    def synapse_dynamics_time(self):
+        return self._slm.get_synapse_dynamics_time()
+
+    @property
+    def init_sparse_time(self):
+        return self._slm.get_init_sparse_time()
 
     def add_neuron_population(self, pop_name, num_neurons, neuron,
                               param_space, var_space):
@@ -401,7 +434,7 @@ class GeNNModel(object):
             check_call(["msbuild", "/p:Configuration=Release", "/m", "/verbosity:minimal",
                         path.join(output_path, "runner.vcxproj")])
         else:
-            check_call(["make", "-C", output_path])
+            check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
         self._built = True
 
