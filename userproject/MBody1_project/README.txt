@@ -2,15 +2,13 @@
 Locust olfactory system (Nowotny et al. 2005)
 =============================================
 
-This project implements the insect olfaction model by Nowotny et
-al. that demonstrates self-organized clustering of odours in a
-simulation of the insect antennal lobe and mushroom body. As provided
-the model works with conductance based Hodgkin-Huxley neurons and
-several different synapse types, conductance based (but pulse-coupled)
-excitatory synapses, graded inhibitory synapses and synapses with a
-simplified STDP rule. This example project contains a helper executable called "generate_run", which 
-prepares input pattern data, before compiling and
-executing the model.
+This project implements the insect olfaction model by Nowotny et al. that demonstrates 
+self-organized clustering of odours in a simulation of the insect antennal lobe and 
+mushroom body. As provided, the model works with conductance based Hodgkin-Huxley neurons 
+and several different synapse types, conductance based (but pulse-coupled) excitatory 
+synapses, graded inhibitory synapses and synapses with a simplified STDP rule.  
+This example project contains a helper executable called "generate_run", which 
+prepares input pattern data, before compiling and executing the model.
 
 To compile it, navigate to genn/userproject/MBody1_project and type:
 
@@ -43,7 +41,8 @@ Optional arguments:
 --num-dn: Number of decision neurons (DN) in the output layer (defaults to 100)
 --gscale: A general rescaling factor for synaptic strength (defaults to 0.0025)
 --bitmask: Use bitmasks to represent sparse PN->KC connectivity rather than dense connectivity
---delayed-synapses: Rather than use constant delays of DT throughough, use delays of (5 * DT) ms on KC->DN and of (3 * DT) ms on DN->DN synapse populations
+--delayed-synapses: Rather than use constant delays of DT throughough, use delays of (5 * DT) ms on KC->DN and 
+of (3 * DT) ms on DN->DN synapse populations
 
 An example invocation of generate_run using these defaults and recording results with a base name of `test' would be:
 
@@ -64,7 +63,7 @@ in `model/MBody1.cc`, debugging is switched off and the model would be simulated
 float (single precision floating point) variables.
 
 In more details, what generate_run program does is: 
-a) use another tools to generate input patterns.
+a) use other tools to generate input patterns.
 
 b) build the source code for the model by writing neuron numbers into
    ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody1.cc.
@@ -72,7 +71,7 @@ b) build the source code for the model by writing neuron numbers into
 c) compile the generated code by invoking "make clean && make" 
    running the code, e.g. "./classol_sim r1".
 
-Another example of an invocation that runs the simulation using the CPU rather than GPU, 
+Another example of an invocation that runs the simulation using CPU rather than GPU, 
 records timing information and uses bitmask connectivity would be: 
 
 generate_run.exe --cpu-only --timing --bitmask test
@@ -83,13 +82,12 @@ for Windows users, or:
 
 for Linux, Mac and other UNIX users.
 
-As provided, the model outputs  `test.dn.st', `test.kc.st', `test.lhi.st' and `test.pn.st' files which contain
-the spiking activity observed in each population inthe simulation, There are two
-columns in this ASCII file, the first one containing the time of
-a spike and the second one the ID of the neuron that spiked. Users
-of matlab can use the scripts in the `matlab` directory to plot
-the results of a simulation and users of python can use the plot_spikes.py script in userproject/python. 
-For more about the model itself and the scientific insights gained from it see Nowotny et al. referenced below.
+As provided, the model outputs  `test.dn.st', `test.kc.st', `test.lhi.st' and `test.pn.st' files 
+which contain the spiking activity observed in each population in the simulation. There are two
+columns in this ASCII file, the first one containing the time of a spike and the second one, 
+the ID of the neuron that spiked. MATLAB users can use the scripts in the `matlab` directory to plot
+the results of a simulation and Python users can use the plot_spikes.py script in userproject/python. 
+For more about the model itself and the scientific insights gained from it, see Nowotny et al. referenced below.
 
 
 MODEL INFORMATION
