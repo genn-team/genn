@@ -9,7 +9,7 @@ options {
             daysToKeepStr: '', 
             numToKeepStr: '100',
         ),
-    ),
+    )
 }
 
 // All the types of build we'll ideally run if suitable nodes exist
