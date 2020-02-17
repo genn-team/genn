@@ -1,5 +1,17 @@
 #!groovy​
 
+// only keep 100 builds to prevent disk usage from growing out of control
+options {
+    buildDiscarder(
+        logRotator(
+            artifactDaysToKeepStr: '', 
+            artifactNumToKeepStr: '', 
+            daysToKeepStr: '', 
+            numToKeepStr: '100',
+        ),
+    ),
+}
+
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
     ["cuda10", "windows", "python27"] as Set,
