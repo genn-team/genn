@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2043
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "genn", "src\genn\genn\genn.vcxproj", "{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}"
 EndProject
@@ -14,6 +14,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cuda_backend", "src\genn\ba
 	ProjectSection(ProjectDependencies) = postProject
 		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opencl_backend", "src\genn\backends\opencl\opencl_backend.vcxproj", "{10E3EBC9-618C-4598-9B38-84144C1BD1A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,14 @@ Global
 		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Release_DLL|x64.Build.0 = Release_DLL|x64
 		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Release|x64.ActiveCfg = Release|x64
 		{F7026BD9-7181-4F28-A2F0-41C41FAC1018}.Release|x64.Build.0 = Release|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Debug_DLL|x64.ActiveCfg = Debug_DLL|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Debug_DLL|x64.Build.0 = Debug_DLL|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Debug|x64.ActiveCfg = Debug|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Debug|x64.Build.0 = Debug|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Release_DLL|x64.ActiveCfg = Release_DLL|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Release_DLL|x64.Build.0 = Release_DLL|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Release|x64.ActiveCfg = Release|x64
+		{10E3EBC9-618C-4598-9B38-84144C1BD1A9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

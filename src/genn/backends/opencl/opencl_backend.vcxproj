@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_DLL|x64">
+      <Configuration>Debug_DLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_DLL|x64">
+      <Configuration>Release_DLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{10E3EBC9-618C-4598-9B38-84144C1BD1A9}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="backend.cc" />
+    <ClCompile Include="presynapticUpdateStrategy.cc" />
+    <ClCompile Include="optimiser.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\include\genn\backends\opencl\backend.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\opencl\optimiser.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\opencl\presynapticUpdateStrategy.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\opencl\utils.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType Condition=" !$(Configuration.Contains('DLL')) ">StaticLibrary</ConfigurationType>
+    <ConfigurationType Condition=" $(Configuration.Contains('DLL')) ">DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries Condition=" $(Configuration.Contains('Release')) ">false</UseDebugLibraries>
+    <UseDebugLibraries Condition=" $(Configuration.Contains('Debug')) ">true</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization Condition=" $(Configuration.Contains('Release')) ">true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>..\..\..\..\lib\</OutDir>
+    <IntDir>..\..\..\..\$(Platform)\$(Configuration)\opencl_backend\</IntDir>
+    <TargetName>genn_opencl_backend_$(Configuration)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization Condition=" $(Configuration.Contains('Release')) ">MaxSpeed</Optimization>
+      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\..\include\genn\backends\opencl;..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;$(OPENCL_PATH)\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">_CRT_SECURE_NO_WARNINGS;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding Condition=" $(Configuration.Contains('Debug')) ">true</EnableCOMDATFolding>
+      <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
+      <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">genn_Release_DLL.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">genn_Debug_DLL.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">..\..\..\..\lib;$(OPENCL_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
