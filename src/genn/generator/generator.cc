@@ -76,7 +76,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
             // Create a new GUID for project
             GUID guid;
             if(::CoCreateGuid(&guid) != S_OK) {
-                LOGE_CODE_GENERATOR << "Unable to generate project GUID";
+                LOGE_CODE_GEN << "Unable to generate project GUID";
                 return EXIT_FAILURE;
             }
 
@@ -91,7 +91,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
 
             // Use result as project GUID string
             projectGUIDString = projectGUIDStream.str();
-            LOGI_CODE_GENERATOR << "Generated new project GUID:" << projectGUIDString;
+            LOGI_CODE_GEN << "Generated new project GUID:" << projectGUIDString;
 
             // Write GUID to project GUID file
             std::ofstream projectGUIDFile(projectGUIDFilename.str());
@@ -102,7 +102,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
             // Read GUID from project GUID file
             std::ifstream projectGUIDFile(projectGUIDFilename.str());
             std::getline(projectGUIDFile, projectGUIDString);
-            LOGI_CODE_GENERATOR << "Using previously generated project GUID:" << projectGUIDString;
+            LOGI_CODE_GEN << "Using previously generated project GUID:" << projectGUIDString;
         }
         // Create MSBuild project to compile and link all generated modules
         std::ofstream makefile((outputPath / "runner.vcxproj").str());
