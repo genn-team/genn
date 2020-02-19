@@ -10,6 +10,7 @@
 #include <unordered_set>
 
 // OpenCL includes
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #include <CL/cl.hpp>
 
 // GeNN includes
@@ -20,8 +21,8 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 
-// CUDA backend includes
-#include "presynapticUpdateStrategy.h"
+// OpenCL backend includes
+// #include "presynapticUpdateStrategy.h"
 
 // Forward declarations
 namespace filesystem
