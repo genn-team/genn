@@ -27,7 +27,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &,
 
 	KernelWorkGroupSize workGroupSize = std::array<size_t, KernelMax>();
 
-    return Backend(workGroupSize, preferences, "test", 1);
+    return Backend(workGroupSize, preferences, "scalar", 1);
 }
 }   // namespace Optimiser
 }   // namespace CUDA

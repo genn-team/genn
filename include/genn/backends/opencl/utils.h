@@ -8,7 +8,7 @@
 #include "logging.h"
 
 // OpenCL error string
-const char *openclGetErrorString(cl_int error) {
+const char * clGetErrorString(cl_int error) {
 	switch (error) {
 		// run-time and JIT compiler errors
 		case 0:		return "CL_SUCCESS";
@@ -84,10 +84,22 @@ const char *openclGetErrorString(cl_int error) {
 	}
 }
 
-#define CHECK_OPENCL_ERRORS(error)																							\
+// Check Run-time and JIT Compiler errors (driver dependent)
+#define CHECK_OPENCL_RT_ERRORS(call)																								\
+{																																	\
+	cl_int error = call;																											\
+    if (error != CL_SUCCESS && (error < 0 && error > -20)) {																		\
+        LOGE_BACKEND << __FILE__ << ": " <<  __LINE__ << ": opencl runtime error " << error << ": " << clGetErrorString(error);	\
+        exit(EXIT_FAILURE);																											\
+    }																																\
+}
+
+// Check Compile-time errors (driver independent)
+#define CHECK_OPENCL_ERRORS(call)																							\
 {																															\
-    if (error != CL_SUCCESS) {																								\
-        LOGE_BACKEND << __FILE__ << ": " <<  __LINE__ << ": opencl error " << error << ": " << openclGetErrorString(error);	\
+	cl_int error = call;																									\
+    if (error != CL_SUCCESS && error <= -30) {																				\
+        LOGE_BACKEND << __FILE__ << ": " <<  __LINE__ << ": opencl error " << error << ": " << clGetErrorString(error);	\
         exit(EXIT_FAILURE);																									\
     }																														\
 }
