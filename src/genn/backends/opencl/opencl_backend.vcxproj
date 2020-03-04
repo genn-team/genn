@@ -28,14 +28,6 @@
 	-->
     <ClCompile Include="optimiser.cc" />
   </ItemGroup>
-  <ItemGroup>
-	<ClInclude Include="..\..\..\..\include\genn\backends\opencl\backend.h" />
-    <ClInclude Include="..\..\..\..\include\genn\backends\opencl\optimiser.h" />
-	<!--
-    <ClInclude Include="..\..\..\..\include\genn\backends\opencl\presynapticUpdateStrategy.h" />
-	-->
-    <ClInclude Include="..\..\..\..\include\genn\backends\opencl\utils.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType Condition=" !$(Configuration.Contains('DLL')) ">StaticLibrary</ConfigurationType>

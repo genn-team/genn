@@ -1,5 +1,23 @@
 #include "backend.h"
 
+// Standard C++ includes
+#include <algorithm>
+
+// PLOG includes
+#include <plog/Log.h>
+
+// GeNN includes
+#include "gennUtils.h"
+#include "modelSpecInternal.h"
+
+// GeNN code generator includes
+#include "code_generator/codeStream.h"
+#include "code_generator/substitutions.h"
+#include "code_generator/codeGenUtils.h"
+
+// CUDA backend includes
+#include "utils.h"
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -41,45 +59,34 @@ const char* Backend::KernelNames[KernelMax] = {
 	"preSynapseResetKernel" };
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferences& preferences,
-	const std::string& scalarType, int device)
-	: BackendBase(scalarType), m_KernelWorkGroupSizes(kernelWorkGroupSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
+	int localHostID, const std::string& scalarType, int device)
+	: BackendBase(localHostID, scalarType), m_KernelWorkGroupSizes(kernelWorkGroupSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::Backend");
 	addDeviceType("cl::Buffer", sizeof(cl::Buffer));
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecMerged& modelMerged,
-	NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
-	HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genNeuronUpdate");
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecMerged& modelMerged,
-	SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
-	SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
-	SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
-	HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
+	SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
+	SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genSynapseUpdate");
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream& os, const ModelSpecMerged& modelMerged,
-	NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
-	SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
-	HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
+                      NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
+                      SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
+                      SynapseGroupHandler sgSparseInitHandler) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genInit");
 }
 //--------------------------------------------------------------------------
-size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal& sg) const
-{
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::getSynapticMatrixRowStride");
-	size_t x = 12;
-	return x;
-}
-//--------------------------------------------------------------------------
-void Backend::genDefinitionsPreamble(CodeStream& os, const ModelSpecMerged&) const
+void Backend::genDefinitionsPreamble(CodeStream& os) const
 {
 	os << "// Standard C++ includes" << std::endl;
 	os << "#include <string>" << std::endl;
@@ -102,7 +109,7 @@ void Backend::genDefinitionsPreamble(CodeStream& os, const ModelSpecMerged&) con
 	os << "}" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerged&) const
+void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 {
 	// Generating inline OpenCL kernels
 	os << "const char * initKernelSrc = \"typedef float scalar;\\" << std::endl;
@@ -136,17 +143,17 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
 
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream& os, const ModelSpecMerged&) const
+void Backend::genRunnerPreamble(CodeStream& os) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genRunnerPreamble");
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged& modelMerged) const
+void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& model) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genAllocateMemPreamble");
 }
 //--------------------------------------------------------------------------
-void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged& modelMerged) const
+void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecInternal& model) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genStepTimeFinalisePreamble");
 }
@@ -226,34 +233,18 @@ void Backend::genExtraGlobalParamPull(CodeStream& os, const std::string& type, c
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genExtraGlobalParamPull");
 }
 //--------------------------------------------------------------------------
-void Backend::genMergedGroupImplementation(CodeStream& os, const std::string& suffix, size_t idx, size_t numGroups) const
-{
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMergedGroupImplementation");
-}
-//--------------------------------------------------------------------------
-void Backend::genMergedGroupPush(CodeStream& os, const std::string& suffix, size_t idx, size_t numGroups) const
-{
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMergedGroupPush");
-}
-//--------------------------------------------------------------------------
-void Backend::genMergedExtraGlobalParamPush(CodeStream& os, const std::string& suffix, size_t mergedGroupIdx, size_t groupIdx,
-	const std::string& fieldName, const std::string& egpName) const
-{
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMergedExtraGlobalParamPush");
-}
-//--------------------------------------------------------------------------
-void Backend::genPopVariableInit(CodeStream& os, const Substitutions& kernelSubs, Handler handler) const
+void Backend::genPopVariableInit(CodeStream& os, VarLocation, const Substitutions& kernelSubs, Handler handler) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genPopVariableInit");
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableInit(CodeStream& os, const std::string&, const std::string& countVarName,
+void Backend::genVariableInit(CodeStream& os, VarLocation, size_t, const std::string& countVarName,
 	const Substitutions& kernelSubs, Handler handler) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genVariableInit");
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream& os, const SynapseGroupMerged&,
+void Backend::genSynapseVariableRowInit(CodeStream& os, VarLocation, const SynapseGroupInternal& sg,
 	const Substitutions& kernelSubs, Handler handler) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genSynapseVariableRowInit");
@@ -279,7 +270,7 @@ void Backend::genCurrentVariablePull(CodeStream& os, const NeuronGroupInternal& 
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genCurrentVariablePull");
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream&, CodeStream& definitionsInternal, CodeStream& runner, CodeStream&, CodeStream&) const
+MemAlloc Backend::genGlobalRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free, const ModelSpecInternal&) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genGlobalRNG");
 	return MemAlloc::zero();
@@ -296,11 +287,6 @@ void Backend::genTimer(CodeStream&, CodeStream& definitionsInternal, CodeStream&
 	CodeStream& stepTimeFinalise, const std::string& name, bool updateInStepTime) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genTimer");
-}
-//--------------------------------------------------------------------------
-void Backend::genReturnFreeDeviceMemoryBytes(CodeStream& os) const
-{
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genReturnFreeDeviceMemoryBytes");
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream& os) const
@@ -343,7 +329,7 @@ void Backend::genMSBuildImportTarget(std::ostream& os) const
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMSBuildImportTarget");
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalRNGRequired(const ModelSpecMerged& modelMerged) const
+bool Backend::isGlobalRNGRequired(const ModelSpecInternal& model) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::isGlobalRNGRequired");
 	return false;

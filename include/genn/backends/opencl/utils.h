@@ -4,8 +4,8 @@
 #include <iostream>
 #include <CL/cl.hpp>
 
-// GeNN includes
-#include "logging.h"
+// PLOG includes
+#include <plog/Log.h>
 
 // OpenCL error string
 const char * clGetErrorString(cl_int error) {
