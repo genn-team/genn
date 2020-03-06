@@ -236,41 +236,27 @@ void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecInterna
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream& definitions, CodeStream& definitionsInternal, const std::string& type, const std::string& name, VarLocation loc) const
 {
-	printf("\n\nBackend::genVariableDefinition called\n\n");
 	const bool deviceType = isDeviceType(type);
 
-	if (::Utils::isTypePointer(type)) {
-		// Export pointer, either in definitionsInternal if variable has a device type
-		// or to definitions if it should be accessable on host
-		CodeStream& d = deviceType ? definitionsInternal : definitions;
-		d << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+	if (loc & VarLocation::HOST) {
+		if (deviceType) {
+			throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
+		}
+		definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
 	}
-	else {
-		if (loc & VarLocation::HOST) {
-			if (deviceType) {
-				throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
-			}
-
-			definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-		}
-		if (loc & VarLocation::DEVICE) {
-			// If the type is a pointer type we need a device pointer
-			if (::Utils::isTypePointer(type)) {
-				// Write host definition to internal definitions stream if type is device only
-				CodeStream& d = deviceType ? definitionsInternal : definitions;
-				d << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
-			}
-			// Otherwise we just need a device variable, made volatile for safety
-			else {
-				definitionsInternal << "EXPORT_VAR cl::Buffer " << " db_" << name << ";" << std::endl;
-			}
-		}
+	if (loc & VarLocation::DEVICE) {
+		definitionsInternal << "EXPORT_VAR cl::Buffer" << " d_" << name << ";" << std::endl;
 	}
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genVariableImplementation");
+	if (loc & VarLocation::HOST) {
+		os << type << " " << name << ";" << std::endl;
+	}
+	if (loc & VarLocation::DEVICE) {
+		os << "cl::Buffer" << " d_" << name << ";" << std::endl;
+	}
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const
