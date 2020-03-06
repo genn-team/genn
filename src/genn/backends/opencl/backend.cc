@@ -99,6 +99,8 @@ void Backend::genDefinitionsPreamble(CodeStream& os) const
 	os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
 	os << "#include <CL/cl.hpp>" << std::endl;
 	os << std::endl;
+	os << "#define DEVICE_INDEX " << m_ChosenDeviceID << std::endl;
+	os << std::endl;
 	os << "// ------------------------------------------------------------------------" << std::endl;
 	os << "// Helper macro for error-checking OpenCL calls" << std::endl;
 	os << "#define CHECK_OPENCL_ERRORS(call) {\\" << std::endl;
@@ -111,41 +113,115 @@ void Backend::genDefinitionsPreamble(CodeStream& os) const
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 {
-	// Generating inline OpenCL kernels
-	os << "const char * initKernelSrc = \"typedef float scalar;\\" << std::endl;
-	os << "\\" << std::endl;
-	os << "__kernel void initializeKernel(const unsigned int deviceRNGSeed,\\" << std::endl;
-	os << "__global unsigned int* glbSpkCntNeurons,\\" << std::endl;
-	os << "__global unsigned int* glbSpkNeurons,\\" << std::endl;
-	os << "__global scalar* VNeurons,\\" << std::endl;
-	os << "__global scalar* UNeurons) {\\" << std::endl;
-	os << "    int groupId = get_group_id(0);\\" << std::endl;
-	os << "    int localId = get_local_id(0);\\" << std::endl;
-	os << "    const unsigned int id = 32 * groupId + localId;\\" << std::endl;
-	os << "\\" << std::endl;
-	os << "    if(id < 32) {\\" << std::endl;
-	os << "        // only do this for existing neurons\\" << std::endl;
-	os << "        if(id < 7) {\\" << std::endl;
-	os << "            if(id == 0) {\\" << std::endl;
-	os << "                glbSpkCntNeurons[0] = 0;\\" << std::endl;
-	os << "            }\\" << std::endl;
-	os << "            glbSpkNeurons[id] = 0;\\" << std::endl;
-	os << "            VNeurons[id] = (-6.50000000000000000e+01f);\\" << std::endl;
-	os << "            UNeurons[id] = (-2.00000000000000000e+01f);\\" << std::endl;
-	os << "            // current source variables\\" << std::endl;
-	os << "        }\\" << std::endl;
-	os << "    }\\" << std::endl;
-	os << "\";" << std::endl;
-
-	// *****************************************************************************
 	// **********************************************************************************
-
-
+	//! TO BE IMPLEMENTED - The starting of definitionsInternal.h
+	
+	// Declaration of OpenCL functions
+	os << "// ------------------------------------------------------------------------" << std::endl;
+	os << "// OpenCL functions declaration" << std::endl;
+	os << "// ------------------------------------------------------------------------" << std::endl;
+	os << "namespace opencl" << std::endl;
+	{
+		CodeStream::Scope b(os);
+		os << "void setUpContext(cl::Context& context, cl::Device& device, const int deviceIndex);" << std::endl;
+		os << "void createProgram(const char* kernelSource, cl::Program& program, cl::Context& context);" << std::endl;
+	}
+	os << std::endl;
+	// **********************************************************************************
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genRunnerPreamble");
+	// Generating static kernels
+	os << "// Initialization kernel" << std::endl;
+	os << "const char* initKernelSource = R\"(typedef float scalar; " << std::endl;
+	os << "// Will have to read the arguments again and update for the program" << std::endl;
+	os << "__kernel void initializeKernel(const unsigned int deviceRNGSeed," << std::endl;
+	os << "__global unsigned int* glbSpkCntNeurons," << std::endl;
+	os << "__global unsigned int* glbSpkNeurons," << std::endl;
+	os << "__global scalar* VNeurons," << std::endl;
+	os << "__global scalar* UNeurons)";
+	{
+		CodeStream::Scope b(os);
+		os << "int groupId = get_group_id(0);" << std::endl;
+		os << "int localId = get_local_id(0);" << std::endl;
+		os << "const unsigned int id = 32 * groupId + localId;" << std::endl;
+		os << std::endl;
+		os << "if(id < 32)";
+		{
+			CodeStream::Scope b(os);
+			os << "// only do this for existing neurons" << std::endl;
+			os << "if(id < 7)";
+			{
+				CodeStream::Scope b(os);
+				os << "if(id == 0)";
+				{
+					CodeStream::Scope b(os);
+					os << "glbSpkCntNeurons[0] = 0;" << std::endl;
+				}
+				os << "glbSpkNeurons[id] = 0;" << std::endl;
+				os << "VNeurons[id] = (-6.50000000000000000e+01f);" << std::endl;
+				os << "UNeurons[id] = (-2.00000000000000000e+01f);" << std::endl;
+				os << "// current source variables" << std::endl;
+			}
+		}
+	}
+	os << ")\";" << std::endl;
+	os << std::endl;
+
+	// Implementation of OpenCL functions declared in definitionsInternal
+	os << "// ------------------------------------------------------------------------" << std::endl;
+	os << "// OpenCL functions implementation" << std::endl;
+	os << "// ------------------------------------------------------------------------" << std::endl;
+	os << std::endl;
+	os << "// Initialize context with the given device" << std::endl;
+	os << "void opencl::setUpContext(cl::Context& context, cl::Device& device, const int deviceIndex)";
+	{
+		CodeStream::Scope b(os);
+		os << "// Getting all platforms to gather devices from" << std::endl;
+		os << "std::vector<cl::Platform> platforms;" << std::endl;
+		os << "cl::Platform::get(&platforms); // Gets all the platforms" << std::endl;
+		os << std::endl;
+		os << "assert(platforms.size() > 0);" << std::endl;
+		os << std::endl;
+		os << "// Getting all devices and putting them into a single vector" << std::endl;
+		os << "std::vector<cl::Device> devices;" << std::endl;
+		os << "for (int i = 0; i < platforms.size(); i++)";
+		{
+			CodeStream::Scope b(os);
+			os << "std::vector<cl::Device> platformDevices;" << std::endl;
+			os << "platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);" << std::endl;
+			os << "devices.insert(devices.end(), platformDevices.begin(), platformDevices.end());" << std::endl;
+		}
+		os << std::endl;
+		os << "assert(devices.size() > 0);" << std::endl;
+		os << std::endl;
+		os << "// Check if the device exists at the given index" << std::endl;
+		os << "if (deviceIndex >= devices.size())";
+		{
+			CodeStream::Scope b(os);
+			os << "assert(deviceIndex >= devices.size());" << std::endl;
+			os << "device = devices.front();" << std::endl;
+		}
+		os << "else";
+		{
+			CodeStream::Scope b(os);
+			os << "device = devices[deviceIndex]; // We will perform our operations using this device" << std::endl;
+		}
+		os << std::endl;
+		os << "context = cl::Context(device);";
+		os << std::endl;
+	}
+	os << std::endl;
+	os << "// Create OpenCL program with the specified device" << std::endl;
+	os << "void opencl::createProgram(const char* kernelSource, cl::Program& program, cl::Context& context)";
+	{
+		CodeStream::Scope b(os);
+		os << "// Reading the kernel source for execution" << std::endl;
+		os << "program = cl::Program(context, kernelSource, true);" << std::endl;
+		os << "program.build(\"-cl-std=CL1.2\");" << std::endl;
+	}
+	os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& model) const
