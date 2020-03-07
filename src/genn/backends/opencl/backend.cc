@@ -15,7 +15,7 @@
 #include "code_generator/substitutions.h"
 #include "code_generator/codeGenUtils.h"
 
-// CUDA backend includes
+// OpenCL backend includes
 #include "utils.h"
 
 //--------------------------------------------------------------------------
@@ -63,12 +63,101 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
 	: BackendBase(localHostID, scalarType), m_KernelWorkGroupSizes(kernelWorkGroupSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::Backend");
-	addDeviceType("cl::Buffer", sizeof(cl::Buffer));
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genNeuronUpdate");
+	// Generate reset kernel to be run before the neuron kernel
+
+	// Collect the arguments to be sent to the kernel
+	std::vector<std::string> kernelArgs;
+	// Loop through remote neuron groups
+	for (const auto& n : model.getRemoteNeuronGroups()) {
+		if (n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
+			kernelArgs.push_back("d_spkQuePtr" + n.first);
+		}
+	}
+	// Loop through local neuron groups
+	for (const auto& n : model.getLocalNeuronGroups()) {
+		if (n.second.isDelayRequired()) { // with delay
+			if (std::find(kernelArgs.begin(), kernelArgs.end(), "d_spkQuePtr" + n.first) == kernelArgs.end()) {
+				kernelArgs.push_back("d_spkQuePtr");
+			}
+		}
+		if (n.second.isSpikeEventRequired()) {
+			kernelArgs.push_back("d_glbSpkCntEvnt" + n.first);
+		}
+		kernelArgs.push_back("d_glbSpkCnt" + n.first);
+	}
+	std::string allKernelArgs = "";
+	for (int i = 0; i < kernelArgs.size(); i++) {
+		allKernelArgs += "__global unsigned int* ";
+		if (i == (kernelArgs.size() - 1)) {
+			allKernelArgs += kernelArgs[i];
+		} else {
+			allKernelArgs += kernelArgs[i] + ", ";
+		}
+	}
+	// ********************
+
+	// Actual kernel generation
+	size_t idPreNeuronReset = 0;
+	os << "extern \"C\" const char* " << KernelNames[KernelPreNeuronReset] << "Src = R\"(typedef float scalar;" << std::endl;
+	os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(" << allKernelArgs << ")";
+	{
+		CodeStream::Scope b(os);
+
+		os << "size_t groupId = get_group_id(0);" << std::endl;
+		os << "size_t localId = get_local_id(0);" << std::endl;
+		os << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreNeuronReset] << " * groupId + localId;" << std::endl;
+
+		// Loop through remote neuron groups
+		for (const auto& n : model.getRemoteNeuronGroups()) {
+			if (n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
+				if (idPreNeuronReset > 0) {
+					os << "else ";
+				}
+				os << "if(id == " << (idPreNeuronReset++) << ")";
+				{
+					CodeStream::Scope b(os);
+					os << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+				}
+			}
+		}
+
+		// Loop through local neuron groups
+		for (const auto& n : model.getLocalNeuronGroups()) {
+			if (idPreNeuronReset > 0) {
+				os << "else ";
+			}
+			os << "if(id == " << (idPreNeuronReset++) << ")";
+			{
+				CodeStream::Scope b(os);
+
+				if (n.second.isDelayRequired()) { // with delay
+					os << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+
+					if (n.second.isSpikeEventRequired()) {
+						os << "d_glbSpkCntEvnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+					}
+					if (n.second.isTrueSpikeRequired()) {
+						os << "d_glbSpkCnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+					}
+					else {
+						os << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+					}
+				}
+				else { // no delay
+					if (n.second.isSpikeEventRequired()) {
+						os << "d_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+					}
+					os << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+				}
+			}
+		}
+	}
+	// Closing the multiline char*
+	os << ")\";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
@@ -113,61 +202,54 @@ void Backend::genDefinitionsPreamble(CodeStream& os) const
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 {
-	// **********************************************************************************
-	//! TO BE IMPLEMENTED - The starting of definitionsInternal.h
-	
 	// Declaration of OpenCL functions
 	os << "// ------------------------------------------------------------------------" << std::endl;
 	os << "// OpenCL functions declaration" << std::endl;
 	os << "// ------------------------------------------------------------------------" << std::endl;
-	os << "namespace opencl" << std::endl;
+	os << "namespace opencl";
 	{
 		CodeStream::Scope b(os);
 		os << "void setUpContext(cl::Context& context, cl::Device& device, const int deviceIndex);" << std::endl;
 		os << "void createProgram(const char* kernelSource, cl::Program& program, cl::Context& context);" << std::endl;
 	}
 	os << std::endl;
-	// **********************************************************************************
+	// Declaration of OpenCL variables
+	os << "extern \"C\"";
+	{
+		CodeStream::Scope b(os);
+		os << "// OpenCL variables" << std::endl;
+		os << "EXPORT_VAR cl::Context clContext;" << std::endl;
+		os << "EXPORT_VAR cl::Device clDevice;" << std::endl;
+		os << "EXPORT_VAR cl::Program initProgram;" << std::endl;
+		os << "EXPORT_VAR cl::Program unProgram;" << std::endl;
+		os << "EXPORT_VAR cl::CommandQueue commandQueue;" << std::endl;
+		os << std::endl;
+		os << "// OpenCL kernels" << std::endl;
+		os << "EXPORT_VAR cl::Kernel initKernel;" << std::endl;
+		os << "EXPORT_VAR cl::Kernel preNeuronResetKernel;" << std::endl;
+		os << "EXPORT_VAR cl::Kernel updateNeuronsKernel;" << std::endl;
+	}
+	os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream& os) const
 {
-	// Generating static kernels
-	os << "// Initialization kernel" << std::endl;
-	os << "const char* initKernelSource = R\"(typedef float scalar; " << std::endl;
-	os << "// Will have to read the arguments again and update for the program" << std::endl;
-	os << "__kernel void initializeKernel(const unsigned int deviceRNGSeed," << std::endl;
-	os << "__global unsigned int* glbSpkCntNeurons," << std::endl;
-	os << "__global unsigned int* glbSpkNeurons," << std::endl;
-	os << "__global scalar* VNeurons," << std::endl;
-	os << "__global scalar* UNeurons)";
+	// Generating OpenCL variables for the runner
+	os << "extern \"C\"";
 	{
 		CodeStream::Scope b(os);
-		os << "int groupId = get_group_id(0);" << std::endl;
-		os << "int localId = get_local_id(0);" << std::endl;
-		os << "const unsigned int id = 32 * groupId + localId;" << std::endl;
+		os << "// OpenCL variables" << std::endl;
+		os << "cl::Context clContext;" << std::endl;
+		os << "cl::Device clDevice;" << std::endl;
+		os << "cl::Program initProgram;" << std::endl;
+		os << "cl::Program unProgram;" << std::endl;
+		os << "cl::CommandQueue commandQueue;" << std::endl;
 		os << std::endl;
-		os << "if(id < 32)";
-		{
-			CodeStream::Scope b(os);
-			os << "// only do this for existing neurons" << std::endl;
-			os << "if(id < 7)";
-			{
-				CodeStream::Scope b(os);
-				os << "if(id == 0)";
-				{
-					CodeStream::Scope b(os);
-					os << "glbSpkCntNeurons[0] = 0;" << std::endl;
-				}
-				os << "glbSpkNeurons[id] = 0;" << std::endl;
-				os << "VNeurons[id] = (-6.50000000000000000e+01f);" << std::endl;
-				os << "UNeurons[id] = (-2.00000000000000000e+01f);" << std::endl;
-				os << "// current source variables" << std::endl;
-			}
-		}
+		os << "// OpenCL kernels" << std::endl;
+		os << "cl::Kernel initKernel;" << std::endl;
+		os << "cl::Kernel preNeuronResetKernel;" << std::endl;
+		os << "cl::Kernel updateNeuronsKernel;" << std::endl;
 	}
-	os << ")\";" << std::endl;
-	os << std::endl;
 
 	// Implementation of OpenCL functions declared in definitionsInternal
 	os << "// ------------------------------------------------------------------------" << std::endl;
@@ -238,31 +320,32 @@ void Backend::genVariableDefinition(CodeStream& definitions, CodeStream& definit
 {
 	const bool deviceType = isDeviceType(type);
 
-	if (loc & VarLocation::HOST) {
+	if(loc & VarLocation::HOST) {
 		if (deviceType) {
 			throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
 		}
 		definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
 	}
-	if (loc & VarLocation::DEVICE) {
+	if(loc & VarLocation::DEVICE) {
 		definitionsInternal << "EXPORT_VAR cl::Buffer" << " d_" << name << ";" << std::endl;
 	}
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
 {
-	if (loc & VarLocation::HOST) {
+	if(loc & VarLocation::HOST) {
 		os << type << " " << name << ";" << std::endl;
 	}
-	if (loc & VarLocation::DEVICE) {
+	if(loc & VarLocation::DEVICE) {
 		os << "cl::Buffer" << " d_" << name << ";" << std::endl;
 	}
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genVariableAllocation");
-	return MemAlloc::zero();
+	auto allocation = MemAlloc::host(count * getSize(type));
+	os << name << " = " << "(" << type << "*)malloc(" << count << " * sizeof(" << type << "));" << std::endl;
+    return allocation;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream& os, const std::string& name, VarLocation loc) const
@@ -272,7 +355,12 @@ void Backend::genVariableFree(CodeStream& os, const std::string& name, VarLocati
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, const std::string& type, const std::string& name, VarLocation loc) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genExtraGlobalParamDefinition");
+	if (loc & VarLocation::HOST) {
+		definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+	}
+	if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+		definitions << "EXPORT_VAR cl::Buffer" << " d_" << name << ";" << std::endl;
+	}
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
