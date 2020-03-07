@@ -69,95 +69,92 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 {
 	// Generate reset kernel to be run before the neuron kernel
 
-	// Collect the arguments to be sent to the kernel
-	std::vector<std::string> kernelArgs;
+	//! KernelPreNeuronReset START
+	size_t idPreNeuronReset = 0;
+	
+	// Vector to collect the arguments to be sent to the kernel
+	std::vector<std::string> preNeuronResetKernelArgs;
+
+	// Creating the kernel body separately to collect all arguments and put them into the main kernel
+	std::stringstream preNeuronResetKernelBodyStream;
+	CodeStream preNeuronResetKernelBody(preNeuronResetKernelBodyStream);
+
+	preNeuronResetKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
+	preNeuronResetKernelBody << "size_t localId = get_local_id(0);" << std::endl;
+	preNeuronResetKernelBody << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreNeuronReset] << " * groupId + localId;" << std::endl;
+
 	// Loop through remote neuron groups
 	for (const auto& n : model.getRemoteNeuronGroups()) {
 		if (n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
-			kernelArgs.push_back("d_spkQuePtr" + n.first);
+			if (idPreNeuronReset > 0) {
+				preNeuronResetKernelBody << "else ";
+			}
+			preNeuronResetKernelBody << "if(id == " << (idPreNeuronReset++) << ")";
+			{
+				CodeStream::Scope b(preNeuronResetKernelBody);
+				preNeuronResetKernelBody << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+			}
+			Utils::pushUnique<std::string>(preNeuronResetKernelArgs, "d_spkQuePtr" + n.first);
 		}
 	}
+
 	// Loop through local neuron groups
 	for (const auto& n : model.getLocalNeuronGroups()) {
-		if (n.second.isDelayRequired()) { // with delay
-			if (std::find(kernelArgs.begin(), kernelArgs.end(), "d_spkQuePtr" + n.first) == kernelArgs.end()) {
-				kernelArgs.push_back("d_spkQuePtr");
-			}
+		if (idPreNeuronReset > 0) {
+			preNeuronResetKernelBody << "else ";
 		}
 		if (n.second.isSpikeEventRequired()) {
-			kernelArgs.push_back("d_glbSpkCntEvnt" + n.first);
+			Utils::pushUnique<std::string>(preNeuronResetKernelArgs, "d_glbSpkCntEvnt" + n.first);
 		}
-		kernelArgs.push_back("d_glbSpkCnt" + n.first);
-	}
-	std::string allKernelArgs = "";
-	for (int i = 0; i < kernelArgs.size(); i++) {
-		allKernelArgs += "__global unsigned int* ";
-		if (i == (kernelArgs.size() - 1)) {
-			allKernelArgs += kernelArgs[i];
-		} else {
-			allKernelArgs += kernelArgs[i] + ", ";
-		}
-	}
-	// ********************
+		preNeuronResetKernelBody << "if(id == " << (idPreNeuronReset++) << ")";
+		{
+			CodeStream::Scope b(preNeuronResetKernelBody);
 
-	// Actual kernel generation
-	size_t idPreNeuronReset = 0;
+			if (n.second.isDelayRequired()) { // with delay
+				preNeuronResetKernelBody << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+
+				if (n.second.isSpikeEventRequired()) {
+					preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+				}
+				if (n.second.isTrueSpikeRequired()) {
+					preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+				}
+				else {
+					preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+				}
+				Utils::pushUnique<std::string>(preNeuronResetKernelArgs, "d_spkQuePtr" + n.first);
+			}
+			else { // no delay
+				if (n.second.isSpikeEventRequired()) {
+					preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+				}
+				preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+			}
+			Utils::pushUnique<std::string>(preNeuronResetKernelArgs, "d_glbSpkCnt" + n.first);
+		}
+	}
+	// Combining collected kernel arguments in a single string
+	std::string allPreNeuronResetKernelArgs = "";
+	for (int i = 0; i < preNeuronResetKernelArgs.size(); i++) {
+		allPreNeuronResetKernelArgs += "__global unsigned int* ";
+		if (i == (preNeuronResetKernelArgs.size() - 1)) {
+			allPreNeuronResetKernelArgs += preNeuronResetKernelArgs[i];
+		}
+		else {
+			allPreNeuronResetKernelArgs += preNeuronResetKernelArgs[i] + ", ";
+		}
+	}
+	
+	// KernelPreNeuronReset definition
 	os << "extern \"C\" const char* " << KernelNames[KernelPreNeuronReset] << "Src = R\"(typedef float scalar;" << std::endl;
-	os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(" << allKernelArgs << ")";
+	os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(" << allPreNeuronResetKernelArgs << ")";
 	{
 		CodeStream::Scope b(os);
-
-		os << "size_t groupId = get_group_id(0);" << std::endl;
-		os << "size_t localId = get_local_id(0);" << std::endl;
-		os << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreNeuronReset] << " * groupId + localId;" << std::endl;
-
-		// Loop through remote neuron groups
-		for (const auto& n : model.getRemoteNeuronGroups()) {
-			if (n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
-				if (idPreNeuronReset > 0) {
-					os << "else ";
-				}
-				os << "if(id == " << (idPreNeuronReset++) << ")";
-				{
-					CodeStream::Scope b(os);
-					os << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-				}
-			}
-		}
-
-		// Loop through local neuron groups
-		for (const auto& n : model.getLocalNeuronGroups()) {
-			if (idPreNeuronReset > 0) {
-				os << "else ";
-			}
-			os << "if(id == " << (idPreNeuronReset++) << ")";
-			{
-				CodeStream::Scope b(os);
-
-				if (n.second.isDelayRequired()) { // with delay
-					os << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-
-					if (n.second.isSpikeEventRequired()) {
-						os << "d_glbSpkCntEvnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
-					}
-					if (n.second.isTrueSpikeRequired()) {
-						os << "d_glbSpkCnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
-					}
-					else {
-						os << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-					}
-				}
-				else { // no delay
-					if (n.second.isSpikeEventRequired()) {
-						os << "d_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-					}
-					os << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-				}
-			}
-		}
+		os << preNeuronResetKernelBodyStream.str();
 	}
 	// Closing the multiline char*
 	os << ")\";" << std::endl;
+	//! KernelPreNeuronReset END
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
@@ -250,6 +247,7 @@ void Backend::genRunnerPreamble(CodeStream& os) const
 		os << "cl::Kernel preNeuronResetKernel;" << std::endl;
 		os << "cl::Kernel updateNeuronsKernel;" << std::endl;
 	}
+	os << std::endl;
 
 	// Implementation of OpenCL functions declared in definitionsInternal
 	os << "// ------------------------------------------------------------------------" << std::endl;

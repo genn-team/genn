@@ -103,3 +103,22 @@ const char * clGetErrorString(cl_int error) {
         exit(EXIT_FAILURE);																									\
     }																														\
 }
+
+//--------------------------------------------------------------------------
+// CodeGenerator::OpenCL::Utils
+//--------------------------------------------------------------------------
+namespace CodeGenerator
+{
+namespace OpenCL
+{
+namespace Utils
+{
+template<class T>
+void pushUnique(std::vector<T>& list, T value) {
+	if (std::find(list.begin(), list.end(), value) == list.end()) {
+		list.push_back(value);
+	}
+}
+}   // namespace Utils
+}   // namespace OpenCL
+}   // namespace CodeGenerator
