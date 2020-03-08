@@ -113,7 +113,7 @@ namespace OpenCL
 {
 namespace Utils
 {
-template<class T>
+template<typename T>
 void pushUnique(std::vector<T>& list, T value) {
 	if (std::find(list.begin(), list.end(), value) == list.end()) {
 		list.push_back(value);
