@@ -16,6 +16,7 @@ Backend createBackend(const ModelSpecInternal& model, const filesystem::path& ou
 	const Preferences& preferences)
 {
 	KernelWorkGroupSize workGroupSize = std::array<size_t, KernelMax>();
+	std::fill(workGroupSize.begin(), workGroupSize.end(), 32);
 
     return Backend(workGroupSize, preferences, 0, "scalar", 1);
 }

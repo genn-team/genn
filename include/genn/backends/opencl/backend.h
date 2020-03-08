@@ -200,7 +200,7 @@ public:
 	virtual void genMSBuildCompileModule(const std::string& moduleName, std::ostream& os) const override;
 	virtual void genMSBuildImportTarget(std::ostream& os) const override;
 
-	virtual std::string getVarPrefix() const override { return "dd_"; }
+	virtual std::string getVarPrefix() const override { return "d_"; }
 
 	virtual bool isGlobalRNGRequired(const ModelSpecInternal& model) const override;
 	virtual bool isSynRemapRequired() const override { return true; }
@@ -238,83 +238,60 @@ public:
 	static const char* KernelNames[KernelMax];
 
 private:
-    //--------------------------------------------------------------------------
-    // Type definitions
-    //--------------------------------------------------------------------------
-    template<typename T>
-    using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
+	//--------------------------------------------------------------------------
+	// Type definitions
+	//--------------------------------------------------------------------------
+	template<typename T>
+	using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
+
+	template<typename T>
+	using FilterGroupFunc = std::function<bool(const T&)>;
 
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, const std::string &mergedGroupPrefix, size_t &idStart,
-                          GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
-                          GroupHandler<T> handler) const
-    {
-        // Loop through groups
-        for(const auto &gMerge : groups) {
-            // Sum padded sizes of each group within merged group
-            const size_t paddedSize = std::accumulate(
-                gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
-                [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
-                {
-                    return (acc + getPaddedSizeFunc(g.get()));
-                });
+	template<typename T>
+	void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart,
+		GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
+		FilterGroupFunc<T> filter,
+		GroupHandler<T> handler) const
+	{
+		// Populate neuron update groups
+		for (const auto& g : groups) {
+			// If this synapse group should be processed
+			Substitutions popSubs(&kernelSubs);
+			if (filter(g.second)) {
+				const size_t paddedSize = getPaddedSizeFunc(g.second);
 
-            os << "// merged" << gMerge.getIndex() << std::endl;
+				os << "// " << g.first << std::endl;
 
-            // If this is the first  group
-            if(idStart == 0) {
-                os << "if(id < " << paddedSize << ")";
-            }
-            else {
-                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
-            }
-            {
-                CodeStream::Scope b(os);
-                Substitutions popSubs(&kernelSubs);
+				// If this is the first  group
+				if (idStart == 0) {
+					os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
+					popSubs.addVarSubstitution("id", "id");
+				}
+				else {
+					os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
+					os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+					popSubs.addVarSubstitution("id", "lid");
+				}
 
-                if(gMerge.getGroups().size() == 1) {
-                    os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[0];" << std::endl;
-                    os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
-                }
-                else {
-                    // Perform bisect operation to get index of merged struct
-                    os << "unsigned int lo = 0;" << std::endl;
-                    os << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
-                    os << "while(lo < hi)" << std::endl;
-                    {
-                        CodeStream::Scope b(os);
-                        os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
+				handler(os, g.second, popSubs);
 
-                        os << "if(id < d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "hi = mid;" << std::endl;
-                        }
-                        os << "else";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "lo = mid + 1;" << std::endl;
-                        }
-                    }
+				idStart += paddedSize;
+				os << CodeStream::CB(1) << std::endl;
+			}
+		}
+	}
 
-                    // Use this to get reference to merged group structure
-                    os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
-
-                    // Use this and starting thread of merged group to calculate local id within neuron group
-                    os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
-
-                }
-                popSubs.addVarSubstitution("id", "lid");
-                handler(os, gMerge, popSubs);
-
-                idStart += paddedSize;
-            }
-        }
-    }
-
+	template<typename T>
+	void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart,
+		GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
+		GroupHandler<T> handler) const
+	{
+		genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
+			[](const T&) { return true; }, handler);
+	}
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
 
