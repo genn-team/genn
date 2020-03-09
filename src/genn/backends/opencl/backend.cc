@@ -50,6 +50,23 @@ private:
 	const bool m_TimingEnabled;
 	const bool m_SynchroniseOnStop;
 };
+
+
+void gennExtraGlobalParamPass(CodeGenerator::CodeStream& os, const std::map<std::string, std::string>::value_type& p)
+{
+	if (Utils::isTypePointer(p.second)) {
+		os << "d_" << p.first << ", ";
+	}
+	else {
+		os << p.first << ", ";
+	}
+}
+//-----------------------------------------------------------------------
+bool isSparseInitRequired(const SynapseGroupInternal& sg)
+{
+	return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+		&& (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
+}
 //-----------------------------------------------------------------------
 void updateExtraGlobalParams(const std::string& varSuffix, const std::string& codeSuffix, const Snippet::Base::EGPVec& extraGlobalParameters,
 	std::map<std::string, std::string>& kernelParameters, const std::vector<std::string>& codeStrings)
@@ -357,6 +374,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 
 	// Neuron update kernels
 	os << "extern \"C\" const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
+	os << std::endl;
 	// KernelPreNeuronReset definition
 	os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
 	{
@@ -375,6 +393,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 		CodeStream::Scope b(os);
 		os << preNeuronResetKernelBodyStream.str();
 	}
+	os << std::endl;
 	// KernelNeuronUpdate definition
 	std::vector<std::string> neuronUpdateKernelArgsForKernel;
 	os << "__kernel void " << KernelNames[KernelNeuronUpdate] << "(";
@@ -468,7 +487,105 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                       SynapseGroupHandler sgSparseInitHandler) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genInit");
+	//! TO BE IMPLEMENTED - Generating minimal kernel
+
+	// Build map of extra global parameters for init kernel
+	std::map<std::string, std::string> initKernelParameters;
+	for (const auto& s : model.getLocalSynapseGroups()) {
+		const auto* initSparseConnectivitySnippet = s.second.getConnectivityInitialiser().getSnippet();
+		updateExtraGlobalParams(s.first, "", initSparseConnectivitySnippet->getExtraGlobalParams(), initKernelParameters,
+			{ initSparseConnectivitySnippet->getRowBuildCode() });
+	}
+
+	// initialization kernel code
+	size_t idInitStart = 0;
+
+	//! KernelInitialize BODY START
+	Substitutions kernelSubs(openclFunctions, model.getPrecision());
+
+	// Creating the kernel body separately to collect all arguments and put them into the main kernel
+	std::stringstream initializeKernelBodyStream;
+	CodeStream initializeKernelBody(initializeKernelBodyStream);
+
+	initializeKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
+	initializeKernelBody << "size_t localId = get_local_id(0);" << std::endl;
+	initializeKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelInitialize] << " * groupId + localId;" << std::endl;
+
+	initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
+	initializeKernelBody << "// Remote neuron groups" << std::endl;
+	genParallelGroup<NeuronGroupInternal>(initializeKernelBody, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
+		[this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
+		[this](const NeuronGroupInternal& ng) { return ng.hasOutputToHost(getLocalHostID()); },
+		[this, remoteNGHandler](CodeStream& initializeKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
+		{
+			initializeKernelBody << "// only do this for existing neurons" << std::endl;
+			initializeKernelBody << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
+			{
+				CodeStream::Scope b(initializeKernelBody);
+
+				remoteNGHandler(initializeKernelBody, ng, popSubs);
+			}
+		});
+	initializeKernelBody << std::endl;
+
+	initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
+	initializeKernelBody << "// Local neuron groups" << std::endl;
+	genParallelGroup<NeuronGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
+		[this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
+		[this](const NeuronGroupInternal&) { return true; },
+		[this, &model, localNGHandler](CodeStream& initializeKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
+		{
+			initializeKernelBody << "// only do this for existing neurons" << std::endl;
+			initializeKernelBody << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
+			{
+				CodeStream::Scope b(initializeKernelBody);
+
+				localNGHandler(initializeKernelBody, ng, popSubs);
+			}
+		});
+	initializeKernelBody << std::endl;
+
+	const size_t numStaticInitThreads = idInitStart;
+
+	//! KernelInitialize BODY END
+
+	// Initialization kernels
+	os << "extern \"C\" const char* " << ProgramNames[ProgramInitialize] << "Src = R\"(typedef float scalar;" << std::endl;
+	os << std::endl;
+
+	// KernelInitialize definition
+	std::vector<std::string> initializeKernelArgsForKernel;
+	os << "__kernel void " << KernelNames[KernelInitialize] << "(";
+	os << "__global unsigned int* " << getVarPrefix() << "glbSpkCnt" << model.getLocalNeuronGroups().begin()->second.getName() << ", ";
+	os << "__global unsigned int* " << getVarPrefix() << "glbSpk" << model.getLocalNeuronGroups().begin()->second.getName() << ", ";
+	// Local neuron groups args
+	for (const auto& ng : model.getLocalNeuronGroups()) {
+		auto* nm = ng.second.getNeuronModel();
+		for (const auto& v : nm->getVars()) {
+			os << "__global " << v.type << "* " << getVarPrefix() << v.name << ng.second.getName() << ", ";
+			initializeKernelArgsForKernel.push_back(getVarPrefix() + v.name + ng.second.getName());
+		}
+	}
+	for (const auto& p : initKernelParameters) {
+		os << p.second << " " << p.first << ", ";
+		initializeKernelArgsForKernel.push_back(p.first);
+	}
+	os << "unsigned int deviceRNGSeed)";
+	{
+		CodeStream::Scope b(os);
+		os << initializeKernelBodyStream.str();
+	}
+	os << std::endl;
+	// Closing the multiline char* containing all kernels for updating neurons
+	os << ")\";" << std::endl;
+
+	os << std::endl;
+
+	os << "void initialize()";
+	{
+		CodeStream::Scope b(os);
+
+	}
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream& os) const
@@ -555,6 +672,22 @@ void Backend::genRunnerPreamble(CodeStream& os) const
 		os << "cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
 		os << "cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
 	}
+
+	os << std::endl;
+
+	// Generating code for initializing OpenCL programs
+	os << "// Initializing OpenCL programs so that they can be used to run the kernels" << std::endl;
+	os << "void initPrograms()";
+	{
+		CodeStream::Scope b(os);
+		os << "opencl::setUpContext(clContext, clDevice, DEVICE_INDEX);" << std::endl;
+		os << "commandQueue = cl::CommandQueue(clContext, clDevice);" << std::endl;
+		os << std::endl;
+		os << "// Create programs for kernels" << std::endl;
+		os << "opencl::createProgram(" << ProgramNames[ProgramInitialize] << "Src, " << ProgramNames[ProgramInitialize] << ", clContext);" << std::endl;
+		os << "opencl::createProgram(" << ProgramNames[ProgramNeuronsUpdate] << "Src, " << ProgramNames[ProgramNeuronsUpdate] << ", clContext);" << std::endl;
+	}
+
 	os << std::endl;
 
 	// Implementation of OpenCL functions declared in definitionsInternal
@@ -691,13 +824,24 @@ void Backend::genExtraGlobalParamPull(CodeStream& os, const std::string& type, c
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream& os, VarLocation, const Substitutions& kernelSubs, Handler handler) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genPopVariableInit");
+	Substitutions varSubs(&kernelSubs);
+
+	// If this is first thread in group
+	os << "if(" << varSubs["id"] << " == 0)";
+	{
+		CodeStream::Scope b(os);
+		handler(os, varSubs);
+	}
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableInit(CodeStream& os, VarLocation, size_t, const std::string& countVarName,
 	const Substitutions& kernelSubs, Handler handler) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genVariableInit");
+	// Variable should already be provided via parallelism
+	assert(kernelSubs.hasVarSubstitution(countVarName));
+
+	Substitutions varSubs(&kernelSubs);
+	handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseVariableRowInit(CodeStream& os, VarLocation, const SynapseGroupInternal& sg,
@@ -713,7 +857,13 @@ void Backend::genVariablePush(CodeStream& os, const std::string& type, const std
 //--------------------------------------------------------------------------
 void Backend::genVariablePull(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genVariablePull");
+	if (!(loc & VarLocation::ZERO_COPY)) {
+		os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << name;
+		os << ", " << "CL_TRUE";
+		os << ", " << "0";
+		os << ", " << count << " * sizeof(" << type << ")";
+		os << ", " << name << "));" << std::endl;
+	}
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream& os, const NeuronGroupInternal& ng, const std::string& type, const std::string& name, VarLocation loc) const
@@ -723,7 +873,18 @@ void Backend::genCurrentVariablePush(CodeStream& os, const NeuronGroupInternal& 
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePull(CodeStream& os, const NeuronGroupInternal& ng, const std::string& type, const std::string& name, VarLocation loc) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genCurrentVariablePull");
+    // If this variable requires queuing and isn't zero-copy
+    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+        // Generate memcpy to copy only current timestep's data
+        //! TO BE IMPLEMENTED
+		/*os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;*/
+    }
+    // Otherwise, generate standard push
+    else {
+        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
+    }
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free, const ModelSpecInternal&) const
