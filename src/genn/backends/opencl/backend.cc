@@ -114,8 +114,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 	//! KernelPreNeuronReset START
 	size_t idPreNeuronReset = 0;
 	
-	// Vector to collect the arguments to be sent to the kernel
-	std::map<std::string, std::string> preNeuronResetKernelArgs;
+	// Vector to collect the parameters for the kernel
+	std::map<std::string, std::string> preNeuronResetKernelParams;
 
 	// Creating the kernel body separately to collect all arguments and put them into the main kernel
 	std::stringstream preNeuronResetKernelBodyStream;
@@ -136,7 +136,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 				CodeStream::Scope b(preNeuronResetKernelBody);
 				preNeuronResetKernelBody << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
 			}
-			preNeuronResetKernelArgs.insert({ "d_spkQuePtr" + n.first, "__global unsigned int*" });
+			preNeuronResetKernelParams.insert({ "d_spkQuePtr" + n.first, "__global unsigned int*" });
 		}
 	}
 
@@ -146,7 +146,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 			preNeuronResetKernelBody << "else ";
 		}
 		if (n.second.isSpikeEventRequired()) {
-			preNeuronResetKernelArgs.insert({ "d_glbSpkCntEvnt" + n.first, "__global unsigned int*" });
+			preNeuronResetKernelParams.insert({ "d_glbSpkCntEvnt" + n.first, "__global unsigned int*" });
 		}
 		preNeuronResetKernelBody << "if(id == " << (idPreNeuronReset++) << ")";
 		{
@@ -164,7 +164,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 				else {
 					preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
 				}
-				preNeuronResetKernelArgs.insert({ "d_spkQuePtr" + n.first, "__global unsigned int*" });
+				preNeuronResetKernelParams.insert({ "d_spkQuePtr" + n.first, "__global unsigned int*" });
 			}
 			else { // no delay
 				if (n.second.isSpikeEventRequired()) {
@@ -172,7 +172,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 				}
 				preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
 			}
-			preNeuronResetKernelArgs.insert({ "d_glbSpkCnt" + n.first, "__global unsigned int*" });
+			preNeuronResetKernelParams.insert({ "d_glbSpkCnt" + n.first, "__global unsigned int*" });
 		}
 	}
 	//! KernelPreNeuronReset END
@@ -181,7 +181,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 	std::stringstream updateNeuronsKernelBodyStream;
 	CodeStream updateNeuronsKernelBody(updateNeuronsKernelBodyStream);
 
-	std::map<std::string, std::string> updateNeuronsKernelArgs;
+	std::map<std::string, std::string> updateNeuronsKernelParams;
 
     // Add extra global parameters references by neuron models to map of kernel parameters
 	std::map<std::string, std::string> neuronKernelParameters;
@@ -256,7 +256,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 	// Parallelise over neuron groups
 	genParallelGroup<NeuronGroupInternal>(updateNeuronsKernelBody, kernelSubs, model.getLocalNeuronGroups(), idStart,
 		[this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelNeuronUpdate]); },
-		[&model, simHandler, wuVarUpdateHandler, this, &updateNeuronsKernelArgs](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
+		[&model, simHandler, wuVarUpdateHandler, this, &updateNeuronsKernelParams](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
 		{
 			// If axonal delays are required
 			if (ng.isDelayRequired()) {
@@ -301,10 +301,10 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 					{
 						CodeStream::Scope b(updateNeuronsKernelBody);
 						updateNeuronsKernelBody << "shPosSpkEvnt = atomic_add((unsigned int *) &d_glbSpkCntEvnt" << ng.getName();
-						updateNeuronsKernelArgs.insert({ "d_glbSpkCntEvnt" + ng.getName(), "__global unsigned int*"}); // Add argument
+						updateNeuronsKernelParams.insert({ "d_glbSpkCntEvnt" + ng.getName(), "__global unsigned int*"}); // Add argument
 						if (ng.isDelayRequired()) {
 							updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
-							updateNeuronsKernelArgs.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
+							updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
 						}
 						else {
 							updateNeuronsKernelBody << "[0], shSpkEvntCount);" << std::endl;
@@ -322,10 +322,10 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 					{
 						CodeStream::Scope b(updateNeuronsKernelBody);
 						updateNeuronsKernelBody << "shPosSpk = atomic_add((unsigned int *) &d_glbSpkCnt" << ng.getName();
-						updateNeuronsKernelArgs.insert({ "d_glbSpkCnt" + ng.getName(), "__global unsigned int*" }); // Add argument
+						updateNeuronsKernelParams.insert({ "d_glbSpkCnt" + ng.getName(), "__global unsigned int*" }); // Add argument
 						if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
 							updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
-							updateNeuronsKernelArgs.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
+							updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
 						}
 						else {
 							updateNeuronsKernelBody << "[0], shSpkCount);" << std::endl;
@@ -341,7 +341,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 				{
 					CodeStream::Scope b(updateNeuronsKernelBody);
 					updateNeuronsKernelBody << "d_glbSpkEvnt" << ng.getName() << "[" << queueOffset << "shPosSpkEvnt + localId] = shSpkEvnt[localId];" << std::endl;
-					updateNeuronsKernelArgs.insert({ "d_glbSpkEvnt" + ng.getName(), "__global unsigned int*" }); // Add argument
+					updateNeuronsKernelParams.insert({ "d_glbSpkEvnt" + ng.getName(), "__global unsigned int*" }); // Add argument
 				}
 			}
 
@@ -360,10 +360,10 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 					wuVarUpdateHandler(updateNeuronsKernelBody, ng, wuSubs);
 
 					updateNeuronsKernelBody << "d_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + localId] = n;" << std::endl;
-					updateNeuronsKernelArgs.insert({ "d_glbSpk" + ng.getName(), "__global unsigned int*" }); // Add argument
+					updateNeuronsKernelParams.insert({ "d_glbSpk" + ng.getName(), "__global unsigned int*" }); // Add argument
 					if (ng.isSpikeTimeRequired()) {
 						updateNeuronsKernelBody << "d_sT" << ng.getName() << "[" << queueOffset << "n] = t;" << std::endl;
-						updateNeuronsKernelArgs.insert({ "d_sT" + ng.getName(), "__global unsigned int*" }); // Add argument
+						updateNeuronsKernelParams.insert({ "d_sT" + ng.getName(), "__global unsigned int*" }); // Add argument
 					}
 				}
 			}
@@ -379,8 +379,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 	os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
 	{
 		int argCnt = 0;
-		for (const auto& arg : preNeuronResetKernelArgs) {
-			if (argCnt == preNeuronResetKernelArgs.size() - 1) {
+		for (const auto& arg : preNeuronResetKernelParams) {
+			if (argCnt == preNeuronResetKernelParams.size() - 1) {
 				os << arg.second << " " << arg.first;
 			} else {
 				os << arg.second << " " << arg.first << ", ";
@@ -401,7 +401,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 		os << p.second << " " << p.first << ", ";
 		neuronUpdateKernelArgsForKernel.push_back(p.first);
 	}
-	for (const auto& arg : updateNeuronsKernelArgs) {
+	for (const auto& arg : updateNeuronsKernelParams) {
 		os << arg.second << " " << arg.first<< ", ";
 		neuronUpdateKernelArgsForKernel.push_back(arg.first);
 	}
@@ -444,7 +444,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 		os << KernelNames[KernelPreNeuronReset] << " = cl::Kernel(" << ProgramNames[ProgramNeuronsUpdate] << ", \"" << KernelNames[KernelPreNeuronReset] << "\");" << std::endl;
 		{
 			int argCnt = 0;
-			for (const auto& arg : preNeuronResetKernelArgs) {
+			for (const auto& arg : preNeuronResetKernelParams) {
 				os << KernelNames[KernelPreNeuronReset] << "(" << argCnt << ", " << arg.first << ");" << std::endl;
 				argCnt++;
 			}
@@ -576,7 +576,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 		os << initializeKernelBodyStream.str();
 	}
 	os << std::endl;
-	// Closing the multiline char* containing all kernels for updating neurons
+	// Closing the multiline char* containing all kernels for initializing neurons
 	os << ")\";" << std::endl;
 
 	os << std::endl;
