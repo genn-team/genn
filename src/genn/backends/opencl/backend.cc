@@ -434,7 +434,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 
 	os << std::endl;
 
-	// Code for initializing the KernelNeuronUpdate kernels
+	// Function for initializing the KernelNeuronUpdate kernels
 	os << "// Initialize the neuronUpdate kernels" << std::endl;
 	os << "void initUpdateNeuronsKernels()";
 	{
@@ -556,14 +556,20 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 	// KernelInitialize definition
 	std::vector<std::string> initializeKernelArgsForKernel;
 	os << "__kernel void " << KernelNames[KernelInitialize] << "(";
-	os << "__global unsigned int* " << getVarPrefix() << "glbSpkCnt" << model.getLocalNeuronGroups().begin()->second.getName() << ", ";
-	os << "__global unsigned int* " << getVarPrefix() << "glbSpk" << model.getLocalNeuronGroups().begin()->second.getName() << ", ";
-	// Local neuron groups args
+	std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
+	os << "__global unsigned int* " << getVarPrefix() << "glbSpkCnt" << nmName << ", ";
+	os << "__global unsigned int* " << getVarPrefix() << "glbSpk" << nmName << ", ";
+	initializeKernelArgsForKernel.push_back(getVarPrefix() + "glbSpkCnt" + nmName);
+	initializeKernelArgsForKernel.push_back(getVarPrefix() + "glbSpk" + nmName);
+	// Local neuron groups params
 	for (const auto& ng : model.getLocalNeuronGroups()) {
 		auto* nm = ng.second.getNeuronModel();
 		for (const auto& v : nm->getVars()) {
-			os << "__global " << v.type << "* " << getVarPrefix() << v.name << ng.second.getName() << ", ";
-			initializeKernelArgsForKernel.push_back(getVarPrefix() + v.name + ng.second.getName());
+			// Initialize only READ_WRITE variables
+			if (v.access == VarAccess::READ_WRITE) {
+				os << "__global " << v.type << "* " << getVarPrefix() << v.name << ng.second.getName() << ", ";
+				initializeKernelArgsForKernel.push_back(getVarPrefix() + v.name + ng.second.getName());
+			}
 		}
 	}
 	for (const auto& p : initKernelParameters) {
@@ -581,10 +587,53 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 
 	os << std::endl;
 
-	os << "void initialize()";
+	// Function for initializing the initialization kernels
+	os << "// Initialize the initialization kernel(s)" << std::endl;
+	os << "void initInitializationKernels()";
 	{
 		CodeStream::Scope b(os);
 
+		// Initializing all OpenCL buffers (device variables)
+		os << "// Initialize buffers to be used by OpenCL kernels" << std::endl;
+
+		std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
+		int neuronCount = model.getLocalNeuronGroups().begin()->second.getNumNeurons();
+		// Initializing glb buffers
+		os << getVarPrefix() << "glbSpk" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 1 * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
+		os << getVarPrefix() << "glbSpkCnt" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << neuronCount << " * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
+		// Initializing neuron buffers
+		for (const auto& ng : model.getLocalNeuronGroups()) {
+			auto* nm = ng.second.getNeuronModel();
+			for (const auto& v : nm->getVars()) {
+				os << getVarPrefix() << v.name << ng.second.getName() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << ng.second.getNumNeurons() << " * sizeof(" << v.name << ng.second.getName() << "), " << v.name << ng.second.getName() << ");" << std::endl;
+			}
+		}
+
+		os << std::endl;
+
+		// KernelInitialize initialization
+		os << KernelNames[KernelInitialize] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
+		{
+			int argCnt = 0;
+			for (const auto& arg : initializeKernelArgsForKernel) {
+				os << KernelNames[KernelInitialize] << "(" << argCnt << ", " << arg << ");" << std::endl;
+				argCnt++;
+			}
+		}
+	}
+
+	os << std::endl;
+
+	os << "void initialize()";
+	{
+		CodeStream::Scope b(os);
+		//! TO BE IMPLEMENTED - Using hard code deviceRNGSeed for now
+		os << "unsigned ing deviceRNGSeed = 0" << std::endl;
+		os << std::endl;
+		os << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelArgsForKernel.size() /*last arg*/ << ", deviceRNGSeed);" << std::endl;
+		os << std::endl;
+		os << "commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelInitialize] << ");" << std::endl;
+		os << "commandQueue.finish();" << std::endl;
 	}
 }
 //--------------------------------------------------------------------------
