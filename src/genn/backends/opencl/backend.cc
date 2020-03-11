@@ -23,6 +23,7 @@
 //--------------------------------------------------------------------------
 namespace {
 
+//! TO BE IMPLEMENTED - Use OpenCL functions
 const std::vector<CodeGenerator::FunctionTemplate> openclFunctions = {
 	{"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
 	{"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
@@ -445,7 +446,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 		{
 			int argCnt = 0;
 			for (const auto& arg : preNeuronResetKernelParams) {
-				os << KernelNames[KernelPreNeuronReset] << "(" << argCnt << ", " << arg.first << ");" << std::endl;
+				os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPreNeuronReset] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
 				argCnt++;
 			}
 		}
@@ -453,7 +454,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 		// KernelNeuronUpdate initialization
 		os << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(" << ProgramNames[ProgramNeuronsUpdate] << ", \"" << KernelNames[KernelNeuronUpdate] << "\");" << std::endl;
 		for (int i = 0; i < neuronUpdateKernelArgsForKernel.size(); i++) {
-			os << KernelNames[KernelNeuronUpdate] << "(" << i << ", " << neuronUpdateKernelArgsForKernel[i] << ");" << std::endl;
+			os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << i << ", " << neuronUpdateKernelArgsForKernel[i] << "));" << std::endl;
 		}
 	}
 
@@ -463,14 +464,14 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 	{
 		CodeStream::Scope b(os);
 		if (idPreNeuronReset > 0) {
-			os << "commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreNeuronReset] << ");" << std::endl;
-			os << "commandQueue.finish();" << std::endl;
+			os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreNeuronReset] << ")));" << std::endl;
+			os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
 			os << std::endl;
 		}
 		if (idStart > 0) {
-			os << KernelNames[KernelNeuronUpdate] << ".setArg(" << neuronUpdateKernelArgsForKernel.size() /*last arg*/ << ", t);" << std::endl;
-			os << "commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << ");" << std::endl;
-			os << "commandQueue.finish();" << std::endl;
+			os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << neuronUpdateKernelArgsForKernel.size() /*last arg*/ << ", t));" << std::endl;
+			os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << ")));" << std::endl;
+			os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
 		}
 	}
 }
@@ -480,6 +481,10 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
 	SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
 	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genSynapseUpdate");
+	os << "void updateSynapses(float t)";
+	{
+		CodeStream::Scope b(os);
+	}
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
@@ -487,6 +492,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
                       SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                       SynapseGroupHandler sgSparseInitHandler) const
 {
+	os << std::endl;
 	//! TO BE IMPLEMENTED - Generating minimal kernel
 
 	// Build map of extra global parameters for init kernel
@@ -616,7 +622,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 		{
 			int argCnt = 0;
 			for (const auto& arg : initializeKernelArgsForKernel) {
-				os << KernelNames[KernelInitialize] << "(" << argCnt << ", " << arg << ");" << std::endl;
+				os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << argCnt << ", " << arg << "));" << std::endl;
 				argCnt++;
 			}
 		}
@@ -628,12 +634,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 	{
 		CodeStream::Scope b(os);
 		//! TO BE IMPLEMENTED - Using hard code deviceRNGSeed for now
-		os << "unsigned ing deviceRNGSeed = 0" << std::endl;
+		os << "unsigned int deviceRNGSeed = 0;" << std::endl;
 		os << std::endl;
-		os << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelArgsForKernel.size() /*last arg*/ << ", deviceRNGSeed);" << std::endl;
+		os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelArgsForKernel.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
 		os << std::endl;
-		os << "commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelInitialize] << ");" << std::endl;
-		os << "commandQueue.finish();" << std::endl;
+		os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelInitialize] << ")));" << std::endl;
+		os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
 	}
 }
 //--------------------------------------------------------------------------
@@ -645,25 +651,66 @@ void Backend::genDefinitionsPreamble(CodeStream& os) const
 	os << std::endl;
 	os << "// Standard C includes" << std::endl;
 	os << "#include <cstdint>" << std::endl;
-	os << std::endl;
+	os << "#include <cassert>" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
+{
 	os << "// OpenCL includes" << std::endl;
 	os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
 	os << "#include <CL/cl.hpp>" << std::endl;
 	os << std::endl;
 	os << "#define DEVICE_INDEX " << m_ChosenDeviceID << std::endl;
-	os << std::endl;
+	/*os << std::endl;
+	os << "// Function for getting OpenCL errors as string" << std::endl;
+	os << "const char * clGetErrorString(cl_int error)";
+	{
+		CodeStream::Scope b(os);
+		std::map<cl_int, std::string> allClErrors = {
+			// run-time and JIT compiler errors
+			{ 0, "CL_SUCCESS" },							{ -1, "CL_DEVICE_NOT_FOUND" },				{ -2, "CL_DEVICE_NOT_AVAILABLE" },
+			{ -3, "CL_COMPILER_NOT_AVAILABLE" },			{ -4, "CL_MEM_OBJECT_ALLOCATION_FAILURE" },	{ -5, "CL_OUT_OF_RESOURCES" },
+			{ -6, "CL_OUT_OF_HOST_MEMORY" },				{ -7, "CL_PROFILING_INFO_NOT_AVAILABLE" },	{ -8, "CL_MEM_COPY_OVERLAP" },
+			{ -9, "CL_IMAGE_FORMAT_MISMATCH" },				{ -10, "CL_IMAGE_FORMAT_NOT_SUPPORTED" },	{ -11, "CL_BUILD_PROGRAM_FAILURE" },
+			{ -12, "CL_MAP_FAILURE" },						{ -13, "CL_MISALIGNED_SUB_BUFFER_OFFSET" }, { -14, "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST" },
+			{ -15, "CL_COMPILE_PROGRAM_FAILURE" },			{ -16, "CL_LINKER_NOT_AVAILABLE" },			{ -17, "CL_LINK_PROGRAM_FAILURE" },
+			{ -18, "CL_DEVICE_PARTITION_FAILED" },			{ -19, "CL_KERNEL_ARG_INFO_NOT_AVAILABLE" },
+			// compile-time errors
+			{ -30, "CL_INVALID_VALUE" },					{ -31, "CL_INVALID_DEVICE_TYPE" },			{ -32, "CL_INVALID_PLATFORM" },
+			{ -33, "CL_INVALID_DEVICE" },					{ -34, "CL_INVALID_CONTEXT" },				{ -35, "CL_INVALID_QUEUE_PROPERTIES" },
+			{ -36, "CL_INVALID_COMMAND_QUEUE" },			{ -37, "CL_INVALID_HOST_PTR" },				{ -38, "CL_INVALID_MEM_OBJECT" },
+			{ -39, "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR" },	{ -40, "CL_INVALID_IMAGE_SIZE" },			{ -41, "CL_INVALID_SAMPLER" },
+			{ -42, "CL_INVALID_BINARY" },					{ -43, "CL_INVALID_BUILD_OPTIONS" },		{ -44, "CL_INVALID_PROGRAM" },
+			{ -45, "CL_INVALID_PROGRAM_EXECUTABLE" },		{ -46, "CL_INVALID_KERNEL_NAME" },			{ -47, "CL_INVALID_KERNEL_DEFINITION" },
+			{ -48, "CL_INVALID_KERNEL" },					{ -49, "CL_INVALID_ARG_INDEX" },			{ -50, "CL_INVALID_ARG_VALUE" },
+			{ -51, "CL_INVALID_ARG_SIZE" },					{ -52, "CL_INVALID_KERNEL_ARGS" },			{ -53, "CL_INVALID_WORK_DIMENSION" },
+			{ -54, "CL_INVALID_WORK_GROUP_SIZE" },			{ -55, "CL_INVALID_WORK_ITEM_SIZE" },		{ -56, "CL_INVALID_GLOBAL_OFFSET" },
+			{ -57, "CL_INVALID_EVENT_WAIT_LIST" },			{ -58, "CL_INVALID_EVENT" },				{ -59, "CL_INVALID_OPERATION" },
+			{ -60, "CL_INVALID_GL_OBJECT" },				{ -61, "CL_INVALID_BUFFER_SIZE" },			{ -62, "CL_INVALID_MIP_LEVEL" },
+			{ -63, "CL_INVALID_GLOBAL_WORK_SIZE" },			{ -64, "CL_INVALID_PROPERTY" },				{ -65, "CL_INVALID_IMAGE_DESCRIPTOR" },
+			{ -66, "CL_INVALID_COMPILER_OPTIONS" },			{ -67, "CL_INVALID_LINKER_OPTIONS" },		{ -68, "CL_INVALID_DEVICE_PARTITION_COUNT" }
+		};
+
+		os << "switch(error)";
+		{
+			CodeStream::Scope b(os);
+
+			for (const auto& e : allClErrors) {
+				os << "case " << e.first << ": return \"" << e.second << "\";" << std::endl;
+			}
+
+			os << "default: return \"Unknown OpenCL error\";" << std::endl;
+		}
+	}*/
 	os << "// ------------------------------------------------------------------------" << std::endl;
 	os << "// Helper macro for error-checking OpenCL calls" << std::endl;
 	os << "#define CHECK_OPENCL_ERRORS(call) {\\" << std::endl;
 	os << "    cl_int error = call;\\" << std::endl;
 	os << "    if (error != CL_SUCCESS) {\\" << std::endl;
-	os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + clGetErrorString(error));\\" << std::endl;
+	//os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": opencl error \" + std::to_string(error) + \": \" + clGetErrorString(error));\\" << std::endl;
 	os << "    }\\" << std::endl;
 	os << "}" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
-{
+
 	// Declaration of OpenCL functions
 	os << "// ------------------------------------------------------------------------" << std::endl;
 	os << "// OpenCL functions declaration" << std::endl;
@@ -675,29 +722,28 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 		os << "void createProgram(const char* kernelSource, cl::Program& program, cl::Context& context);" << std::endl;
 	}
 	os << std::endl;
+
 	// Declaration of OpenCL variables
-	os << "extern \"C\"";
-	{
-		CodeStream::Scope b(os);
-		os << "// OpenCL variables" << std::endl;
-		os << "EXPORT_VAR cl::Context clContext;" << std::endl;
-		os << "EXPORT_VAR cl::Device clDevice;" << std::endl;
-		os << "EXPORT_VAR cl::CommandQueue commandQueue;" << std::endl;
-		os << std::endl;
-		os << "// OpenCL programs" << std::endl;
-		os << "EXPORT_VAR cl::Program " << ProgramNames[ProgramInitialize] << ";" << std::endl;
-		os << "EXPORT_VAR cl::Program " << ProgramNames[ProgramNeuronsUpdate] << ";" << std::endl;
-		os << std::endl;
-		os << "// OpenCL kernels" << std::endl;
-		os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
-		os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
-		os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
-		os << "EXPORT_FUNC void initUpdateNeuronsKernels();" << std::endl;
-		os << "EXPORT_FUNC void initInitializeKernel();" << std::endl;
-		os << "// OpenCL kernels sources" << std::endl;
-		os << "EXPORT_VAR const char* " << ProgramNames[ProgramInitialize] << "Src;" << std::endl;
-		os << "EXPORT_VAR const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src;" << std::endl;
-	}
+	os << "extern \"C\" {"<<std::endl;
+	os << "// OpenCL variables" << std::endl;
+	os << "EXPORT_VAR cl::Context clContext;" << std::endl;
+	os << "EXPORT_VAR cl::Device clDevice;" << std::endl;
+	os << "EXPORT_VAR cl::CommandQueue commandQueue;" << std::endl;
+	os << std::endl;
+	os << "// OpenCL programs" << std::endl;
+	os << "EXPORT_VAR cl::Program " << ProgramNames[ProgramInitialize] << ";" << std::endl;
+	os << "EXPORT_VAR cl::Program " << ProgramNames[ProgramNeuronsUpdate] << ";" << std::endl;
+	os << std::endl;
+	os << "// OpenCL kernels" << std::endl;
+	os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
+	os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
+	os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
+	os << "EXPORT_FUNC void initInitializationKernels();" << std::endl;
+	os << "EXPORT_FUNC void initUpdateNeuronsKernels();" << std::endl;
+	os << "// OpenCL kernels sources" << std::endl;
+	os << "EXPORT_VAR const char* " << ProgramNames[ProgramInitialize] << "Src;" << std::endl;
+	os << "EXPORT_VAR const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src;" << std::endl;
+	os << "} // extern \"C\"" << std::endl;
 	os << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -735,6 +781,19 @@ void Backend::genRunnerPreamble(CodeStream& os) const
 		os << "// Create programs for kernels" << std::endl;
 		os << "opencl::createProgram(" << ProgramNames[ProgramInitialize] << "Src, " << ProgramNames[ProgramInitialize] << ", clContext);" << std::endl;
 		os << "opencl::createProgram(" << ProgramNames[ProgramNeuronsUpdate] << "Src, " << ProgramNames[ProgramNeuronsUpdate] << ", clContext);" << std::endl;
+	}
+
+	os << std::endl;
+
+	// Generating code for initializing all OpenCL elements - Using intializeSparse
+	os << "// Initialize all OpenCL elements" << std::endl;
+	os << "void initializeSparse()";
+	{
+		CodeStream::Scope b(os);
+		os << "initPrograms();" << std::endl;
+		os << "// Initializing kernels" << std::endl;
+		os << "initInitializationKernels();" << std::endl;
+		os << "initUpdateNeuronsKernels();" << std::endl;
 	}
 
 	os << std::endl;
@@ -901,7 +960,13 @@ void Backend::genSynapseVariableRowInit(CodeStream& os, VarLocation, const Synap
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, bool autoInitialized, size_t count) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genVariablePush");
+	if (!(loc & VarLocation::ZERO_COPY)) {
+		os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << name;
+		os << ", " << "CL_TRUE";
+		os << ", " << "0";
+		os << ", " << count << " * sizeof(" << type << ")";
+		os << ", " << name << "));" << std::endl;
+	}
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePull(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const
@@ -977,22 +1042,49 @@ void Backend::genMSBuildConfigProperties(std::ostream& os) const
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportProps(std::ostream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMSBuildImportProps");
+	// Import OpenCL props file
+	os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
+	// Using props provided by Intel
+	os << "\t\t<Import Project=\"$(OPENCL_PATH)\\BuildCustomizations\\IntelOpenCL.props\" />" << std::endl;
+	os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildItemDefinitions(std::ostream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMSBuildItemDefinitions");
+	// Add item definition for host compilation
+	os << "\t\t<ClCompile>" << std::endl;
+	os << "\t\t\t<WarningLevel>Level3</WarningLevel>" << std::endl;
+	os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Release'\">MaxSpeed</Optimization>" << std::endl;
+	os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
+	os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
+	os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
+	os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+	os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+	os << "\t\t\t<AdditionalIncludeDirectories>$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>" << std::endl;
+	os << "\t\t</ClCompile>" << std::endl;
+
+	// Add item definition for linking
+	os << "\t\t<Link>" << std::endl;
+	os << "\t\t\t<GenerateDebugInformation>true</GenerateDebugInformation>" << std::endl;
+	os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
+	os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
+	os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
+	os << "\t\t\t<AdditionalLibraryDirectories>$(OPENCL_PATH)\\lib\\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>" << std::endl;
+	os << "\t\t\t<AdditionalDependencies>OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
+	os << "\t\t</Link>" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildCompileModule(const std::string& moduleName, std::ostream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMSBuildCompileModule");
+	os << "\t\t<ClCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportTarget(std::ostream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMSBuildImportTarget");
+	os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
+	// Using targets provided by Intel
+	os << "\t\t<Import Project=\"$(OPENCL_PATH)\\BuildCustomizations\\IntelOpenCL.targets\" />" << std::endl;
+	os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
 bool Backend::isGlobalRNGRequired(const ModelSpecInternal& model) const
