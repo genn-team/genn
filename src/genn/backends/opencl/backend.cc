@@ -301,7 +301,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 					updateNeuronsKernelBody << "if (shSpkEvntCount > 0)";
 					{
 						CodeStream::Scope b(updateNeuronsKernelBody);
-						updateNeuronsKernelBody << "shPosSpkEvnt = atomic_add((unsigned int *) &d_glbSpkCntEvnt" << ng.getName();
+						updateNeuronsKernelBody << "shPosSpkEvnt = atomic_add(&d_glbSpkCntEvnt" << ng.getName();
 						updateNeuronsKernelParams.insert({ "d_glbSpkCntEvnt" + ng.getName(), "__global unsigned int*"}); // Add argument
 						if (ng.isDelayRequired()) {
 							updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
@@ -322,7 +322,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 					updateNeuronsKernelBody << "if (shSpkCount > 0)";
 					{
 						CodeStream::Scope b(updateNeuronsKernelBody);
-						updateNeuronsKernelBody << "shPosSpk = atomic_add((unsigned int *) &d_glbSpkCnt" << ng.getName();
+						updateNeuronsKernelBody << "shPosSpk = atomic_add(&d_glbSpkCnt" << ng.getName();
 						updateNeuronsKernelParams.insert({ "d_glbSpkCnt" + ng.getName(), "__global unsigned int*" }); // Add argument
 						if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
 							updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
@@ -819,7 +819,7 @@ void Backend::genRunnerPreamble(CodeStream& os) const
 		{
 			CodeStream::Scope b(os);
 			os << "std::vector<cl::Device> platformDevices;" << std::endl;
-			os << "platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);" << std::endl;
+			os << "platforms[i].getDevices(CL_DEVICE_TYPE_GPU, &platformDevices);" << std::endl;
 			os << "devices.insert(devices.end(), platformDevices.begin(), platformDevices.end());" << std::endl;
 		}
 		os << std::endl;
@@ -1105,7 +1105,7 @@ void Backend::genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng,
 //--------------------------------------------------------------------------
 void Backend::genEmitSpike(CodeStream& os, const Substitutions& subs, const std::string& suffix) const
 {
-	os << "const unsigned int spk" << suffix << "Idx = atomic_add((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
+	os << "const unsigned int spk" << suffix << "Idx = atomic_add(&shSpk" << suffix << "Count, 1);" << std::endl;
 	os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
