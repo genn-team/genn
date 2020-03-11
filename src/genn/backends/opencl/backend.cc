@@ -605,8 +605,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 		std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
 		int neuronCount = model.getLocalNeuronGroups().begin()->second.getNumNeurons();
 		// Initializing glb buffers
-		os << getVarPrefix() << "glbSpk" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 1 * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
-		os << getVarPrefix() << "glbSpkCnt" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << neuronCount << " * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
+		os << getVarPrefix() << "glbSpk" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << neuronCount << " * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
+		os << getVarPrefix() << "glbSpkCnt" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 1 * sizeof(" << "glbSpkCnt" << nmName << "), " << "glbSpkCnt" << nmName << ");" << std::endl;
 		// Initializing neuron buffers
 		for (const auto& ng : model.getLocalNeuronGroups()) {
 			auto* nm = ng.second.getNeuronModel();
