@@ -25,10 +25,10 @@ namespace {
 
 //! TO BE IMPLEMENTED - Use OpenCL functions
 const std::vector<CodeGenerator::FunctionTemplate> openclFunctions = {
-	{"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
-	{"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
+	{"gennrand_uniform", 0, "uniform_double($(rng))", "uniform($(rng))"},
+	{"gennrand_normal", 0, "normal_double($(rng))", "normal($(rng))"},
 	{"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
-	{"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
+	{"gennrand_log_normal", 2, "log_normal_double($(rng), $(0), $(1))", "log_normal_float($(rng), $(0), $(1))"},
 	{"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
 };
 
