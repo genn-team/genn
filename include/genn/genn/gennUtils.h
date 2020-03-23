@@ -76,7 +76,7 @@ void writePreciseString(std::ostream &os, T value)
 //! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-GENN_EXPORT std::string writePreciseString(T value)
+std::string writePreciseString(T value)
 {
     std::stringstream s;
     writePreciseString(s, value);
