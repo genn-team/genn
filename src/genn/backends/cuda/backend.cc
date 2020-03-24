@@ -513,10 +513,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecInternal &model,
             // Determine the maximum shared memory outputs 
             size_t maxSharedMemPerThread = 0;
             for (const auto &s : model.getLocalSynapseGroups()) {
-                if (s.second.isTrueSpikeRequired() || !s.second.getWUModel()->getLearnPostCode().empty()) {
-                    maxSharedMemPerThread = std::max(maxSharedMemPerThread,
-                                                     getPresynapticUpdateStrategy(s.second)->getSharedMemoryPerThread(s.second, *this));
-                }
+                maxSharedMemPerThread = std::max(maxSharedMemPerThread,
+                                                 getPresynapticUpdateStrategy(s.second)->getSharedMemoryPerThread(s.second, *this));
             }
 
             // If any shared memory is required, declare array
