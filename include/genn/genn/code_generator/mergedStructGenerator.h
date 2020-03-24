@@ -36,7 +36,7 @@ public:
     //------------------------------------------------------------------------
     typedef std::function<std::string(const typename T::GroupInternal &, size_t)> GetFieldValueFunc;
  
-    MergedStructGenerator(const T &mergedGroup, const std::string &precision) : m_MergedGroup(mergedGroup), m_Precision(precision)
+    MergedStructGenerator(const T &mergedGroup, const std::string &precision) : m_MergedGroup(mergedGroup), m_LiteralSuffix((precision == "float") ? "f" : "")
     {
     }
 
@@ -53,7 +53,7 @@ public:
         addField("scalar", name,
                  [getFieldValue, this](const typename T::GroupInternal &g, size_t i)
                  {
-                    return ensureFtype(getFieldValue(g, i), m_Precision);
+                    return getFieldValue(g, i) + m_LiteralSuffix;
                  },
                  fieldType);
     }
@@ -268,7 +268,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     const T &m_MergedGroup;
-    const std::string m_Precision;
+    const std::string m_LiteralSuffix;
     std::vector<Field> m_Fields;
 };
 
