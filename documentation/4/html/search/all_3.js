@@ -31,5 +31,6 @@ var searchData=
   ['analoguerecorder_2eh',['analogueRecorder.h',['../de/d8b/analogueRecorder_8h.html',1,'']]],
   ['apply',['apply',['../de/d22/classCodeGenerator_1_1Substitutions.html#ae2f104d7fb3d30afa560f4ea00eed80a',1,'CodeGenerator::Substitutions::apply()'],['../d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html#a1fc34201554a5e0c237e6d7a81c4dbe9',1,'SpineMLSimulator::Input::Base::apply()'],['../dd/dfb/classSpineMLSimulator_1_1Input_1_1InterSpikeIntervalBase.html#ac6c2c8049945a6af671074d75c2561ca',1,'SpineMLSimulator::Input::InterSpikeIntervalBase::apply()'],['../da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html#ae7988567b772bd21f7ecf7af2e62ef4c',1,'SpineMLSimulator::Input::SpikeTime::apply()'],['../d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html#a49a674f2bdf809c2849e984cc65d9eff',1,'SpineMLSimulator::Input::Analogue::apply()']]],
   ['applycheckunreplaced',['applyCheckUnreplaced',['../de/d22/classCodeGenerator_1_1Substitutions.html#a3d1c276cee79640a15949258e9643afc',1,'CodeGenerator::Substitutions']]],
-  ['applyscalar',['applyScalar',['../db/d2c/classSpineMLSimulator_1_1InputValue_1_1ScalarBase.html#aec0760f8685f667a294b38430cf879e2',1,'SpineMLSimulator::InputValue::ScalarBase']]]
+  ['applyscalar',['applyScalar',['../db/d2c/classSpineMLSimulator_1_1InputValue_1_1ScalarBase.html#aec0760f8685f667a294b38430cf879e2',1,'SpineMLSimulator::InputValue::ScalarBase']]],
+  ['automaticcopy',['automaticCopy',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#abef79921cc8510fe8b50b3f0fe971346',1,'CodeGenerator::PreferencesBase']]]
 ];

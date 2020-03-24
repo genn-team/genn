@@ -2,6 +2,7 @@ var searchData=
 [
   ['egp',['EGP',['../dd/d5d/structSnippet_1_1Base_1_1EGP.html',1,'Snippet::Base']]],
   ['egpvec',['EGPVec',['../db/d97/classSnippet_1_1Base.html#a43ece29884e2c6cabffe9abf985807c6',1,'Snippet::Base']]],
+  ['enablebitmaskoptimisations',['enableBitmaskOptimisations',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8',1,'CodeGenerator::PreferencesBase']]],
   ['end',['end',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a06269039e7798cafe00f637e5df88410',1,'pygenn::genn_model::GeNNModel']]],
   ['ensureftype',['ensureFtype',['../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee',1,'CodeGenerator']]],
   ['event',['Event',['../d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event.html',1,'SpineMLSimulator::LogOutput::Event'],['../d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event.html#aae78d34fa79fe7005ccd5951f652ac5f',1,'SpineMLSimulator::LogOutput::Event::Event()']]],

@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -99,10 +99,16 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>access
 : <a class="el" href="d5/d42/structModels_1_1Base_1_1Var.html#a43fa55b9b858bb7b6fd9927267aa61ae">Models::Base::Var</a>
 </li>
+<li>automaticCopy
+: <a class="el" href="d1/d7a/structCodeGenerator_1_1PreferencesBase.html#abef79921cc8510fe8b50b3f0fe971346">CodeGenerator::PreferencesBase</a>
+</li>
 </ul>
 
 
 <h3><a id="index_b"></a>- b -</h3><ul>
+<li>backend_log_level
+: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a8f28db62f1b30ae0730cd027c4ca4c91">pygenn.genn_model.GeNNModel</a>
+</li>
 <li>blockSizeSelectMethod
 : <a class="el" href="da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad9ddce1e46c8707bf1c30116f9a799be">CodeGenerator::CUDA::Preferences</a>
 </li>
@@ -112,6 +118,9 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <h3><a id="index_c"></a>- c -</h3><ul>
 <li>connections_set
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af92bed3adac69c3fe0701aa312fd07b5">pygenn.genn_groups.SynapseGroup</a>
+</li>
+<li>connectivity_extra_global_params
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a3b9b5f417df8ec5ccbcf3bf6db9a0fc0">pygenn.genn_groups.SynapseGroup</a>
 </li>
 <li>connectivity_initialiser
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a48893828585d570d55f9c488e9690dd2">pygenn.genn_groups.SynapseGroup</a>
@@ -145,6 +154,9 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 
 
 <h3><a id="index_e"></a>- e -</h3><ul>
+<li>enableBitmaskOptimisations
+: <a class="el" href="d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8">CodeGenerator::PreferencesBase</a>
+</li>
 <li>extra_global_params
 : <a class="el" href="d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a646ab45304e93c1cec854df96e8fb197">pygenn.genn_groups.Group</a>
 </li>
@@ -177,6 +189,9 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 </li>
 <li>init_val
 : <a class="el" href="d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#ac68a6acf871cd1651df79260ca020129">pygenn.model_preprocessor.Variable</a>
+</li>
+<li>is_scalar
+: <a class="el" href="d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#a83143a0e6f85fb2e5794519ea9e551d1">pygenn.model_preprocessor.ExtraGlobalVariable</a>
 </li>
 <li>is_spike_source_array
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#abc7253978f963067a6c518b98653b4ba">pygenn.genn_groups.NeuronGroup</a>
@@ -268,6 +283,9 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <li>pre_vars
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#acf0622c21f3ab6a873acdd8a0d513874">pygenn.genn_groups.SynapseGroup</a>
 </li>
+<li>psm_extra_global_params
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a65fe2257f1f17f7f138c612b1b77b5ed">pygenn.genn_groups.SynapseGroup</a>
+</li>
 <li>psm_vars
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a1e4d53dd8d45f5af69098c3def912bbd">pygenn.genn_groups.SynapseGroup</a>
 </li>
@@ -282,9 +300,6 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 
 
 <h3><a id="index_s"></a>- s -</h3><ul>
-<li>selected_gpu
-: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a70807821d1fb04f61c36a7b2a71e2861">pygenn.genn_model.GeNNModel</a>
-</li>
 <li>showPtxInfo
 : <a class="el" href="da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad8e937d78148dcd94e8174b3fba45e86">CodeGenerator::CUDA::Preferences</a>
 </li>
@@ -374,7 +389,7 @@ $(document).ready(function(){initNavTree('functions_vars.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Nov 5 2019 14:30:11 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:37 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -59,6 +59,7 @@ var classSynapseGroup =
     [ "initDerivedParams", "dc/dfa/classSynapseGroup.html#a46f29a2fdfe2b86ffe00aeb0574c9f05", null ],
     [ "isDendriticDelayRequired", "dc/dfa/classSynapseGroup.html#a0ab4cea002580bb64da2a55db37ab189", null ],
     [ "isEventThresholdReTestRequired", "dc/dfa/classSynapseGroup.html#a3598cc5fbf801448c1aa4d16daab03f0", null ],
+    [ "isProceduralConnectivityRNGRequired", "dc/dfa/classSynapseGroup.html#a4dff309668d8d10cd81f5958de58e5d6", null ],
     [ "isPSInitRNGRequired", "dc/dfa/classSynapseGroup.html#a0cb20a9bde00e1ba8132143bfc3d96c9", null ],
     [ "isPSModelMerged", "dc/dfa/classSynapseGroup.html#aed8d1a858f0731119785fc90394b2220", null ],
     [ "isSparseConnectivityInitRequired", "dc/dfa/classSynapseGroup.html#a1c2454ff904e5df412539aa6477e4f0e", null ],

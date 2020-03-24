@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -118,8 +118,8 @@ Inheritance diagram for InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ac42e7c24944c9492ec3c1ede705f9f35"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html#ac42e7c24944c9492ec3c1ede705f9f35">DECLARE_SNIPPET</a> (<a class="el" href="../../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html">InitSparseConnectivitySnippet::FixedProbabilityNoAutapse</a>, 1)</td></tr>
 <tr class="separator:ac42e7c24944c9492ec3c1ede705f9f35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac61f2720043c7a4a8a32c354a6486bb4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html#ac61f2720043c7a4a8a32c354a6486bb4">SET_ROW_BUILD_CODE</a> (&quot;int nextJ;\ &quot;do {\&quot; &quot; const scalar u=$(gennrand_uniform);\&quot; &quot; nextJ=prevJ+(1+(int)(log(u) *$(probLogRecip)));\&quot; &quot;} while(nextJ==$(id_pre));\&quot; &quot;prevJ=nextJ;\&quot; &quot;if(prevJ&lt; $(num_post)) {\&quot; &quot; $(addSynapse, prevJ);\&quot; &quot;}\&quot; &quot;else {\&quot; &quot; $(endRow);\&quot; &quot;}\&quot;)</td></tr>
-<tr class="separator:ac61f2720043c7a4a8a32c354a6486bb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a466109c58f20d3f1fc2c0ec99b336207"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html#a466109c58f20d3f1fc2c0ec99b336207">SET_ROW_BUILD_CODE</a> (&quot;int nextJ;\ &quot;do {\&quot; &quot; const scalar u=$(gennrand_uniform);\&quot; &quot; nextJ=prevJ+(1+(int)(log(u) *$(probLogRecip)));\&quot; &quot;} while(nextJ==$(id_pre));\&quot; &quot;prevJ=nextJ;\&quot; &quot;if(prevJ&lt; $(num_post)) {\&quot; &quot; $(addSynapse, prevJ+$(id_post_begin));\&quot; &quot;}\&quot; &quot;else {\&quot; &quot; $(endRow);\&quot; &quot;}\&quot;)</td></tr>
+<tr class="separator:a466109c58f20d3f1fc2c0ec99b336207"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classInitSparseConnectivitySnippet_1_1FixedProbabilityBase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classInitSparseConnectivitySnippet_1_1FixedProbabilityBase')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html">InitSparseConnectivitySnippet::FixedProbabilityBase</a></td></tr>
 <tr class="memitem:a57f8d74079f8aa82fa90b11f93dce309 inherit pub_methods_classInitSparseConnectivitySnippet_1_1FixedProbabilityBase"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a57f8d74079f8aa82fa90b11f93dce309">getRowBuildCode</a> () const override=0</td></tr>
 <tr class="separator:a57f8d74079f8aa82fa90b11f93dce309 inherit pub_methods_classInitSparseConnectivitySnippet_1_1FixedProbabilityBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -204,8 +204,8 @@ trials needed to get one success" &ndash; essentially the distribution of the 'g
 
 </div>
 </div>
-<a id="ac61f2720043c7a4a8a32c354a6486bb4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac61f2720043c7a4a8a32c354a6486bb4">&#9670;&nbsp;</a></span>SET_ROW_BUILD_CODE()</h2>
+<a id="a466109c58f20d3f1fc2c0ec99b336207"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a466109c58f20d3f1fc2c0ec99b336207">&#9670;&nbsp;</a></span>SET_ROW_BUILD_CODE()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -230,7 +230,7 @@ trials needed to get one success" &ndash; essentially the distribution of the 'g
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html">InitSparseConnectivitySnippet</a></li><li class="navelem"><a class="el" href="../../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html">FixedProbabilityNoAutapse</a></li>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:52 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

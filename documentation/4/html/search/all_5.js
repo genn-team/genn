@@ -5,7 +5,12 @@ var searchData=
   ['calcmaxlengthfunc',['CalcMaxLengthFunc',['../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7719c85cf11d180023fa955ec86a4204',1,'InitSparseConnectivitySnippet::Base']]],
   ['calcnumtimesteps',['calcNumTimesteps',['../db/d3e/classSpineMLSimulator_1_1Simulator.html#aa8da540022d23b78400ca692ebc13ac0',1,'SpineMLSimulator::Simulator']]],
   ['cb',['CB',['../d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html',1,'CodeGenerator::CodeStream::CB'],['../d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html#a1bdb3de24897472fac38d36a60783347',1,'CodeGenerator::CodeStream::CB::CB()']]],
-  ['ceildivide',['ceilDivide',['../d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils.html#a6d52dbaf0ad3f57b18c7ad4ad3cfa37a',1,'CodeGenerator::CUDA::Utils']]],
+  ['ceildivide',['ceilDivide',['../d0/d02/namespaceCodeGenerator.html#a38f97aa2e801ffd3aedff316b4827b1c',1,'CodeGenerator']]],
+  ['channel',['Channel',['../d4/dd8/namespaceLogging.html#a3f109e5c3f496896e86feaf521e329ab',1,'Logging']]],
+  ['channel_5fbackend',['CHANNEL_BACKEND',['../d4/dd8/namespaceLogging.html#a3f109e5c3f496896e86feaf521e329aba088b8f30c63652daac5eb269d6a845da',1,'Logging']]],
+  ['channel_5fcode_5fgen',['CHANNEL_CODE_GEN',['../d4/dd8/namespaceLogging.html#a3f109e5c3f496896e86feaf521e329abae3c46b942093c15fd47ca9c3157603cb',1,'Logging']]],
+  ['channel_5fgenn',['CHANNEL_GENN',['../d4/dd8/namespaceLogging.html#a3f109e5c3f496896e86feaf521e329aba969d9c5f47b044b381ec81cbab1b8ca0',1,'Logging']]],
+  ['channel_5fmax',['CHANNEL_MAX',['../d4/dd8/namespaceLogging.html#a3f109e5c3f496896e86feaf521e329aba841c241f67fe073648b1cdf9892afecb',1,'Logging']]],
   ['check_5fcu_5ferrors',['CHECK_CU_ERRORS',['../d5/d60/utils_8h.html#ac1cf82f980a76bb9ef43b7027cb2348b',1,'utils.h']]],
   ['check_5fcuda_5ferrors',['CHECK_CUDA_ERRORS',['../d5/d60/utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47',1,'utils.h']]],
   ['checknumdelayslots',['checkNumDelaySlots',['../d7/d3b/classNeuronGroup.html#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce',1,'NeuronGroup']]],
@@ -18,6 +23,7 @@ var searchData=
   ['codestream_2eh',['codeStream.h',['../d0/dbb/codeStream_8h.html',1,'']]],
   ['connect',['connect',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a6111895b6da82c76e96e465568ec62ed',1,'SpineMLSimulator::NetworkClient']]],
   ['connections_5fset',['connections_set',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af92bed3adac69c3fe0701aa312fd07b5',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['connectivity_5fextra_5fglobal_5fparams',['connectivity_extra_global_params',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a3b9b5f417df8ec5ccbcf3bf6db9a0fc0',1,'pygenn::genn_groups::SynapseGroup']]],
   ['connectivity_5finitialiser',['connectivity_initialiser',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a48893828585d570d55f9c488e9690dd2',1,'pygenn::genn_groups::SynapseGroup']]],
   ['connectors_2ecc',['connectors.cc',['../d7/de6/connectors_8cc.html',1,'']]],
   ['connectors_2eh',['connectors.h',['../db/da3/connectors_8h.html',1,'']]],
@@ -33,7 +39,7 @@ var searchData=
   ['create_5fcustom_5fsparse_5fconnect_5finit_5fsnippet_5fclass',['create_custom_sparse_connect_init_snippet_class',['../de/d6e/namespacepygenn_1_1genn__model.html#acd4074f475e3e48c21d1c31d1a28597b',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fweight_5fupdate_5fclass',['create_custom_weight_update_class',['../de/d6e/namespacepygenn_1_1genn__model.html#af8c5efd0096b17d61e13463b1cc73878',1,'pygenn::genn_model']]],
   ['create_5fdpf_5fclass',['create_dpf_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a4877194a4aa6f04ecbc8768ec1c2de21',1,'pygenn::genn_model']]],
-  ['createbackend',['createBackend',['../d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser.html#a1a14e08f72c38a00670f665217ecf0fa',1,'CodeGenerator::CUDA::Optimiser::createBackend()'],['../d0/de6/namespaceCodeGenerator_1_1SingleThreadedCPU_1_1Optimiser.html#ae59a479a42ff9f63ca8d75f36bf00c41',1,'CodeGenerator::SingleThreadedCPU::Optimiser::createBackend()']]],
+  ['createbackend',['createBackend',['../d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser.html#ab29829009d2ba33560f463dfb0f53816',1,'CodeGenerator::CUDA::Optimiser::createBackend()'],['../d0/de6/namespaceCodeGenerator_1_1SingleThreadedCPU_1_1Optimiser.html#a8d17e8257dc1eda0c1ff77cb331471c9',1,'CodeGenerator::SingleThreadedCPU::Optimiser::createBackend()']]],
   ['credits',['Credits',['../dd/d51/Credits.html',1,'']]],
   ['cuda',['CUDA',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html',1,'CodeGenerator']]],
   ['current_5fsource_5fmodel',['current_source_model',['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#aa2e59cb8e23e22392bc2c15dd571fe47',1,'pygenn::genn_groups::CurrentSource']]],
@@ -52,6 +58,5 @@ var searchData=
   ['optimiser_2eh',['optimiser.h',['../d5/d50/cuda_2optimiser_8h.html',1,'']]],
   ['presynapticupdatestrategy',['PresynapticUpdateStrategy',['../da/d97/namespaceCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy.html',1,'CodeGenerator::CUDA']]],
   ['current_20source_20models',['Current source models',['../d0/d1e/sectCurrentSourceModels.html',1,'UserManual']]],
-  ['singlethreadedcpu',['SingleThreadedCPU',['../db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html',1,'CodeGenerator']]],
-  ['utils',['Utils',['../d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils.html',1,'CodeGenerator::CUDA']]]
+  ['singlethreadedcpu',['SingleThreadedCPU',['../db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html',1,'CodeGenerator']]]
 ];

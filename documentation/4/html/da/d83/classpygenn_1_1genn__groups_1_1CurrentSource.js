@@ -6,6 +6,7 @@ var classpygenn_1_1genn__groups_1_1CurrentSource =
     [ "load", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a87b63ce2402a65933e817c9a136c3314", null ],
     [ "reinitialise", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a0593259780b1ea7857b9a37a5456f391", null ],
     [ "set_current_source_model", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a60fec602182442bd50577602ee30f57e", null ],
+    [ "set_extra_global_param", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a714f8e73be4b33c9665e0a3d80a4f922", null ],
     [ "size", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#ad720bb8e5a3825e186756b21ab02efa1", null ],
     [ "size", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a22d0a70cf9e9129a0696065fb0c3f823", null ],
     [ "current_source_model", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#aa2e59cb8e23e22392bc2c15dd571fe47", null ],

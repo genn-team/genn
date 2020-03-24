@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -100,6 +100,12 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 : <a class="el" href="d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html#ae7016585811c7d0889832be64b40c8e9">InitSparseConnectivitySnippet::Init</a>
 , <a class="el" href="d8/df6/classSnippet_1_1Init.html#ae1b490fba08a926f30d03977b37339c5">Snippet::Init&lt; SnippetBase &gt;</a>
 </li>
+<li>init_sparse_time()
+: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a385b3616dad8cc31ce305ad378b5dbaa">pygenn.genn_model.GeNNModel</a>
+</li>
+<li>init_time()
+: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9d2c664ef8e88274606f7027b9271dfb">pygenn.genn_model.GeNNModel</a>
+</li>
 <li>initDerivedParams()
 : <a class="el" href="d1/d48/classCurrentSource.html#af9cc1203e0ef0a067c188324a09b15be">CurrentSource</a>
 , <a class="el" href="d7/d3b/classNeuronGroup.html#affd4e9d0657fe474a7dfe54a8189d634">NeuronGroup</a>
@@ -136,13 +142,20 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 <li>isAccessible()
 : <a class="el" href="dc/db2/classSpineMLSimulator_1_1StateVar.html#a1216c1525809a687dc520bfedbfecbb6">SpineMLSimulator::StateVar&lt; T &gt;</a>
 </li>
+<li>isAutomaticCopyEnabled()
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a0dec1489071ffbfe15a80cfebceb91fc">CodeGenerator::BackendBase</a>
+, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae9d5e09fff71632e88d9640f65753c24">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ad183281d97508cb0b13c0f97cfbb5d18">CodeGenerator::SingleThreadedCPU::Backend</a>
+</li>
 <li>isAutoRefractoryRequired()
 : <a class="el" href="d7/dad/classNeuronModels_1_1Base.html#a84965f7dab4de66215fd85f207ebd9e4">NeuronModels::Base</a>
 </li>
 <li>isCompatible()
-: <a class="el" href="d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a2613968de8aebfbb8e97972b265e6f72">CodeGenerator::CUDA::PresynapticUpdateStrategy::Base</a>
-, <a class="el" href="d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a8f48bb3bab41339ac00e4eca4649bd24">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>
-, <a class="el" href="db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a9e730257e2c09163b3f7f88ba1069033">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>
+: <a class="el" href="d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a8f58d287e37a57e591d63cf1cd42823c">CodeGenerator::CUDA::PresynapticUpdateStrategy::Base</a>
+, <a class="el" href="d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#aac6f169b7213129975e90020779cb035">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>
+, <a class="el" href="d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#afbcdd661a644dbb4c2449f0a4b6acdd7">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>
+, <a class="el" href="db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a83d69c8a7d3f590bcbdcae3984196f71">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>
+, <a class="el" href="d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#a0a4e3518530faf55f5a1e2416ec21874">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>
 </li>
 <li>isDelayRequired()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#aaee088799cba1183037c1a412dbf6be6">NeuronGroup</a>
@@ -178,6 +191,9 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a26c3071dfdf87eaddb857a535894bf7a">WeightUpdateModels::Base</a>
 , <a class="el" href="df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a060eb8fe3f26e106c662519d23a93717">WeightUpdateModels::PiecewiseSTDP</a>
 </li>
+<li>isProceduralConnectivityRNGRequired()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a4dff309668d8d10cd81f5958de58e5d6">SynapseGroup</a>
+</li>
 <li>isPSInitRNGRequired()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a0cb20a9bde00e1ba8132143bfc3d96c9">SynapseGroup</a>
 </li>
@@ -211,7 +227,7 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 , <a class="el" href="dc/dfa/classSynapseGroup.html#a17511671ab71f34c65c37837ee6fa7f3">SynapseGroup</a>
 </li>
 <li>isVarQueueRequired()
-: <a class="el" href="d7/d3b/classNeuronGroup.html#aea0036098408c4e451602ff91396d426">NeuronGroup</a>
+: <a class="el" href="d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837">NeuronGroup</a>
 </li>
 <li>isWUInitRNGRequired()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#aa8191f2f567437c1129e3209fa07273d">SynapseGroup</a>
@@ -229,7 +245,7 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Nov 5 2019 14:30:11 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:37 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

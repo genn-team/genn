@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -94,41 +94,22 @@ $(document).ready(function(){initNavTree('d5/d60/utils_8h.html','../../');});
 
 <div class="header">
   <div class="summary">
-<a href="#namespaces">Namespaces</a> &#124;
-<a href="#define-members">Macros</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#define-members">Macros</a>  </div>
   <div class="headertitle">
 <div class="title">utils.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;iostream&gt;</code><br />
-<code>#include &lt;plog/Log.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../d5/d77/logging_8h_source.html">logging.h</a>&quot;</code><br />
 </div>
 <p><a href="../../d5/d60/utils_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
-Namespaces</h2></td></tr>
-<tr class="memitem:d0/d02/namespaceCodeGenerator"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></td></tr>
-<tr class="memdesc:d0/d02/namespaceCodeGenerator"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper class for generating code - automatically inserts brackets, indents etc. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:d1/df6/namespaceCodeGenerator_1_1CUDA"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CodeGenerator::CUDA</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils.html">CodeGenerator::CUDA::Utils</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:ac1cf82f980a76bb9ef43b7027cb2348b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#ac1cf82f980a76bb9ef43b7027cb2348b">CHECK_CU_ERRORS</a>(call)&#160;&#160;&#160;call</td></tr>
 <tr class="separator:ac1cf82f980a76bb9ef43b7027cb2348b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3d4f854b9c80237b6f4c23540a823f47"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d60/utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47">CHECK_CUDA_ERRORS</a>(call)</td></tr>
 <tr class="separator:a3d4f854b9c80237b6f4c23540a823f47"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a6d52dbaf0ad3f57b18c7ad4ad3cfa37a"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils.html#a6d52dbaf0ad3f57b18c7ad4ad3cfa37a">CodeGenerator::CUDA::Utils::ceilDivide</a> (size_t numerator, size_t denominator)</td></tr>
-<tr class="separator:a6d52dbaf0ad3f57b18c7ad4ad3cfa37a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3b874aa3a303cd2db0779db12f259d81"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils.html#a3b874aa3a303cd2db0779db12f259d81">CodeGenerator::CUDA::Utils::padSize</a> (size_t size, size_t blockSize)</td></tr>
-<tr class="separator:a3b874aa3a303cd2db0779db12f259d81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ac1cf82f980a76bb9ef43b7027cb2348b"></a>
@@ -164,7 +145,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">{                                                                                                                       \</div><div class="line">    cudaError_t error = call;                                                                                           \</div><div class="line">    if (error != cudaSuccess) {                                                                                         \</div><div class="line">        LOGE &lt;&lt; __FILE__ &lt;&lt; <span class="stringliteral">&quot;: &quot;</span> &lt;&lt;  __LINE__ &lt;&lt; <span class="stringliteral">&quot;: cuda runtime error &quot;</span> &lt;&lt; error &lt;&lt; <span class="stringliteral">&quot;: &quot;</span> &lt;&lt; cudaGetErrorString(error); \</div><div class="line">        exit(EXIT_FAILURE);                                                                                             \</div><div class="line">    }                                                                                                                   \</div><div class="line">}</div></div><!-- fragment -->
+<b>Value:</b><div class="fragment"><div class="line">{                                                                                                                       \</div><div class="line">    cudaError_t error = call;                                                                                           \</div><div class="line">    if (error != cudaSuccess) {                                                                                         \</div><div class="line">        LOGE_BACKEND &lt;&lt; __FILE__ &lt;&lt; <span class="stringliteral">&quot;: &quot;</span> &lt;&lt;  __LINE__ &lt;&lt; <span class="stringliteral">&quot;: cuda runtime error &quot;</span> &lt;&lt; error &lt;&lt; <span class="stringliteral">&quot;: &quot;</span> &lt;&lt; cudaGetErrorString(error); \</div><div class="line">        exit(EXIT_FAILURE);                                                                                             \</div><div class="line">    }                                                                                                                   \</div><div class="line">}</div></div><!-- fragment -->
 </div>
 </div>
 </div><!-- contents -->
@@ -173,7 +154,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_1fa87444749e49e6d5f1c20e5949aea4.html">backends</a></li><li class="navelem"><a class="el" href="../../dir_a3ea67eb1c5c0e229c259f0ef36b81ff.html">cuda</a></li><li class="navelem"><a class="el" href="../../d5/d60/utils_8h.html">utils.h</a></li>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:44 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:04 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

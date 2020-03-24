@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -116,7 +116,7 @@ $(document).ready(function(){initNavTree('df/d2e/classInitSparseConnectivitySnip
   <tr><td class="entry"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48">ParamValVec</a> typedef</td><td class="entry"><a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a56d113e066e419d6e24a5ed9f2cc1c0e">SET_CALC_MAX_COL_LENGTH_FUNC</a>([](unsigned int numPre, unsigned int numPost, const std::vector&lt; double &gt; &amp;pars) { const double quantile=pow(0.9999, 1.0/(double) numPost);return binomialInverseCDF(quantile, numPre, pars[0]);})</td><td class="entry"><a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html">InitSparseConnectivitySnippet::FixedProbabilityBase</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a788d2f299d703c2b8868fea4c7435f00">SET_CALC_MAX_ROW_LENGTH_FUNC</a>([](unsigned int numPre, unsigned int numPost, const std::vector&lt; double &gt; &amp;pars) { const double quantile=pow(0.9999, 1.0/(double) numPre);return binomialInverseCDF(quantile, numPost, pars[0]);})</td><td class="entry"><a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html">InitSparseConnectivitySnippet::FixedProbabilityBase</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="../../df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html#ab73e967faf37253cd38a69182341ff46">SET_ROW_BUILD_CODE</a>(&quot;const scalar u = $(gennrand_uniform);\ &quot;prevJ+=(1+(int)(log(u) *$(probLogRecip)));\&quot; &quot;if(prevJ&lt; $(num_post)) {\&quot; &quot; $(addSynapse, prevJ);\&quot; &quot;}\&quot; &quot;else {\&quot; &quot; $(endRow);\&quot; &quot;}\&quot;)</td><td class="entry"><a class="el" href="../../df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html">InitSparseConnectivitySnippet::FixedProbability</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="../../df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html#a2768e245dfe7cd1a3de9146e9d3672b7">SET_ROW_BUILD_CODE</a>(&quot;const scalar u = $(gennrand_uniform);\ &quot;prevJ+=(1+(int)(log(u) *$(probLogRecip)));\&quot; &quot;if(prevJ&lt; $(num_post)) {\&quot; &quot; $(addSynapse, prevJ+$(id_post_begin));\&quot; &quot;}\&quot; &quot;else {\&quot; &quot; $(endRow);\&quot; &quot;}\&quot;)</td><td class="entry"><a class="el" href="../../df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html">InitSparseConnectivitySnippet::FixedProbability</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a7fa338aeb688c18956197ecb5578bc85">SET_ROW_BUILD_STATE_VARS</a>({{&quot;prevJ&quot;, &quot;int&quot;, -1}})</td><td class="entry"><a class="el" href="../../db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html">InitSparseConnectivitySnippet::FixedProbabilityBase</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a> typedef</td><td class="entry"><a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a17a9ca158277401f2c190afb1e791d1f">~Base</a>()</td><td class="entry"><a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
@@ -125,7 +125,7 @@ $(document).ready(function(){initNavTree('df/d2e/classInitSparseConnectivitySnip
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:52 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:14 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

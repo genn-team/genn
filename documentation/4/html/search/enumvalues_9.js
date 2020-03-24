@@ -1,5 +1,12 @@
 var searchData=
 [
-  ['manual',['MANUAL',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()'],['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7abaa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()']]],
-  ['most_5fmemory',['MOST_MEMORY',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0a7091742b1aa4b0be2bcb9750a1f4b0b9',1,'CodeGenerator::CUDA']]]
+  ['kernelinitialize',['KernelInitialize',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9acb34e35b42abc1f34588fdca07e991',1,'CodeGenerator::CUDA']]],
+  ['kernelinitializesparse',['KernelInitializeSparse',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a451ac73ef4b58ec26077ede94530d289',1,'CodeGenerator::CUDA']]],
+  ['kernelmax',['KernelMax',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8',1,'CodeGenerator::CUDA']]],
+  ['kernelneuronupdate',['KernelNeuronUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4aaec9b086a2ef409550ce776d86aaa86a',1,'CodeGenerator::CUDA']]],
+  ['kernelpostsynapticupdate',['KernelPostsynapticUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9f45a6407688531cd48f2388bfafda5c',1,'CodeGenerator::CUDA']]],
+  ['kernelpreneuronreset',['KernelPreNeuronReset',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a49f1596096bf3331e674c7a7cab58ddb',1,'CodeGenerator::CUDA']]],
+  ['kernelpresynapsereset',['KernelPreSynapseReset',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9c6a972a3c8a44df03be8a8d233adf46',1,'CodeGenerator::CUDA']]],
+  ['kernelpresynapticupdate',['KernelPresynapticUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a04b623e2a4ab2808470363c22a79c7e7',1,'CodeGenerator::CUDA']]],
+  ['kernelsynapsedynamicsupdate',['KernelSynapseDynamicsUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4aa3a04c14a730249c086bb298983be99e',1,'CodeGenerator::CUDA']]]
 ];

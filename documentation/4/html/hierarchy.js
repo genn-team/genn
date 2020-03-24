@@ -58,7 +58,9 @@ var hierarchy =
     ] ],
     [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::Base", "d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html", [
       [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html", null ],
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html", null ]
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html", null ],
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html", null ],
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html", null ]
     ] ],
     [ "SpineMLSimulator::Input::Base", "d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html", [
       [ "SpineMLSimulator::Input::Analogue", "d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html", null ],
@@ -106,7 +108,7 @@ var hierarchy =
     [ "CodeGenerator::FunctionTemplate", "dc/df1/structCodeGenerator_1_1FunctionTemplate.html", null ],
     [ "GenerateRunBase", "d4/d40/classGenerateRunBase.html", null ],
     [ "Snippet::Init< SnippetBase >", "d8/df6/classSnippet_1_1Init.html", null ],
-    [ "Snippet::Init< Base >", "d8/df6/classSnippet_1_1Init.html", [
+    [ "Snippet::Init< InitSparseConnectivitySnippet::Base >", "d8/df6/classSnippet_1_1Init.html", [
       [ "InitSparseConnectivitySnippet::Init", "d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html", null ]
     ] ],
     [ "Snippet::Init< InitVarSnippet::Base >", "d8/df6/classSnippet_1_1Init.html", [
@@ -160,8 +162,8 @@ var hierarchy =
     [ "SynapseGroup", "dc/dfa/classSynapseGroup.html", [
       [ "SynapseGroupInternal", "dd/d48/classSynapseGroupInternal.html", null ]
     ] ],
-    [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
     [ "Timer", "dc/dea/classTimer.html", null ],
+    [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
     [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
     [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
     [ "Snippet::ValueBase< NumVars >", "da/d76/classSnippet_1_1ValueBase.html", null ],

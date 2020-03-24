@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -127,6 +127,13 @@ Creating and simulating a network model</h1>
 <li><code>allocateMem()</code></li>
 <li><code>initialize()</code></li>
 <li><code>initializeSparse()</code></li>
+<li><code>get&lt;neuron name&gt;CurrentSpikes()</code></li>
+<li><code>get&lt;neuron name&gt;CurrentSpikeCount()</code></li>
+<li><code>stepTime()</code></li>
+<li><code>freeMem()</code></li>
+</ul>
+<p>In order to correctly access neuron state and spikes for the current timestep, correctly accounting for delay buffering etc, you can use the <code>getCurrent&lt;var name&gt;&lt;neuron name&gt;()</code>, <code>get&lt;neuron name&gt;CurrentSpikes()</code> and `<code>get&lt;neuron name&gt;CurrentSpikeCount()</code> functions. By setting <code>GENN_PREFERENCES::automaticCopy</code>, GeNN can be used in a simple mode where CUDA automatically transfers data between the GPU and CPU when required (see <a href="https://devblogs.nvidia.com/unified-memory-cuda-beginners/">https://devblogs.nvidia.com/unified-memory-cuda-beginners/</a>). However, copying elements between the GPU and the host memory is costly in terms of performance and the automatic copying operates on a fairly coarse grain (pages are approximately 4 bytes). Therefore, in order to maximise performance, we recommend you do not use automatic copying and instead manually call the following functions when required:</p>
+<ul>
 <li><code>push&lt;neuron or synapse name&gt;StateToDevice()</code></li>
 <li><code>pull&lt;neuron or synapse name&gt;StateFromDevice()</code></li>
 <li><code>push&lt;neuron name&gt;SpikesToDevice()</code></li>
@@ -139,8 +146,6 @@ Creating and simulating a network model</h1>
 <li><code>pull&lt;neuron name&gt;CurrentSpikesFromDevice()</code></li>
 <li><code>push&lt;neuron name&gt;CurrentSpikesEventsToDevice()</code></li>
 <li><code>pull&lt;neuron name&gt;CurrentSpikesEventsFromDevice()</code></li>
-<li><code>get&lt;neuron name&gt;CurrentSpikes()</code></li>
-<li><code>get&lt;neuron name&gt;CurrentSpikeCount()</code></li>
 <li><code>pull&lt;synapse name&gt;ConnectivityFromDevice()</code></li>
 <li><code>push&lt;synapse name&gt;ConnectivityToDevice()</code></li>
 <li><code>pull&lt;var name&gt;&lt;neuron or synapse name&gt;FromDevice()</code></li>
@@ -152,10 +157,8 @@ Creating and simulating a network model</h1>
 <li><code>copyStateFromDevice()</code></li>
 <li><code>copyCurrentSpikesFromDevice()</code></li>
 <li><code>copyCurrentSpikesEventsFromDevice()</code></li>
-<li><code>stepTime()</code></li>
-<li><code>freeMem()</code></li>
 </ul>
-<p>You can use the <code>push&lt;neuron or synapse name&gt;StateToDevice()</code> to copy from the host to the GPU. At the end of your simulation, if you want to access the variables you need to copy them back from the device using the <code>pull&lt;neuron or synapse name&gt;StateFromDevice()</code> function or one of the more fine-grained functions listed above. In order to correctly access neuron state and spikes for the current timestep, correctly accounting for delay buffering etc, you can use the <code>getCurrent&lt;var name&gt;&lt;neuron name&gt;()</code>, <code>get&lt;neuron name&gt;CurrentSpikes()</code> and `<code>get&lt;neuron name&gt;CurrentSpikeCount()</code> functions. <b>Copying elements between the GPU and the host memory is very costly in terms of performance and should only be done when needed and the amount of data being copied should be minimized.</b></p>
+<p>You can use the <code>push&lt;neuron or synapse name&gt;StateToDevice()</code> to copy from the host to the GPU. At the end of your simulation, if you want to access the variables you need to copy them back from the device using the <code>pull&lt;neuron or synapse name&gt;StateFromDevice()</code> function or one of the more fine-grained functions listed above.</p>
 <h2><a class="anchor" id="extraGlobalParamSim"></a>
 Extra Global Parameters</h2>
 <p>If extra global parameters have a "scalar" type such as <code>float</code> they can be set directly from simulation code. For example the extra global parameter "reward" of population "Pop" could be set with: </p><div class="fragment"><div class="line">rewardPop = 5.0f;</div></div><!-- fragment --><p> However, if extra global parameters have a pointer type such as <code>float*</code>, GeNN generates additional functions to allocate, free and copy these variables between host and device:</p><ul>
@@ -200,7 +203,7 @@ Debugging suggestions</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:45 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:04 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

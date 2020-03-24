@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -100,13 +100,16 @@ $(document).ready(function(){initNavTree('d5/d68/single__threaded__cpu_2optimise
 <div class="title">single_threaded_cpu/optimiser.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="../../d5/d83/backendExport_8h_source.html">backendExport.h</a>&quot;</code><br />
+<div class="textblock"><code>#include &lt;plog/Severity.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="../../d5/d83/backendExport_8h_source.html">backendExport.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../db/d6d/single__threaded__cpu_2backend_8h_source.html">backend.h</a>&quot;</code><br />
 </div>
 <p><a href="../../d5/d68/single__threaded__cpu_2optimiser_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
+<tr class="memitem:df/d38/namespaceplog"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d38/namespaceplog.html">plog</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:d0/d02/namespaceCodeGenerator"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></td></tr>
 <tr class="memdesc:d0/d02/namespaceCodeGenerator"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper class for generating code - automatically inserts brackets, indents etc. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -117,8 +120,8 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ae59a479a42ff9f63ca8d75f36bf00c41"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/d83/backendExport_8h.html#a4506f237d151a8f16371da48d158cd3e">BACKEND_EXPORT</a> Backend&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/de6/namespaceCodeGenerator_1_1SingleThreadedCPU_1_1Optimiser.html#ae59a479a42ff9f63ca8d75f36bf00c41">CodeGenerator::SingleThreadedCPU::Optimiser::createBackend</a> (const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, const filesystem::path &amp;outputPath, int localHostID, const Preferences &amp;preferences)</td></tr>
-<tr class="separator:ae59a479a42ff9f63ca8d75f36bf00c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d17e8257dc1eda0c1ff77cb331471c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d5/d83/backendExport_8h.html#a4506f237d151a8f16371da48d158cd3e">BACKEND_EXPORT</a> Backend&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/de6/namespaceCodeGenerator_1_1SingleThreadedCPU_1_1Optimiser.html#a8d17e8257dc1eda0c1ff77cb331471c9">CodeGenerator::SingleThreadedCPU::Optimiser::createBackend</a> (const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, const filesystem::path &amp;outputPath, plog::Severity backendLevel, plog::IAppender *backendAppender, int localHostID, const Preferences &amp;preferences)</td></tr>
+<tr class="separator:a8d17e8257dc1eda0c1ff77cb331471c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -126,7 +129,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_1fa87444749e49e6d5f1c20e5949aea4.html">backends</a></li><li class="navelem"><a class="el" href="../../dir_fcb554aab092e8dcb61b1c0786692a7e.html">single_threaded_cpu</a></li><li class="navelem"><a class="el" href="../../d5/d68/single__threaded__cpu_2optimiser_8h.html">optimiser.h</a></li>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:44 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:03 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['selected_5fgpu',['selected_gpu',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a70807821d1fb04f61c36a7b2a71e2861',1,'pygenn::genn_model::GeNNModel']]],
   ['showptxinfo',['showPtxInfo',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad8e937d78148dcd94e8174b3fba45e86',1,'CodeGenerator::CUDA::Preferences']]],
   ['singleprecisiontemplate',['singlePrecisionTemplate',['../dc/df1/structCodeGenerator_1_1FunctionTemplate.html#a01e8c32ad3139cf75813c0972f61eaa9',1,'CodeGenerator::FunctionTemplate']]],
   ['spike_5fcount',['spike_count',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a1d2af6b44512827de67598b630f1448e',1,'pygenn::genn_groups::NeuronGroup']]],

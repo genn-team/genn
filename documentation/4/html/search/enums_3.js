@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['kernel',['Kernel',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4',1,'CodeGenerator::CUDA']]]
+  ['floattype',['FloatType',['../dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08',1,'modelSpec.h']]]
 ];

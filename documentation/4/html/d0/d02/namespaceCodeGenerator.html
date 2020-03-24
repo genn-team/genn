@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -154,6 +154,12 @@ Functions</h2></td></tr>
 <tr class="memitem:ada66f2dbbdc1120868dcdd7e994d467c"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#ada66f2dbbdc1120868dcdd7e994d467c">writePreciseString</a> (T value)</td></tr>
 <tr class="memdesc:ada66f2dbbdc1120868dcdd7e994d467c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function writes a floating point value to a string - setting the precision so no digits are lost.  <a href="#ada66f2dbbdc1120868dcdd7e994d467c">More...</a><br /></td></tr>
 <tr class="separator:ada66f2dbbdc1120868dcdd7e994d467c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38f97aa2e801ffd3aedff316b4827b1c"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a38f97aa2e801ffd3aedff316b4827b1c">ceilDivide</a> (size_t numerator, size_t denominator)</td></tr>
+<tr class="memdesc:a38f97aa2e801ffd3aedff316b4827b1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Divide two integers, rounding up i.e. effectively taking ceil.  <a href="#a38f97aa2e801ffd3aedff316b4827b1c">More...</a><br /></td></tr>
+<tr class="separator:a38f97aa2e801ffd3aedff316b4827b1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af83b93cdf22728d8973b5f6dae21b2f6"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#af83b93cdf22728d8973b5f6dae21b2f6">padSize</a> (size_t size, size_t blockSize)</td></tr>
+<tr class="memdesc:af83b93cdf22728d8973b5f6dae21b2f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pad an integer to a multiple of another.  <a href="#af83b93cdf22728d8973b5f6dae21b2f6">More...</a><br /></td></tr>
+<tr class="separator:af83b93cdf22728d8973b5f6dae21b2f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22199ae12a7875826210e2f57ee0b1ee"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee">ensureFtype</a> (const std::string &amp;oldcode, const std::string &amp;type)</td></tr>
 <tr class="memdesc:a22199ae12a7875826210e2f57ee0b1ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).  <a href="#a22199ae12a7875826210e2f57ee0b1ee">More...</a><br /></td></tr>
 <tr class="separator:a22199ae12a7875826210e2f57ee0b1ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -197,6 +203,44 @@ Functions</h2></td></tr>
 <div class="textblock"><p>Helper class for generating code - automatically inserts brackets, indents etc. </p>
 <p>Based heavily on: <a href="https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class">https://stackoverflow.com/questions/15053753/writing-a-manipulator-for-a-custom-stream-class</a> </p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a id="a38f97aa2e801ffd3aedff316b4827b1c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a38f97aa2e801ffd3aedff316b4827b1c">&#9670;&nbsp;</a></span>ceilDivide()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t CodeGenerator::ceilDivide </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>numerator</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>denominator</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Divide two integers, rounding up i.e. effectively taking ceil. </p>
+
+</div>
+</div>
 <a id="a10af4d74175240a715403e6b5f2103cf"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a10af4d74175240a715403e6b5f2103cf">&#9670;&nbsp;</a></span>checkUnreplacedVariables()</h2>
 
@@ -809,6 +853,44 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="af83b93cdf22728d8973b5f6dae21b2f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af83b93cdf22728d8973b5f6dae21b2f6">&#9670;&nbsp;</a></span>padSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t CodeGenerator::padSize </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>blockSize</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Pad an integer to a multiple of another. </p>
+
+</div>
+</div>
 <a id="acc546df68c6a87e2e08a6935fa0e68f7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acc546df68c6a87e2e08a6935fa0e68f7">&#9670;&nbsp;</a></span>postNeuronSubstitutionsInSynapticCode()</h2>
 
@@ -1128,7 +1210,7 @@ template&lt;class T , typename std::enable_if&lt; std::is_floating_point&lt; T &
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:47 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:08 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

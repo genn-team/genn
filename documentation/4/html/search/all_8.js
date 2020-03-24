@@ -11,6 +11,7 @@ var searchData=
   ['fixedprobabilitynoautapse',['FixedProbabilityNoAutapse',['../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html',1,'InitSparseConnectivitySnippet']]],
   ['float',['FLOAT',['../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fae738c26bf4ce1037fa81b039a915cbf6',1,'modelSpec.h']]],
   ['floattype',['FloatType',['../dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08',1,'modelSpec.h']]],
+  ['free_5fdevice_5fmem_5fbytes',['free_device_mem_bytes',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a047deef538bec408e8e4086ece108ab8',1,'pygenn::genn_model::GeNNModel']]],
   ['freeextraglobalparam',['freeExtraGlobalParam',['../d9/d7e/classSharedLibraryModel.html#a9cbadd59366ff700844877084fa661be',1,'SharedLibraryModel']]],
   ['freemem',['freeMem',['../d9/d7e/classSharedLibraryModel.html#ab8c95174756953fbe957d8a9cbfede50',1,'SharedLibraryModel']]],
   ['func',['func',['../d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html#a4b29bbe2e353521b8499128a73ec5a2b',1,'Snippet::Base::DerivedParam']]],

@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -105,9 +105,6 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <li>Scope()
 : <a class="el" href="d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html#a8b284ec359407bbf5b1ce7344674ee21">CodeGenerator::CodeStream::Scope</a>
 </li>
-<li>selected_gpu()
-: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a0a26b41f070dbefbdc7b15cced886739">pygenn.genn_model.GeNNModel</a>
-</li>
 <li>send()
 : <a class="el" href="db/db9/classSpineMLSimulator_1_1NetworkClient.html#a6384ce62cb57960f3fd9b80e3e358e82">SpineMLSimulator::NetworkClient</a>
 </li>
@@ -127,8 +124,16 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <li>set_connected_populations()
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a6d22f60a1997a803c8fe4de2ee59d926">pygenn.genn_groups.SynapseGroup</a>
 </li>
+<li>set_connectivity_extra_global_param()
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2d508f6f1e04c3ba6b9b1f7f2d00dfdd">pygenn.genn_groups.SynapseGroup</a>
+</li>
 <li>set_current_source_model()
 : <a class="el" href="da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a60fec602182442bd50577602ee30f57e">pygenn.genn_groups.CurrentSource</a>
+</li>
+<li>set_extra_global_param()
+: <a class="el" href="da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a714f8e73be4b33c9665e0a3d80a4f922">pygenn.genn_groups.CurrentSource</a>
+, <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a38237314a9ad94c5c69988640dc47de6">pygenn.genn_groups.NeuronGroup</a>
+, <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a829091e00dc8537cdaac58855543fa63">pygenn.genn_groups.SynapseGroup</a>
 </li>
 <li>SET_INJECTION_CODE()
 : <a class="el" href="d7/da1/classCurrentSourceModels_1_1DC.html#ab3bffc2b43b7a4ba1880ac2f2527e025">CurrentSourceModels::DC</a>
@@ -158,12 +163,15 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <li>set_pre_var()
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8f0673bd4445ab35ae37af0abb805afd">pygenn.genn_groups.SynapseGroup</a>
 </li>
+<li>set_psm_extra_global_param()
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a15e670a9e2010c4eea7f01428bc175a0">pygenn.genn_groups.SynapseGroup</a>
+</li>
 <li>set_psm_var()
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a419fc2b646104bd7e43b28a5be8fc098">pygenn.genn_groups.SynapseGroup</a>
 </li>
 <li>SET_ROW_BUILD_CODE()
-: <a class="el" href="df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html#ab73e967faf37253cd38a69182341ff46">InitSparseConnectivitySnippet::FixedProbability</a>
-, <a class="el" href="d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html#ac61f2720043c7a4a8a32c354a6486bb4">InitSparseConnectivitySnippet::FixedProbabilityNoAutapse</a>
+: <a class="el" href="df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html#a2768e245dfe7cd1a3de9146e9d3672b7">InitSparseConnectivitySnippet::FixedProbability</a>
+, <a class="el" href="d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html#a466109c58f20d3f1fc2c0ec99b336207">InitSparseConnectivitySnippet::FixedProbabilityNoAutapse</a>
 , <a class="el" href="d5/dd3/classInitSparseConnectivitySnippet_1_1OneToOne.html#a81381faa9debab53520272f239906b70">InitSparseConnectivitySnippet::OneToOne</a>
 </li>
 <li>SET_ROW_BUILD_STATE_VARS()
@@ -306,17 +314,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a36fd4856ed157898059c1aab176c02b8">SynapseGroup</a>
 </li>
 <li>SharedLibraryModel()
-: <a class="el" href="d9/d7e/classSharedLibraryModel.html#acf5a56c0d4cb263d4a5a58974523a2a5">SharedLibraryModel&lt; scalar &gt;</a>
-</li>
-<li>shouldAccumulateInRegister()
-: <a class="el" href="d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a9cc23f259f780552598d5424bf4c51e6">CodeGenerator::CUDA::PresynapticUpdateStrategy::Base</a>
-, <a class="el" href="d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#ae55cec8c17b68cb38cd5922f37f2df44">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>
-, <a class="el" href="db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a519ab621abec329dea5e6b34e8b70bb4">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>
-</li>
-<li>shouldAccumulateInSharedMemory()
-: <a class="el" href="d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a4903a1c176412710ec2ca83641be6da4">CodeGenerator::CUDA::PresynapticUpdateStrategy::Base</a>
-, <a class="el" href="d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a1daef37e18265b842431dfaba74be20e">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>
-, <a class="el" href="db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a4e6d4b74e61f06e8b93072ad482b0f2b">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a46fe7bc7fb733795b8a5d63414b94dc7">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>shouldApply()
 : <a class="el" href="d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html#a1b3e070de2eeeba15394c8d203b1ab42">SpineMLSimulator::Input::Base</a>
@@ -325,7 +323,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="db/d9c/classSpineMLSimulator_1_1LogOutput_1_1Base.html#a970098968c983ad783f0d372cb02c59d">SpineMLSimulator::LogOutput::Base</a>
 </li>
 <li>Simulator()
-: <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#a0816792e33a8f6bd0e5e6b2c98e98da2">SpineMLSimulator::Simulator</a>
+: <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#acc5bfa1d6619d52006577e68f1cd7b48">SpineMLSimulator::Simulator</a>
 </li>
 <li>size()
 : <a class="el" href="da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a22d0a70cf9e9129a0696065fb0c3f823">pygenn.genn_groups.CurrentSource</a>
@@ -357,10 +355,13 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 , <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#ac34c720e9cc2c8eed6c4feafc1321ebe">SpineMLSimulator::Simulator</a>
 </li>
 <li>Substitutions()
-: <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#a6e7c057f59d2af8be75d7bd4f81165b7">CodeGenerator::Substitutions</a>
+: <a class="el" href="de/d22/classCodeGenerator_1_1Substitutions.html#a7fe0822b5faffcadce98ffe3b8e10197">CodeGenerator::Substitutions</a>
+</li>
+<li>synapse_dynamics_time()
+: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3cafe733ce4f7ccd2b53746ada70c40e">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>SynapseGroup()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#adae78dfe85576080a3154ecef9e816c2">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a6d6697d4dd8b60bc78be702d75d87c75">SynapseGroup</a>
 </li>
 <li>SynapseGroupInternal()
 : <a class="el" href="dd/d48/classSynapseGroupInternal.html#a3b8bf07648fa19cab9cf42827bafc4c9">SynapseGroupInternal</a>
@@ -371,7 +372,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Nov 5 2019 14:30:11 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:37 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -6,7 +6,9 @@ var searchData=
   ['poissonnew',['PoissonNew',['../dc/dc0/classNeuronModels_1_1PoissonNew.html',1,'NeuronModels']]],
   ['poissonspikerate',['PoissonSpikeRate',['../db/d06/classSpineMLSimulator_1_1Input_1_1PoissonSpikeRate.html',1,'SpineMLSimulator::Input']]],
   ['postspan',['PostSpan',['../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html',1,'CodeGenerator::CUDA::PresynapticUpdateStrategy']]],
-  ['preferences',['Preferences',['../d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html',1,'CodeGenerator::SingleThreadedCPU::Preferences'],['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html',1,'CodeGenerator::CUDA::Preferences']]],
+  ['postspanbitmask',['PostSpanBitmask',['../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html',1,'CodeGenerator::CUDA::PresynapticUpdateStrategy']]],
+  ['preferences',['Preferences',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html',1,'CodeGenerator::CUDA::Preferences'],['../d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html',1,'CodeGenerator::SingleThreadedCPU::Preferences']]],
   ['preferencesbase',['PreferencesBase',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html',1,'CodeGenerator']]],
-  ['prespan',['PreSpan',['../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html',1,'CodeGenerator::CUDA::PresynapticUpdateStrategy']]]
+  ['prespan',['PreSpan',['../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html',1,'CodeGenerator::CUDA::PresynapticUpdateStrategy']]],
+  ['prespanprocedural',['PreSpanProcedural',['../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html',1,'CodeGenerator::CUDA::PresynapticUpdateStrategy']]]
 ];

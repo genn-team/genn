@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -134,8 +134,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a597150844c84e62e5e98bbb18774b1cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add this <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html" title="Class representing a group of neurons. ">NeuronGroup</a> to a model.  <a href="#a597150844c84e62e5e98bbb18774b1cc">More...</a><br /></td></tr>
 <tr class="separator:a597150844c84e62e5e98bbb18774b1cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a870207702ea6ffc852401643a2dd9960"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a870207702ea6ffc852401643a2dd9960">add_extra_global_param</a> (self, param_name, param_values)</td></tr>
-<tr class="memdesc:a870207702ea6ffc852401643a2dd9960"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add extra global parameter.  <a href="#a870207702ea6ffc852401643a2dd9960">More...</a><br /></td></tr>
+<tr class="memdesc:a870207702ea6ffc852401643a2dd9960"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set extra global parameter.  <a href="#a870207702ea6ffc852401643a2dd9960">More...</a><br /></td></tr>
 <tr class="separator:a870207702ea6ffc852401643a2dd9960"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a38237314a9ad94c5c69988640dc47de6"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a38237314a9ad94c5c69988640dc47de6">set_extra_global_param</a> (self, param_name, param_values)</td></tr>
+<tr class="memdesc:a38237314a9ad94c5c69988640dc47de6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set extra global parameter.  <a href="#a38237314a9ad94c5c69988640dc47de6">More...</a><br /></td></tr>
+<tr class="separator:a38237314a9ad94c5c69988640dc47de6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d0e3c87d99f1c348a3a8849882d2606"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a4d0e3c87d99f1c348a3a8849882d2606">load</a> (self, slm, scalar)</td></tr>
 <tr class="memdesc:a4d0e3c87d99f1c348a3a8849882d2606"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads neuron group.  <a href="#a4d0e3c87d99f1c348a3a8849882d2606">More...</a><br /></td></tr>
 <tr class="separator:a4d0e3c87d99f1c348a3a8849882d2606"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -246,7 +249,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Add extra global parameter. </p>
+<p>Set extra global parameter. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">param_name</td><td>string with the name of the extra global parameter </td></tr>
@@ -420,6 +423,49 @@ Public Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">slm</td><td><a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a> instance for acccessing variables </td></tr>
     <tr><td class="paramname">scalar</td><td>String specifying "scalar" type </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a38237314a9ad94c5c69988640dc47de6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a38237314a9ad94c5c69988640dc47de6">&#9670;&nbsp;</a></span>set_extra_global_param()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_groups.NeuronGroup.set_extra_global_param </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_values</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set extra global parameter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">param_name</td><td>string with the name of the extra global parameter </td></tr>
+    <tr><td class="paramname">param_values</td><td>iterable or a single value </td></tr>
   </table>
   </dd>
 </dl>
@@ -602,7 +648,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d5/da5/namespacepygenn_1_1genn__groups.html">genn_groups</a></li><li class="navelem"><a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html">NeuronGroup</a></li>
-    <li class="footer">Generated on Tue Nov 5 2019 14:30:00 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:24 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

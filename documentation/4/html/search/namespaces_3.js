@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['models',['Models',['../dd/d20/namespaceModels.html',1,'']]]
+  ['logging',['Logging',['../d4/dd8/namespaceLogging.html',1,'']]]
 ];

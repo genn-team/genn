@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['neuronmodels',['NeuronModels',['../da/dac/namespaceNeuronModels.html',1,'']]]
+  ['models',['Models',['../dd/d20/namespaceModels.html',1,'']]]
 ];

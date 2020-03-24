@@ -1,10 +1,10 @@
 var searchData=
 [
-  ['connectors',['Connectors',['../df/d40/namespaceSpineMLSimulator_1_1Connectors.html',1,'SpineMLSimulator']]],
-  ['input',['Input',['../d3/de9/namespaceSpineMLSimulator_1_1Input.html',1,'SpineMLSimulator']]],
-  ['inputvalue',['InputValue',['../dc/df0/namespaceSpineMLSimulator_1_1InputValue.html',1,'SpineMLSimulator']]],
-  ['logoutput',['LogOutput',['../dc/df5/namespaceSpineMLSimulator_1_1LogOutput.html',1,'SpineMLSimulator']]],
-  ['modelproperty',['ModelProperty',['../d1/df5/namespaceSpineMLSimulator_1_1ModelProperty.html',1,'SpineMLSimulator']]],
-  ['snippet',['Snippet',['../df/daa/namespaceSnippet.html',1,'']]],
-  ['spinemlsimulator',['SpineMLSimulator',['../d5/dc1/namespaceSpineMLSimulator.html',1,'']]]
+  ['genn_5fgroups',['genn_groups',['../d5/da5/namespacepygenn_1_1genn__groups.html',1,'pygenn']]],
+  ['genn_5fmodel',['genn_model',['../de/d6e/namespacepygenn_1_1genn__model.html',1,'pygenn']]],
+  ['model_5fpreprocessor',['model_preprocessor',['../d0/d17/namespacepygenn_1_1model__preprocessor.html',1,'pygenn']]],
+  ['plog',['plog',['../df/d38/namespaceplog.html',1,'']]],
+  ['postsynapticmodels',['PostsynapticModels',['../db/dcb/namespacePostsynapticModels.html',1,'']]],
+  ['pugi',['pugi',['../d3/d68/namespacepugi.html',1,'']]],
+  ['pygenn',['pygenn',['../da/d6d/namespacepygenn.html',1,'']]]
 ];

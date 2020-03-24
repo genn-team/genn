@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['postsynaptic',['POSTSYNAPTIC',['../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2a39711e1ac5d5263471a6184f362dc02f',1,'SynapseGroup']]],
-  ['presynaptic',['PRESYNAPTIC',['../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2ac583511247567bdc79915d057babba12',1,'SynapseGroup']]]
+  ['occupancy',['OCCUPANCY',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7abad835e9b82eae5eafdd8c3cb305a7d7a5',1,'CodeGenerator::CUDA']]],
+  ['optimal',['OPTIMAL',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0af00c8dbdd6e1f11bdae06be94277d293',1,'CodeGenerator::CUDA']]]
 ];

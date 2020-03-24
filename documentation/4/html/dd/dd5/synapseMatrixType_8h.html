@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -107,13 +107,15 @@ $(document).ready(function(){initNavTree('dd/dd5/synapseMatrixType_8h.html','../
 Enumerations</h2></td></tr>
 <tr class="memitem:aedb0946699027562bc78103a5d2a578d"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578d">SynapseMatrixConnectivity</a> : unsigned int { <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0706fbbd929bd8abc4de386c53d439ff">SynapseMatrixConnectivity::DENSE</a> = (1 &lt;&lt; 0), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699">SynapseMatrixConnectivity::BITMASK</a> = (1 &lt;&lt; 1), 
-<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e">SynapseMatrixConnectivity::SPARSE</a> = (1 &lt;&lt; 2)
+<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e">SynapseMatrixConnectivity::SPARSE</a> = (1 &lt;&lt; 2), 
+<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da71de203441306efe17e882a16d439b89">SynapseMatrixConnectivity::PROCEDURAL</a> = (1 &lt;&lt; 3)
  }<tr class="memdesc:aedb0946699027562bc78103a5d2a578d"><td class="mdescLeft">&#160;</td><td class="mdescRight">&lt; Flags defining differnet types of synaptic matrix connectivity  <a href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578d">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:aedb0946699027562bc78103a5d2a578d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c0f0120d3cb9e81daea1d2afa7fbe1f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1f">SynapseMatrixWeight</a> : unsigned int { <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334">SynapseMatrixWeight::GLOBAL</a> = (1 &lt;&lt; 5), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323">SynapseMatrixWeight::INDIVIDUAL</a> = (1 &lt;&lt; 6), 
-<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa">SynapseMatrixWeight::INDIVIDUAL_PSM</a> = (1 &lt;&lt; 7)
+<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa71de203441306efe17e882a16d439b89">SynapseMatrixWeight::PROCEDURAL</a> = (1 &lt;&lt; 7), 
+<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa">SynapseMatrixWeight::INDIVIDUAL_PSM</a> = (1 &lt;&lt; 8)
  }</td></tr>
 <tr class="separator:a3c0f0120d3cb9e81daea1d2afa7fbe1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24a045033b9a7e987843a67ff5ddec9c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> : unsigned int { <br />
@@ -125,7 +127,11 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca1afc3ca441931cf66047766d6a135ff4">SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::BITMASK) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::GLOBAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d">SynapseMatrixType::SPARSE_GLOBALG</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::SPARSE) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::GLOBAL), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca4caebb15c1a09f263b6f223241bde1ac">SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::SPARSE) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::GLOBAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM), 
-<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cae7658b74f700d52b421afc540c892d2e">SynapseMatrixType::SPARSE_INDIVIDUALG</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::SPARSE) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM)
+<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cae7658b74f700d52b421afc540c892d2e">SynapseMatrixType::SPARSE_INDIVIDUALG</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::SPARSE) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM), 
+<br />
+&#160;&#160;<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca50c74aa23e6563dc03d76c83503b0ef4">SynapseMatrixType::PROCEDURAL_GLOBALG</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::PROCEDURAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::GLOBAL), 
+<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca0fa3005652ae18ada3a75bc01dc81f82">SynapseMatrixType::PROCEDURAL_GLOBALG_INDIVIDUAL_PSM</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::PROCEDURAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::GLOBAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM), 
+<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cadd8d747d9023d98e9045f39935d2803a">SynapseMatrixType::PROCEDURAL_PROCEDURALG</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::PROCEDURAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::PROCEDURAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM)
 <br />
  }</td></tr>
 <tr class="separator:a24a045033b9a7e987843a67ff5ddec9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -165,6 +171,7 @@ Functions</h2></td></tr>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aedb0946699027562bc78103a5d2a578da0706fbbd929bd8abc4de386c53d439ff"></a>DENSE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699"></a>BITMASK&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e"></a>SPARSE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aedb0946699027562bc78103a5d2a578da71de203441306efe17e882a16d439b89"></a>PROCEDURAL&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -197,6 +204,9 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d"></a>SPARSE_GLOBALG&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9ca4caebb15c1a09f263b6f223241bde1ac"></a>SPARSE_GLOBALG_INDIVIDUAL_PSM&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9cae7658b74f700d52b421afc540c892d2e"></a>SPARSE_INDIVIDUALG&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9ca50c74aa23e6563dc03d76c83503b0ef4"></a>PROCEDURAL_GLOBALG&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9ca0fa3005652ae18ada3a75bc01dc81f82"></a>PROCEDURAL_GLOBALG_INDIVIDUAL_PSM&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9cadd8d747d9023d98e9045f39935d2803a"></a>PROCEDURAL_PROCEDURALG&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -223,6 +233,7 @@ Functions</h2></td></tr>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334"></a>GLOBAL&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323"></a>INDIVIDUAL&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a3c0f0120d3cb9e81daea1d2afa7fbe1fa71de203441306efe17e882a16d439b89"></a>PROCEDURAL&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa"></a>INDIVIDUAL_PSM&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -343,7 +354,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html">synapseMatrixType.h</a></li>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:44 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:04 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -77,6 +77,8 @@ var files =
     ] ],
     [ "inputValue.cc", "d5/d56/inputValue_8cc.html", null ],
     [ "inputValue.h", "d7/d6f/inputValue_8h.html", "d7/d6f/inputValue_8h" ],
+    [ "logging.cc", "d8/d11/logging_8cc.html", null ],
+    [ "logging.h", "d5/d77/logging_8h.html", "d5/d77/logging_8h" ],
     [ "logOutput.cc", "d1/d06/logOutput_8cc.html", null ],
     [ "logOutput.h", "db/d9d/logOutput_8h.html", [
       [ "Base", "db/d9c/classSpineMLSimulator_1_1LogOutput_1_1Base.html", "db/d9c/classSpineMLSimulator_1_1LogOutput_1_1Base" ],
@@ -119,7 +121,9 @@ var files =
     [ "presynapticUpdateStrategy.h", "db/dce/presynapticUpdateStrategy_8h.html", [
       [ "Base", "d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html", "d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base" ],
       [ "PreSpan", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan" ],
-      [ "PostSpan", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan" ]
+      [ "PostSpan", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan" ],
+      [ "PostSpanBitmask", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask" ],
+      [ "PreSpanProcedural", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural" ]
     ] ],
     [ "sharedLibraryModel.h", "d0/d42/sharedLibraryModel_8h.html", [
       [ "SharedLibraryModel", "d9/d7e/classSharedLibraryModel.html", "d9/d7e/classSharedLibraryModel" ]

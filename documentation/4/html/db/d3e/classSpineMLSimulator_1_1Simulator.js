@@ -1,7 +1,7 @@
 var classSpineMLSimulator_1_1Simulator =
 [
-    [ "Simulator", "db/d3e/classSpineMLSimulator_1_1Simulator.html#ac91abbdb18103aba916e53f66614941a", null ],
-    [ "Simulator", "db/d3e/classSpineMLSimulator_1_1Simulator.html#a0816792e33a8f6bd0e5e6b2c98e98da2", null ],
+    [ "Simulator", "db/d3e/classSpineMLSimulator_1_1Simulator.html#a6017b9dd845793e66e1e8186db47a4ac", null ],
+    [ "Simulator", "db/d3e/classSpineMLSimulator_1_1Simulator.html#acc5bfa1d6619d52006577e68f1cd7b48", null ],
     [ "~Simulator", "db/d3e/classSpineMLSimulator_1_1Simulator.html#a2ffb23b30e50de0edff076dc308fd967", null ],
     [ "calcNumTimesteps", "db/d3e/classSpineMLSimulator_1_1Simulator.html#aa8da540022d23b78400ca692ebc13ac0", null ],
     [ "getDT", "db/d3e/classSpineMLSimulator_1_1Simulator.html#a839e811b94f3eddd8136b3f3b69dfa5e", null ],

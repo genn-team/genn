@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -131,8 +131,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ac48d2951f6388fd03df83f80bb8e1b97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inject this <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html" title="Class representing a current injection into a group of neurons. ">CurrentSource</a> into population and add it to the GeNN NNmodel.  <a href="#ac48d2951f6388fd03df83f80bb8e1b97">More...</a><br /></td></tr>
 <tr class="separator:ac48d2951f6388fd03df83f80bb8e1b97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6e20b0ea58f3e85341b835b07f5126c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#ae6e20b0ea58f3e85341b835b07f5126c">add_extra_global_param</a> (self, param_name, param_values)</td></tr>
-<tr class="memdesc:ae6e20b0ea58f3e85341b835b07f5126c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add extra global parameter.  <a href="#ae6e20b0ea58f3e85341b835b07f5126c">More...</a><br /></td></tr>
+<tr class="memdesc:ae6e20b0ea58f3e85341b835b07f5126c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set extra global parameter.  <a href="#ae6e20b0ea58f3e85341b835b07f5126c">More...</a><br /></td></tr>
 <tr class="separator:ae6e20b0ea58f3e85341b835b07f5126c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a714f8e73be4b33c9665e0a3d80a4f922"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a714f8e73be4b33c9665e0a3d80a4f922">set_extra_global_param</a> (self, param_name, param_values)</td></tr>
+<tr class="memdesc:a714f8e73be4b33c9665e0a3d80a4f922"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set extra global parameter.  <a href="#a714f8e73be4b33c9665e0a3d80a4f922">More...</a><br /></td></tr>
+<tr class="separator:a714f8e73be4b33c9665e0a3d80a4f922"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87b63ce2402a65933e817c9a136c3314"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a87b63ce2402a65933e817c9a136c3314">load</a> (self, slm, scalar)</td></tr>
 <tr class="separator:a87b63ce2402a65933e817c9a136c3314"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0593259780b1ea7857b9a37a5456f391"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a0593259780b1ea7857b9a37a5456f391">reinitialise</a> (self, slm, scalar)</td></tr>
@@ -234,7 +237,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Add extra global parameter. </p>
+<p>Set extra global parameter. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">param_name</td><td>string with the name of the extra global parameter </td></tr>
@@ -415,6 +418,49 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a714f8e73be4b33c9665e0a3d80a4f922"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a714f8e73be4b33c9665e0a3d80a4f922">&#9670;&nbsp;</a></span>set_extra_global_param()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_groups.CurrentSource.set_extra_global_param </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_values</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set extra global parameter. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">param_name</td><td>string with the name of the extra global parameter </td></tr>
+    <tr><td class="paramname">param_values</td><td>iterable or a single value </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ad720bb8e5a3825e186756b21ab02efa1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad720bb8e5a3825e186756b21ab02efa1">&#9670;&nbsp;</a></span>size() <span class="overload">[1/2]</span></h2>
 
@@ -515,7 +561,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d5/da5/namespacepygenn_1_1genn__groups.html">genn_groups</a></li><li class="navelem"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html">CurrentSource</a></li>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:59 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:23 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

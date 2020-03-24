@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['float',['FLOAT',['../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fae738c26bf4ce1037fa81b039a915cbf6',1,'modelSpec.h']]]
+  ['events',['Events',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a9dd377f02bbae3d25c227bd306841823a87f9f735a1d36793ceaecd4e47124b63',1,'SpineMLSimulator::NetworkClient']]]
 ];

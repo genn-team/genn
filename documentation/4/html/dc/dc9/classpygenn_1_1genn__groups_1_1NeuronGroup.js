@@ -7,6 +7,7 @@ var classpygenn_1_1genn__groups_1_1NeuronGroup =
     [ "delay_slots", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0e0da2c47058822597a9a802380e762f", null ],
     [ "load", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a4d0e3c87d99f1c348a3a8849882d2606", null ],
     [ "reinitialise", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#aad5a7be34e8bf7ee1ef233b094e8cbd9", null ],
+    [ "set_extra_global_param", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a38237314a9ad94c5c69988640dc47de6", null ],
     [ "set_neuron", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#aee609924fc55381b0761ae1b587d4b7e", null ],
     [ "size", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a3cd4c9a8da6c73efc7c403c44435cde4", null ],
     [ "is_spike_source_array", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#abc7253978f963067a6c518b98653b4ba", null ],

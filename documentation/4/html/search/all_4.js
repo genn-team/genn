@@ -2,6 +2,7 @@ var searchData=
 [
   ['backend',['Backend',['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html',1,'CodeGenerator::CUDA::Backend'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html',1,'CodeGenerator::SingleThreadedCPU::Backend'],['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a9f01f9b7a15ea7e31510d3725c7147ab',1,'CodeGenerator::CUDA::Backend::Backend()'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#acc19aa42b8a7a1faa1b1fdc5c91b322a',1,'CodeGenerator::SingleThreadedCPU::Backend::Backend()']]],
   ['backend_5fexport',['BACKEND_EXPORT',['../d5/d83/backendExport_8h.html#a4506f237d151a8f16371da48d158cd3e',1,'backendExport.h']]],
+  ['backend_5flog_5flevel',['backend_log_level',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a8f28db62f1b30ae0730cd027c4ca4c91',1,'pygenn::genn_model::GeNNModel']]],
   ['backend_5fmodules',['backend_modules',['../de/d6e/namespacepygenn_1_1genn__model.html#a0378993ab51a2871fc274bddf7b55bcd',1,'pygenn::genn_model']]],
   ['backendbase',['BackendBase',['../d3/d15/classCodeGenerator_1_1BackendBase.html',1,'CodeGenerator::BackendBase'],['../d3/d15/classCodeGenerator_1_1BackendBase.html#a0ce0c48ea6c5041fb3a6d3d3cd1d24bc',1,'CodeGenerator::BackendBase::BackendBase()']]],
   ['backendbase_2ecc',['backendBase.cc',['../d7/df6/backendBase_8cc.html',1,'']]],

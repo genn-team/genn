@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.1.0</span>
+   &#160;<span id="projectnumber">4.2.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -97,7 +97,26 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.1.0 </h1>
+<div class="textblock"><h1>Release Notes for GeNN v4.2.0 (PyGeNN 0.3) </h1>
+<p>This release adds a number of new features to GeNN and its Python interface as well as fixing a number of bugs that have been identified since the 4.1.0 release.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>Kernel timings can now be enabled from python with <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a49adcd489cc63005ee91d327a8928a10">pygenn.genn_model.GeNNModel.timing_enabled</a></code> and subsequently accessed with <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4e97c002bdee5922aa7cbe37b6fe47e7">pygenn.genn_model.GeNNModel.neuron_update_time</a></code>, <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9d2c664ef8e88274606f7027b9271dfb">pygenn.genn_model.GeNNModel.init_time</a></code>, <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afa372735033902cad5342e96d1c29b71">pygenn.genn_model.GeNNModel.presynaptic_update_time</a></code>, <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6d02ddf4868933a92ece0ac81d1d8afc">pygenn.genn_model.GeNNModel.postsynaptic_update_time</a></code>, <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3cafe733ce4f7ccd2b53746ada70c40e">pygenn.genn_model.GeNNModel.synapse_dynamics_time</a></code> and <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a385b3616dad8cc31ce305ad378b5dbaa">pygenn.genn_model.GeNNModel.init_sparse_time</a></code>.</li>
+<li>Backends now generate <code>getFreeDeviceMemBytes()</code> function to allow free device memory to be queried from user simulation code. This is also exposed to Python via <code>GeNNModel.free_device_mem_bytes</code> property.</li>
+<li>GeNN preferences are now fully exposed to PyGeNN by passing kwargs to <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#adede5692fb02a001d2bc5ebd89f056d7" title="Init GeNNModel. ">pygenn.genn_model.GeNNModel.__init__</a></code>.</li>
+<li><a class="el" href="../../d4/dd8/namespaceLogging.html">Logging</a> level can now be seperately specified for GeNN, the code generator, the SpineML generator and the backend and is accessible from PyGeNN.</li>
+<li><code><a class="el" href="../../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8">CodeGenerator::PreferencesBase::enableBitmaskOptimisations</a></code> flag enables an alternative algorithm for updating synaptic matrices implemented with <code><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699">SynapseMatrixConnectivity::BITMASK</a></code> which performs better on smaller GPUs and CPUs. If you are manually initialising matrices this adds padding to align words to rows of the matrix.</li>
+<li><code><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da71de203441306efe17e882a16d439b89">SynapseMatrixConnectivity::PROCEDURAL</a></code> and <code><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa71de203441306efe17e882a16d439b89">SynapseMatrixWeight::PROCEDURAL</a></code> allow connectivity and synaptic weights to be generated on the fly rather than stored in memory.</li>
+<li><code><a class="el" href="../../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#abef79921cc8510fe8b50b3f0fe971346" title="If backend/device supports it, copy data automatically when required rather than requiring push and p...">CodeGenerator::PreferencesBase::automaticCopy</a></code> flag allows models to be built without the need for explicitly copying data between host and device. For CUDA backend this uses unified memory (<a href="https://devblogs.nvidia.com/unified-memory-cuda-beginners/">https://devblogs.nvidia.com/unified-memory-cuda-beginners/</a>).</li>
+<li>Speed of code compilation can be improved by building using multiple threads. This is now done everywhere where make or MSBuild is invocated automatically.</li>
+</ol>
+<h2>Bug fixes: </h2>
+<ol type="1">
+<li>Fixed several bugs in extra global parameter implementation in PyGeNN.</li>
+<li>Floating point min and max should be calculated with <code>fmax</code> and <code>fmin</code> in code snippets - fixed in several models and user projects.</li>
+<li>Fixed issues with version of numpy required in PyGeNN (previously held back by an issue with PyNN)</li>
+</ol>
+<h1>Release Notes for GeNN v4.1.0 </h1>
 <p>This release adds a number of new features to GeNN and its SpineML interface as well as fixing a number of bugs that have been identified since the 4.0.2 release.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
@@ -111,7 +130,7 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li>Add <code><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522" title="Should line info be included in resultant executable for debugging/profiling purposes? ">CodeGenerator::CUDA::Preferences::generateLineInfo</a></code> option to output CUDA line info for profiling.</li>
 <li>CUDA backend supports <code>half</code> datatype allowing memory savings through reduced precision. Host C++ code does not support half-precision types so such state variables must have their location set to <code><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae10b6ab6a278644ce40631f62f360b6d">VarLocation::DEVICE</a></code>.</li>
 <li>If <code><a class="el" href="../../da/dfd/classModelSpec.html#a8215fd67ea3fa331f9648650904f4a96" title="Sets default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices...">ModelSpec::setDefaultNarrowSparseIndEnabled</a></code> is set on a model or <code><a class="el" href="../../dc/dfa/classSynapseGroup.html#a4c52c9daf780b36515263af1cdb3524e" title="Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices. ">SynapseGroup::setNarrowSparseIndEnabled</a></code> is set on an individual synapse population with sparse connectivity, 16-bit numbers will be used for postsynaptic indices, almost halving memory requirements.</li>
-<li>Manual selection of CUDA devices is now exposed to PyGeNN via the <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a70807821d1fb04f61c36a7b2a71e2861">pygenn.genn_model.GeNNModel.selected_gpu</a></code> property.</li>
+<li>Manual selection of CUDA devices is now exposed to PyGeNN via the <code>pygenn.genn_model.GeNNModel.selected_gpu</code> property.</li>
 </ol>
 <h2>Bug fixes: </h2>
 <ol type="1">
@@ -390,7 +409,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Nov 5 2019 14:29:44 for GeNN by
+    <li class="footer">Generated on Tue Mar 24 2020 12:02:04 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
