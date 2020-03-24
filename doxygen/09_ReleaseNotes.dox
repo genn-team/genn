@@ -1,4 +1,25 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.2.0 (PyGeNN 0.3)
+====
+This release adds a number of new features to GeNN and its Python interface as well as fixing a number of bugs that have been identified since the 4.1.0 release.
+
+User Side Changes
+----
+1. Kernel timings can now be enabled from python with ``pygenn.genn_model.GeNNModel.timing_enabled`` and subsequently accessed with ``pygenn.genn_model.GeNNModel.neuron_update_time``, ``pygenn.genn_model.GeNNModel.init_time``, ``pygenn.genn_model.GeNNModel.presynaptic_update_time``, ``pygenn.genn_model.GeNNModel.postsynaptic_update_time``, ``pygenn.genn_model.GeNNModel.synapse_dynamics_time`` and ``pygenn.genn_model.GeNNModel.init_sparse_time``.
+2. Backends now generate ``getFreeDeviceMemBytes()`` function to allow free device memory to be queried from user simulation code. This is also exposed to Python via ``GeNNModel.free_device_mem_bytes`` property.
+3. GeNN preferences are now fully exposed to PyGeNN by passing kwargs to ``pygenn.genn_model.GeNNModel.__init__``.
+4. Logging level can now be seperately specified for GeNN, the code generator, the SpineML generator and the backend and is accessible from PyGeNN.
+5. ``CodeGenerator::PreferencesBase::enableBitmaskOptimisations`` flag enables an alternative algorithm for updating synaptic matrices implemented with ``SynapseMatrixConnectivity::BITMASK`` which performs better on smaller GPUs and CPUs. If you are manually initialising matrices this adds padding to align words to rows of the matrix.
+6. ``SynapseMatrixConnectivity::PROCEDURAL`` and ``SynapseMatrixWeight::PROCEDURAL`` allow connectivity and synaptic weights to be generated on the fly rather than stored in memory.
+7. ``CodeGenerator::PreferencesBase::automaticCopy`` flag allows models to be built without the need for explicitly copying data between host and device. For CUDA backend this uses unified memory (https://devblogs.nvidia.com/unified-memory-cuda-beginners/).
+8. Speed of code compilation can be improved by building using multiple threads. This is now done everywhere where make or MSBuild is invocated automatically.
+
+Bug fixes:
+----
+1. Fixed several bugs in extra global parameter implementation in PyGeNN.
+2. Floating point min and max should be calculated with ``fmax`` and ``fmin`` in code snippets - fixed in several models and user projects.
+3. Fixed issues with version of numpy required in PyGeNN (previously held back by an issue with PyNN)
+
 Release Notes for GeNN v4.1.0
 ====
 This release adds a number of new features to GeNN and its SpineML interface as well as fixing a number of bugs that have been identified since the 4.0.2 release.
