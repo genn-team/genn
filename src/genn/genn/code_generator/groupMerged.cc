@@ -6,20 +6,12 @@
 // GeNN includes
 #include "modelSpecInternal.h"
 
-//----------------------------------------------------------------------------
-// CodeGenerator::NeuronGroupMergedBase
-//----------------------------------------------------------------------------
-CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    : CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups)
-{
-
-}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronSpikeQueueUpdateMergedGroup
 //----------------------------------------------------------------------------
 CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::NeuronSpikeQueueUpdateMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    : CodeGenerator::NeuronGroupMergedBase(index, init, groups)
+    : CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups)
 {
     assert(!init);
 }
@@ -28,7 +20,7 @@ CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::NeuronSpikeQueueUpdateMergedGr
 // CodeGenerator::NeuronGroupMerged
 //----------------------------------------------------------------------------
 CodeGenerator::NeuronGroupMerged::NeuronGroupMerged(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   CodeGenerator::NeuronGroupMergedBase(index, init, groups)
+:   CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups)
 {
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getMergedInSyn,
