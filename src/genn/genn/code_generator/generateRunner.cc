@@ -1085,7 +1085,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through neuron groups whose spike queues need resetting
     for(const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
-        MergedNeuronStructGenerator gen(m, model.getPrecision());
+        MergedStructGenerator<CodeGenerator::NeuronSpikeQueueUpdateMergedGroup> gen(m, model.getPrecision());
 
         if(m.getArchetype().isDelayRequired()) {
             gen.addField("unsigned int", "numDelaySlots",

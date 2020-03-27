@@ -57,7 +57,7 @@ public:
     const std::vector<SynapseGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
 
     //! Get merged neuron groups which require their spike queues updating
-    const std::vector<NeuronGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
+    const std::vector<NeuronSpikeQueueUpdateMergedGroup> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
 
     //! Get merged synapse groups which require their dendritic delay updating
     const std::vector<SynapseGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
@@ -117,7 +117,7 @@ private:
     std::vector<SynapseGroupMerged> m_MergedSynapseSparseInitGroups;
 
     //! Merged neuron groups which require their spike queues updating
-    std::vector<NeuronGroupMerged> m_MergedNeuronSpikeQueueUpdateGroups;
+    std::vector<NeuronSpikeQueueUpdateMergedGroup> m_MergedNeuronSpikeQueueUpdateGroups;
 
     //! Merged synapse groups which require their dendritic delay updating
     std::vector<SynapseGroupMerged> m_MergedSynapseDendriticDelayUpdateGroups;

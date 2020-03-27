@@ -68,9 +68,27 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// CodeGenerator::NeuronGroupMergedBase
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
+{
+public:
+    NeuronGroupMergedBase(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::NeuronSpikeQueueUpdateMergedGroup
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronSpikeQueueUpdateMergedGroup : public NeuronGroupMergedBase
+{
+public:
+    NeuronSpikeQueueUpdateMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+};
+
+//----------------------------------------------------------------------------
 // CodeGenerator::NeuronGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronGroupMerged : public NeuronGroupMergedBase
 {
 public:
     NeuronGroupMerged(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);

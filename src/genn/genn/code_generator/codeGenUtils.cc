@@ -346,7 +346,7 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 
-void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n)
+void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronSpikeQueueUpdateMergedGroup &n)
 {
     if(n.getArchetype().isDelayRequired()) { // with delay
         if(n.getArchetype().isSpikeEventRequired()) {
