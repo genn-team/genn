@@ -1091,17 +1091,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through synapse groups whose dendritic delay pointers need updating
     for(const auto &m : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
-        MergedSynapseStructGenerator gen(m, model.getPrecision());
-
-        gen.addField("volatile unsigned int*", "denDelayPtr",
-                     [&backend](const SynapseGroupInternal &sg, size_t)
-                     {
-                         return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
-                     });
-
-        // Generate structure definitions and instantiation
-        gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                     mergedStructData, "SynapseDendriticDelayUpdate");
+       m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                     mergedStructData, model.getPrecision());
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;

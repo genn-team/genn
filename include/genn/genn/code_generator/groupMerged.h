@@ -202,6 +202,23 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// CodeGenerator::SynapseDendriticDelayUpdateMergedGroup
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseDendriticDelayUpdateMergedGroup : public GroupMerged<SynapseGroupInternal>
+{
+public:
+    SynapseDendriticDelayUpdateMergedGroup(size_t index, bool, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision) const;
+};
+
+//----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>

@@ -21,12 +21,12 @@ CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::NeuronSpikeQueueUpdateMergedGr
     assert(!init);
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::generate(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal,
-                                                                CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &definitionsInternalVar,
-                                                                CodeGenerator::CodeStream &runnerVarDecl, CodeGenerator::CodeStream &runnerMergedStructAlloc,
-                                                                CodeGenerator::MergedStructData &mergedStructData, const std::string &precision) const
+void CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                                                                CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                                                                CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                                                                MergedStructData &mergedStructData, const std::string &precision) const
 {
-    MergedStructGenerator<CodeGenerator::NeuronSpikeQueueUpdateMergedGroup> gen(*this, precision);
+    MergedStructGenerator<NeuronSpikeQueueUpdateMergedGroup> gen(*this, precision);
 
     if(getArchetype().isDelayRequired()) {
         gen.addField("unsigned int", "numDelaySlots",
@@ -143,6 +143,33 @@ bool CodeGenerator::NeuronGroupMerged::isCurrentSourceDerivedParamHeterogeneous(
         return isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedCurrentSources,
                                               [](const CurrentSourceInternal *cs) { return cs->getDerivedParams();  });
     }
+}
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDendriticDelayUpdateMergedGroup
+//----------------------------------------------------------------------------
+CodeGenerator::SynapseDendriticDelayUpdateMergedGroup::SynapseDendriticDelayUpdateMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, groups)
+{
+    assert(!init);
+}
+//----------------------------------------------------------------------------
+void CodeGenerator::SynapseDendriticDelayUpdateMergedGroup::generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                                                                     CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                                                                     CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                                                                     MergedStructData &mergedStructData, const std::string &precision) const
+{
+    MergedStructGenerator<SynapseDendriticDelayUpdateMergedGroup> gen(*this, precision);
+
+    gen.addField("volatile unsigned int*", "denDelayPtr",
+                 [&backend](const SynapseGroupInternal &sg, size_t)
+                 {
+                     return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
+                 });
+
+    // Generate structure definitions and instantiation
+    gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                 mergedStructData, "SynapseDendriticDelayUpdate");
 }
 
 //----------------------------------------------------------------------------

@@ -60,7 +60,7 @@ public:
     const std::vector<NeuronSpikeQueueUpdateMergedGroup> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
 
     //! Get merged synapse groups which require their dendritic delay updating
-    const std::vector<SynapseGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
+    const std::vector<SynapseDendriticDelayUpdateMergedGroup> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
 
     //! Merged synapse groups which require host code to initialise their synaptic connectivity
     const std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityHostInitGroups() const{ return m_MergedSynapseConnectivityHostInitGroups; }
@@ -120,7 +120,7 @@ private:
     std::vector<NeuronSpikeQueueUpdateMergedGroup> m_MergedNeuronSpikeQueueUpdateGroups;
 
     //! Merged synapse groups which require their dendritic delay updating
-    std::vector<SynapseGroupMerged> m_MergedSynapseDendriticDelayUpdateGroups;
+    std::vector<SynapseDendriticDelayUpdateMergedGroup> m_MergedSynapseDendriticDelayUpdateGroups;
 
     //! Merged synapse groups which require host code to initialise their synaptic connectivity
     std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityHostInitGroups;
