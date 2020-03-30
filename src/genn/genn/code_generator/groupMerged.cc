@@ -578,9 +578,9 @@ void CodeGenerator::SynapseConnectivityInitMergedGroup::generate(const BackendBa
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseGroupMerged
+// CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMerged::getPresynapticAxonalDelaySlot() const
+std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticAxonalDelaySlot() const
 {
     assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
 
@@ -594,7 +594,7 @@ std::string CodeGenerator::SynapseGroupMerged::getPresynapticAxonalDelaySlot() c
     }
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMerged::getPostsynapticBackPropDelaySlot() const
+std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelaySlot() const
 {
     assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
 
@@ -608,7 +608,7 @@ std::string CodeGenerator::SynapseGroupMerged::getPostsynapticBackPropDelaySlot(
     }
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMerged::getDendriticDelayOffset(const std::string &offset) const
+std::string CodeGenerator::SynapseGroupMergedBase::getDendriticDelayOffset(const std::string &offset) const
 {
     assert(getArchetype().isDendriticDelayRequired());
 
@@ -620,7 +620,7 @@ std::string CodeGenerator::SynapseGroupMerged::getDendriticDelayOffset(const std
     }
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMerged::isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
@@ -639,7 +639,7 @@ bool CodeGenerator::SynapseGroupMerged::isWUVarInitParamHeterogeneous(size_t var
     }
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
 {
     // If derived parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
@@ -658,18 +658,18 @@ bool CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHeterogeneous(siz
     }
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
-                                                 CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                                                 CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                                                 MergedStructData &mergedStructData, const std::string &precision, 
-                                                 const std::string &timePrecision, const std::string &name, Role role) const
+void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                                                     CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                                                     CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                                                     MergedStructData &mergedStructData, const std::string &precision, 
+                                                     const std::string &timePrecision, const std::string &name, Role role) const
 {
     const bool updateRole = ((role == Role::PresynapticUpdate)
                              || (role == Role::PostsynapticUpdate)
                              || (role == Role::SynapseDynamics));
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
-    MergedStructGenerator<SynapseGroupMerged> gen(*this, precision);
+    MergedStructGenerator<SynapseGroupMergedBase> gen(*this, precision);
 
     gen.addField("unsigned int", "rowStride",
                  [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
@@ -828,10 +828,10 @@ void CodeGenerator::SynapseGroupMerged::generate(const BackendBase &backend, Cod
     // If synaptic matrix weights are procedural or we are initializing
     if(getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL || !updateRole) {
         gen.addHeterogeneousVarInitParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                                          &CodeGenerator::SynapseGroupMerged::isWUVarInitParamHeterogeneous);
+                                          &SynapseGroupMergedBase::isWUVarInitParamHeterogeneous);
 
         gen.addHeterogeneousVarInitDerivedParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                                                 &CodeGenerator::SynapseGroupMerged::isWUVarInitDerivedParamHeterogeneous);
+                                                 &SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous);
     }
 
     // Generate structure definitions and instantiation
@@ -839,22 +839,22 @@ void CodeGenerator::SynapseGroupMerged::generate(const BackendBase &backend, Cod
                  mergedStructData, name);
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMerged::addPSPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
-                                                          const std::string &type, const std::string &name, const std::string &prefix) const
+void CodeGenerator::SynapseGroupMergedBase::addPSPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
+                                                              const std::string &type, const std::string &name, const std::string &prefix) const
 {
     assert(!Utils::isTypePointer(type));
     gen.addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getPSModelTargetName(); });
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMerged::addSrcPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
-                                                           const std::string &type, const std::string &name, const std::string &prefix) const
+void CodeGenerator::SynapseGroupMergedBase::addSrcPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
+                                                               const std::string &type, const std::string &name, const std::string &prefix) const
 {
     assert(!Utils::isTypePointer(type));
     gen.addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getSrcNeuronGroup()->getName(); });
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMerged::addTrgPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
-                                                           const std::string &type, const std::string &name, const std::string &prefix) const
+void CodeGenerator::SynapseGroupMergedBase::addTrgPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
+                                                               const std::string &type, const std::string &name, const std::string &prefix) const
 {
     assert(!Utils::isTypePointer(type));
     gen.addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });

@@ -311,27 +311,12 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseGroupMerged
+// CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    //----------------------------------------------------------------------------
-    // Enumerations
-    //----------------------------------------------------------------------------
-    enum class Role
-    {
-        PresynapticUpdate,
-        PostsynapticUpdate,
-        SynapseDynamics,
-        DenseInit,
-        SparseInit,
-    };
-
-    SynapseGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   GroupMerged<SynapseGroupInternal>(index, groups)
-    {}
-
+   
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -351,6 +336,26 @@ public:
     //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
 
+protected:
+    //----------------------------------------------------------------------------
+    // Enumerations
+    //----------------------------------------------------------------------------
+    enum class Role
+    {
+        PresynapticUpdate,
+        PostsynapticUpdate,
+        SynapseDynamics,
+        DenseInit,
+        SparseInit,
+    };
+
+    SynapseGroupMergedBase(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+        : GroupMerged<SynapseGroupInternal>(index, groups)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Protected methods
+    //----------------------------------------------------------------------------
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
@@ -360,11 +365,126 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addPSPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
+    void addPSPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
                            const std::string &type, const std::string &name, const std::string &prefix) const;
-    void addSrcPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
+    void addSrcPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
                             const std::string &type, const std::string &name, const std::string &prefix) const;
-    void addTrgPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
+    void addTrgPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
                             const std::string &type, const std::string &name, const std::string &prefix) const;
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::PresynapticUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
+{
+public:
+    PresynapticUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, groups)
+    {}
+
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision) const
+    {
+        SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
+                                         definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc, 
+                                         mergedStructData, precision, timePrecision, 
+                                         "PresynapticUpdate", SynapseGroupMergedBase::Role::PresynapticUpdate);
+    }
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::PostsynapticUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
+{
+public:
+    PostsynapticUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, groups)
+    {}
+
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision) const
+    {
+        SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
+                                         definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                                         mergedStructData, precision, timePrecision,
+                                         "PostsynapticUpdate", SynapseGroupMergedBase::Role::PostsynapticUpdate);
+    }
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDynamicsGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
+{
+public:
+    SynapseDynamicsGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, groups)
+    {}
+
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision) const
+    {
+        SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
+                                         definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                                         mergedStructData, precision, timePrecision,
+                                         "SynapseDynamics", SynapseGroupMergedBase::Role::SynapseDynamics);
+    }
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDenseInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMergedBase
+{
+public:
+    SynapseDenseInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, groups)
+    {}
+
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision) const
+    {
+        SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
+                                         definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                                         mergedStructData, precision, timePrecision,
+                                         "SynapseDenseInit", SynapseGroupMergedBase::Role::DenseInit);
+    }
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseSparseInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
+{
+public:
+    SynapseSparseInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, groups)
+    {}
+
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision) const
+    {
+        SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
+                                         definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                                         mergedStructData, precision, timePrecision,
+                                         "SynapseSparseInit", SynapseGroupMergedBase::Role::SparseInit);
+    }
 };
 }   // namespace CodeGenerator

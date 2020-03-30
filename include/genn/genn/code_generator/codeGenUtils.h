@@ -25,7 +25,6 @@ namespace CodeGenerator
 {
 class NeuronSpikeQueueUpdateMergedGroup;
 class Substitutions;
-class SynapseGroupMerged;
 }
 
 //--------------------------------------------------------------------------

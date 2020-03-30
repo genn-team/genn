@@ -614,8 +614,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // Loop through merged dense synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
          m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                    runnerVarDecl, runnerMergedStructAlloc, mergedStructData, model.getPrecision(),
-                    model.getTimePrecision(), "SynapseDenseInit", SynapseGroupMerged::Role::DenseInit);
+                    runnerVarDecl, runnerMergedStructAlloc, mergedStructData, 
+                    model.getPrecision(), model.getTimePrecision());
     }
 
     // Loop through merged synapse connectivity initialisation groups
@@ -627,8 +627,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
         m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                   runnerVarDecl, runnerMergedStructAlloc, mergedStructData, model.getPrecision(),
-                   model.getTimePrecision(), "SynapseSparseInit", SynapseGroupMerged::Role::SparseInit);
+                   runnerVarDecl, runnerMergedStructAlloc, mergedStructData, 
+                   model.getPrecision(), model.getTimePrecision());
     }
 
     // Loop through merged neuron update groups
@@ -641,34 +641,36 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // Loop through merged presynaptic update groups
     for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
         m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                               runnerVarDecl, runnerMergedStructAlloc, mergedStructData, model.getPrecision(),
-                               model.getTimePrecision(), "PresynapticUpdate", SynapseGroupMerged::Role::PresynapticUpdate);
+                   runnerVarDecl, runnerMergedStructAlloc, mergedStructData, 
+                   model.getPrecision(), model.getTimePrecision());
     }
 
     // Loop through merged postsynaptic update groups
     for(const auto &m : modelMerged.getMergedPostsynapticUpdateGroups()) {
         m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                               runnerVarDecl, runnerMergedStructAlloc, mergedStructData, model.getPrecision(),
-                               model.getTimePrecision(), "PostsynapticUpdate", SynapseGroupMerged::Role::PostsynapticUpdate);
+                   runnerVarDecl, runnerMergedStructAlloc, mergedStructData, 
+                   model.getPrecision(), model.getTimePrecision());
     }
 
     // Loop through synapse dynamics groups
     for(const auto &m : modelMerged.getMergedSynapseDynamicsGroups()) {
         m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                               runnerVarDecl, runnerMergedStructAlloc, mergedStructData, model.getPrecision(),
-                               model.getTimePrecision(), "SynapseDynamics", SynapseGroupMerged::Role::SynapseDynamics);
+                   runnerVarDecl, runnerMergedStructAlloc, mergedStructData, 
+                   model.getPrecision(), model.getTimePrecision());
     }
 
     // Loop through neuron groups whose spike queues need resetting
     for(const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
-        m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+        m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, 
+                   runnerVarDecl, runnerMergedStructAlloc,
                    mergedStructData, model.getPrecision());
     }
 
     // Loop through synapse groups whose dendritic delay pointers need updating
     for(const auto &m : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
-       m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                     mergedStructData, model.getPrecision());
+       m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, 
+                  runnerVarDecl, runnerMergedStructAlloc,
+                  mergedStructData, model.getPrecision());
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;

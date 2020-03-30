@@ -16,7 +16,7 @@
 namespace
 {
 void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext,
-                               const CodeGenerator::SynapseGroupMerged &sg, const CodeGenerator::Substitutions &baseSubs,
+                               const CodeGenerator::SynapseGroupMergedBase &sg, const CodeGenerator::Substitutions &baseSubs,
                                const ModelSpecInternal &model, const CodeGenerator::BackendBase &backend)
 {
     const auto *wu = sg.getArchetype().getWUModel();
@@ -118,7 +118,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
     // Synaptic update kernels
     backend.genSynapseUpdate(os, modelMerged,
         // Presynaptic weight update threshold
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             Substitutions synapseSubs(&baseSubs);
 
@@ -138,19 +138,19 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
             os << code;
         },
         // Presynaptic spike
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getSimCode(), "simCode",
                                       sg, baseSubs, model, backend);
         },
         // Presynaptic spike-like event
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getEventCode(), "eventCode",
                                       sg, baseSubs, model, backend);
         },
         // Procedural connectivity
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &baseSubs)
+        [&backend, &model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
 
@@ -185,7 +185,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
             }
         },
         // Postsynaptic learning code
-        [&backend, &modelMerged](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
+        [&backend, &modelMerged](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
             if (!wum->getLearnPostSupportCode().empty()) {
@@ -196,7 +196,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
                                       sg, baseSubs, modelMerged.getModel(), backend);
         },
         // Synapse dynamics
-        [&backend, &modelMerged](CodeStream &os, const SynapseGroupMerged &sg, const Substitutions &baseSubs)
+        [&backend, &modelMerged](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
             if (!wum->getSynapseDynamicsSuppportCode().empty()) {

@@ -153,7 +153,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                      const CodeGenerator::Substitutions &popSubs, const CodeGenerator::SynapseGroupMerged &sg, const std::string &ftype)
+                      const CodeGenerator::Substitutions &popSubs, const CodeGenerator::SynapseGroupMergedBase &sg, const std::string &ftype)
 {
     using namespace CodeGenerator;
 
@@ -317,7 +317,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             }
         },
         // Dense syanptic matrix variable initialisation
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
         {
             // Loop through rows
             os << "for(unsigned int i = 0; i < group.numSrcNeurons; i++)";
@@ -363,7 +363,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             }
         },
         // Sparse synaptic matrix var initialisation
-        [&backend, &model](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)
         {
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         },
