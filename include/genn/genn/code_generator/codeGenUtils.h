@@ -154,8 +154,6 @@ inline size_t padSize(size_t size, size_t blockSize)
     return ceilDivide(size, blockSize) * blockSize;
 }
 
-GENN_EXPORT void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronSpikeQueueUpdateMergedGroup &n);
-
 template<typename T>
 void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
                         const std::string &suffix, const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)

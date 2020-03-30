@@ -199,7 +199,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                              NeuronGroupSimHandler simHandler, GroupHandler<NeuronUpdateGroupMerged> wuVarUpdateHandler,
+                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     // Generate data structure for accessing merged groups
@@ -241,7 +241,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 if(n.getArchetype().isDelayRequired()) { // with delay
                     os << "*group.spkQuePtr  = (*group.spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
                 }
-                genMergedGroupSpikeCountReset(os, n);
+                n.genMergedGroupSpikeCountReset(os);
             }
             idPreNeuronReset += n.getGroups().size();
         }
@@ -795,8 +795,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                      GroupHandler<NeuronInitGroupMerged> localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
-                      GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                      NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
+                      SynapseConnectivityInitGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;

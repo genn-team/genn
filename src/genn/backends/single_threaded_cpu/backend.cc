@@ -63,7 +63,7 @@ namespace CodeGenerator
 namespace SingleThreadedCPU
 {
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -91,7 +91,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "const auto &group = mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
                 // Generate spike count reset
-                genMergedGroupSpikeCountReset(os, n);
+                n.genMergedGroupSpikeCountReset(os);
             }
             
         }
@@ -130,7 +130,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                     simHandler(os, n, popSubs,
                                // Emit true spikes
-                               [this, wuVarUpdateHandler](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &subs)
+                               [this, wuVarUpdateHandler](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                                {
                                    // Insert code to emit true spikes
                                    genEmitSpike(os, ng, subs, true);
@@ -139,7 +139,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                    wuVarUpdateHandler(os, ng, subs);
                                },
                                // Emit spike-like events
-                                   [this](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &subs)
+                                   [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                                {
                                    // Insert code to emit spike-like events
                                    genEmitSpike(os, ng, subs, false);
@@ -355,8 +355,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                      NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
-                      GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                      NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
+                      SynapseConnectivityInitGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1077,7 +1077,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const NeuronGroupMerged &ng, const Substitutions &subs, bool trueSpike) const
+void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
     const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();

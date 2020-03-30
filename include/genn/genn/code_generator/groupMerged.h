@@ -93,6 +93,8 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision) const;
+
+    void genMergedGroupSpikeCountReset(CodeStream &os) const;
 };
 
 //----------------------------------------------------------------------------
@@ -202,15 +204,6 @@ private:
     void addMergedInSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
                                     const std::string &type, const std::string &name, 
                                     size_t archetypeIndex, const std::string &prefix) const;
-    void addCurrentSourcePointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                                      const std::string &type, const std::string &name, 
-                                      size_t archetypeIndex, const std::string &prefix) const;
-    void addInSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                              const std::string &type, const std::string &name,
-                              size_t archetypeIndex, const std::string &prefix) const;
-    void addOutSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                               const std::string &type, const std::string &name,
-                               size_t archetypeIndex, const std::string &prefix) const;
 
     //------------------------------------------------------------------------
     // Members
@@ -323,6 +316,18 @@ public:
 class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
+    //----------------------------------------------------------------------------
+    // Enumerations
+    //----------------------------------------------------------------------------
+    enum class Role
+    {
+        PresynapticUpdate,
+        PostsynapticUpdate,
+        SynapseDynamics,
+        DenseInit,
+        SparseInit,
+    };
+
     SynapseGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   GroupMerged<SynapseGroupInternal>(index, groups)
     {}
@@ -346,6 +351,20 @@ public:
     //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
 
-    
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision, const std::string &name, Role role) const;
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    void addPSPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
+                           const std::string &type, const std::string &name, const std::string &prefix) const;
+    void addSrcPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
+                            const std::string &type, const std::string &name, const std::string &prefix) const;
+    void addTrgPointerField(MergedStructGenerator<SynapseGroupMerged> &gen, 
+                            const std::string &type, const std::string &name, const std::string &prefix) const;
 };
 }   // namespace CodeGenerator

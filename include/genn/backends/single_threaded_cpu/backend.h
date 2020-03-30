@@ -43,7 +43,7 @@ public:
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
@@ -53,8 +53,8 @@ public:
                                   HostHandler pushEGPHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                         GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
+                         SynapseConnectivityInitGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
@@ -159,7 +159,7 @@ private:
     void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
                               bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const;
 
-    void genEmitSpike(CodeStream &os, const NeuronGroupMerged &ng, const Substitutions &subs, bool trueSpike) const;
+    void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const;
 
   
     //--------------------------------------------------------------------------

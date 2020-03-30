@@ -346,27 +346,6 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 
-void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronSpikeQueueUpdateMergedGroup &n)
-{
-    if(n.getArchetype().isDelayRequired()) { // with delay
-        if(n.getArchetype().isSpikeEventRequired()) {
-            os << "group.spkCntEvnt[*group.spkQuePtr] = 0;" << std::endl;
-        }
-        if(n.getArchetype().isTrueSpikeRequired()) {
-            os << "group.spkCnt[*group.spkQuePtr] = 0;" << std::endl;
-        }
-        else {
-            os << "group.spkCnt[0] = 0;" << std::endl;
-        }
-    }
-    else { // no delay
-        if(n.getArchetype().isSpikeEventRequired()) {
-            os << "group.spkCntEvnt[0] = 0;" << std::endl;
-        }
-        os << "group.spkCnt[0] = 0;" << std::endl;
-    }
-}
-
 void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend)
 {
     // Loop through all merged EGPs

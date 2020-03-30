@@ -128,7 +128,7 @@ public:
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, GroupHandler<NeuronUpdateGroupMerged> wuVarUpdateHandler,
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
@@ -138,8 +138,8 @@ public:
                                   HostHandler pushEGPHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         GroupHandler<NeuronInitGroupMerged> localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
-                         GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
+                         SynapseConnectivityInitGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
