@@ -33,7 +33,7 @@ public:
     const ModelSpecInternal &getModel() const{ return m_Model; }
 
     //! Get merged neuron groups which require updating
-    const std::vector<NeuronGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
+    const std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
 
     //! Get merged synapse groups which require presynaptic updates
     const std::vector<SynapseGroupMerged> &getMergedPresynapticUpdateGroups() const{ return m_MergedPresynapticUpdateGroups; }
@@ -45,7 +45,7 @@ public:
     const std::vector<SynapseGroupMerged> &getMergedSynapseDynamicsGroups() const{ return m_MergedSynapseDynamicsGroups; }
 
     //! Get merged neuron groups which require initialisation
-    const std::vector<NeuronGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
+    const std::vector<NeuronInitGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
 
     //! Get merged synapse groups with dense connectivity which require initialisation
     const std::vector<SynapseGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
@@ -93,7 +93,7 @@ private:
     const ModelSpecInternal &m_Model;
 
     //! Merged neuron groups which require updating
-    std::vector<NeuronGroupMerged> m_MergedNeuronUpdateGroups;
+    std::vector<NeuronUpdateGroupMerged> m_MergedNeuronUpdateGroups;
 
     //! Merged synapse groups which require presynaptic updates
     std::vector<SynapseGroupMerged> m_MergedPresynapticUpdateGroups;
@@ -105,7 +105,7 @@ private:
     std::vector<SynapseGroupMerged> m_MergedSynapseDynamicsGroups;
 
     //! Merged neuron groups which require initialisation
-    std::vector<NeuronGroupMerged> m_MergedNeuronInitGroups;
+    std::vector<NeuronInitGroupMerged> m_MergedNeuronInitGroups;
 
     //! Merged synapse groups with dense connectivity which require initialisation
     std::vector<SynapseGroupMerged> m_MergedSynapseDenseInitGroups;

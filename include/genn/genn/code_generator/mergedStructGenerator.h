@@ -274,54 +274,6 @@ private:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::MergedNeuronStructGenerator
-//--------------------------------------------------------------------------
-class MergedNeuronStructGenerator : public MergedStructGenerator<CodeGenerator::NeuronGroupMerged>
-{
-public:
-    MergedNeuronStructGenerator(const CodeGenerator::NeuronGroupMerged &mergedGroup, const std::string &precision)
-    :   MergedStructGenerator<CodeGenerator::NeuronGroupMerged>(mergedGroup, precision)
-    {
-    }
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void addMergedInSynPointerField(const std::string &type, const std::string &name, size_t archetypeIndex, const std::string &prefix,
-                                    const std::vector<std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>>> &sortedMergedInSyns)
-    {
-        assert(!Utils::isTypePointer(type));
-        addField(type + "*", name + std::to_string(archetypeIndex),
-                 [prefix, &sortedMergedInSyns, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
-                 {
-                     return prefix + sortedMergedInSyns.at(groupIndex).at(archetypeIndex).first->getPSModelTargetName();
-                 });
-    }
-
-    void addCurrentSourcePointerField(const std::string &type, const std::string &name, size_t archetypeIndex, const std::string &prefix,
-                                      const std::vector<std::vector<CurrentSourceInternal*>> &sortedCurrentSources)
-    {
-        assert(!Utils::isTypePointer(type));
-        addField(type + "*", name + std::to_string(archetypeIndex),
-                 [prefix, &sortedCurrentSources, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
-                 {
-                     return prefix + sortedCurrentSources.at(groupIndex).at(archetypeIndex)->getName();
-                 });
-    }
-
-    void addSynPointerField(const std::string &type, const std::string &name, size_t archetypeIndex, const std::string &prefix,
-                            const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn)
-    {
-        assert(!Utils::isTypePointer(type));
-        addField(type + "*", name + std::to_string(archetypeIndex),
-                 [prefix, &sortedSyn, archetypeIndex](const NeuronGroupInternal&, size_t groupIndex)
-                 {
-                     return prefix + sortedSyn.at(groupIndex).at(archetypeIndex)->getName();
-                 });
-
-    }
-};
-//--------------------------------------------------------------------------
 // CodeGenerator::MergedSynapseStructGenerator
 //--------------------------------------------------------------------------
 class MergedSynapseStructGenerator : public MergedStructGenerator<CodeGenerator::SynapseGroupMerged>

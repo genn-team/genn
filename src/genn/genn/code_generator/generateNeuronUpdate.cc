@@ -21,7 +21,7 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, const CodeGenerator::NeuronGroupMerged &ng,
+void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, const CodeGenerator::NeuronUpdateGroupMerged &ng,
                                  const std::string &sourceSuffix = "", const std::string &destSuffix = "")
 {
     const NeuronModels::Base *nm = ng.getArchetype().getNeuronModel();
@@ -55,9 +55,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged,
         // Sim handler
-        [&backend, &modelMerged](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs,
-                                 BackendBase::NeuronGroupMergedHandler genEmitTrueSpike,
-                                 BackendBase::NeuronGroupMergedHandler genEmitSpikeLikeEvent)
+        [&backend, &modelMerged](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs,
+                                 BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitTrueSpike,
+                                 BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent)
         {
             const ModelSpecInternal &model = modelMerged.getModel();
             const NeuronModels::Base *nm = ng.getArchetype().getNeuronModel();
@@ -402,7 +402,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
             }
         },
         // WU var update handler
-        [&backend, &modelMerged](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
+        [&backend, &modelMerged](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             // Loop through outgoing synaptic populations with presynaptic update code
             const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();

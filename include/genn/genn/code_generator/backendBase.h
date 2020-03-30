@@ -22,7 +22,8 @@ class SynapseGroupInternal;
 namespace CodeGenerator
 {
     class ModelSpecMerged;
-    class NeuronGroupMerged;
+    class NeuronInitGroupMerged;
+    class NeuronUpdateGroupMerged;
     class Substitutions;
     class SynapseGroupMerged;
     class SynapseConnectivityInitMergedGroup;
@@ -129,16 +130,13 @@ public:
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
-    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified NeuronGroup to.
-    typedef GroupHandler<NeuronGroupMerged> NeuronGroupMergedHandler;
-
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
     typedef GroupHandler<SynapseGroupMerged> SynapseGroupMergedHandler;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
-    typedef std::function <void(CodeStream &, const NeuronGroupMerged &, Substitutions&,
-                                NeuronGroupMergedHandler, NeuronGroupMergedHandler)> NeuronGroupSimHandler;
+    typedef std::function <void(CodeStream &, const NeuronUpdateGroupMerged &, Substitutions&,
+                                GroupHandler<NeuronUpdateGroupMerged>, GroupHandler<NeuronUpdateGroupMerged>)> NeuronGroupSimHandler;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
@@ -155,7 +153,7 @@ public:
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                                 NeuronGroupSimHandler simHandler, GroupHandler<NeuronUpdateGroupMerged> wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
@@ -183,7 +181,7 @@ public:
                                   HostHandler pushEGPHandler) const = 0;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
+                         GroupHandler<NeuronInitGroupMerged> localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
                          GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 

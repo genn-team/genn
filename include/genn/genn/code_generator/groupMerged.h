@@ -16,7 +16,11 @@ namespace CodeGenerator
 class BackendBase;
 class CodeStream;
 class MergedStructData;
+
+template<typename T>
+class MergedStructGenerator;
 }
+
 //----------------------------------------------------------------------------
 // CodeGenerator::GroupMerged
 //----------------------------------------------------------------------------
@@ -80,7 +84,7 @@ private:
 class GENN_EXPORT NeuronSpikeQueueUpdateMergedGroup : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    NeuronSpikeQueueUpdateMergedGroup(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -92,22 +96,14 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronGroupMerged
+// CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronGroupMerged(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
-
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
-    std::string getCurrentQueueOffset() const;
-
-    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
-    std::string getPrevQueueOffset() const;
-
     //! Should the parameter be implemented heterogeneously?
     bool isParamHeterogeneous(size_t index) const;
 
@@ -120,11 +116,22 @@ public:
     //! Should the current source derived parameter be implemented heterogeneously?
     bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
-    const std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> &getSortedMergedInSyns() const{ return m_SortedMergedInSyns; }
+protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    NeuronGroupMergedBase(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
+    const std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> &getSortedMergedInSyns() const { return m_SortedMergedInSyns; }
     const std::vector<std::vector<CurrentSourceInternal *>> &getSortedCurrentSources() const { return m_SortedCurrentSources; }
     const std::vector<std::vector<SynapseGroupInternal *>> &getSortedInSynWithPostCode() const { return m_SortedInSynWithPostCode; }
-    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedOutSynWithPreCode() const{ return m_SortedOutSynWithPreCode; }
+    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedOutSynWithPreCode() const { return m_SortedOutSynWithPreCode; }
 
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+               CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+               CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+               MergedStructData &mergedStructData, const std::string &precision,
+               const std::string &timePrecision, bool init) const;
 private:
     //------------------------------------------------------------------------
     // Private methods
@@ -192,6 +199,19 @@ private:
         return false;
     }
 
+    void addMergedInSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                                    const std::string &type, const std::string &name, 
+                                    size_t archetypeIndex, const std::string &prefix) const;
+    void addCurrentSourcePointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                                      const std::string &type, const std::string &name, 
+                                      size_t archetypeIndex, const std::string &prefix) const;
+    void addInSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                              const std::string &type, const std::string &name,
+                              size_t archetypeIndex, const std::string &prefix) const;
+    void addOutSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                               const std::string &type, const std::string &name,
+                               size_t archetypeIndex, const std::string &prefix) const;
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -202,12 +222,51 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// CodeGenerator::NeuronUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
+{
+public:
+    NeuronUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
+    std::string getCurrentQueueOffset() const;
+
+    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
+    std::string getPrevQueueOffset() const;
+
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision) const;
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::NeuronInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
+{
+public:
+    NeuronInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision) const;
+};
+
+//----------------------------------------------------------------------------
 // CodeGenerator::SynapseDendriticDelayUpdateMergedGroup
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseDendriticDelayUpdateMergedGroup : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseDendriticDelayUpdateMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -224,7 +283,7 @@ public:
 class GENN_EXPORT SynapseConnectivityHostInitMergedGroup : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseConnectivityHostInitMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -247,7 +306,7 @@ public:
 class GENN_EXPORT SynapseConnectivityInitMergedGroup : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityInitMergedGroup(size_t index, bool, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseConnectivityInitMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -264,7 +323,7 @@ public:
 class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseGroupMerged(size_t index, bool, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    SynapseGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   GroupMerged<SynapseGroupInternal>(index, groups)
     {}
 

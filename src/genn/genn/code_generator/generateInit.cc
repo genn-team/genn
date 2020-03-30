@@ -17,7 +17,7 @@
 namespace
 {
 void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                       const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronGroupMerged &ng, bool spikeEvent)
+                       const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronInitGroupMerged &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
@@ -52,7 +52,7 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
 }
 //--------------------------------------------------------------------------
 void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                   const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronGroupMerged &ng, bool spikeEvent)
+                   const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronInitGroupMerged &ng, bool spikeEvent)
 {
     using namespace CodeGenerator;
 
@@ -209,7 +209,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
 
     backend.genInit(os, modelMerged,
         // Local neuron group initialisation
-        [&backend, &model](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             // Initialise spike counts
             genInitSpikeCount(os, backend, popSubs, ng, false);
