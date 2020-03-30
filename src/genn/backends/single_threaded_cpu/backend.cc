@@ -356,7 +356,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                       NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
-                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                      GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();

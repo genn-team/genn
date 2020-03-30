@@ -51,7 +51,7 @@ public:
     const std::vector<SynapseGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
 
     //! Get merged synapse groups which require connectivity initialisation
-    const std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
+    const std::vector<SynapseConnectivityInitMergedGroup> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
 
     //! Get merged synapse groups with sparse connectivity which require initialisation
     const std::vector<SynapseGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
@@ -63,7 +63,7 @@ public:
     const std::vector<SynapseDendriticDelayUpdateMergedGroup> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
 
     //! Merged synapse groups which require host code to initialise their synaptic connectivity
-    const std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityHostInitGroups() const{ return m_MergedSynapseConnectivityHostInitGroups; }
+    const std::vector<SynapseConnectivityHostInitMergedGroup> &getMergedSynapseConnectivityHostInitGroups() const{ return m_MergedSynapseConnectivityHostInitGroups; }
 
     void genNeuronUpdateGroupSupportCode(CodeStream &os) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision()); }
 
@@ -111,7 +111,7 @@ private:
     std::vector<SynapseGroupMerged> m_MergedSynapseDenseInitGroups;
 
     //! Merged synapse groups which require connectivity initialisation
-    std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityInitGroups;
+    std::vector<SynapseConnectivityInitMergedGroup> m_MergedSynapseConnectivityInitGroups;
 
     //! Merged synapse groups with sparse connectivity which require initialisation
     std::vector<SynapseGroupMerged> m_MergedSynapseSparseInitGroups;
@@ -123,7 +123,7 @@ private:
     std::vector<SynapseDendriticDelayUpdateMergedGroup> m_MergedSynapseDendriticDelayUpdateGroups;
 
     //! Merged synapse groups which require host code to initialise their synaptic connectivity
-    std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityHostInitGroups;
+    std::vector<SynapseConnectivityHostInitMergedGroup> m_MergedSynapseConnectivityHostInitGroups;
 
     //! Unique support code strings for neuron update
     SupportCodeMerged m_NeuronUpdateSupportCode;

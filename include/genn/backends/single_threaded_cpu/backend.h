@@ -54,7 +54,7 @@ public:
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                          NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;

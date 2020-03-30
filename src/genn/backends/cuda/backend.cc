@@ -796,7 +796,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                       NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                      GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;
@@ -909,9 +909,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit", idInitStart,
+        genParallelGroup<SynapseConnectivityInitMergedGroup>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit", idInitStart,
             [this](const SynapseGroupInternal &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this, sgSparseConnectHandler](CodeStream &os, const SynapseGroupMerged &sg, Substitutions &popSubs)
+            [this, sgSparseConnectHandler](CodeStream &os, const SynapseConnectivityInitMergedGroup &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing presynaptic neurons" << std::endl;
                 os << "if(" << popSubs["id"] << " < group.numSrcNeurons)";

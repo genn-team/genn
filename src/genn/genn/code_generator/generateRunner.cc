@@ -467,55 +467,6 @@ void genMergedSynapseStruct(const BackendBase &backend, CodeStream &definitionsI
                  mergedStructData, name);
 }
 //--------------------------------------------------------------------------
-void genMergedSynapseConnectivityInit(const BackendBase &backend, CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc,
-                                      CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc,
-                                      MergedStructData &mergedStructData, const SynapseGroupMerged &m, const std::string &precision, bool host)
-{
-    MergedSynapseStructGenerator gen(m, precision);
-
-    gen.addField("unsigned int", "numSrcNeurons",
-                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-    gen.addField("unsigned int", "numTrgNeurons",
-                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-    gen.addField("unsigned int", "rowStride",
-                 [&backend, m](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
-
-    if(host) {
-        // Add heterogeneous neuron model parameters
-        gen.addHeterogeneousParams(m.getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(),
-                                   [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
-                                   &CodeGenerator::SynapseGroupMerged::isConnectivityHostInitParamHeterogeneous);
-
-
-        // Add heterogeneous neuron model derived parameters
-        gen.addHeterogeneousDerivedParams(m.getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(),
-                                          [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
-                                          &CodeGenerator::SynapseGroupMerged::isConnectivityHostInitDerivedParamHeterogeneous);
-
-        // Add EGP pointers to struct for both host and device EGPs
-        gen.addEGPPointers(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
-        gen.addEGPPointers(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-                           backend.getArrayPrefix());
-    }
-    else {
-        if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            gen.addPointerField("unsigned int", "rowLength", backend.getArrayPrefix() + "rowLength");
-            gen.addPointerField(m.getArchetype().getSparseIndType(), "ind", backend.getArrayPrefix() + "ind");
-        }
-        else if(m.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            gen.addPointerField("uint32_t", "gp", backend.getArrayPrefix() + "gp");
-        }
-
-        // Add EGPs to struct
-        gen.addEGPs(m.getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-                    backend.getArrayPrefix());
-    }
-
-    // Generate structure definitions and instantiation
-    gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc,
-                 mergedStructData, host ? "SynapseConnectivityHostInit" : "SynapseConnectivityInit", host);
-}
-//--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
 {
     // A variable can be pushed and pulled if it is located on both host and device
@@ -764,7 +715,7 @@ MemAlloc genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
 }
 //-------------------------------------------------------------------------
 void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os, 
-                                    const SynapseGroupMerged &sg, const std::string &precision)
+                                    const SynapseConnectivityHostInitMergedGroup &sg, const std::string &precision)
 {
     CodeStream::Scope b(os);
     os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;
@@ -1018,8 +969,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through merged synapse connectivity host initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        genMergedSynapseConnectivityInit(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                         runnerVarDecl, runnerMergedStructAlloc, mergedStructData, m, model.getPrecision(), true);
+        m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                   runnerVarDecl, runnerMergedStructAlloc, mergedStructData, model.getPrecision());
     }
 
     // Loop through merged synapse connectivity host init groups and generate host init code
@@ -1044,8 +995,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through merged synapse connectivity initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityInitGroups()) {
-        genMergedSynapseConnectivityInit(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                         runnerVarDecl, runnerMergedStructAlloc, mergedStructData, m, model.getPrecision(), false);
+        m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                   runnerVarDecl, runnerMergedStructAlloc, mergedStructData, model.getPrecision());
     }
 
     // Loop through merged sparse synapse init groups

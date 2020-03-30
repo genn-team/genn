@@ -207,7 +207,47 @@ private:
 class GENN_EXPORT SynapseDendriticDelayUpdateMergedGroup : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateMergedGroup(size_t index, bool, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseDendriticDelayUpdateMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision) const;
+};
+
+// ----------------------------------------------------------------------------
+// SynapseConnectivityHostInitMergedGroup
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseConnectivityHostInitMergedGroup : public GroupMerged<SynapseGroupInternal>
+{
+public:
+    SynapseConnectivityHostInitMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision) const;
+
+    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityHostInitParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityHostInitDerivedParamHeterogeneous(size_t paramIndex) const;
+};
+
+// ----------------------------------------------------------------------------
+// SynapseConnectivityInitMergedGroup
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseConnectivityInitMergedGroup : public GroupMerged<SynapseGroupInternal>
+{
+public:
+    SynapseConnectivityInitMergedGroup(size_t index, bool, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -247,10 +287,6 @@ public:
     //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
 
-    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityHostInitParamHeterogeneous(size_t paramIndex) const;
-
-    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityHostInitDerivedParamHeterogeneous(size_t paramIndex) const;
+    
 };
 }   // namespace CodeGenerator

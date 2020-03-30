@@ -25,6 +25,7 @@ namespace CodeGenerator
     class NeuronGroupMerged;
     class Substitutions;
     class SynapseGroupMerged;
+    class SynapseConnectivityInitMergedGroup;
 }
 
 //--------------------------------------------------------------------------
@@ -183,7 +184,7 @@ public:
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                          NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         GroupHandler<SynapseConnectivityInitMergedGroup> sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
