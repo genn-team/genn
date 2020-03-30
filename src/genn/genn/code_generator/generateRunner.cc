@@ -1085,29 +1085,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through neuron groups whose spike queues need resetting
     for(const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
-        MergedStructGenerator<CodeGenerator::NeuronSpikeQueueUpdateMergedGroup> gen(m, model.getPrecision());
-
-        if(m.getArchetype().isDelayRequired()) {
-            gen.addField("unsigned int", "numDelaySlots",
-                         [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumDelaySlots()); });
-
-            gen.addField("volatile unsigned int*", "spkQuePtr",
-                         [&backend](const NeuronGroupInternal &ng, size_t)
-                         {
-                             return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + ng.getName() + ")";
-                         });
-        }
-
-        gen.addPointerField("unsigned int", "spkCnt", backend.getArrayPrefix() + "glbSpkCnt");
-
-        if(m.getArchetype().isSpikeEventRequired()) {
-            gen.addPointerField("unsigned int", "spkCntEvnt", backend.getArrayPrefix() + "glbSpkCntEvnt");
-        }
-
-
-        // Generate structure definitions and instantiation
-        gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                     mergedStructData, "NeuronSpikeQueueUpdate");
+        m.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                   mergedStructData, model.getPrecision());
     }
 
     // Loop through synapse groups whose dendritic delay pointers need updating

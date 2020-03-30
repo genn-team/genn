@@ -10,6 +10,13 @@
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
+// Forward declarations
+namespace CodeGenerator
+{
+class BackendBase;
+class CodeStream;
+class MergedStructData;
+}
 //----------------------------------------------------------------------------
 // CodeGenerator::GroupMerged
 //----------------------------------------------------------------------------
@@ -74,6 +81,14 @@ class GENN_EXPORT NeuronSpikeQueueUpdateMergedGroup : public GroupMerged<NeuronG
 {
 public:
     NeuronSpikeQueueUpdateMergedGroup(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision) const;
 };
 
 //----------------------------------------------------------------------------

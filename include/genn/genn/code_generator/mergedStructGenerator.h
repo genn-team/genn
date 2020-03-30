@@ -9,6 +9,7 @@
 #include "gennUtils.h"
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
 
@@ -170,7 +171,7 @@ public:
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal, 
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar, 
-                  CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, 
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &name, bool host = false) const
     {
         const size_t mergedGroupIndex = getMergedGroup().getIndex();
@@ -223,10 +224,10 @@ public:
             const auto &g = getMergedGroup().getGroups()[groupIndex];
 
             // Set all fields in array of structs
-            runnerVarAlloc << "merged" << name << "Group" << mergedGroupIndex << "[" << groupIndex << "] = {";
+            runnerMergedStructAlloc << "merged" << name << "Group" << mergedGroupIndex << "[" << groupIndex << "] = {";
             for(const auto &f : sortedFields) {
                 const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
-                runnerVarAlloc << fieldInitVal << ", ";
+                runnerMergedStructAlloc << fieldInitVal << ", ";
 
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) != FieldType::Standard) {
@@ -234,7 +235,7 @@ public:
                                                   std::get<0>(f), std::get<1>(f));
                 }
             }
-            runnerVarAlloc << "};" << std::endl;
+            runnerMergedStructAlloc << "};" << std::endl;
 
         }
 
@@ -245,7 +246,7 @@ public:
         // Otherwise
         else {
             // Then generate call to function to copy local array to device
-            runnerVarAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(merged" << name << "Group" << mergedGroupIndex << ");" << std::endl;
+            runnerMergedStructAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(merged" << name << "Group" << mergedGroupIndex << ");" << std::endl;
 
             // Finally add declaration to function to definitions internal
             definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(const Merged" << name << "Group" << mergedGroupIndex << " *group);" << std::endl;

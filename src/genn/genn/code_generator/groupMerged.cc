@@ -6,6 +6,11 @@
 // GeNN includes
 #include "modelSpecInternal.h"
 
+// GeNN code generator includes
+#include "code_generator/backendBase.h"
+#include "code_generator/codeGenUtils.h"
+#include "code_generator/codeStream.h"
+#include "code_generator/mergedStructGenerator.h"
 
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronSpikeQueueUpdateMergedGroup
@@ -14,6 +19,36 @@ CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::NeuronSpikeQueueUpdateMergedGr
     : CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups)
 {
     assert(!init);
+}
+//----------------------------------------------------------------------------
+void CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::generate(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsInternal,
+                                                                CodeGenerator::CodeStream &definitionsInternalFunc, CodeGenerator::CodeStream &definitionsInternalVar,
+                                                                CodeGenerator::CodeStream &runnerVarDecl, CodeGenerator::CodeStream &runnerMergedStructAlloc,
+                                                                CodeGenerator::MergedStructData &mergedStructData, const std::string &precision) const
+{
+    MergedStructGenerator<CodeGenerator::NeuronSpikeQueueUpdateMergedGroup> gen(*this, precision);
+
+    if(getArchetype().isDelayRequired()) {
+        gen.addField("unsigned int", "numDelaySlots",
+                     [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumDelaySlots()); });
+
+        gen.addField("volatile unsigned int*", "spkQuePtr",
+                     [&backend](const NeuronGroupInternal &ng, size_t)
+                     {
+                         return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + ng.getName() + ")";
+                     });
+    }
+
+    gen.addPointerField("unsigned int", "spkCnt", backend.getArrayPrefix() + "glbSpkCnt");
+
+    if(getArchetype().isSpikeEventRequired()) {
+        gen.addPointerField("unsigned int", "spkCntEvnt", backend.getArrayPrefix() + "glbSpkCntEvnt");
+    }
+
+
+    // Generate structure definitions and instantiation
+    gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
+                 mergedStructData, "NeuronSpikeQueueUpdate");
 }
 
 //----------------------------------------------------------------------------
