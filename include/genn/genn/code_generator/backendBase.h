@@ -29,7 +29,7 @@ namespace CodeGenerator
     class PresynapticUpdateGroupMerged;
     class PostsynapticUpdateGroupMerged;
     class SynapseDynamicsGroupMerged;
-    class SynapseConnectivityInitMergedGroup;
+    class SynapseConnectivityInitGroupMerged;
     class SynapseDenseInitGroupMerged;
     class SynapseSparseInitGroupMerged;
 }
@@ -141,7 +141,7 @@ public:
     typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
     typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
     typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
-    typedef GroupHandler<SynapseConnectivityInitMergedGroup> SynapseConnectivityInitMergedGroupHandler;
+    typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
     typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
 

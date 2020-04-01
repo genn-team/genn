@@ -340,7 +340,7 @@ MemAlloc genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
 }
 //-------------------------------------------------------------------------
 void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os, 
-                                    const SynapseConnectivityHostInitMergedGroup &sg, const std::string &precision)
+                                    const SynapseConnectivityHostInitGroupMerged &sg, const std::string &precision)
 {
     CodeStream::Scope b(os);
     os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;

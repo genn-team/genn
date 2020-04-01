@@ -329,7 +329,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             }
         },
         // Sparse synaptic matrix connectivity initialisation
-        [&model](CodeStream &os, const SynapseConnectivityInitMergedGroup &sg, Substitutions &popSubs)
+        [&model](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
         {
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
 

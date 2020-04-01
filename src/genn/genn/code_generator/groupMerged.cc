@@ -13,19 +13,19 @@
 #include "code_generator/mergedStructGenerator.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronSpikeQueueUpdateMergedGroup
+// CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
-CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::NeuronSpikeQueueUpdateMergedGroup(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
     : CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups)
 {
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::generate(const BackendBase &backend, CodeStream &definitionsInternal,
+void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                 CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                                                                 CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                                                                 MergedStructData &mergedStructData, const std::string &precision) const
 {
-    MergedStructGenerator<NeuronSpikeQueueUpdateMergedGroup> gen(*this, precision);
+    MergedStructGenerator<NeuronSpikeQueueUpdateGroupMerged> gen(*this, precision);
 
     if(getArchetype().isDelayRequired()) {
         gen.addField("unsigned int", "numDelaySlots",
@@ -50,7 +50,7 @@ void CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::generate(const BackendBas
                  mergedStructData, "NeuronSpikeQueueUpdate");
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::NeuronSpikeQueueUpdateMergedGroup::genMergedGroupSpikeCountReset(CodeStream &os) const
+void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os) const
 {
     if(getArchetype().isDelayRequired()) { // with delay
         if(getArchetype().isSpikeEventRequired()) {
@@ -423,19 +423,19 @@ void CodeGenerator::NeuronInitGroupMerged::generate(const BackendBase &backend, 
 
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateMergedGroup
+// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
-CodeGenerator::SynapseDendriticDelayUpdateMergedGroup::SynapseDendriticDelayUpdateMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, groups)
 {
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseDendriticDelayUpdateMergedGroup::generate(const BackendBase &backend, CodeStream &definitionsInternal,
+void CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                      CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                                                                      CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                                                                      MergedStructData &mergedStructData, const std::string &precision) const
 {
-    MergedStructGenerator<SynapseDendriticDelayUpdateMergedGroup> gen(*this, precision);
+    MergedStructGenerator<SynapseDendriticDelayUpdateGroupMerged> gen(*this, precision);
 
     gen.addField("volatile unsigned int*", "denDelayPtr",
                  [&backend](const SynapseGroupInternal &sg, size_t)
@@ -449,19 +449,19 @@ void CodeGenerator::SynapseDendriticDelayUpdateMergedGroup::generate(const Backe
 }
 
 // ----------------------------------------------------------------------------
-// SynapseConnectivityHostInitMergedGroup
+// SynapseConnectivityHostInitGroupMerged
 //----------------------------------------------------------------------------
-CodeGenerator::SynapseConnectivityHostInitMergedGroup::SynapseConnectivityHostInitMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 : GroupMerged<SynapseGroupInternal>(index, groups)
 {
 }
 //------------------------------------------------------------------------
-void CodeGenerator::SynapseConnectivityHostInitMergedGroup::generate(const BackendBase &backend, CodeStream &definitionsInternal,
+void CodeGenerator::SynapseConnectivityHostInitGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                      CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                                                                      CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                                                                      MergedStructData &mergedStructData, const std::string &precision) const
 {
-    MergedStructGenerator<SynapseConnectivityHostInitMergedGroup> gen(*this, precision);
+    MergedStructGenerator<SynapseConnectivityHostInitGroupMerged> gen(*this, precision);
 
     // **TODO** these could be generic
     gen.addField("unsigned int", "numSrcNeurons",
@@ -475,13 +475,13 @@ void CodeGenerator::SynapseConnectivityHostInitMergedGroup::generate(const Backe
     // **TODO** shouldn't non-host have this too!?
     gen.addHeterogeneousParams(getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(),
                                [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
-                               &SynapseConnectivityHostInitMergedGroup::isConnectivityHostInitParamHeterogeneous);
+                               &SynapseConnectivityHostInitGroupMerged::isConnectivityHostInitParamHeterogeneous);
 
 
     // Add heterogeneous connectivity initialiser derived parameters
     gen.addHeterogeneousDerivedParams(getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(),
                                       [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
-                                      &SynapseConnectivityHostInitMergedGroup::isConnectivityHostInitDerivedParamHeterogeneous);
+                                      &SynapseConnectivityHostInitGroupMerged::isConnectivityHostInitDerivedParamHeterogeneous);
 
     // Add EGP pointers to struct for both host and device EGPs
     gen.addEGPPointers(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
@@ -493,7 +493,7 @@ void CodeGenerator::SynapseConnectivityHostInitMergedGroup::generate(const Backe
                  mergedStructData,  "SynapseConnectivityHostInit", true);
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseConnectivityHostInitMergedGroup::isConnectivityHostInitParamHeterogeneous(size_t paramIndex) const
+bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityHostInitParamHeterogeneous(size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
@@ -515,7 +515,7 @@ bool CodeGenerator::SynapseConnectivityHostInitMergedGroup::isConnectivityHostIn
     }
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseConnectivityHostInitMergedGroup::isConnectivityHostInitDerivedParamHeterogeneous(size_t paramIndex) const
+bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityHostInitDerivedParamHeterogeneous(size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
@@ -538,19 +538,19 @@ bool CodeGenerator::SynapseConnectivityHostInitMergedGroup::isConnectivityHostIn
 }
 
 // ----------------------------------------------------------------------------
-// SynapseConnectivityInitMergedGroup
+// SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------
-CodeGenerator::SynapseConnectivityInitMergedGroup::SynapseConnectivityInitMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     : GroupMerged<SynapseGroupInternal>(index, groups)
 {
 }
 //------------------------------------------------------------------------
-void CodeGenerator::SynapseConnectivityInitMergedGroup::generate(const BackendBase &backend, CodeStream &definitionsInternal,
+void CodeGenerator::SynapseConnectivityInitGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                                                                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                                                                  MergedStructData &mergedStructData, const std::string &precision) const
 {
-    MergedStructGenerator<SynapseConnectivityInitMergedGroup> gen(*this, precision);
+    MergedStructGenerator<SynapseConnectivityInitGroupMerged> gen(*this, precision);
 
     // **TODO** these could be generic
     gen.addField("unsigned int", "numSrcNeurons",

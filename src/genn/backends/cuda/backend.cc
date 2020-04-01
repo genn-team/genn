@@ -909,9 +909,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseConnectivityInitMergedGroup>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit", idInitStart,
+        genParallelGroup<SynapseConnectivityInitGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit", idInitStart,
             [this](const SynapseGroupInternal &sg){ return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-            [this, sgSparseConnectHandler](CodeStream &os, const SynapseConnectivityInitMergedGroup &sg, Substitutions &popSubs)
+            [this, sgSparseConnectHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing presynaptic neurons" << std::endl;
                 os << "if(" << popSubs["id"] << " < group.numSrcNeurons)";

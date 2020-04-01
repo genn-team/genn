@@ -79,12 +79,12 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronSpikeQueueUpdateMergedGroup
+// CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronSpikeQueueUpdateMergedGroup : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateMergedGroup(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -254,12 +254,12 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateMergedGroup
+// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDendriticDelayUpdateMergedGroup : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -271,12 +271,12 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// SynapseConnectivityHostInitMergedGroup
+// SynapseConnectivityHostInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityHostInitMergedGroup : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseConnectivityHostInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -294,12 +294,12 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// SynapseConnectivityInitMergedGroup
+// SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityInitMergedGroup : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityInitMergedGroup(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseConnectivityInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
