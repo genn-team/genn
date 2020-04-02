@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <algorithm>
 #include <functional>
 #include <vector>
 
@@ -70,6 +71,26 @@ protected:
                            });
     }
 
+    //! Helper to test whether parameter values are heterogeneous within merged group
+    template<typename P>
+    bool isParamValueHeterogeneous(std::initializer_list<std::string> codeStrings, const std::string &paramName,
+                                   size_t index, P getParamValuesFn) const
+    {
+        // If none of the code strings reference the parameter, return false
+        if(std::none_of(codeStrings.begin(), codeStrings.end(),
+                        [&paramName](const std::string &c) 
+                        { 
+                            return (c.find("$(" + paramName + ")") != std::string::npos); 
+                        }))
+        {
+            return false;
+        }
+        // Otherwise check if values are heterogeneous
+        else {
+            return isParamValueHeterogeneous<P>(index, getParamValuesFn);
+        }
+    }
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -119,6 +140,12 @@ public:
 
     //! Should the current source derived parameter be implemented heterogeneously?
     bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the postsynaptic model parameter be implemented heterogeneously?
+    bool isPSMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the postsynaptic model derived parameter be implemented heterogeneously?
+    bool isPSMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
 protected:
     //------------------------------------------------------------------------
@@ -185,21 +212,31 @@ private:
         const std::vector<T> &archetypeChildren = (getArchetype().*getVectorFunc)();
         orderNeuronGroupChildren(archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
     }
-    
-    template<typename T, typename G>
-    bool isChildParamValueHeterogeneous(size_t childIndex, size_t paramIndex, const std::vector<std::vector<T>> &sortedGroupChildren,
-                                        G getParamValuesFn) const
-    {
-        // Get value of archetype derived parameter
-        const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
 
-        // Loop through groups within merged group
-        for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
-            const auto group = sortedGroupChildren[i][childIndex];
-            if(getParamValuesFn(group).at(paramIndex) != firstValue) {
-                return true;
+    template<typename T, typename G>
+    bool isChildParamValueHeterogeneous(std::initializer_list<std::string> codeStrings,
+                                        const std::string &paramName, size_t childIndex, size_t paramIndex,
+                                        const std::vector<std::vector<T>> &sortedGroupChildren, G getParamValuesFn) const
+    {
+        // If none of the code strings reference the parameter
+        if(std::any_of(codeStrings.begin(), codeStrings.end(),
+                        [&paramName](const std::string &c)
+                        {
+                            return (c.find("$(" + paramName + ")") != std::string::npos);
+                        }))
+        {
+            // Get value of archetype derived parameter
+            const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
+
+            // Loop through groups within merged group
+            for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
+                const auto group = sortedGroupChildren[i][childIndex];
+                if(getParamValuesFn(group).at(paramIndex) != firstValue) {
+                    return true;
+                }
             }
         }
+
         return false;
     }
 
