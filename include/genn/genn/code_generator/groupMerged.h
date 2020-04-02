@@ -147,6 +147,18 @@ public:
     //! Should the postsynaptic model derived parameter be implemented heterogeneously?
     bool isPSMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
+    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
+    bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    
+    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
+    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
+    bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
+    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
 protected:
     //------------------------------------------------------------------------
     // Protected methods
