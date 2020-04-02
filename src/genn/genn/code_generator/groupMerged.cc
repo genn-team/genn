@@ -15,11 +15,6 @@
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
-CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    : CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups)
-{
-}
-//----------------------------------------------------------------------------
 void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                 CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                                                                 CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
@@ -373,12 +368,6 @@ void CodeGenerator::NeuronGroupMergedBase::addMergedInSynPointerField(MergedStru
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronUpdateGroupMerged
 //----------------------------------------------------------------------------
-CodeGenerator::NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    : NeuronGroupMergedBase(index, false, groups)
-{
-
-}
-//----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentQueueOffset() const
 {
     assert(getArchetype().isDelayRequired());
@@ -390,45 +379,9 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getPrevQueueOffset() const
     assert(getArchetype().isDelayRequired());
     return "(((*group.spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * group.numNeurons)";
 }
-//----------------------------------------------------------------------------
-void CodeGenerator::NeuronUpdateGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
-                                                      CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                                                      CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                                                      MergedStructData &mergedStructData, const std::string &precision,
-                                                      const std::string &timePrecision) const
-{
-    NeuronGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                    runnerVarDecl, runnerMergedStructAlloc, mergedStructData, precision, timePrecision, false);
-}
-
-//----------------------------------------------------------------------------
-// CodeGenerator::NeuronInitGroupMerged
-//----------------------------------------------------------------------------
-CodeGenerator::NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    : NeuronGroupMergedBase(index, true, groups)
-{
-
-}
-//----------------------------------------------------------------------------
-void CodeGenerator::NeuronInitGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
-                                                    CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                                                    CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                                                    MergedStructData &mergedStructData, const std::string &precision,
-                                                    const std::string &timePrecision) const
-{
-    NeuronGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                    runnerVarDecl, runnerMergedStructAlloc, mergedStructData, precision, timePrecision, true);
-}
-
-
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
-//----------------------------------------------------------------------------
-CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, groups)
-{
-}
 //----------------------------------------------------------------------------
 void CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                      CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
@@ -450,11 +403,6 @@ void CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::generate(const Backe
 
 // ----------------------------------------------------------------------------
 // SynapseConnectivityHostInitGroupMerged
-//----------------------------------------------------------------------------
-CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-: GroupMerged<SynapseGroupInternal>(index, groups)
-{
-}
 //------------------------------------------------------------------------
 void CodeGenerator::SynapseConnectivityHostInitGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                      CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
@@ -539,11 +487,6 @@ bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityHostIn
 
 // ----------------------------------------------------------------------------
 // SynapseConnectivityInitGroupMerged
-//----------------------------------------------------------------------------
-CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    : GroupMerged<SynapseGroupInternal>(index, groups)
-{
-}
 //------------------------------------------------------------------------
 void CodeGenerator::SynapseConnectivityInitGroupMerged::generate(const BackendBase &backend, CodeStream &definitionsInternal,
                                                                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,

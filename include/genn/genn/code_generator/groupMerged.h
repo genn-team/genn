@@ -84,7 +84,9 @@ private:
 class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+    :   GroupMerged<NeuronGroupInternal>(index, groups)
+    {}
 
     //------------------------------------------------------------------------
     // Public API
@@ -130,10 +132,10 @@ protected:
     const std::vector<std::vector<SynapseGroupInternal *>> &getSortedOutSynWithPreCode() const { return m_SortedOutSynWithPreCode; }
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
-               CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-               CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-               MergedStructData &mergedStructData, const std::string &precision,
-               const std::string &timePrecision, bool init) const;
+                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                  MergedStructData &mergedStructData, const std::string &precision,
+                  const std::string &timePrecision, bool init) const;
 private:
     //------------------------------------------------------------------------
     // Private methods
@@ -220,7 +222,9 @@ private:
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    NeuronUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+    :   NeuronGroupMergedBase(index, false, groups)
+    {}
 
     //------------------------------------------------------------------------
     // Public API
@@ -235,7 +239,11 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision,
-                  const std::string &timePrecision) const;
+                  const std::string &timePrecision) const
+    {
+        NeuronGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                                        runnerVarDecl, runnerMergedStructAlloc, mergedStructData, precision, timePrecision, false);
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -244,13 +252,19 @@ public:
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    NeuronInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+    :   NeuronGroupMergedBase(index, true, groups)
+    {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision,
-                  const std::string &timePrecision) const;
+                  const std::string &timePrecision) const
+    {
+        NeuronGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                                        runnerVarDecl, runnerMergedStructAlloc, mergedStructData, precision, timePrecision, true);
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -259,7 +273,9 @@ public:
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   GroupMerged<SynapseGroupInternal>(index, groups)
+    {}
 
     //------------------------------------------------------------------------
     // Public API
@@ -276,7 +292,9 @@ public:
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseConnectivityHostInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   GroupMerged<SynapseGroupInternal>(index, groups)
+    {}
 
     //------------------------------------------------------------------------
     // Public API
@@ -299,7 +317,9 @@ public:
 class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+    SynapseConnectivityInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   GroupMerged<SynapseGroupInternal>(index, groups)
+    {}
 
     //------------------------------------------------------------------------
     // Public API
@@ -316,7 +336,6 @@ public:
 class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
 {
 public:
-   
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -350,7 +369,7 @@ protected:
     };
 
     SynapseGroupMergedBase(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-        : GroupMerged<SynapseGroupInternal>(index, groups)
+    :   GroupMerged<SynapseGroupInternal>(index, groups)
     {}
 
     //----------------------------------------------------------------------------
