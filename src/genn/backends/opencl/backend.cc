@@ -599,24 +599,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 	{
 		CodeStream::Scope b(os);
 
-		// Initializing all OpenCL buffers (device variables)
-		os << "// Initialize buffers to be used by OpenCL kernels" << std::endl;
-
-		std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
-		int neuronCount = model.getLocalNeuronGroups().begin()->second.getNumNeurons();
-		// Initializing glb buffers
-		os << getVarPrefix() << "glbSpk" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << neuronCount << " * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
-		os << getVarPrefix() << "glbSpkCnt" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, 1 * sizeof(" << "glbSpkCnt" << nmName << "), " << "glbSpkCnt" << nmName << ");" << std::endl;
-		// Initializing neuron buffers
-		for (const auto& ng : model.getLocalNeuronGroups()) {
-			auto* nm = ng.second.getNeuronModel();
-			for (const auto& v : nm->getVars()) {
-				os << getVarPrefix() << v.name << ng.second.getName() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << ng.second.getNumNeurons() << " * sizeof(" << v.name << ng.second.getName() << "), " << v.name << ng.second.getName() << ");" << std::endl;
-			}
-		}
-
-		os << std::endl;
-
 		// KernelInitialize initialization
 		os << KernelNames[KernelInitialize] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
 		{
@@ -640,6 +622,17 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 		os << std::endl;
 		os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelInitialize] << ")));" << std::endl;
 		os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+	}
+
+	os << std::endl;
+
+	// Generating code for initializing all OpenCL elements - Using intializeSparse
+	os << "// Initialize all OpenCL elements" << std::endl;
+	os << "void initializeSparse()";
+	{
+		CodeStream::Scope b(os);
+		// Copy all uninitialised state variables to device
+		os << "copyStateToDevice(true);" << std::endl;
 	}
 }
 //--------------------------------------------------------------------------
@@ -785,19 +778,6 @@ void Backend::genRunnerPreamble(CodeStream& os) const
 
 	os << std::endl;
 
-	// Generating code for initializing all OpenCL elements - Using intializeSparse
-	os << "// Initialize all OpenCL elements" << std::endl;
-	os << "void initializeSparse()";
-	{
-		CodeStream::Scope b(os);
-		os << "initPrograms();" << std::endl;
-		os << "// Initializing kernels" << std::endl;
-		os << "initInitializationKernels();" << std::endl;
-		os << "initUpdateNeuronsKernels();" << std::endl;
-	}
-
-	os << std::endl;
-
 	// Implementation of OpenCL functions declared in definitionsInternal
 	os << "// ------------------------------------------------------------------------" << std::endl;
 	os << "// OpenCL functions implementation" << std::endl;
@@ -855,7 +835,35 @@ void Backend::genRunnerPreamble(CodeStream& os) const
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& model) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genAllocateMemPreamble");
+	// Initializing OpenCL programs
+	os << "initPrograms();" << std::endl;
+
+	os << std::endl;
+
+	// Initializing all OpenCL buffers (device variables)
+	os << "// ------------------------------------------------------------------------" << std::endl;
+	os << "// device buffers" << std::endl;
+	os << "// ------------------------------------------------------------------------" << std::endl;
+
+	std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
+	int neuronCount = model.getLocalNeuronGroups().begin()->second.getNumNeurons();
+	// Initializing glb buffers
+	os << getVarPrefix() << "glbSpk" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << neuronCount << " * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
+	os << getVarPrefix() << "glbSpkCnt" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, 1 * sizeof(" << "glbSpkCnt" << nmName << "), " << "glbSpkCnt" << nmName << ");" << std::endl;
+	// Initializing neuron buffers
+	for (const auto& ng : model.getLocalNeuronGroups()) {
+		auto* nm = ng.second.getNeuronModel();
+		for (const auto& v : nm->getVars()) {
+			os << getVarPrefix() << v.name << ng.second.getName() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << ng.second.getNumNeurons() << " * sizeof(" << v.name << ng.second.getName() << "), " << v.name << ng.second.getName() << ");" << std::endl;
+		}
+	}
+
+	os << std::endl;
+
+	os << "// Initialize kernels" << std::endl;
+	os << "initInitializationKernels();" << std::endl;
+	os << "initUpdateNeuronsKernels();" << std::endl;
+
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecInternal& model) const
@@ -961,11 +969,20 @@ void Backend::genSynapseVariableRowInit(CodeStream& os, VarLocation, const Synap
 void Backend::genVariablePush(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, bool autoInitialized, size_t count) const
 {
 	if (!(loc & VarLocation::ZERO_COPY)) {
-		os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << name;
+		// Only copy if uninitialisedOnly isn't set
+		if (autoInitialized) {
+			os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
+		}
+
+		os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << getVarPrefix() << name;
 		os << ", " << "CL_TRUE";
 		os << ", " << "0";
 		os << ", " << count << " * sizeof(" << type << ")";
 		os << ", " << name << "));" << std::endl;
+
+		if (autoInitialized) {
+			os << CodeStream::CB(1101);
+		}
 	}
 }
 //--------------------------------------------------------------------------
@@ -982,23 +999,34 @@ void Backend::genVariablePull(CodeStream& os, const std::string& type, const std
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream& os, const NeuronGroupInternal& ng, const std::string& type, const std::string& name, VarLocation loc) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genCurrentVariablePush");
+	// If this variable requires queuing and isn't zero-copy
+	if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+		// Generate memcpy to copy only current timestep's data
+		//! TO BE IMPLEMENTED
+		/*os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+		os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+		os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;*/
+	}
+	// Otherwise, generate standard push
+	else {
+		genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
+	}
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePull(CodeStream& os, const NeuronGroupInternal& ng, const std::string& type, const std::string& name, VarLocation loc) const
 {
-    // If this variable requires queuing and isn't zero-copy
-    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
-        // Generate memcpy to copy only current timestep's data
-        //! TO BE IMPLEMENTED
+	// If this variable requires queuing and isn't zero-copy
+	if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+		// Generate memcpy to copy only current timestep's data
+		//! TO BE IMPLEMENTED
 		/*os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;*/
-    }
-    // Otherwise, generate standard push
-    else {
-        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
-    }
+		os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
+		os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;*/
+	}
+	// Otherwise, generate standard push
+	else {
+		genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons());
+	}
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free, const ModelSpecInternal&) const
