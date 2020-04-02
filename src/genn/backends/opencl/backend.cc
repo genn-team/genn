@@ -840,26 +840,6 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& mo
 
 	os << std::endl;
 
-	// Initializing all OpenCL buffers (device variables)
-	os << "// ------------------------------------------------------------------------" << std::endl;
-	os << "// device buffers" << std::endl;
-	os << "// ------------------------------------------------------------------------" << std::endl;
-
-	std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
-	int neuronCount = model.getLocalNeuronGroups().begin()->second.getNumNeurons();
-	// Initializing glb buffers
-	os << getVarPrefix() << "glbSpk" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << neuronCount << " * sizeof(" << "glbSpk" << nmName << "), " << "glbSpk" << nmName << ");" << std::endl;
-	os << getVarPrefix() << "glbSpkCnt" << nmName << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, 1 * sizeof(" << "glbSpkCnt" << nmName << "), " << "glbSpkCnt" << nmName << ");" << std::endl;
-	// Initializing neuron buffers
-	for (const auto& ng : model.getLocalNeuronGroups()) {
-		auto* nm = ng.second.getNeuronModel();
-		for (const auto& v : nm->getVars()) {
-			os << getVarPrefix() << v.name << ng.second.getName() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << ng.second.getNumNeurons() << " * sizeof(" << v.name << ng.second.getName() << "), " << v.name << ng.second.getName() << ");" << std::endl;
-		}
-	}
-
-	os << std::endl;
-
 	os << "// Initialize kernels" << std::endl;
 	os << "initInitializationKernels();" << std::endl;
 	os << "initUpdateNeuronsKernels();" << std::endl;
@@ -898,8 +878,19 @@ void Backend::genVariableImplementation(CodeStream& os, const std::string& type,
 //--------------------------------------------------------------------------
 MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const
 {
-	auto allocation = MemAlloc::host(count * getSize(type));
-	os << name << " = " << "(" << type << "*)malloc(" << count << " * sizeof(" << type << "));" << std::endl;
+	auto allocation = MemAlloc::zero();
+
+	if (loc & VarLocation::HOST) {
+		os << name << " = (" << type << "*)malloc(" << count << " * sizeof(" << type << "));" << std::endl;
+		allocation += MemAlloc::host(count * getSize(type));
+	}
+
+	// If variable is present on device then initialize the device buffer
+	if (loc & VarLocation::DEVICE) {
+		os << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << count << " * sizeof (" << type << "), " << name << ");" << std::endl;
+		allocation += MemAlloc::device(count * getSize(type));
+	}
+
     return allocation;
 }
 //--------------------------------------------------------------------------
