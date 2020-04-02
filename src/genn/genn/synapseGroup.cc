@@ -488,8 +488,6 @@ bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
     const bool delayed = (getDelaySteps() != 0);
     const bool otherDelayed = (other.getDelaySteps() != 0);
     return (getWUModel()->canBeMerged(other.getWUModel())
-            && (getWUParams() == other.getWUParams())
-            && (getWUDerivedParams() == other.getWUDerivedParams())
             && (delayed == otherDelayed));
 }
 //----------------------------------------------------------------------------
@@ -498,8 +496,6 @@ bool SynapseGroup::canWUPostBeMerged(const SynapseGroup &other) const
     const bool delayed = (getDelaySteps() != 0);
     const bool otherDelayed = (other.getDelaySteps() != 0);
     return (getWUModel()->canBeMerged(other.getWUModel())
-            && (getWUParams() == other.getWUParams())
-            && (getWUDerivedParams() == other.getWUDerivedParams())
             && (delayed == otherDelayed));
 }
 //----------------------------------------------------------------------------

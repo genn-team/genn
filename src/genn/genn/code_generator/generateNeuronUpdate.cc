@@ -424,9 +424,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                     }
                     os << preSubs["id"] << "];" << std::endl;
                 }
-
-                preSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams());
-                preSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams());
+                preSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
+                                                  [i, &ng](size_t k) { return ng.isOutSynWUMParamHeterogeneous(i, k); },
+                                                  "", "group.", "WUPre" + std::to_string(i));
+                preSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams(),
+                                                [i, &ng](size_t k) { return ng.isOutSynWUMDerivedParamHeterogeneous(i, k); },
+                                                "", "group.", "WUPre" + std::to_string(i));
                 preSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group.", "WUPre" + std::to_string(i));
                 preSubs.addVarNameSubstitution(sg->getWUModel()->getPreVars(), "", "l");
 
@@ -476,8 +479,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                     os << postSubs["id"] << "];" << std::endl;
                 }
 
-                postSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams());
-                postSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams());
+                postSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
+                                                   [i, &ng](size_t k) { return ng.isInSynWUMParamHeterogeneous(i, k); },
+                                                   "", "group.", "WUPost" + std::to_string(i));
+                postSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams(),
+                                                 [i, &ng](size_t k) { return ng.isInSynWUMDerivedParamHeterogeneous(i, k); },
+                                                 "", "group.", "WUPost" + std::to_string(i));
                 postSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group.", "WUPost" + std::to_string(i));
                 postSubs.addVarNameSubstitution(sg->getWUModel()->getPostVars(), "", "l");
 
