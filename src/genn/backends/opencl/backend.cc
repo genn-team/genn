@@ -838,9 +838,14 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& mo
 	// Initializing OpenCL programs
 	os << "initPrograms();" << std::endl;
 
-	os << std::endl;
-
-	os << "// Initialize kernels" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genAllocateMemPostamble(CodeStream& os, const ModelSpecInternal& model) const
+{
+	// Initializing OpenCL kernels - after buffer initialization
+	os << "// ------------------------------------------------------------------------" << std::endl;
+	os << "// OpenCL kernels initialization" << std::endl;
+	os << "// ------------------------------------------------------------------------" << std::endl;
 	os << "initInitializationKernels();" << std::endl;
 	os << "initUpdateNeuronsKernels();" << std::endl;
 

@@ -960,7 +960,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << std::endl;
 
     // ---------------------------------------------------------------------
-    // Function for setting the CUDA device and the host's global variables.
+    // Function for setting the CUDA/OpenCL device and the host's global variables.
     // Also estimates memory usage on device ...
     runner << "void allocateMem()";
     {
@@ -972,6 +972,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // Write variable allocations to runner
         runner << runnerVarAllocStream.str();
+
+        // Generate postamble
+        backend.genAllocateMemPostamble(runner, model);
     }
     runner << std::endl;
 

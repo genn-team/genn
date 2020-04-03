@@ -171,8 +171,9 @@ public:
     virtual void genRunnerPreamble(CodeStream &os) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
-    //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;
+    //! Therefore it's a good place for any global initialisation. These functions generate a 'preamble' and 'postamble' to this function.
+	virtual void genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& model) const = 0;
+	virtual void genAllocateMemPostamble(CodeStream& os, const ModelSpecInternal& model) const = 0;
 
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const = 0;

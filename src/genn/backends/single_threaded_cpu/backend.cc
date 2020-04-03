@@ -555,7 +555,11 @@ void Backend::genRunnerPreamble(CodeStream &) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpecInternal &) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecInternal&) const
+{
+}
+//--------------------------------------------------------------------------
+void Backend::genAllocateMemPostamble(CodeStream&, const ModelSpecInternal&) const
 {
 }
 //--------------------------------------------------------------------------
