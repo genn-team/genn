@@ -94,13 +94,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
             os << std::endl;
 
             // If neuron model sim code references ISyn (could still be the case if there are no incoming synapses)
-            // OR any incoming synapse groups have post synaptic models which reference $(inSyn), declare it
+            // OR any incoming synapse groups have post synaptic models which reference $(Isyn), declare it
             if (nm->getSimCode().find("$(Isyn)") != std::string::npos ||
                 std::any_of(ng.getMergedInSyn().cbegin(), ng.getMergedInSyn().cend(),
                             [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &p)
                             {
-                                return (p.first->getPSModel()->getApplyInputCode().find("$(inSyn)") != std::string::npos
-                                        || p.first->getPSModel()->getDecayCode().find("$(inSyn)") != std::string::npos);
+                                return (p.first->getPSModel()->getApplyInputCode().find("$(Isyn)") != std::string::npos
+                                        || p.first->getPSModel()->getDecayCode().find("$(Isyn)") != std::string::npos);
                             }))
             {
                 os << model.getPrecision() << " Isyn = 0;" << std::endl;
