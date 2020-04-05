@@ -1046,17 +1046,21 @@ void Backend::genTimer(CodeStream&, CodeStream& definitionsInternal, CodeStream&
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMakefilePreamble");
+	os << "LIBS := " << "-lOpenCL" << std::endl;
+	os << "INCL := " << "-I$(OPENCL_PATH)/include" << std::endl;
+	os << "LINKFLAGS := " << "-shared" << std::endl;
+	os << "CXXFLAGS := " << "-c -fPIC -std=c++11 -MMD -MP" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMakefileLinkRule");
+	os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS) $(LIBS)" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileCompileRule(std::ostream& os) const
 {
-	printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMakefileCompileRule");
+	os << "%.o: %.cc" << std::endl;
+	os << "\t@$(CXX) $(CXXFLAGS) $(INCL) -o $@ $<" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream& os) const
