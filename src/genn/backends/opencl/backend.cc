@@ -799,7 +799,7 @@ void Backend::genRunnerPreamble(CodeStream& os) const
 		{
 			CodeStream::Scope b(os);
 			os << "std::vector<cl::Device> platformDevices;" << std::endl;
-			os << "platforms[i].getDevices(CL_DEVICE_TYPE_GPU, &platformDevices);" << std::endl;
+			os << "platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);" << std::endl;
 			os << "devices.insert(devices.end(), platformDevices.begin(), platformDevices.end());" << std::endl;
 		}
 		os << std::endl;
@@ -892,7 +892,7 @@ MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type,
 
 	// If variable is present on device then initialize the device buffer
 	if (loc & VarLocation::DEVICE) {
-		os << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << count << " * sizeof (" << type << "), " << name << ");" << std::endl;
+		os << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << count << " * sizeof (" << type << "), " << name << ");" << std::endl;
 		allocation += MemAlloc::device(count * getSize(type));
 	}
 
