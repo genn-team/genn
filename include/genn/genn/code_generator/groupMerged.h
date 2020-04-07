@@ -252,6 +252,44 @@ private:
         return false;
     }
 
+    template<typename H, typename V>
+    void addHeterogeneousChildParams(MergedStructGenerator<NeuronGroupMergedBase> &gen, 
+                                     const Snippet::Base::StringVec &paramNames, size_t childIndex,
+                                     const std::string &prefix, 
+                                     H isChildParamHeterogeneousFn, V getValueFn) const
+    {
+        // Loop through parameters
+        for(size_t p = 0; p < paramNames.size(); p++) {
+            // If parameter is heterogeneous
+            if((this->*isChildParamHeterogeneousFn)(childIndex, p)) {
+                gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
+                                   [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
+                                   {
+                                       return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                   });
+            }
+        }
+    }
+
+    template<typename H, typename V>
+    void addHeterogeneousChildDerivedParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                                            const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
+                                            const std::string &prefix,
+                                            H isChildDerivedParamHeterogeneousFn, V getValueFn) const
+    {
+        // Loop through derived parameters
+        for(size_t p = 0; p < derivedParams.size(); p++) {
+            // If parameter is heterogeneous
+            if((this->*isChildDerivedParamHeterogeneousFn)(childIndex, p)) {
+                gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
+                                   [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
+                                   {
+                                       return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                   });
+            }
+        }
+    }
+
     void addMergedInSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
                                     const std::string &type, const std::string &name, 
                                     size_t archetypeIndex, const std::string &prefix) const;

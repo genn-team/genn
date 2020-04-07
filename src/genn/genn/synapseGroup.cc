@@ -504,8 +504,6 @@ bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
     const bool individualPSM = (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
     const bool otherIndividualPSM = (other.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
     if(getPSModel()->canBeMerged(other.getPSModel())
-       && (getPSParams() == other.getPSParams())
-       && (getPSDerivedParams() == other.getPSDerivedParams())
        && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
        && (individualPSM == otherIndividualPSM))
     {
@@ -529,6 +527,8 @@ bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
     // **NOTE * *many models with variables would work fine, but nothing stops
     // initialisers being used to configure PS models to behave totally different
     return (canPSBeMerged(other)
+            && (getPSParams() == other.getPSParams())
+            && (getPSDerivedParams() == other.getPSDerivedParams())
             && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
 //----------------------------------------------------------------------------

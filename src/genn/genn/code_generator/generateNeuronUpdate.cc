@@ -157,10 +157,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                 else {
                     inSynSubs.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals());
                 }
-                inSynSubs.addParamValueSubstitution(psm->getParamNames(), sg->getPSParams());
 
-                // Create iterators to iterate over the names of the postsynaptic model's derived parameters
-                inSynSubs.addVarValueSubstitution(psm->getDerivedParams(), sg->getPSDerivedParams());
+                inSynSubs.addParamValueSubstitution(psm->getParamNames(), sg->getPSParams(),
+                                                    [i, &ng](size_t p) { return ng.isPSMParamHeterogeneous(i, p);  },
+                                                    "", "group.", "InSyn" + std::to_string(i));
+                inSynSubs.addVarValueSubstitution(psm->getDerivedParams(), sg->getPSDerivedParams(),
+                                                  [i, &ng](size_t p) { return ng.isPSMDerivedParamHeterogeneous(i, p);  },
+                                                  "", "group.", "InSyn" + std::to_string(i));
                 inSynSubs.addVarNameSubstitution(psm->getExtraGlobalParams(), "", "group.", "InSyn" + std::to_string(i));
 
                 // Apply substitutions to current converter code
