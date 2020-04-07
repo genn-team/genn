@@ -57,7 +57,7 @@ public:
     virtual void genDefinitionsInternalPreamble(CodeStream &os) const override;
     virtual void genRunnerPreamble(CodeStream &os) const override;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecInternal &model) const override;
-	virtual void genAllocateMemPostamble(CodeStream& os, const ModelSpecInternal& model) const override;
+    virtual void genAllocateMemPostamble(CodeStream& os, const ModelSpecInternal& model) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecInternal &model) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;

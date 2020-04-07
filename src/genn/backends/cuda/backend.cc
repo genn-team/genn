@@ -1556,7 +1556,7 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& mo
 	os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPostamble(CodeStream& os, const ModelSpecInternal& model) const
+void Backend::genAllocateMemPostamble(CodeStream&, const ModelSpecInternal&) const
 {
 }
 //--------------------------------------------------------------------------
