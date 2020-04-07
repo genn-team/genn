@@ -1072,8 +1072,7 @@ void Backend::genMSBuildImportProps(std::ostream& os) const
 {
 	// Import OpenCL props file
 	os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
-	// Using props provided by Intel
-	os << "\t\t<Import Project=\"$(OPENCL_PATH)\\BuildCustomizations\\IntelOpenCL.props\" />" << std::endl;
+	// Include OpenCL props - none required
 	os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
