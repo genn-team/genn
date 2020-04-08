@@ -135,11 +135,23 @@ public:
     //! Should the derived parameter be implemented heterogeneously?
     bool isDerivedParamHeterogeneous(size_t index) const;
 
+    //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+
     //! Should the current source parameter be implemented heterogeneously?
     bool isCurrentSourceParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
     //! Should the current source derived parameter be implemented heterogeneously?
     bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the current source var init parameter be implemented heterogeneously?
+    bool isCurrentSourceVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the current source var init derived parameter be implemented heterogeneously?
+    bool isCurrentSourceVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     //! Should the postsynaptic model parameter be implemented heterogeneously?
     bool isPSMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
@@ -147,17 +159,35 @@ public:
     //! Should the postsynaptic model derived parameter be implemented heterogeneously?
     bool isPSMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
+    //! Should the postsynaptic model var init parameter be implemented heterogeneously?
+    bool isPSMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the postsynaptic model var init derived parameter be implemented heterogeneously?
+    bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
     //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
     bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
     
     //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
     bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
+    //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
+    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the incoming synapse weight update model var init derived parameter be implemented heterogeneously?
+    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
     //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
     bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
     //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
     bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model var init parameter be implemented heterogeneously?
+    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
+    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
 protected:
     //------------------------------------------------------------------------
