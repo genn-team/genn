@@ -53,11 +53,6 @@ public:
         : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
     {
     }
-
-    bool canBeMerged(const VarInit &other) const
-    {
-        return Snippet::Init<InitVarSnippet::Base>::canBeMerged(other, getSnippet()->getCode());
-    }
 };
 
 //----------------------------------------------------------------------------

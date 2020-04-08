@@ -539,11 +539,11 @@ bool SynapseGroup::canWUInitBeMerged(const SynapseGroup &other) const
        && (getWUModel()->getVars() == other.getWUModel()->getVars()))
     {
         // if any of the variable's initialisers can't be merged, return false
-        /*for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
+        for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
             if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
                 return false;
             }
-        }*/
+        }
 
         return true;
     }
