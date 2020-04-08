@@ -497,5 +497,5 @@ TEST(NeuronGroup, InitCompareDifferentVars)
 
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
     ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_FALSE(ng0Internal->canBeMerged(*ng2));
+    ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
 }
