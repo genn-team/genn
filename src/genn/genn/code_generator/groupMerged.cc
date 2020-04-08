@@ -328,8 +328,17 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
     const NeuronModels::Base *nm = getArchetype().getNeuronModel();
     gen.addVars(nm->getVars(), backend.getArrayPrefix());
 
-    // Extra global parameters are not required for init
-    if(!init) {
+    // If we're generating a struct for initialization
+    if(init) {
+        // Add heterogeneous var init parameters
+        gen.addHeterogeneousVarInitParams(nm->getVars(), &NeuronGroupInternal::getVarInitialisers,
+                                          &NeuronGroupMergedBase::isVarInitParamHeterogeneous);
+
+        gen.addHeterogeneousVarInitDerivedParams(nm->getVars(), &NeuronGroupInternal::getVarInitialisers,
+                                                 &NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous);
+    }
+    // Otherwise
+    else {
         gen.addEGPs(nm->getExtraGlobalParams(), backend.getArrayPrefix());
 
         // Add heterogeneous neuron model parameters
@@ -378,10 +387,26 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                          });
         }
 
-        // Add pointers to state variables
+        // If PSM has individual variables
         if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            for(const auto &v : sg->getPSModel()->getVars()) {
-                addMergedInSynPointerField(gen, v.type, v.name + "InSyn", i, backend.getArrayPrefix() + v.name);
+            // Loop through variables
+            const auto vars = sg->getPSModel()->getVars();
+            for(size_t v = 0; v < vars.size(); v++) {
+                // Add pointers to state variables
+                addMergedInSynPointerField(gen, vars[v].type, vars[v].name + "InSyn", i, backend.getArrayPrefix() + vars[v].name);
+
+                // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
+                if(init) {
+                    const auto *varInitSnippet = sg->getPSVarInitialisers().at(v).getSnippet();
+                    auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
+                    {
+                        return getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSVarInitialisers();
+                    };
+                    addHeterogeneousChildVarInitParams(gen, varInitSnippet->getParamNames(), i, v, vars[v].name + "InSyn",
+                                                       &NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous, getVarInitialiserFn);
+                    addHeterogeneousChildVarInitDerivedParams(gen, varInitSnippet->getDerivedParams(), i, v, vars[v].name + "InSyn",
+                                                              &NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous, getVarInitialiserFn);
+                }
             }
         }
 
@@ -413,14 +438,17 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                return getSortedCurrentSources().at(groupIndex).at(childIndex)->getDerivedParams().at(paramIndex);
                                            });
   
-        // Add current source state variables
+        // Loop through variables
         for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
+            // Add pointers to state variables
             assert(!Utils::isTypePointer(v.type));
             gen.addField(v.type + "*", v.name + "CS" + std::to_string(i),
                          [&backend, i, v, this](const NeuronGroupInternal &, size_t groupIndex)
                          {
                              return backend.getArrayPrefix() + v.name + m_SortedCurrentSources.at(groupIndex).at(i)->getName();
                          });
+
+
         }
 
         if(!init) {

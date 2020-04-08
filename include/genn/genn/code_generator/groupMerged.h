@@ -304,8 +304,7 @@ private:
     template<typename H, typename V>
     void addHeterogeneousChildDerivedParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
                                             const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
-                                            const std::string &prefix,
-                                            H isChildDerivedParamHeterogeneousFn, V getValueFn) const
+                                            const std::string &prefix, H isChildDerivedParamHeterogeneousFn, V getValueFn) const
     {
         // Loop through derived parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
@@ -315,6 +314,46 @@ private:
                                    [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                    {
                                        return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                   });
+            }
+        }
+    }
+
+    template<typename H, typename V>
+    void addHeterogeneousChildVarInitParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                                            const Snippet::Base::StringVec &paramNames, size_t childIndex,
+                                            size_t varIndex, const std::string &prefix,
+                                            H isChildParamHeterogeneousFn, V getVarInitialiserFn) const
+    {
+        // Loop through parameters
+        for(size_t p = 0; p < paramNames.size(); p++) {
+            // If parameter is heterogeneous
+            if((this->*isChildParamHeterogeneousFn)(childIndex, varIndex, p)) {
+                gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
+                                   [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                                   {
+                                       const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                       return Utils::writePreciseString(varInit.at(varIndex).getParams().at(p));
+                                   });
+            }
+        }
+    }
+
+    template<typename H, typename V>
+    void addHeterogeneousChildVarInitDerivedParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                                                   const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
+                                                   size_t varIndex, const std::string &prefix,
+                                                   H isChildDerivedParamHeterogeneousFn, V getVarInitialiserFn) const
+    {
+        // Loop through parameters
+        for(size_t p = 0; p < derivedParams.size(); p++) {
+            // If parameter is heterogeneous
+            if((this->*isChildDerivedParamHeterogeneousFn)(childIndex, varIndex, p)) {
+                gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
+                                   [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                                   {
+                                       const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                       return Utils::writePreciseString(varInit.at(varIndex).getDerivedParams().at(p));
                                    });
             }
         }
