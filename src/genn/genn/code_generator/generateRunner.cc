@@ -365,10 +365,10 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
         subs.addVarSubstitution("num_threads", std::to_string(numThreads));
         subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group.");
         subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                       [&sg](size_t p) { return sg.isConnectivityHostInitParamHeterogeneous(p); },
+                                       [&sg](size_t p) { return sg.isConnectivityInitParamHeterogeneous(p); },
                                        "", "group.");
         subs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                     [&sg](size_t p) { return sg.isConnectivityHostInitDerivedParamHeterogeneous(p); },
+                                     [&sg](size_t p) { return sg.isConnectivityInitDerivedParamHeterogeneous(p); },
                                      "", "group.");
 
         // Loop through EGPs

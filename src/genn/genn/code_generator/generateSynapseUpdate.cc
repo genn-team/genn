@@ -24,8 +24,12 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     CodeGenerator::Substitutions synapseSubs(&baseSubs);
 
     // Substitute parameter and derived parameter names
-    synapseSubs.addParamValueSubstitution(wu->getParamNames(), sg.getArchetype().getWUParams());
-    synapseSubs.addVarValueSubstitution(wu->getDerivedParams(), sg.getArchetype().getWUDerivedParams());
+    synapseSubs.addParamValueSubstitution(wu->getParamNames(), sg.getArchetype().getWUParams(),
+                                          [&sg](size_t i) { return sg.isWUParamHeterogeneous(i);  },
+                                          "", "group.");
+    synapseSubs.addVarValueSubstitution(wu->getDerivedParams(), sg.getArchetype().getWUDerivedParams(),
+                                        [&sg](size_t i) { return sg.isWUDerivedParamHeterogeneous(i);  },
+                                        "", "group.");
     synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "group.");
 
     // Substitute names of pre and postsynaptic weight update variables
@@ -123,8 +127,12 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
             Substitutions synapseSubs(&baseSubs);
 
             // Make weight update model substitutions
-            synapseSubs.addParamValueSubstitution(sg.getArchetype().getWUModel()->getParamNames(), sg.getArchetype().getWUParams());
-            synapseSubs.addVarValueSubstitution(sg.getArchetype().getWUModel()->getDerivedParams(), sg.getArchetype().getWUDerivedParams());
+            synapseSubs.addParamValueSubstitution(sg.getArchetype().getWUModel()->getParamNames(), sg.getArchetype().getWUParams(),
+                                                  [&sg](size_t i) { return sg.isWUParamHeterogeneous(i);  },
+                                                  "", "group.");
+            synapseSubs.addVarValueSubstitution(sg.getArchetype().getWUModel()->getDerivedParams(), sg.getArchetype().getWUDerivedParams(),
+                                                [&sg](size_t i) { return sg.isWUDerivedParamHeterogeneous(i);  },
+                                                "", "group.");
             synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "group.");
 
             // Get read offset if required
@@ -156,8 +164,12 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
 
             // Add substitutions
             baseSubs.addFuncSubstitution("endRow", 0, "break");
-            baseSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-            baseSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+            baseSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                               [&sg](size_t i) { return sg.isConnectivityInitParamHeterogeneous(i);  },
+                                               "", "group.");
+            baseSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                             [&sg](size_t i) { return sg.isConnectivityInitDerivedParamHeterogeneous(i);  },
+                                             "", "group.");
             baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
 
             // Initialise row building state variables for procedural connectivity

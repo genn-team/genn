@@ -353,8 +353,12 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
 
             // Add substitutions
             popSubs.addFuncSubstitution("endRow", 0, "break");
-            popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-            popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+            popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                              [&sg](size_t i) { return sg.isConnectivityInitParamHeterogeneous(i);  },
+                                              "", "group.");
+            popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                            [&sg](size_t i) { return sg.isConnectivityInitDerivedParamHeterogeneous(i);  },
+                                            "", "group.");
             popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
 
             // Initialise row building state variables and loop on generated code to initialise sparse connectivity

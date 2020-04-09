@@ -461,10 +461,10 @@ public:
                   MergedStructData &mergedStructData, const std::string &precision) const;
 
     //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityHostInitParamHeterogeneous(size_t paramIndex) const;
+    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
 
     //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityHostInitDerivedParamHeterogeneous(size_t paramIndex) const;
+    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
 };
 
 // ----------------------------------------------------------------------------
@@ -480,6 +480,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Should the connectivity initialization parameter be implemented heterogeneously?
+    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the connectivity initialization parameter be implemented heterogeneously?
+    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
@@ -505,11 +511,23 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
+    //! Should the parameter be implemented heterogeneously?
+    bool isWUParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the derived parameter be implemented heterogeneously?
+    bool isWUDerivedParamHeterogeneous(size_t paramIndex) const;
+
     //! Should the weight update model variable initialization parameter be implemented heterogeneously?
     bool isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
     
     //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+
+    //! Should the connectivity initialization parameter be implemented heterogeneously?
+    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the connectivity initialization parameter be implemented heterogeneously?
+    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
 
 protected:
     //----------------------------------------------------------------------------

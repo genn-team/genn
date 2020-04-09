@@ -261,7 +261,6 @@ protected:
     const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
     bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
 
-
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
 

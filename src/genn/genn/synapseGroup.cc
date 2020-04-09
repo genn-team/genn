@@ -442,8 +442,6 @@ std::string SynapseGroup::getSparseIndType() const
 bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
 {
     if(getWUModel()->canBeMerged(other.getWUModel())
-       && (getWUParams() == other.getWUParams())
-       && (getWUDerivedParams() == other.getWUDerivedParams())
        && (getDelaySteps() == other.getDelaySteps())
        && (getBackPropDelaySteps() == other.getBackPropDelaySteps())
        && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
@@ -464,19 +462,11 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
             if(getMatrixType() & SynapseMatrixWeight::GLOBAL) {
                 return (getWUConstInitVals() == other.getWUConstInitVals());
             }
-            // Otherwise, if connectivity is procedural, all variable initialisers must be mergable
-            else if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-                /*return std::equal(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), other.getWUVarInitialisers().cbegin(),
-                                  [](const Models::VarInit &a, const Models::VarInit & b)
-                                  {
-                                      return a.canBeMerged(b);
-                                  });*/
+            // Otherwise, if weights are individual or procedural, merging is unproblematic
+            else {
                 return true;
             }
-            // Otherwise, if matrix weights are individual, merging is unproblematic
-            else if(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-                return true;
-            }
+            
         }
     }
 
