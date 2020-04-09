@@ -804,9 +804,9 @@ bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitParamHeterogeneous(size_t
     const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
     return isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
-                                     [paramIndex](const SynapseGroupInternal &sg)
+                                     [varIndex](const SynapseGroupInternal &sg)
                                      {
-                                         return sg.getWUVarInitialisers().at(paramIndex).getParams();
+                                         return sg.getWUVarInitialisers().at(varIndex).getParams();
                                      });
 }
 //----------------------------------------------------------------------------
@@ -816,9 +816,9 @@ bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous
     const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
-                                     [paramIndex](const SynapseGroupInternal &sg)
+                                     [varIndex](const SynapseGroupInternal &sg)
                                      {
-                                         return sg.getWUVarInitialisers().at(paramIndex).getDerivedParams();
+                                         return sg.getWUVarInitialisers().at(varIndex).getDerivedParams();
                                      });
 }
 //----------------------------------------------------------------------------
