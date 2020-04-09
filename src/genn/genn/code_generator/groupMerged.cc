@@ -85,9 +85,9 @@ bool CodeGenerator::NeuronGroupMergedBase::isVarInitParamHeterogeneous(size_t va
     const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
     return isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
-                                     [paramIndex](const NeuronGroupInternal &sg)
+                                     [varIndex](const NeuronGroupInternal &sg)
                                      {
-                                         return sg.getVarInitialisers().at(paramIndex).getParams();
+                                         return sg.getVarInitialisers().at(varIndex).getParams();
                                      });
 }
 //----------------------------------------------------------------------------
@@ -97,9 +97,9 @@ bool CodeGenerator::NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous(si
     const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varIndex).getSnippet();
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, paramIndex,
-                                     [paramIndex](const NeuronGroupInternal &sg)
+                                     [varIndex](const NeuronGroupInternal &sg)
                                      {
-                                         return sg.getVarInitialisers().at(paramIndex).getDerivedParams();
+                                         return sg.getVarInitialisers().at(varIndex).getDerivedParams();
                                      });
 }
 //----------------------------------------------------------------------------
