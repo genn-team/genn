@@ -43,5 +43,5 @@ TEST(InitVarSnippet, CompareVarInitParameters)
     const auto varInit2 = initVar<InitVarSnippet::Uniform>(uniformParamsB);
 
     ASSERT_TRUE(varInit0.canBeMerged(varInit1));
-    ASSERT_FALSE(varInit0.canBeMerged(varInit2));
+    ASSERT_TRUE(varInit0.canBeMerged(varInit2));
 }

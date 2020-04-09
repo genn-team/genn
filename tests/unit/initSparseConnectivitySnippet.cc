@@ -100,7 +100,7 @@ TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
     connectivityInit2.initDerivedParams(0.1);
 
     ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit1));
-    ASSERT_FALSE(connectivityInit0.canBeMerged(connectivityInit2));
+    ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit2));
 }
 
 TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)

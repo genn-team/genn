@@ -56,7 +56,7 @@ TEST(CurrentSource, CompareDifferentParameters)
     model.finalize();
 
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
-    ASSERT_FALSE(cs1Internal->canBeMerged(*cs0));
+    ASSERT_TRUE(cs1Internal->canBeMerged(*cs0));
 }
 
 TEST(CurrentSource, CompareSameParameters)
