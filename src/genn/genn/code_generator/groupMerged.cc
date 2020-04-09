@@ -392,7 +392,7 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
             // Loop through variables
             const auto vars = sg->getPSModel()->getVars();
             for(size_t v = 0; v < vars.size(); v++) {
-                // Add pointers to state variables
+                // Add pointers to state variable
                 addMergedInSynPointerField(gen, vars[v].type, vars[v].name + "InSyn", i, backend.getArrayPrefix() + vars[v].name);
 
                 // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
@@ -439,16 +439,29 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                            });
   
         // Loop through variables
-        for(const auto &v : cs->getCurrentSourceModel()->getVars()) {
-            // Add pointers to state variables
-            assert(!Utils::isTypePointer(v.type));
-            gen.addField(v.type + "*", v.name + "CS" + std::to_string(i),
-                         [&backend, i, v, this](const NeuronGroupInternal &, size_t groupIndex)
+        const auto vars = cs->getCurrentSourceModel()->getVars();
+        for(size_t v = 0; v < vars.size(); v++) {
+            // Add pointers to state variable
+            const auto var = vars[v];
+            assert(!Utils::isTypePointer(var.type));
+            gen.addField(var.type + "*", var.name + "CS" + std::to_string(i),
+                         [&backend, i, var, this](const NeuronGroupInternal &, size_t groupIndex)
                          {
-                             return backend.getArrayPrefix() + v.name + m_SortedCurrentSources.at(groupIndex).at(i)->getName();
+                             return backend.getArrayPrefix() + var.name + m_SortedCurrentSources.at(groupIndex).at(i)->getName();
                          });
 
-
+            // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
+            if(init) {
+                const auto *varInitSnippet = cs->getVarInitialisers().at(v).getSnippet();
+                auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
+                {
+                    return getSortedCurrentSources().at(groupIndex).at(childIndex)->getVarInitialisers();
+                };
+                addHeterogeneousChildVarInitParams(gen, varInitSnippet->getParamNames(), i, v, vars[v].name + "CS",
+                                                   &NeuronGroupMergedBase::isCurrentSourceVarInitParamHeterogeneous, getVarInitialiserFn);
+                addHeterogeneousChildVarInitDerivedParams(gen, varInitSnippet->getDerivedParams(), i, v, vars[v].name + "CS",
+                                                          &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamHeterogeneous, getVarInitialiserFn);
+            }
         }
 
         if(!init) {
@@ -485,14 +498,30 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                return getSortedInSynWithPostCode().at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
                                            });
 
-        // Add postsynaptic variables
-        for(const auto &v : sg->getWUModel()->getPostVars()) {
-            assert(!Utils::isTypePointer(v.type));
-            gen.addField(v.type + "*", v.name + "WUPost" + std::to_string(i),
-                         [i, v, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
+        // Loop through postsynaptic variables
+        const auto vars = sg->getWUModel()->getPostVars();
+        for(size_t v = 0; v < vars.size(); v++) {
+            // Add pointers to state variable
+            const auto var = vars[v];
+            assert(!Utils::isTypePointer(var.type));
+            gen.addField(var.type + "*", var.name + "WUPost" + std::to_string(i),
+                         [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
                          {
-                             return backend.getArrayPrefix() + v.name + getSortedInSynWithPostCode().at(groupIndex).at(i)->getName();
+                             return backend.getArrayPrefix() + var.name + getSortedInSynWithPostCode().at(groupIndex).at(i)->getName();
                          });
+
+            // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
+            if(init) {
+                const auto *varInitSnippet = sg->getWUPostVarInitialisers().at(v).getSnippet();
+                auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
+                {
+                    return getSortedInSynWithPostCode().at(groupIndex).at(childIndex)->getWUPostVarInitialisers();
+                };
+                addHeterogeneousChildVarInitParams(gen, varInitSnippet->getParamNames(), i, v, vars[v].name + "WUPost",
+                                                   &NeuronGroupMergedBase::isInSynWUMVarInitParamHeterogeneous, getVarInitialiserFn);
+                addHeterogeneousChildVarInitDerivedParams(gen, varInitSnippet->getDerivedParams(), i, v, vars[v].name + "WUPost",
+                                                          &NeuronGroupMergedBase::isInSynWUMVarInitDerivedParamHeterogeneous, getVarInitialiserFn);
+            }
         }
     }
 
@@ -517,20 +546,35 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                return getSortedOutSynWithPreCode().at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
                                            });
 
-        // Add presynaptic variables
-        for(const auto &v : sg->getWUModel()->getPreVars()) {
-            assert(!Utils::isTypePointer(v.type));
-            gen.addField(v.type + "*", v.name + "WUPre" + std::to_string(i),
-                         [i, v, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
+        // Loop through presynaptic variables
+        const auto vars = sg->getWUModel()->getPreVars();
+        for(size_t v = 0; v < vars.size(); v++) {
+            // Add pointers to state variable
+            const auto var = vars[v];
+            assert(!Utils::isTypePointer(var.type));
+            gen.addField(var.type + "*", var.name + "WUPre" + std::to_string(i),
+                         [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
                          {
-                             return backend.getArrayPrefix() + v.name + m_SortedInSynWithPostCode.at(groupIndex).at(i)->getName();
+                             return backend.getArrayPrefix() + var.name + m_SortedInSynWithPostCode.at(groupIndex).at(i)->getName();
                          });
+
+            // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
+            if(init) {
+                const auto *varInitSnippet = sg->getWUPreVarInitialisers().at(v).getSnippet();
+                auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
+                {
+                    return getSortedInSynWithPostCode().at(groupIndex).at(childIndex)->getWUPreVarInitialisers();
+                };
+                addHeterogeneousChildVarInitParams(gen, varInitSnippet->getParamNames(), i, v, vars[v].name + "WUPre",
+                                                   &NeuronGroupMergedBase::isOutSynWUMVarInitParamHeterogeneous, getVarInitialiserFn);
+                addHeterogeneousChildVarInitDerivedParams(gen, varInitSnippet->getDerivedParams(), i, v, vars[v].name + "WUPre",
+                                                          &NeuronGroupMergedBase::isOutSynWUMVarInitDerivedParamHeterogeneous, getVarInitialiserFn);
+            }
         }
     }
 
-    std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
-
     // Loop through neuron groups
+    std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
     for(const auto &g : getGroups()) {
         // Reserve vector for this group's children
         eventThresholdSGs.emplace_back();

@@ -85,11 +85,11 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
     }
 }
 //------------------------------------------------------------------------
-template<typename I, typename Q>
+template<typename I, typename Q, typename P, typename D>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
                           size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
-                          I getVarInitialiser, Q isVarQueueRequired)
+                          I getVarInitialiser, Q isVarQueueRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
     using namespace CodeGenerator;
 
@@ -103,11 +103,15 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 
             // Generate target-specific code to initialise variable
             backend.genVariableInit(os, count, "id", popSubs,
-                [&backend, &vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, numDelaySlots]
+                [&backend, &vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                                                      [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
+                                                      "", "group.", vars[k].name + fieldSuffix);
+                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
+                                                    [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
+                                                    "", "group.", vars[k].name + fieldSuffix);
 
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
@@ -141,14 +145,17 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
     }
 }
 //------------------------------------------------------------------------
-template<typename I>
+template<typename I, typename P, typename D>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
-                          const size_t groupIndex, const std::string &ftype, I getVarInitialiser)
+                          const size_t groupIndex, const std::string &ftype, 
+                          I getVarInitialiser, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
     genInitNeuronVarCode(os, backend, popSubs, vars, fieldSuffix, countMember, 0, groupIndex, ftype,
                          getVarInitialiser,
-                         [](size_t){ return false; });
+                         [](size_t){ return false; }, 
+                         isParamHeterogeneousFn,
+                         isDerivedParamHeterogeneousFn);
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
@@ -243,7 +250,9 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), "", "numNeurons",
                                  ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(),
                                  [&ng](size_t i){ return ng.getArchetype().getVarInitialisers().at(i); },
-                                 [&ng](size_t i){ return ng.getArchetype().isVarQueueRequired(i); });
+                                 [&ng](size_t i){ return ng.getArchetype().isVarQueueRequired(i); },
+                                 [&ng](size_t v, size_t p) { return ng.isVarInitParamHeterogeneous(v, p); },
+                                 [&ng](size_t v, size_t p) { return ng.isVarInitDerivedParamHeterogeneous(v, p); });
 
             // Loop through incoming synaptic populations
             for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
@@ -278,7 +287,9 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
                     genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), 
                                          "InSyn" + std::to_string(i), "numNeurons",
                                          i, model.getPrecision(),
-                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); });
+                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
+                                         [&ng, i](size_t v, size_t p) { return ng.isPSMVarInitParamHeterogeneous(i, v, p); },
+                                         [&ng, i](size_t v, size_t p) { return ng.isPSMVarInitDerivedParamHeterogeneous(i, v, p); });
                 }
             }
 
@@ -290,7 +301,9 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
                                      "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),
                                      [&sg](size_t i){ return sg->getWUPostVarInitialisers().at(i); },
-                                     [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); });
+                                     [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); },
+                                     [&ng, i](size_t v, size_t p) { return ng.isInSynWUMVarInitParamHeterogeneous(i, v, p); },
+                                     [&ng, i](size_t v, size_t p) { return ng.isInSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
             }
 
             // Loop through outgoing synaptic populations with presynaptic update code
@@ -302,7 +315,9 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
                                      "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),
                                      [&sg](size_t i){ return sg->getWUPreVarInitialisers().at(i); },
-                                     [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); });
+                                     [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); },
+                                     [&ng, i](size_t v, size_t p) { return ng.isOutSynWUMVarInitParamHeterogeneous(i, v, p); },
+                                     [&ng, i](size_t v, size_t p) { return ng.isOutSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
             }
 
             // Loop through current sources
@@ -313,7 +328,9 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
                 genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), 
                                      "CS" + std::to_string(i), "numNeurons",
                                      i, model.getPrecision(),
-                                     [cs](size_t i){ return cs->getVarInitialisers().at(i); });
+                                     [cs](size_t i){ return cs->getVarInitialisers().at(i); },
+                                     [&ng, i](size_t v, size_t p) { return ng.isCurrentSourceVarInitParamHeterogeneous(i, v, p); },
+                                     [&ng, i](size_t v, size_t p) { return ng.isCurrentSourceVarInitDerivedParamHeterogeneous(i, v, p); });
             }
         },
         // Dense syanptic matrix variable initialisation
