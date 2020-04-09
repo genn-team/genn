@@ -204,18 +204,18 @@ bool CodeGenerator::NeuronGroupMergedBase::isInSynWUMDerivedParamHeterogeneous(s
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getInSynWithPostCode().at(childIndex)->getWUVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getInSynWithPostCode().at(childIndex)->getWUPostVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, childIndex, paramIndex, m_SortedInSynWithPostCode,
-                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUVarInitialisers().at(varIndex).getParams(); });
+                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUPostVarInitialisers().at(varIndex).getParams(); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getInSynWithPostCode().at(childIndex)->getWUVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getInSynWithPostCode().at(childIndex)->getWUPostVarInitialisers().at(varIndex).getSnippet();
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, childIndex, paramIndex, m_SortedInSynWithPostCode,
-                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUVarInitialisers().at(varIndex).getDerivedParams(); });
+                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUPostVarInitialisers().at(varIndex).getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
@@ -238,18 +238,18 @@ bool CodeGenerator::NeuronGroupMergedBase::isOutSynWUMDerivedParamHeterogeneous(
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getOutSynWithPreCode().at(childIndex)->getWUVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getOutSynWithPreCode().at(childIndex)->getWUPreVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
-                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUVarInitialisers().at(varIndex).getParams(); });
+                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUPreVarInitialisers().at(varIndex).getParams(); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getOutSynWithPreCode().at(childIndex)->getWUVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getOutSynWithPreCode().at(childIndex)->getWUPreVarInitialisers().at(varIndex).getSnippet();
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
-                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUVarInitialisers().at(varIndex).getDerivedParams(); });
+                                          [varIndex](const SynapseGroupInternal *s) { return s->getWUPreVarInitialisers().at(varIndex).getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
