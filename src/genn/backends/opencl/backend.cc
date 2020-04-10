@@ -102,6 +102,11 @@ const char* Backend::ProgramNames[ProgramMax] = {
     "initProgram",
     "updateNeuronsProgram" };
 //--------------------------------------------------------------------------
+std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
+    new PresynapticUpdateStrategy::PreSpan,
+    new PresynapticUpdateStrategy::PostSpan,
+};
+//--------------------------------------------------------------------------
 Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferences& preferences,
     int localHostID, const std::string& scalarType, int device)
     : BackendBase(localHostID, scalarType), m_KernelWorkGroupSizes(kernelWorkGroupSizes), m_Preferences(preferences), m_ChosenDeviceID(device)
@@ -1119,6 +1124,46 @@ void Backend::genMSBuildImportTarget(std::ostream& os) const
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
+std::string Backend::getFloatAtomicAdd(const std::string& ftype) const
+{
+    if (ftype == "float" || ftype == "double") {
+        return "atomic_add_sw"; //! TO BE IMPLEMENTED
+    }
+    else {
+        return "atomic_add";
+    }
+}
+//--------------------------------------------------------------------------
+size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
+{
+     return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);
+}
+//--------------------------------------------------------------------------
+size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg)
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return sg.getMaxSourceConnections();
+    }
+    else {
+        return sg.getSrcNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
+{
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
+    }
+    else {
+        return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base *strategy)
+{
+    s_PresynapticUpdateStrategies.push_back(strategy);
+}
+//--------------------------------------------------------------------------
 bool Backend::isGlobalRNGRequired(const ModelSpecInternal& model) const
 {
     printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::isGlobalRNGRequired");
@@ -1154,6 +1199,20 @@ bool Backend::isDeviceType(const std::string& type) const
 
     // Return true if it is in device types set
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
+}
+//--------------------------------------------------------------------------
+const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal& sg)
+{
+    // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
+    // **NOTE** this is done backwards so that user-registered strategies get first priority
+    for (auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
+        if ((*s)->isCompatible(sg)) {
+            return *s;
+        }
+    }
+
+    throw std::runtime_error("Unable to find a suitable presynaptic update strategy for synapse group '" + sg.getName() + "'");
+    return nullptr;
 }
 } // namespace OpenCL
 } // namespace CodeGenerator

@@ -223,7 +223,6 @@ public:
     const cl::Device& getChosenOpenCLDevice() const { return m_ChosenDevice; }
     int getChosenDeviceID() const { return m_ChosenDeviceID; }
     int getRuntimeVersion() const { return m_RuntimeVersion; }
-    std::string getNVCCFlags() const;
 
     std::string getFloatAtomicAdd(const std::string& ftype) const;
 
@@ -316,6 +315,12 @@ private:
     bool isDeviceType(const std::string& type) const;
 
     //--------------------------------------------------------------------------
+    // Private static methods
+    //--------------------------------------------------------------------------
+    // Get appropriate presynaptic update strategy to use for this synapse group
+    static const PresynapticUpdateStrategy::Base* getPresynapticUpdateStrategy(const SynapseGroupInternal& sg);
+
+    //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const KernelWorkGroupSize m_KernelWorkGroupSizes;
@@ -332,7 +337,7 @@ private:
     //--------------------------------------------------------------------------
     // Static members
     //--------------------------------------------------------------------------
-    //! TO BE IMPLEMENTED - static std::vector<PresynapticUpdateStrategy::Base*> s_PresynapticUpdateStrategies;
+    static std::vector<PresynapticUpdateStrategy::Base*> s_PresynapticUpdateStrategies;
 };
 }   // OpenCL
 }   // CodeGenerator

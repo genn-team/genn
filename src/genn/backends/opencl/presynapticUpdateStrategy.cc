@@ -23,7 +23,7 @@ size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
     // Use a thread for each presynaptic neuron
     // **YUCK** really should only launch a thread per-spike
-    return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
+    return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
 bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
@@ -205,6 +205,9 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
+    //! TO BE IMPLEMENTED - Possibly respecifying localId in this block
+    os << "size_t localIdi = get_local_id(0);" << std::endl;
+
     os << "const unsigned int numSpikes = d_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName();
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
         os << "[preReadDelaySlot];" << std::endl;
@@ -222,15 +225,15 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
         os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + 1 : " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
         os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-        // localId will be specified in the kernel which this generated code will be a part of
-        os << "if (localId < numSpikesInBlock)";
+
+        os << "if (localIdi < numSpikesInBlock)";
         {
             CodeStream::Scope b(os);
             const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            os << "const unsigned int spk = d_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + localId];" << std::endl;
-            os << "shSpk" << eventSuffix << "[localId] = spk;" << std::endl;
+            os << "const unsigned int spk = d_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + localIdi];" << std::endl;
+            os << "shSpk" << eventSuffix << "[localIdi] = spk;" << std::endl;
             if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "shRowLength[localId] = d_rowLength" << sg.getName() << "[spk];" << std::endl;
+                os << "shRowLength[localIdi] = d_rowLength" << sg.getName() << "[spk];" << std::endl;
             }
         }
         os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
