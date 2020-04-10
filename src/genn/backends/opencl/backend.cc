@@ -829,11 +829,9 @@ void Backend::genRunnerPreamble(CodeStream& os) const
         os << "switch(error)";
         {
             CodeStream::Scope b(os);
-
             for (const auto& e : allClErrors) {
                 os << "case " << e.first << ": return \"" << e.second << "\";" << std::endl;
             }
-
             os << "default: return \"Unknown OpenCL error\";" << std::endl;
         }
     }

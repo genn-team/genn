@@ -22,7 +22,7 @@
 #include "code_generator/substitutions.h"
 
 // OpenCL backend includes
-// #include "presynapticUpdateStrategy.h"
+#include "presynapticUpdateStrategy.h"
 
 // Forward declarations
 namespace filesystem
@@ -238,7 +238,7 @@ public:
 
     //! Register a new presynaptic update strategy
     /*! This function should be called with strategies in ascending order of preference */
-    //! TO BE IMPLEMENTED - static void addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base* strategy);
+    static void addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base* strategy);
 
     //--------------------------------------------------------------------------
     // Constants
