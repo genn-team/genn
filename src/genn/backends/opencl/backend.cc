@@ -23,7 +23,7 @@
 //--------------------------------------------------------------------------
 namespace {
 
-    //! TO BE IMPLEMENTED - Use OpenCL functions
+//! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<CodeGenerator::FunctionTemplate> openclFunctions = {
     {"gennrand_uniform", 0, "uniform_double($(rng))", "uniform($(rng))"},
     {"gennrand_normal", 0, "normal_double($(rng))", "normal($(rng))"},
@@ -82,6 +82,22 @@ void updateExtraGlobalParams(const std::string& varSuffix, const std::string& co
             kernelParameters.emplace(p.name + varSuffix, p.type);
         }
     }
+}
+//--------------------------------------------------------------------------
+void updateSynapseGroupExtraGlobalParams(const SynapseGroupInternal& sg, std::map<std::string, std::string>& kernelParameters,
+    const std::vector<std::string>& codeStrings)
+{
+    // Synapse kernel
+    // --------------
+    // Add any of the pre or postsynaptic neuron group's extra global
+    // parameters referenced in code strings to the map of kernel parameters
+    updateExtraGlobalParams(sg.getSrcNeuronGroup()->getName(), "_pre", sg.getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+        kernelParameters, codeStrings);
+    updateExtraGlobalParams(sg.getTrgNeuronGroup()->getName(), "_post", sg.getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams(),
+        kernelParameters, codeStrings);
+
+    // Finally add any weight update model extra global parameters referenced in code strings to the map of kernel paramters
+    updateExtraGlobalParams(sg.getName(), "", sg.getWUModel()->getExtraGlobalParams(), kernelParameters, codeStrings);
 }
 }
 
@@ -488,9 +504,428 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
     printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genSynapseUpdate");
-    os << "void updateSynapses(float t)";
+    // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
+    size_t idPreSynapseReset = 0;
+    if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const ModelSpec::SynapseGroupValueType& s) { return s.second.isDendriticDelayRequired(); }))
+    {
+        // pre synapse reset kernel header
+        os << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
+        {
+            CodeStream::Scope b(os);
+
+            os << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreSynapseReset] << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+            // Loop through neuron groups
+            for (const auto& n : model.getLocalNeuronGroups()) {
+                // Loop through incoming synaptic populations
+                for (const auto& m : n.second.getMergedInSyn()) {
+                    const auto* sg = m.first;
+
+                    // If this kernel requires dendritic delay
+                    if (sg->isDendriticDelayRequired()) {
+                        if (idPreSynapseReset > 0) {
+                            os << "else ";
+                        }
+                        os << "if(id == " << (idPreSynapseReset++) << ")";
+                        {
+                            CodeStream::Scope b(os);
+
+                            os << "dd_denDelayPtr" << sg->getPSModelTargetName() << " = (dd_denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Add extra global parameters references by weight updates models to maps of kernel parameters
+    std::map<std::string, std::string> presynapticKernelParameters;
+    std::map<std::string, std::string> postsynapticKernelParameters;
+    std::map<std::string, std::string> synapseDynamicsKernelParameters;
+    for (const auto& s : model.getLocalSynapseGroups()) {
+        const auto* wum = s.second.getWUModel();
+        updateSynapseGroupExtraGlobalParams(s.second, presynapticKernelParameters,
+            { wum->getSimCode(), wum->getEventCode(), wum->getEventThresholdConditionCode() });
+        updateSynapseGroupExtraGlobalParams(s.second, postsynapticKernelParameters, { wum->getLearnPostCode() });
+        updateSynapseGroupExtraGlobalParams(s.second, synapseDynamicsKernelParameters, { wum->getSynapseDynamicsCode() });
+    }
+
+    // If any synapse groups require spike-driven presynaptic updates
+    size_t idPresynapticStart = 0;
+    if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const ModelSpec::SynapseGroupValueType& s) { return (s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()); }))
+    {
+        os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(";
+        for (const auto& p : presynapticKernelParameters) {
+            os << p.second << " " << p.first << ", ";
+        }
+        os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs(openclFunctions, model.getPrecision());
+            kernelSubs.addVarSubstitution("t", "t");
+
+            os << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+            // We need shLg if any synapse groups accumulate into shared memory
+            if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                [this](const ModelSpec::SynapseGroupValueType& s)
+                {
+                    return this->getPresynapticUpdateStrategy(s.second)->shouldAccumulateInSharedMemory(s.second, *this);
+                }))
+            {
+                os << "__shared__ " << model.getPrecision() << " shLg[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
+            }
+
+                // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
+                if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                    [&model](const ModelSpec::SynapseGroupValueType& s)
+                    {
+                        return (s.second.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
+                            && (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
+                    }))
+                {
+                    os << "__shared__ unsigned int shRowLength[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
+                }
+
+                    if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                        [&model](const ModelSpec::SynapseGroupValueType& s)
+                        {
+                            return (s.second.isTrueSpikeRequired() || !s.second.getWUModel()->getLearnPostCode().empty());
+                        }))
+                    {
+                        os << "__shared__ unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
+                    }
+
+                        if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                            [](const ModelSpec::SynapseGroupValueType& s) { return (s.second.isSpikeEventRequired()); }))
+                        {
+                            os << "__shared__ unsigned int shSpkEvnt[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
+                        }
+
+                        // Parallelise over synapse groups
+                        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
+                            [this](const SynapseGroupInternal& sg) { return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelWorkGroupSizes[KernelPresynapticUpdate]); },
+                            [](const SynapseGroupInternal& sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
+                            [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this](CodeStream& os, const SynapseGroupInternal& sg, const Substitutions& popSubs)
+                            {
+                                // Get presynaptic update strategy to use for this synapse group
+                                const auto* presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg);
+                                LOGD << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for synapse group '" << sg.getName() << "'";
+
+                                // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                                if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+                                    os << "const unsigned int preReadDelaySlot = " << sg.getPresynapticAxonalDelaySlot("dd_") << ";" << std::endl;
+                                    os << "const unsigned int preReadDelayOffset = preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                                }
+
+                                // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                                if (sg.getTrgNeuronGroup()->isDelayRequired()) {
+                                    os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                                }
+
+                                // If we are going to accumulate postsynaptic input into a register, zero register value
+                                if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
+                                    os << "// only do this for existing neurons" << std::endl;
+                                    os << model.getPrecision() << " linSyn = 0;" << std::endl;
+                                }
+                                // Otherwise, if we are going to accumulate into shared memory, zero entry in array for each target neuron
+                                // **NOTE** is ok as number of target neurons <= synapseBlkSz
+                                else if (presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
+                                    os << "if(threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                                    {
+                                        CodeStream::Scope b(os);
+                                        os << "shLg[threadIdx.x] = 0;" << std::endl;
+                                    }
+                                    os << "__syncthreads();" << std::endl;
+                                }
+
+                                // If spike events should be processed
+                                if (sg.isSpikeEventRequired()) {
+                                    CodeStream::Scope b(os);
+                                    presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, false,
+                                        wumThreshHandler, wumEventHandler);
+                                }
+
+                                // If true spikes should be processed
+                                if (sg.isTrueSpikeRequired()) {
+                                    CodeStream::Scope b(os);
+                                    presynapticUpdateStrategy->genCode(os, model, sg, popSubs, *this, true,
+                                        wumThreshHandler, wumSimHandler);
+                                }
+
+                                os << std::endl;
+
+                                // If we have been accumulating into a register, write value back to global memory
+                                if (presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
+                                    os << "// only do this for existing neurons" << std::endl;
+                                    os << "if (" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                                    {
+                                        CodeStream::Scope b(os);
+                                        const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[" + popSubs["id"] + "]";
+                                        if (sg.isPSModelMerged()) {
+                                            os << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
+                                        }
+                                        else {
+                                            os << inSyn << " += linSyn;" << std::endl;
+                                        }
+                                    }
+                                }
+                                // Otherwise, if we have been accumulating into shared memory, write value back to global memory
+                                // **NOTE** is ok as number of target neurons <= synapseBlkSz
+                                else if (presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
+                                    os << "__syncthreads();" << std::endl;
+                                    os << "if (threadIdx.x < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                                    {
+                                        CodeStream::Scope b(os);
+                                        const std::string inSyn = "dd_inSyn" + sg.getPSModelTargetName() + "[threadIdx.x]";
+                                        if (sg.isPSModelMerged()) {
+                                            os << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[threadIdx.x]);" << std::endl;
+                                        }
+                                        else {
+                                            os << inSyn << " += shLg[threadIdx.x];" << std::endl;
+                                        }
+                                    }
+                                }
+                            }
+                        );
+        }
+    }
+
+    // If any synapse groups require postsynaptic learning
+    size_t idPostsynapticStart = 0;
+    if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const ModelSpec::SynapseGroupValueType& s) { return !s.second.getWUModel()->getLearnPostCode().empty(); }))
+    {
+        os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
+        for (const auto& p : postsynapticKernelParameters) {
+            os << p.second << " " << p.first << ", ";
+        }
+        os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs(openclFunctions, model.getPrecision());
+            kernelSubs.addVarSubstitution("t", "t");
+
+            os << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
+            os << "__shared__ unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << "];" << std::endl;
+            if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+                [&model](const ModelSpec::SynapseGroupValueType& s)
+                {
+                    return ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty());
+                }))
+            {
+                os << "__shared__ unsigned int shColLength[" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << "];" << std::endl;
+            }
+
+                // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
+                genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
+                    [this](const SynapseGroupInternal& sg) { return Utils::padSize(getNumPostsynapticUpdateThreads(sg), m_KernelWorkGroupSizes[KernelPostsynapticUpdate]); },
+                    [](const SynapseGroupInternal& sg) { return !sg.getWUModel()->getLearnPostCode().empty(); },
+                    [postLearnHandler, &model, this](CodeStream& os, const SynapseGroupInternal& sg, const Substitutions& popSubs)
+                    {
+                        // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                        if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+                            os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("dd_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        }
+
+                        // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                        if (sg.getTrgNeuronGroup()->isDelayRequired()) {
+                            os << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot("dd_") << ";" << std::endl;
+                            os << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                        }
+
+                        if (sg.getTrgNeuronGroup()->isDelayRequired() && sg.getTrgNeuronGroup()->isTrueSpikeRequired()) {
+                            os << "const unsigned int numSpikes = dd_glbSpkCnt" << sg.getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
+                        }
+                        else {
+                            os << "const unsigned int numSpikes = dd_glbSpkCnt" << sg.getTrgNeuronGroup()->getName() << "[0];" << std::endl;
+                        }
+
+                        os << "const unsigned int numSpikeBlocks = (numSpikes + " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] - 1 << ") / " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ";" << std::endl;
+                        os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ") + 1 : " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ";" << std::endl;
+
+                            os << "if (threadIdx.x < numSpikesInBlock)";
+                            {
+                                CodeStream::Scope b(os);
+                                const std::string offsetTrueSpkPost = (sg.getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
+                                os << "const unsigned int spk = dd_glbSpk" << sg.getTrgNeuronGroup()->getName() << "[" << offsetTrueSpkPost << "(r * " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ") + threadIdx.x];" << std::endl;
+                                os << "shSpk[threadIdx.x] = spk;" << std::endl;
+
+                                if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                    os << "shColLength[threadIdx.x] = dd_colLength" << sg.getName() << "[spk];" << std::endl;
+                                }
+                            }
+
+                            os << "__syncthreads();" << std::endl;
+                            os << "// only work on existing neurons" << std::endl;
+                            os << "if (" << popSubs["id"] << " < " << sg.getMaxSourceConnections() << ")";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "// loop through all incoming spikes for learning" << std::endl;
+                                os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
+                                {
+                                    CodeStream::Scope b(os);
+
+                                    Substitutions synSubs(&popSubs);
+                                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                        os << "if (" << popSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
+                                        os << "const unsigned int synAddress = dd_remap" + sg.getName() + "[(shSpk[j] * " << std::to_string(sg.getMaxSourceConnections()) << ") + " << popSubs["id"] << "];" << std::endl;
+                                        os << "const unsigned int ipre = synAddress / " + std::to_string(sg.getMaxConnections()) + ";" << std::endl;
+                                        synSubs.addVarSubstitution("id_pre", "ipre");
+                                    }
+                                    else {
+                                        os << "const unsigned int synAddress = (" << popSubs["id"] << " * " << std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) << ") + shSpk[j];" << std::endl;
+                                        synSubs.addVarSubstitution("id_pre", synSubs["id"]);
+                                    }
+
+                                    synSubs.addVarSubstitution("id_post", "shSpk[j]");
+                                    synSubs.addVarSubstitution("id_syn", "synAddress");
+
+                                    postLearnHandler(os, sg, synSubs);
+
+                                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                        os << CodeStream::CB(1540);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                );
+        }
+    }
+
+    size_t idSynapseDynamicsStart = 0;
+    if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const ModelSpec::SynapseGroupValueType& s) { return !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
+    {
+        os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
+        for (const auto& p : synapseDynamicsKernelParameters) {
+            os << p.second << " " << p.first << ", ";
+        }
+        os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+        {
+            CodeStream::Scope b(os);
+            os << "unsigned int id = " << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+            Substitutions kernelSubs(openclFunctions, model.getPrecision());
+            kernelSubs.addVarSubstitution("t", "t");
+
+            // Parallelise over synapse groups whose weight update models have code for synapse dynamics
+            genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
+                [this](const SynapseGroupInternal& sg) { return Utils::padSize(getNumSynapseDynamicsThreads(sg), m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate]); },
+                [](const SynapseGroupInternal& sg) { return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
+                [synapseDynamicsHandler, &model, this](CodeStream& os, const SynapseGroupInternal& sg, const Substitutions& popSubs)
+                {
+                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
+                    if (sg.getSrcNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("dd_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
+                    if (sg.getTrgNeuronGroup()->isDelayRequired()) {
+                        os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("dd_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    }
+
+                    Substitutions synSubs(&popSubs);
+
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                        os << "if (" << popSubs["id"] << " < dd_synRemap" << sg.getName() << "[0])";
+                    }
+                    else {
+                        os << "if (" << popSubs["id"] << " < " << sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                    }
+                    {
+                        CodeStream::Scope b(os);
+
+                        if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                            // Determine synapse and presynaptic indices for this thread
+                            os << "const unsigned int s = dd_synRemap" << sg.getName() << "[1 + " << popSubs["id"] << "];" << std::endl;
+
+                            synSubs.addVarSubstitution("id_pre", "s / " + std::to_string(sg.getMaxConnections()));
+                            synSubs.addVarSubstitution("id_post", "dd_ind" + sg.getName() + "[s]");
+                            synSubs.addVarSubstitution("id_syn", "s");
+                        }
+                        else {
+                            synSubs.addVarSubstitution("id_pre", popSubs["id"] + " / " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+                            synSubs.addVarSubstitution("id_post", popSubs["id"] + " % " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()));
+                            synSubs.addVarSubstitution("id_syn", popSubs["id"]);
+                        }
+
+                        // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                        if (sg.isDendriticDelayRequired()) {
+                            synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
+                        }
+                        // Otherwise
+                        else {
+                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
+                        }
+
+                        synapseDynamicsHandler(os, sg, synSubs);
+                    }
+                });
+        }
+    }
+
+    os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
+
+        // Launch pre-synapse reset kernel if required
+        if (idPreSynapseReset > 0) {
+            CodeStream::Scope b(os);
+            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
+            os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+
+        // Launch synapse dynamics kernel if required
+        if (idSynapseDynamicsStart > 0) {
+            CodeStream::Scope b(os);
+            Timer t(os, "synapseDynamics", model.isTimingEnabled());
+
+            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
+            os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
+            for (const auto& p : synapseDynamicsKernelParameters) {
+                gennExtraGlobalParamPass(os, p);
+            }
+            os << "t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+
+        // Launch presynaptic update kernel
+        if (idPresynapticStart > 0) {
+            CodeStream::Scope b(os);
+            Timer t(os, "presynapticUpdate", model.isTimingEnabled());
+
+            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
+            os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(";
+            for (const auto& p : presynapticKernelParameters) {
+                gennExtraGlobalParamPass(os, p);
+            }
+            os << "t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+
+        // Launch postsynaptic update kernel
+        if (idPostsynapticStart > 0) {
+            CodeStream::Scope b(os);
+            Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
+
+            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
+            os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(";
+            for (const auto& p : postsynapticKernelParameters) {
+                gennExtraGlobalParamPass(os, p);
+            }
+            os << "t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -1184,6 +1619,11 @@ void Backend::genEmitSpike(CodeStream& os, const Substitutions& subs, const std:
 {
     os << "const unsigned int spk" << suffix << "Idx = atomic_add(&shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const
+{
+    //! TO BE IMPLEMENTED
 }
 //--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string& type, size_t size)
