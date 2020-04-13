@@ -563,7 +563,7 @@ void Backend::genAllocateMemPostamble(CodeStream&, const ModelSpecInternal&) con
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecInternal &) const
+void Backend::genStepTimeFinalisePreamble(CodeStream&, const ModelSpecInternal&) const
 {
 }
 //--------------------------------------------------------------------------
