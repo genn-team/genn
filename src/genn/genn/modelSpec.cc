@@ -185,9 +185,10 @@ void ModelSpec::finalize()
                 using namespace CodeGenerator;
                 assert(!wu->getEventThresholdConditionCode().empty());
 
-                // do an early replacement of parameters and derived parameters
+                // do an early replacement of weight update model parameters and derived parameters
                 // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
                 // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
+                // **NOTE** this prevents heterogeneous parameters being allowed in event threshold conditions but I can't see any way around this
                 Substitutions thresholdSubs;
                 thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
                 thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
