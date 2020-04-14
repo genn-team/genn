@@ -32,6 +32,7 @@
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
+    <ClCompile Include="code_generator\substitutions.cc" />
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />

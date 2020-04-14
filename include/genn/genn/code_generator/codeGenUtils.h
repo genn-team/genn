@@ -24,7 +24,6 @@ class SynapseGroupInternal;
 namespace CodeGenerator
 {
 class NeuronSpikeQueueUpdateGroupMerged;
-class Substitutions;
 }
 
 //--------------------------------------------------------------------------
