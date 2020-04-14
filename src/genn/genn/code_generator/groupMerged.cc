@@ -425,7 +425,6 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                 }
             }
         }
-       
 
         if(!init) {
             // Add any heterogeneous postsynaptic model parameters
@@ -443,10 +442,12 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                {
                                                    return getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSDerivedParams().at(paramIndex);
                                                });
-            /*for(const auto &e : egps) {
-                gen.addField(e.type + " " + e.name + std::to_string(i),
-                             [e](const typename T::GroupInternal &g){ return e.name + g.getName(); });
-            }*/
+            // Add EGPs
+            addChildEGPs(gen, sg->getPSModel()->getExtraGlobalParams(), i, backend.getArrayPrefix(), "InSyn",
+                         [this](size_t groupIndex, size_t childIndex)
+                         {
+                             return getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSModelTargetName();
+                         });
         }
     }
 
@@ -497,17 +498,13 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                    return getSortedCurrentSources().at(groupIndex).at(childIndex)->getDerivedParams().at(paramIndex);
                                                });
 
-            const auto egps = cs->getCurrentSourceModel()->getExtraGlobalParams();
-            for(const auto &e : egps) {
-                const bool isPointer = Utils::isTypePointer(e.type);
-                const std::string prefix = isPointer ? backend.getArrayPrefix() : "";
-                gen.addField(e.type, e.name + "CS" + std::to_string(i),
-                             [i, e, prefix, this](const NeuronGroupInternal &, size_t groupIndex)
-                             {
-                                 return prefix + e.name + getSortedCurrentSources().at(groupIndex).at(i)->getName();
-                             },
-                             Utils::isTypePointer(e.type) ? decltype(gen)::FieldType::PointerEGP : decltype(gen)::FieldType::ScalarEGP);
-            }
+            // Add EGPs
+            addChildEGPs(gen, cs->getCurrentSourceModel()->getExtraGlobalParams(), i, backend.getArrayPrefix(), "CS",
+                         [this](size_t groupIndex, size_t childIndex) 
+                         { 
+                             return getSortedCurrentSources().at(groupIndex).at(childIndex)->getName(); 
+                         });
+            
         }
     }
 
@@ -558,6 +555,13 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                {
                                                    return getSortedInSynWithPostCode().at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
                                                });
+
+            // Add EGPs
+            addChildEGPs(gen, sg->getWUModel()->getExtraGlobalParams(), i, backend.getArrayPrefix(), "WUPost",
+                         [this](size_t groupIndex, size_t childIndex)
+                         {
+                             return getSortedInSynWithPostCode().at(groupIndex).at(childIndex)->getName();
+                         });
         }
     }
 
@@ -608,6 +612,13 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                {
                                                    return getSortedOutSynWithPreCode().at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
                                                });
+
+            // Add EGPs
+            addChildEGPs(gen, sg->getWUModel()->getExtraGlobalParams(), i, backend.getArrayPrefix(), "WUPre",
+                         [this](size_t groupIndex, size_t childIndex)
+                         {
+                             return getSortedOutSynWithPreCode().at(groupIndex).at(childIndex)->getName();
+                         });
         }
     }
 

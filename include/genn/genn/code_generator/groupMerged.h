@@ -3,6 +3,7 @@
 // Standard includes
 #include <algorithm>
 #include <functional>
+#include <type_traits>
 #include <vector>
 
 // GeNN includes
@@ -258,6 +259,7 @@ private:
         orderNeuronGroupChildren(archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
     }
 
+
     template<typename T, typename G>
     bool isChildParamValueHeterogeneous(std::initializer_list<std::string> codeStrings,
                                         const std::string &paramName, size_t childIndex, size_t paramIndex,
@@ -361,6 +363,27 @@ private:
             }
         }
     }
+
+    template<typename S>
+    void addChildEGPs(MergedStructGenerator<NeuronGroupMergedBase> &gen,
+                      const std::vector<Snippet::Base::EGP> &egps, size_t childIndex,
+                      const std::string &arrayPrefix, const std::string &prefix,
+                      S getEGPSuffixFn) const
+    {
+        using FieldType = std::remove_reference<decltype(gen)>::type::FieldType;
+        for(const auto &e : egps) {
+            const bool isPointer = Utils::isTypePointer(e.type);
+            const std::string prefix = isPointer ? arrayPrefix : "";
+            gen.addField(e.type, e.name + prefix + std::to_string(childIndex),
+                         [getEGPSuffixFn, childIndex, e, prefix](const NeuronGroupInternal&, size_t groupIndex)
+                         {
+                             return prefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
+                         },
+                         Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+        }
+    }
+    
+
 
     void addMergedInSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
                                     const std::string &type, const std::string &name, 
