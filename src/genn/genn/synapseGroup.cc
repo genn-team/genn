@@ -458,15 +458,7 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
         if(!(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
            || getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser()))
         {
-            // If matrix weights are global, constantified init values must match
-            if(getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-                return (getWUConstInitVals() == other.getWUConstInitVals());
-            }
-            // Otherwise, if weights are individual or procedural, merging is unproblematic
-            else {
-                return true;
-            }
-            
+            return true;
         }
     }
 
@@ -497,14 +489,7 @@ bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
        && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
        && (individualPSM == otherIndividualPSM))
     {
-        // If synapse group has individual postsynaptic model variables, return true
-        if(individualPSM) {
-            return true;
-        }
-        // Otherwise, constantified init values must match
-        else {
-            return (getPSConstInitVals() == other.getPSConstInitVals());
-        }
+        return true;
     }
 
     return false;

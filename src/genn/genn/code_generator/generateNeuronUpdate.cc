@@ -155,7 +155,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                     inSynSubs.addVarNameSubstitution(psm->getVars(), "", "lps");
                 }
                 else {
-                    inSynSubs.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals());
+                    inSynSubs.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals(),
+                                                      [i, &ng](size_t p) { return ng.isPSMGlobalVarHeterogeneous(i, p); },
+                                                      "", "group.", "InSyn" + std::to_string(i));
                 }
 
                 inSynSubs.addParamValueSubstitution(psm->getParamNames(), sg->getPSParams(),

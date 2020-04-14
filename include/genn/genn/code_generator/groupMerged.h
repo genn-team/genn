@@ -157,7 +157,10 @@ public:
     bool isPSMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
     //! Should the postsynaptic model derived parameter be implemented heterogeneously?
-    bool isPSMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    bool isPSMDerivedParamHeterogeneous(size_t childIndex, size_t varIndex) const;
+
+    //! Should the GLOBALG postsynaptic model variable be implemented heterogeneously?
+    bool isPSMGlobalVarHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
     //! Should the postsynaptic model var init parameter be implemented heterogeneously?
     bool isPSMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;

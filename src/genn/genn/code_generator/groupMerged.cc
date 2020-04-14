@@ -162,6 +162,24 @@ bool CodeGenerator::NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous(size_t
                                           });
 }
 //----------------------------------------------------------------------------
+bool CodeGenerator::NeuronGroupMergedBase::isPSMGlobalVarHeterogeneous(size_t childIndex, size_t varIndex) const
+{
+    // If synapse group doesn't have individual PSM variables to start with, return false
+    const auto *sg = getArchetype().getMergedInSyn().at(childIndex).first;
+    if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+        return false;
+    }
+    else {
+        const auto *psm = getArchetype().getMergedInSyn().at(childIndex).first->getPSModel();
+        const std::string varName = psm->getVars().at(varIndex).name;
+        return isChildParamValueHeterogeneous({psm->getApplyInputCode(), psm->getDecayCode()}, varName, childIndex, varIndex, m_SortedMergedInSyns,
+                                              [](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &inSyn)
+                                              {
+                                                  return inSyn.first->getPSConstInitVals();
+                                              });
+    }
+}
+//----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
     const auto *varInitSnippet = getArchetype().getMergedInSyn().at(childIndex).first->getPSVarInitialisers().at(varIndex).getSnippet();
@@ -371,11 +389,13 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                          });
         }
 
-        // If PSM has individual variables
-        if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            // Loop through variables
-            const auto vars = sg->getPSModel()->getVars();
-            for(size_t v = 0; v < vars.size(); v++) {
+        
+        
+        // Loop through variables
+        const auto vars = sg->getPSModel()->getVars();
+        for(size_t v = 0; v < vars.size(); v++) {
+            // If PSM has individual variables
+            if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 // Add pointers to state variable
                 addMergedInSynPointerField(gen, vars[v].type, vars[v].name + "InSyn", i, backend.getArrayPrefix() + vars[v].name);
 
@@ -392,7 +412,20 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                                                               &NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous, getVarInitialiserFn);
                 }
             }
+            // Otherwise
+            else {
+                // If GLOBALG variable should be implemented heterogeneously, add value
+                if(isPSMGlobalVarHeterogeneous(i, v)) {
+                    gen.addScalarField(vars[v].name + "InSyn" + std::to_string(i),
+                                       [this, i, v](const NeuronGroupInternal &, size_t groupIndex)
+                                       {
+                                           const double val = getSortedMergedInSyns().at(groupIndex).at(i).first->getPSConstInitVals().at(v);
+                                           return Utils::writePreciseString(val);
+                                       });
+                }
+            }
         }
+       
 
         if(!init) {
             // Add any heterogeneous postsynaptic model parameters
