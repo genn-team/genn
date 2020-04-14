@@ -15,16 +15,8 @@
 // GeNN code generator includes
 #include "backendBase.h"
 #include "codeStream.h"
+#include "substitutions.h"
 #include "teeStream.h"
-
-// Forward declarations
-class ModelSpecInternal;
-class SynapseGroupInternal;
-
-namespace CodeGenerator
-{
-class NeuronSpikeQueueUpdateGroupMerged;
-}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::FunctionTemplate
