@@ -20,6 +20,30 @@ namespace CodeGenerator
 class Substitutions
 {
 public:
+    //! Immutable structure for specifying how to implement
+    //! a generic function e.g. gennrand_uniform
+    /*! **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes) */
+    struct FunctionTemplate
+    {
+        // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
+        FunctionTemplate operator = (const FunctionTemplate &o)
+        {
+            return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
+        }
+
+        //! Generic name used to refer to function in user code
+        const std::string genericName;
+
+        //! Number of function arguments
+        const unsigned int numArguments;
+
+        //! The function template (for use with ::functionSubstitute) used when model uses double precision
+        const std::string doublePrecisionTemplate;
+
+        //! The function template (for use with ::functionSubstitute) used when model uses single precision
+        const std::string singlePrecisionTemplate;
+    };
+
     Substitutions(const Substitutions *parent = nullptr) : m_Parent(parent)
     {
         assert(m_Parent != this);

@@ -24,6 +24,7 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/generateAll.h"
 
 // CUDA backend includes

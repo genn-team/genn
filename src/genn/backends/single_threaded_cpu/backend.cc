@@ -9,12 +9,14 @@
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
+using namespace CodeGenerator;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<CodeGenerator::FunctionTemplate> cpuFunctions = {
+const std::vector<Substitutions::FunctionTemplate> cpuFunctions = {
     {"gennrand_uniform", 0, "standardUniformDistribution($(rng))", "standardUniformDistribution($(rng))"},
     {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
@@ -28,7 +30,7 @@ const std::vector<CodeGenerator::FunctionTemplate> cpuFunctions = {
 class Timer
 {
 public:
-    Timer(CodeGenerator::CodeStream &codeStream, const std::string &name, bool timingEnabled)
+    Timer(CodeStream &codeStream, const std::string &name, bool timingEnabled)
     :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
     {
         // Record start event
@@ -49,7 +51,7 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    CodeGenerator::CodeStream &m_CodeStream;
+    CodeStream &m_CodeStream;
     const std::string m_Name;
     const bool m_TimingEnabled;
 };

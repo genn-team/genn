@@ -7,7 +7,7 @@
 // CodeGenerator::Substitutions
 //--------------------------------------------------------------------------
 void CodeGenerator::Substitutions::addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values,
-                                                             const std::string &sourceSuffix = "")
+                                                             const std::string &sourceSuffix)
 {
     if(paramNames.size() != values.size()) {
         throw std::runtime_error("Number of parameters does not match number of values");
@@ -22,7 +22,7 @@ void CodeGenerator::Substitutions::addParamValueSubstitution(const std::vector<s
 
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::Substitutions::addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride = false)
+void CodeGenerator::Substitutions::addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride)
 {
     auto res = m_VarSubstitutions.emplace(source, destionation);
     if(!allowOverride && !res.second) {
@@ -31,7 +31,7 @@ void CodeGenerator::Substitutions::addVarSubstitution(const std::string &source,
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::Substitutions::addFuncSubstitution(const std::string &source, unsigned int numArguments, 
-                                                       const std::string &funcTemplate, bool allowOverride = false)
+                                                       const std::string &funcTemplate, bool allowOverride)
 {
     auto res = m_FuncSubstitutions.emplace(std::piecewise_construct,
                                            std::forward_as_tuple(source),

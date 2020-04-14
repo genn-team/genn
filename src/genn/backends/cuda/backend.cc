@@ -24,7 +24,7 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<FunctionTemplate> cudaFunctions = {
+const std::vector<Substitutions::FunctionTemplate> cudaFunctions = {
     {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
     {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
