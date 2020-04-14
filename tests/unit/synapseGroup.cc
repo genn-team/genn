@@ -133,7 +133,24 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_FALSE(sg0Internal->canWUBeMerged(*sg2));
+    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
+
+    // Check that global g var is heterogeneous
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUGlobalVarHeterogeneous(0));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
