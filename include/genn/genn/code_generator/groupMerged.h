@@ -529,6 +529,18 @@ public:
     //! Should the connectivity initialization parameter be implemented heterogeneously?
     bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
 
+    //! Is presynaptic neuron parameter heterogeneous
+    bool isSrcNeuronParamHeterogeneous(size_t paramIndex) const;
+
+    //! Is presynaptic neuron derived parameter heterogeneous
+    bool isSrcNeuronDerivedParamHeterogeneous(size_t paramIndex) const;
+
+    //! Is postsynaptic neuron parameter heterogeneous
+    bool isTrgNeuronParamHeterogeneous(size_t paramIndex) const;
+
+    //! Is postsynaptic neuron derived parameter heterogeneous
+    bool isTrgNeuronDerivedParamHeterogeneous(size_t paramIndex) const;
+
 protected:
     //----------------------------------------------------------------------------
     // Enumerations
@@ -545,6 +557,11 @@ protected:
     SynapseGroupMergedBase(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   GroupMerged<SynapseGroupInternal>(index, groups)
     {}
+
+    //----------------------------------------------------------------------------
+    // Declared virtuals
+    //----------------------------------------------------------------------------
+    virtual std::string getArchetypeCode() const { return ""; }
 
     //----------------------------------------------------------------------------
     // Protected methods
@@ -587,6 +604,16 @@ public:
                                          mergedStructData, precision, timePrecision, 
                                          "PresynapticUpdate", SynapseGroupMergedBase::Role::PresynapticUpdate);
     }
+
+protected:
+    //----------------------------------------------------------------------------
+    // SynapseGroupMergedBase virtuals
+    //----------------------------------------------------------------------------
+    virtual std::string getArchetypeCode() const override
+    {
+        // **NOTE** we concatenate sim code, event code and threshold code so all get tested
+        return getArchetype().getWUModel()->getSimCode() + getArchetype().getWUModel()->getEventCode() + getArchetype().getWUModel()->getEventThresholdConditionCode();
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -610,6 +637,15 @@ public:
                                          mergedStructData, precision, timePrecision,
                                          "PostsynapticUpdate", SynapseGroupMergedBase::Role::PostsynapticUpdate);
     }
+
+protected:
+    //----------------------------------------------------------------------------
+    // SynapseGroupMergedBase virtuals
+    //----------------------------------------------------------------------------
+    virtual std::string getArchetypeCode() const override
+    {
+        return getArchetype().getWUModel()->getLearnPostCode();
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -632,6 +668,15 @@ public:
                                          definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                                          mergedStructData, precision, timePrecision,
                                          "SynapseDynamics", SynapseGroupMergedBase::Role::SynapseDynamics);
+    }
+
+protected:
+    //----------------------------------------------------------------------------
+    // SynapseGroupMergedBase virtuals
+    //----------------------------------------------------------------------------
+    virtual std::string getArchetypeCode() const override
+    {
+        return getArchetype().getWUModel()->getSynapseDynamicsCode();
     }
 };
 

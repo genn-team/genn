@@ -437,7 +437,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                 preSubs.addVarNameSubstitution(sg->getWUModel()->getPreVars(), "", "l");
 
                 const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                neuronSubstitutionsInSynapticCode(preSubs, sg->getSrcNeuronGroup(), offset, "", preSubs["id"], "_pre", "");
+                neuronSubstitutionsInSynapticCode(preSubs, sg->getSrcNeuronGroup(), offset, "", preSubs["id"], "_pre", "", "", "",
+                                                  [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
+                                                  [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
 
                 // Perform standard substitutions
                 std::string code = sg->getWUModel()->getPreSpikeCode();
@@ -492,7 +494,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                 postSubs.addVarNameSubstitution(sg->getWUModel()->getPostVars(), "", "l");
 
                 const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                neuronSubstitutionsInSynapticCode(postSubs, sg->getTrgNeuronGroup(), offset, "", postSubs["id"], "_post", "");
+                neuronSubstitutionsInSynapticCode(postSubs, sg->getTrgNeuronGroup(), offset, "", postSubs["id"], "_post", "", "", "",
+                                                  [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
+                                                  [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
 
                 // Perform standard substitutions
                 std::string code = sg->getWUModel()->getPostSpikeCode();

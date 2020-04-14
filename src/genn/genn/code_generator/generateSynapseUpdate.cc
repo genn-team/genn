@@ -4,6 +4,7 @@
 #include <string>
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
 #include "code_generator/modelSpecMerged.h"
@@ -88,8 +89,22 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
         synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getArchetype().getWUConstInitVals());
     }
 
-    neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype(), synapseSubs["id_pre"],
-                                      synapseSubs["id_post"], model.getDT());
+    // Make presynaptic neuron substitutions
+    const std::string axonalDelayOffset = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getDelaySteps() + 1u)) + " + ";
+    const std::string preOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
+    neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(),
+                                      preOffset, axonalDelayOffset, synapseSubs["id_pre"], "_pre", "Pre", "", "",
+                                      [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
+                                      [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+
+
+    // Make postsynaptic neuron substitutions
+    const std::string backPropDelayMs = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u)) + " + ";
+    const std::string postOffset = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
+    neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getTrgNeuronGroup(),
+                                      postOffset, backPropDelayMs, synapseSubs["id_post"], "_post", "Post", "", "",
+                                      [&sg](size_t paramIndex) { return sg.isTrgNeuronParamHeterogeneous(paramIndex); },
+                                      [&sg](size_t derivedParamIndex) { return sg.isTrgNeuronDerivedParamHeterogeneous(derivedParamIndex); });
 
     synapseSubs.apply(code);
     //synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
@@ -135,10 +150,12 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
                                                 "", "group.");
             synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "group.");
 
-            // Get read offset if required
+            // Get read offset if required and substitute in presynaptic neuron properties
             const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, "", baseSubs["id_pre"], "_pre", "Pre");
-
+            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, "", baseSubs["id_pre"], "_pre", "Pre", "", "",
+                                              [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
+                                              [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+            
             // Get event threshold condition code
             std::string code = sg.getArchetype().getWUModel()->getEventThresholdConditionCode();
             synapseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
