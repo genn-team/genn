@@ -186,7 +186,7 @@ void ModelSpec::finalize()
                 assert(!wu->getEventThresholdConditionCode().empty());
 
                 // do an early replacement of parameters and derived parameters
-                // **NOTE * *this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
+                // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
                 // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
                 Substitutions thresholdSubs;
                 thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
