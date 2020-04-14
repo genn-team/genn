@@ -10,6 +10,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
+#include "neuronGroupInternal.h"
 #include "variableMode.h"
 
 // GeNN code generator includes
