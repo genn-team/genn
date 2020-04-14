@@ -542,7 +542,7 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
             gen.addField(var.type + "*", var.name + "WUPre" + std::to_string(i),
                          [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
                          {
-                             return backend.getArrayPrefix() + var.name + m_SortedInSynWithPostCode.at(groupIndex).at(i)->getName();
+                             return backend.getArrayPrefix() + var.name + getSortedOutSynWithPreCode().at(groupIndex).at(i)->getName();
                          });
 
             // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
