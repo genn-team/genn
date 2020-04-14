@@ -127,7 +127,7 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
 {
     // Accumulate the accumulation of all groups in merged group
     return std::accumulate(
-        groups.cbegin(), groups.cend(), 0,
+        groups.cbegin(), groups.cend(), size_t{0},
         [getNumThreads](size_t acc, const T &n)
         {
             return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
@@ -143,7 +143,7 @@ size_t getGroupStartIDSize(const std::vector<T> &mergedGroups)
 {
     // Calculate size of groups
     return std::accumulate(mergedGroups.cbegin(), mergedGroups.cend(),
-                           0, [](size_t acc, const T &ng)
+                           size_t{0}, [](size_t acc, const T &ng)
                            {
                                return acc + (sizeof(unsigned int) * ng.getGroups().size());
                            });
