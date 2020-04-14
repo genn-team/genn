@@ -499,11 +499,13 @@ bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
 {
     // Postsynaptic models can be linearly combined if they can be merged and either 
     // they DON'T have individual postsynaptic model variables or they have no variable at all
-    // **NOTE * *many models with variables would work fine, but nothing stops
+    // **NOTE** many models with variables would work fine, but nothing stops
     // initialisers being used to configure PS models to behave totally different
+    // **NOTE** similarly with EGPs
     return (canPSBeMerged(other)
             && (getPSParams() == other.getPSParams())
             && (getPSDerivedParams() == other.getPSDerivedParams())
+            && getPSModel()->getExtraGlobalParams().empty()
             && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
 //----------------------------------------------------------------------------
