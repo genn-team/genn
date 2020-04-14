@@ -359,7 +359,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     ASSERT_FALSE(deltaAlphaMergedUpdateGroup->isPSMParamHeterogeneous(alphaUpdateIndex, 0));
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, 0));
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, 1));
-    ASSERT_TRUE(deltaAlphaMergedInitGroup->isPSMVarInitParamHeterogeneous(alphaUpdateIndex, 0, 0));
+    ASSERT_TRUE(deltaAlphaMergedInitGroup->isPSMVarInitParamHeterogeneous(alphaInitIndex, 0, 0));
 }
 
 TEST(NeuronGroup, CompareWUPreUpdate)
