@@ -83,14 +83,6 @@ public:
         }
     }
 
-    void addEGPPointers(const std::vector<Snippet::Base::EGP> &egps, const std::string &prefix)
-    {
-        for(const auto &e : egps) {
-            addField(e.type + "*", prefix + e.name,
-                     [e, prefix](const typename T::GroupInternal &g, size_t) { return "&" + prefix + e.name + g.getName(); });
-        }
-    }
-
     template<typename G, typename H>
     void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, 
                                 G getParamValues, H isHeterogeneous)

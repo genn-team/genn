@@ -726,9 +726,17 @@ void CodeGenerator::SynapseConnectivityHostInitGroupMerged::generate(const Backe
                                       &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
 
     // Add EGP pointers to struct for both host and device EGPs
-    gen.addEGPPointers(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
-    gen.addEGPPointers(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-                       backend.getArrayPrefix());
+    const auto egps = getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
+    for(const auto &e : egps) {
+        gen.addField(e.type + "*", e.name,
+                     [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); });
+
+        gen.addField(e.type + "*", backend.getArrayPrefix() + e.name,
+                     [e, &backend](const SynapseGroupInternal &g, size_t) 
+                     { 
+                         return "&" + backend.getArrayPrefix() + e.name + g.getName();
+                     });
+    }
 
     // Generate structure definitions and instantiation
     gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
