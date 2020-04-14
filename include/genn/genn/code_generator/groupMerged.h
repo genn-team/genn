@@ -11,15 +11,15 @@
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
+// GeNN code generator includes
+#include "code_generator/mergedStructGenerator.h"
+
 // Forward declarations
 namespace CodeGenerator
 {
 class BackendBase;
 class CodeStream;
 class MergedStructData;
-
-template<typename T>
-class MergedStructGenerator;
 }
 
 //----------------------------------------------------------------------------
