@@ -514,11 +514,14 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
-    //! Should the parameter be implemented heterogeneously?
+    //! Should the weight update model parameter be implemented heterogeneously?
     bool isWUParamHeterogeneous(size_t paramIndex) const;
 
-    //! Should the derived parameter be implemented heterogeneously?
+    //! Should the weight update model derived parameter be implemented heterogeneously?
     bool isWUDerivedParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the GLOBALG weight update model variable be implemented heterogeneously?
+    bool isWUGlobalVarHeterogeneous(size_t varIndex) const;
 
     //! Should the weight update model variable initialization parameter be implemented heterogeneously?
     bool isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;

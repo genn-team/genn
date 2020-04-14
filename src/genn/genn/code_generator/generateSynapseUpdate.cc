@@ -86,7 +86,9 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     }
     // Otherwise, substitute variables for constant values
     else {
-        synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getArchetype().getWUConstInitVals());
+        synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getArchetype().getWUConstInitVals(),
+                                            [&sg](size_t v) { return sg.isWUGlobalVarHeterogeneous(v); },
+                                            "", "group.");
     }
 
     // Make presynaptic neuron substitutions

@@ -880,6 +880,21 @@ bool CodeGenerator::SynapseGroupMergedBase::isWUDerivedParamHeterogeneous(size_t
                                      [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMergedBase::isWUGlobalVarHeterogeneous(size_t varIndex) const
+{
+    // If synapse group has global WU variables
+    if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+        const auto *wum = getArchetype().getWUModel();
+        const std::string varName = wum->getVars().at(varIndex).name;
+        return isParamValueHeterogeneous({getArchetypeCode()}, varName, varIndex,
+                                         [](const SynapseGroupInternal &sg) { return sg.getWUConstInitVals(); });
+    }
+    // Otherwise, return false
+    else {
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
 bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
@@ -1161,9 +1176,23 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
                     backend.getArrayPrefix());
     }
 
-    // If synaptic matrix weights are individual, add pointers to var pointers to struct
+    // If WU varaibles are individual, add pointers to var pointers to struct
+    const auto vars = wum->getVars();
     if(getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         gen.addVars(wum->getVars(), backend.getArrayPrefix());
+    }
+    // Otherwise, if WU variables are global, loop through them
+    else if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+        for(size_t v = 0; v < vars.size(); v++) {
+            // If variable should be implemented heterogeneously, add scalar field
+            if(isWUGlobalVarHeterogeneous(v)) {
+                gen.addScalarField(vars[v].name,
+                                   [v](const SynapseGroupInternal &sg, size_t)
+                                   {
+                                       return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
+                                   });
+            }
+        }
     }
 
     // If synaptic matrix weights are procedural or we are initializing
