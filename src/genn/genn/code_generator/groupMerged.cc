@@ -466,10 +466,12 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
 
             const auto egps = cs->getCurrentSourceModel()->getExtraGlobalParams();
             for(const auto &e : egps) {
+                const bool isPointer = Utils::isTypePointer(e.type);
+                const std::string prefix = isPointer ? backend.getArrayPrefix() : "";
                 gen.addField(e.type, e.name + "CS" + std::to_string(i),
-                             [i, e, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
+                             [i, e, prefix, this](const NeuronGroupInternal &, size_t groupIndex)
                              {
-                                 return backend.getArrayPrefix() + e.name + getSortedCurrentSources().at(groupIndex).at(i)->getName();
+                                 return prefix + e.name + getSortedCurrentSources().at(groupIndex).at(i)->getName();
                              },
                              Utils::isTypePointer(e.type) ? decltype(gen)::FieldType::PointerEGP : decltype(gen)::FieldType::ScalarEGP);
             }
@@ -595,10 +597,12 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
         if(s.egpInThresholdCode) {
             const auto sgEGPs = s.synapseGroup->getWUModel()->getExtraGlobalParams();
             for(const auto &egp : sgEGPs) {
+                const bool isPointer = Utils::isTypePointer(egp.type);
+                const std::string prefix = isPointer ? backend.getArrayPrefix() : "";
                 gen.addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
-                             [&eventThresholdSGs, &backend, egp, i](const NeuronGroupInternal &, size_t groupIndex)
+                             [&eventThresholdSGs, prefix, egp, i](const NeuronGroupInternal &, size_t groupIndex)
                              {
-                                 return backend.getArrayPrefix() + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
+                                 return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
                              },
                              Utils::isTypePointer(egp.type) ? decltype(gen)::FieldType::PointerEGP : decltype(gen)::FieldType::ScalarEGP);
             }
@@ -980,8 +984,10 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
         const auto preEGPs = getArchetype().getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams();
         for(const auto &e : preEGPs) {
             if(code.find("$(" + e.name + "_pre)") != std::string::npos) {
+                const bool isPointer = Utils::isTypePointer(e.type);
+                const std::string prefix = isPointer ? backend.getArrayPrefix() : "";
                 gen.addField(e.type, e.name + "Pre",
-                             [e](const SynapseGroupInternal &sg, size_t) { return e.name + sg.getSrcNeuronGroup()->getName(); },
+                             [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getSrcNeuronGroup()->getName(); },
                              Utils::isTypePointer(e.type) ? decltype(gen)::FieldType::PointerEGP : decltype(gen)::FieldType::ScalarEGP);
             }
         }
@@ -990,8 +996,10 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
         const auto postEGPs = getArchetype().getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams();
         for(const auto &e : postEGPs) {
             if(code.find("$(" + e.name + "_post)") != std::string::npos) {
+                const bool isPointer = Utils::isTypePointer(e.type);
+                const std::string prefix = isPointer ? backend.getArrayPrefix() : "";
                 gen.addField(e.type, e.name + "Post",
-                             [e](const SynapseGroupInternal &sg, size_t) { return e.name + sg.getTrgNeuronGroup()->getName(); },
+                             [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getTrgNeuronGroup()->getName(); },
                              Utils::isTypePointer(e.type) ? decltype(gen)::FieldType::PointerEGP : decltype(gen)::FieldType::ScalarEGP);
             }
         }
