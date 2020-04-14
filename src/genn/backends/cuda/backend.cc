@@ -1210,15 +1210,6 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << std::endl;
     os << "// Standard C includes" << std::endl;
     os << "#include <cstdint>" << std::endl;
-    os << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Helper macro for error-checking CUDA calls" << std::endl;
-    os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
-    os << "    cudaError_t error = call;\\" << std::endl;
-    os << "    if (error != cudaSuccess) {\\" << std::endl;
-    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
-    os << "    }\\" << std::endl;
-    os << "}" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
@@ -1228,6 +1219,15 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     if(getRuntimeVersion() >= 9000) {
         os <<"#include <cuda_fp16.h>" << std::endl;
     }
+    os << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Helper macro for error-checking CUDA calls" << std::endl;
+    os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
+    os << "    cudaError_t error = call;\\" << std::endl;
+    os << "    if (error != cudaSuccess) {\\" << std::endl;
+    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
+    os << "    }\\" << std::endl;
+    os << "}" << std::endl;
     os << std::endl;
     os << "#define SUPPORT_CODE_FUNC __device__ __host__ inline" << std::endl;
     os << std::endl;
