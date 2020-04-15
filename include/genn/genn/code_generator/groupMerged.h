@@ -373,11 +373,11 @@ private:
         using FieldType = std::remove_reference<decltype(gen)>::type::FieldType;
         for(const auto &e : egps) {
             const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string prefix = isPointer ? arrayPrefix : "";
+            const std::string varPrefix = isPointer ? arrayPrefix : "";
             gen.addField(e.type, e.name + prefix + std::to_string(childIndex),
-                         [getEGPSuffixFn, childIndex, e, prefix](const NeuronGroupInternal&, size_t groupIndex)
+                         [getEGPSuffixFn, childIndex, e, varPrefix](const NeuronGroupInternal&, size_t groupIndex)
                          {
-                             return prefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
+                             return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
                          },
                          Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
