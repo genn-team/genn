@@ -28,7 +28,6 @@ genn_wrapper_include = os.path.join(genn_wrapper_path, "include")
 genn_wrapper_swig = os.path.join(genn_wrapper_path, "swig")
 genn_wrapper_generated = os.path.join(genn_wrapper_path, "generated")
 genn_include = os.path.join(genn_path, "include", "genn", "genn")
-genn_userproject_include = os.path.join(genn_path, "userproject", "include")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
 
 swig_opts = ["-c++", "-relativeimport", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
@@ -56,13 +55,9 @@ package_data = ["genn_wrapper/genn_Release_DLL.*"] if windows else ["genn_wrappe
 # Copy dictionary and add libGeNN to apply to all modules that link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
 genn_extension_kwargs["libraries"] =  ["genn_Release_DLL"] if windows else ["genn_dynamic"]
-genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include, genn_userproject_include])
+genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
 genn_extension_kwargs["swig_opts"].extend(["-I" + genn_include, "-I" + genn_third_party_include])
 genn_extension_kwargs["define_macros"] = [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]
-
-userproject_extension_kwargs = deepcopy(extension_kwargs)
-userproject_extension_kwargs["include_dirs"].append(genn_userproject_include)
-userproject_extension_kwargs["swig_opts"].append("-I" + genn_userproject_include)
 
 # On Linux, we want to add extension directory i.e. $ORIGIN to runtime
 # directories so libGeNN and backends can be found wherever package is installed
@@ -145,6 +140,6 @@ setup(name = "pygenn",
       ext_modules=ext_modules,
 
       # Requirements
-      install_requires=["numpy>1.6, < 1.15", "six", "psutil"],
+      install_requires=["numpy>=1.10.0,!=1.16.*", "six", "deprecated", "psutil"],
       zip_safe=False,  # Partly for performance reasons
 )

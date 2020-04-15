@@ -171,7 +171,7 @@ class StaticPulseDendriticDelay : public Base
 public:
     DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelay, 0, 2, 0, 0);
 
-    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY},{"d", "uint8_t", VarAccess::READ_ONLY}});
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
 };
@@ -210,7 +210,7 @@ public:
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_EVENT_CODE("$(addToInSyn, max(0.0, $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT));\n");
+    SET_EVENT_CODE("$(addToInSyn, fmax(0.0, $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT));\n");
 
     SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > $(Epre)");
 };

@@ -39,14 +39,14 @@ int main(int argc,     //!< number of arguments; expected to be 2
             std::cerr << "usage: generator <target dir>";
             return EXIT_FAILURE;
         }
-        
+
         const filesystem::path targetPath(argv[1]);
 
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
         ModelSpecInternal model;
         modelDefinition(static_cast<ModelSpec&>(std::ref(model)));
-        
+
         // Initialise logging, appending all to console
         plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
         Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, &consoleAppender, &consoleAppender);
@@ -64,7 +64,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
         auto backend = Optimiser::createBackend(model, outputPath,
                                                 GENN_PREFERENCES.logLevel, &consoleAppender,
                                                 GENN_PREFERENCES);
-        
+
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
 
@@ -79,7 +79,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
                 LOGE_CODE_GEN << "Unable to generate project GUID";
                 return EXIT_FAILURE;
             }
-            
+
             // Write GUID to string stream
             std::stringstream projectGUIDStream;
             projectGUIDStream << std::uppercase << std::hex << std::setfill('0');
@@ -88,11 +88,11 @@ int main(int argc,     //!< number of arguments; expected to be 2
             projectGUIDStream << std::setw(4) << guid.Data3 << '-';
             projectGUIDStream << std::setw(2) << static_cast<short>(guid.Data4[0]) << std::setw(2) << static_cast<short>(guid.Data4[1]) << '-';
             projectGUIDStream << static_cast<short>(guid.Data4[2]) << static_cast<short>(guid.Data4[3]) << static_cast<short>(guid.Data4[4]) << static_cast<short>(guid.Data4[5]) << static_cast<short>(guid.Data4[6]) << static_cast<short>(guid.Data4[7]);
-            
+
             // Use result as project GUID string
             projectGUIDString = projectGUIDStream.str();
             LOGI_CODE_GEN << "Generated new project GUID:" << projectGUIDString;
-            
+
             // Write GUID to project GUID file
             std::ofstream projectGUIDFile(projectGUIDFilename.str());
             projectGUIDFile << projectGUIDString << std::endl;

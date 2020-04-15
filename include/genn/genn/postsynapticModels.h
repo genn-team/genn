@@ -41,6 +41,8 @@ public:
 // PostsynapticModels::ExpCurr
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a current value.
+/*! This model has no variables and a single parameter:
+  - \c tau : Decay time constant*/
 class ExpCurr : public Base
 {
 public:

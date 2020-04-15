@@ -75,6 +75,13 @@ class GaussianNoise : public Base
 //----------------------------------------------------------------------------
 // CurrentSourceModels::PoissonExp
 //----------------------------------------------------------------------------
+//! Current source for injecting a current equivalent to a population of
+//! Poisson spike sources, one-to-one connected with exponential synapses
+/*! It has 3 parameters:
+    - \c weight - synaptic weight of the Poisson spikes [nA]
+    - \c tauSyn - decay time constant [ms]
+    - \c rate   - mean firing rate [Hz]
+*/
 class PoissonExp : public Base
 {
     DECLARE_MODEL(PoissonExp, 3, 1);

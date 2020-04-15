@@ -7,6 +7,7 @@ try:
 except NameError:  # Python 3
     xrange = range
 
+from deprecated import deprecated
 from six import iteritems
 import numpy as np
 from . import genn_wrapper
@@ -43,8 +44,8 @@ class Group(object):
         """
         self.vars[var_name].set_values(values)
 
-    def _add_extra_global_param(self, param_name, param_values, model, egp_dict=None):
-        """Add extra global parameter
+    def _set_extra_global_param(self, param_name, param_values, model, egp_dict=None):
+        """Set extra global parameter
 
         Args:
         param_name      --  string with the name of the extra global parameter
@@ -254,14 +255,24 @@ class NeuronGroup(Group):
         self.pop = add_fct(self.name, num_neurons, self.neuron,
                            self.params, var_ini)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
     def add_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter
+        """Set extra global parameter
 
         Args:
         param_name      --  string with the name of the extra global parameter
         param_values    --  iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values, self.neuron)
+        self.set_extra_global_param(param_name, param_values)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self._set_extra_global_param(param_name, param_values, self.neuron)
 
     def load(self, slm, scalar):
         """Loads neuron group
@@ -588,37 +599,47 @@ class SynapseGroup(Group):
                            wu_post_var_ini, self.postsyn, self.ps_params,
                            ps_var_ini, connect_init)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
     def add_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter to weight update model
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self.set_extra_global_param(param_name, param_values)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter to weight update model
 
         Args:
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values, self.w_update)
+        self._set_extra_global_param(param_name, param_values, self.w_update)
 
-    def add_psm_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter to postsynaptic model
+    def set_psm_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter to postsynaptic model
 
         Args:
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values, 
+        self._set_extra_global_param(param_name, param_values,
                                      self.postsyn,
                                      self.psm_extra_global_params)
-                                     
-    def add_connectivity_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter to connectivity initialisation snippet
+
+    def set_connectivity_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter to connectivity initialisation snippet
 
         Args:
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values, 
+        self._set_extra_global_param(param_name, param_values,
                                      self.connectivity_initialiser.get_snippet(),
                                      self.connectivity_extra_global_params)
-    
+
     def load(self, slm, scalar):
         # If synapse population has non-dense connectivity which
         # requires initialising manually
@@ -796,14 +817,24 @@ class CurrentSource(Group):
         self.pop = add_fct(self.name, self.current_source_model, pop.name,
                            self.params, var_ini)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
     def add_extra_global_param(self, param_name, param_values):
-        """Add extra global parameter
+        """Set extra global parameter
 
         Args:
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        self._add_extra_global_param(param_name, param_values,
+        self.set_extra_global_param(param_name, param_values)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self._set_extra_global_param(param_name, param_values,
                                      self.current_source_model)
 
     def load(self, slm, scalar):

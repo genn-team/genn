@@ -88,8 +88,7 @@ class GeNNModel(object):
     """
 
     def __init__(self, precision=None, model_name="GeNNModel",
-                 backend=None, selected_gpu=None,
-                 genn_log_level=genn_wrapper.warning,
+                 backend=None, genn_log_level=genn_wrapper.warning,
                  code_gen_log_level=genn_wrapper.warning,
                  backend_log_level=genn_wrapper.warning,
                  **preference_kwargs):
@@ -100,8 +99,6 @@ class GeNNModel(object):
         model_name      --  string name of the model. Defaults to "GeNNModel".
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
-        selected_gpu    --  integer specifying the id of the gpu in which the
-                            simulator wil run; None will select automatically
         """
         precision = "float" if precision is not None else precision
         self._scalar = precision
@@ -136,7 +133,9 @@ class GeNNModel(object):
         self.current_sources = {}
         self.dT = 0.1
 
-        # For backward compatibility, if selected GPU is set, add preferences
+        # For backward compatibility, if selected GPU is set, remove it from
+        # preferences dictionary and add in underlying GeNN preferences
+        selected_gpu = self._preferences.pop("selected_gpu", None)
         if selected_gpu is not None:
             self._preferences["deviceSelectMethod"] = self._backend_module.DeviceSelect_MANUAL
             self._preferences["preferences.manualDeviceID"] = selected_gpu
@@ -430,7 +429,7 @@ class GeNNModel(object):
 
         # Build code
         if system() == "Windows":
-            check_call(["msbuild", "/m", "/verbosity:minimal", "/p:Configuration=Release",
+            check_call(["msbuild", "/p:Configuration=Release", "/m", "/verbosity:minimal",
                         path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])

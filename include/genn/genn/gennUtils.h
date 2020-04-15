@@ -10,6 +10,7 @@
 // GeNN includes
 #include "gennExport.h"
 
+// Forward declarations
 namespace Models
 {
 class VarInit;
