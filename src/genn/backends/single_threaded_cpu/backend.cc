@@ -707,7 +707,7 @@ void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &me
                                            size_t idx, size_t numGroups) const
 {
     assert(memorySpace.empty());
-    os << "Merged" << suffix << "Group" << idx << " merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
+    os << "static Merged" << suffix << "Group" << idx << " merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
