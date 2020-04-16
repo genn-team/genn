@@ -9,6 +9,7 @@
 #include <cassert>
 
 // GeNN includes
+#include "gennExport.h"
 #include "gennUtils.h"
 #include "logging.h"
 
@@ -17,7 +18,7 @@
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-class Substitutions
+class GENN_EXPORT Substitutions
 {
 public:
     //! Immutable structure for specifying how to implement
