@@ -148,21 +148,6 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     preNeuronResetKernelBody << "size_t localId = get_local_id(0);" << std::endl;
     preNeuronResetKernelBody << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreNeuronReset] << " * groupId + localId;" << std::endl;
 
-    // Loop through remote neuron groups
-    for (const auto& n : model.getRemoteNeuronGroups()) {
-        if (n.second.hasOutputToHost(getLocalHostID()) && n.second.isDelayRequired()) {
-            if (idPreNeuronReset > 0) {
-                preNeuronResetKernelBody << "else ";
-            }
-            preNeuronResetKernelBody << "if(id == " << (idPreNeuronReset++) << ")";
-            {
-                CodeStream::Scope b(preNeuronResetKernelBody);
-                preNeuronResetKernelBody << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-            }
-            preNeuronResetKernelParams.insert({ "d_spkQuePtr" + n.first, "__global unsigned int*" });
-        }
-    }
-
     // Loop through local neuron groups
     for (const auto& n : model.getLocalNeuronGroups()) {
         if (idPreNeuronReset > 0) {
@@ -430,14 +415,6 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         neuronUpdateKernelArgsForKernel.push_back(arg.first);
     }
     // Passing the neurons to the kernel as kernel arguments
-    // Remote neuron groups
-    for (const auto& ng : model.getRemoteNeuronGroups()) {
-        auto* nm = ng.second.getNeuronModel();
-        for (const auto& v : nm->getVars()) {
-            os << "__global " << v.type << "* " << getVarPrefix() << v.name << ng.second.getName() << ", ";
-            neuronUpdateKernelArgsForKernel.push_back(getVarPrefix() + v.name + ng.second.getName());
-        }
-    }
     // Local neuron groups
     for (const auto& ng : model.getLocalNeuronGroups()) {
         auto* nm = ng.second.getNeuronModel();
@@ -962,23 +939,6 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         initializeKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelInitialize] << " * groupId + localId;" << std::endl;
 
         initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
-        initializeKernelBody << "// Remote neuron groups" << std::endl;
-        genParallelGroup<NeuronGroupInternal>(initializeKernelBody, kernelSubs, model.getRemoteNeuronGroups(), idInitStart,
-            [this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
-            [this](const NeuronGroupInternal& ng) { return ng.hasOutputToHost(getLocalHostID()); },
-            [this, remoteNGHandler](CodeStream& initializeKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
-            {
-                initializeKernelBody << "// only do this for existing neurons" << std::endl;
-                initializeKernelBody << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
-                {
-                    CodeStream::Scope b(initializeKernelBody);
-
-                    remoteNGHandler(initializeKernelBody, ng, popSubs);
-                }
-            });
-        initializeKernelBody << std::endl;
-
-        initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
         initializeKernelBody << "// Local neuron groups" << std::endl;
         genParallelGroup<NeuronGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
             [this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
@@ -1262,6 +1222,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             }
         }
     }
+    // Collected params
     for (const auto& p : initializeKernelParams) {
         os << p.second << " " << p.first << ", ";
         initializeKernelArgs.push_back(p.first);
@@ -1271,7 +1232,26 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         CodeStream::Scope b(os);
         os << initializeKernelBodyStream.str();
     }
+
     os << std::endl;
+
+    std::vector<std::string> initializeSparseKernelArgs;
+    if (hasInitializeSparseKernel)
+    {
+        // KernelInitializeSparse definition
+        os << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
+        // Collected params
+        for (const auto& p : initializeSparseKernelParams) {
+            os << p.second << " " << p.first << ", ";
+            initializeSparseKernelArgs.push_back(p.first);
+        }
+        os << ")";
+        {
+            CodeStream::Scope b(os);
+            os << initializeSparseKernelBodyStream.str();
+        }
+        os << std::endl;
+    }
 
     // Closing the multiline char* containing all kernels for initializing neurons
     os << ")\";" << std::endl;
@@ -1291,6 +1271,21 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             for (const auto& arg : initializeKernelArgs) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << argCnt << ", " << arg << "));" << std::endl;
                 argCnt++;
+            }
+        }
+
+        os << std::endl;
+
+        if (hasInitializeSparseKernel)
+        {
+            // KernelInitializeSparse initialization
+            os << KernelNames[KernelInitializeSparse] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitializeSparse] << "\");" << std::endl;
+            {
+                int argCnt = 0;
+                for (const auto& arg : initializeSparseKernelArgs) {
+                    os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << argCnt << ", " << arg << "));" << std::endl;
+                    argCnt++;
+                }
             }
         }
     }
