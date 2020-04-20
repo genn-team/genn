@@ -127,11 +127,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecInternal &model, Ne
                         // Emit true spikes
                         [this, wuVarUpdateHandler](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &subs)
                         {
-                            // Insert code to emit true spikes
-                            genEmitSpike(os, ng, subs, true);
-
                             // Insert code to update WU vars
                             wuVarUpdateHandler(os, ng, subs);
+
+                            // Insert code to emit true spikes
+                            genEmitSpike(os, ng, subs, true);
                         },
                         // Emit spike-like events
                         [this](CodeStream &os, const NeuronGroupInternal &ng, Substitutions &subs)
