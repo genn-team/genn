@@ -67,7 +67,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\backend\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
@@ -81,7 +81,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
@@ -97,7 +97,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\backends\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
@@ -115,7 +115,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
