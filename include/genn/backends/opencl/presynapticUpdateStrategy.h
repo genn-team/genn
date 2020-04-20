@@ -44,7 +44,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const = 0;
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -71,7 +71,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -98,7 +98,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const override;
+                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const override;
 };
 }   // namespace PresynapticUpdateStrategy
 }   // namespace OpenCL

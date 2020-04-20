@@ -53,7 +53,7 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, con
 }
 //----------------------------------------------------------------------------
 void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                      BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+                      BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string> &params) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -74,6 +74,9 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
     else {
         os << "d_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[0])";
     }
+
+    params.insert({ "d_glbSpkCnt" + eventSuffix + sg.getSrcNeuronGroup()->getName(), "__global unsigned int*" });
+
     {
         CodeStream::Scope b(os);
 
@@ -90,6 +93,8 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             os << "[spike];" << std::endl;
         }
 
+        params.insert({ "d_glbSpk" + eventSuffix + sg.getSrcNeuronGroup()->getName(), "__global unsigned int*" });
+
         if(sg.getNumThreadsPerSpike() > 1) {
             os << "unsigned int synAddress = (preInd * " << std::to_string(sg.getMaxConnections()) << ") + thread;" << std::endl;
         }
@@ -97,6 +102,8 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
         }
         os << "const unsigned int npost = d_rowLength" << sg.getName() << "[preInd];" << std::endl;
+
+        params.insert({ "d_rowLength" + eventSuffix + sg.getName(), "__global unsigned int*" });
 
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << "if(";
@@ -125,6 +132,8 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             // **TODO** pretty sure __ldg will boost performance here - basically will bring whole row into cache
             os << "const unsigned int ipost = d_ind" <<  sg.getName() << "[synAddress];" << std::endl;
 
+            params.insert({ "d_ind" + sg.getName(), "__global unsigned int*" });
+
             // Code substitutions ----------------------------------------------------------------------------------
             std::string wCode = trueSpike ? wu->getSimCode() : wu->getEventCode();
 
@@ -136,6 +145,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
                 synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("d_", "$(1)") + "ipost], $(0))");
+                params.insert({ "d_denDelay" + sg.getPSModelTargetName(), "__global unsigned int*" });
             }
             // Otherwise
             else {
@@ -146,6 +156,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
                     synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
+                    params.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global unsigned int*" });
                 }
             }
 
@@ -200,7 +211,7 @@ bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, co
 }
 //----------------------------------------------------------------------------
 void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -215,6 +226,9 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
     else {
         os << "[0];" << std::endl;
     }
+
+    params.insert({ "d_glbSpkCnt" + eventSuffix + sg.getSrcNeuronGroup()->getName(), "__global unsigned int*" });
+
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
 
@@ -234,7 +248,10 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
             os << "shSpk" << eventSuffix << "[localIdi] = spk;" << std::endl;
             if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength[localIdi] = d_rowLength" << sg.getName() << "[spk];" << std::endl;
+                params.insert({ "d_rowLength" + sg.getName(), "__global unsigned int*" });
             }
+
+            params.insert({ "d_glbSpk" + eventSuffix + sg.getSrcNeuronGroup()->getName(), "__global unsigned int*" });
         }
         os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 
@@ -249,7 +266,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     const size_t maxSynapses = (size_t)sg.getTrgNeuronGroup()->getNumNeurons() * (size_t)sg.getSrcNeuronGroup()->getNumNeurons();
                     if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                        os << "const uint64_t gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << popSubs["id"] << ");" << std::endl;
+                        os << "const ulong gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << popSubs["id"] << ");" << std::endl;
                     }
                     else {
                         os << "const unsigned int gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << popSubs["id"] << ");" << std::endl;
@@ -264,6 +281,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
                         os << "(B(d_gp" << sg.getName() << "[gid / 32], gid & 31)) && ";
+                        params.insert({ "d_gp" + sg.getName(), "__global unsigned int*" });
                     }
 
                     Substitutions threshSubs(&popSubs);
@@ -278,6 +296,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                 }
                 else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     os << "if (B(d_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
+                    params.insert({ "d_gp" + sg.getName(), "__global unsigned int*" });
                 }
 
                 Substitutions synSubs(&popSubs);
@@ -289,6 +308,8 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     os << "if (" << popSubs["id"] << " < npost)" << CodeStream::OB(140);
                     os << "synAddress += " << popSubs["id"] << ";" << std::endl;
                     os << "const unsigned int ipost = d_ind" << sg.getName() << "[synAddress];" << std::endl;
+
+                    params.insert({ "d_ind" + sg.getName(), "__global unsigned int*" });
 
                     synSubs.addVarSubstitution("id_post", "ipost");
                 }
@@ -302,6 +323,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
                     synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("d_", "$(1)") + synSubs["id_post"] + "], $(0))");
+                    params.insert({ "d_denDelay" + sg.getPSModelTargetName(), "__global unsigned int*" });
                 }
                 // Otherwise
                 else {
@@ -312,6 +334,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                         }
                         else {
                             synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
+                            params.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global unsigned int*" });
                         }
                     }
                     else {
