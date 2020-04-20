@@ -55,7 +55,7 @@ if not defined MODEL (
 )
 for /f %%I in ("%-o%") do set "-o=%%~fI"
 for /f %%I in ("%-i%") do set "-i=%%~fI"
-for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o% /p:BuildModelInclude=%-i%"
+for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile="%%~fI" /p:GeneratePath="%-o%" /p:BuildModelInclude="%-i%""
 
 rem set SDL check flag
 if defined -s (
@@ -87,7 +87,6 @@ if defined -d (
         set GENERATOR=.\generator_Release_CUDA.exe
     )
 )
-
 
 rem :: build backend
 msbuild "%GENN_PATH%..\genn.sln" /m /verbosity:minimal /t:%BACKEND_PROJECT% %BACKEND_MACROS% /p:BuildProjectReferences=true && (
