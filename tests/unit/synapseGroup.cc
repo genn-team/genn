@@ -4,6 +4,12 @@
 // GeNN includes
 #include "modelSpecInternal.h"
 
+// GeNN code generator includes
+#include "code_generator/modelSpecMerged.h"
+
+// (Single-threaded CPU) backend includes
+#include "backend.h"
+
 class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
@@ -79,6 +85,23 @@ TEST(SynapseGroup, CompareWUDifferentModel)
 
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
     ASSERT_FALSE(sg1Internal->canWUBeMerged(*sg0));
+    ASSERT_FALSE(sg1Internal->canWUInitBeMerged(*sg0));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPostsynapticUpdateGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDynamicsGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 2);
+
 }
 
 TEST(SynapseGroup, CompareWUDifferentGlobalG)
@@ -110,7 +133,24 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_FALSE(sg0Internal->canWUBeMerged(*sg2));
+    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
+
+    // Check that global g var is heterogeneous
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUGlobalVarHeterogeneous(0));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
@@ -146,7 +186,26 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_FALSE(sg0Internal->canWUBeMerged(*sg2));
+    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
+
+    // Check that connectivity parameter is heterogeneous
+    // **NOTE** raw parameter is NOT as only derived parameter is used in code
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralVars)
@@ -184,7 +243,27 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_FALSE(sg0Internal->canWUBeMerged(*sg2));
+    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
+
+    // Check that only synaptic weight initialistion parameters are heterogeneous
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 1));
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentVars)
@@ -224,12 +303,30 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
-    ASSERT_FALSE(sg0Internal->canWUInitBeMerged(*sg2));
-
+    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
+
+    // Check that only synaptic weight initialistion parameters are heterogeneous
+    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0).isWUVarInitParamHeterogeneous(0, 0));
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentPreVars)
@@ -269,7 +366,7 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
-    ASSERT_FALSE(sg0Internal->canWUPreInitBeMerged(*sg2));
+    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
 
     ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
@@ -314,7 +411,7 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
-    ASSERT_FALSE(sg0Internal->canWUPostInitBeMerged(*sg2));
+    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
 
     ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));

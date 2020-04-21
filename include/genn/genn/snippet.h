@@ -244,40 +244,9 @@ public:
         }
     }
 
-protected:
-    bool canBeMerged(const Init<SnippetBase> &other, const std::string &codeString) const
+    bool canBeMerged(const Init<SnippetBase> &other) const
     {
-        // If snippets can be merged
-        if(getSnippet()->canBeMerged(other.getSnippet())) {
-            // Loop through parameters
-            const auto paramNames = getSnippet()->getParamNames();
-            for(size_t i = 0; i < paramNames.size(); i++) {
-                // If parameter is referenced in code string
-                if(codeString.find("$(" + paramNames[i] + ")") != std::string::npos) {
-                    // If parameter values don't match, return true
-                    if(getParams()[i] != other.getParams()[i]) {
-                        return false;
-                    }
-                }
-            }
-
-            // Loop through derived parameters
-            const auto derivedParams = getSnippet()->getDerivedParams();
-            assert(derivedParams.size() == getDerivedParams().size());
-            assert(derivedParams.size() == other.getDerivedParams().size());
-            for(size_t i = 0; i < derivedParams.size(); i++) {
-                // If derived parameter is referenced in code string
-                if(codeString.find("$(" + derivedParams[i].name + ")") != std::string::npos) {
-                    // If derived parameter values don't match, return true
-                    if(getDerivedParams()[i] != other.getDerivedParams()[i]) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-        return false;
+        return getSnippet()->canBeMerged(other.getSnippet());
     }
 
 private:

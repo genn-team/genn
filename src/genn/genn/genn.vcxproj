@@ -32,6 +32,7 @@
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
+    <ClCompile Include="code_generator\substitutions.cc" />
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
@@ -76,6 +77,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initVarSnippet.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\logging.h" />
     <ClInclude Include="..\..\..\include\genn\genn\models.h" />
     <ClInclude Include="..\..\..\include\genn\genn\modelSpec.h" />
     <ClInclude Include="..\..\..\include\genn\genn\modelSpecInternal.h" />

@@ -18,6 +18,8 @@
 #define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const override{ return CODE; }
 #define SET_ROW_BUILD_STATE_VARS(...) virtual ParamValVec getRowBuildStateVars() const override{ return __VA_ARGS__; }
 
+#define SET_HOST_INIT_CODE(CODE) virtual std::string getHostInitCode() const override{ return CODE; }
+
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 
@@ -45,6 +47,8 @@ public:
     //----------------------------------------------------------------------------
     virtual std::string getRowBuildCode() const{ return ""; }
     virtual ParamValVec getRowBuildStateVars() const{ return {}; }
+
+    virtual std::string getHostInitCode() const{ return ""; }
 
     //! Get function to calculate the maximum row length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return CalcMaxLengthFunc(); }
@@ -78,11 +82,6 @@ public:
     Init(const Base *snippet, const std::vector<double> &params)
         : Snippet::Init<Base>(snippet, params)
     {
-    }
-
-    bool canBeMerged(const Init &other) const
-    {
-        return Snippet::Init<Base>::canBeMerged(other, getSnippet()->getRowBuildCode());
     }
 };
 
@@ -287,7 +286,46 @@ public:
     SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
 
     SET_PARAM_NAMES({"total"});
-    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
+    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
+
+    SET_HOST_INIT_CODE(
+        "// Allocate pre-calculated row length array\n"
+    	"$(allocatepreCalcRowLength, $(num_pre) * $(num_threads));\n"
+        "// Calculate row lengths\n"
+        "const size_t numPostPerThread = ($(num_post) + $(num_threads) - 1) / $(num_threads);\n"
+        "const size_t leftOverNeurons = $(num_post) % numPostPerThread;\n"
+        "size_t remainingConnections = $(total);\n"
+        "size_t matrixSize = (size_t)$(num_pre) * (size_t)$(num_post);\n"
+        "uint16_t *subRowLengths = $(preCalcRowLength);\n"
+        "// Loop through rows\n"
+        "for(size_t i = 0; i < $(num_pre); i++) {\n"
+        "    const bool lastPre = (i == ($(num_pre) - 1));\n"
+        "    // Loop through subrows\n"
+        "    for(size_t j = 0; j < $(num_threads); j++) {\n"
+        "        const bool lastSubRow = (j == ($(num_threads) - 1));\n"
+        "        // If this isn't the last sub-row of the matrix\n"
+        "        if(!lastPre || ! lastSubRow) {\n"
+        "            // Get length of this subrow\n"
+        "            const unsigned int numSubRowNeurons = (leftOverNeurons != 0 && lastSubRow) ? leftOverNeurons : numPostPerThread;\n"
+        "            // Calculate probability\n"
+        "            const double probability = (double)numSubRowNeurons / (double)matrixSize;\n"
+        "            // Create distribution to sample row length\n"
+        "            std::binomial_distribution<size_t> rowLengthDist(remainingConnections, probability);\n"
+        "            // Sample row length;\n"
+        "            const size_t subRowLength = rowLengthDist($(rng));\n"
+        "            // Update counters\n"
+        "            remainingConnections -= subRowLength;\n"
+        "            matrixSize -= numSubRowNeurons;\n"
+        "            // Add row length to array\n"
+        "            assert(subRowLength < std::numeric_limits<uint16_t>::max());\n"
+        "            *subRowLengths++ = (uint16_t)subRowLength;\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+        "// Insert remaining connections into last sub-row\n"
+        "*subRowLengths = (uint16_t)remainingConnections;\n"
+        "// Push populated row length array\n"
+        "$(pushpreCalcRowLength, $(num_pre) * $(num_threads));\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
@@ -298,7 +336,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars[0], (double)numPost / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, (unsigned int)pars[0], (double)numPost / ((double)numPre * (double)numPost));
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
@@ -310,7 +348,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars[0], (double)numPre / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, (unsigned int)pars[0], (double)numPre / ((double)numPre * (double)numPost));
         });
 };
 }   // namespace InitVarSnippet

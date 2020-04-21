@@ -212,6 +212,9 @@ public:
     //! Does this synapse group require an RNG for it's weight update init code?
     bool isWUInitRNGRequired() const;
 
+    //! Does this synapse group require a RNG for any sort of initialization
+    bool isHostInitRNGRequired() const;
+
     //! Is var init code required for any variables in this synapse group's weight update model?
     bool isWUVarInitRequired() const;
 
@@ -258,7 +261,6 @@ protected:
     const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
     bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
 
-
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
 
@@ -301,6 +303,10 @@ protected:
     //! Can connectivity initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canConnectivityInitBeMerged(const SynapseGroup &other) const;
+
+    //! Can connectivity host initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canConnectivityHostInitBeMerged(const SynapseGroup &other) const;
 
 private:
     //------------------------------------------------------------------------

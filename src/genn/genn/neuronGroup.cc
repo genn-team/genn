@@ -321,8 +321,6 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
 {
     if(getNeuronModel()->canBeMerged(other.getNeuronModel())
-       && (getParams() == other.getParams())
-       && (getDerivedParams() == other.getDerivedParams())
        && (isSpikeTimeRequired() == other.isSpikeTimeRequired())
        && (getSpikeEventCondition() == other.getSpikeEventCondition())
        && (isSpikeEventRequired() == other.isSpikeEventRequired())

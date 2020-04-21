@@ -1,8 +1,5 @@
 #include "backend.h"
 
-// Standard C++ include
-#include <random>
-
 // GeNN includes
 #include "gennUtils.h"
 
@@ -12,12 +9,14 @@
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
+using namespace CodeGenerator;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<CodeGenerator::FunctionTemplate> cpuFunctions = {
+const std::vector<Substitutions::FunctionTemplate> cpuFunctions = {
     {"gennrand_uniform", 0, "standardUniformDistribution($(rng))", "standardUniformDistribution($(rng))"},
     {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
@@ -31,7 +30,7 @@ const std::vector<CodeGenerator::FunctionTemplate> cpuFunctions = {
 class Timer
 {
 public:
-    Timer(CodeGenerator::CodeStream &codeStream, const std::string &name, bool timingEnabled)
+    Timer(CodeStream &codeStream, const std::string &name, bool timingEnabled)
     :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
     {
         // Record start event
@@ -52,7 +51,7 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    CodeGenerator::CodeStream &m_CodeStream;
+    CodeStream &m_CodeStream;
     const std::string m_Name;
     const bool m_TimingEnabled;
 };
@@ -66,7 +65,7 @@ namespace CodeGenerator
 namespace SingleThreadedCPU
 {
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -94,7 +93,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "const auto &group = mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
                 // Generate spike count reset
-                genMergedGroupSpikeCountReset(os, n);
+                n.genMergedGroupSpikeCountReset(os);
             }
             
         }
@@ -133,16 +132,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                     simHandler(os, n, popSubs,
                                // Emit true spikes
-                               [this, wuVarUpdateHandler](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &subs)
+                               [this, wuVarUpdateHandler](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                                {
-                                   // Insert code to emit true spikes
-                                   genEmitSpike(os, ng, subs, true);
-
                                    // Insert code to update WU vars
                                    wuVarUpdateHandler(os, ng, subs);
+
+                                   // Insert code to emit true spikes
+                                   genEmitSpike(os, ng, subs, true);
                                },
                                // Emit spike-like events
-                                   [this](CodeStream &os, const NeuronGroupMerged &ng, Substitutions &subs)
+                                   [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                                {
                                    // Insert code to emit spike-like events
                                    genEmitSpike(os, ng, subs, false);
@@ -154,9 +153,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                               SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
-                               SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler,
-                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler,
+                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -358,8 +357,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                      NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
-                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                      NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                      SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -373,36 +372,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         Timer t(os, "init", model.isTimingEnabled());
 
-        // If model requires a host RNG
-        if(isGlobalRNGRequired(modelMerged)) {
-            // If no seed is specified, use system randomness to generate seed sequence
-            CodeStream::Scope b(os);
-            if (model.getSeed() == 0) {
-                os << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
-                os << "std::random_device seedSource;" << std::endl;
-                {
-                    CodeStream::Scope b(os);
-                    os << "for(int i = 0; i < std::mt19937::state_size; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "seedData[i] = seedSource();" << std::endl;
-                    }
-                }
-                os << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
-            }
-            // Otherwise, create a seed sequence from model seed
-            // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
-            else {
-                os << "std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
-            }
-
-            // Seed RNG from seed sequence
-            os << "rng.seed(seeds);" << std::endl;
-
-            // Add RNG to substitutions
+        // If model requires a host RNG, add RNG to substitutions
+        if(isGlobalHostRNGRequired(modelMerged)) {
             funcSubs.addVarSubstitution("rng", "rng");
         }
-        os << std::endl;
 
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Local neuron groups" << std::endl;
@@ -517,7 +490,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         Timer t(os, "initSparse", model.isTimingEnabled());
 
         // If model requires RNG, add it to substitutions
-        if(isGlobalRNGRequired(modelMerged)) {
+        if(isGlobalHostRNGRequired(modelMerged)) {
             funcSubs.addVarSubstitution("rng", "rng");
         }
 
@@ -604,12 +577,13 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <random>" << std::endl;
     os << std::endl;
     os << "// Standard C includes" << std::endl;
+    os << "#include <cassert>" << std::endl;
     os << "#include <cmath>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
 
      // If a global RNG is required, define standard host distributions as recreating them each call is slow
-    if(isGlobalRNGRequired(modelMerged)) {
+    if(isGlobalHostRNGRequired(modelMerged)) {
         os << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution;" << std::endl;
         os << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution;" << std::endl;
@@ -652,7 +626,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // If a global RNG is required, implement standard host distributions as recreating them each call is slow
-    if(isGlobalRNGRequired(modelMerged)) {
+    if(isGlobalHostRNGRequired(modelMerged)) {
         os << "std::uniform_real_distribution<" << model.getPrecision() << "> standardUniformDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
         os << "std::normal_distribution<" << model.getPrecision() << "> standardNormalDistribution(" << model.scalarExpr(0.0) << ", " << model.scalarExpr(1.0) << ");" << std::endl;
         os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
@@ -707,28 +681,33 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
     genVariableImplementation(os, type, name, loc);
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                            VarLocation, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
     // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
     const std::string underlyingType = Utils::getUnderlyingType(type);
 
-    os << name << " = new " << underlyingType << "[count];" << std::endl;
+    os << prefix << name << " = new " << underlyingType << "[" << countVarName << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, VarLocation) const
+void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, 
+                                      VarLocation, const std::string &, const std::string &) const
 {
     assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, VarLocation) const
+void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, 
+                                      VarLocation, const std::string &, const std::string &) const
 {
     assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
+void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                           size_t idx, size_t numGroups) const
 {
-    os << "Merged" << suffix << "Group" << idx << " merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
+    assert(memorySpace.empty());
+    os << "static Merged" << suffix << "Group" << idx << " merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
@@ -736,8 +715,9 @@ void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size
     os << "std::copy_n(group, " << numGroups << ", merged" << suffix << "Group" << idx << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
-                                            const std::string &fieldName, const std::string &egpName) const
+void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                            const std::string &groupIdx, const std::string &fieldName, 
+                                            const std::string &egpName) const
 {
     os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
 }
@@ -762,7 +742,7 @@ void Backend::genVariableInit(CodeStream &os, const std::string &count, const st
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged &sg, 
+void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg, 
                                         const Substitutions &kernelSubs, Handler handler) const
 {
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -827,12 +807,10 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
     assert(!m_Preferences.automaticCopy);
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalRNG(CodeStream &definitions, CodeStream &, CodeStream &runner, CodeStream &, CodeStream &) const
+MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &) const
 {
-    definitions << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
-    runner << "std::mt19937 rng;" << std::endl;
-
-    return MemAlloc::host(sizeof(std::mt19937));
+    assert(false);
+    return MemAlloc::host(0);
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
@@ -930,26 +908,26 @@ void Backend::genMSBuildImportTarget(std::ostream&) const
 {
 }
 //--------------------------------------------------------------------------
-bool Backend::isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const
+bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
     const ModelSpecInternal &model = modelMerged.getModel();
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-        [](const ModelSpec::NeuronGroupValueType &n)
-        {
-            return n.second.isSimRNGRequired() || n.second.isInitRNGRequired();
-        }))
+                   [](const ModelSpec::NeuronGroupValueType &n)
+                   {
+                       return n.second.isSimRNGRequired() || n.second.isInitRNGRequired();
+                   }))
     {
         return true;
     }
 
     // If any synapse groups require an RNG for weight update model initialisation, return true
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-        [](const ModelSpec::SynapseGroupValueType &s)
-        {
-            return s.second.isWUInitRNGRequired();
-        }))
+                   [](const ModelSpec::SynapseGroupValueType &s)
+                   {
+                       return (s.second.isWUInitRNGRequired() || s.second.isHostInitRNGRequired());
+                   }))
     {
         return true;
     }
@@ -957,8 +935,18 @@ bool Backend::isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const
     return false;
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
-                                   bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const
+bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &) const
+{
+    return false;
+}
+//--------------------------------------------------------------------------
+Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
+{
+    return {{"", std::numeric_limits<size_t>::max()}};
+}
+//--------------------------------------------------------------------------
+void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,
+                                   bool trueSpike, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -1091,7 +1079,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const NeuronGroupMerged &ng, const Substitutions &subs, bool trueSpike) const
+void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
     const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();

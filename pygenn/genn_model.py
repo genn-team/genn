@@ -99,8 +99,6 @@ class GeNNModel(object):
         model_name      --  string name of the model. Defaults to "GeNNModel".
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
-        selected_gpu    --  integer specifying the id of the gpu in which the
-                            simulator wil run; None will select automatically
         """
         precision = "float" if precision is not None else precision
         self._scalar = precision
@@ -438,14 +436,12 @@ class GeNNModel(object):
 
         self._built = True
 
-    def load(self):
+    def load(self, path_to_model="./"):
         """import the model as shared library and initialize it"""
-        if not self._built:
-            raise Exception("GeNN model has to be built before running")
-
         if self._loaded:
             raise Exception("GeNN model already loaded")
-
+        self._path_to_model = path_to_model
+        
         self._slm.open(self._path_to_model, self.model_name)
 
         self._slm.allocate_mem()
@@ -473,8 +469,9 @@ class GeNNModel(object):
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
 
-        # Set loaded flag
+        # Set loaded flag and built flag
         self._loaded = True
+        self._built = True
 
     def reinitialise(self):
         """reinitialise model to its original state without re-loading"""

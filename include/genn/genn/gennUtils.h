@@ -37,6 +37,11 @@ GENN_EXPORT bool isRNGRequired(const std::vector<Models::VarInit> &varInitialise
 GENN_EXPORT bool isTypePointer(const std::string &type);
 
 //--------------------------------------------------------------------------
+//! \brief Function to determine whether a string containing a type is a pointer to a pointer
+//--------------------------------------------------------------------------
+GENN_EXPORT bool isTypePointerToPointer(const std::string &type);
+
+//--------------------------------------------------------------------------
 //! \brief Assuming type is a string containing a pointer type, function to return the underlying type
 //--------------------------------------------------------------------------
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);
@@ -45,7 +50,7 @@ GENN_EXPORT std::string getUnderlyingType(const std::string &type);
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-GENN_EXPORT void writePreciseString(std::ostream &os, T value)
+void writePreciseString(std::ostream &os, T value)
 {
     // Cache previous precision
     const std::streamsize previousPrecision = os.precision();
@@ -72,7 +77,7 @@ GENN_EXPORT void writePreciseString(std::ostream &os, T value)
 //! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-GENN_EXPORT std::string writePreciseString(T value)
+std::string writePreciseString(T value)
 {
     std::stringstream s;
     writePreciseString(s, value);
