@@ -116,7 +116,8 @@ const char* Backend::KernelNames[KernelMax] = {
     "preSynapseResetKernel" };
 const char* Backend::ProgramNames[ProgramMax] = {
     "initProgram",
-    "updateNeuronsProgram" };
+    "updateNeuronsProgram",
+    "updateSynapsesProgram" };
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategy::PreSpan,
@@ -480,7 +481,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
     SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
-    printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genSynapseUpdate");
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
     std::stringstream preSynapseResetKernelBodyStream;
@@ -543,12 +543,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     //! KernelPresynapticUpdate BODY START
     if (hasPresynapticUpdateKernel)
     {
-        //! TO BE IMPLEMENTED - KernelPresynapticUpdate parameters
-        //os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(";
-        //for (const auto& p : presynapticUpdateKernelParams) {
-        //    os << p.second << " " << p.first << ", ";
-        //}
-        //os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
         CodeStream presynapticUpdateKernelBody(presynapticUpdateKernelBodyStream);
         Substitutions kernelSubs(openclFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
@@ -699,11 +693,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     //! KernelPostsynapticUpdate BODY START
     if (hasPostsynapticUpdateKernel)
     {
-        //os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(";
-        //for (const auto& p : postsynapticUpdateKernelParams) {
-        //    os << p.second << " " << p.first << ", ";
-        //}
-        //os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
         CodeStream postsynapticUpdateKernelBody(postsynapticUpdateKernelBodyStream);
 
         Substitutions kernelSubs(openclFunctions, model.getPrecision());
@@ -820,11 +809,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     //! KernelSynapseDynamicsUpdate BODY START
     if (hasSynapseDynamicsUpdateKernel)
     {
-        //os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
-        //for (const auto& p : synapseDynamicsUpdateKernelParams) {
-        //    os << p.second << " " << p.first << ", ";
-        //}
-        //os << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
         CodeStream synapseDynamicsUpdateKernelBody(synapseDynamicsUpdateKernelBodyStream);
 
         synapseDynamicsUpdateKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
@@ -899,6 +883,138 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                 }
             });
     }
+    //! KernelSynapseDynamicsUpdate BODY END
+
+    os << std::endl;
+
+    // Actual kernels definitions
+    os << "extern \"C\" const char* " << ProgramNames[ProgramSynapsesUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
+    os << std::endl;
+
+    //! KernelPreSynapseReset
+    std::vector<std::string> preSynapseResetKernelArgs;
+    if (hasPreSynapseResetKernel) {
+        os << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
+        for (const auto& p : preSynapseResetKernelParams) {
+            os << p.second << " " << p.first << ", ";
+            preSynapseResetKernelArgs.push_back(p.first);
+        }
+        os << ")";
+        {
+            CodeStream::Scope b(os);
+            os << preSynapseResetKernelBodyStream.str();
+        }
+
+        os << std::endl;
+    }
+
+    //! KernelPresynapticUpdate
+    std::vector<std::string> presynapticUpdateKernelArgs;
+    if (hasPresynapticUpdateKernel) {
+        os << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
+        for (const auto& p : presynapticUpdateKernelParams) {
+            os << p.second << " " << p.first << ", ";
+            presynapticUpdateKernelArgs.push_back(p.first);
+        }
+        for (const auto& sg : model.getLocalSynapseGroups()) {
+            // Postsynaptic model
+            auto* psm = sg.second.getPSModel();
+            for (const auto& v : psm->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
+                    presynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                }
+            }
+            // Weight update model
+            auto* wum = sg.second.getWUModel();
+            for (const auto& v : wum->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
+                    presynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                }
+            }
+        }
+        os << model.getTimePrecision() << " t)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << presynapticUpdateKernelBodyStream.str();
+        }
+
+        os << std::endl;
+    }
+
+    //! KernelPostsynapticUpdate
+    std::vector<std::string> postsynapticUpdateKernelArgs;
+    if (hasPostsynapticUpdateKernel) {
+        os << "__kernel void " << KernelNames[KernelPostsynapticUpdate] << "(";
+        for (const auto& p : postsynapticUpdateKernelParams) {
+            os << p.second << " " << p.first << ", ";
+            postsynapticUpdateKernelArgs.push_back(p.first);
+        }
+        for (const auto& sg : model.getLocalSynapseGroups()) {
+            // Postsynaptic model
+            auto* psm = sg.second.getPSModel();
+            for (const auto& v : psm->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
+                    postsynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                }
+            }
+            // Weight update model
+            auto* wum = sg.second.getWUModel();
+            for (const auto& v : wum->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
+                    postsynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                }
+            }
+        }
+        os << model.getTimePrecision() << " t)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << postsynapticUpdateKernelBodyStream.str();
+        }
+
+        os << std::endl;
+    }
+
+    //! KernelSynapseDynamicsUpdate
+    std::vector<std::string> synapseDynamicsUpdateKernelArgs;
+    if (hasSynapseDynamicsUpdateKernel) {
+        os << "__kernel void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
+        for (const auto& p : synapseDynamicsUpdateKernelParams) {
+            os << p.second << " " << p.first << ", ";
+            synapseDynamicsUpdateKernelArgs.push_back(p.first);
+        }
+        for (const auto& sg : model.getLocalSynapseGroups()) {
+            // Postsynaptic model
+            auto* psm = sg.second.getPSModel();
+            for (const auto& v : psm->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
+                    synapseDynamicsUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                }
+            }
+            // Weight update model
+            auto* wum = sg.second.getWUModel();
+            for (const auto& v : wum->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
+                    synapseDynamicsUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                }
+            }
+        }
+        os << model.getTimePrecision() << " t)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << synapseDynamicsUpdateKernelBodyStream.str();
+        }
+
+        os << std::endl;
+    }
+
+    os << std::endl;
+    os << ")\";" << std::endl;
 
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {

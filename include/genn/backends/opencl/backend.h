@@ -76,6 +76,7 @@ enum Program
 {
     ProgramInitialize,
     ProgramNeuronsUpdate,
+    ProgramSynapsesUpdate,
     ProgramMax
 };
 
