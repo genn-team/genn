@@ -1016,6 +1016,53 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << std::endl;
     os << ")\";" << std::endl;
 
+    os << std::endl;
+    
+    // Function for initializing the synapse update kernels
+    os << "// Initialize the synapse update kernel(s)" << std::endl;
+    os << "void initUpdateSynapsesKernels()";
+    {
+        CodeStream::Scope b(os);
+
+        // KernelPreSynapseReset initialization
+        if (hasPreSynapseResetKernel && idPreSynapseReset > 0) {
+            os << KernelNames[KernelPreSynapseReset] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelPreSynapseReset] << "\");" << std::endl;
+            for (int i = 0; i < preSynapseResetKernelArgs.size(); i++) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPreSynapseReset] << ".setArg(" << i << ", " << preSynapseResetKernelArgs[i] << "));" << std::endl;
+            }
+            os << std::endl;
+        }
+
+        // KernelSynapseDynamicsUpdate initialization
+        if (hasSynapseDynamicsUpdateKernel && idSynapseDynamicsStart > 0) {
+            os << KernelNames[KernelSynapseDynamicsUpdate] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelSynapseDynamicsUpdate] << "\");" << std::endl;
+            for (int i = 0; i < synapseDynamicsUpdateKernelArgs.size(); i++) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << i << ", " << synapseDynamicsUpdateKernelArgs[i] << "));" << std::endl;
+            }
+            os << std::endl;
+        }
+
+        // KernelPresynapticUpdate initialization
+        if (hasPresynapticUpdateKernel && idPresynapticStart > 0) {
+            os << KernelNames[KernelPresynapticUpdate] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelPresynapticUpdate] << "\");" << std::endl;
+            for (int i = 0; i < presynapticUpdateKernelArgs.size(); i++) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << i << ", " << presynapticUpdateKernelArgs[i] << "));" << std::endl;
+            }
+            os << std::endl;
+        }
+
+        // KernelPostsynapticUpdate initialization
+        if (hasPostsynapticUpdateKernel && idPostsynapticStart > 0) {
+            os << KernelNames[KernelPostsynapticUpdate] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelPostsynapticUpdate] << "\");" << std::endl;
+            for (int i = 0; i < postsynapticUpdateKernelArgs.size(); i++) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << i << ", " << postsynapticUpdateKernelArgs[i] << "));" << std::endl;
+            }
+            os << std::endl;
+        }
+    }
+
+    os << std::endl;
+
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
@@ -1023,51 +1070,36 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch pre-synapse reset kernel if required
         if (idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
-            os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreSynapseReset] << ")));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+            os << std::endl;
         }
 
         // Launch synapse dynamics kernel if required
         if (idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
-            Timer t(os, "synapseDynamics", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
-            os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(";
-            for (const auto& p : synapseDynamicsUpdateKernelParams) {
-                gennExtraGlobalParamPass(os, p);
-            }
-            os << "t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << synapseDynamicsUpdateKernelArgs.size() << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDynamicsUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << ")));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+            os << std::endl;
         }
 
         // Launch presynaptic update kernel
         if (idPresynapticStart > 0) {
             CodeStream::Scope b(os);
-            Timer t(os, "presynapticUpdate", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
-            os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(";
-            for (const auto& p : presynapticUpdateKernelParams) {
-                gennExtraGlobalParamPass(os, p);
-            }
-            os << "t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << presynapticUpdateKernelArgs.size() << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << ")));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+            os << std::endl;
         }
 
         // Launch postsynaptic update kernel
         if (idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
-            Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
-            os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(";
-            for (const auto& p : postsynapticUpdateKernelParams) {
-                gennExtraGlobalParamPass(os, p);
-            }
-            os << "t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << postsynapticUpdateKernelArgs.size() << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ")));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+            os << std::endl;
         }
     }
 }
