@@ -1,4 +1,18 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.2.1 (PyGeNN 0.3.1)
+====
+This release fixes several small issues including several relating to Brian2GeNN compatibility.
+
+User Side Changes
+----
+1. Added -s option to genn-buildmodel.bat on Windows to turn off Visual C++ additional security checks (SDL), allowing Brian2GeNN libraries to be included in code generator.
+
+Bug fixes:
+----
+1. Fixed bug where \$(sT_pre) and \$(sT_post) were incorrect when accessed in weight update model pre and postsynaptic spike code respectively when using the single-threaded CPU backend.
+2. Fixed a corner case where valid models might result in compiler errors about ``Isyn`` not being defined.
+3. Fixed a bug preventing multiple include paths being passed to genn-buildmodel.bat on Windows.
+
 Release Notes for GeNN v4.2.0 (PyGeNN 0.3)
 ====
 This release adds a number of new features to GeNN and its Python interface as well as fixing a number of bugs that have been identified since the 4.1.0 release.
