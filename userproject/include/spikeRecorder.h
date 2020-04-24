@@ -26,11 +26,14 @@ public:
         }
     }
 
+// GCC 4.x does not provide a move constructor for ofstream
+#if defined(__GNUC__) && (__GNUC__ > 4)
     SpikeWriterText(SpikeWriterText&& other)
     :   m_Stream(std::move(other.m_Stream)),
         m_Delimiter(std::move(other.m_Delimiter))
     {
     }
+#endif
 
 protected:
     //----------------------------------------------------------------------------
@@ -69,12 +72,15 @@ public:
         }
     }
 
+// GCC 4.x does not provide a move constructor for ofstream
+#if defined(__GNUC__) && (__GNUC__ > 4)
     SpikeWriterTextCached(SpikeWriterTextCached&& other)
     :   m_Stream(std::move(other.m_Stream)),
         m_Delimiter(std::move(other.m_Delimiter)),
         m_Cache(std::move(other.m_Cache))
     {
     }
+#endif
 
     ~SpikeWriterTextCached()
     {
