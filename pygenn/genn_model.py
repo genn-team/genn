@@ -538,6 +538,13 @@ class GeNNModel(object):
 
         self._slm.pull_var_from_device(pop_name, var_name)
 
+    def pull_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+        """Pull extra global parameter from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
+
+        self._slm.pull_extra_global_param(pop_name, egp_name, size)
+
     def push_state_to_device(self, pop_name):
         """Push state to the device for a given population"""
         if not self._loaded:
@@ -569,9 +576,16 @@ class GeNNModel(object):
     def push_var_to_device(self, pop_name, var_name):
         """Push variable to the device for a given population"""
         if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pulling")
+            raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_var_to_device(pop_name, var_name)
+
+    def push_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+        """Push extra global parameter to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_extra_global_param(pop_name, egp_name, size)
 
     def end(self):
         """Free memory"""
