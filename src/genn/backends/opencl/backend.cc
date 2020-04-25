@@ -133,6 +133,9 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
+#ifdef _WIN32
+    os << "#pragma warning(disable: 4297)" << std::endl;
+#endif
     // Generate reset kernel to be run before the neuron kernel
 
     //! KernelPreNeuronReset START
@@ -438,7 +441,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 
     // Function for initializing the KernelNeuronUpdate kernels
     os << "// Initialize the neuronUpdate kernels" << std::endl;
-    os << "void initUpdateNeuronsKernels()";
+    os << "void " << ProgramNames[ProgramNeuronsUpdate] << "Kernels()";
     {
         CodeStream::Scope b(os);
 
@@ -483,6 +486,9 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
     SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
+#ifdef _WIN32
+    os << "#pragma warning(disable: 4297)" << std::endl;
+#endif
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
     std::stringstream preSynapseResetKernelBodyStream;
@@ -1019,7 +1025,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     
     // Function for initializing the synapse update kernels
     os << "// Initialize the synapse update kernel(s)" << std::endl;
-    os << "void initUpdateSynapsesKernels()";
+    os << "void " << ProgramNames[ProgramSynapsesUpdate] << "Kernels()";
     {
         CodeStream::Scope b(os);
 
@@ -1101,6 +1107,9 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     SynapseGroupHandler sgSparseInitHandler) const
 {
     os << std::endl;
+#ifdef _WIN32
+    os << "#pragma warning(disable: 4297)" << std::endl;
+#endif
     //! TO BE IMPLEMENTED - Generating minimal kernel
     //! TO BE IMPLEMENTED - initializeRNGKernel - if needed
 
@@ -1488,7 +1497,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
 
     // Function for initializing the initialization kernels
     os << "// Initialize the initialization kernel(s)" << std::endl;
-    os << "void initInitializationKernels()";
+    os << "void " << ProgramNames[ProgramInitialize] << "Kernels()";
     {
         CodeStream::Scope b(os);
 
@@ -1602,11 +1611,9 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
     for (const auto& kernelName : KernelNames) {
         os << "EXPORT_VAR cl::Kernel " << kernelName << ";" << std::endl;
     }
-    os << "EXPORT_FUNC void initInitializationKernels();" << std::endl;
-    os << "EXPORT_FUNC void initUpdateNeuronsKernels();" << std::endl;
-    os << "EXPORT_FUNC void initUpdateSynapsesKernels();" << std::endl;
-    os << "// OpenCL kernels sources" << std::endl;
+    os << "// OpenCL kernels initialization functions and kernels sources" << std::endl;
     for (const auto& programName : ProgramNames) {
+        os << "EXPORT_FUNC void " << programName << "Kernels();" << std::endl;
         os << "EXPORT_VAR const char* " << programName << "Src;" << std::endl;
     }
     os << "} // extern \"C\"" << std::endl;
@@ -1615,6 +1622,9 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream& os) const
 {
+#ifdef _WIN32
+    os << "#pragma warning(disable: 4297)" << std::endl;
+#endif
     // Generating OpenCL variables for the runner
     os << "extern \"C\"";
     {
@@ -1758,8 +1768,9 @@ void Backend::genAllocateMemPostamble(CodeStream& os, const ModelSpecInternal& m
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// OpenCL kernels initialization" << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "initInitializationKernels();" << std::endl;
-    os << "initUpdateNeuronsKernels();" << std::endl;
+    for (const auto& programName : ProgramNames) {
+        os << programName << "Kernels();" << std::endl;
+    }
 
 }
 //--------------------------------------------------------------------------
@@ -1779,7 +1790,7 @@ void Backend::genVariableDefinition(CodeStream& definitions, CodeStream& definit
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE) {
-        definitionsInternal << "EXPORT_VAR cl::Buffer" << " d_" << name << ";" << std::endl;
+        definitionsInternal << "EXPORT_VAR cl::Buffer " << getVarPrefix() << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1789,7 +1800,7 @@ void Backend::genVariableImplementation(CodeStream& os, const std::string& type,
         os << type << " " << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE) {
-        os << "cl::Buffer" << " d_" << name << ";" << std::endl;
+        os << "cl::Buffer " << getVarPrefix() << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1813,7 +1824,9 @@ MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type,
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream& os, const std::string& name, VarLocation loc) const
 {
-    printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genVariableFree");
+    if (loc & VarLocation::HOST) {
+        os << "free(" << name << ");" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, const std::string& type, const std::string& name, VarLocation loc) const

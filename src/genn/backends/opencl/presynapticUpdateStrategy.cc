@@ -1,5 +1,8 @@
 #include "presynapticUpdateStrategy.h"
 
+// Standard includes
+#include <regex>
+
 // GeNN includes
 #include "modelSpecInternal.h"
 
@@ -108,11 +111,25 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << "if(";
 
+
             Substitutions threshSubs(&popSubs);
             threshSubs.addVarSubstitution("id_pre", "preInd");
 
+            std::stringstream threshOsStream;
+            CodeStream threshOs(threshOsStream);
+
             // Generate weight update threshold condition
-            wumThreshHandler(os, sg, threshSubs);
+            wumThreshHandler(threshOs, sg, threshSubs);
+
+            std::string code = threshOsStream.str();
+
+            os << code;
+
+            // Collect device variables in code
+            std::regex rgx(backend.getVarPrefix() + "\\w+");
+            for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
+                params.insert({ it->str(), "__global scalar*" });
+            }
 
             // end code substitutions ----
             os << ")";
@@ -287,8 +304,20 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     Substitutions threshSubs(&popSubs);
                     threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
 
+                    std::stringstream threshOsStream;
+                    CodeStream threshOs(threshOsStream);
+
                     // Generate weight update threshold condition
-                    wumThreshHandler(os, sg, threshSubs);
+                    wumThreshHandler(threshOs, sg, threshSubs);
+
+                    os << threshOsStream.str();
+
+                    // Collect device variables in code
+                    std::string code = threshOsStream.str();
+                    std::regex rgx(backend.getVarPrefix() + "\\w+");
+                    for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
+                        params.insert({ it->str(), "__global scalar*" });
+                    }
 
                     // end code substitutions ----
                     os << ")";
