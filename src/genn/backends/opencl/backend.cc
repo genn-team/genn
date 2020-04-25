@@ -465,11 +465,13 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     {
         CodeStream::Scope b(os);
         if (idPreNeuronReset > 0) {
+            CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreNeuronReset] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
             os << std::endl;
         }
         if (idStart > 0) {
+            CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << neuronUpdateKernelArgsForKernel.size() /*last arg*/ << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
@@ -885,8 +887,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     }
     //! KernelSynapseDynamicsUpdate BODY END
 
-    os << std::endl;
-
     // Actual kernels definitions
     os << "extern \"C\" const char* " << ProgramNames[ProgramSynapsesUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
@@ -934,7 +934,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                 }
             }
         }
-        os << model.getTimePrecision() << " t)" << std::endl;
+        os << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
             os << presynapticUpdateKernelBodyStream.str();
@@ -969,7 +969,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                 }
             }
         }
-        os << model.getTimePrecision() << " t)" << std::endl;
+        os << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
             os << postsynapticUpdateKernelBodyStream.str();
@@ -1004,7 +1004,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                 }
             }
         }
-        os << model.getTimePrecision() << " t)" << std::endl;
+        os << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
             os << synapseDynamicsUpdateKernelBodyStream.str();
@@ -1013,7 +1013,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         os << std::endl;
     }
 
-    os << std::endl;
     os << ")\";" << std::endl;
 
     os << std::endl;
@@ -1030,7 +1029,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             for (int i = 0; i < preSynapseResetKernelArgs.size(); i++) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPreSynapseReset] << ".setArg(" << i << ", " << preSynapseResetKernelArgs[i] << "));" << std::endl;
             }
-            os << std::endl;
         }
 
         // KernelSynapseDynamicsUpdate initialization
@@ -1039,7 +1037,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             for (int i = 0; i < synapseDynamicsUpdateKernelArgs.size(); i++) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << i << ", " << synapseDynamicsUpdateKernelArgs[i] << "));" << std::endl;
             }
-            os << std::endl;
         }
 
         // KernelPresynapticUpdate initialization
@@ -1048,7 +1045,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             for (int i = 0; i < presynapticUpdateKernelArgs.size(); i++) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << i << ", " << presynapticUpdateKernelArgs[i] << "));" << std::endl;
             }
-            os << std::endl;
         }
 
         // KernelPostsynapticUpdate initialization
@@ -1057,7 +1053,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             for (int i = 0; i < postsynapticUpdateKernelArgs.size(); i++) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << i << ", " << postsynapticUpdateKernelArgs[i] << "));" << std::endl;
             }
-            os << std::endl;
         }
     }
 
@@ -1072,7 +1067,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreSynapseReset] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-            os << std::endl;
         }
 
         // Launch synapse dynamics kernel if required
@@ -1081,7 +1075,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << synapseDynamicsUpdateKernelArgs.size() << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDynamicsUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-            os << std::endl;
         }
 
         // Launch presynaptic update kernel
@@ -1090,7 +1083,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << presynapticUpdateKernelArgs.size() << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-            os << std::endl;
         }
 
         // Launch postsynaptic update kernel
@@ -1099,7 +1091,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << postsynapticUpdateKernelArgs.size() << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-            os << std::endl;
         }
     }
 }
@@ -1155,53 +1146,53 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             });
         initializeKernelBody << std::endl;
 
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Synapse groups with dense connectivity" << std::endl;
-        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
+        initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
+        initializeKernelBody << "// Synapse groups with dense connectivity" << std::endl;
+        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
             [](const SynapseGroupInternal& sg) { return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
-            [sgDenseInitHandler](CodeStream& os, const SynapseGroupInternal& sg, Substitutions& popSubs)
+            [sgDenseInitHandler](CodeStream& initializeKernelBody, const SynapseGroupInternal& sg, Substitutions& popSubs)
             {
-                os << "// only do this for existing postsynaptic neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                initializeKernelBody << "// only do this for existing postsynaptic neurons" << std::endl;
+                initializeKernelBody << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(initializeKernelBody);
 
                     //! TO BE IMPLEMENTED - isWUInitRNGRequired
 
                     popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                    sgDenseInitHandler(os, sg, popSubs);
+                    sgDenseInitHandler(initializeKernelBody, sg, popSubs);
                 }
             });
-        os << std::endl;
+        initializeKernelBody << std::endl;
 
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseGroupInternal>(os, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
+        initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
+        initializeKernelBody << "// Synapse groups with sparse connectivity" << std::endl;
+        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
             [](const SynapseGroupInternal& sg) { return sg.isSparseConnectivityInitRequired(); },
-            [sgSparseConnectHandler, &initializeKernelParams](CodeStream& os, const SynapseGroupInternal& sg, Substitutions& popSubs)
+            [sgSparseConnectHandler, &initializeKernelParams](CodeStream& initializeKernelBody, const SynapseGroupInternal& sg, Substitutions& popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
 
-                os << "// only do this for existing presynaptic neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
+                initializeKernelBody << "// only do this for existing presynaptic neurons" << std::endl;
+                initializeKernelBody << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(initializeKernelBody);
 
                     //! TO BE IMPLEMENTED - ::Utils::isRNGRequired
 
                     // If the synapse group has bitmask connectivity
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // Calculate indices of bits at start and end of row
-                        os << "// Calculate indices" << std::endl;
+                        initializeKernelBody << "// Calculate indices" << std::endl;
                         const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
                         if ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                            os << "const ulong rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << "ull;" << std::endl;
+                            initializeKernelBody << "const ulong rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << "ull;" << std::endl;
                         }
                         else {
-                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << ";" << std::endl;
+                            initializeKernelBody << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << ";" << std::endl;
                         }
 
                         // Build function template to set correct bit in bitmask
@@ -1218,7 +1209,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
                         initializeKernelParams.insert({ "d_ind" + sg.getName(), "__global unsigned int*" });
 
                         // Zero row length
-                        os << rowLength << " = 0;" << std::endl;
+                        initializeKernelBody << rowLength << " = 0;" << std::endl;
 
                         // Build function template to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
@@ -1229,7 +1220,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
                     }
 
                     popSubs.addVarSubstitution("id_pre", popSubs["id"]);
-                    sgSparseConnectHandler(os, sg, popSubs);
+                    sgSparseConnectHandler(initializeKernelBody, sg, popSubs);
                 }
             });
     }
@@ -1511,10 +1502,9 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             }
         }
 
-        os << std::endl;
-
         if (hasInitializeSparseKernel)
         {
+            os << std::endl;
             // KernelInitializeSparse initialization
             os << KernelNames[KernelInitializeSparse] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitializeSparse] << "\");" << std::endl;
             {
@@ -1536,7 +1526,6 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         os << "unsigned int deviceRNGSeed = 0;" << std::endl;
         os << std::endl;
         os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelArgs.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
-        os << std::endl;
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelInitialize] << ")));" << std::endl;
         os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
     }
@@ -1605,18 +1594,21 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
     os << "EXPORT_VAR cl::CommandQueue commandQueue;" << std::endl;
     os << std::endl;
     os << "// OpenCL programs" << std::endl;
-    os << "EXPORT_VAR cl::Program " << ProgramNames[ProgramInitialize] << ";" << std::endl;
-    os << "EXPORT_VAR cl::Program " << ProgramNames[ProgramNeuronsUpdate] << ";" << std::endl;
+    for (const auto& programName : ProgramNames) {
+        os << "EXPORT_VAR cl::Program " << programName << ";" << std::endl;
+    }
     os << std::endl;
     os << "// OpenCL kernels" << std::endl;
-    os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
-    os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
-    os << "EXPORT_VAR cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
+    for (const auto& kernelName : KernelNames) {
+        os << "EXPORT_VAR cl::Kernel " << kernelName << ";" << std::endl;
+    }
     os << "EXPORT_FUNC void initInitializationKernels();" << std::endl;
     os << "EXPORT_FUNC void initUpdateNeuronsKernels();" << std::endl;
+    os << "EXPORT_FUNC void initUpdateSynapsesKernels();" << std::endl;
     os << "// OpenCL kernels sources" << std::endl;
-    os << "EXPORT_VAR const char* " << ProgramNames[ProgramInitialize] << "Src;" << std::endl;
-    os << "EXPORT_VAR const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src;" << std::endl;
+    for (const auto& programName : ProgramNames) {
+        os << "EXPORT_VAR const char* " << programName << "Src;" << std::endl;
+    }
     os << "} // extern \"C\"" << std::endl;
     os << std::endl;
 }
