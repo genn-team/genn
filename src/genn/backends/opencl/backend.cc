@@ -143,67 +143,65 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
 
     // Creating the kernel body separately to collect all arguments and put them into the main kernel
     std::stringstream preNeuronResetKernelBodyStream;
-    CodeStream preNeuronResetKernelBody(preNeuronResetKernelBodyStream);
+    {
+        CodeStream preNeuronResetKernelBody(preNeuronResetKernelBodyStream);
 
-    preNeuronResetKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-    preNeuronResetKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-    preNeuronResetKernelBody << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreNeuronReset] << " * groupId + localId;" << std::endl;
+        preNeuronResetKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
+        preNeuronResetKernelBody << "size_t localId = get_local_id(0);" << std::endl;
+        preNeuronResetKernelBody << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreNeuronReset] << " * groupId + localId;" << std::endl;
 
-    // Loop through local neuron groups
-    for (const auto& n : model.getLocalNeuronGroups()) {
-        if (idPreNeuronReset > 0) {
-            preNeuronResetKernelBody << "else ";
-        }
-        if (n.second.isSpikeEventRequired()) {
-            preNeuronResetKernelParams.insert({ "d_glbSpkCntEvnt" + n.first, "__global unsigned int*" });
-        }
-        preNeuronResetKernelBody << "if(id == " << (idPreNeuronReset++) << ")";
-        {
-            CodeStream::Scope b(preNeuronResetKernelBody);
+        // Loop through local neuron groups
+        for (const auto& n : model.getLocalNeuronGroups()) {
+            if (idPreNeuronReset > 0) {
+                preNeuronResetKernelBody << "else ";
+            }
+            if (n.second.isSpikeEventRequired()) {
+                preNeuronResetKernelParams.insert({ "d_glbSpkCntEvnt" + n.first, "__global unsigned int*" });
+            }
+            preNeuronResetKernelBody << "if(id == " << (idPreNeuronReset++) << ")";
+            {
+                CodeStream::Scope b(preNeuronResetKernelBody);
 
-            if (n.second.isDelayRequired()) { // with delay
-                preNeuronResetKernelBody << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                if (n.second.isDelayRequired()) { // with delay
+                    preNeuronResetKernelBody << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                    preNeuronResetKernelParams.insert({ "d_spkQuePtr" + n.first, "__global unsigned int*" });
 
-                if (n.second.isSpikeEventRequired()) {
-                    preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                    if (n.second.isSpikeEventRequired()) {
+                        preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                    }
+                    if (n.second.isTrueSpikeRequired()) {
+                        preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                    }
+                    else {
+                        preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
+                    }
                 }
-                if (n.second.isTrueSpikeRequired()) {
-                    preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
-                }
-                else {
+                else { // no delay
+                    if (n.second.isSpikeEventRequired()) {
+                        preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
+                    }
                     preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
                 }
-                preNeuronResetKernelParams.insert({ "d_spkQuePtr" + n.first, "__global unsigned int*" });
+                preNeuronResetKernelParams.insert({ "d_glbSpkCnt" + n.first, "__global unsigned int*" });
             }
-            else { // no delay
-                if (n.second.isSpikeEventRequired()) {
-                    preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[0] = 0;" << std::endl;
-                }
-                preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
-            }
-            preNeuronResetKernelParams.insert({ "d_glbSpkCnt" + n.first, "__global unsigned int*" });
         }
     }
     //! KernelPreNeuronReset END
 
     //! KernelNeuronUpdate START
-    std::stringstream updateNeuronsKernelBodyStream;
-    CodeStream updateNeuronsKernelBody(updateNeuronsKernelBodyStream);
-
     std::map<std::string, std::string> updateNeuronsKernelParams;
 
     // Add extra global parameters references by neuron models to map of kernel parameters
-    std::map<std::string, std::string> neuronKernelParameters;
     for (const auto& n : model.getLocalNeuronGroups()) {
         const auto* nm = n.second.getNeuronModel();
-        updateExtraGlobalParams(n.first, "", nm->getExtraGlobalParams(), neuronKernelParameters,
+        updateExtraGlobalParams(n.first, "", nm->getExtraGlobalParams(), updateNeuronsKernelParams,
             { nm->getSimCode(), nm->getThresholdConditionCode(), nm->getResetCode() });
     }
 
     // Add extra global parameters references by current source models to map of kernel parameters
     for (const auto& c : model.getLocalCurrentSources()) {
         const auto* csm = c.second.getCurrentSourceModel();
-        updateExtraGlobalParams(c.first, "", csm->getExtraGlobalParams(), neuronKernelParameters,
+        updateExtraGlobalParams(c.first, "", csm->getExtraGlobalParams(), updateNeuronsKernelParams,
             { csm->getInjectionCode() });
     }
 
@@ -211,173 +209,178 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     // event thresholds of weight update models to map of kernel parameters
     for (const auto& s : model.getLocalSynapseGroups()) {
         const auto* psm = s.second.getPSModel();
-        updateExtraGlobalParams(s.first, "", psm->getExtraGlobalParams(), neuronKernelParameters,
+        updateExtraGlobalParams(s.first, "", psm->getExtraGlobalParams(), updateNeuronsKernelParams,
             { psm->getDecayCode(), psm->getApplyInputCode() });
 
         const auto* wum = s.second.getWUModel();
-        updateExtraGlobalParams(s.first, "", wum->getExtraGlobalParams(), neuronKernelParameters,
+        updateExtraGlobalParams(s.first, "", wum->getExtraGlobalParams(), updateNeuronsKernelParams,
             { wum->getEventThresholdConditionCode() });
     }
 
     size_t idStart = 0;
 
     //! KernelNeuronUpdate BODY START
-    updateNeuronsKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-    updateNeuronsKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-    updateNeuronsKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelNeuronUpdate] << " * groupId + localId; " << std::endl;
-
-    Substitutions kernelSubs(openclFunctions, model.getPrecision());
-    kernelSubs.addVarSubstitution("t", "t");
-
-    // If any neuron groups emit spike events
-    if (std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-        [](const ModelSpec::NeuronGroupValueType& n) { return n.second.isSpikeEventRequired(); }))
+    std::stringstream updateNeuronsKernelBodyStream;
     {
-        updateNeuronsKernelBody << "volatile __local unsigned int shSpkEvnt[" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << "];" << std::endl;
-        updateNeuronsKernelBody << "volatile __local unsigned int shPosSpkEvnt;" << std::endl;
-        updateNeuronsKernelBody << "volatile __local unsigned int shSpkEvntCount;" << std::endl;
-        updateNeuronsKernelBody << std::endl;
-        updateNeuronsKernelBody << "if (localId == 1);";
+        CodeStream updateNeuronsKernelBody(updateNeuronsKernelBodyStream);
+
+        updateNeuronsKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
+        updateNeuronsKernelBody << "size_t localId = get_local_id(0);" << std::endl;
+        updateNeuronsKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelNeuronUpdate] << " * groupId + localId; " << std::endl;
+
+        Substitutions kernelSubs(openclFunctions, model.getPrecision());
+        kernelSubs.addVarSubstitution("t", "t");
+
+        // If any neuron groups emit spike events
+        if (std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+            [](const ModelSpec::NeuronGroupValueType& n) { return n.second.isSpikeEventRequired(); }))
         {
-            CodeStream::Scope b(updateNeuronsKernelBody);
-            updateNeuronsKernelBody << "shSpkEvntCount = 0;" << std::endl;
-        }
-        updateNeuronsKernelBody << std::endl;
-    }
-
-    // If any neuron groups emit true spikes
-    if (std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-        [](const ModelSpec::NeuronGroupValueType& n) { return !n.second.getNeuronModel()->getThresholdConditionCode().empty(); }))
-    {
-        updateNeuronsKernelBody << "volatile __local unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << "];" << std::endl;
-        updateNeuronsKernelBody << "volatile __local unsigned int shPosSpk;" << std::endl;
-        updateNeuronsKernelBody << "volatile __local unsigned int shSpkCount;" << std::endl;
-        updateNeuronsKernelBody << "if (localId == 0);";
-        {
-            CodeStream::Scope b(updateNeuronsKernelBody);
-            updateNeuronsKernelBody << "shSpkCount = 0;" << std::endl;
-        }
-        updateNeuronsKernelBody << std::endl;
-    }
-
-    updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
-    // Parallelise over neuron groups
-    genParallelGroup<NeuronGroupInternal>(updateNeuronsKernelBody, kernelSubs, model.getLocalNeuronGroups(), idStart,
-        [this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelNeuronUpdate]); },
-        [&model, simHandler, wuVarUpdateHandler, this, &updateNeuronsKernelParams](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
-        {
-            // If axonal delays are required
-            if (ng.isDelayRequired()) {
-                // We should READ from delay slot before spkQuePtr
-                updateNeuronsKernelBody << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset("d_") << ";" << std::endl;
-
-                // And we should WRITE to delay slot pointed to be spkQuePtr
-                updateNeuronsKernelBody << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset("d_") << ";" << std::endl;
-            }
+            updateNeuronsKernelBody << "volatile __local unsigned int shSpkEvnt[" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << "];" << std::endl;
+            updateNeuronsKernelBody << "volatile __local unsigned int shPosSpkEvnt;" << std::endl;
+            updateNeuronsKernelBody << "volatile __local unsigned int shSpkEvntCount;" << std::endl;
             updateNeuronsKernelBody << std::endl;
-
-            // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
-            //! TO BE IMPLEMENTED - Not using range at this point - 2020/03/08
-            if (ng.isSimRNGRequired()) {
-                popSubs.addVarSubstitution("rng", "&d_rng" + ng.getName() + "[" + popSubs["id"] + "]");
-            }
-
-            // Call handler to generate generic neuron code
-            updateNeuronsKernelBody << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
+            updateNeuronsKernelBody << "if (localId == 1);";
             {
                 CodeStream::Scope b(updateNeuronsKernelBody);
-                simHandler(updateNeuronsKernelBody, ng, popSubs,
-                    // Emit true spikes
-                    [this](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal&, Substitutions& subs)
-                    {
-                        genEmitSpike(updateNeuronsKernelBody, subs, "");
-                    },
-                    // Emit spike-like events
-                        [this](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal&, Substitutions& subs)
-                    {
-                        genEmitSpike(updateNeuronsKernelBody, subs, "Evnt");
-                    });
+                updateNeuronsKernelBody << "shSpkEvntCount = 0;" << std::endl;
             }
-
-            updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
-            if (ng.isSpikeEventRequired()) {
-                updateNeuronsKernelBody << "if (localId == 1)";
-                {
-                    CodeStream::Scope b(updateNeuronsKernelBody);
-                    updateNeuronsKernelBody << "if (shSpkEvntCount > 0)";
-                    {
-                        CodeStream::Scope b(updateNeuronsKernelBody);
-                        updateNeuronsKernelBody << "shPosSpkEvnt = atomic_add(&d_glbSpkCntEvnt" << ng.getName();
-                        updateNeuronsKernelParams.insert({ "d_glbSpkCntEvnt" + ng.getName(), "__global unsigned int*" }); // Add argument
-                        if (ng.isDelayRequired()) {
-                            updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
-                            updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
-                        }
-                        else {
-                            updateNeuronsKernelBody << "[0], shSpkEvntCount);" << std::endl;
-                        }
-                    }
-                } // end if (localId == 0)
-                updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-            }
-
-            if (!ng.getNeuronModel()->getThresholdConditionCode().empty()) {
-                updateNeuronsKernelBody << "if (localId == 0)";
-                {
-                    CodeStream::Scope b(updateNeuronsKernelBody);
-                    updateNeuronsKernelBody << "if (shSpkCount > 0)";
-                    {
-                        CodeStream::Scope b(updateNeuronsKernelBody);
-                        updateNeuronsKernelBody << "shPosSpk = atomic_add(&d_glbSpkCnt" << ng.getName();
-                        updateNeuronsKernelParams.insert({ "d_glbSpkCnt" + ng.getName(), "__global unsigned int*" }); // Add argument
-                        if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
-                            updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
-                            updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
-                        }
-                        else {
-                            updateNeuronsKernelBody << "[0], shSpkCount);" << std::endl;
-                        }
-                    }
-                } // end if (localId == 1)
-                updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-            }
-
-            const std::string queueOffset = ng.isDelayRequired() ? "writeDelayOffset + " : "";
-            if (ng.isSpikeEventRequired()) {
-                updateNeuronsKernelBody << "if (localId < shSpkEvntCount)";
-                {
-                    CodeStream::Scope b(updateNeuronsKernelBody);
-                    updateNeuronsKernelBody << "d_glbSpkEvnt" << ng.getName() << "[" << queueOffset << "shPosSpkEvnt + localId] = shSpkEvnt[localId];" << std::endl;
-                    updateNeuronsKernelParams.insert({ "d_glbSpkEvnt" + ng.getName(), "__global unsigned int*" }); // Add argument
-                }
-            }
-
-            if (!ng.getNeuronModel()->getThresholdConditionCode().empty()) {
-                const std::string queueOffsetTrueSpk = ng.isTrueSpikeRequired() ? queueOffset : "";
-
-                updateNeuronsKernelBody << "if (localId < shSpkCount)";
-                {
-                    CodeStream::Scope b(updateNeuronsKernelBody);
-
-                    updateNeuronsKernelBody << "const unsigned int n = shSpk[localId];" << std::endl;
-
-                    // Create new substition stack and explicitly replace id with 'n' and perform WU var update
-                    Substitutions wuSubs(&popSubs);
-                    wuSubs.addVarSubstitution("id", "n", true);
-                    wuVarUpdateHandler(updateNeuronsKernelBody, ng, wuSubs);
-
-                    updateNeuronsKernelBody << "d_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + localId] = n;" << std::endl;
-                    updateNeuronsKernelParams.insert({ "d_glbSpk" + ng.getName(), "__global unsigned int*" }); // Add argument
-                    if (ng.isSpikeTimeRequired()) {
-                        updateNeuronsKernelBody << "d_sT" << ng.getName() << "[" << queueOffset << "n] = t;" << std::endl;
-                        updateNeuronsKernelParams.insert({ "d_sT" + ng.getName(), "__global unsigned int*" }); // Add argument
-                    }
-                }
-            }
+            updateNeuronsKernelBody << std::endl;
         }
-    );
+
+        // If any neuron groups emit true spikes
+        if (std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+            [](const ModelSpec::NeuronGroupValueType& n) { return !n.second.getNeuronModel()->getThresholdConditionCode().empty(); }))
+        {
+            updateNeuronsKernelBody << "volatile __local unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << "];" << std::endl;
+            updateNeuronsKernelBody << "volatile __local unsigned int shPosSpk;" << std::endl;
+            updateNeuronsKernelBody << "volatile __local unsigned int shSpkCount;" << std::endl;
+            updateNeuronsKernelBody << "if (localId == 0);";
+            {
+                CodeStream::Scope b(updateNeuronsKernelBody);
+                updateNeuronsKernelBody << "shSpkCount = 0;" << std::endl;
+            }
+            updateNeuronsKernelBody << std::endl;
+        }
+
+        updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+
+        // Parallelise over neuron groups
+        genParallelGroup<NeuronGroupInternal>(updateNeuronsKernelBody, kernelSubs, model.getLocalNeuronGroups(), idStart, updateNeuronsKernelParams,
+            [this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelNeuronUpdate]); },
+            [&model, simHandler, wuVarUpdateHandler, this, &updateNeuronsKernelParams](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
+            {
+                // If axonal delays are required
+                if (ng.isDelayRequired()) {
+                    // We should READ from delay slot before spkQuePtr
+                    updateNeuronsKernelBody << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset("d_") << ";" << std::endl;
+
+                    // And we should WRITE to delay slot pointed to be spkQuePtr
+                    updateNeuronsKernelBody << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset("d_") << ";" << std::endl;
+                }
+                updateNeuronsKernelBody << std::endl;
+
+                // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
+                //! TO BE IMPLEMENTED - Not using range at this point - 2020/03/08
+                if (ng.isSimRNGRequired()) {
+                    popSubs.addVarSubstitution("rng", "&d_rng" + ng.getName() + "[" + popSubs["id"] + "]");
+                }
+
+                // Call handler to generate generic neuron code
+                updateNeuronsKernelBody << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
+                {
+                    CodeStream::Scope b(updateNeuronsKernelBody);
+                    simHandler(updateNeuronsKernelBody, ng, popSubs,
+                        // Emit true spikes
+                        [this](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal&, Substitutions& subs)
+                        {
+                            genEmitSpike(updateNeuronsKernelBody, subs, "");
+                        },
+                        // Emit spike-like events
+                            [this](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal&, Substitutions& subs)
+                        {
+                            genEmitSpike(updateNeuronsKernelBody, subs, "Evnt");
+                        });
+                }
+
+                updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+
+                if (ng.isSpikeEventRequired()) {
+                    updateNeuronsKernelBody << "if (localId == 1)";
+                    {
+                        CodeStream::Scope b(updateNeuronsKernelBody);
+                        updateNeuronsKernelBody << "if (shSpkEvntCount > 0)";
+                        {
+                            CodeStream::Scope b(updateNeuronsKernelBody);
+                            updateNeuronsKernelBody << "shPosSpkEvnt = atomic_add(&d_glbSpkCntEvnt" << ng.getName();
+                            updateNeuronsKernelParams.insert({ "d_glbSpkCntEvnt" + ng.getName(), "__global unsigned int*" }); // Add argument
+                            if (ng.isDelayRequired()) {
+                                updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
+                                updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
+                            }
+                            else {
+                                updateNeuronsKernelBody << "[0], shSpkEvntCount);" << std::endl;
+                            }
+                        }
+                    } // end if (localId == 0)
+                    updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+                }
+
+                if (!ng.getNeuronModel()->getThresholdConditionCode().empty()) {
+                    updateNeuronsKernelBody << "if (localId == 0)";
+                    {
+                        CodeStream::Scope b(updateNeuronsKernelBody);
+                        updateNeuronsKernelBody << "if (shSpkCount > 0)";
+                        {
+                            CodeStream::Scope b(updateNeuronsKernelBody);
+                            updateNeuronsKernelBody << "shPosSpk = atomic_add(&d_glbSpkCnt" << ng.getName();
+                            updateNeuronsKernelParams.insert({ "d_glbSpkCnt" + ng.getName(), "__global unsigned int*" }); // Add argument
+                            if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
+                                updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
+                                updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "__global unsigned int*" }); // Add argument
+                            }
+                            else {
+                                updateNeuronsKernelBody << "[0], shSpkCount);" << std::endl;
+                            }
+                        }
+                    } // end if (localId == 1)
+                    updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+                }
+
+                const std::string queueOffset = ng.isDelayRequired() ? "writeDelayOffset + " : "";
+                if (ng.isSpikeEventRequired()) {
+                    updateNeuronsKernelBody << "if (localId < shSpkEvntCount)";
+                    {
+                        CodeStream::Scope b(updateNeuronsKernelBody);
+                        updateNeuronsKernelBody << "d_glbSpkEvnt" << ng.getName() << "[" << queueOffset << "shPosSpkEvnt + localId] = shSpkEvnt[localId];" << std::endl;
+                        updateNeuronsKernelParams.insert({ "d_glbSpkEvnt" + ng.getName(), "__global unsigned int*" }); // Add argument
+                    }
+                }
+
+                if (!ng.getNeuronModel()->getThresholdConditionCode().empty()) {
+                    const std::string queueOffsetTrueSpk = ng.isTrueSpikeRequired() ? queueOffset : "";
+
+                    updateNeuronsKernelBody << "if (localId < shSpkCount)";
+                    {
+                        CodeStream::Scope b(updateNeuronsKernelBody);
+
+                        updateNeuronsKernelBody << "const unsigned int n = shSpk[localId];" << std::endl;
+
+                        // Create new substition stack and explicitly replace id with 'n' and perform WU var update
+                        Substitutions wuSubs(&popSubs);
+                        wuSubs.addVarSubstitution("id", "n", true);
+                        wuVarUpdateHandler(updateNeuronsKernelBody, ng, wuSubs);
+
+                        updateNeuronsKernelBody << "d_glbSpk" << ng.getName() << "[" << queueOffsetTrueSpk << "shPosSpk + localId] = n;" << std::endl;
+                        updateNeuronsKernelParams.insert({ "d_glbSpk" + ng.getName(), "__global unsigned int*" }); // Add argument
+                        if (ng.isSpikeTimeRequired()) {
+                            updateNeuronsKernelBody << "d_sT" << ng.getName() << "[" << queueOffset << "n] = t;" << std::endl;
+                            updateNeuronsKernelParams.insert({ "d_sT" + ng.getName(), "__global unsigned int*" }); // Add argument
+                        }
+                    }
+                }
+            }
+        );
+    }
     //! KernelNeuronUpdate BODY END
     //! KernelNeuronUpdate END
 
@@ -403,29 +406,23 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         CodeStream::Scope b(os);
         os << preNeuronResetKernelBodyStream.str();
     }
+
     os << std::endl;
+
     // KernelNeuronUpdate definition
-    std::vector<std::string> neuronUpdateKernelArgsForKernel;
     os << "__kernel void " << KernelNames[KernelNeuronUpdate] << "(";
-    for (const auto& p : neuronKernelParameters) {
-        os << p.second << " " << p.first << ", ";
-        neuronUpdateKernelArgsForKernel.push_back(p.first);
-    }
-    for (const auto& arg : updateNeuronsKernelParams) {
-        os << arg.second << " " << arg.first << ", ";
-        neuronUpdateKernelArgsForKernel.push_back(arg.first);
-    }
     // Passing the neurons to the kernel as kernel arguments
     // Local neuron groups
     for (const auto& ng : model.getLocalNeuronGroups()) {
         auto* nm = ng.second.getNeuronModel();
         for (const auto& v : nm->getVars()) {
-            os << "__global " << v.type << "* " << getVarPrefix() << v.name << ng.second.getName() << ", ";
-            neuronUpdateKernelArgsForKernel.push_back(getVarPrefix() + v.name + ng.second.getName());
+            updateNeuronsKernelParams.insert({ getVarPrefix() + v.name + ng.second.getName(), "__global " + v.type + "*" });
         }
     }
-    os << "const float DT, ";
-    neuronUpdateKernelArgsForKernel.push_back("DT");
+    updateNeuronsKernelParams.insert({ "DT", "const float" });
+    for (const auto& arg : updateNeuronsKernelParams) {
+        os << arg.second << " " << arg.first << ", ";
+    }
     os << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
@@ -454,8 +451,12 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         os << std::endl;
         // KernelNeuronUpdate initialization
         os << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(" << ProgramNames[ProgramNeuronsUpdate] << ", \"" << KernelNames[KernelNeuronUpdate] << "\");" << std::endl;
-        for (int i = 0; i < neuronUpdateKernelArgsForKernel.size(); i++) {
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << i << ", " << neuronUpdateKernelArgsForKernel[i] << "));" << std::endl;
+        {
+            int argCnt = 0;
+            for (const auto& arg : updateNeuronsKernelParams) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
+                argCnt++;
+            }
         }
     }
 
@@ -471,7 +472,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         }
         if (idStart > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << neuronUpdateKernelArgsForKernel.size() /*last arg*/ << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << updateNeuronsKernelParams.size() /*last arg*/ << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
@@ -589,7 +590,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                     }
 
                     // Parallelise over synapse groups
-                    genParallelGroup<SynapseGroupInternal>(presynapticUpdateKernelBody, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart,
+                    genParallelGroup<SynapseGroupInternal>(presynapticUpdateKernelBody, kernelSubs, model.getLocalSynapseGroups(), idPresynapticStart, presynapticUpdateKernelParams,
                         [this](const SynapseGroupInternal& sg) { return Utils::padSize(getNumPresynapticUpdateThreads(sg), m_KernelWorkGroupSizes[KernelPresynapticUpdate]); },
                         [](const SynapseGroupInternal& sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
                         [wumThreshHandler, wumSimHandler, wumEventHandler, &model, this, &presynapticUpdateKernelParams](CodeStream& presynapticUpdateKernelBody, const SynapseGroupInternal& sg, const Substitutions& popSubs)
@@ -713,7 +714,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         }
 
             // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
-            genParallelGroup<SynapseGroupInternal>(postsynapticUpdateKernelBody, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart,
+            genParallelGroup<SynapseGroupInternal>(postsynapticUpdateKernelBody, kernelSubs, model.getLocalSynapseGroups(), idPostsynapticStart, postsynapticUpdateKernelParams,
                 [this](const SynapseGroupInternal& sg) { return Utils::padSize(getNumPostsynapticUpdateThreads(sg), m_KernelWorkGroupSizes[KernelPostsynapticUpdate]); },
                 [](const SynapseGroupInternal& sg) { return !sg.getWUModel()->getLearnPostCode().empty(); },
                 [postLearnHandler, &model, this, &postsynapticUpdateKernelParams](CodeStream& postsynapticUpdateKernelBody, const SynapseGroupInternal& sg, const Substitutions& popSubs)
@@ -820,7 +821,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         kernelSubs.addVarSubstitution("t", "t");
 
         // Parallelise over synapse groups whose weight update models have code for synapse dynamics
-        genParallelGroup<SynapseGroupInternal>(synapseDynamicsUpdateKernelBody, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart,
+        genParallelGroup<SynapseGroupInternal>(synapseDynamicsUpdateKernelBody, kernelSubs, model.getLocalSynapseGroups(), idSynapseDynamicsStart, synapseDynamicsUpdateKernelParams,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(getNumSynapseDynamicsThreads(sg), m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate]); },
             [](const SynapseGroupInternal& sg) { return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
             [synapseDynamicsHandler, &model, this, &synapseDynamicsUpdateKernelParams](CodeStream& synapseDynamicsUpdateKernelBody, const SynapseGroupInternal& sg, const Substitutions& popSubs)
@@ -891,12 +892,10 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << std::endl;
 
     //! KernelPreSynapseReset
-    std::vector<std::string> preSynapseResetKernelArgs;
     if (hasPreSynapseResetKernel) {
         os << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
         for (const auto& p : preSynapseResetKernelParams) {
             os << p.second << " " << p.first << ", ";
-            preSynapseResetKernelArgs.push_back(p.first);
         }
         os << ")";
         {
@@ -908,30 +907,26 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     }
 
     //! KernelPresynapticUpdate
-    std::vector<std::string> presynapticUpdateKernelArgs;
     if (hasPresynapticUpdateKernel) {
         os << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
-        for (const auto& p : presynapticUpdateKernelParams) {
-            os << p.second << " " << p.first << ", ";
-            presynapticUpdateKernelArgs.push_back(p.first);
-        }
         for (const auto& sg : model.getLocalSynapseGroups()) {
             // Postsynaptic model
             auto* psm = sg.second.getPSModel();
             for (const auto& v : psm->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    presynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
             // Weight update model
             auto* wum = sg.second.getWUModel();
             for (const auto& v : wum->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    presynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
+        }
+        for (const auto& p : presynapticUpdateKernelParams) {
+            os << p.second << " " << p.first << ", ";
         }
         os << model.getTimePrecision() << " t)";
         {
@@ -943,30 +938,26 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     }
 
     //! KernelPostsynapticUpdate
-    std::vector<std::string> postsynapticUpdateKernelArgs;
     if (hasPostsynapticUpdateKernel) {
         os << "__kernel void " << KernelNames[KernelPostsynapticUpdate] << "(";
-        for (const auto& p : postsynapticUpdateKernelParams) {
-            os << p.second << " " << p.first << ", ";
-            postsynapticUpdateKernelArgs.push_back(p.first);
-        }
         for (const auto& sg : model.getLocalSynapseGroups()) {
             // Postsynaptic model
             auto* psm = sg.second.getPSModel();
             for (const auto& v : psm->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    postsynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
             // Weight update model
             auto* wum = sg.second.getWUModel();
             for (const auto& v : wum->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    postsynapticUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
+        }
+        for (const auto& p : postsynapticUpdateKernelParams) {
+            os << p.second << " " << p.first << ", ";
         }
         os << model.getTimePrecision() << " t)";
         {
@@ -978,30 +969,26 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     }
 
     //! KernelSynapseDynamicsUpdate
-    std::vector<std::string> synapseDynamicsUpdateKernelArgs;
     if (hasSynapseDynamicsUpdateKernel) {
         os << "__kernel void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
-        for (const auto& p : synapseDynamicsUpdateKernelParams) {
-            os << p.second << " " << p.first << ", ";
-            synapseDynamicsUpdateKernelArgs.push_back(p.first);
-        }
         for (const auto& sg : model.getLocalSynapseGroups()) {
             // Postsynaptic model
             auto* psm = sg.second.getPSModel();
             for (const auto& v : psm->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    synapseDynamicsUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
             // Weight update model
             auto* wum = sg.second.getWUModel();
             for (const auto& v : wum->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    synapseDynamicsUpdateKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
+        }
+        for (const auto& p : synapseDynamicsUpdateKernelParams) {
+            os << p.second << " " << p.first << ", ";
         }
         os << model.getTimePrecision() << " t)";
         {
@@ -1025,32 +1012,40 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // KernelPreSynapseReset initialization
         if (hasPreSynapseResetKernel && idPreSynapseReset > 0) {
             os << KernelNames[KernelPreSynapseReset] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelPreSynapseReset] << "\");" << std::endl;
-            for (int i = 0; i < preSynapseResetKernelArgs.size(); i++) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPreSynapseReset] << ".setArg(" << i << ", " << preSynapseResetKernelArgs[i] << "));" << std::endl;
+            int argCnt = 0;
+            for (const auto& arg : preSynapseResetKernelParams) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPreSynapseReset] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
+                argCnt++;
             }
         }
 
         // KernelSynapseDynamicsUpdate initialization
         if (hasSynapseDynamicsUpdateKernel && idSynapseDynamicsStart > 0) {
             os << KernelNames[KernelSynapseDynamicsUpdate] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelSynapseDynamicsUpdate] << "\");" << std::endl;
-            for (int i = 0; i < synapseDynamicsUpdateKernelArgs.size(); i++) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << i << ", " << synapseDynamicsUpdateKernelArgs[i] << "));" << std::endl;
+            int argCnt = 0;
+            for (const auto& arg : synapseDynamicsUpdateKernelParams) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
+                argCnt++;
             }
         }
 
         // KernelPresynapticUpdate initialization
         if (hasPresynapticUpdateKernel && idPresynapticStart > 0) {
             os << KernelNames[KernelPresynapticUpdate] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelPresynapticUpdate] << "\");" << std::endl;
-            for (int i = 0; i < presynapticUpdateKernelArgs.size(); i++) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << i << ", " << presynapticUpdateKernelArgs[i] << "));" << std::endl;
+            int argCnt = 0;
+            for (const auto& arg : presynapticUpdateKernelParams) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
+                argCnt++;
             }
         }
 
         // KernelPostsynapticUpdate initialization
         if (hasPostsynapticUpdateKernel && idPostsynapticStart > 0) {
             os << KernelNames[KernelPostsynapticUpdate] << " = cl::Kernel(" << ProgramNames[ProgramSynapsesUpdate] << ", \"" << KernelNames[KernelPostsynapticUpdate] << "\");" << std::endl;
-            for (int i = 0; i < postsynapticUpdateKernelArgs.size(); i++) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << i << ", " << postsynapticUpdateKernelArgs[i] << "));" << std::endl;
+            int argCnt = 0;
+            for (const auto& arg : postsynapticUpdateKernelParams) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
+                argCnt++;
             }
         }
     }
@@ -1071,7 +1066,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch synapse dynamics kernel if required
         if (idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << synapseDynamicsUpdateKernelArgs.size() << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << synapseDynamicsUpdateKernelParams.size() << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDynamicsUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
@@ -1079,7 +1074,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch presynaptic update kernel
         if (idPresynapticStart > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << presynapticUpdateKernelArgs.size() << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << presynapticUpdateKernelParams.size() << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
@@ -1087,7 +1082,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch postsynaptic update kernel
         if (idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << postsynapticUpdateKernelArgs.size() << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << postsynapticUpdateKernelParams.size() << ", t));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
@@ -1128,7 +1123,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
 
         initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
         initializeKernelBody << "// Local neuron groups" << std::endl;
-        genParallelGroup<NeuronGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalNeuronGroups(), idInitStart,
+        genParallelGroup<NeuronGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalNeuronGroups(), idInitStart, initializeKernelParams,
             [this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
             [this](const NeuronGroupInternal&) { return true; },
             [this, &model, localNGHandler](CodeStream& initializeKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
@@ -1147,7 +1142,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
 
         initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
         initializeKernelBody << "// Synapse groups with dense connectivity" << std::endl;
-        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
+        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart, initializeKernelParams,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
             [](const SynapseGroupInternal& sg) { return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
             [sgDenseInitHandler](CodeStream& initializeKernelBody, const SynapseGroupInternal& sg, Substitutions& popSubs)
@@ -1167,7 +1162,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
 
         initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
         initializeKernelBody << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart,
+        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart, initializeKernelParams,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
             [](const SynapseGroupInternal& sg) { return sg.isSparseConnectivityInitRequired(); },
             [sgSparseConnectHandler, &initializeKernelParams](CodeStream& initializeKernelBody, const SynapseGroupInternal& sg, Substitutions& popSubs)
@@ -1259,7 +1254,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         }
 
         // Initialise weight update variables for synapse groups with dense connectivity
-        genParallelGroup<SynapseGroupInternal>(initializeSparseKernelBody, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart,
+        genParallelGroup<SynapseGroupInternal>(initializeSparseKernelBody, kernelSubs, model.getLocalSynapseGroups(), idSparseInitStart, initializeSparseKernelParams,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(sg.getMaxConnections(), m_KernelWorkGroupSizes[KernelInitializeSparse]); },
             [](const SynapseGroupInternal& sg) { return isSparseInitRequired(sg); },
             [this, &model, sgSparseInitHandler, numStaticInitThreads, &initializeSparseKernelParams](CodeStream& initializeSparseKernelBody, const SynapseGroupInternal& sg, Substitutions& popSubs)
@@ -1393,21 +1388,17 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     os << std::endl;
 
     // KernelInitialize definition
-    std::vector<std::string> initializeKernelArgs;
     os << "__kernel void " << KernelNames[KernelInitialize] << "(";
     std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
-    os << "__global unsigned int* " << getVarPrefix() << "glbSpkCnt" << nmName << ", ";
-    os << "__global unsigned int* " << getVarPrefix() << "glbSpk" << nmName << ", ";
-    initializeKernelArgs.push_back(getVarPrefix() + "glbSpkCnt" + nmName);
-    initializeKernelArgs.push_back(getVarPrefix() + "glbSpk" + nmName);
+    initializeKernelParams.insert({ getVarPrefix() + "glbSpkCnt" + nmName, "__global unsigned int*" });
+    initializeKernelParams.insert({ getVarPrefix() + "glbSpk" + nmName, "__global unsigned int*" });
     // Local neuron groups params
     for (const auto& ng : model.getLocalNeuronGroups()) {
         auto* nm = ng.second.getNeuronModel();
         for (const auto& v : nm->getVars()) {
             // Initialize only READ_WRITE variables
             if (v.access == VarAccess::READ_WRITE) {
-                os << "__global " << v.type << "* " << getVarPrefix() << v.name << ng.second.getName() << ", ";
-                initializeKernelArgs.push_back(getVarPrefix() + v.name + ng.second.getName());
+                initializeKernelParams.insert({ getVarPrefix() + v.name + ng.second.getName(), "__global " + v.type + "*" });
             }
         }
     }
@@ -1417,23 +1408,20 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         auto* psm = sg.second.getPSModel();
         for (const auto& v : psm->getVars()) {
             if (v.access == VarAccess::READ_WRITE) {
-                os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                initializeKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
             }
         }
         // Weight update model
         auto* wum = sg.second.getWUModel();
         for (const auto& v : wum->getVars()) {
             if (v.access == VarAccess::READ_WRITE) {
-                os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                initializeKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
             }
         }
     }
     // Collected params
     for (const auto& p : initializeKernelParams) {
         os << p.second << " " << p.first << ", ";
-        initializeKernelArgs.push_back(p.first);
     }
     os << "unsigned int deviceRNGSeed)";
     {
@@ -1443,7 +1431,6 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
 
     os << std::endl;
 
-    std::vector<std::string> initializeSparseKernelArgs;
     if (hasInitializeSparseKernel)
     {
         // KernelInitializeSparse definition
@@ -1454,23 +1441,20 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             auto* psm = sg.second.getPSModel();
             for (const auto& v : psm->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    initializeSparseKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
             // Weight update model
             auto* wum = sg.second.getWUModel();
             for (const auto& v : wum->getVars()) {
                 if (v.access == VarAccess::READ_WRITE) {
-                    os << "__global " << v.type << "* " << getVarPrefix() << v.name << sg.second.getName() << ", ";
-                    initializeSparseKernelArgs.push_back(getVarPrefix() + v.name + sg.second.getName());
+                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
         }
         // Collected params
         for (const auto& p : initializeSparseKernelParams) {
             os << p.second << " " << p.first << ", ";
-            initializeSparseKernelArgs.push_back(p.first);
         }
         os << ")";
         {
@@ -1495,8 +1479,8 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         os << KernelNames[KernelInitialize] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
         {
             int argCnt = 0;
-            for (const auto& arg : initializeKernelArgs) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << argCnt << ", " << arg << "));" << std::endl;
+            for (const auto& arg : initializeKernelParams) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
                 argCnt++;
             }
         }
@@ -1508,8 +1492,8 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             os << KernelNames[KernelInitializeSparse] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitializeSparse] << "\");" << std::endl;
             {
                 int argCnt = 0;
-                for (const auto& arg : initializeSparseKernelArgs) {
-                    os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << argCnt << ", " << arg << "));" << std::endl;
+                for (const auto& arg : initializeSparseKernelParams) {
+                    os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
                     argCnt++;
                 }
             }
@@ -1524,7 +1508,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         //! TO BE IMPLEMENTED - Using hard code deviceRNGSeed for now
         os << "unsigned int deviceRNGSeed = 0;" << std::endl;
         os << std::endl;
-        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelArgs.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelInitialize] << ")));" << std::endl;
         os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
     }

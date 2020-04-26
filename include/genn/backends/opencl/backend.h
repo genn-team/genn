@@ -8,6 +8,7 @@
 #include <numeric>
 #include <string>
 #include <unordered_set>
+#include <regex>
 
 // OpenCL includes
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
@@ -260,7 +261,7 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart,
+    void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart, std::map<std::string, std::string>& params,
         GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
         FilterGroupFunc<T> filter,
         GroupHandler<T> handler) const
@@ -285,7 +286,19 @@ private:
                     popSubs.addVarSubstitution("id", "lid");
                 }
 
-                handler(os, g.second, popSubs);
+                std::stringstream subOsStream;
+                CodeStream subOs(subOsStream);
+
+                handler(subOs, g.second, popSubs);
+
+                std::string code = subOsStream.str();
+                os << code;
+
+                // Collect device variables in code
+                std::regex rgx(getVarPrefix() + "\\w+");
+                for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
+                    params.insert({ it->str(), "__global scalar*" });
+                }
 
                 idStart += paddedSize;
                 os << CodeStream::CB(1) << std::endl;
@@ -294,11 +307,11 @@ private:
     }
 
     template<typename T>
-    void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart,
+    void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart, std::map<std::string, std::string>& params,
         GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
         GroupHandler<T> handler) const
     {
-        genParallelGroup<T>(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
+        genParallelGroup<T>(os, kernelSubs, groups, idStart, params, getPaddedSizeFunc,
             [](const T&) { return true; }, handler);
     }
 

@@ -1,6 +1,6 @@
 #include "presynapticUpdateStrategy.h"
 
-// Standard includes
+// Standard C++ includes
 #include <regex>
 
 // GeNN includes
@@ -310,10 +310,11 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     // Generate weight update threshold condition
                     wumThreshHandler(threshOs, sg, threshSubs);
 
-                    os << threshOsStream.str();
+                    std::string code = threshOsStream.str();
+
+                    os << code;
 
                     // Collect device variables in code
-                    std::string code = threshOsStream.str();
                     std::regex rgx(backend.getVarPrefix() + "\\w+");
                     for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
                         params.insert({ it->str(), "__global scalar*" });
