@@ -133,9 +133,6 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const
 {
-#ifdef _WIN32
-    os << "#pragma warning(disable: 4297)" << std::endl;
-#endif
     // Generate reset kernel to be run before the neuron kernel
 
     //! KernelPreNeuronReset START
@@ -471,7 +468,6 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreNeuronReset] << ")));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-            os << std::endl;
         }
         if (idStart > 0) {
             CodeStream::Scope b(os);
@@ -486,9 +482,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
     SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const
 {
-#ifdef _WIN32
-    os << "#pragma warning(disable: 4297)" << std::endl;
-#endif
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     size_t idPreSynapseReset = 0;
     std::stringstream preSynapseResetKernelBodyStream;
@@ -1107,9 +1100,6 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     SynapseGroupHandler sgSparseInitHandler) const
 {
     os << std::endl;
-#ifdef _WIN32
-    os << "#pragma warning(disable: 4297)" << std::endl;
-#endif
     //! TO BE IMPLEMENTED - Generating minimal kernel
     //! TO BE IMPLEMENTED - initializeRNGKernel - if needed
 
@@ -1564,6 +1554,9 @@ void Backend::genDefinitionsPreamble(CodeStream& os) const
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 {
+#ifdef _WIN32
+    os << "#pragma warning(disable: 4297)" << std::endl;
+#endif
     os << "// OpenCL includes" << std::endl;
     os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
     os << "#include <CL/cl.hpp>" << std::endl;
@@ -1622,9 +1615,6 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream& os) const
 {
-#ifdef _WIN32
-    os << "#pragma warning(disable: 4297)" << std::endl;
-#endif
     // Generating OpenCL variables for the runner
     os << "extern \"C\"";
     {
@@ -1635,13 +1625,14 @@ void Backend::genRunnerPreamble(CodeStream& os) const
         os << "cl::CommandQueue commandQueue;" << std::endl;
         os << std::endl;
         os << "// OpenCL programs" << std::endl;
-        os << "cl::Program " << ProgramNames[ProgramInitialize] << ";" << std::endl;
-        os << "cl::Program " << ProgramNames[ProgramNeuronsUpdate] << ";" << std::endl;
+        for (const auto& programName : ProgramNames) {
+            os << "cl::Program " << programName << ";" << std::endl;
+        }
         os << std::endl;
         os << "// OpenCL kernels" << std::endl;
-        os << "cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
-        os << "cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
-        os << "cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
+        for (const auto& kernelName : KernelNames) {
+            os << "cl::Kernel " << kernelName << ";" << std::endl;
+        }
     }
 
     os << std::endl;
@@ -1655,8 +1646,9 @@ void Backend::genRunnerPreamble(CodeStream& os) const
         os << "commandQueue = cl::CommandQueue(clContext, clDevice);" << std::endl;
         os << std::endl;
         os << "// Create programs for kernels" << std::endl;
-        os << "opencl::createProgram(" << ProgramNames[ProgramInitialize] << "Src, " << ProgramNames[ProgramInitialize] << ", clContext);" << std::endl;
-        os << "opencl::createProgram(" << ProgramNames[ProgramNeuronsUpdate] << "Src, " << ProgramNames[ProgramNeuronsUpdate] << ", clContext);" << std::endl;
+        for (const auto& programName : ProgramNames) {
+            os << "opencl::createProgram(" << programName << "Src, " << programName << ", clContext);" << std::endl;
+        }
     }
 
     os << std::endl;
@@ -1835,28 +1827,47 @@ void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, const std::
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-        definitions << "EXPORT_VAR cl::Buffer" << " d_" << name << ";" << std::endl;
+        definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
 {
-    printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genExtraGlobalParamImplementation");
+    if (loc & VarLocation::HOST) {
+        os << type << " " << name << ";" << std::endl;
+    }
+    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+        os << type << " d_" << name << ";" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamAllocation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
 {
-    printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genExtraGlobalParamAllocation");
+    // Get underlying type
+    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+
+    if (loc & VarLocation::HOST) {
+        os << name << " = (" << underlyingType << "*)malloc(count * sizeof(" << underlyingType << "));" << std::endl;
+    }
+
+    // If variable is present on device at all
+    if (loc & VarLocation::DEVICE) {
+        os << getVarPrefix() << name << " = (" << underlyingType << "*)malloc(count * sizeof(" << underlyingType << "));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPush(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
 {
-    printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genExtraGlobalParamPush");
+    if (!(loc & VarLocation::ZERO_COPY)) {
+        //! TO BE REVIEWED - No need to push
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPull(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
 {
-    printf("\nTO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genExtraGlobalParamPull");
+    if (!(loc & VarLocation::ZERO_COPY)) {
+        //! TO BE REVIEWED - No need to pull
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream& os, VarLocation, const Substitutions& kernelSubs, Handler handler) const
