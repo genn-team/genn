@@ -1,8 +1,8 @@
 A neuromorphic network for generic multivariate data classification
 ===================================================================
 
-This project recreates the spiking classifier using GeNN as proposed in the paper by 
-Michael Schmuker, Thomas Pfeil and Martin Paul Nawrota. The classifier design is based on an 
+This project recreates the spiking classifier proposed in the paper by 
+Michael Schmuker, Thomas Pfeil and Martin Paul Nawrota using GeNN. The classifier design is based on an 
 abstraction of the insect olfactory system. This example uses the IRIS standard data set 
 as a test for the classifier.
 
