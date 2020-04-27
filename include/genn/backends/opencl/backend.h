@@ -295,7 +295,7 @@ private:
                 os << code;
 
                 // Collect device variables in code
-                std::regex rgx(getVarPrefix() + "\\w+");
+                std::regex rgx("\\b" + getVarPrefix() + "\\w+\\b");
                 for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
                     params.insert({ it->str(), "__global scalar*" });
                 }

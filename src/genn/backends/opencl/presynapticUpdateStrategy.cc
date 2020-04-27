@@ -126,7 +126,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             os << code;
 
             // Collect device variables in code
-            std::regex rgx(backend.getVarPrefix() + "\\w+");
+            std::regex rgx("\\b" + backend.getVarPrefix() + "\\w+\\b");
             for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
                 params.insert({ it->str(), "__global scalar*" });
             }
