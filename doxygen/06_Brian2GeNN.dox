@@ -2,7 +2,7 @@
 /*! \page brian2genn Brian interface (Brian2GeNN)
 
 GeNN can simulate models written for the [Brian simulator](http://brian2.readthedocs.io) via the [Brian2GeNN](http://brian2genn.readthedocs.io) interface \cite  brian2genn2018.
-In order for Brian2GeNN to find GeNN, GeNN must either be in your path with the location of the CUDA libraries configured via the `CUDA_PATH` environment variables (as described in \ref Installation) or the `devices.genn.path` and `devices.genn.cuda_backend.cuda_path` [Brian preferences](http://brian2.readthedocs.io/en/stable/advanced/preferences.html) should be set.
+In order for Brian2GeNN to find GeNN, GeNN must either be in your path with the location of the CUDA libraries configured via the `CUDA_PATH` environment variable (as described in \ref Installation) or the `devices.genn.path` and `devices.genn.cuda_backend.cuda_path` [Brian preferences](http://brian2.readthedocs.io/en/stable/advanced/preferences.html) should be set.
 
 To use GeNN to simulate a Brian script, import the `brian2genn` package and switch Brian to the `genn` device.
 As an example, the following Python script will simulate Leaky-integrate-and-fire neurons with varying input currents to construct an f/I curve:
