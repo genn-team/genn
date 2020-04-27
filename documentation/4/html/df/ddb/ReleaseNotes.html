@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.0</span>
+   &#160;<span id="projectnumber">4.2.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -97,7 +97,19 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.2.0 (PyGeNN 0.3) </h1>
+<div class="textblock"><h1>Release Notes for GeNN v4.2.1 (PyGeNN 0.3.1) </h1>
+<p>This release fixes several small issues including several relating to Brian2GeNN compatibility.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>Added -s option to genn-buildmodel.bat on Windows to turn off Visual C++ additional security checks (SDL), allowing Brian2GeNN libraries to be included in code generator.</li>
+</ol>
+<h2>Bug fixes: </h2>
+<ol type="1">
+<li>Fixed bug where $(sT_pre) and $(sT_post) were incorrect when accessed in weight update model pre and postsynaptic spike code respectively when using the single-threaded CPU backend.</li>
+<li>Fixed a corner case where valid models might result in compiler errors about <code>Isyn</code> not being defined.</li>
+<li>Fixed a bug preventing multiple include paths being passed to genn-buildmodel.bat on Windows.</li>
+</ol>
+<h1>Release Notes for GeNN v4.2.0 (PyGeNN 0.3) </h1>
 <p>This release adds a number of new features to GeNN and its Python interface as well as fixing a number of bugs that have been identified since the 4.1.0 release.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
@@ -409,7 +421,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Mar 24 2020 12:02:04 for GeNN by
+    <li class="footer">Generated on Mon Apr 27 2020 17:13:13 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
