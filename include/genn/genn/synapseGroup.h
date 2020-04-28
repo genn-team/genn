@@ -16,6 +16,7 @@
 
 // Forward declarations
 class NeuronGroupInternal;
+class SynapseGroupInternal;
 
 //------------------------------------------------------------------------
 // SynapseGroup
@@ -134,6 +135,9 @@ public:
     //! Does synapse group need to handle spike-like events
     bool isSpikeEventRequired() const;
 
+    //! Is this synapse group a weight-sharing slave
+    bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
+
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
@@ -225,7 +229,7 @@ protected:
     SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
-                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
+                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, SynapseGroupInternal *weightSharingMaster,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                  VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled);
@@ -253,6 +257,8 @@ protected:
 
     const std::vector<double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::vector<double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
+
+    const SynapseGroupInternal *getWeightSharingMaster() const { return m_WeightSharingMaster; }
 
     //!< Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
@@ -344,6 +350,9 @@ private:
 
     //! Pointer to postsynaptic neuron group
     NeuronGroupInternal * const m_TrgNeuronGroup;
+
+    //! Pointer to 'master' weight sharing group if this is a slave
+    const SynapseGroupInternal *m_WeightSharingMaster;
 
     //! Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
