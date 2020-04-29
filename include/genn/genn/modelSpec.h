@@ -272,7 +272,7 @@ public:
         auto result = m_LocalSynapseGroups.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(name),
-            std::forward_as_tuple(name, mtype, delaySteps,
+            std::forward_as_tuple(name, nullptr, mtype, delaySteps,
                                   wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp,
@@ -360,12 +360,12 @@ public:
         auto trgNeuronGrp = findNeuronGroupInternal(trg);
 
         // Find weight sharing master group
-        auto weightSharingMasterGrp = findSynapseGroupInternal(weightSharingMasterName);
-        const auto *wum = weightSharingMasterGrp->getWUModel();
+        auto masterGrp = findSynapseGroupInternal(weightSharingMasterName);
+        const auto *wum = masterGrp->getWUModel();
 
         // If the weight sharing master has individuak weights and any are read-write, give error
         const auto wumVars = wum->getVars();
-        if((weightSharingMasterGrp->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+        if((masterGrp->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
            std::any_of(wumVars.cbegin(), wumVars.cend(), 
                        [](const Models::Base::Var &v) 
                        { 
@@ -385,12 +385,11 @@ public:
         auto result = m_LocalSynapseGroups.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(name),
-            std::forward_as_tuple(name, weightSharingMasterGrp->getMatrixType(), delaySteps,
-                                  wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
+            std::forward_as_tuple(name, masterGrp, masterGrp->getMatrixType(), delaySteps,
+                                  wum, masterGrp->getWUParams(), masterGrp->getWUVarInitialisers(), masterGrp->getWUPreVarInitialisers(), masterGrp->getWUPostVarInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
-                                  srcNeuronGrp, trgNeuronGrp, weightSharingMasterGrp,
-                                  connectivityInitialiser, m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
-                                  m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
+                                  srcNeuronGrp, trgNeuronGrp, masterGrp->getConnectivityInitialiser(), 
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
 
         if(!result.second) {
             throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
@@ -398,6 +397,14 @@ public:
         else {
             return &result.first->second;
         }
+    }
+
+    template<typename PostsynapticModel>
+    SynapseGroup *addSlaveSynapsePopulation(const std::string &name, const std::string &weightSharingMasterName, unsigned int delaySteps, const std::string &src, const std::string &trg,
+                                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+    {
+        return addSlaveSynapsePopulation(name, weightSharingMasterName, delaySteps, src, trg,
+                                         PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers);
     }
 
     // PUBLIC CURRENT SOURCE FUNCTIONS
