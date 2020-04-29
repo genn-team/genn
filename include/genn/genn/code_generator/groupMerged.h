@@ -610,6 +610,8 @@ private:
                             const std::string &type, const std::string &name, const std::string &prefix) const;
     void addTrgPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
                             const std::string &type, const std::string &name, const std::string &prefix) const;
+    void addWeightSharingPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
+                                      const std::string &type, const std::string &name, const std::string &prefix) const;
 };
 
 //----------------------------------------------------------------------------

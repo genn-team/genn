@@ -1169,36 +1169,38 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
 
     // Add pointers to connectivity data
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        gen.addPointerField("unsigned int", "rowLength", backend.getArrayPrefix() + "rowLength");
-        gen.addPointerField(getArchetype().getSparseIndType(), "ind", backend.getArrayPrefix() + "ind");
+        addWeightSharingPointerField(gen, "unsigned int", "rowLength", backend.getArrayPrefix() + "rowLength");
+        addWeightSharingPointerField(gen, getArchetype().getSparseIndType(), "ind", backend.getArrayPrefix() + "ind");
 
         // Add additional structure for postsynaptic access
         if(backend.isPostsynapticRemapRequired() && !wum->getLearnPostCode().empty()
            && (role == Role::PostsynapticUpdate || role == Role::SparseInit))
         {
-            gen.addPointerField("unsigned int", "colLength", backend.getArrayPrefix() + "colLength");
-            gen.addPointerField("unsigned int", "remap", backend.getArrayPrefix() + "remap");
+            addWeightSharingPointerField(gen, "unsigned int", "colLength", backend.getArrayPrefix() + "colLength");
+            addWeightSharingPointerField(gen, "unsigned int", "remap", backend.getArrayPrefix() + "remap");
         }
 
         // Add additional structure for synapse dynamics access
         if(backend.isSynRemapRequired() && !wum->getSynapseDynamicsCode().empty()
            && (role == Role::SynapseDynamics || role == Role::SparseInit))
         {
-            gen.addPointerField("unsigned int", "synRemap", backend.getArrayPrefix() + "synRemap");
+            addWeightSharingPointerField(gen, "unsigned int", "synRemap", backend.getArrayPrefix() + "synRemap");
         }
     }
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        gen.addPointerField("uint32_t", "gp", backend.getArrayPrefix() + "gp");
+        addWeightSharingPointerField(gen, "uint32_t", "gp", backend.getArrayPrefix() + "gp");
     }
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
         gen.addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
                     backend.getArrayPrefix());
     }
 
-    // If WU varaibles are individual, add pointers to var pointers to struct
+    // If WU variables are individual, add pointers to var pointers to struct
     const auto vars = wum->getVars();
     if(getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        gen.addVars(wum->getVars(), backend.getArrayPrefix());
+        for(const auto &v : vars) {
+            addWeightSharingPointerField(gen, v.type, v.name, backend.getArrayPrefix() + v.name);
+        }
     }
     // Otherwise, if WU variables are global, loop through them
     else if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
@@ -1248,4 +1250,20 @@ void CodeGenerator::SynapseGroupMergedBase::addTrgPointerField(MergedStructGener
 {
     assert(!Utils::isTypePointer(type));
     gen.addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });
+}
+//----------------------------------------------------------------------------
+void CodeGenerator::SynapseGroupMergedBase::addWeightSharingPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
+                                                                         const std::string &type, const std::string &name, const std::string &prefix) const
+{
+    assert(!Utils::isTypePointer(type));
+    gen.addField(type + "*", name, 
+                 [prefix](const SynapseGroupInternal &sg, size_t)
+                 { 
+                     if(sg.isWeightSharingSlave()) {
+                         return prefix + sg.getWeightSharingMaster()->getName();
+                     }
+                     else {
+                         return prefix + sg.getName();
+                     }
+                 });
 }
