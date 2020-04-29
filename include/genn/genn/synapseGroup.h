@@ -76,7 +76,7 @@ public:
 
     //! Set variable mode used for sparse connectivity
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setSparseConnectivityLocation(VarLocation loc){ m_SparseConnectivityLocation = loc; }
+    void setSparseConnectivityLocation(VarLocation loc);
 
     //! Set variable mode used for this synapse group's dendritic delay buffers
     void setDendriticDelayLocation(VarLocation loc) { m_DendriticDelayLocation = loc; }
@@ -115,8 +115,8 @@ public:
     unsigned int getNumThreadsPerSpike() const{ return m_NumThreadsPerSpike; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getBackPropDelaySteps() const{ return m_BackPropDelaySteps; }
-    unsigned int getMaxConnections() const{ return m_MaxConnections; }
-    unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
+    unsigned int getMaxConnections() const;
+    unsigned int getMaxSourceConnections() const;
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
 
@@ -124,7 +124,7 @@ public:
     VarLocation getInSynLocation() const { return m_InSynLocation; }
 
     //! Get variable mode used for sparse connectivity
-    VarLocation getSparseConnectivityLocation() const{ return m_SparseConnectivityLocation; }
+    VarLocation getSparseConnectivityLocation() const;
 
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
@@ -160,7 +160,7 @@ public:
     VarLocation getWUVarLocation(const std::string &var) const;
 
     //! Get location of weight update model per-synapse state variable by index
-    VarLocation getWUVarLocation(size_t index) const{ return m_WUVarLocation.at(index); }
+    VarLocation getWUVarLocation(size_t index) const;
 
     //! Get location of weight update model presynaptic state variable by name
     VarLocation getWUPreVarLocation(const std::string &var) const;
@@ -202,7 +202,7 @@ public:
 
     //! Get location of sparse connectivity initialiser extra global parameter by index
     /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getSparseConnectivityExtraGlobalParamLocation(size_t index) const{ return m_ConnectivityExtraGlobalParamLocation.at(index); }
+    VarLocation getSparseConnectivityExtraGlobalParamLocation(size_t index) const;
 
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
@@ -226,10 +226,10 @@ public:
     bool isSparseConnectivityInitRequired() const;
 
 protected:
-    SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
+    SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
-                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, SynapseGroupInternal *weightSharingMaster,
+                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                  VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled);
