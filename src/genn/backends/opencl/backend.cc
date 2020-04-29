@@ -891,6 +891,23 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << "extern \"C\" const char* " << ProgramNames[ProgramSynapsesUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
 
+    // Float atomic add function
+    os << "void atomic_add_f(volatile local float *source, const float operand)";
+    {
+        CodeStream::Scope b(os);
+        os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
+        os << "union { unsigned int intVal; float floatVal; } prevVal;" << std::endl;
+        os << "do";
+        {
+            CodeStream::Scope b(os);
+            os << "prevVal.floatVal = *source;" << std::endl;
+            os << "newVal.floatVal = prevVal.floatVal + operand;" << std::endl;
+        }
+        os << "while (atomic_cmpxchg((volatile local unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);" << std::endl;
+    }
+
+    os << std::endl;
+
     //! KernelPreSynapseReset
     if (hasPreSynapseResetKernel) {
         os << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
@@ -2037,7 +2054,7 @@ void Backend::genMSBuildImportTarget(std::ostream& os) const
 std::string Backend::getFloatAtomicAdd(const std::string& ftype) const
 {
     if (ftype == "float" || ftype == "double") {
-        return "atomic_add_sw"; //! TO BE IMPLEMENTED
+        return "atomic_add_f";
     }
     else {
         return "atomic_add";
