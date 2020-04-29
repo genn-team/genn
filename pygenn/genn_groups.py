@@ -313,7 +313,7 @@ class SynapseGroup(Group):
 
     """Class representing synaptic connection between two groups of neurons"""
 
-    def __init__(self, name):
+    def __init__(self, name, weight_sharing_master=None):
         """Init SynapseGroup
 
         Args:
@@ -331,7 +331,8 @@ class SynapseGroup(Group):
         self.psm_extra_global_params = {}
         self.connectivity_extra_global_params = {}
         self.connectivity_initialiser = None
-
+        self.weight_sharing_master = weight_sharing_master
+    
     @property
     def num_synapses(self):
         """Number of synapses in group"""
@@ -391,16 +392,20 @@ class SynapseGroup(Group):
         pre_var_space   --  dict with model presynaptic variables
         post_var_space  --  dict with model postsynaptic variables
         """
-        (self.w_update, self.wu_type, self.wu_param_names, self.wu_params,
-         self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
-         self.wu_post_var_names, post_var_dict) =\
-             model_preprocessor.prepare_model(
-                 model, param_space, var_space, pre_var_space,
-                 post_var_space, model_family=genn_wrapper.WeightUpdateModels)
+        if self.weight_sharing_master is not None:
+            raise Exception("when weight sharing is used, set_weight_update"
+                            "can only be used on the 'master' population")
+        else:
+            (self.w_update, self.wu_type, self.wu_param_names, self.wu_params,
+             self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
+             self.wu_post_var_names, post_var_dict) =\
+                 model_preprocessor.prepare_model(
+                     model, param_space, var_space, pre_var_space,
+                     post_var_space, model_family=genn_wrapper.WeightUpdateModels)
 
-        self.vars.update(var_dict)
-        self.pre_vars.update(pre_var_dict)
-        self.post_vars.update(post_var_dict)
+            self.vars.update(var_dict)
+            self.pre_vars.update(pre_var_dict)
+            self.post_vars.update(post_var_dict)
 
     def set_post_syn(self, model, param_space, var_space):
         """Set postsynaptic model, its parameters and initial variables
@@ -418,63 +423,76 @@ class SynapseGroup(Group):
         self.psm_vars.update(var_dict)
 
     def get_var_values(self, var_name):
-        var_view = self.vars[var_name].view
-
-        if self.is_dense:
-            return np.copy(var_view)
-        elif self.is_ragged:
-            # Create range containing the index where each row starts in ind
-            row_start_idx = xrange(0, self.weight_update_var_size,
-                                   self.max_row_length)
-
-            # Build list of subviews representing each row
-            rows = [var_view[i:i + r]
-                    for i, r in zip(row_start_idx, self.row_lengths)]
-
-            # Stack all rows together into single array
-            return np.hstack(rows)
+        if self.weight_sharing_master is not None:
+            raise Exception("when weight sharing is used, get_var_values"
+                            "can only be used on the 'master' population")
         else:
-            raise Exception("Matrix format not supported")
+            var_view = self.vars[var_name].view
+
+            if self.is_dense:
+                return np.copy(var_view)
+            elif self.is_ragged:
+                # Create range containing the index where each row starts in ind
+                row_start_idx = xrange(0, self.weight_update_var_size,
+                                       self.max_row_length)
+
+                # Build list of subviews representing each row
+                rows = [var_view[i:i + r]
+                        for i, r in zip(row_start_idx, self.row_lengths)]
+
+                # Stack all rows together into single array
+                return np.hstack(rows)
+            else:
+                raise Exception("Matrix format not supported")
 
     @property
     def is_connectivity_init_required(self):
-        return self.connectivity_initialiser is None
+        return (self.weight_sharing_master is None 
+                and self.connectivity_initialiser is None)
 
     @property
     def matrix_type(self):
         """Type of the projection matrix"""
-        return self._matrix_type
+        if self.weight_sharing_master is None:
+            return self._matrix_type
+        else:
+            return self.weight_sharing_master.matrix_type
 
     @matrix_type.setter
     def matrix_type(self, matrix_type):
-        self._matrix_type = getattr(genn_wrapper,
-                                    "SynapseMatrixType_" + matrix_type)
+        if self.weight_sharing_master is None:
+            self._matrix_type = getattr(genn_wrapper,
+                                        "SynapseMatrixType_" + matrix_type)
+        else:
+            raise Exception("when weight sharing is used, matrix_type"
+                            "can only be set on the 'master' population")
 
     @property
     def is_ragged(self):
         """Tests whether synaptic connectivity uses Ragged format"""
-        return (self._matrix_type & SynapseMatrixConnectivity_SPARSE) != 0
+        return (self.matrix_type & SynapseMatrixConnectivity_SPARSE) != 0
 
     @property
     def is_bitmask(self):
         """Tests whether synaptic connectivity uses Bitmask format"""
-        return (self._matrix_type & SynapseMatrixConnectivity_BITMASK) != 0
+        return (self.matrix_type & SynapseMatrixConnectivity_BITMASK) != 0
 
     @property
     def is_dense(self):
         """Tests whether synaptic connectivity uses dense format"""
-        return (self._matrix_type & SynapseMatrixConnectivity_DENSE) != 0
+        return (self.matrix_type & SynapseMatrixConnectivity_DENSE) != 0
 
     @property
     def has_individual_synapse_vars(self):
         """Tests whether synaptic connectivity has individual weights"""
-        return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL) != 0
+        return (self.weight_sharing_master is None 
+                and (self.matrix_type & SynapseMatrixWeight_INDIVIDUAL) != 0)
 
     @property
     def has_individual_postsynaptic_vars(self):
         """Tests whether synaptic connectivity has
         individual postsynaptic model variables"""
-        return (self._matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
+        return (self.matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
 
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
@@ -483,7 +501,10 @@ class SynapseGroup(Group):
         pre_indices     --  ndarray of presynaptic indices
         post_indices    --  ndarray of postsynaptic indices
         """
-        if self.is_ragged:
+        if self.weight_sharing_master is not None:
+            raise Exception("when weight sharing is used, set_sparse_connections"
+                            "can only be used on the 'master' population")
+        elif self.is_ragged:
             # Lexically sort indices
             self.synapse_order = np.lexsort((post_indices, pre_indices))
 
@@ -518,7 +539,10 @@ class SynapseGroup(Group):
         ndarray of presynaptic indices
         """
 
-        if self.is_ragged:
+        if self.weight_sharing_master is not None:
+            raise Exception("when weight sharing is used, get_sparse_pre_inds"
+                            "can only be used on the 'master' population")
+        elif self.is_ragged:
             if self.ind is None or self.row_lengths is None:
                 raise Exception("only manually initialised connectivity "
                                 "can currently by accessed")
@@ -539,8 +563,10 @@ class SynapseGroup(Group):
         Returns:
         ndarrays of postsynaptic indices
         """
-
-        if self.is_ragged:
+        if self.weight_sharing_master is not None:
+            raise Exception("when weight sharing is used, get_sparse_post_inds"
+                            "can only be used on the 'master' population")
+        elif self.is_ragged:
             if self.ind is None or self.row_lengths is None:
                 raise Exception("only manually initialised connectivity "
                                 "can currently by accessed")
@@ -569,35 +595,45 @@ class SynapseGroup(Group):
         model_spec  -- ``pygenn.genn_model.GeNNModel`` to add to
         delay_steps -- number of axonal delay timesteps to simulate for this synapse group
         """
-        add_fct = getattr(
-            model_spec,
-            ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
-
-        wu_var_ini = model_preprocessor.var_space_to_vals(
-            self.w_update, {vn: self.vars[vn]
-                            for vn in self.wu_var_names})
-
-        wu_pre_var_ini = model_preprocessor.pre_var_space_to_vals(
-            self.w_update, {vn: self.pre_vars[vn]
-                            for vn in self.wu_pre_var_names})
-
-        wu_post_var_ini = model_preprocessor.post_var_space_to_vals(
-            self.w_update, {vn: self.post_vars[vn]
-                            for vn in self.wu_post_var_names})
-
         ps_var_ini = model_preprocessor.var_space_to_vals(
-            self.postsyn, {vn: self.psm_vars[vn]
-                           for vn in self.ps_var_names})
+                self.postsyn, {vn: self.psm_vars[vn]
+                               for vn in self.ps_var_names})
+       
+        if self.weight_sharing_master is None:
+            add_fct = getattr(
+                model_spec,
+                ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
 
-        # Use unitialised connectivity initialiser if none has been set
-        connect_init = (genn_wrapper.uninitialised_connectivity()
-                        if self.connectivity_initialiser is None
-                        else self.connectivity_initialiser)
-        self.pop = add_fct(self.name, self.matrix_type, delay_steps,
-                           self.src.name, self.trg.name, self.w_update,
-                           self.wu_params, wu_var_ini, wu_pre_var_ini,
-                           wu_post_var_ini, self.postsyn, self.ps_params,
-                           ps_var_ini, connect_init)
+            wu_var_ini = model_preprocessor.var_space_to_vals(
+                self.w_update, {vn: self.vars[vn]
+                                for vn in self.wu_var_names})
+
+            wu_pre_var_ini = model_preprocessor.pre_var_space_to_vals(
+                self.w_update, {vn: self.pre_vars[vn]
+                                for vn in self.wu_pre_var_names})
+
+            wu_post_var_ini = model_preprocessor.post_var_space_to_vals(
+                self.w_update, {vn: self.post_vars[vn]
+                                for vn in self.wu_post_var_names})
+
+            # Use unitialised connectivity initialiser if none has been set
+            connect_init = (genn_wrapper.uninitialised_connectivity()
+                            if self.connectivity_initialiser is None
+                            else self.connectivity_initialiser)
+
+            self.pop = add_fct(self.name, self.matrix_type, delay_steps,
+                               self.src.name, self.trg.name, self.w_update,
+                               self.wu_params, wu_var_ini, wu_pre_var_ini,
+                               wu_post_var_ini, self.postsyn, self.ps_params,
+                               ps_var_ini, connect_init)
+        else:
+            add_fct = getattr(
+                model_spec,
+                ("add_slave_synapse_population_" + self.ps_type))
+
+            self.pop = add_fct(self.name, self.weight_sharing_master.name,
+                               delay_steps,self.src.name, self.trg.name,
+                               self.postsyn, self.ps_params, ps_var_ini)
 
     @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
     def add_extra_global_param(self, param_name, param_values):
@@ -636,13 +672,14 @@ class SynapseGroup(Group):
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
+        assert self.weight_sharing_master is None
         self._set_extra_global_param(param_name, param_values,
                                      self.connectivity_initialiser.get_snippet(),
                                      self.connectivity_extra_global_params)
 
     def load(self, slm, scalar):
-        # If synapse population has non-dense connectivity which
-        # requires initialising manually
+        # If synapse population has non-dense connectivity 
+        # which requires initialising manually
         if not self.is_dense and self.is_connectivity_init_required:
             # If data is available
             if self.connections_set:
@@ -712,7 +749,9 @@ class SynapseGroup(Group):
         self._load_egp(slm, scalar, self.psm_extra_global_params)
     
     def load_connectivity_init_egps(self,  slm, scalar):
-        self._load_egp(slm, scalar, self.connectivity_extra_global_params)
+        # If population isn't a weight-sharing slave
+        if self.weight_sharing_master is None:
+            self._load_egp(slm, scalar, self.connectivity_extra_global_params)
     
     def reinitialise(self, slm, scalar):
         """Reinitialise synapse group

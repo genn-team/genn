@@ -355,6 +355,53 @@ class GeNNModel(object):
         self.synapse_populations[pop_name] = s_group
 
         return s_group
+    
+    def add_slave_synapse_population(self, pop_name, master_pop, delay_steps,
+                                     source, target, postsyn_model,
+                                     ps_param_space, ps_var_space):
+        """Add a 'slave' population to the GeNN model which shares 
+        weights and connectivity with a 'master' population
+
+        Args:
+        pop_name                    --  name of the new population
+        master_pop                  --  master synapse group to share weights with
+        delay_steps                 --  delay in number of steps
+        source                      --  source neuron group
+        target                      --  target neuron group
+        postsyn_model               --  type of the PostsynapticModels class
+                                        as string or instance of postsynaptic
+                                        model class derived from
+                                        ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also
+                                        pygenn.genn_model.create_custom_postsynaptic_class)
+        ps_param_space              --  dict with param values for the
+                                        PostsynapticModels class
+        ps_var_space                --  dict with initial variable values for
+                                        the PostsynapticModels class
+        """
+        if self._built:
+            raise Exception("GeNN model already built")
+
+        if pop_name in self.synapse_populations:
+            raise ValueError("synapse population '{0}' "
+                             "already exists".format(pop_name))
+
+        if not isinstance(source, NeuronGroup):
+            raise ValueError("'source' must be a NeuronGroup")
+
+        if not isinstance(target, NeuronGroup):
+            raise ValueError("'target' must be a NeuronGroup")
+        
+        if not isinstance(master_pop, SynapseGroup):
+            raise ValueError("'master_pop' must be a SynapseGroup")
+        
+        s_group = SynapseGroup(pop_name, master_pop)
+        s_group.set_connected_populations(source, target)
+        s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
+        s_group.add_to(self._model, delay_steps)
+
+        self.synapse_populations[pop_name] = s_group
+
+        return s_group
 
     def add_current_source(self, cs_name, current_source_model, pop_name,
                            param_space, var_space):
