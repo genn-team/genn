@@ -25,13 +25,14 @@ class Group(object):
 
     """Parent class of NeuronGroup, SynapseGroup and CurrentSource"""
 
-    def __init__(self, name):
+    def __init__(self, name, model):
         """Init Group
 
         Args:
         name    --  string name of the Group
         """
         self.name = name
+        self._model = model
         self.vars = {}
         self.extra_global_params = {}
 
@@ -43,6 +44,48 @@ class Group(object):
         values      --  iterable or a single value
         """
         self.vars[var_name].set_values(values)
+
+    def pull_state_from_device(self):
+        """Wrapper around GeNNModel.pull_state_from_device"""
+        self._model.pull_state_from_device(self.name)
+
+    def pull_var_from_device(self, var_name):
+        """Wrapper around GeNNModel.pull_var_from_device
+
+        Args:
+        var_name    --  string with the name of the variable
+        """
+        self._model.pull_var_from_device(self.name, var_name)
+
+    def pull_extra_global_param_to_device(self, egp_name, size=1):
+        """Wrapper around GeNNModel.pull_extra_global_param_to_device
+
+        Args:
+        var_name    --  string with the name of the variable
+        size        --  number of entries in EGP array
+        """
+        self._model.pull_extra_global_param_to_device(self.name, egp_name, size)
+
+    def push_state_to_device(self, pop_name):
+        """Wrapper around GeNNModel.push_state_to_device"""
+        self._model.push_state_to_device(self.name)
+
+    def push_var_to_device(self, var_name):
+        """Wrapper around GeNNModel.push_var_to_device
+        
+        Args:
+        var_name    --  string with the name of the variable
+        """
+        self._model.push_var_to_device(self.name, var_name)
+    
+    def push_extra_global_param_to_device(self, egp_name, size=1):
+        """Wrapper around GeNNModel.push_extra_global_param_to_device
+
+        Args:
+        var_name    --  string with the name of the variable
+        size        --  number of entries in EGP array
+        """
+        self._model.push_extra_global_param_to_device(self.name, egp_name, size)
 
     def _set_extra_global_param(self, param_name, param_values, model, egp_dict=None):
         """Set extra global parameter
@@ -196,13 +239,13 @@ class NeuronGroup(Group):
 
     """Class representing a group of neurons"""
 
-    def __init__(self, name):
+    def __init__(self, name, model):
         """Init NeuronGroup
 
         Args:
         name    --  string name of the group
         """
-        super(NeuronGroup, self).__init__(name)
+        super(NeuronGroup, self).__init__(name, model)
         self.neuron = None
         self.spikes = None
         self.spike_count = None
@@ -274,6 +317,22 @@ class NeuronGroup(Group):
         """
         self._set_extra_global_param(param_name, param_values, self.neuron)
 
+    def pull_spikes_from_device(self):
+        """Wrapper around GeNNModel.pull_spikes_from_device"""
+        self._model.pull_spikes_from_device(self.name)
+
+    def pull_current_spikes_from_device(self):
+        """Wrapper around GeNNModel.pull_current_spikes_from_device"""
+        self._model.pull_current_spikes_from_device(self.name)
+
+    def push_spikes_to_device(self):
+        """Wrapper around GeNNModel.push_spikes_to_device"""
+        self._model.push_spikes_to_device(self.name)
+
+    def push_current_spikes_to_device(self):
+        """Wrapper around GeNNModel.push_current_spikes_to_device"""
+        self._model.push_current_spikes_to_device(self.name)
+
     def load(self, slm, scalar):
         """Loads neuron group
 
@@ -313,14 +372,14 @@ class SynapseGroup(Group):
 
     """Class representing synaptic connection between two groups of neurons"""
 
-    def __init__(self, name, weight_sharing_master=None):
+    def __init__(self, name, model, weight_sharing_master=None):
         """Init SynapseGroup
 
         Args:
         name    --  string name of the group
         """
         self.connections_set = False
-        super(SynapseGroup, self).__init__(name)
+        super(SynapseGroup, self).__init__(name, model)
         self.w_update = None
         self.postsyn = None
         self.src = None
@@ -677,6 +736,14 @@ class SynapseGroup(Group):
                                      self.connectivity_initialiser.get_snippet(),
                                      self.connectivity_extra_global_params)
 
+    def pull_connectivity_from_device(self):
+        """Wrapper around GeNNModel.pull_connectivity_from_device"""
+        self._model.pull_connectivity_from_device(self.name)
+
+    def push_connectivity_to_device(self, pop_name):
+        """Wrapper around GeNNModel.push_connectivity_to_device"""
+        self._model.push_connectivity_to_device(self.name)
+    
     def load(self, slm, scalar):
         # If synapse population has non-dense connectivity 
         # which requires initialising manually
@@ -807,13 +874,13 @@ class CurrentSource(Group):
 
     """Class representing a current injection into a group of neurons"""
 
-    def __init__(self, name):
+    def __init__(self, name, model):
         """Init CurrentSource
 
         Args:
         name -- string name of the current source
         """
-        super(CurrentSource, self).__init__(name)
+        super(CurrentSource, self).__init__(name, model)
         self.current_source_model = None
         self.target_pop = None
 

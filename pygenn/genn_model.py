@@ -283,7 +283,7 @@ class GeNNModel(object):
             raise ValueError("Neuron population '{0}'"
                              "already exists".format(pop_name))
 
-        n_group = NeuronGroup(pop_name)
+        n_group = NeuronGroup(pop_name, self)
         n_group.set_neuron(neuron, param_space, var_space)
         n_group.add_to(self._model, int(num_neurons))
 
@@ -341,7 +341,7 @@ class GeNNModel(object):
         source = self._validate_neuron_group(source, "source")
         target = self._validate_neuron_group(target, "target")
         
-        s_group = SynapseGroup(pop_name)
+        s_group = SynapseGroup(pop_name, self)
         s_group.matrix_type = matrix_type
         s_group.set_connected_populations(source, target)
         s_group.set_weight_update(w_update_model, wu_param_space, wu_var_space,
@@ -390,7 +390,7 @@ class GeNNModel(object):
         
         master_pop = self._validate_synapse_group(master_pop, "master_pop")
         
-        s_group = SynapseGroup(pop_name, master_pop)
+        s_group = SynapseGroup(pop_name, self, master_pop)
         s_group.set_connected_populations(source, target)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
         s_group.add_to(self._model, delay_steps)
@@ -427,7 +427,7 @@ class GeNNModel(object):
         # Validate population
         pop = self._validate_neuron_group(pop, "pop")
         
-        c_source = CurrentSource(cs_name)
+        c_source = CurrentSource(cs_name, self)
         c_source.set_current_source_model(current_source_model,
                                           param_space, var_space)
         c_source.add_to(self._model, pop)
