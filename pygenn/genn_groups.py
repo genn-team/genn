@@ -109,12 +109,10 @@ class Group(object):
         egp_dict[param_name] = ExtraGlobalVariable(param_name, param_type,
                                                    param_values)
 
-    def _assign_ext_ptr_array(self, slm, scalar, var_name, var_size, var_type):
+    def _assign_ext_ptr_array(self, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
 
         Args:
-        slm         --  SharedLibraryModel instance for acccessing variables
-        scalar      --  string containing type to use inplace of scalar
         var_name    --  string a fully qualified name of the variable to assign
         var_size    --  int the size of the variable
         var_type    --  string type of the variable. The supported types are
@@ -131,16 +129,16 @@ class Group(object):
         internal_var_name = var_name + self.name
         
         if var_type == "scalar":
-            var_type = scalar
+            var_type = self._model._scalar
         
-        return genn_types[var_type].assign_ext_ptr_array(slm, internal_var_name, var_size)
+        return genn_types[var_type].assign_ext_ptr_array(self._model._slm,
+                                                         internal_var_name,
+                                                         var_size)
     
-    def _assign_ext_ptr_single(self, slm, scalar, var_name, var_type):
+    def _assign_ext_ptr_single(self, var_name, var_type):
         """Assign a variable to an external scalar value containing one element
 
         Args:
-        slm         --  SharedLibraryModel instance for acccessing variables
-        scalar      --  string containing type to use inplace of scalar
         var_name    --  string a fully qualified name of the variable to assign
         var_type    --  string type of the variable. The supported types are
                         char, unsigned char, short, unsigned short, int,
@@ -156,11 +154,12 @@ class Group(object):
         internal_var_name = var_name + self.name
         
         if var_type == "scalar":
-            var_type = scalar
+            var_type = self._model._scalar
         
-        return genn_types[var_type].assign_ext_ptr_single(slm, internal_var_name)
+        return genn_types[var_type].assign_ext_ptr_single(self._model._slm,
+                                                          internal_var_name)
         
-    def _load_vars(self, slm, scalar, size=None, var_dict=None, get_location_fn=None):
+    def _load_vars(self, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
         if size is None:
             size = self.size
@@ -179,8 +178,7 @@ class Group(object):
             var_loc = get_location_fn(var_name) 
             if (var_loc & VarLocation_HOST) != 0:
                 # Get view
-                var_data.view = self._assign_ext_ptr_array(slm, scalar,
-                                                           var_name, size,
+                var_data.view = self._assign_ext_ptr_array(var_name, size,
                                                            var_data.type)
 
                 # If manual initialisation is required, copy over variables
@@ -190,7 +188,7 @@ class Group(object):
                 assert not var_data.init_required
                 var_data.view = None
 
-    def _reinitialise_vars(self, slm, scalar, size=None, var_dict=None):
+    def _reinitialise_vars(self, size=None, var_dict=None):
         # If no size is specified, use standard size
         if size is None:
             size = self.size
@@ -205,7 +203,7 @@ class Group(object):
             if var_data.init_required:
                 var_data.view[:] = var_data.values
 
-    def _load_egp(self, slm, scalar, egp_dict=None):
+    def _load_egp(self, egp_dict=None):
         # If no EGP dictionary is specified, use standard one
         if egp_dict is None:
             egp_dict = self.extra_global_params
@@ -214,17 +212,17 @@ class Group(object):
         for egp_name, egp_data in iteritems(egp_dict):
             if egp_data.is_scalar:
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_single(slm, scalar, egp_name,
+                egp_data.view = self._assign_ext_ptr_single(egp_name,
                                                             egp_data.type)
                 # Copy values
                 egp_data.view[:] = egp_data.values
             else:
                 # Allocate memory
-                slm.allocate_extra_global_param(self.name, egp_name,
-                                                len(egp_data.values))
+                self._model._slm.allocate_extra_global_param(self.name, egp_name,
+                                                             len(egp_data.values))
 
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_array(slm, scalar, egp_name,
+                egp_data.view = self._assign_ext_ptr_array(egp_name,
                                                            len(egp_data.values), 
                                                            egp_data.type)
 
@@ -232,8 +230,8 @@ class Group(object):
                 egp_data.view[:] = egp_data.values
 
                 # Push egp_data
-                slm.push_extra_global_param(self.name, egp_name,
-                                            len(egp_data.values))
+                self._model._slm.push_extra_global_param(self.name, egp_name,
+                                                         len(egp_data.values))
 
 class NeuronGroup(Group):
 
@@ -333,40 +331,29 @@ class NeuronGroup(Group):
         """Wrapper around GeNNModel.push_current_spikes_to_device"""
         self._model.push_current_spikes_to_device(self.name)
 
-    def load(self, slm, scalar):
-        """Loads neuron group
-
-        Args:
-        slm --      SharedLibraryModel instance for acccessing variables
-        scalar --   String specifying "scalar" type
-        """
-        self.spikes = self._assign_ext_ptr_array(slm, scalar, "glbSpk", 
+    def load(self):
+        """Loads neuron group"""
+        self.spikes = self._assign_ext_ptr_array("glbSpk", 
                                                  self.size * self.delay_slots,
                                                  "unsigned int")
-        self.spike_count = self._assign_ext_ptr_array(slm, scalar, 
-                                                      "glbSpkCnt", 
+        self.spike_count = self._assign_ext_ptr_array("glbSpkCnt", 
                                                       self.delay_slots, 
                                                       "unsigned int")
         if self.delay_slots > 1:
-            self.spike_que_ptr = slm.assign_external_pointer_single_ui(
+            self.spike_que_ptr = self._model._slm.assign_external_pointer_single_ui(
                 "spkQuePtr" + self.name)
 
         # Load neuron state variables
-        self._load_vars(slm, scalar)
+        self._load_vars()
 
         # Load neuron extra global params
-        self._load_egp(slm, scalar)
+        self._load_egp()
 
-    def reinitialise(self, slm, scalar):
-        """Reinitialise neuron group
-
-        Args:
-        slm --      SharedLibraryModel instance for acccessing variables
-        scalar --   String specifying "scalar" type
-        """
+    def reinitialise(self):
+        """Reinitialise neuron group"""
 
         # Reinitialise neuron state variables
-        self._reinitialise_vars(slm, scalar)
+        self._reinitialise_vars()
 
 class SynapseGroup(Group):
 
@@ -744,7 +731,7 @@ class SynapseGroup(Group):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
         self._model.push_connectivity_to_device(self.name)
     
-    def load(self, slm, scalar):
+    def load(self):
         # If synapse population has non-dense connectivity 
         # which requires initialising manually
         if not self.is_dense and self.is_connectivity_init_required:
@@ -752,11 +739,10 @@ class SynapseGroup(Group):
             if self.connections_set:
                 if self.is_ragged:
                     # Get pointers to ragged data structure members
-                    ind = self._assign_ext_ptr_array(slm, scalar, "ind",
+                    ind = self._assign_ext_ptr_array("ind",
                                                      self.weight_update_var_size,
                                                      "unsigned int")
-                    row_length = self._assign_ext_ptr_array(slm, scalar,
-                                                            "rowLength",
+                    row_length = self._assign_ext_ptr_array("rowLength",
                                                             self.src.size,
                                                             "unsigned int")
 
@@ -788,9 +774,7 @@ class SynapseGroup(Group):
                 if (var_loc & VarLocation_HOST) != 0:
                     # Get view
                     var_data.view = self._assign_ext_ptr_array(
-                        slm, scalar, var_name,
-                        self.weight_update_var_size,
-                        var_data.type)
+                        var_name, self.weight_update_var_size, var_data.type)
 
                     # Initialise variable if necessary
                     self._init_wum_var(var_data)
@@ -799,34 +783,29 @@ class SynapseGroup(Group):
                     var_data.view = None
 
         # Load weight update model presynaptic variables
-        self._load_vars(slm, scalar, self.src.size, self.pre_vars,
+        self._load_vars(self.src.size, self.pre_vars,
                         self.pop.get_wupre_var_location)
 
         # Load weight update model postsynaptic variables
-        self._load_vars(slm, scalar, self.trg.size, self.post_vars,
+        self._load_vars(self.trg.size, self.post_vars,
                         self.pop.get_wupost_var_location)
 
         # Load postsynaptic update model variables
         if self.has_individual_postsynaptic_vars:
-            self._load_vars(slm, scalar, self.trg.size, self.psm_vars,
+            self._load_vars(self.trg.size, self.psm_vars,
                             self.pop.get_psvar_location)
         
         # Load extra global parameters
-        self._load_egp(slm, scalar)
-        self._load_egp(slm, scalar, self.psm_extra_global_params)
+        self._load_egp()
+        self._load_egp(self.psm_extra_global_params)
     
-    def load_connectivity_init_egps(self,  slm, scalar):
+    def load_connectivity_init_egps(self):
         # If population isn't a weight-sharing slave
         if self.weight_sharing_master is None:
-            self._load_egp(slm, scalar, self.connectivity_extra_global_params)
+            self._load_egp(self.connectivity_extra_global_params)
     
-    def reinitialise(self, slm, scalar):
-        """Reinitialise synapse group
-
-        Args:
-        slm --      SharedLibraryModel instance for acccessing variables
-        scalar --   String specifying "scalar" type
-        """
+    def reinitialise(self):
+        """Reinitialise synapse group"""
         # If population has individual synapse variables
         if self.has_individual_synapse_vars:
             # Loop through weight update model state variables
@@ -835,14 +814,14 @@ class SynapseGroup(Group):
                 self._init_wum_var(var_data)
 
         # Reinitialise weight update model presynaptic variables
-        self._reinitialise_vars(slm, scalar, self.src.size, self.pre_vars)
+        self._reinitialise_vars(self.src.size, self.pre_vars)
 
         # Reinitialise weight update model postsynaptic variables
-        self._reinitialise_vars(slm, scalar, self.trg.size, self.post_vars)
+        self._reinitialise_vars(self.trg.size, self.post_vars)
 
         # Reinitialise postsynaptic update model variables
         if self.has_individual_postsynaptic_vars:
-            self._reinitialise_vars(slm, scalar, self.trg.size, self.psm_vars)
+            self._reinitialise_vars(self.trg.size, self.psm_vars)
 
     def _init_wum_var(self, var_data):
         # If initialisation is required
@@ -943,20 +922,14 @@ class CurrentSource(Group):
         self._set_extra_global_param(param_name, param_values,
                                      self.current_source_model)
 
-    def load(self, slm, scalar):
+    def load(self):
         # Load current source variables
-        self._load_vars(slm, scalar)
+        self._load_vars()
 
         # Load current source extra global parameters
-        self._load_egp(slm, scalar)
+        self._load_egp()
 
-    def reinitialise(self, slm, scalar):
-        """Reinitialise current source
-
-        Args:
-        slm --      SharedLibraryModel instance for acccessing variables
-        scalar --   String specifying "scalar" type
-        """
-
+    def reinitialise(self):
+        """Reinitialise current source"""
         # Reinitialise current source state variables
-        self._reinitialise_vars(slm, scalar)
+        self._reinitialise_vars()

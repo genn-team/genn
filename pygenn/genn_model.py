@@ -493,22 +493,22 @@ class GeNNModel(object):
         # Loop through synapse populations and load any 
         # extra global parameters required for connectivity init
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.load_connectivity_init_egps(self._slm, self._scalar)
+            pop_data.load_connectivity_init_egps()
 
         # Initialize model
         self._slm.initialize()
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.load(self._slm, self._scalar)
+            pop_data.load()
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.load(self._slm, self._scalar)
+            pop_data.load()
 
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
-            src_data.load(self._slm, self._scalar)
+            src_data.load()
 
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
@@ -527,15 +527,15 @@ class GeNNModel(object):
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.reinitialise(self._slm, self._scalar)
+            pop_data.reinitialise()
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.reinitialise(self._slm, self._scalar)
+            pop_data.reinitialise()
 
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
-            src_data.reinitialise(self._slm, self._scalar)
+            src_data.reinitialise()
 
         # Initialise any sparse variables
         self._slm.initialize_sparse()
