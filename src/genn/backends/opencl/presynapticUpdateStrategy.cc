@@ -234,7 +234,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
     //! TO BE IMPLEMENTED - Possibly respecifying localId in this block
-    os << "size_t localIdi = get_local_id(0);" << std::endl;
+    os << "const size_t localIdi = get_local_id(0);" << std::endl;
 
     os << "const unsigned int numSpikes = d_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName();
     if (sg.getSrcNeuronGroup()->isDelayRequired()) {

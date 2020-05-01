@@ -146,9 +146,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     {
         CodeStream preNeuronResetKernelBody(preNeuronResetKernelBodyStream);
 
-        preNeuronResetKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        preNeuronResetKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        preNeuronResetKernelBody << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreNeuronReset] << " * groupId + localId;" << std::endl;
+        preNeuronResetKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        preNeuronResetKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
 
         // Loop through local neuron groups
         for (const auto& n : model.getLocalNeuronGroups()) {
@@ -224,9 +223,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     {
         CodeStream updateNeuronsKernelBody(updateNeuronsKernelBodyStream);
 
-        updateNeuronsKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        updateNeuronsKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        updateNeuronsKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelNeuronUpdate] << " * groupId + localId; " << std::endl;
+        updateNeuronsKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        updateNeuronsKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
 
         Substitutions kernelSubs(openclFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
@@ -495,9 +493,8 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     {
         CodeStream preSynapseResetKernelBody(preSynapseResetKernelBodyStream);
 
-        preSynapseResetKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        preSynapseResetKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        preSynapseResetKernelBody << "unsigned int id = " << m_KernelWorkGroupSizes[KernelPreSynapseReset] << " * groupId + localId;" << std::endl;
+        preSynapseResetKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        preSynapseResetKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
 
         // Loop through neuron groups
         for (const auto& n : model.getLocalNeuronGroups()) {
@@ -549,9 +546,8 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         Substitutions kernelSubs(openclFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
 
-        presynapticUpdateKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        presynapticUpdateKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        presynapticUpdateKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << " * groupId + localId; " << std::endl;
+        presynapticUpdateKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        presynapticUpdateKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
 
         // We need shLg if any synapse groups accumulate into shared memory
         if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
@@ -700,9 +696,8 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         Substitutions kernelSubs(openclFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
 
-        postsynapticUpdateKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        postsynapticUpdateKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        postsynapticUpdateKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << " * groupId + localId; " << std::endl;
+        postsynapticUpdateKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        postsynapticUpdateKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
         postsynapticUpdateKernelBody << "__local unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << "];" << std::endl;
         if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
             [&model](const ModelSpec::SynapseGroupValueType& s)
@@ -813,9 +808,8 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     {
         CodeStream synapseDynamicsUpdateKernelBody(synapseDynamicsUpdateKernelBodyStream);
 
-        synapseDynamicsUpdateKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        synapseDynamicsUpdateKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        synapseDynamicsUpdateKernelBody << "unsigned int id = " << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << " * groupId + localId;" << std::endl;
+        synapseDynamicsUpdateKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        synapseDynamicsUpdateKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
 
         Substitutions kernelSubs(openclFunctions, model.getPrecision());
         kernelSubs.addVarSubstitution("t", "t");
@@ -1134,9 +1128,8 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     {
         CodeStream initializeKernelBody(initializeKernelBodyStream);
 
-        initializeKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        initializeKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        initializeKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelInitialize] << " * groupId + localId;" << std::endl;
+        initializeKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        initializeKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
 
         initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
         initializeKernelBody << "// Local neuron groups" << std::endl;
@@ -1257,9 +1250,8 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         // Common variables for all cases
         Substitutions kernelSubs(openclFunctions, model.getPrecision());
 
-        initializeSparseKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        initializeSparseKernelBody << "size_t localId = get_local_id(0);" << std::endl;
-        initializeSparseKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelInitializeSparse] << " * groupId + localId;" << std::endl;
+        initializeSparseKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
+        initializeSparseKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
 
         // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
         // **TODO** check actually required
