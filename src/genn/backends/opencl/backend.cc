@@ -465,13 +465,16 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         CodeStream::Scope b(os);
         if (idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreNeuronReset] << ")));" << std::endl;
+            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
         if (idStart > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << updateNeuronsKernelParams.size() /*last arg*/ << ", t));" << std::endl;
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << ")));" << std::endl;
+            os << std::endl;
+            genKernelDimensions(os, KernelNeuronUpdate, idStart);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
     }
@@ -1070,7 +1073,8 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch pre-synapse reset kernel if required
         if (idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPreSynapseReset] << ")));" << std::endl;
+            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
 
@@ -1078,7 +1082,9 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         if (idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << synapseDynamicsUpdateKernelParams.size() << ", t));" << std::endl;
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDynamicsUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << ")));" << std::endl;
+            os << std::endl;
+            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDynamicsUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
 
@@ -1086,7 +1092,9 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         if (idPresynapticStart > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << presynapticUpdateKernelParams.size() << ", t));" << std::endl;
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << ")));" << std::endl;
+            os << std::endl;
+            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
 
@@ -1094,7 +1102,9 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         if (idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << postsynapticUpdateKernelParams.size() << ", t));" << std::endl;
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ")));" << std::endl;
+            os << std::endl;
+            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
     }
@@ -1514,12 +1524,21 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     os << "void initialize()";
     {
         CodeStream::Scope b(os);
-        //! TO BE IMPLEMENTED - Using hard code deviceRNGSeed for now
-        os << "unsigned int deviceRNGSeed = 0;" << std::endl;
-        os << std::endl;
-        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, " << "cl::NDRange(" << m_KernelWorkGroupSizes[KernelInitialize] << ")));" << std::endl;
-        os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+
+        // If there are any initialisation threads
+        if (idInitStart > 0) {
+            CodeStream::Scope b(os);
+            {
+                //! TO BE IMPLEMENTED - Using hard code deviceRNGSeed for now
+                os << "unsigned int deviceRNGSeed = 0;" << std::endl;
+                os << std::endl;
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
+                os << std::endl;
+                genKernelDimensions(os, KernelInitialize, idInitStart);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+                os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+            }
+        }
     }
 
     os << std::endl;
@@ -2199,7 +2218,10 @@ void Backend::genEmitSpike(CodeStream& os, const Substitutions& subs, const std:
 //--------------------------------------------------------------------------
 void Backend::genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const
 {
-    //! TO BE IMPLEMENTED
+    // Calculate grid size
+    const size_t numOfWorkGroups = Utils::ceilDivide(numThreads, m_KernelWorkGroupSizes[kernel]);
+    os << "const cl::NDRange globalWorkSize(" << (m_KernelWorkGroupSizes[kernel] * numOfWorkGroups) << ", 1);" << std::endl;
+    os << "const cl::NDRange localWorkSize(" << m_KernelWorkGroupSizes[kernel] << ", 1);" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string& type, size_t size)
