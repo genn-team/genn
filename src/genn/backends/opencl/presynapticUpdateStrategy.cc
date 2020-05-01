@@ -173,7 +173,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
                     synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_inSyn" + sg.getPSModelTargetName() + "[ipost], $(0))");
-                    params.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                    params.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
                 }
             }
 
@@ -364,7 +364,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                         }
                         else {
                             synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
-                            params.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                            params.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
                         }
                     }
                     else {

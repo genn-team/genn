@@ -550,7 +550,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         kernelSubs.addVarSubstitution("t", "t");
 
         presynapticUpdateKernelBody << "size_t groupId = get_group_id(0);" << std::endl;
-        presynapticUpdateKernelBody << "size_t localId = get_group_id(0);" << std::endl;
+        presynapticUpdateKernelBody << "size_t localId = get_local_id(0);" << std::endl;
         presynapticUpdateKernelBody << "const unsigned int id = " << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << " * groupId + localId; " << std::endl;
 
         // We need shLg if any synapse groups accumulate into shared memory
@@ -653,7 +653,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                                 {
                                     CodeStream::Scope b(presynapticUpdateKernelBody);
                                     const std::string inSyn = "d_inSyn" + sg.getPSModelTargetName() + "[" + popSubs["id"] + "]";
-                                    presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                                    presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
                                     if (sg.isPSModelMerged()) {
                                         presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
                                     }
@@ -670,7 +670,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                                 {
                                     CodeStream::Scope b(presynapticUpdateKernelBody);
                                     const std::string inSyn = "d_inSyn" + sg.getPSModelTargetName() + "[localId]";
-                                    presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                                    presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
 
                                     if (sg.isPSModelMerged()) {
                                         presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[localId]);" << std::endl;
@@ -878,7 +878,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                     // Otherwise
                     else {
                         synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&d_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
-                        synapseDynamicsUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                        synapseDynamicsUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
                     }
 
                     synapseDynamicsHandler(synapseDynamicsUpdateKernelBody, sg, synSubs);
@@ -1539,6 +1539,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         CodeStream::Scope b(os);
         // Copy all uninitialised state variables to device
         os << "copyStateToDevice(true);" << std::endl;
+        os << "copyConnectivityToDevice(true);" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
