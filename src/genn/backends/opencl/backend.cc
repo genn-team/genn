@@ -889,30 +889,33 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << std::endl;
 
     // Float atomic add function
-    std::vector<std::string> memoryTypes = { "global" };
-    for (const auto& sg : model.getLocalSynapseGroups()) {
-        if (this->getPresynapticUpdateStrategy(sg.second)->shouldAccumulateInSharedMemory(sg.second, *this)) {
+    if (hasPresynapticUpdateKernel || hasSynapseDynamicsUpdateKernel) {
+        std::vector<std::string> memoryTypes = { "global" };
+
+        // Check if presynaptic update strategy needs local/shared memory
+        if (std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+            [this](const ModelSpec::SynapseGroupValueType& s)
+            { return this->getPresynapticUpdateStrategy(s.second)->shouldAccumulateInSharedMemory(s.second, *this); })) {
             memoryTypes.push_back("local");
-            break;
-        }
-    }
-    
-    for (const auto& memoryType : memoryTypes) {
-        os << "void atomic_add_f_" << memoryType << "(volatile __" << memoryType << " float *source, const float operand)";
-        {
-            CodeStream::Scope b(os);
-            os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
-            os << "union { unsigned int intVal; float floatVal; } prevVal;" << std::endl;
-            os << "do";
-            {
-                CodeStream::Scope b(os);
-                os << "prevVal.floatVal = *source;" << std::endl;
-                os << "newVal.floatVal = prevVal.floatVal + operand;" << std::endl;
-            }
-            os << "while (atomic_cmpxchg((volatile __" << memoryType << " unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);" << std::endl;
         }
 
-        os << std::endl;
+        for (const auto& memoryType : memoryTypes) {
+            os << "void atomic_add_f_" << memoryType << "(volatile __" << memoryType << " float *source, const float operand)";
+            {
+                CodeStream::Scope b(os);
+                os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
+                os << "union { unsigned int intVal; float floatVal; } prevVal;" << std::endl;
+                os << "do";
+                {
+                    CodeStream::Scope b(os);
+                    os << "prevVal.floatVal = *source;" << std::endl;
+                    os << "newVal.floatVal = prevVal.floatVal + operand;" << std::endl;
+                }
+                os << "while (atomic_cmpxchg((volatile __" << memoryType << " unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);" << std::endl;
+            }
+
+            os << std::endl;
+        }
     }
 
     //! KernelPreSynapseReset
