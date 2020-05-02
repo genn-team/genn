@@ -37,7 +37,7 @@ const std::vector<CodeGenerator::FunctionTemplate> openclFunctions = {
 //--------------------------------------------------------------------------
 class Timer {
 public:
-    // TO BE REVIEWED
+    //! TO BE REVIEWED
     Timer(CodeGenerator::CodeStream& codeStream, const std::string& name, bool timingEnabled, bool synchroniseOnStop = false)
         : m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled), m_SynchroniseOnStop(synchroniseOnStop)
     {
@@ -654,7 +654,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                                     const std::string inSyn = "d_inSyn" + sg.getPSModelTargetName() + "[" + popSubs["id"] + "]";
                                     presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
                                     if (sg.isPSModelMerged()) {
-                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
+                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision(), "local") << "(&" << inSyn << ", linSyn);" << std::endl;
                                     }
                                     else {
                                         presynapticUpdateKernelBody << inSyn << " += linSyn;" << std::endl;
@@ -672,7 +672,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                                     presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
 
                                     if (sg.isPSModelMerged()) {
-                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[localId]);" << std::endl;
+                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision(), "local") << "(&" << inSyn << ", shLg[localId]);" << std::endl;
                                     }
                                     else {
                                         presynapticUpdateKernelBody << inSyn << " += shLg[localId];" << std::endl;
@@ -889,21 +889,31 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << std::endl;
 
     // Float atomic add function
-    os << "void atomic_add_f(volatile local float *source, const float operand)";
-    {
-        CodeStream::Scope b(os);
-        os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
-        os << "union { unsigned int intVal; float floatVal; } prevVal;" << std::endl;
-        os << "do";
+    std::vector<std::string> memoryTypes = { "global" };
+    for (const auto& sg : model.getLocalSynapseGroups()) {
+        if (this->getPresynapticUpdateStrategy(sg.second)->shouldAccumulateInSharedMemory(sg.second, *this)) {
+            memoryTypes.push_back("local");
+            break;
+        }
+    }
+    
+    for (const auto& memoryType : memoryTypes) {
+        os << "void atomic_add_f_" << memoryType << "(volatile __" << memoryType << " float *source, const float operand)";
         {
             CodeStream::Scope b(os);
-            os << "prevVal.floatVal = *source;" << std::endl;
-            os << "newVal.floatVal = prevVal.floatVal + operand;" << std::endl;
+            os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
+            os << "union { unsigned int intVal; float floatVal; } prevVal;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "prevVal.floatVal = *source;" << std::endl;
+                os << "newVal.floatVal = prevVal.floatVal + operand;" << std::endl;
+            }
+            os << "while (atomic_cmpxchg((volatile __" << memoryType << " unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);" << std::endl;
         }
-        os << "while (atomic_cmpxchg((volatile local unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);" << std::endl;
-    }
 
-    os << std::endl;
+        os << std::endl;
+    }
 
     //! KernelPreSynapseReset
     if (hasPreSynapseResetKernel) {
@@ -1596,7 +1606,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
         CodeStream::Scope b(os);
         os << "void setUpContext(cl::Context& context, cl::Device& device, const int deviceIndex);" << std::endl;
         os << "void createProgram(const char* kernelSource, cl::Program& program, cl::Context& context);" << std::endl;
-        os << "char* clGetErrorString(cl_int error);" << std::endl;
+        os << "const char* clGetErrorString(cl_int error);" << std::endl;
     }
 
     os << std::endl;
@@ -1683,11 +1693,11 @@ void Backend::genRunnerPreamble(CodeStream& os) const
         os << std::endl;
         os << "// Getting all devices and putting them into a single vector" << std::endl;
         os << "std::vector<cl::Device> devices;" << std::endl;
-        os << "for (int i = 0; i < platforms.size(); i++)";
+        os << "for (const auto& platform : platforms)";
         {
             CodeStream::Scope b(os);
             os << "std::vector<cl::Device> platformDevices;" << std::endl;
-            os << "platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);" << std::endl;
+            os << "platform.getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);" << std::endl;
             os << "devices.insert(devices.end(), platformDevices.begin(), platformDevices.end());" << std::endl;
         }
         os << std::endl;
@@ -1720,7 +1730,7 @@ void Backend::genRunnerPreamble(CodeStream& os) const
     }
     os << std::endl;
     os << "// Get OpenCL error as string" << std::endl;
-    os << "char* opencl::clGetErrorString(cl_int error)";
+    os << "const char* opencl::clGetErrorString(cl_int error)";
     {
         CodeStream::Scope b(os);
         std::map<cl_int, std::string> allClErrors = {
@@ -2014,7 +2024,6 @@ void Backend::genMakefileCompileRule(std::ostream& os) const
 //--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream& os) const
 {
-    printf("TO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genMSBuildConfigProperties\n");
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportProps(std::ostream& os) const
@@ -2063,10 +2072,10 @@ void Backend::genMSBuildImportTarget(std::ostream& os) const
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getFloatAtomicAdd(const std::string& ftype) const
+std::string Backend::getFloatAtomicAdd(const std::string& ftype, const char* memoryType) const
 {
     if (ftype == "float" || ftype == "double") {
-        return "atomic_add_f";
+        return "atomic_add_f_" + std::string(memoryType);
     }
     else {
         return "atomic_add";
@@ -2218,7 +2227,7 @@ void Backend::genEmitSpike(CodeStream& os, const Substitutions& subs, const std:
 //--------------------------------------------------------------------------
 void Backend::genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const
 {
-    // Calculate grid size
+    // Calculate global and local work size
     const size_t numOfWorkGroups = Utils::ceilDivide(numThreads, m_KernelWorkGroupSizes[kernel]);
     os << "const cl::NDRange globalWorkSize(" << (m_KernelWorkGroupSizes[kernel] * numOfWorkGroups) << ", 1);" << std::endl;
     os << "const cl::NDRange localWorkSize(" << m_KernelWorkGroupSizes[kernel] << ", 1);" << std::endl;

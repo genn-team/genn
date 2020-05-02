@@ -226,7 +226,7 @@ public:
     int getChosenDeviceID() const { return m_ChosenDeviceID; }
     int getRuntimeVersion() const { return m_RuntimeVersion; }
 
-    std::string getFloatAtomicAdd(const std::string& ftype) const;
+    std::string getFloatAtomicAdd(const std::string& ftype, const char* memoryType = "global") const;
 
     size_t getKernelBlockSize(Kernel kernel) const { return m_KernelWorkGroupSizes.at(kernel); }
 

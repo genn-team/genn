@@ -168,7 +168,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             else {
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
                 if(shouldAccumulateInSharedMemory(sg, backend)) {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&shLg[ipost], $(0))");
+                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision(), "local") + "(&shLg[ipost], $(0))");
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
