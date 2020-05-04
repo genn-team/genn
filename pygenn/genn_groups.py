@@ -66,7 +66,7 @@ class Group(object):
         """
         self._model.pull_extra_global_param_to_device(self.name, egp_name, size)
 
-    def push_state_to_device(self, pop_name):
+    def push_state_to_device(self):
         """Wrapper around GeNNModel.push_state_to_device"""
         self._model.push_state_to_device(self.name)
 
@@ -727,7 +727,7 @@ class SynapseGroup(Group):
         """Wrapper around GeNNModel.pull_connectivity_from_device"""
         self._model.pull_connectivity_from_device(self.name)
 
-    def push_connectivity_to_device(self, pop_name):
+    def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
         self._model.push_connectivity_to_device(self.name)
     
