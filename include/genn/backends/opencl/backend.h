@@ -98,12 +98,6 @@ struct Preferences : public PreferencesBase
         std::fill(manualWorkGroupSizes.begin(), manualWorkGroupSizes.end(), 32);
     }
 
-    //! Should PTX assembler information be displayed for each OpenCL kernel during compilation?
-    //! TO BE IMPLEMENTED - bool showPtxInfo = false;
-
-    //! Should line info be included in resultant executable for debugging/profiling purposes?
-    bool generateLineInfo = false;
-
     //! Should we use the constant cache for storing merged structures - improves performance but may overflow for large models
     bool useConstantCacheForMergedStructs = true;
 
@@ -119,8 +113,7 @@ struct Preferences : public PreferencesBase
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
     KernelWorkGroupSize manualWorkGroupSizes;
 
-    //! NVCC compiler options for all GPU code
-    std::string userNvccFlags = "";
+    //! TO BE IMPLEMENTED - Additional libraries in kernels for passing to program.build
 };
 
 //--------------------------------------------------------------------------
