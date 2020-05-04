@@ -933,25 +933,43 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         os << std::endl;
     }
 
-    //! KernelPresynapticUpdate
-    if (hasPresynapticUpdateKernel) {
-        os << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
-        for (const auto& sg : model.getLocalSynapseGroups()) {
-            // Postsynaptic model
-            auto* psm = sg.second.getPSModel();
-            for (const auto& v : psm->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
+    // Collecting common parameters for KernelPresynapticUpdate, KernelPostsynapticUpdate and KernelSynapseDynamicsUpdate
+    for (const auto& sg : model.getLocalSynapseGroups()) {
+        // Postsynaptic model
+        auto* psm = sg.second.getPSModel();
+        for (const auto& v : psm->getVars()) {
+            if (v.access == VarAccess::READ_WRITE) {
+                if (hasPresynapticUpdateKernel) {
                     presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
-            }
-            // Weight update model
-            auto* wum = sg.second.getWUModel();
-            for (const auto& v : wum->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                if (hasPostsynapticUpdateKernel) {
+                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                }
+                if (hasSynapseDynamicsUpdateKernel) {
+                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
                 }
             }
         }
+        // Weight update model
+        auto* wum = sg.second.getWUModel();
+        for (const auto& v : wum->getVars()) {
+            if (v.access == VarAccess::READ_WRITE) {
+                if (hasPresynapticUpdateKernel) {
+                    presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                }
+                if (hasPostsynapticUpdateKernel) {
+                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                }
+                if (hasSynapseDynamicsUpdateKernel) {
+                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                }
+            }
+        }
+    }
+
+    //! KernelPresynapticUpdate
+    if (hasPresynapticUpdateKernel) {
+        os << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
         for (const auto& p : presynapticUpdateKernelParams) {
             os << p.second << " " << p.first << ", ";
         }
@@ -967,22 +985,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     //! KernelPostsynapticUpdate
     if (hasPostsynapticUpdateKernel) {
         os << "__kernel void " << KernelNames[KernelPostsynapticUpdate] << "(";
-        for (const auto& sg : model.getLocalSynapseGroups()) {
-            // Postsynaptic model
-            auto* psm = sg.second.getPSModel();
-            for (const auto& v : psm->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-            // Weight update model
-            auto* wum = sg.second.getWUModel();
-            for (const auto& v : wum->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-        }
         for (const auto& p : postsynapticUpdateKernelParams) {
             os << p.second << " " << p.first << ", ";
         }
@@ -998,22 +1000,6 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     //! KernelSynapseDynamicsUpdate
     if (hasSynapseDynamicsUpdateKernel) {
         os << "__kernel void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
-        for (const auto& sg : model.getLocalSynapseGroups()) {
-            // Postsynaptic model
-            auto* psm = sg.second.getPSModel();
-            for (const auto& v : psm->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-            // Weight update model
-            auto* wum = sg.second.getWUModel();
-            for (const auto& v : wum->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-        }
         for (const auto& p : synapseDynamicsUpdateKernelParams) {
             os << p.second << " " << p.first << ", ";
         }
@@ -1413,11 +1399,36 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             });
         initializeSparseKernelBody << std::endl;
     }
-    //! KernelInitializeSparse BODY START
+    //! KernelInitializeSparse BODY END
 
     // Initialization kernels
     os << "extern \"C\" const char* " << ProgramNames[ProgramInitialize] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
+
+    // Collecting common parameters for KernelInitialize and KernelInitializeSparse
+    // Local synapse groups params
+    for (const auto& sg : model.getLocalSynapseGroups()) {
+        // Postsynaptic model
+        auto* psm = sg.second.getPSModel();
+        for (const auto& v : psm->getVars()) {
+            if (v.access == VarAccess::READ_WRITE) {
+                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                if (hasInitializeSparseKernel) {
+                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                }
+            }
+        }
+        // Weight update model
+        auto* wum = sg.second.getWUModel();
+        for (const auto& v : wum->getVars()) {
+            if (v.access == VarAccess::READ_WRITE) {
+                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                if (hasInitializeSparseKernel) {
+                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                }
+            }
+        }
+    }
 
     // KernelInitialize definition
     os << "__kernel void " << KernelNames[KernelInitialize] << "(";
@@ -1431,23 +1442,6 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             // Initialize only READ_WRITE variables
             if (v.access == VarAccess::READ_WRITE) {
                 initializeKernelParams.insert({ getVarPrefix() + v.name + ng.second.getName(), "__global " + v.type + "*" });
-            }
-        }
-    }
-    // Local synapse groups params
-    for (const auto& sg : model.getLocalSynapseGroups()) {
-        // Postsynaptic model
-        auto* psm = sg.second.getPSModel();
-        for (const auto& v : psm->getVars()) {
-            if (v.access == VarAccess::READ_WRITE) {
-                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-            }
-        }
-        // Weight update model
-        auto* wum = sg.second.getWUModel();
-        for (const auto& v : wum->getVars()) {
-            if (v.access == VarAccess::READ_WRITE) {
-                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
             }
         }
     }
@@ -1467,23 +1461,6 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     {
         // KernelInitializeSparse definition
         os << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
-        // Local synapse groups params
-        for (const auto& sg : model.getLocalSynapseGroups()) {
-            // Postsynaptic model
-            auto* psm = sg.second.getPSModel();
-            for (const auto& v : psm->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-            // Weight update model
-            auto* wum = sg.second.getWUModel();
-            for (const auto& v : wum->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-        }
         // Collected params
         for (const auto& p : initializeSparseKernelParams) {
             os << p.second << " " << p.first << ", ";
@@ -1507,17 +1484,19 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     {
         CodeStream::Scope b(os);
 
-        // KernelInitialize initialization
-        os << KernelNames[KernelInitialize] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
-        {
-            int argCnt = 0;
-            for (const auto& arg : initializeKernelParams) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
-                argCnt++;
+        if (idInitStart > 0) {
+            // KernelInitialize initialization
+            os << KernelNames[KernelInitialize] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
+            {
+                int argCnt = 0;
+                for (const auto& arg : initializeKernelParams) {
+                    os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
+                    argCnt++;
+                }
             }
         }
 
-        if (hasInitializeSparseKernel)
+        if (hasInitializeSparseKernel && idSparseInitStart > 0)
         {
             os << std::endl;
             // KernelInitializeSparse initialization
@@ -1538,11 +1517,11 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     {
         CodeStream::Scope b(os);
 
-        // If there are any initialisation threads
+        // If there are any initialisation work-items
         if (idInitStart > 0) {
             CodeStream::Scope b(os);
             {
-                //! TO BE IMPLEMENTED - Using hard code deviceRNGSeed for now
+                //! TO BE IMPLEMENTED - Using hard coded deviceRNGSeed for now
                 os << "unsigned int deviceRNGSeed = 0;" << std::endl;
                 os << std::endl;
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
@@ -1564,6 +1543,16 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         // Copy all uninitialised state variables to device
         os << "copyStateToDevice(true);" << std::endl;
         os << "copyConnectivityToDevice(true);" << std::endl;
+
+        // If there are any sparse initialisation work-items
+        if (idSparseInitStart > 0) {
+            CodeStream::Scope b(os);
+            {
+                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+                os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+            }
+        }
     }
 }
 //--------------------------------------------------------------------------
