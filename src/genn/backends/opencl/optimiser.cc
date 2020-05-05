@@ -63,7 +63,7 @@ void getOpenCLDevices(std::vector<cl::Device>& devices) {
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
 
-    if (platforms.size() > 0) {
+    if (platforms.size() == 0) {
         throw std::runtime_error("No OpenCL platforms found");
     }
 

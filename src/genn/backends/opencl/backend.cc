@@ -1631,24 +1631,22 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 void Backend::genRunnerPreamble(CodeStream& os) const
 {
     // Generating OpenCL variables for the runner
-    os << "extern \"C\"";
-    {
-        CodeStream::Scope b(os);
-        os << "// OpenCL variables" << std::endl;
-        os << "cl::Context clContext;" << std::endl;
-        os << "cl::Device clDevice;" << std::endl;
-        os << "cl::CommandQueue commandQueue;" << std::endl;
-        os << std::endl;
-        os << "// OpenCL programs" << std::endl;
-        for (const auto& programName : ProgramNames) {
-            os << "cl::Program " << programName << ";" << std::endl;
-        }
-        os << std::endl;
-        os << "// OpenCL kernels" << std::endl;
-        for (const auto& kernelName : KernelNames) {
-            os << "cl::Kernel " << kernelName << ";" << std::endl;
-        }
+    os << "extern \"C\" {";
+    os << "// OpenCL variables" << std::endl;
+    os << "cl::Context clContext;" << std::endl;
+    os << "cl::Device clDevice;" << std::endl;
+    os << "cl::CommandQueue commandQueue;" << std::endl;
+    os << std::endl;
+    os << "// OpenCL programs" << std::endl;
+    for (const auto& programName : ProgramNames) {
+        os << "cl::Program " << programName << ";" << std::endl;
     }
+    os << std::endl;
+    os << "// OpenCL kernels" << std::endl;
+    for (const auto& kernelName : KernelNames) {
+        os << "cl::Kernel " << kernelName << ";" << std::endl;
+    }
+    os << "} // extern \"C\"" << std::endl;
 
     os << std::endl;
 
