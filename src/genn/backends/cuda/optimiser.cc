@@ -109,9 +109,6 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
             groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
-        }
-
-        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
             groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
         }
 
