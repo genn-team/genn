@@ -3,9 +3,6 @@
 // GeNN includes
 #include "modelSpecInternal.h"
 
-// OpenCL backend includes
-#include "utils.h"
-
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -74,9 +71,7 @@ void getOpenCLDevices(std::vector<cl::Device>& devices) {
     for (const auto& platform : platforms) {
         std::vector<cl::Device> platformDevices;
         platform.getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);
-        for (const auto& device : platformDevices) {
-            CodeGenerator::OpenCL::Utils::pushUnique(devices, device);
-        }
+        devices.insert(devices.end(), platformDevices.begin(), platformDevices.end());
     }
 }
 //--------------------------------------------------------------------------
