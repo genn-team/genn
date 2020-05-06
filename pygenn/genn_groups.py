@@ -57,14 +57,14 @@ class Group(object):
         """
         self._model.pull_var_from_device(self.name, var_name)
 
-    def pull_extra_global_param_to_device(self, egp_name, size=1):
-        """Wrapper around GeNNModel.pull_extra_global_param_to_device
+    def pull_extra_global_param_from_device(self, egp_name, size=1):
+        """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
         Args:
         var_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
-        self._model.pull_extra_global_param_to_device(self.name, egp_name, size)
+        self._model.pull_extra_global_param_from_device(self.name, egp_name, size)
 
     def push_state_to_device(self):
         """Wrapper around GeNNModel.push_state_to_device"""

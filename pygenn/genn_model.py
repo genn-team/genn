@@ -582,7 +582,7 @@ class GeNNModel(object):
 
         self._slm.pull_var_from_device(pop_name, var_name)
 
-    def pull_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=1):
         """Pull extra global parameter from the device for a given population"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
