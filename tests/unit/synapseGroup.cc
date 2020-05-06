@@ -418,3 +418,59 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
 }
+
+
+TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
+{
+    ModelSpecInternal model;
+
+    // Add four neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0A", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1A", 20, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0B", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1B", 20, paramVals, varVals);
+
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Neurons0A_Neurons1A", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Neurons0A", "Neurons1A",
+        {}, { 1.0 },
+        {}, {});
+    auto *slave = model.addSlaveSynapsePopulation<PostsynapticModels::DeltaCurr>(
+        "Neurons0B_Neurons1B", "Neurons0A_Neurons1A", NO_DELAY,
+        "Neurons0B", "Neurons1B",
+        {}, {});
+
+   
+    // Check that you can't call methods which make no snese 
+    try {
+        slave->setSparseConnectivityLocation(VarLocation::HOST_DEVICE);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
+
+    try {
+        slave->setMaxConnections(4);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
+
+    try {
+        slave->setNarrowSparseIndEnabled(true);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
+
+    try {
+        slave->setWUVarLocation("g", VarLocation::DEVICE);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
+    //setSparseConnectivityExtraGlobalParamLocation
+    //setMaxSourceConnections
+}
