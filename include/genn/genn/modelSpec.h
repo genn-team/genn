@@ -375,6 +375,13 @@ public:
             throw std::runtime_error("Individual synapse variables can only be shared if they are read-only");
         }
 
+        // Check that population sizes match
+        if ((srcNeuronGrp->getNumNeurons() != masterGrp->getSrcNeuronGroup()->getNumNeurons())
+            || (trgNeuronGrp->getNumNeurons() != masterGrp->getTrgNeuronGroup()->getNumNeurons()))
+        {
+            throw std::runtime_error("Size of populations connected by shared weights must match");
+        }
+
         // If weight update model has any pre or postsynaptic variables, give error
         // **THINK** this could be supported but quite what the semantics are is ambiguous
         if(!wum->getPreVars().empty() || !wum->getPostVars().empty()) {
