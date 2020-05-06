@@ -582,7 +582,7 @@ int main(int argc, char *argv[])
             model, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
 
         // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath);
+        const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath).first;
 
 #ifdef _WIN32
         // Create MSBuild project to compile and link all generated modules

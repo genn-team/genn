@@ -66,7 +66,7 @@ int main(int argc,     //!< number of arguments; expected to be 2
                                                 GENN_PREFERENCES);
 
         // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath);
+        const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath).first;
 
 #ifdef _WIN32
         // If runner GUID file doesn't exist

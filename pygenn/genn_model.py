@@ -422,7 +422,7 @@ class GeNNModel(object):
         backend = self._backend_module.create_backend(self._model, output_path, self.backend_log_level, preferences);
 
         # Generate code
-        genn_wrapper.generate_code(self._model, backend, output_path, 0)
+        mem_alloc = genn_wrapper.generate_code(self._model, backend, output_path, 0)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
         backend = None
@@ -435,6 +435,7 @@ class GeNNModel(object):
             check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
         self._built = True
+        return mem_alloc
 
     def load(self, path_to_model="./"):
         """import the model as shared library and initialize it"""

@@ -26,8 +26,8 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                    const filesystem::path &outputPath, bool standaloneModules)
+std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+                                                                                        const filesystem::path &outputPath, bool standaloneModules)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -99,5 +99,5 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     }
 
     // Return list of modules
-    return modules;
+    return std::make_pair(modules, mem);
 }
