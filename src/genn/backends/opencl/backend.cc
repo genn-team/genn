@@ -734,7 +734,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                         postsynapticUpdateKernelBody << "const unsigned int numSpikes = d_glbSpkCnt" << sg.getTrgNeuronGroup()->getName() << "[postReadDelaySlot];" << std::endl;
                     }
                     else {
-                        postsynapticUpdateKernelBody << "const unsigned int numSpikes = dd_glbSpkCnt" << sg.getTrgNeuronGroup()->getName() << "[0];" << std::endl;
+                        postsynapticUpdateKernelBody << "const unsigned int numSpikes = d_glbSpkCnt" << sg.getTrgNeuronGroup()->getName() << "[0];" << std::endl;
                     }
                     postsynapticUpdateKernelParams.insert({ "d_glbSpkCnt" + sg.getTrgNeuronGroup()->getName(), "__global unsigned int*" });
 
@@ -921,8 +921,15 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     //! KernelPreSynapseReset
     if (hasPreSynapseResetKernel) {
         os << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
+        int argCnt = 0;
         for (const auto& p : preSynapseResetKernelParams) {
-            os << p.second << " " << p.first << ", ";
+            if (argCnt == preSynapseResetKernelParams.size() - 1) {
+                os << p.second << " " << p.first;
+            }
+            else {
+                os << p.second << " " << p.first << ", ";
+            }
+            argCnt++;
         }
         os << ")";
         {
@@ -1462,8 +1469,15 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         // KernelInitializeSparse definition
         os << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
         // Collected params
+        int argCnt = 0;
         for (const auto& p : initializeSparseKernelParams) {
-            os << p.second << " " << p.first << ", ";
+            if (argCnt == initializeSparseKernelParams.size() - 1) {
+                os << p.second << " " << p.first;
+            }
+            else {
+                os << p.second << " " << p.first << ", ";
+            }
+            argCnt++;
         }
         os << ")";
         {
@@ -1795,6 +1809,9 @@ void Backend::genVariableDefinition(CodeStream& definitions, CodeStream& definit
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE) {
+        if (!(loc & VarLocation::HOST)) {
+            definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+        }
         definitionsInternal << "EXPORT_VAR cl::Buffer " << getVarPrefix() << name << ";" << std::endl;
     }
 }
@@ -1805,6 +1822,9 @@ void Backend::genVariableImplementation(CodeStream& os, const std::string& type,
         os << type << " " << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE) {
+        if (!(loc & VarLocation::HOST)) {
+            os << type << " " << name << ";" << std::endl;
+        }
         os << "cl::Buffer " << getVarPrefix() << name << ";" << std::endl;
     }
 }
@@ -1820,6 +1840,10 @@ MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type,
 
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
+        if (!(loc & VarLocation::HOST)) {
+            os << name << " = (" << type << "*)malloc(" << count << " * sizeof(" << type << "));" << std::endl;
+            allocation += MemAlloc::host(count * getSize(type));
+        }
         os << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << count << " * sizeof (" << type << "), " << name << ");" << std::endl;
         allocation += MemAlloc::device(count * getSize(type));
     }
@@ -1908,7 +1932,18 @@ void Backend::genVariableInit(CodeStream& os, VarLocation, size_t, const std::st
 void Backend::genSynapseVariableRowInit(CodeStream& os, VarLocation, const SynapseGroupInternal& sg,
     const Substitutions& kernelSubs, Handler handler) const
 {
-    printf("TO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genSynapseVariableRowInit\n");
+    // Pre and postsynaptic ID should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution("id_pre"));
+    assert(kernelSubs.hasVarSubstitution("id_post"));
+
+    Substitutions varSubs(&kernelSubs);
+    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getMaxConnections()) + ") + " + kernelSubs["id"]);
+    }
+    else {
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + " + kernelSubs["id"]);
+    }
+    handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, bool autoInitialized, size_t count) const
@@ -1947,10 +1982,12 @@ void Backend::genCurrentVariablePush(CodeStream& os, const NeuronGroupInternal& 
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
-        //! TO BE IMPLEMENTED
-        /*os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;*/
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << getVarPrefix() << name << ng.getName();
+        os << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]";
+        os << ", " << "CL_TRUE";
+        os << ", " << "0";
+        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
+        os << ", " << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
     }
     // Otherwise, generate standard push
     else {
@@ -1963,10 +2000,12 @@ void Backend::genCurrentVariablePull(CodeStream& os, const NeuronGroupInternal& 
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
-        //! TO BE IMPLEMENTED
-        /*os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;*/
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << name << ng.getName();
+        os << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]";
+        os << ", " << "CL_TRUE";
+        os << ", " << "0";
+        os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
+        os << ", " << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
     }
     // Otherwise, generate standard push
     else {
@@ -2018,9 +2057,7 @@ void Backend::genMSBuildConfigProperties(std::ostream& os) const
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportProps(std::ostream& os) const
 {
-    // Import OpenCL props file
     os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
-    //! TO BE IMPLEMENTED - Include OpenCL props - none required
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -2104,10 +2141,9 @@ void Backend::addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base *stra
 //--------------------------------------------------------------------------
 bool Backend::isGlobalRNGRequired(const ModelSpecInternal& model) const
 {
-    printf("TO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::isGlobalRNGRequired\n");
     // If any neuron groups require  RNG for initialisation, return true
     // **NOTE** this takes postsynaptic model initialisation into account
-    /*if (std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+    if (std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
         [](const ModelSpec::NeuronGroupValueType& n)
         {
             return n.second.isInitRNGRequired();
@@ -2124,7 +2160,7 @@ bool Backend::isGlobalRNGRequired(const ModelSpecInternal& model) const
         }))
     {
         return true;
-    }*/
+    }
 
     return false;
 }
