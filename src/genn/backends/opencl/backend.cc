@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <regex>
 
 // PLOG includes
 #include <plog/Log.h>
@@ -162,14 +163,14 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                 CodeStream::Scope b(preNeuronResetKernelBody);
 
                 if (n.second.isDelayRequired()) { // with delay
-                    preNeuronResetKernelBody << "d_spkQuePtr" << n.first << " = (d_spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-                    preNeuronResetKernelParams.insert({ "d_spkQuePtr" + n.first, "volatile unsigned int" });
+                    preNeuronResetKernelBody << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
+                    preNeuronResetKernelParams.insert({ "spkQuePtr" + n.first, "volatile unsigned int" });
 
                     if (n.second.isSpikeEventRequired()) {
-                        preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                        preNeuronResetKernelBody << "d_glbSpkCntEvnt" << n.first << "[spkQuePtr" << n.first << "] = 0;" << std::endl;
                     }
                     if (n.second.isTrueSpikeRequired()) {
-                        preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[d_spkQuePtr" << n.first << "] = 0;" << std::endl;
+                        preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[spkQuePtr" << n.first << "] = 0;" << std::endl;
                     }
                     else {
                         preNeuronResetKernelBody << "d_glbSpkCnt" << n.first << "[0] = 0;" << std::endl;
@@ -270,10 +271,12 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                 // If axonal delays are required
                 if (ng.isDelayRequired()) {
                     // We should READ from delay slot before spkQuePtr
-                    updateNeuronsKernelBody << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset("d_") << ";" << std::endl;
+                    updateNeuronsKernelBody << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset("") << ";" << std::endl;
 
                     // And we should WRITE to delay slot pointed to be spkQuePtr
-                    updateNeuronsKernelBody << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset("d_") << ";" << std::endl;
+                    updateNeuronsKernelBody << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset("") << ";" << std::endl;
+
+                    updateNeuronsKernelParams.insert({ "spkQuePtr" + ng.getName(), "volatile unsigned int" });
                 }
                 updateNeuronsKernelBody << std::endl;
 
@@ -312,8 +315,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                             updateNeuronsKernelBody << "shPosSpkEvnt = atomic_add(&d_glbSpkCntEvnt" << ng.getName();
                             updateNeuronsKernelParams.insert({ "d_glbSpkCntEvnt" + ng.getName(), "__global unsigned int*" }); // Add argument
                             if (ng.isDelayRequired()) {
-                                updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
-                                updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "volatile unsigned int" }); // Add argument
+                                updateNeuronsKernelBody << "[spkQuePtr" << ng.getName() << "], shSpkEvntCount);" << std::endl;
+                                updateNeuronsKernelParams.insert({ "spkQuePtr" + ng.getName(), "volatile unsigned int" }); // Add argument
                             }
                             else {
                                 updateNeuronsKernelBody << "[0], shSpkEvntCount);" << std::endl;
@@ -333,8 +336,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                             updateNeuronsKernelBody << "shPosSpk = atomic_add(&d_glbSpkCnt" << ng.getName();
                             updateNeuronsKernelParams.insert({ "d_glbSpkCnt" + ng.getName(), "__global unsigned int*" }); // Add argument
                             if (ng.isDelayRequired() && ng.isTrueSpikeRequired()) {
-                                updateNeuronsKernelBody << "[d_spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
-                                updateNeuronsKernelParams.insert({ "d_spkQuePtr" + ng.getName(), "volatile unsigned int" }); // Add argument
+                                updateNeuronsKernelBody << "[spkQuePtr" << ng.getName() << "], shSpkCount);" << std::endl;
+                                updateNeuronsKernelParams.insert({ "spkQuePtr" + ng.getName(), "volatile unsigned int" }); // Add argument
                             }
                             else {
                                 updateNeuronsKernelBody << "[0], shSpkCount);" << std::endl;
@@ -424,7 +427,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     os << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
-        os << updateNeuronsKernelBodyStream.str();
+        std::regex toReplace("fmodf");
+        os << std::regex_replace(updateNeuronsKernelBodyStream.str(), toReplace, "fmod");
     }
     // Closing the multiline char* containing all kernels for updating neurons
     os << ")\";" << std::endl;
@@ -465,12 +469,14 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         CodeStream::Scope b(os);
         if (idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
+            genKernelArgIfDelayRequired(os, model, KernelNames[KernelPreNeuronReset], preNeuronResetKernelParams);
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
         if (idStart > 0) {
             CodeStream::Scope b(os);
+            genKernelArgIfDelayRequired(os, model, KernelNames[KernelNeuronUpdate], updateNeuronsKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << updateNeuronsKernelParams.size() /*last arg*/ << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
@@ -603,14 +609,14 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                                 presynapticUpdateKernelBody << "const unsigned int preReadDelaySlot = " << sg.getPresynapticAxonalDelaySlot("d_") << ";" << std::endl;
                                 presynapticUpdateKernelBody << "const unsigned int preReadDelayOffset = preReadDelaySlot * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
 
-                                presynapticUpdateKernelParams.insert({ "d_spkQuePtr" + sg.getSrcNeuronGroup()->getName(), "volatile unsigned int" });
+                                presynapticUpdateKernelParams.insert({ "spkQuePtr" + sg.getSrcNeuronGroup()->getName(), "volatile unsigned int" });
                             }
 
                             // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                             if (sg.getTrgNeuronGroup()->isDelayRequired()) {
                                 presynapticUpdateKernelBody << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("d_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
 
-                                presynapticUpdateKernelParams.insert({ "d_spkQuePtr" + sg.getTrgNeuronGroup()->getName(), "volatile unsigned int" });
+                                presynapticUpdateKernelParams.insert({ "spkQuePtr" + sg.getTrgNeuronGroup()->getName(), "volatile unsigned int" });
                             }
 
                             // If we are going to accumulate postsynaptic input into a register, zero register value
@@ -720,14 +726,14 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if (sg.getSrcNeuronGroup()->isDelayRequired()) {
                         postsynapticUpdateKernelBody << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("d_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
-                        postsynapticUpdateKernelParams.insert({ "d_spkQuePtr" + sg.getSrcNeuronGroup()->getName(), "volatile unsigned int" });
+                        postsynapticUpdateKernelParams.insert({ "spkQuePtr" + sg.getSrcNeuronGroup()->getName(), "volatile unsigned int" });
                     }
 
                     // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                     if (sg.getTrgNeuronGroup()->isDelayRequired()) {
                         postsynapticUpdateKernelBody << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot("d_") << ";" << std::endl;
                         postsynapticUpdateKernelBody << "const unsigned int postReadDelayOffset = postReadDelaySlot * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
-                        postsynapticUpdateKernelParams.insert({ "d_spkQuePtr" + sg.getTrgNeuronGroup()->getName(), "volatile unsigned int" });
+                        postsynapticUpdateKernelParams.insert({ "spkQuePtr" + sg.getTrgNeuronGroup()->getName(), "volatile unsigned int" });
                     }
 
                     if (sg.getTrgNeuronGroup()->isDelayRequired() && sg.getTrgNeuronGroup()->isTrueSpikeRequired()) {
@@ -825,14 +831,14 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
             {
                 // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                 if (sg.getSrcNeuronGroup()->isDelayRequired()) {
-                    synapseDynamicsUpdateKernelBody << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("d_") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
-                    synapseDynamicsUpdateKernelParams.insert({ "d_spkQuePtr" + sg.getSrcNeuronGroup()->getName(), "volatile unsigned int" });
+                    synapseDynamicsUpdateKernelBody << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot("") << " * " << sg.getSrcNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    synapseDynamicsUpdateKernelParams.insert({ "spkQuePtr" + sg.getSrcNeuronGroup()->getName(), "volatile unsigned int" });
                 }
 
                 // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                 if (sg.getTrgNeuronGroup()->isDelayRequired()) {
-                    synapseDynamicsUpdateKernelBody << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("d_") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
-                    synapseDynamicsUpdateKernelParams.insert({ "d_spkQuePtr" + sg.getTrgNeuronGroup()->getName(), "volatile unsigned int" });
+                    synapseDynamicsUpdateKernelBody << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot("") << " * " << sg.getTrgNeuronGroup()->getNumNeurons() << ";" << std::endl;
+                    synapseDynamicsUpdateKernelParams.insert({ "spkQuePtr" + sg.getTrgNeuronGroup()->getName(), "volatile unsigned int" });
                 }
 
                 Substitutions synSubs(&popSubs);
@@ -1087,6 +1093,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch synapse dynamics kernel if required
         if (idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
+            genKernelArgIfDelayRequired(os, model, KernelNames[KernelSynapseDynamicsUpdate], synapseDynamicsUpdateKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << synapseDynamicsUpdateKernelParams.size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
@@ -1097,6 +1104,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch presynaptic update kernel
         if (idPresynapticStart > 0) {
             CodeStream::Scope b(os);
+            genKernelArgIfDelayRequired(os, model, KernelNames[KernelPresynapticUpdate], presynapticUpdateKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << presynapticUpdateKernelParams.size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
@@ -1107,6 +1115,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch postsynaptic update kernel
         if (idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
+            genKernelArgIfDelayRequired(os, model, KernelNames[KernelPostsynapticUpdate], postsynapticUpdateKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << postsynapticUpdateKernelParams.size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
@@ -2272,6 +2281,28 @@ bool Backend::isDeviceType(const std::string& type) const
 
     // Return true if it is in device types set
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInternal& model, const char* kernelName, const std::map<std::string, std::string>& params) const
+{
+    // If delay required then include the "spkQuePtr" argument
+    bool ngDelayRequired = std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+        [](const ModelSpec::NeuronGroupValueType& n) { return n.second.isDelayRequired(); });
+    bool sgDelayRequired = std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+        [](const ModelSpec::SynapseGroupValueType& s)
+        {
+            return (s.second.getSrcNeuronGroup()->isDelayRequired() || s.second.getTrgNeuronGroup()->isDelayRequired());
+        });
+    if (ngDelayRequired || sgDelayRequired) {
+        int i = 0;
+        for (const auto& p : params) {
+            if (p.first.rfind("spkQuePtr", 0) == 0) {
+                os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(" << i << ", " << p.first << "));" << std::endl;
+                return;
+            }
+            i++;
+        }
+    }
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal& sg)

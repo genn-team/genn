@@ -321,6 +321,8 @@ private:
     //! Is type a a device only type?
     bool isDeviceType(const std::string& type) const;
 
+    void genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInternal& model, const char* kernelName, const std::map<std::string, std::string>& params) const;
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------
