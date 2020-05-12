@@ -26,8 +26,6 @@
 #define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector<double> &){ return MAX_ROW_LENGTH; }; }
 #define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector<double> &){ return MAX_COL_LENGTH; }; }
 
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
-
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base
 //----------------------------------------------------------------------------
@@ -56,19 +54,9 @@ public:
     //! Get function to calculate the maximum column length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const{ return CalcMaxLengthFunc(); }
 
-    //! Gets names and types (as strings) of additional
-    //! per-population parameters for the connection initialisation snippet
-    virtual EGPVec getExtraGlobalParams() const{ return {}; }
-
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Find the index of a named extra global parameter
-    size_t getExtraGlobalParamIndex(const std::string &paramName) const
-    {
-        return getNamedVecIndex(paramName, getExtraGlobalParams());
-    }
-
     //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
 };
