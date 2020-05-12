@@ -896,65 +896,68 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> connectivityPushPullFunctions;
     for(const auto &s : model.getSynapseGroups()) {
-        const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
+        // If this synapse group isn't a weight sharing slave i.e. it's connectivity isn't initialized on the master
+        if(!s.second.isWeightSharingSlave()) {
+            const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-            const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second), 32);
-            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                            runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
-                            s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
+            if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second), 32);
+                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                   runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
+                                   s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
 
-        }
-        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            const VarLocation varLoc = s.second.getSparseConnectivityLocation();
-            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
-
-            // Maximum row length constant
-            definitionsVar << "EXPORT_VAR const unsigned int maxRowLength" << s.second.getName() << ";" << std::endl;
-            runnerVarDecl << "const unsigned int maxRowLength" << s.second.getName() << " = " << backend.getSynapticMatrixRowStride(s.second) << ";" << std::endl;
-
-            // Row lengths
-            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "rowLength" + s.second.getName(), varLoc, s.second.getSrcNeuronGroup()->getNumNeurons());
-
-            // Target indices
-            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size);
-
-            // **TODO** remap is not always required
-            if(backend.isSynRemapRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-                // Allocate synRemap
-                // **THINK** this is over-allocating
-                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                        "unsigned int", "synRemap" + s.second.getName(), VarLocation::DEVICE, size + 1);
             }
+            else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                const VarLocation varLoc = s.second.getSparseConnectivityLocation();
+                const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
 
-            // **TODO** remap is not always required
-            if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
+                // Maximum row length constant
+                definitionsVar << "EXPORT_VAR const unsigned int maxRowLength" << s.second.getName() << ";" << std::endl;
+                runnerVarDecl << "const unsigned int maxRowLength" << s.second.getName() << " = " << backend.getSynapticMatrixRowStride(s.second) << ";" << std::endl;
 
-                // Allocate column lengths
+                // Row lengths
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                        "unsigned int", "colLength" + s.second.getName(), VarLocation::DEVICE, s.second.getTrgNeuronGroup()->getNumNeurons());
+                                        "unsigned int", "rowLength" + s.second.getName(), varLoc, s.second.getSrcNeuronGroup()->getNumNeurons());
 
-                // Allocate remap
+                // Target indices
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                        "unsigned int", "remap" + s.second.getName(), VarLocation::DEVICE, postSize);
+                                        s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size);
+
+                // **TODO** remap is not always required
+                if(backend.isSynRemapRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+                    // Allocate synRemap
+                    // **THINK** this is over-allocating
+                    mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                            "unsigned int", "synRemap" + s.second.getName(), VarLocation::DEVICE, size + 1);
+                }
+
+                // **TODO** remap is not always required
+                if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
+                    const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();
+
+                    // Allocate column lengths
+                    mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                            "unsigned int", "colLength" + s.second.getName(), VarLocation::DEVICE, s.second.getTrgNeuronGroup()->getNumNeurons());
+
+                    // Allocate remap
+                    mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                            "unsigned int", "remap" + s.second.getName(), VarLocation::DEVICE, postSize);
+                }
+
+                // Generate push and pull functions for sparse connectivity
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
+                                    backend.isAutomaticCopyEnabled(), s.second.getName() + "Connectivity", connectivityPushPullFunctions,
+                                    [&]()
+                                    {
+                                        // Row lengths
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "rowLength" + s.second.getName(), 
+                                                                    s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
+
+                                        // Target indices
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "ind" + s.second.getName(), 
+                                                                    s.second.getSparseConnectivityLocation(), autoInitialized, size);
+                                    });
             }
-
-            // Generate push and pull functions for sparse connectivity
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
-                                backend.isAutomaticCopyEnabled(), s.second.getName() + "Connectivity", connectivityPushPullFunctions,
-                [&]()
-                {
-                    // Row lengths
-                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "rowLength" + s.second.getName(), s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
-
-                    // Target indices
-                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "ind" + s.second.getName(), s.second.getSparseConnectivityLocation(), autoInitialized, size);
-                });
         }
     }
     allVarStreams << std::endl;
@@ -966,9 +969,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        // If weight update variables should be individual
+        // If group isn't a weight sharing slave and per-synapse variables should be individual
         std::vector<std::string> synapseGroupStatePushPullFunctions;
-        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        if (!s.second.isWeightSharingSlave() && s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
             const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
 
             const auto wuVars = wu->getVars();
@@ -1053,12 +1056,15 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                                 true, s.second.getWUExtraGlobalParamLocation(i));
         }
 
-        const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
-        for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                mergedStructData, sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.second.getName(),
-                                s.second.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty(),
-                                s.second.getSparseConnectivityExtraGlobalParamLocation(i));
+        // If group isn't a weight sharing slave 
+        if(!s.second.isWeightSharingSlave()) {
+            const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
+            for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
+                                    mergedStructData, sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.second.getName(),
+                                    s.second.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty(),
+                                    s.second.getSparseConnectivityExtraGlobalParamLocation(i));
+            }
         }
     }
     allVarStreams << std::endl;
@@ -1066,7 +1072,6 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // End extern C block around variable declarations
     runnerVarDecl << "}  // extern \"C\"" << std::endl;
  
-
     // Write variable declarations to runner
     runner << runnerVarDeclStream.str();
 

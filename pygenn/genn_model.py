@@ -49,7 +49,7 @@ from textwrap import dedent
 
 # 3rd party imports
 import numpy as np
-from six import iteritems, itervalues
+from six import iteritems, itervalues, string_types
 
 # pygenn imports
 from . import genn_wrapper
@@ -283,7 +283,7 @@ class GeNNModel(object):
             raise ValueError("Neuron population '{0}'"
                              "already exists".format(pop_name))
 
-        n_group = NeuronGroup(pop_name)
+        n_group = NeuronGroup(pop_name, self)
         n_group.set_neuron(neuron, param_space, var_space)
         n_group.add_to(self._model, int(num_neurons))
 
@@ -303,8 +303,8 @@ class GeNNModel(object):
         pop_name                    --  name of the new population
         matrix_type                 --  type of the matrix as string
         delay_steps                 --  delay in number of steps
-        source                      --  source neuron group
-        target                      --  target neuron group
+        source                      --  source neuron group (either name or NeuronGroup object)
+        target                      --  target neuron group (either name or NeuronGroup object)
         w_update_model              --  type of the WeightUpdateModels class
                                         as string or instance of weight update
                                         model class derived from
@@ -337,13 +337,11 @@ class GeNNModel(object):
             raise ValueError("synapse population '{0}' "
                              "already exists".format(pop_name))
 
-        if not isinstance(source, NeuronGroup):
-            raise ValueError("'source' myst be a NeuronGroup")
-
-        if not isinstance(target, NeuronGroup):
-            raise ValueError("'target' myst be a NeuronGroup")
-
-        s_group = SynapseGroup(pop_name)
+        # Validate source and target groups
+        source = self._validate_neuron_group(source, "source")
+        target = self._validate_neuron_group(target, "target")
+        
+        s_group = SynapseGroup(pop_name, self)
         s_group.matrix_type = matrix_type
         s_group.set_connected_populations(source, target)
         s_group.set_weight_update(w_update_model, wu_param_space, wu_var_space,
@@ -355,8 +353,53 @@ class GeNNModel(object):
         self.synapse_populations[pop_name] = s_group
 
         return s_group
+    
+    def add_slave_synapse_population(self, pop_name, master_pop, delay_steps,
+                                     source, target, postsyn_model,
+                                     ps_param_space, ps_var_space):
+        """Add a 'slave' population to the GeNN model which shares 
+        weights and connectivity with a 'master' population
 
-    def add_current_source(self, cs_name, current_source_model, pop_name,
+        Args:
+        pop_name                    --  name of the new population
+        master_pop                  --  master synapse group to share weights with 
+                                        (either name or SynapseGroup object)
+        delay_steps                 --  delay in number of steps
+        source                      --  source neuron group (either name or NeuronGroup object)
+        target                      --  target neuron group (either name or NeuronGroup object)
+        postsyn_model               --  type of the PostsynapticModels class
+                                        as string or instance of postsynaptic
+                                        model class derived from
+                                        ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also
+                                        pygenn.genn_model.create_custom_postsynaptic_class)
+        ps_param_space              --  dict with param values for the
+                                        PostsynapticModels class
+        ps_var_space                --  dict with initial variable values for
+                                        the PostsynapticModels class
+        """
+        if self._built:
+            raise Exception("GeNN model already built")
+
+        if pop_name in self.synapse_populations:
+            raise ValueError("synapse population '{0}' "
+                             "already exists".format(pop_name))
+        
+        # Validate source and target groups
+        source = self._validate_neuron_group(source, "source")
+        target = self._validate_neuron_group(target, "target")
+        
+        master_pop = self._validate_synapse_group(master_pop, "master_pop")
+        
+        s_group = SynapseGroup(pop_name, self, master_pop)
+        s_group.set_connected_populations(source, target)
+        s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
+        s_group.add_to(self._model, delay_steps)
+
+        self.synapse_populations[pop_name] = s_group
+
+        return s_group
+
+    def add_current_source(self, cs_name, current_source_model, pop,
                            param_space, var_space):
         """Add a current source to the GeNN model
 
@@ -367,8 +410,8 @@ class GeNNModel(object):
                                     class derived from
                                     ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also
                                     pygenn.genn_model.create_custom_current_source_class)
-        pop_name                --  name of the population into which the
-                                    current source should be injected
+        pop                     --  population into which the current source 
+                                    should be injected (either name or NeuronGroup object)
         param_space             --  dict with param values for the
                                     CurrentSourceModels class
         var_space               --  dict with initial variable values for the
@@ -376,17 +419,18 @@ class GeNNModel(object):
         """
         if self._built:
             raise Exception("GeNN model already built")
-        if pop_name not in self.neuron_populations:
-            raise ValueError("neuron population '{0}' "
-                             "does not exist".format(pop_name))
+
         if cs_name in self.current_sources:
             raise ValueError("current source '{0}' "
                              "already exists".format(cs_name))
 
-        c_source = CurrentSource(cs_name)
+        # Validate population
+        pop = self._validate_neuron_group(pop, "pop")
+        
+        c_source = CurrentSource(cs_name, self)
         c_source.set_current_source_model(current_source_model,
                                           param_space, var_space)
-        c_source.add_to(self._model, self.neuron_populations[pop_name])
+        c_source.add_to(self._model, pop)
 
         self.current_sources[cs_name] = c_source
 
@@ -450,22 +494,22 @@ class GeNNModel(object):
         # Loop through synapse populations and load any 
         # extra global parameters required for connectivity init
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.load_connectivity_init_egps(self._slm, self._scalar)
+            pop_data.load_connectivity_init_egps()
 
         # Initialize model
         self._slm.initialize()
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.load(self._slm, self._scalar)
+            pop_data.load()
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.load(self._slm, self._scalar)
+            pop_data.load()
 
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
-            src_data.load(self._slm, self._scalar)
+            src_data.load()
 
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
@@ -484,15 +528,15 @@ class GeNNModel(object):
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.reinitialise(self._slm, self._scalar)
+            pop_data.reinitialise()
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.reinitialise(self._slm, self._scalar)
+            pop_data.reinitialise()
 
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
-            src_data.reinitialise(self._slm, self._scalar)
+            src_data.reinitialise()
 
         # Initialise any sparse variables
         self._slm.initialize_sparse()
@@ -539,7 +583,7 @@ class GeNNModel(object):
 
         self._slm.pull_var_from_device(pop_name, var_name)
 
-    def pull_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=1):
         """Pull extra global parameter from the device for a given population"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
@@ -598,7 +642,40 @@ class GeNNModel(object):
                     if egp_dat.needsAllocation:
                         self._slm.free_extra_global_param(g_name, egp_name)
         # "normal" variables are freed when SharedLibraryModel is destoyed
-
+    
+    def _validate_neuron_group(self, group, context):
+        # If group is a string
+        if isinstance(group, string_types):
+            # If it's the name of a neuron group, return it
+            if group in self.neuron_populations:
+                return self.neuron_populations[group]
+            # Otherwise, raise error
+            else:
+                raise ValueError("'%s' neuron group '%s' not found" % 
+                                 (context, group))
+        # Otherwise, if group is a neuron group, return it
+        elif isinstance(group, NeuronGroup):
+            return group
+        # Otherwise, raise error
+        else:
+            raise ValueError("'%s' must be a NeuronGroup or string" % context)
+    
+    def _validate_synapse_group(self, group, context):
+        # If group is a string
+        if isinstance(group, string_types):
+            # If it's the name of a neuron group, return it
+            if group in self.synapse_populations:
+                return self.synapse_populations[group]
+            # Otherwise, raise error
+            else:
+                raise ValueError("'%s' synapse group '%s' not found" % 
+                                 (context, group))
+        # Otherwise, if group is a synapse group, return it
+        elif isinstance(group, SynapseGroup):
+            return group
+        # Otherwise, raise error
+        else:
+            raise ValueError("'%s' must be a SynapseGroup or string" % context)
 
 def init_var(init_var_snippet, param_space):
     """This helper function creates a VarInit object
