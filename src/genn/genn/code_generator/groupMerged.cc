@@ -344,7 +344,7 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
 
     // Add pointers to variables
     const NeuronModels::Base *nm = getArchetype().getNeuronModel();
-    gen.addVars(nm->getVars(), backend.getArrayPrefix());
+    gen.addVars(nm->getVars(), getArchetype().getVarInitialisers(), init, backend.getArrayPrefix());
 
     // If we're generating a struct for initialization
     if(init) {
@@ -389,19 +389,20 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                          });
         }
 
-        
-        
         // Loop through variables
         const auto vars = sg->getPSModel()->getVars();
+        const auto &varInit = sg->getPSVarInitialisers();
         for(size_t v = 0; v < vars.size(); v++) {
             // If PSM has individual variables
             if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 // Add pointers to state variable
-                addMergedInSynPointerField(gen, vars[v].type, vars[v].name + "InSyn", i, backend.getArrayPrefix() + vars[v].name);
+                if(!init || !varInit[v].getSnippet()->getCode().empty()) {
+                    addMergedInSynPointerField(gen, vars[v].type, vars[v].name + "InSyn", i, backend.getArrayPrefix() + vars[v].name);
+                }
 
                 // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
                 if(init) {
-                    const auto *varInitSnippet = sg->getPSVarInitialisers().at(v).getSnippet();
+                    const auto *varInitSnippet = varInit.at(v).getSnippet();
                     auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
                     {
                         return getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSVarInitialisers();
@@ -413,7 +414,7 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
                 }
             }
             // Otherwise
-            else {
+            else if(!init) {
                 // If GLOBALG variable should be implemented heterogeneously, add value
                 if(isPSMGlobalVarHeterogeneous(i, v)) {
                     gen.addScalarField(vars[v].name + "InSyn" + std::to_string(i),
@@ -457,19 +458,22 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
   
         // Loop through variables
         const auto vars = cs->getCurrentSourceModel()->getVars();
+        const auto &varInit = cs->getVarInitialisers();
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
-            const auto var = vars[v];
-            assert(!Utils::isTypePointer(var.type));
-            gen.addField(var.type + "*", var.name + "CS" + std::to_string(i),
-                         [&backend, i, var, this](const NeuronGroupInternal &, size_t groupIndex)
-                         {
-                             return backend.getArrayPrefix() + var.name + m_SortedCurrentSources.at(groupIndex).at(i)->getName();
-                         });
+            if(!init || !varInit[v].getSnippet()->getCode().empty()) {
+                const auto var = vars[v];
+                assert(!Utils::isTypePointer(var.type));
+                gen.addField(var.type + "*", var.name + "CS" + std::to_string(i),
+                             [&backend, i, var, this](const NeuronGroupInternal &, size_t groupIndex)
+                             {
+                                 return backend.getArrayPrefix() + var.name + m_SortedCurrentSources.at(groupIndex).at(i)->getName();
+                             });
+            }
 
             // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
             if(init) {
-                const auto *varInitSnippet = cs->getVarInitialisers().at(v).getSnippet();
+                const auto *varInitSnippet = varInit.at(v).getSnippet();
                 auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
                 {
                     return getSortedCurrentSources().at(groupIndex).at(childIndex)->getVarInitialisers();
@@ -515,19 +519,22 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
 
         // Loop through postsynaptic variables
         const auto vars = sg->getWUModel()->getPostVars();
+        const auto &varInit = sg->getWUPostVarInitialisers();
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
-            const auto var = vars[v];
-            assert(!Utils::isTypePointer(var.type));
-            gen.addField(var.type + "*", var.name + "WUPost" + std::to_string(i),
-                         [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
-                         {
-                             return backend.getArrayPrefix() + var.name + getSortedInSynWithPostCode().at(groupIndex).at(i)->getName();
-                         });
+            if(!init || !varInit[v].getSnippet()->getCode().empty()) {
+                const auto var = vars[v];
+                assert(!Utils::isTypePointer(var.type));
+                gen.addField(var.type + "*", var.name + "WUPost" + std::to_string(i),
+                             [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
+                             {
+                                 return backend.getArrayPrefix() + var.name + getSortedInSynWithPostCode().at(groupIndex).at(i)->getName();
+                             });
+            }
 
             // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
             if(init) {
-                const auto *varInitSnippet = sg->getWUPostVarInitialisers().at(v).getSnippet();
+                const auto *varInitSnippet = varInit.at(v).getSnippet();
                 auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
                 {
                     return getSortedInSynWithPostCode().at(groupIndex).at(childIndex)->getWUPostVarInitialisers();
@@ -572,16 +579,19 @@ void CodeGenerator::NeuronGroupMergedBase::generate(const BackendBase &backend, 
 
         // Loop through presynaptic variables
         const auto vars = sg->getWUModel()->getPreVars();
+        const auto &varInit = sg->getWUPreVarInitialisers();
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
-            const auto var = vars[v];
-            assert(!Utils::isTypePointer(var.type));
-            gen.addField(var.type + "*", var.name + "WUPre" + std::to_string(i),
-                         [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
-                         {
-                             return backend.getArrayPrefix() + var.name + getSortedOutSynWithPreCode().at(groupIndex).at(i)->getName();
-                         });
-
+            if(!init || !varInit[v].getSnippet()->getCode().empty()) {
+                const auto var = vars[v];
+                assert(!Utils::isTypePointer(var.type));
+                gen.addField(var.type + "*", var.name + "WUPre" + std::to_string(i),
+                             [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
+                             {
+                                 return backend.getArrayPrefix() + var.name + getSortedOutSynWithPreCode().at(groupIndex).at(i)->getName();
+                             });
+            }
+            
             // If we're generating an initialization structure, also add any heterogeneous parameters and derived parameters required for initializers
             if(init) {
                 const auto *varInitSnippet = sg->getWUPreVarInitialisers().at(v).getSnippet();
@@ -1146,8 +1156,8 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
                                           &SynapseGroupMergedBase::isWUDerivedParamHeterogeneous);
 
         // Add pre and postsynaptic variables to struct
-        gen.addVars(wum->getPreVars(), backend.getArrayPrefix());
-        gen.addVars(wum->getPostVars(), backend.getArrayPrefix());
+        gen.addVars(wum->getPreVars(), getArchetype().getWUPreVarInitialisers(), !updateRole, backend.getArrayPrefix());
+        gen.addVars(wum->getPostVars(), getArchetype().getWUPostVarInitialisers(), !updateRole, backend.getArrayPrefix());
 
         // Add EGPs to struct
         gen.addEGPs(wum->getExtraGlobalParams(), backend.getArrayPrefix());
@@ -1197,13 +1207,16 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
 
     // If WU variables are individual, add pointers to var pointers to struct
     const auto vars = wum->getVars();
+    const auto &varInit = getArchetype().getWUVarInitialisers();
     if(getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        for(const auto &v : vars) {
-            addWeightSharingPointerField(gen, v.type, v.name, backend.getArrayPrefix() + v.name);
+        for(size_t v = 0; v < vars.size(); v++) {
+            if(updateRole || !varInit[v].getSnippet()->getCode().empty()) {
+                addWeightSharingPointerField(gen, vars[v].type, vars[v].name, backend.getArrayPrefix() + vars[v].name);
+            }
         }
     }
     // Otherwise, if WU variables are global, loop through them
-    else if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+    else if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL && !updateRole) {
         for(size_t v = 0; v < vars.size(); v++) {
             // If variable should be implemented heterogeneously, add scalar field
             if(isWUGlobalVarHeterogeneous(v)) {

@@ -65,14 +65,20 @@ public:
         addField(type + "*", name, [prefix](const typename T::GroupInternal &g, size_t){ return prefix + g.getName(); });
     }
 
-    void addVars(const std::vector<Models::Base::Var> &vars, const std::string &prefix)
+
+    void addVars(const Models::Base::VarVec &vars, const std::vector<Models::VarInit> &varInit, bool init, const std::string &prefix)
     {
-        for(const auto &v : vars) {
-            addPointerField(v.type, v.name, prefix + v.name);
+        // Loop through variables
+        assert(vars.size() == varInit.size());
+        for(size_t v = 0; v < vars.size(); v++) {
+            // If we're not initialising or if there is initialization code for this variable
+            if(!init || !varInit[v].getSnippet()->getCode().empty()) {
+                addPointerField(vars[v].type, vars[v].name, prefix + vars[v].name);
+            }
         }
     }
 
-    void addEGPs(const std::vector<Snippet::Base::EGP> &egps, const std::string &arrayPrefix)
+    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix)
     {
         for(const auto &e : egps) {
             const bool isPointer = Utils::isTypePointer(e.type);
