@@ -113,6 +113,8 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
                                                     [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
                                                     "", "group.", vars[k].name + fieldSuffix);
+                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                                   "", "group.", vars[k].name + fieldSuffix);
 
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
@@ -185,6 +187,8 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
                                                       "", "group.", vars[k].name);
+                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                                   "", "group.", vars[k].name);
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
