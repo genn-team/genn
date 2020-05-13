@@ -58,37 +58,39 @@ for /f %%I in ("%-i%") do set "-i=%%~fI"
 for /f %%I in ("%MODEL%") do set "MACROS=/p:ModelFile=%%~fI /p:GeneratePath=%-o% /p:BuildModelInclude=%-i%"
 
 if defined -d (
-	set "BACKEND_MACROS= /p:Configuration=Debug"
-	if defined -c (
-		set "BACKEND_PROJECT=single_threaded_cpu_backend"
-		set "MACROS=%MACROS% /p:Configuration=Debug"
-		set GENERATOR=.\generator_Debug.exe
-	)
-	if defined -l (
-		set "BACKEND_PROJECT=opencl_backend"
-		set "MACROS=%MACROS% /p:Configuration=Debug_OpenCL"
-		set GENERATOR=.\generator_Debug_OpenCL.exe
-	) else (
-		set "BACKEND_PROJECT=cuda_backend"
-		set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
-		set GENERATOR=.\generator_Debug_CUDA.exe
-	)    
+    set "BACKEND_MACROS= /p:Configuration=Debug"
+    if defined -c (
+        set "BACKEND_PROJECT=single_threaded_cpu_backend"
+        set "MACROS=%MACROS% /p:Configuration=Debug"
+        set GENERATOR=.\generator_Debug.exe
+    ) else (
+        if defined -l (
+            set "BACKEND_PROJECT=opencl_backend"
+            set "MACROS=%MACROS% /p:Configuration=Debug_OpenCL"
+            set GENERATOR=.\generator_Debug_OpenCL.exe
+        ) else (
+            set "BACKEND_PROJECT=cuda_backend"
+            set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
+            set GENERATOR=.\generator_Debug_CUDA.exe
+        )
+    )
 ) else (
-	set "BACKEND_MACROS= /p:Configuration=Release"
-	if defined -c (
-		set "BACKEND_PROJECT=single_threaded_cpu_backend"
-		set "MACROS=%MACROS% /p:Configuration=Release"
-		set GENERATOR=.\generator_Release.exe
-	) 
-	if defined -l (
-		set "BACKEND_PROJECT=opencl_backend"
-		set "MACROS=%MACROS% /p:Configuration=Release_OpenCL"
-		set GENERATOR=.\generator_Release_OpenCL.exe
-	) else (
-		set "BACKEND_PROJECT=cuda_backend"
-		set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
-		set GENERATOR=.\generator_Release_CUDA.exe
-	)
+    set "BACKEND_MACROS= /p:Configuration=Release"
+    if defined -c (
+        set "BACKEND_PROJECT=single_threaded_cpu_backend"
+        set "MACROS=%MACROS% /p:Configuration=Release"
+        set GENERATOR=.\generator_Release.exe
+    ) else ( 
+        if defined -l (
+            set "BACKEND_PROJECT=opencl_backend"
+            set "MACROS=%MACROS% /p:Configuration=Release_OpenCL"
+            set GENERATOR=.\generator_Release_OpenCL.exe
+        ) else (
+            set "BACKEND_PROJECT=cuda_backend"
+            set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
+            set GENERATOR=.\generator_Release_CUDA.exe
+        )
+    )
 )
 
 
