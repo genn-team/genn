@@ -281,7 +281,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                 updateNeuronsKernelBody << std::endl;
 
                 // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
-                //! TO BE IMPLEMENTED - Not using range at this point - 2020/03/08
+                //! TO BE IMPLEMENTED - Not using rng at this point - 2020/03/08
                 if (ng.isSimRNGRequired()) {
                     popSubs.addVarSubstitution("rng", "&d_rng" + ng.getName() + "[" + popSubs["id"] + "]");
                 }
@@ -1654,7 +1654,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
 void Backend::genRunnerPreamble(CodeStream& os) const
 {
     // Generating OpenCL variables for the runner
-    os << "extern \"C\" {";
+    os << "extern \"C\" {" << std::endl;
     os << "// OpenCL variables" << std::endl;
     os << "cl::Context clContext;" << std::endl;
     os << "cl::Device clDevice;" << std::endl;
@@ -2205,7 +2205,7 @@ void Backend::genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng,
             os << ", sizeof(unsigned int)";
             os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
 
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << getVarPrefix() << spikeCntPrefix << ng.getName();
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << getVarPrefix() << spikePrefix << ng.getName();
             os << ", " << "CL_TRUE";
             os << ", " << "0";
             os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
@@ -2245,7 +2245,7 @@ void Backend::genCurrentSpikePull(CodeStream& os, const NeuronGroupInternal& ng,
             os << ", sizeof(unsigned int)";
             os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
 
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << spikeCntPrefix << ng.getName();
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << spikePrefix << ng.getName();
             os << ", " << "CL_TRUE";
             os << ", " << "0";
             os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
@@ -2286,14 +2286,12 @@ bool Backend::isDeviceType(const std::string& type) const
 void Backend::genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInternal& model, const char* kernelName, const std::map<std::string, std::string>& params) const
 {
     // If delay required then include the "spkQuePtr" argument
-    bool ngDelayRequired = std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
-        [](const ModelSpec::NeuronGroupValueType& n) { return n.second.isDelayRequired(); });
-    bool sgDelayRequired = std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
+    bool delayRequired = std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
         [](const ModelSpec::SynapseGroupValueType& s)
         {
-            return (s.second.getSrcNeuronGroup()->isDelayRequired() || s.second.getTrgNeuronGroup()->isDelayRequired());
+            return s.second.getDelaySteps() != NO_DELAY;
         });
-    if (ngDelayRequired || sgDelayRequired) {
+    if (delayRequired) {
         int i = 0;
         for (const auto& p : params) {
             if (p.first.rfind("spkQuePtr", 0) == 0) {

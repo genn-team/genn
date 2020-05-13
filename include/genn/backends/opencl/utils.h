@@ -113,6 +113,11 @@ namespace OpenCL
 {
 namespace Utils
 {
+class ToBeImplemented : public std::logic_error
+{
+public:
+    ToBeImplemented(const char* exception) : std::logic_error(exception) { };
+};
 template<typename T>
 void pushUnique(std::vector<T>& list, T value) {
     if (std::find(list.begin(), list.end(), value) == list.end()) {
