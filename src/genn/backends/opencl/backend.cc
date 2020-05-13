@@ -2100,12 +2100,8 @@ void Backend::genMSBuildCompileModule(const std::string& moduleName, std::ostrea
     os << "\t\t<ClCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildImportTarget(std::ostream& os) const
+void Backend::genMSBuildImportTarget(std::ostream&) const
 {
-    os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
-    // Using targets provided by Intel
-    os << "\t\t<Import Project=\"$(OPENCL_PATH)\\BuildCustomizations\\IntelOpenCL.targets\" />" << std::endl;
-    os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
 std::string Backend::getFloatAtomicAdd(const std::string& ftype, const char* memoryType) const
