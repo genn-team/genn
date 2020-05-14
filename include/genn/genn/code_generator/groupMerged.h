@@ -199,11 +199,6 @@ protected:
     //------------------------------------------------------------------------
     NeuronGroupMergedBase(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
-    const std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> &getSortedMergedInSyns() const { return m_SortedMergedInSyns; }
-    const std::vector<std::vector<CurrentSourceInternal *>> &getSortedCurrentSources() const { return m_SortedCurrentSources; }
-    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedInSynWithPostCode() const { return m_SortedInSynWithPostCode; }
-    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedOutSynWithPreCode() const { return m_SortedOutSynWithPreCode; }
-
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
