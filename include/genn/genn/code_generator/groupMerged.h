@@ -435,8 +435,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSyn;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSyn;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostVars;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreVars;
 };
 
 //----------------------------------------------------------------------------
