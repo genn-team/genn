@@ -13,7 +13,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 // Auto-generated simulation code includess
 #include "var_init_egp_CODE/definitions.h"
 
-#define CONFIGURE_EGP(NAME)                 \
+#define CONFIGURE_REPEAT_EGP(NAME)          \
     allocate##NAME(10);                     \
     std::iota(&NAME[0], &NAME[10], 0.0f);   \
     push##NAME##ToDevice(10)
@@ -32,17 +32,29 @@ protected:
         // Perform GeNN initialization
         allocateMem();
         
-        // Allocate EGPs
-        CONFIGURE_EGP(valuesvPop);
-        CONFIGURE_EGP(valuesvCurrSource);
-        CONFIGURE_EGP(valuespvSparse);
-        CONFIGURE_EGP(valuespvDense);
-        CONFIGURE_EGP(valuesvSparse);
-        CONFIGURE_EGP(valuesvDense);
-        CONFIGURE_EGP(valuespre_vSparse);
-        CONFIGURE_EGP(valuespre_vDense);
-        CONFIGURE_EGP(valuespost_vSparse);
-        CONFIGURE_EGP(valuespost_vDense);
+        // Set scalar egps
+        valvconstantPop =  7.0f;
+        valvconstantCurrSource =  7.0f;
+        valpvconstantSparse =  7.0f;
+        valpvconstantDense =  7.0f;
+        valvconstantSparse =  7.0f;
+        valvconstantDense =  7.0f;
+        valpre_vconstantSparse =  7.0f;
+        valpre_vconstantDense =  7.0f;
+        valpost_vconstantSparse =  7.0f;
+        valpost_vconstantDense =  7.0f;
+        
+        // Configure EGP arrays containing repeating pattern
+        CONFIGURE_REPEAT_EGP(valuesvrepeatPop);
+        CONFIGURE_REPEAT_EGP(valuesvrepeatCurrSource);
+        CONFIGURE_REPEAT_EGP(valuespvrepeatSparse);
+        CONFIGURE_REPEAT_EGP(valuespvrepeatDense);
+        CONFIGURE_REPEAT_EGP(valuesvrepeatSparse);
+        CONFIGURE_REPEAT_EGP(valuesvrepeatDense);
+        CONFIGURE_REPEAT_EGP(valuespre_vrepeatSparse);
+        CONFIGURE_REPEAT_EGP(valuespre_vrepeatDense);
+        CONFIGURE_REPEAT_EGP(valuespost_vrepeatSparse);
+        CONFIGURE_REPEAT_EGP(valuespost_vrepeatDense);
         initialize();
         
         initializeSparse();
@@ -63,16 +75,28 @@ TEST_F(SimTest, VarInitEGP)
     pullSparseStateFromDevice();
     
     for(size_t i = 0; i < 100; i++) {
-        const float correct = (float)(i % 10);
-        EXPECT_EQ(vPop[i], correct);
-        EXPECT_EQ(vCurrSource[i], correct);
-        EXPECT_EQ(pvSparse[i], correct);
-        EXPECT_EQ(pvDense[i], correct);
-        EXPECT_EQ(vSparse[i], correct);
-        EXPECT_EQ(vDense[i], correct);
-        EXPECT_EQ(pre_vSparse[i], correct);
-        EXPECT_EQ(post_vSparse[i], correct);
-        EXPECT_EQ(post_vDense[i], correct);
+        // Check values initialised using repeating values are correct
+        const float correctRepeatVal = (float)(i % 10);
+        EXPECT_EQ(vrepeatPop[i], correctRepeatVal);
+        EXPECT_EQ(vrepeatCurrSource[i], correctRepeatVal);
+        EXPECT_EQ(pvrepeatSparse[i], correctRepeatVal);
+        EXPECT_EQ(pvrepeatDense[i], correctRepeatVal);
+        EXPECT_EQ(vrepeatSparse[i], correctRepeatVal);
+        EXPECT_EQ(vrepeatDense[i], correctRepeatVal);
+        EXPECT_EQ(pre_vrepeatSparse[i], correctRepeatVal);
+        EXPECT_EQ(post_vrepeatSparse[i], correctRepeatVal);
+        EXPECT_EQ(post_vrepeatDense[i], correctRepeatVal);
+        
+        // Check values initialised using constnat values are correct
+        EXPECT_EQ(vconstantPop[i], 7.0f);
+        EXPECT_EQ(vconstantCurrSource[i], 7.0f);
+        EXPECT_EQ(pvconstantSparse[i], 7.0f);
+        EXPECT_EQ(pvconstantDense[i], 7.0f);
+        EXPECT_EQ(vconstantSparse[i], 7.0f);
+        EXPECT_EQ(vconstantDense[i], 7.0f);
+        EXPECT_EQ(pre_vconstantSparse[i], 7.0f);
+        EXPECT_EQ(post_vconstantSparse[i], 7.0f);
+        EXPECT_EQ(post_vconstantDense[i], 7.0f);
     }
     
 }

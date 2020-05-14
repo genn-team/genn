@@ -10,6 +10,20 @@ suite of minimal models with known analytic outcomes that are used for continuou
 #include "modelSpec.h"
 
 //----------------------------------------------------------------------------
+// ScalarEGP
+//----------------------------------------------------------------------------
+class ScalarEGP : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(ScalarEGP, 0);
+
+    SET_CODE("$(value) = $(val);");
+
+    SET_EXTRA_GLOBAL_PARAMS({{"val", "scalar"}});
+};
+IMPLEMENT_SNIPPET(ScalarEGP);
+
+//----------------------------------------------------------------------------
 // RepeatVal
 //----------------------------------------------------------------------------
 class RepeatVal : public InitVarSnippet::Base
@@ -43,9 +57,9 @@ IMPLEMENT_SNIPPET(PostRepeatVal);
 class Neuron : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(Neuron, 0, 1);
+    DECLARE_MODEL(Neuron, 0, 2);
 
-    SET_VARS({{"v", "scalar"}});
+    SET_VARS({{"vconstant", "scalar"}, {"vrepeat", "scalar"}});
 };
 IMPLEMENT_MODEL(Neuron);
 
@@ -55,9 +69,9 @@ IMPLEMENT_MODEL(Neuron);
 class CurrentSrc : public CurrentSourceModels::Base
 {
 public:
-    DECLARE_MODEL(CurrentSrc, 0, 1);
+    DECLARE_MODEL(CurrentSrc, 0, 2);
 
-    SET_VARS({{"v", "scalar"}});
+    SET_VARS({{"vconstant", "scalar"}, {"vrepeat", "scalar"}});
 };
 IMPLEMENT_MODEL(CurrentSrc);
 
@@ -67,9 +81,9 @@ IMPLEMENT_MODEL(CurrentSrc);
 class PostsynapticModel : public PostsynapticModels::Base
 {
 public:
-    DECLARE_MODEL(PostsynapticModel, 0, 1);
+    DECLARE_MODEL(PostsynapticModel, 0, 2);
 
-    SET_VARS({{"pv", "scalar"}});
+    SET_VARS({{"pvconstant", "scalar"}, {"pvrepeat", "scalar"}});
 };
 IMPLEMENT_MODEL(PostsynapticModel);
 
@@ -79,11 +93,11 @@ IMPLEMENT_MODEL(PostsynapticModel);
 class WeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 1, 1, 1);
+    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 2, 2, 2);
 
-    SET_VARS({{"v", "scalar"}});
-    SET_PRE_VARS({{"pre_v", "scalar"}});
-    SET_POST_VARS({{"post_v", "scalar"}});
+    SET_VARS({{"vconstant", "scalar"}, {"vrepeat", "scalar"}});
+    SET_PRE_VARS({{"pre_vconstant", "scalar"}, {"pre_vrepeat", "scalar"}});
+    SET_POST_VARS({{"post_vconstant", "scalar"}, {"post_vrepeat", "scalar"}});
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
@@ -93,12 +107,12 @@ void modelDefinition(ModelSpec &model)
     model.setName("var_init_egp");
     
     // Parameters
-    Neuron::VarValues neuronInit(initVar<RepeatVal>());
-    CurrentSrc::VarValues currentSourceInit(initVar<RepeatVal>());
-    PostsynapticModel::VarValues postsynapticInit(initVar<RepeatVal>());
-    WeightUpdateModel::VarValues weightUpdateInit(initVar<PostRepeatVal>());
-    WeightUpdateModel::PreVarValues weightUpdatePreInit(initVar<RepeatVal>());
-    WeightUpdateModel::PostVarValues weightUpdatePostInit(initVar<RepeatVal>());
+    Neuron::VarValues neuronInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
+    CurrentSrc::VarValues currentSourceInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
+    PostsynapticModel::VarValues postsynapticInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
+    WeightUpdateModel::VarValues weightUpdateInit(initVar<ScalarEGP>(), initVar<PostRepeatVal>());
+    WeightUpdateModel::PreVarValues weightUpdatePreInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
+    WeightUpdateModel::PostVarValues weightUpdatePostInit(initVar<ScalarEGP>(), initVar<RepeatVal>());
     
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
