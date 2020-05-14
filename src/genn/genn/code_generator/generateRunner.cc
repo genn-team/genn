@@ -266,7 +266,7 @@ void genExtraGlobalParam(const BackendBase &backend, CodeStream &definitionsVar,
             const auto &mergedDestinations = mergedStructData.getMergedEGPs().at(backend.getArrayPrefix() + name);
             for(const auto &v : mergedDestinations) {
                 extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                extraGlobalParam << v.second.groupIndex << ", " << name << ");" << std::endl;
+                extraGlobalParam << v.second.groupIndex << ", " << backend.getArrayPrefix() << name << ");" << std::endl;
             }
         }
 
