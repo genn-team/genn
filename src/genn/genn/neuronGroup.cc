@@ -176,6 +176,20 @@ bool NeuronGroup::isInitRNGRequired() const
         return true;
     }
 
+    // Return true if any incoming synapse groups require and RNG to initialize their postsynaptic variables
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return sg->isWUPostInitRNGRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any outgoing synapse groups require and RNG to initialize their presynaptic variables
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return sg->isWUPreInitRNGRequired(); }))
+    {
+        return true;
+    }
+
     // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
