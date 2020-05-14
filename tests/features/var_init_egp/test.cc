@@ -39,7 +39,10 @@ protected:
         CONFIGURE_EGP(valuespvDense);
         CONFIGURE_EGP(valuesvSparse);
         CONFIGURE_EGP(valuesvDense);
-        
+        CONFIGURE_EGP(valuespre_vSparse);
+        CONFIGURE_EGP(valuespre_vDense);
+        CONFIGURE_EGP(valuespost_vSparse);
+        CONFIGURE_EGP(valuespost_vDense);
         initialize();
         
         // Build sparse connectors
@@ -73,6 +76,10 @@ TEST_F(SimTest, VarInitEGP)
         EXPECT_EQ(pvDense[i], correct);
         EXPECT_EQ(vSparse[i], correct);
         EXPECT_EQ(vDense[i], correct);
+        EXPECT_EQ(pre_vSparse[i], correct);
+        EXPECT_EQ(pre_vDense[i], correct);
+        EXPECT_EQ(post_vSparse[i], correct);
+        EXPECT_EQ(post_vDense[i], correct);
     }
     
 }

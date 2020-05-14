@@ -79,9 +79,11 @@ IMPLEMENT_MODEL(PostsynapticModel);
 class WeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_MODEL(WeightUpdateModel, 0, 1);
+    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 1, 1, 1);
 
     SET_VARS({{"v", "scalar"}});
+    SET_PRE_VARS({{"pre_v", "scalar"}});
+    SET_POST_VARS({{"post_v", "scalar"}});
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
@@ -95,6 +97,8 @@ void modelDefinition(ModelSpec &model)
     CurrentSrc::VarValues currentSourceInit(initVar<RepeatVal>());
     PostsynapticModel::VarValues postsynapticInit(initVar<RepeatVal>());
     WeightUpdateModel::VarValues weightUpdateInit(initVar<PostRepeatVal>());
+    WeightUpdateModel::PreVarValues weightUpdatePreInit(initVar<RepeatVal>());
+    WeightUpdateModel::PostVarValues weightUpdatePostInit(initVar<RepeatVal>());
     
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 1, {}, {});
@@ -105,14 +109,14 @@ void modelDefinition(ModelSpec &model)
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Pop",
-        {}, weightUpdateInit,
+        {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
         {}, postsynapticInit);
 
     // Sparse synapse populations
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Pop",
-        {}, weightUpdateInit,
+        {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
         {}, postsynapticInit);
 
     model.setPrecision(GENN_FLOAT);
