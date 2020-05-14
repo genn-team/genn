@@ -70,13 +70,12 @@ TEST_F(SimTest, Vars)
     pullSparseStateFromDevice();
 
     // Test host-generated vars
-    PROB_TEST(, Pop, 10000)
-    PROB_TEST(, CurrSource, 10000)
-    PROB_TEST(p, Dense, 10000)
-    // **NOTE** dense actually contains 10000 * 10000 entries but that slows down test too much
-    PROB_TEST(, Dense, 10000)
-    PROB_TEST(pre_, Dense, 10000)
-    PROB_TEST(post_, Dense, 10000)
-    PROB_TEST(, Sparse, 10000)
+    PROB_TEST(, Pop, 20000)
+    PROB_TEST(, CurrSource, 20000)
+    PROB_TEST(p, Dense, 20000)
+    PROB_TEST(, Dense, 20000)
+    PROB_TEST(, Sparse, 20000)
+    PROB_TEST(pre_, Sparse, 20000)
+    PROB_TEST(post_, Sparse, 20000)
 }
 
