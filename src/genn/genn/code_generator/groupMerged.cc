@@ -640,18 +640,18 @@ CodeGenerator::NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const 
 {
     // Build vector of vectors containing each child group's incoming 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(getArchetype().getInSyn(), m_SortedInSyn, &NeuronGroupInternal::getInSyn,
+    orderNeuronGroupChildren(getArchetype().getInSynWithPostVars(), m_SortedInSyn, &NeuronGroupInternal::getInSynWithPostVars,
                              [](const SynapseGroupInternal *a, const SynapseGroupInternal *b) { return a->canWUPostInitBeMerged(*b); });
 
     // Build vector of vectors containing each child group's outgoing 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(getArchetype().getOutSyn(), m_SortedOutSyn, &NeuronGroupInternal::getOutSyn,
+    orderNeuronGroupChildren(getArchetype().getOutSynWithPreVars(), m_SortedOutSyn, &NeuronGroupInternal::getOutSynWithPreVars,
                              [](const SynapseGroupInternal *a, const SynapseGroupInternal *b){ return a->canWUPreInitBeMerged(*b); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getInSyn().at(childIndex)->getWUPostVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getInSynWithPostVars().at(childIndex)->getWUPostVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, childIndex, paramIndex, m_SortedInSyn,
                                           [varIndex](const SynapseGroupInternal *s) { return s->getWUPostVarInitialisers().at(varIndex).getParams(); });
@@ -659,7 +659,7 @@ bool CodeGenerator::NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous(s
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getInSyn().at(childIndex)->getWUPostVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getInSynWithPostVars().at(childIndex)->getWUPostVarInitialisers().at(varIndex).getSnippet();
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, childIndex, paramIndex, m_SortedInSyn,
                                           [varIndex](const SynapseGroupInternal *s) { return s->getWUPostVarInitialisers().at(varIndex).getDerivedParams(); });
@@ -667,7 +667,7 @@ bool CodeGenerator::NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeteroge
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronInitGroupMerged::isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getOutSyn().at(childIndex)->getWUPreVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getOutSynWithPreVars().at(childIndex)->getWUPreVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, childIndex, paramIndex, m_SortedOutSyn,
                                           [varIndex](const SynapseGroupInternal *s) { return s->getWUPreVarInitialisers().at(varIndex).getParams(); });
@@ -675,7 +675,7 @@ bool CodeGenerator::NeuronInitGroupMerged::isOutSynWUMVarInitParamHeterogeneous(
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getOutSyn().at(childIndex)->getWUPreVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getOutSynWithPreVars().at(childIndex)->getWUPreVarInitialisers().at(varIndex).getSnippet();
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSyn,
                                           [varIndex](const SynapseGroupInternal *s) { return s->getWUPreVarInitialisers().at(varIndex).getDerivedParams(); });
@@ -693,9 +693,10 @@ void CodeGenerator::NeuronInitGroupMerged::generate(const BackendBase &backend, 
     // Build generic struct
     NeuronGroupMergedBase::generate(gen, backend, precision, timePrecision, true);
 
-    // Loop through incoming synapse groups
-    for(size_t i = 0; i < getArchetype().getInSyn().size(); i++) {
-        const auto *sg = getArchetype().getInSyn().at(i);
+    // Loop through incoming synapse groups with postsynaptic variables
+    const auto inSynWithPostVars = getArchetype().getInSynWithPostVars();
+    for(size_t i = 0; i < inSynWithPostVars.size(); i++) {
+        const auto *sg = inSynWithPostVars.at(i);
 
         // Loop through postsynaptic variables
         const auto vars = sg->getWUModel()->getPostVars();
@@ -723,8 +724,9 @@ void CodeGenerator::NeuronInitGroupMerged::generate(const BackendBase &backend, 
     }
 
     // Loop through outgoing synapse groups
-    for(size_t i = 0; i < getArchetype().getOutSyn().size(); i++) {
-        const auto *sg = getArchetype().getOutSyn().at(i);
+    const auto outSynWithPreVars = getArchetype().getOutSynWithPreVars();
+    for(size_t i = 0; i < outSynWithPreVars.size(); i++) {
+        const auto *sg = outSynWithPreVars.at(i);
 
         // Loop through presynaptic variables
         const auto vars = sg->getWUModel()->getPreVars();

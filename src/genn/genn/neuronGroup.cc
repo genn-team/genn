@@ -311,6 +311,22 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
     return vec;
 }
 //----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostVars() const
+{
+    std::vector<SynapseGroupInternal *> vec;
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPostVars().empty(); });
+    return vec;
+}
+//----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreVars() const
+{
+    std::vector<SynapseGroupInternal *> vec;
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPreVars().empty(); });
+    return vec;
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup)
 {
     const auto *wu = synapseGroup->getWUModel();
@@ -421,8 +437,8 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
         }
 
         // Check if, by reshuffling, all incoming synapse groups with are mergable
-        auto otherInSyn = other.getInSyn();
-        if(!checkCompatibleUnordered(getInSyn(), otherInSyn,
+        auto otherInSynWithPostVars = other.getInSynWithPostVars();
+        if(!checkCompatibleUnordered(getInSynWithPostVars(), otherInSynWithPostVars,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPostInitBeMerged(*b);
@@ -432,8 +448,8 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
         }
 
         // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
-        auto otherOutSyn = other.getOutSyn();
-        if(!checkCompatibleUnordered(getOutSyn(), otherOutSyn,
+        auto otherOutSynWithPreVars = other.getOutSynWithPreVars();
+        if(!checkCompatibleUnordered(getOutSynWithPreVars(), otherOutSynWithPreVars,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPreInitBeMerged(*b);
