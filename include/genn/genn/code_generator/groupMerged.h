@@ -169,45 +169,15 @@ public:
     //! Should the postsynaptic model var init derived parameter be implemented heterogeneously?
     bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
-    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
-    bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-    
-    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
-    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the incoming synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
-    bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
-    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model var init parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
 protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
     NeuronGroupMergedBase(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
-    void generate(const BackendBase &backend, CodeStream &definitionsInternal,
-                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                  MergedStructData &mergedStructData, const std::string &precision,
-                  const std::string &timePrecision, bool init) const;
-private:
-    //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
+    void generate(MergedStructGenerator<NeuronGroupMergedBase> &gen, const BackendBase &backend, 
+                  const std::string &precision, const std::string &timePrecision, bool init) const;
+
     template<typename T, typename G, typename C>
     void orderNeuronGroupChildren(const std::vector<T> &archetypeChildren,
                                   std::vector<std::vector<T>> &sortedGroupChildren,
@@ -282,7 +252,7 @@ private:
         return false;
     }
 
-    template<typename H, typename V>
+    template<typename T = NeuronGroupMergedBase, typename H, typename V>
     void addHeterogeneousChildParams(MergedStructGenerator<NeuronGroupMergedBase> &gen, 
                                      const Snippet::Base::StringVec &paramNames, size_t childIndex,
                                      const std::string &prefix, 
@@ -291,7 +261,7 @@ private:
         // Loop through parameters
         for(size_t p = 0; p < paramNames.size(); p++) {
             // If parameter is heterogeneous
-            if((this->*isChildParamHeterogeneousFn)(childIndex, p)) {
+            if((static_cast<const T *>(this)->*isChildParamHeterogeneousFn)(childIndex, p)) {
                 gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
                                    [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                    {
@@ -301,7 +271,7 @@ private:
         }
     }
 
-    template<typename H, typename V>
+    template<typename T = NeuronGroupMergedBase, typename H, typename V>
     void addHeterogeneousChildDerivedParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
                                             const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
                                             const std::string &prefix, H isChildDerivedParamHeterogeneousFn, V getValueFn) const
@@ -309,7 +279,7 @@ private:
         // Loop through derived parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameter is heterogeneous
-            if((this->*isChildDerivedParamHeterogeneousFn)(childIndex, p)) {
+            if((static_cast<const T *>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, p)) {
                 gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
                                    [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                    {
@@ -319,7 +289,7 @@ private:
         }
     }
 
-    template<typename H, typename V>
+    template<typename T = NeuronGroupMergedBase, typename H, typename V>
     void addHeterogeneousChildVarInitParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
                                             const Snippet::Base::StringVec &paramNames, size_t childIndex,
                                             size_t varIndex, const std::string &prefix,
@@ -328,7 +298,7 @@ private:
         // Loop through parameters
         for(size_t p = 0; p < paramNames.size(); p++) {
             // If parameter is heterogeneous
-            if((this->*isChildParamHeterogeneousFn)(childIndex, varIndex, p)) {
+            if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varIndex, p)) {
                 gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
                                    [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                    {
@@ -339,7 +309,7 @@ private:
         }
     }
 
-    template<typename H, typename V>
+    template<typename T = NeuronGroupMergedBase, typename H, typename V>
     void addHeterogeneousChildVarInitDerivedParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
                                                    const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
                                                    size_t varIndex, const std::string &prefix,
@@ -348,7 +318,7 @@ private:
         // Loop through parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameter is heterogeneous
-            if((this->*isChildDerivedParamHeterogeneousFn)(childIndex, varIndex, p)) {
+            if((static_cast<const T *>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varIndex, p)) {
                 gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
                                    [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                    {
@@ -384,13 +354,12 @@ private:
                                     const std::string &type, const std::string &name, 
                                     size_t archetypeIndex, const std::string &prefix) const;
 
+private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> m_SortedMergedInSyns;
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreCode;
 };
 
 //----------------------------------------------------------------------------
@@ -399,9 +368,7 @@ private:
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    :   NeuronGroupMergedBase(index, false, groups)
-    {}
+    NeuronUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -412,15 +379,30 @@ public:
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
     std::string getPrevQueueOffset() const;
 
+    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
+    bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
+    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
+    bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
+    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision,
-                  const std::string &timePrecision) const
-    {
-        NeuronGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                        runnerVarDecl, runnerMergedStructAlloc, mergedStructData, precision, timePrecision, false);
-    }
+                  const std::string &timePrecision) const;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreCode;
 };
 
 //----------------------------------------------------------------------------
@@ -429,19 +411,32 @@ public:
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    :   NeuronGroupMergedBase(index, true, groups)
-    {}
+    NeuronInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
+    //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
+    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the incoming synapse weight update model var init derived parameter be implemented heterogeneously?
+    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model var init parameter be implemented heterogeneously?
+    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
+    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision,
-                  const std::string &timePrecision) const
-    {
-        NeuronGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                                        runnerVarDecl, runnerMergedStructAlloc, mergedStructData, precision, timePrecision, true);
-    }
+                  const std::string &timePrecision) const;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSyn;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSyn;
 };
 
 //----------------------------------------------------------------------------
