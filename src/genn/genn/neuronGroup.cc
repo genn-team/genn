@@ -422,7 +422,7 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
 
         // Check if, by reshuffling, all incoming synapse groups with are mergable
         auto otherInSyn = other.getInSyn();
-        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSyn,
+        if(!checkCompatibleUnordered(getInSyn(), otherInSyn,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPostInitBeMerged(*b);
@@ -433,7 +433,7 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
 
         // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
         auto otherOutSyn = other.getOutSyn();
-        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSyn,
+        if(!checkCompatibleUnordered(getOutSyn(), otherOutSyn,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPreInitBeMerged(*b);
