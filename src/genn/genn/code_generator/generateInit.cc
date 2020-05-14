@@ -299,9 +299,9 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             }
 
             // Loop through incoming synaptic populations with postsynaptic update code
-            const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
-            for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
-                const auto *sg = inSynWithPostCode[i];
+            // **NOTE** number of delay slots is based on the target neuron (for simplicity) but whether delay is required is based on the synapse group
+            for(size_t i = 0; i < ng.getArchetype().getInSyn().size(); i++) {
+                const auto *sg = ng.getArchetype().getInSyn().at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPostVars(),
                                      "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),
@@ -312,10 +312,9 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             }
 
             // Loop through outgoing synaptic populations with presynaptic update code
-            const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
-            for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
-                const auto *sg = outSynWithPreCode[i];
-                // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
+            // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
+            for(size_t i = 0; i < ng.getArchetype().getOutSyn().size(); i++) {
+                const auto *sg = ng.getArchetype().getOutSyn().at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPreVars(),
                                      "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),

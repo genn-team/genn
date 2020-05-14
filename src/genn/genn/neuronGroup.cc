@@ -176,6 +176,20 @@ bool NeuronGroup::isInitRNGRequired() const
         return true;
     }
 
+    // Return true if any incoming synapse groups require and RNG to initialize their postsynaptic variables
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return sg->isWUPostInitRNGRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any outgoing synapse groups require and RNG to initialize their presynaptic variables
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return sg->isWUPreInitRNGRequired(); }))
+    {
+        return true;
+    }
+
     // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
@@ -406,9 +420,9 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
             return false;
         }
 
-        // Check if, by reshuffling, all incoming synapse groups with post code are mergable
-        auto otherInSynWithPostCode = other.getInSynWithPostCode();
-        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSynWithPostCode,
+        // Check if, by reshuffling, all incoming synapse groups with are mergable
+        auto otherInSyn = other.getInSyn();
+        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSyn,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPostInitBeMerged(*b);
@@ -418,8 +432,8 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
         }
 
         // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
-        auto otherOutSynWithPreCode = other.getOutSynWithPreCode();
-        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSynWithPreCode,
+        auto otherOutSyn = other.getOutSyn();
+        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSyn,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPreInitBeMerged(*b);
