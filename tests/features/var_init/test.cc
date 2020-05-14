@@ -86,6 +86,8 @@ TEST_F(SimTest, Vars)
     PROB_TEST(, CurrSource, 10000)
     PROB_TEST(p, Dense, 10000)
     PROB_TEST(, Dense, 10000)
+    PROB_TEST(pre_, Dense, 10000)
+    PROB_TEST(post_, Dense, 10000)
     PROB_TEST(, Sparse, 10000)
 }
 
