@@ -101,23 +101,25 @@ void modelDefinition(ModelSpec &model)
     WeightUpdateModel::PostVarValues weightUpdatePostInit(initVar<RepeatVal>());
     
     // Neuron populations
-    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 1, {}, {});
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource2", 100, {}, {});
     model.addNeuronPopulation<Neuron>("Pop", 100, {}, neuronInit);
     model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
 
     // Dense synapse populations
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "Pop",
+        "SpikeSource1", "Pop",
         {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
         {}, postsynapticInit);
 
     // Sparse synapse populations
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "Pop",
+        "SpikeSource2", "Pop",
         {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
-        {}, postsynapticInit);
+        {}, postsynapticInit,
+        initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
 
     model.setPrecision(GENN_FLOAT);
 }

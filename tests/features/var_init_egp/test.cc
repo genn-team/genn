@@ -45,12 +45,6 @@ protected:
         CONFIGURE_EGP(valuespost_vDense);
         initialize();
         
-        // Build sparse connectors
-        rowLengthSparse[0] = 100;
-        for(unsigned int i = 0; i < 100; i++) {
-            indSparse[i] = i;
-        }
-        
         initializeSparse();
     }
 
@@ -77,7 +71,6 @@ TEST_F(SimTest, VarInitEGP)
         EXPECT_EQ(vSparse[i], correct);
         EXPECT_EQ(vDense[i], correct);
         EXPECT_EQ(pre_vSparse[i], correct);
-        EXPECT_EQ(pre_vDense[i], correct);
         EXPECT_EQ(post_vSparse[i], correct);
         EXPECT_EQ(post_vDense[i], correct);
     }
