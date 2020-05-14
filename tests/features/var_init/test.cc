@@ -42,18 +42,6 @@ double gammaCDF4(double x)
 //----------------------------------------------------------------------------
 class SimTest : public SimulationTest
 {
-public:
-    //----------------------------------------------------------------------------
-    // SimulationTest virtuals
-    //----------------------------------------------------------------------------
-    virtual void Init()
-    {
-        // Build sparse connectors
-        rowLengthSparse[0] = 10000;
-        for(unsigned int i = 0; i < 10000; i++) {
-            indSparse[i] = i;
-        }
-    }
 };
 
 template<typename F>
@@ -85,6 +73,7 @@ TEST_F(SimTest, Vars)
     PROB_TEST(, Pop, 10000)
     PROB_TEST(, CurrSource, 10000)
     PROB_TEST(p, Dense, 10000)
+    // **NOTE** dense actually contains 10000 * 10000 entries but that slows down test too much
     PROB_TEST(, Dense, 10000)
     PROB_TEST(pre_, Dense, 10000)
     PROB_TEST(post_, Dense, 10000)

@@ -127,7 +127,7 @@ void modelDefinition(ModelSpec &model)
         initVar<InitVarSnippet::Gamma>(gammaParams));
     
     // Neuron populations
-    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 1, {}, {});
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 10000, {}, {});
     model.addNeuronPopulation<Neuron>("Pop", 10000, {}, neuronInit);
     model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
 
@@ -143,7 +143,8 @@ void modelDefinition(ModelSpec &model)
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Pop",
         {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
-        {}, postsynapticInit);
+        {}, postsynapticInit,
+        initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
 
     model.setPrecision(GENN_FLOAT);
 }
