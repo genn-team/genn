@@ -378,6 +378,16 @@ bool SynapseGroup::isWUInitRNGRequired() const
             && Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isWUPreInitRNGRequired() const
+{
+    return Utils::isRNGRequired(m_WUPreVarInitialisers);
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isWUPostInitRNGRequired() const
+{
+    return Utils::isRNGRequired(m_WUPostVarInitialisers);
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isHostInitRNGRequired() const
 {
     return (m_ConnectivityInitialiser.getSnippet()->getHostInitCode().find("$(rng)") != std::string::npos);

@@ -216,6 +216,12 @@ public:
     //! Does this synapse group require an RNG for it's weight update init code?
     bool isWUInitRNGRequired() const;
 
+    //! Does this synapse group require an RNG for it's weight update presynaptic variable init code?
+    bool isWUPreInitRNGRequired() const;
+
+    //! Does this synapse group require an RNG for it's weight update postsynaptic variable init code?
+    bool isWUPostInitRNGRequired() const;
+
     //! Does this synapse group require a RNG for any sort of initialization
     bool isHostInitRNGRequired() const;
 

@@ -176,6 +176,20 @@ bool NeuronGroup::isInitRNGRequired() const
         return true;
     }
 
+    // Return true if any incoming synapse groups require and RNG to initialize their postsynaptic variables
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return sg->isWUPostInitRNGRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any outgoing synapse groups require and RNG to initialize their presynaptic variables
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return sg->isWUPreInitRNGRequired(); }))
+    {
+        return true;
+    }
+
     // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
@@ -297,6 +311,22 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
     return vec;
 }
 //----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostVars() const
+{
+    std::vector<SynapseGroupInternal *> vec;
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPostVars().empty(); });
+    return vec;
+}
+//----------------------------------------------------------------------------
+std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreVars() const
+{
+    std::vector<SynapseGroupInternal *> vec;
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
+                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPreVars().empty(); });
+    return vec;
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup)
 {
     const auto *wu = synapseGroup->getWUModel();
@@ -406,9 +436,9 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
             return false;
         }
 
-        // Check if, by reshuffling, all incoming synapse groups with post code are mergable
-        auto otherInSynWithPostCode = other.getInSynWithPostCode();
-        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSynWithPostCode,
+        // Check if, by reshuffling, all incoming synapse groups with are mergable
+        auto otherInSynWithPostVars = other.getInSynWithPostVars();
+        if(!checkCompatibleUnordered(getInSynWithPostVars(), otherInSynWithPostVars,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPostInitBeMerged(*b);
@@ -418,8 +448,8 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
         }
 
         // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
-        auto otherOutSynWithPreCode = other.getOutSynWithPreCode();
-        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSynWithPreCode,
+        auto otherOutSynWithPreVars = other.getOutSynWithPreVars();
+        if(!checkCompatibleUnordered(getOutSynWithPreVars(), otherOutSynWithPreVars,
                                      [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
                                          return a->canWUPreInitBeMerged(*b);

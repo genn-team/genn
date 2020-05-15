@@ -216,6 +216,12 @@ protected:
     //! Helper to get vector of outgoing synapse groups which have presynaptic update code
     std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
 
+    //! Helper to get vector of incoming synapse groups which have postsynaptic variables
+    std::vector<SynapseGroupInternal *> getInSynWithPostVars() const;
+
+    //! Helper to get vector of outgoing synapse groups which have presynaptic variables
+    std::vector<SynapseGroupInternal *> getOutSynWithPreVars() const;
+
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
