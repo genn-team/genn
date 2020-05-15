@@ -1134,7 +1134,9 @@ def create_cmlf_class(cml_func):
 
 def create_custom_init_var_snippet_class(class_name, param_names=None,
                                          derived_params=None,
-                                         var_init_code=None, custom_body=None):
+                                         var_init_code=None, 
+                                         extra_global_params=None,
+                                         custom_body=None):
     """This helper function creates a custom InitVarSnippet class.
     See also:
     create_custom_neuron_class
@@ -1152,6 +1154,8 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
                         name of the derived parameter and the second MUST be
                         an instance of the `pygenn.genn_wrapper.DerivedParamFunc`` class
     var_init_code   --  string with the variable initialization code
+    extra_global_params     --  list of pairs of strings with names and
+                                types of additional parameters
     custom_body     --  dictionary with additional attributes and methods of
                         the new class
     """
@@ -1163,6 +1167,11 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
 
     if var_init_code is not None:
         body["get_code"] = lambda self: dedent(var_init_code)
+
+    if extra_global_params is not None:
+        body["get_extra_global_params"] = \
+            lambda self: EGPVector([EGP(egp[0], egp[1])
+                                    for egp in extra_global_params])
 
     if custom_body is not None:
         body.update(custom_body)
