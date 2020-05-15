@@ -277,7 +277,7 @@ class NeuronGroup(Group):
         """
         (self.neuron, self.type, self.param_names, self.params,
          self.var_names, self.vars) = model_preprocessor.prepare_model(
-             model, param_space, var_space,
+             model, self, param_space, var_space, self,
              model_family=genn_wrapper.NeuronModels)
 
         if self.type == "SpikeSourceArray":
@@ -446,7 +446,7 @@ class SynapseGroup(Group):
              self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
              self.wu_post_var_names, post_var_dict) =\
                  model_preprocessor.prepare_model(
-                     model, param_space, var_space, pre_var_space,
+                     model, self, param_space, var_space, pre_var_space,
                      post_var_space, model_family=genn_wrapper.WeightUpdateModels)
 
             self.vars.update(var_dict)
@@ -463,7 +463,7 @@ class SynapseGroup(Group):
         """
         (self.postsyn, self.ps_type, self.ps_param_names, self.ps_params,
          self.ps_var_names, var_dict) = model_preprocessor.prepare_model(
-             model, param_space, var_space,
+             model, self, param_space, var_space,
              model_family=genn_wrapper.PostsynapticModels)
 
         self.psm_vars.update(var_dict)
@@ -882,7 +882,7 @@ class CurrentSource(Group):
         """
         (self.current_source_model, self.type, self.param_names, self.params,
          self.var_names, self.vars) = model_preprocessor.prepare_model(
-             model, param_space, var_space,
+             model, self, param_space, var_space,
              model_family=genn_wrapper.CurrentSourceModels)
 
     def add_to(self, nn_model, pop):
