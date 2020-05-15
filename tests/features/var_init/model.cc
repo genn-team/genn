@@ -61,7 +61,7 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(ModelSpec &model)
 {
-    model.setSeed(12345);
+    model.setSeed(2345678);
     model.setDT(0.1);
     model.setName("var_init");
 
