@@ -1334,7 +1334,7 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
             // If we're updating or if there is initialization code for this variable 
             // (otherwise, it's not needed during initialization)
             const auto var = vars[v];
-            if(updateRole || !varInit[v].getSnippet()->getCode().empty()) {
+            if(individualWeights && (updateRole || !varInit[v].getSnippet()->getCode().empty())) {
                 addWeightSharingPointerField(gen, var.type, var.name, backend.getArrayPrefix() + var.name);
             }
 
