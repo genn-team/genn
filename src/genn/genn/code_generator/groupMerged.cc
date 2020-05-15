@@ -342,7 +342,8 @@ void CodeGenerator::NeuronGroupMergedBase::generate(MergedStructGenerator<Neuron
                                  });
                 }
             }
-            // Otherwise
+            // Otherwise, if postsynaptic model variables are global and we're updating 
+            // **NOTE** global variable values aren't useful during initialization
             else if(!init) {
                 // If GLOBALG variable should be implemented heterogeneously, add value
                 if(isPSMGlobalVarHeterogeneous(i, v)) {
@@ -1312,26 +1313,41 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
                     backend.getArrayPrefix());
     }
 
-    // If WU variables are individual, add pointers to var pointers to struct
+    // If WU variables are procedural and this is an update or WU variables are individual
     const auto vars = wum->getVars();
     const auto &varInit = getArchetype().getWUVarInitialisers();
-    if(getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+    const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
+    const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+    if((proceduralWeights && updateRole) || individualWeights) {
+        // If we're performing a procedural update or we're initializing individual variables
+        if((proceduralWeights && updateRole) || !updateRole) {
+            // Add heterogeneous variable initialization parameters and derived parameters
+            gen.addHeterogeneousVarInitParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+                                              &SynapseGroupMergedBase::isWUVarInitParamHeterogeneous);
+
+            gen.addHeterogeneousVarInitDerivedParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
+                                                     &SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous);
+        }
+
+        // Loop through variables
         for(size_t v = 0; v < vars.size(); v++) {
-            // If we're not initialising or if there is initialization code for this variable
+            // If we're updating or if there is initialization code for this variable 
+            // (otherwise, it's not needed during initialization)
             const auto var = vars[v];
             if(updateRole || !varInit[v].getSnippet()->getCode().empty()) {
                 addWeightSharingPointerField(gen, var.type, var.name, backend.getArrayPrefix() + var.name);
             }
 
-            // If we're initializing, add any var init EGPs to structure
+            // If we're performing a procedural update or we're initializing, add any var init EGPs to structure
             // **THINK** weight sharing?
-            if(!updateRole) {
+            if((proceduralWeights && updateRole) || !updateRole) {
                 gen.addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getArrayPrefix(), var.name);
             }
         }
     }
-    // Otherwise, if WU variables are global, loop through them
-    else if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL && !updateRole) {
+    // Otherwise, if WU variables are global and this is an update kernel
+    // **NOTE** global variable values aren't useful during initialization
+    else if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL && updateRole) {
         for(size_t v = 0; v < vars.size(); v++) {
             // If variable should be implemented heterogeneously, add scalar field
             if(isWUGlobalVarHeterogeneous(v)) {
@@ -1342,16 +1358,6 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
                                    });
             }
         }
-    }
-
-    // If synaptic matrix weights are procedural or we are initializing
-    if(getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL || !updateRole) {
-        // Add heterogeneous variable initialization parameters and derived parameters
-        gen.addHeterogeneousVarInitParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                                          &SynapseGroupMergedBase::isWUVarInitParamHeterogeneous);
-
-        gen.addHeterogeneousVarInitDerivedParams(wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                                                 &SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous);
     }
 
     // Generate structure definitions and instantiation
