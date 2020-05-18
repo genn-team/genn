@@ -996,17 +996,21 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         const auto *psm = s.second.getPSModel();
 
         // If group isn't a weight sharing slave and per-synapse variables should be individual
+        const bool individualWeights = (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+        const bool proceduralWeights = (s.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         std::vector<std::string> synapseGroupStatePushPullFunctions;
-        if (!s.second.isWeightSharingSlave() && s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+        if (!s.second.isWeightSharingSlave() && (individualWeights || proceduralWeights)) {
             const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
 
             const auto wuVars = wu->getVars();
             for(size_t i = 0; i < wuVars.size(); i++) {
                 const auto *varInitSnippet = s.second.getWUVarInitialisers()[i].getSnippet();
-                const bool autoInitialized = !varInitSnippet->getCode().empty();
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
-                                s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
+                if(individualWeights) {
+                    const bool autoInitialized = !varInitSnippet->getCode().empty();
+                    mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                       runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
+                                       s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
+                }
 
                 // Loop through EGPs required to initialize WUM variable
                 const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
