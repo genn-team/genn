@@ -250,6 +250,18 @@ class Variable(object):
         self.needs_allocation = False
         self.set_values(values)
 
+    def set_extra_global_init_param(self, param_name, param_values):
+        # Check that this variable is initialised with 
+        if not isinstance(self.init_val, VarInit):
+            raise ValueError("Extra global initialisation parameters can only "
+                             "be set on variables configured using variable "
+                             "initialization snippets")
+        
+        # Set extra global init params
+        self.group._set_extra_global_param(param_name, param_values, 
+                                           self.init_val.get_snippet(),
+                                           self.extra_global_params)
+    
     def set_values(self, values):
         """Set Variable's values
 

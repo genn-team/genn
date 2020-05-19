@@ -187,6 +187,10 @@ class Group(object):
             else:
                 assert not var_data.init_required
                 var_data.view = None
+            
+            # Load any var initialisation egps associated with this variable
+            self._load_egp(var_data.extra_global_params, var_name)
+                
 
     def _reinitialise_vars(self, size=None, var_dict=None):
         # If no size is specified, use standard size
@@ -203,7 +207,7 @@ class Group(object):
             if var_data.init_required:
                 var_data.view[:] = var_data.values
 
-    def _load_egp(self, egp_dict=None):
+    def _load_egp(self, egp_dict=None, egp_suffix=""):
         # If no EGP dictionary is specified, use standard one
         if egp_dict is None:
             egp_dict = self.extra_global_params
@@ -212,17 +216,17 @@ class Group(object):
         for egp_name, egp_data in iteritems(egp_dict):
             if egp_data.is_scalar:
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_single(egp_name,
+                egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
                                                             egp_data.type)
                 # Copy values
                 egp_data.view[:] = egp_data.values
             else:
                 # Allocate memory
-                self._model._slm.allocate_extra_global_param(self.name, egp_name,
-                                                             len(egp_data.values))
+                self._model._slm.allocate_extra_global_param(
+                    self.name, egp_name + egp_suffix, len(egp_data.values))
 
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_array(egp_name,
+                egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
                                                            len(egp_data.values), 
                                                            egp_data.type)
 
@@ -230,8 +234,8 @@ class Group(object):
                 egp_data.view[:] = egp_data.values
 
                 # Push egp_data
-                self._model._slm.push_extra_global_param(self.name, egp_name,
-                                                         len(egp_data.values))
+                self._model._slm.push_extra_global_param(
+                    self.name, egp_name + egp_suffix, len(egp_data.values))
 
 class NeuronGroup(Group):
 
