@@ -420,6 +420,18 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
             updateNeuronsKernelParams.insert({ getVarPrefix() + v.name + ng.second.getName(), "__global " + v.type + "*" });
         }
     }
+    // Local synapse groups
+    for (const auto& sg : model.getLocalSynapseGroups()) {
+        // Postsynaptic model
+        if (sg.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+            auto* psm = sg.second.getPSModel();
+            for (const auto& v : psm->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    updateNeuronsKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                }
+            }
+        }
+    }
     updateNeuronsKernelParams.insert({ "DT", "const float" });
     for (const auto& arg : updateNeuronsKernelParams) {
         os << arg.second << " " << arg.first << ", ";
@@ -948,24 +960,15 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
 
     // Collecting common parameters for KernelPresynapticUpdate, KernelPostsynapticUpdate and KernelSynapseDynamicsUpdate
     for (const auto& sg : model.getLocalSynapseGroups()) {
-        // Postsynaptic model
-        auto* psm = sg.second.getPSModel();
-        for (const auto& v : psm->getVars()) {
-            if (v.access == VarAccess::READ_WRITE) {
-                if (hasPresynapticUpdateKernel) {
-                    presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-                if (hasPostsynapticUpdateKernel) {
-                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-                if (hasSynapseDynamicsUpdateKernel) {
-                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-        }
         // Weight update model
         auto* wum = sg.second.getWUModel();
-        for (const auto& v : wum->getVars()) {
+        std::vector<Models::Base::Var> allVars;
+        if (sg.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+            allVars.insert(allVars.end(), wum->getVars().begin(), wum->getVars().end());
+        }
+        allVars.insert(allVars.end(), wum->getPreVars().begin(), wum->getPreVars().end());
+        allVars.insert(allVars.end(), wum->getPostVars().begin(), wum->getPostVars().end());
+        for (const auto& v : allVars) {
             if (v.access == VarAccess::READ_WRITE) {
                 if (hasPresynapticUpdateKernel) {
                     presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
@@ -1425,22 +1428,14 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     // Local synapse groups params
     for (const auto& sg : model.getLocalSynapseGroups()) {
         // Postsynaptic model
-        auto* psm = sg.second.getPSModel();
-        for (const auto& v : psm->getVars()) {
-            if (v.access == VarAccess::READ_WRITE) {
-                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                if (hasInitializeSparseKernel) {
-                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-            }
-        }
-        // Weight update model
-        auto* wum = sg.second.getWUModel();
-        for (const auto& v : wum->getVars()) {
-            if (v.access == VarAccess::READ_WRITE) {
-                initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                if (hasInitializeSparseKernel) {
-                    initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+        if (sg.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+            auto* psm = sg.second.getPSModel();
+            for (const auto& v : psm->getVars()) {
+                if (v.access == VarAccess::READ_WRITE) {
+                    initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                    if (hasInitializeSparseKernel) {
+                        initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
+                    }
                 }
             }
         }
