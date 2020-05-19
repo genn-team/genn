@@ -963,11 +963,14 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Weight update model
         auto* wum = sg.second.getWUModel();
         std::vector<Models::Base::Var> allVars;
+        const auto wuVars = wum->getVars();
+        const auto wuPreVars = wum->getPreVars();
+        const auto wuPostVars = wum->getPostVars();
         if (sg.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            allVars.insert(allVars.end(), wum->getVars().begin(), wum->getVars().end());
+            allVars.insert(allVars.end(), wuVars.begin(), wuVars.end());
         }
-        allVars.insert(allVars.end(), wum->getPreVars().begin(), wum->getPreVars().end());
-        allVars.insert(allVars.end(), wum->getPostVars().begin(), wum->getPostVars().end());
+        allVars.insert(allVars.end(), wuPreVars.begin(), wuPreVars.end());
+        allVars.insert(allVars.end(), wuPostVars.begin(), wuPostVars.end());
         for (const auto& v : allVars) {
             if (v.access == VarAccess::READ_WRITE) {
                 if (hasPresynapticUpdateKernel) {
@@ -1444,10 +1447,12 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     // KernelInitialize definition
     os << "__kernel void " << KernelNames[KernelInitialize] << "(";
     std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
-    initializeKernelParams.insert({ getVarPrefix() + "glbSpkCnt" + nmName, "__global unsigned int*" });
-    initializeKernelParams.insert({ getVarPrefix() + "glbSpk" + nmName, "__global unsigned int*" });
     // Local neuron groups params
     for (const auto& ng : model.getLocalNeuronGroups()) {
+        // Overwriting / inserting glbSpk variables
+        initializeKernelParams[getVarPrefix() + "glbSpkCnt" + ng.second.getName()] = "__global unsigned int*";
+        initializeKernelParams[getVarPrefix() + "glbSpk" + ng.second.getName()] = "__global unsigned int*";
+
         auto* nm = ng.second.getNeuronModel();
         for (const auto& v : nm->getVars()) {
             // Initialize only READ_WRITE variables
@@ -2280,7 +2285,7 @@ void Backend::genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInterna
     bool delayRequired = std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
         [](const ModelSpec::SynapseGroupValueType& s)
         {
-            return s.second.getDelaySteps() != NO_DELAY;
+            return (s.second.getDelaySteps() != NO_DELAY || s.second.getBackPropDelaySteps() != NO_DELAY);
         });
     if (delayRequired) {
         int i = 0;
