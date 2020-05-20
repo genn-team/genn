@@ -736,7 +736,7 @@ void CodeGenerator::NeuronInitGroupMerged::generateWUVar(MergedStructGenerator<N
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
             const auto var = vars.at(v);
-            if(!varInit[v].getSnippet()->getCode().empty()) {
+            if(!varInit.at(v).getSnippet()->getCode().empty()) {
                 assert(!Utils::isTypePointer(var.type));
                 gen.addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
                              [i, var, &backend, &sortedSyn](const NeuronGroupInternal &, size_t groupIndex)
@@ -746,14 +746,14 @@ void CodeGenerator::NeuronInitGroupMerged::generateWUVar(MergedStructGenerator<N
             }
 
             // Also add any heterogeneous, derived or extra global parameters required for initializers
-            const auto *varInitSnippet = sg->getWUPreVarInitialisers().at(v).getSnippet();
+            const auto *varInitSnippet = varInit.at(v).getSnippet();
             auto getVarInitialiserFn = [&sortedSyn](size_t groupIndex, size_t childIndex)
                                        {
                                            return sortedSyn.at(groupIndex).at(childIndex)->getWUPreVarInitialisers();
                                        };
-            addHeterogeneousChildVarInitParams<NeuronInitGroupMerged>(gen, varInitSnippet->getParamNames(), i, v, vars[v].name + fieldPrefixStem,
+            addHeterogeneousChildVarInitParams<NeuronInitGroupMerged>(gen, varInitSnippet->getParamNames(), i, v, var.name + fieldPrefixStem,
                                                                       isParamHeterogeneous, getVarInitialiserFn);
-            addHeterogeneousChildVarInitDerivedParams<NeuronInitGroupMerged>(gen, varInitSnippet->getDerivedParams(), i, v, vars[v].name + fieldPrefixStem,
+            addHeterogeneousChildVarInitDerivedParams<NeuronInitGroupMerged>(gen, varInitSnippet->getDerivedParams(), i, v, var.name + fieldPrefixStem,
                                                                              isDerivedParamHeterogeneous, getVarInitialiserFn);
             addChildEGPs(gen, varInitSnippet->getExtraGlobalParams(), i, backend.getArrayPrefix(), var.name + fieldPrefixStem,
                          [var, &sortedSyn](size_t groupIndex, size_t childIndex)
