@@ -1294,14 +1294,29 @@ void CodeGenerator::SynapseGroupMergedBase::generate(const BackendBase &backend,
             // If we're updating or if there is initialization code for this variable 
             // (otherwise, it's not needed during initialization)
             const auto var = vars[v];
-            if(individualWeights && (updateRole || !varInit[v].getSnippet()->getCode().empty())) {
+            if(individualWeights && (updateRole || !varInit.at(v).getSnippet()->getCode().empty())) {
                 addWeightSharingPointerField(gen, var.type, var.name, backend.getArrayPrefix() + var.name);
             }
 
             // If we're performing a procedural update or we're initializing, add any var init EGPs to structure
-            // **THINK** weight sharing?
             if((proceduralWeights && updateRole) || !updateRole) {
-                gen.addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getArrayPrefix(), var.name);
+                const auto egps = varInit.at(v).getSnippet()->getExtraGlobalParams();
+                for(const auto &e : egps) {
+                    const bool isPointer = Utils::isTypePointer(e.type);
+                    const std::string prefix = isPointer ? backend.getArrayPrefix() : "";
+                    gen.addField(e.type, e.name + var.name,
+                                 [e, prefix, var](const SynapseGroupInternal &sg, size_t) 
+                                 {
+                                     if(sg.isWeightSharingSlave()) {
+                                         return prefix + e.name + var.name + sg.getWeightSharingMaster()->getName();
+                                     }
+                                     else {
+                                         return prefix + e.name + var.name + sg.getName();
+                                     }
+                                
+                                 },
+                                 isPointer ? decltype(gen)::FieldType::PointerEGP : decltype(gen)::FieldType::ScalarEGP);
+                }
             }
         }
     }
