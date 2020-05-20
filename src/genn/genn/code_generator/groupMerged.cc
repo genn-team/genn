@@ -574,93 +574,69 @@ void CodeGenerator::NeuronUpdateGroupMerged::generate(const BackendBase &backend
 
     // Loop through incoming synapse groups with postsynaptic update code
     const auto inSynWithPostCode = getArchetype().getInSynWithPostCode();
-    for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
-        const auto *sg = inSynWithPostCode[i];
-
-        // Loop through postsynaptic variables
-        const auto vars = sg->getWUModel()->getPostVars();
-        for(size_t v = 0; v < vars.size(); v++) {
-            // Add pointers to state variable
-            const auto var = vars[v];
-            assert(!Utils::isTypePointer(var.type));
-            gen.addField(var.type + "*", var.name + "WUPost" + std::to_string(i),
-                         [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
-                         {
-                             return backend.getArrayPrefix() + var.name + m_SortedInSynWithPostCode.at(groupIndex).at(i)->getName();
-                         });
-        }
-
-        // Add any heterogeneous parameters
-        const auto paramNames = sg->getWUModel()->getParamNames();
-        addHeterogeneousChildParams<NeuronUpdateGroupMerged>(gen, paramNames, i, "WUPost", &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
-                                                             [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                                             {
-                                                                 return m_SortedInSynWithPostCode.at(groupIndex).at(childIndex)->getWUParams().at(paramIndex);
-                                                             });
-
-        // Add any heterogeneous derived parameters
-        const auto derivedParams = sg->getWUModel()->getDerivedParams();
-        addHeterogeneousChildDerivedParams<NeuronUpdateGroupMerged>(gen, derivedParams, i, "WUPost", &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous,
-                                                                    [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                                                    {
-                                                                        return m_SortedInSynWithPostCode.at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
-                                                                    });
-
-        // Add EGPs
-        addChildEGPs(gen, sg->getWUModel()->getExtraGlobalParams(), i, backend.getArrayPrefix(), "WUPost",
-                     [this](size_t groupIndex, size_t childIndex)
-                     {
-                         return m_SortedInSynWithPostCode.at(groupIndex).at(childIndex)->getName();
-                     });
-    }
-
+    generateWUVar(gen, backend, "WUPost", inSynWithPostCode, m_SortedInSynWithPostCode,
+                  &WeightUpdateModels::Base::getPostVars, &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
+                  &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
+    
     // Loop through outgoing synapse groups with presynaptic update code
     const auto outSynWithPreCode = getArchetype().getOutSynWithPreCode();
-    for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
-        const auto *sg = outSynWithPreCode[i];
-
-        // Loop through presynaptic variables
-        const auto vars = sg->getWUModel()->getPreVars();
-        for(size_t v = 0; v < vars.size(); v++) {
-            // Add pointers to state variable
-            const auto var = vars[v];
-            assert(!Utils::isTypePointer(var.type));
-            gen.addField(var.type + "*", var.name + "WUPre" + std::to_string(i),
-                         [i, var, &backend, this](const NeuronGroupInternal &, size_t groupIndex)
-                         {
-                             return backend.getArrayPrefix() + var.name + m_SortedOutSynWithPreCode.at(groupIndex).at(i)->getName();
-                         });
-        }
-
-        // Add any heterogeneous parameters
-        const auto paramNames = sg->getWUModel()->getParamNames();
-        addHeterogeneousChildParams<NeuronUpdateGroupMerged>(gen, paramNames, i, "WUPre", &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
-                                                             [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                                             {
-                                                                 return m_SortedOutSynWithPreCode.at(groupIndex).at(childIndex)->getWUParams().at(paramIndex);
-                                                             });
-
-        // Add any heterogeneous derived parameters
-        const auto derivedParams = sg->getWUModel()->getDerivedParams();
-        addHeterogeneousChildDerivedParams<NeuronUpdateGroupMerged>(gen, derivedParams, i, "WUPre", &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous,
-                                                                    [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                                                    {
-                                                                        return m_SortedOutSynWithPreCode.at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
-                                                                    });
-
-        // Add EGPs
-        addChildEGPs(gen, sg->getWUModel()->getExtraGlobalParams(), i, backend.getArrayPrefix(), "WUPre",
-                     [this](size_t groupIndex, size_t childIndex)
-                     {
-                         return m_SortedOutSynWithPreCode.at(groupIndex).at(childIndex)->getName();
-                     });
-    }
+    generateWUVar(gen, backend, "WUPre", outSynWithPreCode, m_SortedOutSynWithPreCode,
+                  &WeightUpdateModels::Base::getPreVars, &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
+                  &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous);
 
     // Generate structure definitions and instantiation
     gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                  mergedStructData, "NeuronUpdate");
 }
+//----------------------------------------------------------------------------
+void CodeGenerator::NeuronUpdateGroupMerged::generateWUVar(MergedStructGenerator<NeuronGroupMergedBase> &gen, const BackendBase &backend, 
+                                                           const std::string &fieldPrefixStem, const std::vector<SynapseGroupInternal *> &archetypeSyn,
+                                                           const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
+                                                           Models::Base::VarVec (WeightUpdateModels::Base::*getVars)(void) const,
+                                                           bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
+                                                           bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const
+{
+    // Loop through synapse groups
+    for(size_t i = 0; i < archetypeSyn.size(); i++) {
+        const auto *sg = archetypeSyn[i];
 
+        // Loop through variables
+        const auto vars = (sg->getWUModel()->*getVars)();
+        for(size_t v = 0; v < vars.size(); v++) {
+            // Add pointers to state variable
+            const auto var = vars[v];
+            assert(!Utils::isTypePointer(var.type));
+            gen.addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
+                         [i, var, &backend, &sortedSyn](const NeuronGroupInternal &, size_t groupIndex)
+                         {
+                             return backend.getArrayPrefix() + var.name + sortedSyn.at(groupIndex).at(i)->getName();
+                         });
+        }
+
+        // Add any heterogeneous parameters
+        const auto paramNames = sg->getWUModel()->getParamNames();
+        addHeterogeneousChildParams<NeuronUpdateGroupMerged>(gen, paramNames, i, fieldPrefixStem, isParamHeterogeneous,
+                                                             [&sortedSyn](size_t groupIndex, size_t childIndex, size_t paramIndex)
+                                                             {
+                                                                 return sortedSyn.at(groupIndex).at(childIndex)->getWUParams().at(paramIndex);
+                                                             });
+
+        // Add any heterogeneous derived parameters
+        const auto derivedParams = sg->getWUModel()->getDerivedParams();
+        addHeterogeneousChildDerivedParams<NeuronUpdateGroupMerged>(gen, derivedParams, i, fieldPrefixStem, isDerivedParamHeterogeneous,
+                                                                    [&sortedSyn](size_t groupIndex, size_t childIndex, size_t paramIndex)
+                                                                    {
+                                                                        return sortedSyn.at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
+                                                                    });
+
+        // Add EGPs
+        addChildEGPs(gen, sg->getWUModel()->getExtraGlobalParams(), i, backend.getArrayPrefix(), fieldPrefixStem,
+                     [&sortedSyn](size_t groupIndex, size_t childIndex)
+                     {
+                         return sortedSyn.at(groupIndex).at(childIndex)->getName();
+                     });
+    }
+}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronInitGroupMerged
