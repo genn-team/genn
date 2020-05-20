@@ -419,6 +419,71 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
 }
 
+TEST(SynapseGroup, InvalidMatrixTypes)
+{
+    ModelSpecInternal model;
+
+    // Add four neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsA", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsB", 20, paramVals, varVals);
+
+    // Check that making a synapse group with procedural connectivity fails if no connectivity initialiser is specified
+    try {
+        model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+            "NeuronsA_NeuronsB_1", SynapseMatrixType::PROCEDURAL_GLOBALG, NO_DELAY,
+            "NeuronsA", "NeuronsB",
+            {}, {1.0},
+            {}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Check that making a synapse group with procedural connectivity and STDP fails
+    try {
+        InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProbParams(0.1);
+        STDPAdditive::ParamValues params(10.0, 10.0, 0.01, 0.01, 0.0, 1.0);
+        STDPAdditive::VarValues varVals(0.0);
+        STDPAdditive::PreVarValues preVarVals(0.0);
+        STDPAdditive::PostVarValues postVarVals(0.0);
+
+        model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>("NeuronsA_NeuronsB_2", SynapseMatrixType::PROCEDURAL_GLOBALG, NO_DELAY,
+                                                                                "NeuronsA", "NeuronsB",
+                                                                                params, varVals, preVarVals, postVarVals,
+                                                                                {}, {},
+                                                                                initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParams));
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Check that making a synapse group with dense connections and procedural weights fails if var initialialisers use random numbers
+    try {
+        model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+            "NeuronsA_NeuronsB_3", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
+            "NeuronsA", "NeuronsB",
+            {}, {initVar<InitVarSnippet::Uniform>({0.0, 1.0})},
+            {}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+    /*
+        // If weight update model has code for continuous synapse dynamics, give error
+        // **THINK** this would actually be pretty trivial to implement
+        if (!m_WUModel->getSynapseDynamicsCode().empty()) {
+            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
+        }
+    }
+    // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
+    else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
+        if(::Utils::isRNGRequired(m_WUVarInitialisers)) {
+            throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
+        }
+    }*/
+}
 
 TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
 {
