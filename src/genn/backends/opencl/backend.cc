@@ -163,7 +163,6 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                 CodeStream::Scope b(preNeuronResetKernelBody);
 
                 if (n.second.isDelayRequired()) { // with delay
-                    preNeuronResetKernelBody << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
                     preNeuronResetKernelParams.insert({ "spkQuePtr" + n.first, "volatile unsigned int" });
 
                     if (n.second.isSpikeEventRequired()) {
@@ -1843,14 +1842,14 @@ MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type,
     auto allocation = MemAlloc::zero();
 
     if (loc & VarLocation::HOST) {
-        os << name << " = (" << type << "*)malloc(" << count << " * sizeof(" << type << "));" << std::endl;
+        os << name << " = (" << type << "*)calloc(" << count << ", sizeof(" << type << "));" << std::endl;
         allocation += MemAlloc::host(count * getSize(type));
     }
 
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
         if (!(loc & VarLocation::HOST)) {
-            os << name << " = (" << type << "*)malloc(" << count << " * sizeof(" << type << "));" << std::endl;
+            os << name << " = (" << type << "*)calloc(" << count << ", sizeof(" << type << "));" << std::endl;
             allocation += MemAlloc::host(count * getSize(type));
         }
         os << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << count << " * sizeof (" << type << "), " << name << ");" << std::endl;
@@ -1893,12 +1892,12 @@ void Backend::genExtraGlobalParamAllocation(CodeStream& os, const std::string& t
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
 
     if (loc & VarLocation::HOST) {
-        os << name << " = (" << underlyingType << "*)malloc(count * sizeof(" << underlyingType << "));" << std::endl;
+        os << name << " = (" << underlyingType << "*)calloc(count, sizeof(" << underlyingType << "));" << std::endl;
     }
 
     // If variable is present on device at all
     if (loc & VarLocation::DEVICE) {
-        os << getVarPrefix() << name << " = (" << underlyingType << "*)malloc(count * sizeof(" << underlyingType << "));" << std::endl;
+        os << getVarPrefix() << name << " = (" << underlyingType << "*)calloc(count, sizeof(" << underlyingType << "));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
