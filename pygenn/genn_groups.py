@@ -188,9 +188,6 @@ class Group(object):
                 assert not var_data.init_required
                 var_data.view = None
 
-            # Load any var initialisation egps associated with this variable
-            self._load_egp(var_data.extra_global_params, var_name)
-
     def _reinitialise_vars(self, size=None, var_dict=None):
         # If no size is specified, use standard size
         if size is None:
@@ -235,6 +232,16 @@ class Group(object):
                 # Push egp_data
                 self._model._slm.push_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
+                    
+    def _load_var_init_egps(self, var_dict=None):
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+        
+        # Loop through variables and load any associated initialisation egps
+        for var_name, var_data in iteritems(var_dict):
+            self._load_egp(var_data.extra_global_params, var_name)
+
 
 class NeuronGroup(Group):
 
@@ -351,6 +358,10 @@ class NeuronGroup(Group):
 
         # Load neuron extra global params
         self._load_egp()
+    
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
 
     def reinitialise(self):
         """Reinitialise neuron group"""
@@ -805,10 +816,22 @@ class SynapseGroup(Group):
         self._load_egp()
         self._load_egp(self.psm_extra_global_params)
 
-    def load_connectivity_init_egps(self):
+    def load_init_egps(self):
         # If population isn't a weight-sharing slave
         if self.weight_sharing_master is None:
+            # Load any egps used for connectivity initialisation
             self._load_egp(self.connectivity_extra_global_params)
+            
+            # Load any egps used for variable initialisation
+            self._load_var_init_egps()
+
+        # Load any egps used for postsynaptic model variable initialisation
+        if self.has_individual_postsynaptic_vars:
+            self._load_var_init_egps(self.psm_vars)
+        
+        # Load any egps used for pre and postsynaptic variable initialisation
+        self._load_var_init_egps(self.pre_vars)
+        self._load_var_init_egps(self.post_vars)
 
     def reinitialise(self):
         """Reinitialise synapse group"""
@@ -934,6 +957,10 @@ class CurrentSource(Group):
 
         # Load current source extra global parameters
         self._load_egp()
+    
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
 
     def reinitialise(self):
         """Reinitialise current source"""

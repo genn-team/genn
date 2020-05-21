@@ -492,10 +492,19 @@ class GeNNModel(object):
         self._slm.allocate_mem()
 
         # Loop through synapse populations and load any 
-        # extra global parameters required for connectivity init
+        # extra global parameters required for initialization
+        for pop_data in itervalues(self.neuron_populations):
+            pop_data.load_init_egps()
+            
+        # Loop through synapse populations and load any 
+        # extra global parameters required for initialization
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.load_connectivity_init_egps()
+            pop_data.load_init_egps()
 
+        # Loop through current sources
+        for src_data in itervalues(self.current_sources):
+            src_data.load_init_egps()
+    
         # Initialize model
         self._slm.initialize()
 
