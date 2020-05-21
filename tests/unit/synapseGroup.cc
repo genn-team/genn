@@ -57,6 +57,17 @@ public:
 };
 IMPLEMENT_MODEL(STDPAdditive);
 
+class Continuous : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_MODEL(Continuous, 0, 1);
+
+    SET_VARS({{"g", "scalar"}});
+
+    SET_SYNAPSE_DYNAMICS_CODE("$(addToInSyn, $(g) * $(V_pre));\n");
+};
+IMPLEMENT_MODEL(Continuous);
+
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
@@ -459,10 +470,23 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     catch(const std::runtime_error &) {
     }
 
+    // Check that making a synapse group with procedural connectivity and synapse dynamics fails
+    try {
+        InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProbParams(0.1);
+        model.addSynapsePopulation<Continuous, PostsynapticModels::DeltaCurr>("NeuronsA_NeuronsB_3", SynapseMatrixType::PROCEDURAL_GLOBALG, NO_DELAY,
+                                                                              "NeuronsA", "NeuronsB",
+                                                                              {}, {0.0}, {}, {},
+                                                                              {}, {},
+                                                                              initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParams));
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
     // Check that making a synapse group with dense connections and procedural weights fails if var initialialisers use random numbers
     try {
         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-            "NeuronsA_NeuronsB_3", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
+            "NeuronsA_NeuronsB_4", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
             "NeuronsA", "NeuronsB",
             {}, {initVar<InitVarSnippet::Uniform>({0.0, 1.0})},
             {}, {});
@@ -470,19 +494,6 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     }
     catch(const std::runtime_error &) {
     }
-    /*
-        // If weight update model has code for continuous synapse dynamics, give error
-        // **THINK** this would actually be pretty trivial to implement
-        if (!m_WUModel->getSynapseDynamicsCode().empty()) {
-            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
-        }
-    }
-    // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
-    else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
-        if(::Utils::isRNGRequired(m_WUVarInitialisers)) {
-            throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
-        }
-    }*/
 }
 
 TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
