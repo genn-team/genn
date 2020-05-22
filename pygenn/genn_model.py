@@ -692,6 +692,13 @@ def init_var(init_var_snippet, param_space):
         prepare_snippet(init_var_snippet, param_space,
                         genn_wrapper.InitVarSnippet)
 
+    # **YUCK** VarInit (and GeNN) assume that the snippet will live forever but
+    # as far as Python is concerned, s_instance is never used again so it will be
+    # destroyed. Disowning it here hands over it's ownership to C++
+    # **NOTE** this isn't the case with models as references to neuron and synapse
+    # models are kept within NeuronGroup and SynapseGroup objects
+    s_instance.__disown__()
+
     # Use add function to create suitable VarInit
     return VarInit(s_instance, params)
 
