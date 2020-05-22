@@ -11,6 +11,7 @@
 #include "models.h"
 #include "snippet.h"
 #include "variableMode.h"
+#include "generateRunner.h"
 
 // Forward declarations
 class ModelSpecInternal;
@@ -169,4 +170,10 @@ void neuronSubstitutionsInSynapticCode(
     const std::string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
     const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
     const std::string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+
+//--------------------------------------------------------------------------
+/*! \brief Generate minimum and maximum range definitions for a type.
+*/
+//--------------------------------------------------------------------------
+void genTypeRange(CodeStream& os, const std::string& precision, const std::string& prefix);
 }   // namespace CodeGenerator

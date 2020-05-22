@@ -549,4 +549,31 @@ void neuronSubstitutionsInSynapticCode(
     const std::string postOffset = sg.getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
     postNeuronSubstitutionsInSynapticCode(substitutions, sg, postOffset, backPropDelayMs, postIdx, devPrefix, postVarPrefix, postVarSuffix);
 }
+//--------------------------------------------------------------------------
+/*! \brief Generate minimum and maximum range definitions for a type.
+ */
+ //--------------------------------------------------------------------------
+void genTypeRange(CodeStream& os, const std::string& precision, const std::string& prefix)
+{
+    os << "#define " << prefix << "_MIN ";
+    if (precision == "float") {
+        writePreciseString(os, std::numeric_limits<float>::min());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::min());
+        os << std::endl;
+    }
+
+    os << "#define " << prefix << "_MAX ";
+    if (precision == "float") {
+        writePreciseString(os, std::numeric_limits<float>::max());
+        os << "f" << std::endl;
+    }
+    else {
+        writePreciseString(os, std::numeric_limits<double>::max());
+        os << std::endl;
+    }
+    os << std::endl;
+}
 }   // namespace CodeGenerator

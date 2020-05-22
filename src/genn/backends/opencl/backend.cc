@@ -15,6 +15,7 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/codeGenUtils.h"
+#include "code_generator/generateRunner.h"
 
 // OpenCL backend includes
 #include "utils.h"
@@ -374,7 +375,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                         updateNeuronsKernelParams.insert({ "d_glbSpk" + ng.getName(), "__global unsigned int*" }); // Add argument
                         if (ng.isSpikeTimeRequired()) {
                             updateNeuronsKernelBody << "d_sT" << ng.getName() << "[" << queueOffset << "n] = t;" << std::endl;
-                            updateNeuronsKernelParams.insert({ "d_sT" + ng.getName(), "__global unsigned int*" }); // Add argument
+                            updateNeuronsKernelParams.insert({ "d_sT" + ng.getName(), "__global scalar*" }); // Add argument
                         }
                     }
                 }
@@ -671,7 +672,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                                     const std::string inSyn = "d_inSyn" + sg.getPSModelTargetName() + "[" + popSubs["id"] + "]";
                                     presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
                                     if (sg.isPSModelMerged()) {
-                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision(), "local") << "(&" << inSyn << ", linSyn);" << std::endl;
+                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
                                     }
                                     else {
                                         presynapticUpdateKernelBody << inSyn << " += linSyn;" << std::endl;
@@ -689,7 +690,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                                     presynapticUpdateKernelParams.insert({ "d_inSyn" + sg.getPSModelTargetName(), "__global float*" });
 
                                     if (sg.isPSModelMerged()) {
-                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision(), "local") << "(&" << inSyn << ", shLg[localId]);" << std::endl;
+                                        presynapticUpdateKernelBody << getFloatAtomicAdd(model.getPrecision()) << "(&" << inSyn << ", shLg[localId]);" << std::endl;
                                     }
                                     else {
                                         presynapticUpdateKernelBody << inSyn << " += shLg[localId];" << std::endl;
@@ -1425,6 +1426,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     // Initialization kernels
     os << "extern \"C\" const char* " << ProgramNames[ProgramInitialize] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
+    genTypeRange(os, model.getTimePrecision(), "TIME");
 
     // Collecting common parameters for KernelInitialize and KernelInitializeSparse
     // Local synapse groups params
@@ -1545,6 +1547,17 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
             {
                 //! TO BE IMPLEMENTED - Using hard coded deviceRNGSeed for now
                 os << "unsigned int deviceRNGSeed = 0;" << std::endl;
+                for (const auto& s : model.getLocalSynapseGroups()) {
+                    // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
+                    if (s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                        const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
+                    }
+                    // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
+                    else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
+                        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
+                    }
+                }
                 os << std::endl;
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
                 os << std::endl;
@@ -1852,7 +1865,7 @@ MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type,
             os << name << " = (" << type << "*)calloc(" << count << ", sizeof(" << type << "));" << std::endl;
             allocation += MemAlloc::host(count * getSize(type));
         }
-        os << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << count << " * sizeof (" << type << "), " << name << ");" << std::endl;
+        os << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << count << " * sizeof(" << type << "), " << name << ");" << std::endl;
         allocation += MemAlloc::device(count * getSize(type));
     }
 
@@ -1990,12 +2003,16 @@ void Backend::genCurrentVariablePush(CodeStream& os, const NeuronGroupInternal& 
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
+        //! TO BE IMPLEMENTED - Current push not applicable for OpenCL
+        /*
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << getVarPrefix() << name << ng.getName();
         os << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]";
         os << ", " << "CL_TRUE";
         os << ", " << "0";
         os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-        os << ", " << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+        os << ", &" << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+        */
+        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
     }
     // Otherwise, generate standard push
     else {
@@ -2008,12 +2025,16 @@ void Backend::genCurrentVariablePull(CodeStream& os, const NeuronGroupInternal& 
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
+        //! TO BE IMPLEMENTED - Current pull not applicable for OpenCL
+        /*
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << name << ng.getName();
         os << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]";
         os << ", " << "CL_TRUE";
         os << ", " << "0";
         os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-        os << ", " << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+        os << ", &" << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+        */
+        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons());
     }
     // Otherwise, generate standard push
     else {
