@@ -72,12 +72,12 @@ class Group(object):
 
     def push_var_to_device(self, var_name):
         """Wrapper around GeNNModel.push_var_to_device
-        
+
         Args:
         var_name    --  string with the name of the variable
         """
         self._model.push_var_to_device(self.name, var_name)
-    
+
     def push_extra_global_param_to_device(self, egp_name, size=1):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
 
@@ -98,7 +98,7 @@ class Group(object):
         # If no EGP dictionary is specified, use standard one
         if egp_dict is None:
             egp_dict = self.extra_global_params
-        
+
         param_type = None
         for p in model.get_extra_global_params():
             if p.name == param_name:
@@ -127,14 +127,14 @@ class Group(object):
         """
 
         internal_var_name = var_name + self.name
-        
+
         if var_type == "scalar":
             var_type = self._model._scalar
-        
+
         return genn_types[var_type].assign_ext_ptr_array(self._model._slm,
                                                          internal_var_name,
                                                          var_size)
-    
+
     def _assign_ext_ptr_single(self, var_name, var_type):
         """Assign a variable to an external scalar value containing one element
 
@@ -152,13 +152,13 @@ class Group(object):
         """
 
         internal_var_name = var_name + self.name
-        
+
         if var_type == "scalar":
             var_type = self._model._scalar
-        
+
         return genn_types[var_type].assign_ext_ptr_single(self._model._slm,
                                                           internal_var_name)
-        
+
     def _load_vars(self, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
         if size is None:
@@ -203,7 +203,7 @@ class Group(object):
             if var_data.init_required:
                 var_data.view[:] = var_data.values
 
-    def _load_egp(self, egp_dict=None):
+    def _load_egp(self, egp_dict=None, egp_suffix=""):
         # If no EGP dictionary is specified, use standard one
         if egp_dict is None:
             egp_dict = self.extra_global_params
@@ -212,17 +212,17 @@ class Group(object):
         for egp_name, egp_data in iteritems(egp_dict):
             if egp_data.is_scalar:
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_single(egp_name,
+                egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
                                                             egp_data.type)
                 # Copy values
                 egp_data.view[:] = egp_data.values
             else:
                 # Allocate memory
-                self._model._slm.allocate_extra_global_param(self.name, egp_name,
-                                                             len(egp_data.values))
+                self._model._slm.allocate_extra_global_param(
+                    self.name, egp_name + egp_suffix, len(egp_data.values))
 
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_array(egp_name,
+                egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
                                                            len(egp_data.values), 
                                                            egp_data.type)
 
@@ -230,8 +230,18 @@ class Group(object):
                 egp_data.view[:] = egp_data.values
 
                 # Push egp_data
-                self._model._slm.push_extra_global_param(self.name, egp_name,
-                                                         len(egp_data.values))
+                self._model._slm.push_extra_global_param(
+                    self.name, egp_name + egp_suffix, len(egp_data.values))
+                    
+    def _load_var_init_egps(self, var_dict=None):
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+        
+        # Loop through variables and load any associated initialisation egps
+        for var_name, var_data in iteritems(var_dict):
+            self._load_egp(var_data.extra_global_params, var_name)
+
 
 class NeuronGroup(Group):
 
@@ -277,7 +287,7 @@ class NeuronGroup(Group):
         """
         (self.neuron, self.type, self.param_names, self.params,
          self.var_names, self.vars) = model_preprocessor.prepare_model(
-             model, param_space, var_space,
+             model, self, param_space, var_space, self,
              model_family=genn_wrapper.NeuronModels)
 
         if self.type == "SpikeSourceArray":
@@ -348,6 +358,10 @@ class NeuronGroup(Group):
 
         # Load neuron extra global params
         self._load_egp()
+    
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
 
     def reinitialise(self):
         """Reinitialise neuron group"""
@@ -446,7 +460,7 @@ class SynapseGroup(Group):
              self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
              self.wu_post_var_names, post_var_dict) =\
                  model_preprocessor.prepare_model(
-                     model, param_space, var_space, pre_var_space,
+                     model, self, param_space, var_space, pre_var_space,
                      post_var_space, model_family=genn_wrapper.WeightUpdateModels)
 
             self.vars.update(var_dict)
@@ -463,7 +477,7 @@ class SynapseGroup(Group):
         """
         (self.postsyn, self.ps_type, self.ps_param_names, self.ps_params,
          self.ps_var_names, var_dict) = model_preprocessor.prepare_model(
-             model, param_space, var_space,
+             model, self, param_space, var_space,
              model_family=genn_wrapper.PostsynapticModels)
 
         self.psm_vars.update(var_dict)
@@ -644,7 +658,7 @@ class SynapseGroup(Group):
         ps_var_ini = model_preprocessor.var_space_to_vals(
                 self.postsyn, {vn: self.psm_vars[vn]
                                for vn in self.ps_var_names})
-       
+
         if self.weight_sharing_master is None:
             add_fct = getattr(
                 model_spec,
@@ -730,7 +744,7 @@ class SynapseGroup(Group):
     def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
         self._model.push_connectivity_to_device(self.name)
-    
+
     def load(self):
         # If synapse population has non-dense connectivity 
         # which requires initialising manually
@@ -765,10 +779,10 @@ class SynapseGroup(Group):
                 raise Exception("For sparse projections, the connections"
                                 "must be set before loading a model")
 
-        # If population has individual synapse variables
-        if self.has_individual_synapse_vars:
-            # Loop through weight update model state variables
-            for var_name, var_data in iteritems(self.vars):
+        # Loop through weight update model state variables
+        for var_name, var_data in iteritems(self.vars):
+            # If population has individual synapse variables
+            if self.has_individual_synapse_vars:
                 # If variable is located on host
                 var_loc = self.pop.get_wuvar_location(var_name) 
                 if (var_loc & VarLocation_HOST) != 0:
@@ -782,6 +796,9 @@ class SynapseGroup(Group):
                     assert not var_data.init_required
                     var_data.view = None
 
+            # Load any var initialisation egps associated with this variable
+            self._load_egp(var_data.extra_global_params, var_name)
+
         # Load weight update model presynaptic variables
         self._load_vars(self.src.size, self.pre_vars,
                         self.pop.get_wupre_var_location)
@@ -794,16 +811,28 @@ class SynapseGroup(Group):
         if self.has_individual_postsynaptic_vars:
             self._load_vars(self.trg.size, self.psm_vars,
                             self.pop.get_psvar_location)
-        
+
         # Load extra global parameters
         self._load_egp()
         self._load_egp(self.psm_extra_global_params)
-    
-    def load_connectivity_init_egps(self):
+
+    def load_init_egps(self):
         # If population isn't a weight-sharing slave
         if self.weight_sharing_master is None:
+            # Load any egps used for connectivity initialisation
             self._load_egp(self.connectivity_extra_global_params)
-    
+            
+            # Load any egps used for variable initialisation
+            self._load_var_init_egps()
+
+        # Load any egps used for postsynaptic model variable initialisation
+        if self.has_individual_postsynaptic_vars:
+            self._load_var_init_egps(self.psm_vars)
+        
+        # Load any egps used for pre and postsynaptic variable initialisation
+        self._load_var_init_egps(self.pre_vars)
+        self._load_var_init_egps(self.post_vars)
+
     def reinitialise(self):
         """Reinitialise synapse group"""
         # If population has individual synapse variables
@@ -882,7 +911,7 @@ class CurrentSource(Group):
         """
         (self.current_source_model, self.type, self.param_names, self.params,
          self.var_names, self.vars) = model_preprocessor.prepare_model(
-             model, param_space, var_space,
+             model, self, param_space, var_space,
              model_family=genn_wrapper.CurrentSourceModels)
 
     def add_to(self, nn_model, pop):
@@ -928,6 +957,10 @@ class CurrentSource(Group):
 
         # Load current source extra global parameters
         self._load_egp()
+    
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
 
     def reinitialise(self):
         """Reinitialise current source"""

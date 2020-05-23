@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "decode_matrix_conn_gen_proceduralg_dense", "decode_matrix_conn_gen_proceduralg_dense.vcxproj", "{A6EDBA29-5B61-4DF2-ACC4-EB2AA6014F33}"
+	ProjectSection(ProjectDependencies) = postProject
+		{443CB371-495D-4910-A1F8-BED8A61A634} = {443CB371-495D-4910-A1F8-BED8A61A634}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "decode_matrix_conn_gen_proceduralg_dense_CODE\runner.vcxproj", "{443CB371-495D-4910-A1F8-BED8A61A634}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A6EDBA29-5B61-4DF2-ACC4-EB2AA6014F33}.Debug|x64.ActiveCfg = Debug|x64
+		{A6EDBA29-5B61-4DF2-ACC4-EB2AA6014F33}.Debug|x64.Build.0 = Debug|x64
+		{A6EDBA29-5B61-4DF2-ACC4-EB2AA6014F33}.Release|x64.ActiveCfg = Release|x64
+		{A6EDBA29-5B61-4DF2-ACC4-EB2AA6014F33}.Release|x64.Build.0 = Release|x64
+		{443CB371-495D-4910-A1F8-BED8A61A634}.Debug|x64.ActiveCfg = Debug|x64
+		{443CB371-495D-4910-A1F8-BED8A61A634}.Debug|x64.Build.0 = Debug|x64
+		{443CB371-495D-4910-A1F8-BED8A61A634}.Release|x64.ActiveCfg = Release|x64
+		{443CB371-495D-4910-A1F8-BED8A61A634}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -399,6 +399,18 @@ public:
 
 private:
     //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    //! Helper to generate merged struct fields for WU pre and post vars
+    void generateWUVar(MergedStructGenerator<NeuronGroupMergedBase> &gen, const BackendBase &backend,
+                       const std::string &fieldPrefixStem, 
+                       const std::vector<SynapseGroupInternal*> &archetypeSyn,
+                       const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
+                       Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
+                       bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
+                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const;
+
+    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
@@ -432,6 +444,20 @@ public:
                   const std::string &timePrecision) const;
 
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    //! Helper to generate merged struct fields for WU pre and post vars
+    void generateWUVar(MergedStructGenerator<NeuronGroupMergedBase> &gen, const BackendBase &backend,
+                       const std::string &fieldPrefixStem,
+                       const std::vector<SynapseGroupInternal *> &archetypeSyn,
+                       const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
+                       Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
+                       const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialisers)(void) const,
+                       bool(NeuronInitGroupMerged::*isParamHeterogeneous)(size_t, size_t, size_t) const,
+                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t, size_t) const) const;
+
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

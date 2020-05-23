@@ -451,6 +451,12 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
             throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
         }
     }
+    // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
+    else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
+        if(::Utils::isRNGRequired(m_WUVarInitialisers)) {
+            throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
+        }
+    }
 
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
     // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks

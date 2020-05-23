@@ -34,6 +34,75 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
                                          sourceSuffix, "group.");
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group.");
 }
+//--------------------------------------------------------------------------
+void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Substitutions &popSubs,
+                         const CodeGenerator::NeuronUpdateGroupMerged &ng, const std::string &fieldPrefixStem,
+                         const std::string &precision, const std::string &sourceSuffix,
+                         const std::vector<SynapseGroupInternal*> &archetypeSyn,
+                         unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
+                         Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
+                         std::string(WeightUpdateModels::Base::*getCode)(void) const,
+                         bool(CodeGenerator::NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
+                         bool(CodeGenerator::NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const)
+{
+    using namespace CodeGenerator;
+
+    // Loop through synaptic populations
+    for(size_t i = 0; i < archetypeSyn.size(); i++) {
+        const SynapseGroupInternal *sg = archetypeSyn[i];
+        Substitutions subs(&popSubs);
+        CodeStream::Scope b(os);
+
+        // Fetch variables from global memory
+        os << "// perform WUM update required for merged" << i << std::endl;
+        const auto vars = (sg->getWUModel()->*getVars)();
+        const bool delayed = ((sg->*getDelaySteps)() != NO_DELAY);
+        for(const auto &v : vars) {
+            if(v.access == VarAccess::READ_ONLY) {
+                os << "const ";
+            }
+            os << v.type << " l" << v.name << " = group." << v.name << fieldPrefixStem << i << "[";
+            if(delayed) {
+                os << "readDelayOffset + ";
+            }
+            os << subs["id"] << "];" << std::endl;
+        }
+
+        subs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
+                                       [i, isParamHeterogeneous , &ng](size_t k) { return (ng.*isParamHeterogeneous)(i, k); },
+                                       "", "group.", fieldPrefixStem + std::to_string(i));
+        subs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams(),
+                                     [i, isDerivedParamHeterogeneous , &ng](size_t k) { return (ng.*isDerivedParamHeterogeneous)(i, k); },
+                                     "", "group.", fieldPrefixStem + std::to_string(i));
+        subs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group.", fieldPrefixStem + std::to_string(i));
+        subs.addVarNameSubstitution(vars, "", "l");
+
+        const std::string offset = ng.getArchetype().isDelayRequired() ? "readDelayOffset + " : "";
+        neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, "", subs["id"], sourceSuffix, "", "", "",
+                                          [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
+                                          [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
+
+        // Perform standard substitutions
+        std::string code = (sg->getWUModel()->*getCode)();
+        subs.applyCheckUnreplaced(code, "spikeCode : merged" + std::to_string(i));
+        code = ensureFtype(code, precision);
+        os << code;
+
+        // Write back presynaptic variables into global memory
+        for(const auto &v : vars) {
+            // If state variables is read/write - meaning that it may have been updated - or it is delayed -
+            // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
+            // back to global state variables dd_V etc 
+            if((v.access == VarAccess::READ_WRITE) || delayed) {
+                os << "group." << v.name << fieldPrefixStem << i << "[";
+                if(delayed) {
+                    os << "writeDelayOffset + ";
+                }
+                os << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
+            }
+        }
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -409,118 +478,20 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
         // WU var update handler
         [&backend, &modelMerged](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
-            // Loop through outgoing synaptic populations with presynaptic update code
-            const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
-            for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
-                const SynapseGroupInternal *sg = outSynWithPreCode[i];
-                Substitutions preSubs(&popSubs);
+            // Generate var update for outgoing synaptic populations with presynaptic update code
+            generateWUVarUpdate(os, popSubs, ng, "WUPre", modelMerged.getModel().getPrecision(), "_pre",
+                                ng.getArchetype().getOutSynWithPreCode(), &SynapseGroupInternal::getDelaySteps,
+                                &WeightUpdateModels::Base::getPreVars, &WeightUpdateModels::Base::getPreSpikeCode,
+                                &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous, 
+                                &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous);
+            
 
-                CodeStream::Scope b(os);
-                os << "// perform presynaptic update required for merged " << i << std::endl;
-
-                // Fetch presynaptic variables from global memory
-                for(const auto &v : sg->getWUModel()->getPreVars()) {
-                    if(v.access == VarAccess::READ_ONLY) {
-                        os << "const ";
-                    }
-                    os << v.type << " l" << v.name << " = group." << v.name << "WUPre" << i << "[";
-                    if (sg->getDelaySteps() != NO_DELAY) {
-                        os << "readDelayOffset + ";
-                    }
-                    os << preSubs["id"] << "];" << std::endl;
-                }
-                preSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
-                                                  [i, &ng](size_t k) { return ng.isOutSynWUMParamHeterogeneous(i, k); },
-                                                  "", "group.", "WUPre" + std::to_string(i));
-                preSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams(),
-                                                [i, &ng](size_t k) { return ng.isOutSynWUMDerivedParamHeterogeneous(i, k); },
-                                                "", "group.", "WUPre" + std::to_string(i));
-                preSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group.", "WUPre" + std::to_string(i));
-                preSubs.addVarNameSubstitution(sg->getWUModel()->getPreVars(), "", "l");
-
-                const std::string offset = sg->getSrcNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                neuronSubstitutionsInSynapticCode(preSubs, sg->getSrcNeuronGroup(), offset, "", preSubs["id"], "_pre", "", "", "",
-                                                  [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
-                                                  [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
-
-                // Perform standard substitutions
-                std::string code = sg->getWUModel()->getPreSpikeCode();
-                preSubs.applyCheckUnreplaced(code, "preSpikeCode :merged" + std::to_string(i));
-                code = ensureFtype(code, modelMerged.getModel().getPrecision());
-                os << code;
-
-                // Loop through presynaptic variables into global memory
-                for(const auto &v : sg->getWUModel()->getPreVars()) {
-                    // If state variables is read/write - meaning that it may have been updated - or it is axonally delayed -
-                    // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
-                    // back to global state variables dd_V etc
-                    const bool delayed = (sg->getDelaySteps() != NO_DELAY);
-                    if((v.access == VarAccess::READ_WRITE) || delayed) {
-                        os << "group." << v.name << "WUPre" << i << "[";
-                        if (delayed) {
-                            os << "writeDelayOffset + ";
-                        }
-                        os << preSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
-                    }
-                }
-            }
-
-            // Loop through incoming synaptic populations with postsynaptic code
-            const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
-            for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
-                const SynapseGroupInternal *sg = inSynWithPostCode[i];
-                Substitutions postSubs(&popSubs);
-                CodeStream::Scope b(os);
-
-                os << "// perform postsynaptic update required for merged" << i << std::endl;
-
-                // Fetch postsynaptic variables from global memory
-                for(const auto &v : sg->getWUModel()->getPostVars()) {
-                    if(v.access == VarAccess::READ_ONLY) {
-                        os << "const ";
-                    }
-                    os << v.type << " l" << v.name << " = group." << v.name << "WUPost" << i << "[";
-                    if (sg->getBackPropDelaySteps() != NO_DELAY) {
-                        os << "readDelayOffset + ";
-                    }
-                    os << postSubs["id"] << "];" << std::endl;
-                }
-
-                postSubs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
-                                                   [i, &ng](size_t k) { return ng.isInSynWUMParamHeterogeneous(i, k); },
-                                                   "", "group.", "WUPost" + std::to_string(i));
-                postSubs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams(),
-                                                 [i, &ng](size_t k) { return ng.isInSynWUMDerivedParamHeterogeneous(i, k); },
-                                                 "", "group.", "WUPost" + std::to_string(i));
-                postSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group.", "WUPost" + std::to_string(i));
-                postSubs.addVarNameSubstitution(sg->getWUModel()->getPostVars(), "", "l");
-
-                const std::string offset = sg->getTrgNeuronGroup()->isDelayRequired() ? "readDelayOffset + " : "";
-                neuronSubstitutionsInSynapticCode(postSubs, sg->getTrgNeuronGroup(), offset, "", postSubs["id"], "_post", "", "", "",
-                                                  [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
-                                                  [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
-
-                // Perform standard substitutions
-                std::string code = sg->getWUModel()->getPostSpikeCode();
-                postSubs.applyCheckUnreplaced(code, "postSpikeCode : merged" + std::to_string(i));
-                code = ensureFtype(code, modelMerged.getModel().getPrecision());
-                os << code;
-
-                // Write back presynaptic variables into global memory
-                for(const auto &v : sg->getWUModel()->getPostVars()) {
-                    // If state variables is read/write - meaning that it may have been updated - or it is dendritically delayed -
-                    // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
-                    // back to global state variables dd_V etc
-                    const bool delayed = (sg->getBackPropDelaySteps() != NO_DELAY);
-                    if((v.access == VarAccess::READ_WRITE) || delayed) {
-                        os << "group." << v.name << "WUPost" << i << "[";
-                        if (delayed) {
-                            os << "writeDelayOffset + ";
-                        }
-                        os << popSubs["id"] <<  "] = l" << v.name << ";" << std::endl;
-                    }
-                }
-            }
+            // Generate var update for incoming synaptic populations with postsynaptic code
+            generateWUVarUpdate(os, popSubs, ng, "WUPost", modelMerged.getModel().getPrecision(), "_post",
+                                ng.getArchetype().getInSynWithPostCode(), &SynapseGroupInternal::getBackPropDelaySteps,
+                                &WeightUpdateModels::Base::getPostVars, &WeightUpdateModels::Base::getPostSpikeCode,
+                                &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
+                                &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
         },
         // Push EGP handler
         [&backend, &mergedStructData](CodeStream &os)
