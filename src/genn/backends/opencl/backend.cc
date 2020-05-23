@@ -15,7 +15,6 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/substitutions.h"
 #include "code_generator/codeGenUtils.h"
-#include "code_generator/generateRunner.h"
 
 // OpenCL backend includes
 #include "utils.h"
@@ -490,6 +489,15 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
             CodeStream::Scope b(os);
             genKernelArgIfDelayRequired(os, model, KernelNames[KernelNeuronUpdate], updateNeuronsKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << updateNeuronsKernelParams.size() /*last arg*/ << ", t));" << std::endl;
+            {
+                int argCnt = 0;
+                for (const auto& param : updateNeuronsKernelParams) {
+                    if (param.second.rfind("__global", 0) != 0 && param.second.rfind("__local", 0) != 0 && param.first != "DT") {
+                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << argCnt << ", " << param.first << "));" << std::endl;
+                    }
+                    argCnt++;
+                }
+            }
             os << std::endl;
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
@@ -906,6 +914,14 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << "extern \"C\" const char* " << ProgramNames[ProgramSynapsesUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
 
+    // Definitions for bitmask
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// bit tool macros" << std::endl;
+    os << "#define B(x,i) ((x) & (0x80000000 >> (i))) //!< Extract the bit at the specified position i from x" << std::endl;
+    os << "#define setB(x,i) x= ((x) | (0x80000000 >> (i))) //!< Set the bit at the specified position i in x to 1" << std::endl;
+    os << "#define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0" << std::endl;
+    os << std::endl;
+
     // Float atomic add function
     if (hasPresynapticUpdateKernel || hasSynapseDynamicsUpdateKernel) {
         std::vector<std::string> memoryTypes = { "global" };
@@ -952,7 +968,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         os << ")";
         {
             CodeStream::Scope b(os);
-            os << preSynapseResetKernelBodyStream.str();
+            divideKernelStreamInParts(os, preSynapseResetKernelBodyStream, 5000);
         }
 
         os << std::endl;
@@ -995,7 +1011,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         os << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
-            os << presynapticUpdateKernelBodyStream.str();
+            divideKernelStreamInParts(os, presynapticUpdateKernelBodyStream, 5000);
         }
 
         os << std::endl;
@@ -1010,7 +1026,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         os << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
-            os << postsynapticUpdateKernelBodyStream.str();
+            divideKernelStreamInParts(os, postsynapticUpdateKernelBodyStream, 5000);
         }
 
         os << std::endl;
@@ -1025,7 +1041,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         os << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(os);
-            os << synapseDynamicsUpdateKernelBodyStream.str();
+            divideKernelStreamInParts(os, synapseDynamicsUpdateKernelBodyStream, 5000);
         }
 
         os << std::endl;
@@ -1492,7 +1508,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         os << ")";
         {
             CodeStream::Scope b(os);
-            os << initializeSparseKernelBodyStream.str();
+            divideKernelStreamInParts(os, initializeSparseKernelBodyStream, 5000);
         }
         os << std::endl;
     }
@@ -2316,6 +2332,26 @@ void Backend::genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInterna
             }
             i++;
         }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::divideKernelStreamInParts(CodeStream& os, std::stringstream& kernelCode, int partLength) const
+{
+    std::string kernelStr = kernelCode.str();
+    int parts = (int)kernelStr.length() / partLength;
+    int partsUpperLimit = parts * partLength;
+    if (parts > 1) {
+        for (int i = 0; i < parts * partLength; i += partLength) {
+            if (i != 0) {
+                os << "R\"(";
+            }
+            os << kernelStr.substr(i, partLength) << ")\"" << std::endl;
+        }
+        // Last part
+        os << "R\"(" << kernelStr.substr(partsUpperLimit, kernelStr.length() - partsUpperLimit);
+    }
+    else {
+        os << kernelStr;
     }
 }
 //--------------------------------------------------------------------------

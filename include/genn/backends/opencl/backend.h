@@ -323,6 +323,8 @@ private:
 
     void genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInternal& model, const char* kernelName, const std::map<std::string, std::string>& params) const;
 
+    void divideKernelStreamInParts(CodeStream& os, std::stringstream& kernelCode, int partLength) const;
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------

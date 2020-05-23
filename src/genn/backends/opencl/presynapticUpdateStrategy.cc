@@ -106,7 +106,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
         }
         os << "const unsigned int npost = d_rowLength" << sg.getName() << "[preInd];" << std::endl;
 
-        params.insert({ "d_rowLength" + eventSuffix + sg.getName(), "__global unsigned int*" });
+        params.insert({ "d_rowLength" + sg.getName(), "__global unsigned int*" });
 
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << "if(";
@@ -122,6 +122,9 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             wumThreshHandler(threshOs, sg, threshSubs);
 
             std::string code = threshOsStream.str();
+
+            std::regex toReplace("fmodf");
+            code = std::regex_replace(code, toReplace, "fmod");
 
             os << code;
 
@@ -311,6 +314,9 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     wumThreshHandler(threshOs, sg, threshSubs);
 
                     std::string code = threshOsStream.str();
+
+                    std::regex toReplace("fmodf");
+                    code = std::regex_replace(code, toReplace, "fmod");
 
                     os << code;
 
