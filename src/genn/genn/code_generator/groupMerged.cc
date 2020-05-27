@@ -461,16 +461,20 @@ void CodeGenerator::NeuronGroupMergedBase::generate(MergedStructGenerator<Neuron
         }
     }
 
+    // Loop through all spike event conditions
     using FieldType = std::remove_reference<decltype(gen)>::type::FieldType;
     size_t i = 0;
     for(const auto &s : getArchetype().getSpikeEventCondition()) {
+        // If threshold condition references any EGPs
         if(s.egpInThresholdCode) {
+            // Loop through all EGPs in synapse group and add to merged group
+            // **TODO** should only be ones referenced
             const auto sgEGPs = s.synapseGroup->getWUModel()->getExtraGlobalParams();
             for(const auto &egp : sgEGPs) {
                 const bool isPointer = Utils::isTypePointer(egp.type);
                 const std::string prefix = isPointer ? backend.getArrayPrefix() : "";
                 gen.addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
-                             [&eventThresholdSGs, prefix, egp, i](const NeuronGroupInternal &, size_t groupIndex)
+                             [eventThresholdSGs, prefix, egp, i](const NeuronGroupInternal &, size_t groupIndex)
                              {
                                  return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
                              },
