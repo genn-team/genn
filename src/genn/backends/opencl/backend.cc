@@ -387,6 +387,11 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     // Neuron update kernels
     os << "extern \"C\" const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
+    os << "#define DT " << std::to_string(model.getDT());
+    if (model.getTimePrecision() == "float") {
+        os << "f";
+    }
+    os << std::endl << std::endl;
     // KernelPreNeuronReset definition
     os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
     {
@@ -431,7 +436,6 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
             }
         }
     }
-    updateNeuronsKernelParams.insert({ "DT", "const float" });
     for (const auto& arg : updateNeuronsKernelParams) {
         os << arg.second << " " << arg.first << ", ";
     }
@@ -480,24 +484,16 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         CodeStream::Scope b(os);
         if (idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
-            genKernelArgIfDelayRequired(os, model, KernelNames[KernelPreNeuronReset], preNeuronResetKernelParams);
+            genKernelHostArgs(os, KernelPreNeuronReset, preNeuronResetKernelParams);
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
         }
         if (idStart > 0) {
             CodeStream::Scope b(os);
-            genKernelArgIfDelayRequired(os, model, KernelNames[KernelNeuronUpdate], updateNeuronsKernelParams);
+            genKernelHostArgs(os, KernelNeuronUpdate, updateNeuronsKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << updateNeuronsKernelParams.size() /*last arg*/ << ", t));" << std::endl;
-            {
-                int argCnt = 0;
-                for (const auto& param : updateNeuronsKernelParams) {
-                    if (param.second.rfind("__global", 0) != 0 && param.second.rfind("__local", 0) != 0 && param.first != "DT") {
-                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << argCnt << ", " << param.first << "));" << std::endl;
-                    }
-                    argCnt++;
-                }
-            }
+
             os << std::endl;
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
@@ -1107,6 +1103,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch pre-synapse reset kernel if required
         if (idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
+            genKernelHostArgs(os, KernelPreSynapseReset, preSynapseResetKernelParams);
             genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
@@ -1115,7 +1112,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch synapse dynamics kernel if required
         if (idSynapseDynamicsStart > 0) {
             CodeStream::Scope b(os);
-            genKernelArgIfDelayRequired(os, model, KernelNames[KernelSynapseDynamicsUpdate], synapseDynamicsUpdateKernelParams);
+            genKernelHostArgs(os, KernelSynapseDynamicsUpdate, synapseDynamicsUpdateKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << synapseDynamicsUpdateKernelParams.size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
@@ -1126,7 +1123,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch presynaptic update kernel
         if (idPresynapticStart > 0) {
             CodeStream::Scope b(os);
-            genKernelArgIfDelayRequired(os, model, KernelNames[KernelPresynapticUpdate], presynapticUpdateKernelParams);
+            genKernelHostArgs(os, KernelPresynapticUpdate, presynapticUpdateKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << presynapticUpdateKernelParams.size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
@@ -1137,7 +1134,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         // Launch postsynaptic update kernel
         if (idPostsynapticStart > 0) {
             CodeStream::Scope b(os);
-            genKernelArgIfDelayRequired(os, model, KernelNames[KernelPostsynapticUpdate], postsynapticUpdateKernelParams);
+            genKernelHostArgs(os, KernelPostsynapticUpdate, postsynapticUpdateKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << postsynapticUpdateKernelParams.size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
@@ -1575,6 +1572,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
                     }
                 }
                 os << std::endl;
+                genKernelHostArgs(os, KernelInitialize, initializeKernelParams);
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
                 os << std::endl;
                 genKernelDimensions(os, KernelInitialize, idInitStart);
@@ -1599,6 +1597,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         if (idSparseInitStart > 0) {
             CodeStream::Scope b(os);
             {
+                genKernelHostArgs(os, KernelInitializeSparse, initializeSparseKernelParams);
                 genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
                 os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
@@ -2315,23 +2314,14 @@ bool Backend::isDeviceType(const std::string& type) const
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInternal& model, const char* kernelName, const std::map<std::string, std::string>& params) const
+void Backend::genKernelHostArgs(CodeStream& os, Kernel kernel, const std::map<std::string, std::string>& params) const
 {
-    // If delay required then include the "spkQuePtr" argument
-    bool delayRequired = std::any_of(model.getLocalSynapseGroups().cbegin(), model.getLocalSynapseGroups().cend(),
-        [](const ModelSpec::SynapseGroupValueType& s)
-        {
-            return (s.second.getDelaySteps() != NO_DELAY || s.second.getBackPropDelaySteps() != NO_DELAY);
-        });
-    if (delayRequired) {
-        int i = 0;
-        for (const auto& p : params) {
-            if (p.first.rfind("spkQuePtr", 0) == 0) {
-                os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(" << i << ", " << p.first << "));" << std::endl;
-                return;
-            }
-            i++;
+    int argCnt = 0;
+    for (const auto& param : params) {
+        if (!::Utils::isTypePointer(param.second)) {
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[kernel] << ".setArg(" << argCnt << ", " << param.first << "));" << std::endl;
         }
+        argCnt++;
     }
 }
 //--------------------------------------------------------------------------

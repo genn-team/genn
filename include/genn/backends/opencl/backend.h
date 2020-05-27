@@ -315,13 +315,13 @@ private:
 
     void genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const;
 
+    void genKernelHostArgs(CodeStream& os, Kernel kernel, const std::map<std::string, std::string>& params) const;
+
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string& type, size_t size);
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string& type) const;
-
-    void genKernelArgIfDelayRequired(CodeStream& os, const ModelSpecInternal& model, const char* kernelName, const std::map<std::string, std::string>& params) const;
 
     void divideKernelStreamInParts(CodeStream& os, std::stringstream& kernelCode, int partLength) const;
 
