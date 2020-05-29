@@ -908,6 +908,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
 
     // Actual kernels definitions
     os << "extern \"C\" const char* " << ProgramNames[ProgramSynapsesUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
+    os << "typedef unsigned char uint8_t;" << std::endl;
     os << std::endl;
 
     // Definitions for bitmask
@@ -984,16 +985,14 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
         allVars.insert(allVars.end(), wuPreVars.begin(), wuPreVars.end());
         allVars.insert(allVars.end(), wuPostVars.begin(), wuPostVars.end());
         for (const auto& v : allVars) {
-            if (v.access == VarAccess::READ_WRITE) {
-                if (hasPresynapticUpdateKernel) {
-                    presynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-                if (hasPostsynapticUpdateKernel) {
-                    postsynapticUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
-                if (hasSynapseDynamicsUpdateKernel) {
-                    synapseDynamicsUpdateKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
+            if (hasPresynapticUpdateKernel) {
+                presynapticUpdateKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
+            }
+            if (hasPostsynapticUpdateKernel) {
+                postsynapticUpdateKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
+            }
+            if (hasSynapseDynamicsUpdateKernel) {
+                synapseDynamicsUpdateKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
             }
         }
     }

@@ -112,6 +112,7 @@ public:
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return 0; }
+    virtual std::string getPointerPrefix() const override { return ""; };
 
 private:
     //--------------------------------------------------------------------------

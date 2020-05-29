@@ -211,6 +211,7 @@ public:
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override { return m_ChosenDevice.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>(); }
+    virtual std::string getPointerPrefix() const override { return "__global "; };
 
     //--------------------------------------------------------------------------
     // Public API

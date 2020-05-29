@@ -265,6 +265,9 @@ public:
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 
+    //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
+    virtual std::string getPointerPrefix() const = 0;
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------

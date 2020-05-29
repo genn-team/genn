@@ -126,14 +126,14 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
-                    os << model.getPrecision() << " &denDelayFront" << sg->getPSModelTargetName() << " = ";
-                    os << backend.getVarPrefix() << "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset(backend.getVarPrefix()) + popSubs["id"] + "];" << std::endl;
+                    os << backend.getPointerPrefix() << model.getPrecision() << " *denDelayFront" << sg->getPSModelTargetName() << " = ";
+                    os << "&" << backend.getVarPrefix() << "denDelay" + sg->getPSModelTargetName() + "[" + sg->getDendriticDelayOffset(backend.getVarPrefix()) + popSubs["id"] + "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
-                    os << "linSyn" + sg->getPSModelTargetName() + " += denDelayFront" << sg->getPSModelTargetName() << ";" << std::endl;
+                    os << "linSyn" + sg->getPSModelTargetName() + " += *denDelayFront" << sg->getPSModelTargetName() << ";" << std::endl;
 
                     // Zero delay buffer slot
-                    os << "denDelayFront" << sg->getPSModelTargetName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    os << "*denDelayFront" << sg->getPSModelTargetName() << " = " << model.scalarExpr(0.0) << ";" << std::endl;
                 }
 
                 // If synapse group has individual postsynaptic variables, also pull these in a coalesced access
