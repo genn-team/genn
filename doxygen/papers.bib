@@ -1,19 +1,19 @@
 @book{Traub1991,
-  title = {Neural Networks of the Hippocampus},
-  publisher = {Cambridge University Press},
-  year = {1991},
-  author = {R. D. Traub and R. Miles},
-  address = {New York}
+    title = {Neural Networks of the Hippocampus},
+    publisher = {Cambridge University Press},
+    year = {1991},
+    author = {R. D. Traub and R. Miles},
+    address = {New York}
 }
 
 @article{izhikevich2003simple,
-  title={Simple model of spiking neurons},
-  author={Izhikevich, Eugene M},
-  journal={IEEE Transactions on neural networks},
-  volume={14},
-  number={6},
-  pages={1569--1572},
-  year={2003}
+    title={Simple model of spiking neurons},
+    author={Izhikevich, Eugene M},
+    journal={IEEE Transactions on neural networks},
+    volume={14},
+    number={6},
+    pages={1569--1572},
+    year={2003}
 }
 
 @article{Morrison2008,
@@ -31,49 +31,92 @@
 }
 
 @article{nowotny2005self,
-  title={Self-organization in the olfactory system: one shot odor recognition in insects},
-  author={Nowotny, Thomas and Huerta, Ram{\'o}n and Abarbanel, Henry DI and Rabinovich, Mikhail I},
-  journal={Biological cybernetics},
-  volume={93},
-  number={6},
-  pages={436--446},
-  year={2005},
-  publisher={Springer},
-	doi={10.1007/s00422-005-0019-7} 
+    title={Self-organization in the olfactory system: one shot odor recognition in insects},
+    author={Nowotny, Thomas and Huerta, Ram{\'o}n and Abarbanel, Henry DI and Rabinovich, Mikhail I},
+    journal={Biological cybernetics},
+    volume={93},
+    number={6},
+    pages={436--446},
+    year={2005},
+    publisher={Springer},
+    doi={10.1007/s00422-005-0019-7} 
 
 }
 
 @article{Rulkov2002,
-  title={Modeling of spiking-bursting neural behavior using two-dimensional map},
-  author={Rulkov, Nikolai F},
-  journal={Physical Review E},
-  volume={65},
-  number={4},
-  pages={041922},
-  year={2002},
-  publisher={APS}
+    title={Modeling of spiking-bursting neural behavior using two-dimensional map},
+    author={Rulkov, Nikolai F},
+    journal={Physical Review E},
+    volume={65},
+    number={4},
+    pages={041922},
+    year={2002},
+    publisher={APS}
 }
 
 @INPROCEEDINGS{Nowotny2010,
-  author = {T.~Nowotny},
-  title = {Parallel implementation of a spiking neuronal network model of unsupervised
-	olfactory learning on {NVidia CUDA}},
-  booktitle = {IEEE World Congress on Computational Intelligence},
-  year = {2010},
-  editor = {P. Sobrevilla},
-  pages = {3238-3245},
-  address = {Barcelona},
-  organization = {IEEE}
+    author = {T.~Nowotny},
+    title = {Parallel implementation of a spiking neuronal network model of unsupervised
+    olfactory learning on {NVidia CUDA}},
+    booktitle = {IEEE World Congress on Computational Intelligence},
+    year = {2010},
+    editor = {P. Sobrevilla},
+    pages = {3238-3245},
+    address = {Barcelona},
+    organization = {IEEE}
 }
 
 @article {brian2genn2018,
-	author = {Stimberg, Marcel and Goodman, Dan F. M. and Nowotny, Thomas},
-	title = {Brian2GeNN: a system for accelerating a large variety of spiking neural networks with graphics hardware},
-	year = {2018},
-	doi = {10.1101/448050},
-	publisher = {Cold Spring Harbor Laboratory},
-	abstract = {"Brian" is a popular Python-based simulator for spiking neural networks, commonly used in computational neuroscience. GeNN is a C++-based meta-compiler for accelerating spiking neural network simulations using consumer or high performance grade graphics processing units (GPUs). Here we introduce a new software package, Brian2GeNN, that connects the two systems so that users can make use of GeNN GPU acceleration when developing their models in Brian, without requiring any technical knowledge about GPUs, C++ or GeNN. The new Brian2GeNN software uses a pipeline of code generation to translate Brian scripts into C++ code that can be used as input to GeNN, and subsequently can be run on suitable NVIDIA GPU accelerators. From the user{\textquoteright}s perspective, the entire pipeline is invoked by adding two simple lines to their Brian scripts. We have shown that using Brian2GeNN, typical models can run tens to hundreds of times faster than on CPU.},
-	URL = {https://www.biorxiv.org/content/early/2018/10/20/448050},
-	eprint = {https://www.biorxiv.org/content/early/2018/10/20/448050.full.pdf},
-	journal = {bioRxiv}
+    author = {Stimberg, Marcel and Goodman, Dan F. M. and Nowotny, Thomas},
+    title = {Brian2GeNN: a system for accelerating a large variety of spiking neural networks with graphics hardware},
+    year = {2018},
+    doi = {10.1101/448050},
+    publisher = {Cold Spring Harbor Laboratory},
+    abstract = {"Brian" is a popular Python-based simulator for spiking neural networks, commonly used in computational neuroscience. GeNN is a C++-based meta-compiler for accelerating spiking neural network simulations using consumer or high performance grade graphics processing units (GPUs). Here we introduce a new software package, Brian2GeNN, that connects the two systems so that users can make use of GeNN GPU acceleration when developing their models in Brian, without requiring any technical knowledge about GPUs, C++ or GeNN. The new Brian2GeNN software uses a pipeline of code generation to translate Brian scripts into C++ code that can be used as input to GeNN, and subsequently can be run on suitable NVIDIA GPU accelerators. From the user{\textquoteright}s perspective, the entire pipeline is invoked by adding two simple lines to their Brian scripts. We have shown that using Brian2GeNN, typical models can run tens to hundreds of times faster than on CPU.},
+    URL = {https://www.biorxiv.org/content/early/2018/10/20/448050},
+    eprint = {https://www.biorxiv.org/content/early/2018/10/20/448050.full.pdf},
+    journal = {bioRxiv}
 }
+
+@article{Knight2020,
+    abstract = {Large-scale simulations of spiking neural network models are an important tool for improving our understanding of the dynamics and ultimately the function of brains. However, even small mammals such as mice have on the order of 1{\{}$\backslash$texttimes{\}}10{\^{}}12 synaptic connections which, in simulations, are each typically charaterized by at least one floating-point value. This amounts to several terabytes of data - an unrealistic memory requirement for a single desktop machine. Large models are therefore typically simulated on distributed supercomputers which is costly and limits large-scale modelling to a few privileged research groups. In this work, we describe extensions to GeNN - our Graphical Processing Unit{\~{}}(GPU) accelerated spiking neural network simulator - that enable it to {\{}$\backslash$textquoteright{\}}procedurally{\{}$\backslash$textquoteright{\}} generate connectivity and synaptic weights {\{}$\backslash$textquoteright{\}}on the go{\{}$\backslash$textquoteright{\}} as spikes are triggered, instead of storing and retrieving them from memory. We find that GPUs are well-suited to this approach because of their raw computational power which, due to memory bandwidth limitations, is often under-utilised when simulating spiking neural networks. We demonstrate the value of our approach with a recent model of the Macaque visual cortex consisting of 4.13{\{}$\backslash$texttimes{\}}10{\^{}}6 neurons and 24.2{\{}$\backslash$texttimes{\}}10{\^{}}9 synapses. Using our new method, it can be simulated on a single GPU - a significant step forward in making large-scale brain modelling accessible to many more researchers. Our results match those obtained on a supercomputer and the simulation runs up to 35{\%} faster on a single high-end GPU than previously on over 1000 supercomputer nodes.Competing Interest StatementThe authors have declared no competing interest.},
+    author = {Knight, James C and Nowotny, Thomas},
+    doi = {10.1101/2020.04.27.063693},
+    journal = {bioRxiv},
+    publisher = {Cold Spring Harbor Laboratory},
+    title = {{Larger GPU-accelerated brain simulations with procedural connectivity}},
+    url = {https://www.biorxiv.org/content/10.1101/2020.04.27.063693v2},
+    year = {2020}
+}
+
+@article{Knight2018,
+    author = {Knight, James C. and Nowotny, Thomas},
+    doi = {10.3389/fnins.2018.00941},
+    issn = {1662-453X},
+    journal = {Frontiers in Neuroscience},
+    keywords = {GPU, high-performance computing, parallel computin,accuracy of simulation,benchmarking,computational neuroscience,energy to solution,gpu,high-performance computing,parallel computing,spiking neural networks},
+    number = {December},
+    pages = {1--19},
+    title = {{GPUs Outperform Current HPC and Neuromorphic Solutions in Terms of Speed and Energy When Simulating a Highly-Connected Cortical Model}},
+    url = {https://www.frontiersin.org/article/10.3389/fnins.2018.00941/full},
+    volume = {12},
+    year = {2018}
+}
+
+@article{Potjans2012,
+    author = {Potjans, Tobias C. and Diesmann, Markus},
+    doi = {10.1093/cercor/bhs358},
+    issn = {1460-2199},
+    journal = {Cerebral Cortex},
+    keywords = {connections,connectivity maps,cortical microcircuit,large-scale models,layered network,speci fi city of},
+    mendeley-groups = {Manchester PhD/Microcircuit},
+    month = {mar},
+    number = {3},
+    pages = {785--806},
+    pmid = {23203991},
+    title = {{The Cell-Type Specific Cortical Microcircuit: Relating Structure and Activity in a Full-Scale Spiking Network Model}},
+    url = {http://www.ncbi.nlm.nih.gov/pubmed/23203991 https://academic.oup.com/cercor/article-lookup/doi/10.1093/cercor/bhs358},
+    volume = {24},
+    year = {2014}
+}
+

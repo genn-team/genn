@@ -12,8 +12,6 @@ Izhikevich model and sparse connectivity by Esin Yavuz.
 
 Block size optimisations, delayed synapses and page-locked memory by James Turner.
 
-Automatic brackets and dense-to-sparse network conversion helper tools by Alan Diamond.
-
 User-defined synaptic and postsynaptic methods by Alex Cope and Esin Yavuz.
 
 Example projects were provided by Alan Diamond, James Turner, Esin Yavuz and Thomas Nowotny.
