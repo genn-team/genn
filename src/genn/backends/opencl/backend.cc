@@ -488,12 +488,12 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+            os << std::endl;
         }
         if (idStart > 0) {
             CodeStream::Scope b(os);
             genKernelHostArgs(os, KernelNeuronUpdate, updateNeuronsKernelParams);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << updateNeuronsKernelParams.size() /*last arg*/ << ", t));" << std::endl;
-
             os << std::endl;
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
@@ -536,9 +536,9 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
                     {
                         CodeStream::Scope b(preSynapseResetKernelBody);
 
-                        preSynapseResetKernelBody << "d_denDelayPtr" << sg->getPSModelTargetName() << " = (d_denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                        preSynapseResetKernelBody << "denDelayPtr" << sg->getPSModelTargetName() << " = (denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
 
-                        preSynapseResetKernelParams.insert({ "d_denDelayPtr" + sg->getPSModelTargetName(), "__global unsigned int*" });
+                        preSynapseResetKernelParams.insert({ "denDelayPtr" + sg->getPSModelTargetName(), "volatile unsigned int" });
                     }
                 }
             }
@@ -889,10 +889,10 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
 
                     // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                     if (sg.isDendriticDelayRequired()) {
-                        synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("d_", "$(1)") + synSubs["id_post"] + "], $(0))");
+                        synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + synSubs["id_post"] + "], $(0))");
 
                         synapseDynamicsUpdateKernelParams.insert({ "d_denDelay" + sg.getPSModelTargetName(), "__global unsigned int*" });
-                        synapseDynamicsUpdateKernelParams.insert({ "d_denDelayPtr" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                        synapseDynamicsUpdateKernelParams.insert({ "denDelayPtr" + sg.getPSModelTargetName(), "volatile unsigned int" });
                     }
                     // Otherwise
                     else {

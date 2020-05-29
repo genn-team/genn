@@ -285,13 +285,20 @@ private:
                 handler(subOs, g.second, popSubs);
 
                 std::string code = subOsStream.str();
-                os << code;
 
                 // Collect device variables in code
                 std::regex rgx("\\b" + getVarPrefix() + "\\w+\\b");
                 for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
+                    if (it->str().find("denDelayPtr") != std::string::npos) {
+                        std::regex toReplace(getVarPrefix() + "denDelayPtr");
+                        code = std::regex_replace(code, toReplace, "denDelayPtr");
+                        params.insert({ it->str().erase(0, getVarPrefix().size()), "volatile unsigned int" });
+                        continue;
+                    }
                     params.insert({ it->str(), "__global scalar*" });
                 }
+
+                os << code;
 
                 idStart += paddedSize;
                 os << CodeStream::CB(1) << std::endl;

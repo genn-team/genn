@@ -164,8 +164,9 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 
             // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
             if(sg.isDendriticDelayRequired()) {
-                synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("d_", "$(1)") + "ipost], $(0))");
-                params.insert({ "d_denDelay" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + "ipost], $(0))");
+                params.insert({ "d_denDelay" + sg.getPSModelTargetName(), "__global scalar*" });
+                params.insert({ "denDelayPtr" + sg.getPSModelTargetName(), "volatile unsigned int" });
             }
             // Otherwise
             else {
@@ -358,8 +359,9 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("d_", "$(1)") + synSubs["id_post"] + "], $(0))");
-                    params.insert({ "d_denDelay" + sg.getPSModelTargetName(), "__global unsigned int*" });
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&d_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("", "$(1)") + synSubs["id_post"] + "], $(0))");
+                    params.insert({ "d_denDelay" + sg.getPSModelTargetName(), "__global scalar*" });
+                    params.insert({ "denDelayPtr" + sg.getPSModelTargetName(), "volatile unsigned int" });
                 }
                 // Otherwise
                 else {
