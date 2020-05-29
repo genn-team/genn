@@ -26,8 +26,8 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                    const filesystem::path &outputPath, bool standaloneModules)
+std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+                                                                                        const filesystem::path &outputPath, bool standaloneModules)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -54,12 +54,13 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     ModelSpecMerged modelMerged(model, backend);
 
     // Generate modules
-    MergedEGPMap mergedEGPs;
-    auto mem = generateRunner(definitions, definitionsInternal, runner, mergedEGPs, modelMerged, backend);
-    generateNeuronUpdate(neuronUpdate, mergedEGPs, modelMerged, backend, standaloneModules);
-    generateSynapseUpdate(synapseUpdate, mergedEGPs, modelMerged, backend, standaloneModules);
-    generateInit(init, mergedEGPs, modelMerged, backend, standaloneModules);
-
+    //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
+    MergedStructData mergedStructData;
+    auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
+    auto mem = generateRunner(definitions, definitionsInternal, runner, mergedStructData, modelMerged, backend);
+    generateSynapseUpdate(synapseUpdate, mergedStructData, memorySpaces, modelMerged, backend);
+    generateNeuronUpdate(neuronUpdate, mergedStructData, memorySpaces, modelMerged, backend);
+    generateInit(init, mergedStructData, memorySpaces, modelMerged, backend);
     generateSupportCode(supportCode, modelMerged);
 
     // Create basic list of modules
@@ -83,19 +84,20 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
         }
 
         // Output summary to log
-        LOGI << "Merging model with " << model.getNeuronGroups().size() << " neuron groups and " << model.getSynapseGroups().size() << " synapse groups results in:";
-        LOGI << "\t" << modelMerged.getMergedNeuronUpdateGroups().size() << " merged neuron update groups";
-        LOGI << "\t" << modelMerged.getMergedPresynapticUpdateGroups().size() << " merged presynaptic update groups";
-        LOGI << "\t" << modelMerged.getMergedPostsynapticUpdateGroups().size() << " merged postsynaptic update groups";
-        LOGI << "\t" << modelMerged.getMergedSynapseDynamicsGroups().size() << " merged synapse dynamics groups";
-        LOGI << "\t" << modelMerged.getMergedNeuronInitGroups().size() << " merged neuron init groups";
-        LOGI << "\t" << modelMerged.getMergedSynapseDenseInitGroups().size() << " merged synapse dense init groups";
-        LOGI << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
-        LOGI << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
-        LOGI << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
-        LOGI << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
+        LOGI_CODE_GEN << "Merging model with " << model.getNeuronGroups().size() << " neuron groups and " << model.getSynapseGroups().size() << " synapse groups results in:";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronUpdateGroups().size() << " merged neuron update groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedPresynapticUpdateGroups().size() << " merged presynaptic update groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedPostsynapticUpdateGroups().size() << " merged postsynaptic update groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDynamicsGroups().size() << " merged synapse dynamics groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronInitGroups().size() << " merged neuron init groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDenseInitGroups().size() << " merged synapse dense init groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";
     }
 
     // Return list of modules
-    return modules;
+    return std::make_pair(modules, mem);
 }

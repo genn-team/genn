@@ -43,12 +43,13 @@ from collections import OrderedDict
 from importlib import import_module
 from os import path
 from platform import system
+from psutil import cpu_count
 from subprocess import check_call  # to call make
 from textwrap import dedent
 
 # 3rd party imports
 import numpy as np
-from six import iteritems, itervalues
+from six import iteritems, itervalues, string_types
 
 # pygenn imports
 from . import genn_wrapper
@@ -98,8 +99,6 @@ class GeNNModel(object):
         model_name      --  string name of the model. Defaults to "GeNNModel".
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
-        selected_gpu    --  integer specifying the id of the gpu in which the
-                            simulator wil run; None will select automatically
         """
         precision = "float" if precision is not None else precision
         self._scalar = precision
@@ -159,6 +158,14 @@ class GeNNModel(object):
             self._backend_name = backend
             self._backend_module = backend_modules[backend]
 
+    @property
+    def timing_enabled(self):
+        return self._model.is_timing_enabled()
+
+    @timing_enabled.setter
+    def timing_enabled(self, timing):
+        self._model.set_timing(timing)
+    
     @property
     def default_var_location(self):
         """Default variable location - defines
@@ -231,6 +238,30 @@ class GeNNModel(object):
             raise Exception("GeNN model already built")
         self._model.set_dt(dt)
 
+    @property
+    def neuron_update_time(self):
+        return self._slm.get_neuron_update_time()
+    
+    @property
+    def init_time(self):
+        return self._slm.get_init_time()
+        
+    @property
+    def presynaptic_update_time(self):
+        return self._slm.get_presynaptic_update_time()
+    
+    @property
+    def postsynaptic_update_time(self):
+        return self._slm.get_postsynaptic_update_time()
+
+    @property
+    def synapse_dynamics_time(self):
+        return self._slm.get_synapse_dynamics_time()
+
+    @property
+    def init_sparse_time(self):
+        return self._slm.get_init_sparse_time()
+
     def add_neuron_population(self, pop_name, num_neurons, neuron,
                               param_space, var_space):
         """Add a neuron population to the GeNN model
@@ -252,7 +283,7 @@ class GeNNModel(object):
             raise ValueError("Neuron population '{0}'"
                              "already exists".format(pop_name))
 
-        n_group = NeuronGroup(pop_name)
+        n_group = NeuronGroup(pop_name, self)
         n_group.set_neuron(neuron, param_space, var_space)
         n_group.add_to(self._model, int(num_neurons))
 
@@ -272,8 +303,8 @@ class GeNNModel(object):
         pop_name                    --  name of the new population
         matrix_type                 --  type of the matrix as string
         delay_steps                 --  delay in number of steps
-        source                      --  source neuron group
-        target                      --  target neuron group
+        source                      --  source neuron group (either name or NeuronGroup object)
+        target                      --  target neuron group (either name or NeuronGroup object)
         w_update_model              --  type of the WeightUpdateModels class
                                         as string or instance of weight update
                                         model class derived from
@@ -306,13 +337,11 @@ class GeNNModel(object):
             raise ValueError("synapse population '{0}' "
                              "already exists".format(pop_name))
 
-        if not isinstance(source, NeuronGroup):
-            raise ValueError("'source' myst be a NeuronGroup")
-
-        if not isinstance(target, NeuronGroup):
-            raise ValueError("'target' myst be a NeuronGroup")
-
-        s_group = SynapseGroup(pop_name)
+        # Validate source and target groups
+        source = self._validate_neuron_group(source, "source")
+        target = self._validate_neuron_group(target, "target")
+        
+        s_group = SynapseGroup(pop_name, self)
         s_group.matrix_type = matrix_type
         s_group.set_connected_populations(source, target)
         s_group.set_weight_update(w_update_model, wu_param_space, wu_var_space,
@@ -324,8 +353,53 @@ class GeNNModel(object):
         self.synapse_populations[pop_name] = s_group
 
         return s_group
+    
+    def add_slave_synapse_population(self, pop_name, master_pop, delay_steps,
+                                     source, target, postsyn_model,
+                                     ps_param_space, ps_var_space):
+        """Add a 'slave' population to the GeNN model which shares 
+        weights and connectivity with a 'master' population
 
-    def add_current_source(self, cs_name, current_source_model, pop_name,
+        Args:
+        pop_name                    --  name of the new population
+        master_pop                  --  master synapse group to share weights with 
+                                        (either name or SynapseGroup object)
+        delay_steps                 --  delay in number of steps
+        source                      --  source neuron group (either name or NeuronGroup object)
+        target                      --  target neuron group (either name or NeuronGroup object)
+        postsyn_model               --  type of the PostsynapticModels class
+                                        as string or instance of postsynaptic
+                                        model class derived from
+                                        ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also
+                                        pygenn.genn_model.create_custom_postsynaptic_class)
+        ps_param_space              --  dict with param values for the
+                                        PostsynapticModels class
+        ps_var_space                --  dict with initial variable values for
+                                        the PostsynapticModels class
+        """
+        if self._built:
+            raise Exception("GeNN model already built")
+
+        if pop_name in self.synapse_populations:
+            raise ValueError("synapse population '{0}' "
+                             "already exists".format(pop_name))
+        
+        # Validate source and target groups
+        source = self._validate_neuron_group(source, "source")
+        target = self._validate_neuron_group(target, "target")
+        
+        master_pop = self._validate_synapse_group(master_pop, "master_pop")
+        
+        s_group = SynapseGroup(pop_name, self, master_pop)
+        s_group.set_connected_populations(source, target)
+        s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
+        s_group.add_to(self._model, delay_steps)
+
+        self.synapse_populations[pop_name] = s_group
+
+        return s_group
+
+    def add_current_source(self, cs_name, current_source_model, pop,
                            param_space, var_space):
         """Add a current source to the GeNN model
 
@@ -336,8 +410,8 @@ class GeNNModel(object):
                                     class derived from
                                     ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also
                                     pygenn.genn_model.create_custom_current_source_class)
-        pop_name                --  name of the population into which the
-                                    current source should be injected
+        pop                     --  population into which the current source 
+                                    should be injected (either name or NeuronGroup object)
         param_space             --  dict with param values for the
                                     CurrentSourceModels class
         var_space               --  dict with initial variable values for the
@@ -345,17 +419,18 @@ class GeNNModel(object):
         """
         if self._built:
             raise Exception("GeNN model already built")
-        if pop_name not in self.neuron_populations:
-            raise ValueError("neuron population '{0}' "
-                             "does not exist".format(pop_name))
+
         if cs_name in self.current_sources:
             raise ValueError("current source '{0}' "
                              "already exists".format(cs_name))
 
-        c_source = CurrentSource(cs_name)
+        # Validate population
+        pop = self._validate_neuron_group(pop, "pop")
+        
+        c_source = CurrentSource(cs_name, self)
         c_source.set_current_source_model(current_source_model,
                                           param_space, var_space)
-        c_source.add_to(self._model, self.neuron_populations[pop_name])
+        c_source.add_to(self._model, pop)
 
         self.current_sources[cs_name] = c_source
 
@@ -391,7 +466,7 @@ class GeNNModel(object):
         backend = self._backend_module.create_backend(self._model, output_path, self.backend_log_level, preferences);
 
         # Generate code
-        genn_wrapper.generate_code(self._model, backend, output_path, 0)
+        mem_alloc = genn_wrapper.generate_code(self._model, backend, output_path, 0)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
         backend = None
@@ -401,47 +476,56 @@ class GeNNModel(object):
             check_call(["msbuild", "/p:Configuration=Release", "/m", "/verbosity:minimal",
                         path.join(output_path, "runner.vcxproj")])
         else:
-            check_call(["make", "-C", output_path])
+            check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
         self._built = True
+        return mem_alloc
 
-    def load(self):
+    def load(self, path_to_model="./"):
         """import the model as shared library and initialize it"""
-        if not self._built:
-            raise Exception("GeNN model has to be built before running")
-
         if self._loaded:
             raise Exception("GeNN model already loaded")
-
+        self._path_to_model = path_to_model
+        
         self._slm.open(self._path_to_model, self.model_name)
 
         self._slm.allocate_mem()
 
         # Loop through synapse populations and load any 
-        # extra global parameters required for connectivity init
+        # extra global parameters required for initialization
+        for pop_data in itervalues(self.neuron_populations):
+            pop_data.load_init_egps()
+            
+        # Loop through synapse populations and load any 
+        # extra global parameters required for initialization
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.load_connectivity_init_egps(self._slm, self._scalar)
+            pop_data.load_init_egps()
 
+        # Loop through current sources
+        for src_data in itervalues(self.current_sources):
+            src_data.load_init_egps()
+    
         # Initialize model
         self._slm.initialize()
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.load(self._slm, self._scalar)
+            pop_data.load()
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.load(self._slm, self._scalar)
+            pop_data.load()
 
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
-            src_data.load(self._slm, self._scalar)
+            src_data.load()
 
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
 
-        # Set loaded flag
+        # Set loaded flag and built flag
         self._loaded = True
+        self._built = True
 
     def reinitialise(self):
         """reinitialise model to its original state without re-loading"""
@@ -453,15 +537,15 @@ class GeNNModel(object):
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.reinitialise(self._slm, self._scalar)
+            pop_data.reinitialise()
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
-            pop_data.reinitialise(self._slm, self._scalar)
+            pop_data.reinitialise()
 
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
-            src_data.reinitialise(self._slm, self._scalar)
+            src_data.reinitialise()
 
         # Initialise any sparse variables
         self._slm.initialize_sparse()
@@ -508,6 +592,13 @@ class GeNNModel(object):
 
         self._slm.pull_var_from_device(pop_name, var_name)
 
+    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=1):
+        """Pull extra global parameter from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
+
+        self._slm.pull_extra_global_param(pop_name, egp_name, size)
+
     def push_state_to_device(self, pop_name):
         """Push state to the device for a given population"""
         if not self._loaded:
@@ -539,9 +630,16 @@ class GeNNModel(object):
     def push_var_to_device(self, pop_name, var_name):
         """Push variable to the device for a given population"""
         if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pulling")
+            raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_var_to_device(pop_name, var_name)
+
+    def push_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+        """Push extra global parameter to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_extra_global_param(pop_name, egp_name, size)
 
     def end(self):
         """Free memory"""
@@ -553,7 +651,40 @@ class GeNNModel(object):
                     if egp_dat.needsAllocation:
                         self._slm.free_extra_global_param(g_name, egp_name)
         # "normal" variables are freed when SharedLibraryModel is destoyed
-
+    
+    def _validate_neuron_group(self, group, context):
+        # If group is a string
+        if isinstance(group, string_types):
+            # If it's the name of a neuron group, return it
+            if group in self.neuron_populations:
+                return self.neuron_populations[group]
+            # Otherwise, raise error
+            else:
+                raise ValueError("'%s' neuron group '%s' not found" % 
+                                 (context, group))
+        # Otherwise, if group is a neuron group, return it
+        elif isinstance(group, NeuronGroup):
+            return group
+        # Otherwise, raise error
+        else:
+            raise ValueError("'%s' must be a NeuronGroup or string" % context)
+    
+    def _validate_synapse_group(self, group, context):
+        # If group is a string
+        if isinstance(group, string_types):
+            # If it's the name of a neuron group, return it
+            if group in self.synapse_populations:
+                return self.synapse_populations[group]
+            # Otherwise, raise error
+            else:
+                raise ValueError("'%s' synapse group '%s' not found" % 
+                                 (context, group))
+        # Otherwise, if group is a synapse group, return it
+        elif isinstance(group, SynapseGroup):
+            return group
+        # Otherwise, raise error
+        else:
+            raise ValueError("'%s' must be a SynapseGroup or string" % context)
 
 def init_var(init_var_snippet, param_space):
     """This helper function creates a VarInit object
@@ -569,6 +700,13 @@ def init_var(init_var_snippet, param_space):
     (s_instance, s_type, param_names, params) = \
         prepare_snippet(init_var_snippet, param_space,
                         genn_wrapper.InitVarSnippet)
+
+    # **YUCK** VarInit (and GeNN) assume that the snippet will live forever but
+    # as far as Python is concerned, s_instance is never used again so it will be
+    # destroyed. Disowning it here hands over it's ownership to C++
+    # **NOTE** this isn't the case with models as references to neuron and synapse
+    # models are kept within NeuronGroup and SynapseGroup objects
+    s_instance.__disown__()
 
     # Use add function to create suitable VarInit
     return VarInit(s_instance, params)
@@ -1012,7 +1150,9 @@ def create_cmlf_class(cml_func):
 
 def create_custom_init_var_snippet_class(class_name, param_names=None,
                                          derived_params=None,
-                                         var_init_code=None, custom_body=None):
+                                         var_init_code=None, 
+                                         extra_global_params=None,
+                                         custom_body=None):
     """This helper function creates a custom InitVarSnippet class.
     See also:
     create_custom_neuron_class
@@ -1030,6 +1170,8 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
                         name of the derived parameter and the second MUST be
                         an instance of the `pygenn.genn_wrapper.DerivedParamFunc`` class
     var_init_code   --  string with the variable initialization code
+    extra_global_params     --  list of pairs of strings with names and
+                                types of additional parameters
     custom_body     --  dictionary with additional attributes and methods of
                         the new class
     """
@@ -1041,6 +1183,11 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
 
     if var_init_code is not None:
         body["get_code"] = lambda self: dedent(var_init_code)
+
+    if extra_global_params is not None:
+        body["get_extra_global_params"] = \
+            lambda self: EGPVector([EGP(egp[0], egp[1])
+                                    for egp in extra_global_params])
 
     if custom_body is not None:
         body.update(custom_body)

@@ -1,76 +1,84 @@
 #pragma once
 
 // Standard includes
+#include <algorithm>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 // GeNN includes
 #include "gennExport.h"
+#include "gennUtils.h"
+#include "neuronGroupInternal.h"
 #include "variableMode.h"
 
 // GeNN code generator includes
 #include "backendBase.h"
 #include "codeStream.h"
+#include "substitutions.h"
 #include "teeStream.h"
 
-// Forward declarations
-class ModelSpecInternal;
-class SynapseGroupInternal;
-
-namespace CodeGenerator
-{
-class NeuronGroupMerged;
-class Substitutions;
-class SynapseGroupMerged;
-}
-
 //--------------------------------------------------------------------------
 // CodeGenerator::FunctionTemplate
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-//! Immutable structure for specifying how to implement
-//! a generic function e.g. gennrand_uniform
-/*! **NOTE** for the sake of easy initialisation first two parameters of GenericFunction are repeated (C++17 fixes) */
-struct FunctionTemplate
+//--------------------------------------------------------------------------
+// CodeGenerator::MergedStructData
+//--------------------------------------------------------------------------
+//! Class for storing data generated when writing merged
+//! structures in runner and required in later code generation
+class MergedStructData
 {
-    // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
-    FunctionTemplate operator = (const FunctionTemplate &o)
+public:
+    //! Immutable structure for tracking where an extra global variable ends up after merging
+    struct MergedEGP
     {
-        return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
+        MergedEGP(size_t m, size_t g, const std::string &t, const std::string &f)
+        :   mergedGroupIndex(m), groupIndex(g), type(t), fieldName(f){}
+
+        const size_t mergedGroupIndex;
+        const size_t groupIndex;
+        const std::string type;
+        const std::string fieldName;
+    };
+
+    //! Map of original extra global param names to their locations within merged structures
+    typedef std::map<std::string, std::unordered_multimap<std::string, MergedEGP>> MergedEGPMap;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    const MergedEGPMap &getMergedEGPs() const{ return m_MergedEGPs; }
+
+    void addMergedEGP(const std::string &variableName, const std::string &mergedGroupType,
+                      size_t mergedGroupIndex, size_t groupIndex, const std::string &type, const std::string &fieldName)
+    {
+        m_MergedEGPs[variableName].emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(mergedGroupType),
+            std::forward_as_tuple(mergedGroupIndex, groupIndex, type, fieldName));
     }
 
-    //! Generic name used to refer to function in user code
-    const std::string genericName;
+    size_t getMergedGroupSize(const std::string &mergedGroupType, size_t mergedGroupIndex) const
+    {
+        return m_MergedGroupSizes.at(mergedGroupType).at(mergedGroupIndex);
+    }
 
-    //! Number of function arguments
-    const unsigned int numArguments;
+    void addMergedGroupSize(const std::string &mergedGroupType, size_t mergedGroupIndex, size_t sizeBytes)
+    {
+        m_MergedGroupSizes[mergedGroupType].emplace(mergedGroupIndex, sizeBytes);
+    }
 
-    //! The function template (for use with ::functionSubstitute) used when model uses double precision
-    const std::string doublePrecisionTemplate;
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    MergedEGPMap m_MergedEGPs;
 
-    //! The function template (for use with ::functionSubstitute) used when model uses single precision
-    const std::string singlePrecisionTemplate;
+    std::unordered_map<std::string, std::map<size_t, size_t>> m_MergedGroupSizes;
 };
-
-//--------------------------------------------------------------------------
-// CodeGenerator::FunctionTemplate
-//--------------------------------------------------------------------------
-//! Immutable structure for tracking where an extra global variable ends up after merging
-struct MergedEGP
-{
-    MergedEGP(size_t m, size_t g, bool p, const std::string &f)
-    :   mergedGroupIndex(m), groupIndex(g), pointer(p), fieldName(f){}
-
-    const size_t mergedGroupIndex;
-    const size_t groupIndex;
-    const bool pointer;
-    const std::string fieldName;
-};
-
-//! Map of original extra global param names to their locations within merged structures
-typedef std::map<std::string, std::unordered_multimap<std::string, MergedEGP>> MergedEGPMap;
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
@@ -113,11 +121,9 @@ inline size_t padSize(size_t size, size_t blockSize)
     return ceilDivide(size, blockSize) * blockSize;
 }
 
-GENN_EXPORT void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n);
-
 template<typename T>
-void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedEGPMap &mergedEGPs,
-                        const std::string &suffix, const BackendBase &backend)
+void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
+                        const std::string &suffix, const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)
 {
     // Loop through merged neuron groups
     std::stringstream mergedGroupArrayStream;
@@ -130,8 +136,29 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         const size_t idx = g.getIndex();
         const size_t numGroups = g.getGroups().size();
 
-        // Implement merged group array
-        backend.genMergedGroupImplementation(mergedGroupArray, suffix, idx, numGroups);
+        // Get size of group in bytes
+        const size_t groupBytes = mergedStructData.getMergedGroupSize(suffix, idx);
+
+        // Loop through memory spaces
+        bool memorySpaceFound = false;
+        for(auto &m : memorySpaces) {
+            // If there is space in this memory space for group
+            if(m.second > groupBytes) {
+                // Implement merged group array in this memory space
+                backend.genMergedGroupImplementation(mergedGroupArray, m.first, suffix, idx, numGroups);
+
+                // Set flag
+                memorySpaceFound = true;
+
+                // Subtract
+                m.second -= groupBytes;
+
+                // Stop searching
+                break;
+            }
+        }
+
+        assert(memorySpaceFound);
 
         // Write function to update
         mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(const Merged" << suffix << "Group" << idx << " *group)";
@@ -153,24 +180,42 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << mergedGroupFuncStream.str();
         os << std::endl;
-        for(const auto &e : mergedEGPs) {
+
+        // Loop through all extra global parameters to build a set of unique filename, group index pairs
+        // **YUCK** it would be much nicer if this were part of the original data structure
+        // **NOTE** tuple would be nicer but doesn't define std::hash overload
+        std::set<std::pair<size_t, std::pair<std::string, std::string>>> mergedGroupFields;
+        for(const auto &e : mergedStructData.getMergedEGPs()) {
             const auto groupEGPs = e.second.equal_range(suffix);
-            for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-                if(g->second.pointer) {
-                    os << "void pushMerged" << suffix << g->second.mergedGroupIndex << g->second.fieldName << g->second.groupIndex << "ToDevice()";
-                    {
-                        CodeStream::Scope b(os);
-                        backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
-                    }
-                    os << std::endl;
+            std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
+                           [](const MergedStructData::MergedEGPMap::value_type::second_type::value_type &g)
+                           {
+                               return std::make_pair(g.second.mergedGroupIndex, 
+                                                     std::make_pair(g.second.type, g.second.fieldName));
+                           });
+        }
+
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// merged extra global parameter functions" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        // Loop through resultant fields and generate push function for pointer extra global parameters
+        for(auto f : mergedGroupFields) {
+            // If EGP is a pointer
+            // **NOTE** this is common to all references!
+            if(Utils::isTypePointer(f.second.first)) {
+                os << "void pushMerged" << suffix << f.first << f.second.second << "ToDevice(unsigned int idx, " << f.second.first << " value)";
+                {
+                    CodeStream::Scope b(os);
+                    backend.genMergedExtraGlobalParamPush(os, suffix, f.first, "idx", f.second.second, "value");
                 }
+                os << std::endl;
             }
         }
     }
 }
 
 
-void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std::string &suffix, const BackendBase &backend);
+void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
@@ -185,30 +230,39 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type);
 //--------------------------------------------------------------------------
 void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
 
-void neuronSubstitutionsInSynapticCode(
-    CodeGenerator::Substitutions &substitutions,
-    const NeuronGroupInternal *ng,
-    const std::string &offset,
-    const std::string &delayOffset,
-    const std::string &idx,             //!< index of the neuron to be accessed
-    const std::string &sourceSuffix,
-    const std::string &destSuffix,
-    const std::string &varPrefix = "",  //!< prefix to be used for variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &varSuffix = ""); //!< suffix to be used for variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
-
 //-------------------------------------------------------------------------
 /*!
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
-void neuronSubstitutionsInSynapticCode(
-    Substitutions &substitutions,
-    const SynapseGroupInternal &sg,          //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const std::string &preIdx,               //!< index of the pre-synaptic neuron to be accessed for _pre variables
-    const std::string &postIdx,              //!< index of the post-synaptic neuron to be accessed for _post variables
-    double dt,                               //!< simulation timestep (ms)
-    const std::string &preVarPrefix = "",    //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &preVarSuffix = "",    //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
-    const std::string &postVarPrefix = "",   //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &postVarSuffix = "");  //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
+template<typename P, typename D>
+void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutions, const NeuronGroupInternal *archetypeNG, 
+                                       const std::string &offset, const std::string &delayOffset, const std::string &idx, 
+                                       const std::string &sourceSuffix, const std::string &destSuffix, 
+                                       const std::string &varPrefix, const std::string &varSuffix,
+                                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
+{
+
+    // Substitute spike times
+    substitutions.addVarSubstitution("sT" + sourceSuffix,
+                                     "(" + delayOffset + varPrefix + "group.sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
+
+    // Substitute neuron variables
+    const auto *nm = archetypeNG->getNeuronModel();
+    for(const auto &v : nm->getVars()) {
+        const std::string varIdx = archetypeNG->isVarQueueRequired(v.name) ? offset + idx : idx;
+
+        substitutions.addVarSubstitution(v.name + sourceSuffix,
+                                         varPrefix + "group." + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
+    }
+
+    // Substitute (potentially heterogeneous) parameters and derived parameters from neuron model
+    substitutions.addParamValueSubstitution(nm->getParamNames(), archetypeNG->getParams(), isParamHeterogeneousFn,
+                                            sourceSuffix, "group.", destSuffix);
+    substitutions.addVarValueSubstitution(nm->getDerivedParams(), archetypeNG->getDerivedParams(), isDerivedParamHeterogeneousFn,
+                                          sourceSuffix, "group.", destSuffix);
+
+    // Substitute extra global parameters from neuron model
+    substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group.", destSuffix);
+}
 }   // namespace CodeGenerator

@@ -21,7 +21,6 @@
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
 #define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
-#define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // VarAccess
@@ -52,11 +51,6 @@ public:
     VarInit(double constant)
         : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
     {
-    }
-
-    bool canBeMerged(const VarInit &other) const
-    {
-        return Snippet::Init<InitVarSnippet::Base>::canBeMerged(other, getSnippet()->getCode());
     }
 };
 
@@ -182,10 +176,6 @@ public:
     //! Gets names and types (as strings) of model variables
     virtual VarVec getVars() const{ return {}; }
 
-    //! Gets names and types (as strings) of additional
-    //! per-population parameters for the weight update model.
-    virtual EGPVec getExtraGlobalParams() const{ return {}; }
-
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -193,12 +183,6 @@ public:
     size_t getVarIndex(const std::string &varName) const
     {
         return getNamedVecIndex(varName, getVars());
-    }
-
-    //! Find the index of a named extra global parameter
-    size_t getExtraGlobalParamIndex(const std::string &paramName) const
-    {
-        return getNamedVecIndex(paramName, getExtraGlobalParams());
     }
 
 protected:
@@ -209,8 +193,7 @@ protected:
     {
         // Return true if vars and egps match
         return (Snippet::Base::canBeMerged(other)
-                && (getVars() == other->getVars())
-                && (getExtraGlobalParams() == other->getExtraGlobalParams()));
+                && (getVars() == other->getVars()));
     }
 };
 } // Models

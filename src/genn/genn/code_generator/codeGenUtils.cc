@@ -346,37 +346,18 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 
-void genMergedGroupSpikeCountReset(CodeStream &os, const NeuronGroupMerged &n)
-{
-    if(n.getArchetype().isDelayRequired()) { // with delay
-        if(n.getArchetype().isSpikeEventRequired()) {
-            os << "group.spkCntEvnt[*group.spkQuePtr] = 0;" << std::endl;
-        }
-        if(n.getArchetype().isTrueSpikeRequired()) {
-            os << "group.spkCnt[*group.spkQuePtr] = 0;" << std::endl;
-        }
-        else {
-            os << "group.spkCnt[0] = 0;" << std::endl;
-        }
-    }
-    else { // no delay
-        if(n.getArchetype().isSpikeEventRequired()) {
-            os << "group.spkCntEvnt[0] = 0;" << std::endl;
-        }
-        os << "group.spkCnt[0] = 0;" << std::endl;
-    }
-}
-
-void genScalarEGPPush(CodeStream &os, const MergedEGPMap &mergedEGPs, const std::string &suffix, const BackendBase &backend)
+void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend)
 {
     // Loop through all merged EGPs
-    for(const auto &e : mergedEGPs) {
+    for(const auto &e : mergedStructData.getMergedEGPs()) {
         // Loop through range with correct suffix
         const auto groupEGPs = e.second.equal_range(suffix);
         for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
             // If EGP is scalar, generate code to copy
-            if(!g->second.pointer) {
-                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, g->second.groupIndex, g->second.fieldName, e.first);
+            if(!Utils::isTypePointer(g->second.type)) {
+                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, 
+                                                      std::to_string(g->second.groupIndex), 
+                                                      g->second.fieldName, e.first);
             }
 
         }
@@ -504,59 +485,5 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
        
         throw std::runtime_error("The "+vars+"undefined in code "+codeName+".");
     }
-}
-
-//-------------------------------------------------------------------------
-/*!
-  \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
-*/
-//-------------------------------------------------------------------------
-
-void neuronSubstitutionsInSynapticCode(
-    CodeGenerator::Substitutions &substitutions,
-    const NeuronGroupInternal *ng,
-    const std::string &offset,
-    const std::string &delayOffset,
-    const std::string &idx,
-    const std::string &sourceSuffix,
-    const std::string &destSuffix,
-    const std::string &varPrefix,
-    const std::string &varSuffix)
-{
-    using namespace CodeGenerator;
-
-    // presynaptic neuron variables, parameters, and global parameters
-    const auto *neuronModel = ng->getNeuronModel();
-    substitutions.addVarSubstitution("sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group.sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
-    for(const auto &v : neuronModel->getVars()) {
-        const std::string varIdx = ng->isVarQueueRequired(v.name) ? offset + idx : idx;
-
-        substitutions.addVarSubstitution(v.name + sourceSuffix,
-                                         varPrefix + "group." + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
-    }
-    substitutions.addParamValueSubstitution(neuronModel->getParamNames(), ng->getParams(), sourceSuffix);
-    substitutions.addVarValueSubstitution(neuronModel->getDerivedParams(), ng->getDerivedParams(), sourceSuffix);
-    substitutions.addVarNameSubstitution(neuronModel->getExtraGlobalParams(), sourceSuffix, "group.", destSuffix);
-}
-
-void neuronSubstitutionsInSynapticCode(
-    Substitutions &substitutions,        //!< the code string to work on
-    const SynapseGroupInternal &sg,      //!< the synapse group connecting the pre and postsynaptic neuron populations whose parameters might need to be substituted
-    const std::string &preIdx,           //!< index of the pre-synaptic neuron to be accessed for _pre variables; differs for different Span)
-    const std::string &postIdx,          //!< index of the post-synaptic neuron to be accessed for _post variables; differs for different Span)
-    double dt,                           //!< simulation timestep (ms)
-    const std::string &preVarPrefix,     //!< prefix to be used for presynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &preVarSuffix,     //!< suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
-    const std::string &postVarPrefix,    //!< prefix to be used for postsynaptic variable accesses - typically combined with suffix to wrap in function call such as __ldg(&XXX)
-    const std::string &postVarSuffix)    //!< suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&XXX)
-{
-    const std::string axonalDelayOffset = Utils::writePreciseString(dt * (double)(sg.getDelaySteps() + 1u)) + " + ";
-    const std::string preOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-    neuronSubstitutionsInSynapticCode(substitutions, sg.getSrcNeuronGroup(), preOffset, axonalDelayOffset, preIdx, "_pre", "Pre", preVarPrefix, preVarSuffix);
-    
-    const std::string backPropDelayMs = Utils::writePreciseString(dt * (double)(sg.getBackPropDelaySteps() + 1u)) + " + ";
-    const std::string postOffset = sg.getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
-    neuronSubstitutionsInSynapticCode(substitutions, sg.getTrgNeuronGroup(), postOffset, backPropDelayMs, postIdx, "_post", "Post", postVarPrefix, postVarSuffix);
 }
 }   // namespace CodeGenerator

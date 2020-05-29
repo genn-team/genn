@@ -16,6 +16,6 @@ class ModelSpecMerged;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-MemAlloc generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, MergedEGPMap &mergedEGPs,
-                        const ModelSpecMerged &modelMerged, const BackendBase &backend);
+MemAlloc generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
+                        MergedStructData &mergedStructData, const ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

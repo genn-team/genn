@@ -185,9 +185,10 @@ void ModelSpec::finalize()
                 using namespace CodeGenerator;
                 assert(!wu->getEventThresholdConditionCode().empty());
 
-                // do an early replacement of parameters and derived parameters
-                // **NOTE * *this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
+                // do an early replacement of weight update model parameters and derived parameters
+                // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
                 // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
+                // **NOTE** this prevents heterogeneous parameters being allowed in event threshold conditions but I can't see any way around this
                 Substitutions thresholdSubs;
                 thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
                 thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
@@ -252,5 +253,18 @@ NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
     // Otherwise, error
     else {
         throw std::runtime_error("neuron group " + name + " not found, aborting ...");
+    }
+}
+
+SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &name)
+{
+    // If a matching local synapse group is found, return it
+    auto synapseGroup = m_LocalSynapseGroups.find(name);
+    if(synapseGroup != m_LocalSynapseGroups.cend()) {
+        return &synapseGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
     }
 }

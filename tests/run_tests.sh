@@ -70,6 +70,10 @@ for f in features/*/ ; do
     popd
 done;
 
+# Make sure we have a version of the single-threaded CPU backend with coverage calculation built
+pushd $GENN_PATH
+make single_threaded_cpu -j $CORE_COUNT COVERAGE=1
+popd
 
 # Run unit tests
 pushd unit

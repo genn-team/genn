@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "decode_shared_matrix_individualg_ragged", "decode_shared_matrix_individualg_ragged.vcxproj", "{74002EEF-5F4D-4106-976D-7FCDD6160AA2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0EE02766-BF0C-4774-839F-FDA6BD57D636} = {0EE02766-BF0C-4774-839F-FDA6BD57D636}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "decode_shared_matrix_individualg_ragged_CODE\runner.vcxproj", "{0EE02766-BF0C-4774-839F-FDA6BD57D636}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{74002EEF-5F4D-4106-976D-7FCDD6160AA2}.Debug|x64.ActiveCfg = Debug|x64
+		{74002EEF-5F4D-4106-976D-7FCDD6160AA2}.Debug|x64.Build.0 = Debug|x64
+		{74002EEF-5F4D-4106-976D-7FCDD6160AA2}.Release|x64.ActiveCfg = Release|x64
+		{74002EEF-5F4D-4106-976D-7FCDD6160AA2}.Release|x64.Build.0 = Release|x64
+		{0EE02766-BF0C-4774-839F-FDA6BD57D636}.Debug|x64.ActiveCfg = Debug|x64
+		{0EE02766-BF0C-4774-839F-FDA6BD57D636}.Debug|x64.Build.0 = Debug|x64
+		{0EE02766-BF0C-4774-839F-FDA6BD57D636}.Release|x64.ActiveCfg = Release|x64
+		{0EE02766-BF0C-4774-839F-FDA6BD57D636}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

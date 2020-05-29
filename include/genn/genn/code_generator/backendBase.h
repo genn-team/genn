@@ -22,9 +22,16 @@ class SynapseGroupInternal;
 namespace CodeGenerator
 {
     class ModelSpecMerged;
-    class NeuronGroupMerged;
+    class NeuronInitGroupMerged;
+    class NeuronUpdateGroupMerged;
     class Substitutions;
-    class SynapseGroupMerged;
+    class SynapseGroupMergedBase;
+    class PresynapticUpdateGroupMerged;
+    class PostsynapticUpdateGroupMerged;
+    class SynapseDynamicsGroupMerged;
+    class SynapseConnectivityInitGroupMerged;
+    class SynapseDenseInitGroupMerged;
+    class SynapseSparseInitGroupMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -47,6 +54,12 @@ struct PreferencesBase
 
     //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
     bool automaticCopy = false;
+
+    //! Should GeNN generate empty state push and pull functions
+    bool generateEmptyStatePushPull = true;
+
+    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
+    bool generateExtraGlobalParamPull = true;
 
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
@@ -122,17 +135,24 @@ public:
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
-    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified NeuronGroup to.
-    typedef GroupHandler<NeuronGroupMerged> NeuronGroupMergedHandler;
-
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
-    typedef GroupHandler<SynapseGroupMerged> SynapseGroupMergedHandler;
+    typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
+    typedef GroupHandler<NeuronUpdateGroupMerged> NeuronUpdateGroupMergedHandler;
+    typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
+    typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
+    typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
+    typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
+    typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
+    typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
-    typedef std::function <void(CodeStream &, const NeuronGroupMerged &, Substitutions&,
-                                NeuronGroupMergedHandler, NeuronGroupMergedHandler)> NeuronGroupSimHandler;
+    typedef std::function <void(CodeStream &, const NeuronUpdateGroupMerged &, Substitutions&,
+                                NeuronUpdateGroupMergedHandler, NeuronUpdateGroupMergedHandler)> NeuronGroupSimHandler;
     
+    //! Vector of prefixes required to allocate in memory space and size of memory space
+    typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
+
     BackendBase(const std::string &scalarType);
     virtual ~BackendBase(){}
 
@@ -145,7 +165,7 @@ public:
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
@@ -167,14 +187,14 @@ public:
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.*/
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                  SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
-                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
-                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
+                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
@@ -205,24 +225,29 @@ public:
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
+    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
+    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
 
     //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                              size_t idx, size_t numGroups) const = 0;
     
     //! Generate code for pushing merged group data to the 'device'
     virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
-    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
-                                               const std::string &fieldName, const std::string &egpName) const = 0;
+    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                               const std::string &groupIdx, const std::string &fieldName,
+                                               const std::string &egpName) const = 0;
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged &sg, 
+    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
                                            const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'
@@ -251,7 +276,7 @@ public:
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
+    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
 
     //! Generate an RNG with a state per population member
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -293,8 +318,11 @@ public:
 
     virtual std::string getScalarPrefix() const{ return ""; }
 
-    //! Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?
-    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
+    //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
+    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
+
+    //! Different backends use different RNGs for different things. Does this one require a global device RNG for the specified model?
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require population RNGs?
     virtual bool isPopulationRNGRequired() const = 0;
@@ -308,8 +336,19 @@ public:
     //! Is automatic copy mode enabled in the preferences?
     virtual bool isAutomaticCopyEnabled() const = 0;
 
+    //! Should GeNN generate empty state push and pull functions?
+    virtual bool shouldGenerateEmptyStatePushPull() const = 0;
+
+    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
+    virtual bool shouldGenerateExtraGlobalParamPull() const = 0;
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
+
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -347,6 +386,9 @@ public:
         genVariableImplementation(runner, type, name, loc);
     }
 
+    //! Get the size of the type
+    size_t getSize(const std::string &type) const;
+
 protected:
     //--------------------------------------------------------------------------
     // Protected API
@@ -355,8 +397,6 @@ protected:
     {
         m_TypeBytes.emplace(type, size);
     }
-
-    size_t getSize(const std::string &type) const;
 
 private:
     //--------------------------------------------------------------------------

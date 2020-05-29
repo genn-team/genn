@@ -95,8 +95,9 @@ struct Preferences : public PreferencesBase
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
 
-    //! Should we use the constant cache for storing merged structures - improves performance but may overflow for large models
-    bool useConstantCacheForMergedStructs = true;
+    //! GeNN normally identifies devices by PCI bus ID to ensure that the model is run on the same device
+    //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
+    bool selectGPUByDeviceID = false;
 
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
@@ -127,18 +128,18 @@ public:
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                  SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
-                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
-                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
+                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
@@ -157,25 +158,30 @@ public:
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
 
     //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                              size_t idx, size_t numGroups) const override;
 
     //! Generate code for pushing merged group data to the 'device'
     virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
-    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, size_t groupIdx,
-                                               const std::string &fieldName, const std::string &egpName) const override;
+    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                               const std::string &groupIdx, const std::string &fieldName,
+                                               const std::string &egpName) const override;
 
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged &sg, 
+    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
                                            const Substitutions &kernelSubs, Handler handler) const override;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
@@ -201,7 +207,7 @@ public:
         genCurrentSpikePull(os, ng, true);
     }
     
-    virtual MemAlloc genGlobalRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
+    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                                       CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
@@ -224,7 +230,8 @@ public:
     virtual std::string getArrayPrefix() const override{ return m_Preferences.automaticCopy ? "" : "d_"; }
     virtual std::string getScalarPrefix() const override{ return "d_"; }
 
-    virtual bool isGlobalRNGRequired(const ModelSpecMerged &modelMerged) const override;
+    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override{ return true; }
     virtual bool isSynRemapRequired() const override{ return true; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
@@ -232,8 +239,19 @@ public:
     //! Is automatic copy mode enabled in the preferences?
     virtual bool isAutomaticCopyEnabled() const override { return m_Preferences.automaticCopy; }
 
+    //! Should GeNN generate empty state push and pull functions?
+    virtual bool shouldGenerateEmptyStatePushPull() const override { return m_Preferences.generateEmptyStatePushPull; }
+
+    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
+    virtual bool shouldGenerateExtraGlobalParamPull() const override { return m_Preferences.generateExtraGlobalParamPull; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
+
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     //--------------------------------------------------------------------------
     // Public API

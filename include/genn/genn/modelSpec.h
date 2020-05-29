@@ -272,7 +272,7 @@ public:
         auto result = m_LocalSynapseGroups.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(name),
-            std::forward_as_tuple(name, mtype, delaySteps,
+            std::forward_as_tuple(name, nullptr, mtype, delaySteps,
                                   wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
                                   psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp,
@@ -348,6 +348,70 @@ public:
                                     PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
                                     connectivityInitialiser);
 
+    }
+
+
+    template<typename PostsynapticModel>
+    SynapseGroup *addSlaveSynapsePopulation(const std::string &name, const std::string &weightSharingMasterName, unsigned int delaySteps, const std::string &src, const std::string &trg,
+                                            const PostsynapticModel *psm, const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+    {
+        // Get source and target neuron groups
+        auto srcNeuronGrp = findNeuronGroupInternal(src);
+        auto trgNeuronGrp = findNeuronGroupInternal(trg);
+
+        // Find weight sharing master group
+        auto masterGrp = findSynapseGroupInternal(weightSharingMasterName);
+        const auto *wum = masterGrp->getWUModel();
+
+        // If the weight sharing master has individuak weights and any are read-write, give error
+        const auto wumVars = wum->getVars();
+        if((masterGrp->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) &&
+           std::any_of(wumVars.cbegin(), wumVars.cend(), 
+                       [](const Models::Base::Var &v) 
+                       { 
+                           return (v.access == VarAccess::READ_WRITE); 
+                       }))
+        {
+            throw std::runtime_error("Individual synapse variables can only be shared if they are read-only");
+        }
+
+        // Check that population sizes match
+        if ((srcNeuronGrp->getNumNeurons() != masterGrp->getSrcNeuronGroup()->getNumNeurons())
+            || (trgNeuronGrp->getNumNeurons() != masterGrp->getTrgNeuronGroup()->getNumNeurons()))
+        {
+            throw std::runtime_error("Size of populations connected by shared weights must match");
+        }
+
+        // If weight update model has any pre or postsynaptic variables, give error
+        // **THINK** this could be supported but quite what the semantics are is ambiguous
+        if(!wum->getPreVars().empty() || !wum->getPostVars().empty()) {
+            throw std::runtime_error("Synapse groups with pre and postsynpatic variables cannot be shared");
+        }
+
+        // Add synapse group to map
+        auto result = m_LocalSynapseGroups.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, masterGrp, masterGrp->getMatrixType(), delaySteps,
+                                  wum, masterGrp->getWUParams(), masterGrp->getWUVarInitialisers(), masterGrp->getWUPreVarInitialisers(), masterGrp->getWUPostVarInitialisers(),
+                                  psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
+                                  srcNeuronGrp, trgNeuronGrp, masterGrp->getConnectivityInitialiser(), 
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
+
+        if(!result.second) {
+            throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
+        }
+        else {
+            return &result.first->second;
+        }
+    }
+
+    template<typename PostsynapticModel>
+    SynapseGroup *addSlaveSynapsePopulation(const std::string &name, const std::string &weightSharingMasterName, unsigned int delaySteps, const std::string &src, const std::string &trg,
+                                            const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+    {
+        return addSlaveSynapsePopulation(name, weightSharingMasterName, delaySteps, src, trg,
+                                         PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers);
     }
 
     // PUBLIC CURRENT SOURCE FUNCTIONS
@@ -436,6 +500,9 @@ private:
     //! Find a neuron group by name
     NeuronGroupInternal *findNeuronGroupInternal(const std::string &name);
     
+    //! Find a synapse group by name
+    SynapseGroupInternal *findSynapseGroupInternal(const std::string &name);
+
     //--------------------------------------------------------------------------
     // Private members
     //--------------------------------------------------------------------------

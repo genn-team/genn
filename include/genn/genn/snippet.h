@@ -35,6 +35,7 @@ public:                                                 \
 
 #define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const override{ return __VA_ARGS__; }
 #define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const override{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // Snippet::ValueBase
@@ -183,6 +184,18 @@ public:
     //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const{ return {}; }
 
+    //! Gets names and types (as strings) of additional
+    //! per-population parameters for the snippet
+    virtual EGPVec getExtraGlobalParams() const { return {}; }
+    
+    //------------------------------------------------------------------------
+    // Public methods
+    //------------------------------------------------------------------------
+    //! Find the index of a named extra global parameter
+    size_t getExtraGlobalParamIndex(const std::string &paramName) const
+    {
+        return getNamedVecIndex(paramName, getExtraGlobalParams());
+    }
 
 protected:
     //------------------------------------------------------------------------
@@ -191,7 +204,9 @@ protected:
     bool canBeMerged(const Base *other) const
     {
         // Return true if parameters names and derived parameter names match
-        return ((getParamNames() == other->getParamNames()) && (getDerivedParams() == other->getDerivedParams()));
+        return ((getParamNames() == other->getParamNames()) 
+                && (getDerivedParams() == other->getDerivedParams())
+                && (getExtraGlobalParams() == other->getExtraGlobalParams()));
     }
 
     //------------------------------------------------------------------------
@@ -244,40 +259,9 @@ public:
         }
     }
 
-protected:
-    bool canBeMerged(const Init<SnippetBase> &other, const std::string &codeString) const
+    bool canBeMerged(const Init<SnippetBase> &other) const
     {
-        // If snippets can be merged
-        if(getSnippet()->canBeMerged(other.getSnippet())) {
-            // Loop through parameters
-            const auto paramNames = getSnippet()->getParamNames();
-            for(size_t i = 0; i < paramNames.size(); i++) {
-                // If parameter is referenced in code string
-                if(codeString.find("$(" + paramNames[i] + ")") != std::string::npos) {
-                    // If parameter values don't match, return true
-                    if(getParams()[i] != other.getParams()[i]) {
-                        return false;
-                    }
-                }
-            }
-
-            // Loop through derived parameters
-            const auto derivedParams = getSnippet()->getDerivedParams();
-            assert(derivedParams.size() == getDerivedParams().size());
-            assert(derivedParams.size() == other.getDerivedParams().size());
-            for(size_t i = 0; i < derivedParams.size(); i++) {
-                // If derived parameter is referenced in code string
-                if(codeString.find("$(" + derivedParams[i].name + ")") != std::string::npos) {
-                    // If derived parameter values don't match, return true
-                    if(getDerivedParams()[i] != other.getDerivedParams()[i]) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-        return false;
+        return getSnippet()->canBeMerged(other.getSnippet());
     }
 
 private:

@@ -7,8 +7,8 @@ UNIT_TEST_PATH		:=$(GENN_DIR)/tests/unit
 TEST_SOURCES		:= $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc $(UNIT_TEST_PATH)/*.cc
 
 # Add compiler and linker flags to link libGeNN and pthreads
-LDFLAGS			+= -L$(GENN_DIR)/lib -lgenn$(GENN_PREFIX) -lpthread
-CXXFLAGS		+= -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" 
+LDFLAGS			+= -L$(GENN_DIR)/lib -lgenn_single_threaded_cpu_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX) -lpthread
+CXXFLAGS		+= -I$(GENN_DIR)/include/genn/backends/single_threaded_cpu -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" 
 
 # Determine full path to generator and backend
 TEST			:=$(UNIT_TEST_PATH)/test$(GENN_PREFIX)

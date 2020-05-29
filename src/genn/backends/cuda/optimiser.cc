@@ -24,6 +24,7 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/generateAll.h"
 
 // CUDA backend includes
@@ -110,7 +111,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
             groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
         }
 
-        if (!s.second.getWUModel()->getLearnPostCode().empty()) {
+        if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
             groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
         }
 
@@ -190,7 +191,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
 
         // Generate code
-        const auto moduleNames = generateAll(model, backend, outputPath, true);
+        const auto moduleNames = generateAll(model, backend, outputPath, true).first;
 
         // Set context
         // **NOTE** CUDA calls in code generation seem to lose driver context
